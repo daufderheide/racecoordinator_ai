@@ -1,0 +1,110 @@
+<div class="dashboard-wrapper">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" class="dashboard-svg">
+    <defs>
+      <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#1a2a3a;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#0d151e;stop-opacity:1" />
+      </linearGradient>
+      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="5" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+      <filter id="timerGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="10" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+
+    <!-- Background -->
+    <rect width="1600" height="900" fill="url(#bgGradient)" />
+
+    <!-- Header Section -->
+    <g class="header">
+      <!-- Logo -->
+      <text x="30" y="70" font-size="50" font-weight="800" fill="#3b82f6" class="logo">RACE <tspan fill="#60a5fa">COORDINATOR</tspan></text>
+      <text x="30" y="110" font-size="22" font-style="italic" fill="#94a3b8">Bright Plume Raceway</text>
+
+      <!-- Timer & Info -->
+      <text x="800" y="60" font-size="36" font-weight="700" fill="#4ade80" text-anchor="middle">ROUND ROBIN</text>
+      <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle" filter="url(#timerGlow)" font-family="monospace">9:44</text>
+      <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat 1 of 8</text>
+
+      <!-- Flags -->
+      <image x="1370" y="20" width="200" height="180" href="assets/crossed_racing_flags.png" />
+    </g>
+
+    <!-- Table Headers -->
+    <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8">
+      <text x="50" y="280">NAME</text>
+      <text x="637.5" y="280" text-anchor="middle">LAP</text>
+      <text x="912.5" y="280" text-anchor="middle">LAP TIME</text>
+      <text x="1187.5" y="280" text-anchor="middle">MEDIAN LAP</text>
+      <text x="1462.5" y="280" text-anchor="middle">BEST LAP</text>
+    </g>
+
+    <!-- Rows -->
+    <!-- Row 1: Angel -->
+    <g transform="translate(0, 310)">
+      <rect x="20" y="0" width="1560" height="135" fill="#ef4444" rx="4" />
+      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Angel</text>
+      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <!-- Vertical Lines -->
+      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+    </g>
+
+    <!-- Row 2: The Pants -->
+    <g transform="translate(0, 455)">
+      <rect x="20" y="0" width="1560" height="135" fill="#ffffff" rx="4" />
+      <text x="50" y="90" font-size="85" font-weight="800" fill="black">The Pants</text>
+      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+    </g>
+
+    <!-- Row 3: Fart Goblin -->
+    <g transform="translate(0, 600)">
+      <rect x="20" y="0" width="1560" height="135" fill="#3b82f6" rx="4" />
+      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Fart Goblin</text>
+      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+    </g>
+
+    <!-- Row 4: Peo Fuente -->
+    <g transform="translate(0, 745)">
+      <rect x="20" y="0" width="1560" height="135" fill="#fbbf24" rx="4" />
+      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Peo Fuente</text>
+      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+    </g>
+  </svg>
+  
+  <div class="controls">
+    <button routerLink="/" class="back-button">Back to Home</button>
+  </div>
+</div>
