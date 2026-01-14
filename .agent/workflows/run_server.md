@@ -2,12 +2,7 @@
 description: Start the Java server
 ---
 
-1. Navigate to the server directory
+1. Run the server script from the root
    ```bash
-   cd server
-   ```
-
-2. Run the server using Maven
-   ```bash
-   mvn compile exec:java -Dexec.mainClass="com.antigravity.App"
+   ./run_server.sh
    ```

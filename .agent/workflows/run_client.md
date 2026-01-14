@@ -2,17 +2,7 @@
 description: Start the Angular client
 ---
 
-1. Navigate to the client directory
+1. Run the client script from the root
    ```bash
-   cd client
-   ```
-
-2. Install dependencies (if not already installed)
-   ```bash
-   npm install
-   ```
-
-3. Start the development server
-   ```bash
-   npm start
+   ./run_client.sh
    ```

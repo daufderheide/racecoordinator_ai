@@ -1,0 +1,9 @@
+com/antigravity/proto/HelloResponse.class
+com/antigravity/proto/HelloResponseOrBuilder.class
+com/antigravity/proto/HelloRequest.class
+com/antigravity/proto/HelloResponse$1.class
+com/antigravity/proto/HelloRequestOrBuilder.class
+com/antigravity/proto/HelloRequest$Builder.class
+com/antigravity/proto/HelloRequest$1.class
+com/antigravity/proto/HelloResponse$Builder.class
+com/antigravity/proto/Message.class

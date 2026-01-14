@@ -12,6 +12,12 @@ import { DataService } from './data.service';
         <p style="font-weight: bold; color: #007acc;">{{ serverData }}</p>
       </div>
 
+      <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; display: inline-block; border-radius: 8px; background-color: #f0f7ff;">
+        <h3>Protobuf Greeting:</h3>
+        <p style="font-weight: bold; color: #28a745;">{{ protobufGreeting }}</p>
+        <button (click)="fetchProtoData()" style="padding: 5px 10px; cursor: pointer;">Refresh Proto</button>
+      </div>
+
       <div style="margin-top: 30px;">
         <h3>Interactive SVG</h3>
         <p>Use buttons to change the circle size.</p>
@@ -39,19 +45,34 @@ import { DataService } from './data.service';
 })
 export class HomeComponent implements OnInit {
   serverData: string = 'Loading...';
+  protobufGreeting: string = 'Waiting for Protobuf...';
   radius: number = 50;
+  userName: string = 'Antigravity User';
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
     this.dataService.getData().subscribe({
-      next: (data) => {
+      next: (data: string) => {
         this.serverData = data;
         console.log('Data received:', data);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.serverData = 'Failed to connect to server (Is it running?)';
         console.error('Error:', err);
+      }
+    });
+
+    this.fetchProtoData();
+  }
+
+  fetchProtoData() {
+    this.dataService.getProtoData(this.userName).subscribe({
+      next: (greeting: string) => {
+        this.protobufGreeting = greeting;
+      },
+      error: (err: any) => {
+        this.protobufGreeting = 'Protobuf failed: ' + err.message;
       }
     });
   }
