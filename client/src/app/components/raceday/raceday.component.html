@@ -24,13 +24,16 @@
     <!-- Header Section -->
     <g class="header">
       <!-- Logo -->
-      <text x="30" y="70" font-size="50" font-weight="800" fill="#3b82f6" class="logo">RACE <tspan fill="#60a5fa">COORDINATOR</tspan></text>
+      <text x="30" y="70" font-size="50" font-weight="800" fill="#3b82f6" class="logo">RACE <tspan fill="#60a5fa">
+          COORDINATOR</tspan></text>
       <text x="30" y="110" font-size="22" font-style="italic" fill="#94a3b8">Bright Plume Raceway</text>
 
       <!-- Timer & Info -->
       <text x="800" y="60" font-size="36" font-weight="700" fill="#4ade80" text-anchor="middle">ROUND ROBIN</text>
-      <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle" filter="url(#timerGlow)" font-family="monospace">9:44</text>
-      <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat 1 of 8</text>
+      <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle"
+        filter="url(#timerGlow)" font-family="monospace">9:44</text>
+      <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat {{ heat.heatNumber
+        }} of 8</text>
 
       <!-- Flags -->
       <image x="1370" y="20" width="200" height="180" href="assets/crossed_racing_flags.png" />
@@ -46,64 +49,35 @@
     </g>
 
     <!-- Rows -->
-    <!-- Row 1: Angel -->
-    <g transform="translate(0, 310)">
-      <rect x="20" y="0" width="1560" height="135" fill="#ef4444" rx="4" />
-      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Angel</text>
-      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
+    <g *ngFor="let lane of track.lanes; let i = index"
+      [attr.transform]="'translate(0, ' + (310 + i * (590 / track.lanes.length)) + ')'">
+      <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length" [attr.fill]="lane.background_color"
+        rx="4" />
+      <text x="50" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="85" font-weight="800"
+        [attr.fill]="lane.foreground_color">{{ heat.heatDrivers[i].driver.name }}</text>
+      <text x="637.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
+        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">--</text>
+      <text x="912.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
+        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
+        heat.heatDrivers[i].lastLapTime > 0 ? heat.heatDrivers[i].lastLapTime.toFixed(3) : '--' }}</text>
+      <text x="1187.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
+        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
+        heat.heatDrivers[i].medianLapTime > 0 ? heat.heatDrivers[i].medianLapTime.toFixed(3) : '--' }}</text>
+      <text x="1462.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
+        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
+        heat.heatDrivers[i].bestLapTime > 0 ? heat.heatDrivers[i].bestLapTime.toFixed(3) : '--' }}</text>
       <!-- Vertical Lines -->
-      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-    </g>
-
-    <!-- Row 2: The Pants -->
-    <g transform="translate(0, 455)">
-      <rect x="20" y="0" width="1560" height="135" fill="#ffffff" rx="4" />
-      <text x="50" y="90" font-size="85" font-weight="800" fill="black">The Pants</text>
-      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-    </g>
-
-    <!-- Row 3: Fart Goblin -->
-    <g transform="translate(0, 600)">
-      <rect x="20" y="0" width="1560" height="135" fill="#3b82f6" rx="4" />
-      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Fart Goblin</text>
-      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-    </g>
-
-    <!-- Row 4: Peo Fuente -->
-    <g transform="translate(0, 745)">
-      <rect x="20" y="0" width="1560" height="135" fill="#fbbf24" rx="4" />
-      <text x="50" y="90" font-size="85" font-weight="800" fill="black">Peo Fuente</text>
-      <text x="637.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="912.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1187.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <text x="1462.5" y="90" font-size="60" font-weight="700" fill="black" text-anchor="middle" font-family="monospace">--</text>
-      <line x1="500" y1="0" x2="500" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="775" y1="0" x2="775" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1050" y1="0" x2="1050" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
-      <line x1="1325" y1="0" x2="1325" y2="135" stroke="black" stroke-width="2" stroke-opacity="0.15" />
+      <line x1="500" y1="0" x2="500" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
+        stroke-opacity="0.15" />
+      <line x1="775" y1="0" x2="775" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
+        stroke-opacity="0.15" />
+      <line x1="1050" y1="0" x2="1050" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
+        stroke-opacity="0.15" />
+      <line x1="1325" y1="0" x2="1325" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
+        stroke-opacity="0.15" />
     </g>
   </svg>
-  
+
   <div class="controls">
     <button routerLink="/" class="back-button">Back to Home</button>
   </div>
