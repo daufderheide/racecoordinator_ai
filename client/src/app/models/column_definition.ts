@@ -1,10 +1,10 @@
 export class ColumnDefinition {
-    readonly label: string;
+    readonly labelKey: string;
     readonly propertyName: string;
     readonly width: number;
 
-    constructor(label: string, propertyName: string, width: number) {
-        this.label = label;
+    constructor(labelKey: string, propertyName: string, width: number) {
+        this.labelKey = labelKey;
         this.propertyName = propertyName;
         this.width = width;
     }

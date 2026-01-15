@@ -5,6 +5,7 @@ import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
 import { Lane } from 'src/app/models/lane';
 import { ColumnDefinition } from 'src/app/models/column_definition';
+import { TranslationService } from 'src/app/services/translation.service';
 
 @Component({
     selector: 'app-raceday',
@@ -17,7 +18,7 @@ export class RacedayComponent {
     track: Track;
     columns: ColumnDefinition[];
 
-    constructor() {
+    constructor(private translationService: TranslationService) {
         this.track = new Track('Bright Plume Raceway', [
             new Lane('black', '#ef4444', 100),
             new Lane('black', '#ffffff', 100),
@@ -25,13 +26,13 @@ export class RacedayComponent {
             new Lane('black', '#fbbf24', 100),
         ]);
 
-        // Define columns to display
+        // Define columns to display with translation keys
         this.columns = [
             new ColumnDefinition('NAME', 'driver.name', 480),
             new ColumnDefinition('LAP', 'lapCount', 275),
-            new ColumnDefinition('LAP TIME', 'lastLapTime', 275),
-            new ColumnDefinition('MEDIAN LAP', 'medianLapTime', 275),
-            new ColumnDefinition('BEST LAP', 'bestLapTime', 275),
+            new ColumnDefinition('LAP_TIME', 'lastLapTime', 275),
+            new ColumnDefinition('MEDIAN_LAP', 'medianLapTime', 275),
+            new ColumnDefinition('BEST_LAP', 'bestLapTime', 275),
         ];
 
         const drivers = [
@@ -46,6 +47,11 @@ export class RacedayComponent {
         drivers[3].addLapTime(3.333);
 
         this.heat = new Heat(1, drivers);
+    }
+
+    // Get translated column label
+    getColumnLabel(column: ColumnDefinition): string {
+        return this.translationService.translate(column.labelKey);
     }
 
     // Helper method to get column X position

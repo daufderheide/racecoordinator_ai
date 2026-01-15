@@ -43,7 +43,7 @@
     <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8">
       <text *ngFor="let column of columns; let colIndex = index"
         [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)" y="280"
-        [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'">{{ column.label }}</text>
+        [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'">{{ getColumnLabel(column) }}</text>
     </g>
 
     <!-- Rows -->
