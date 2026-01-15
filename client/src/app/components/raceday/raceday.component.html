@@ -41,11 +41,9 @@
 
     <!-- Table Headers -->
     <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8">
-      <text x="50" y="280">NAME</text>
-      <text x="637.5" y="280" text-anchor="middle">LAP</text>
-      <text x="912.5" y="280" text-anchor="middle">LAP TIME</text>
-      <text x="1187.5" y="280" text-anchor="middle">MEDIAN LAP</text>
-      <text x="1462.5" y="280" text-anchor="middle">BEST LAP</text>
+      <text *ngFor="let column of columns; let colIndex = index"
+        [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)" y="280"
+        [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'">{{ column.label }}</text>
     </g>
 
     <!-- Rows -->
@@ -53,28 +51,18 @@
       [attr.transform]="'translate(0, ' + (310 + i * (590 / track.lanes.length)) + ')'">
       <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length" [attr.fill]="lane.background_color"
         rx="4" />
-      <text x="50" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="85" font-weight="800"
-        [attr.fill]="lane.foreground_color">{{ heat.heatDrivers[i].driver.name }}</text>
-      <text x="637.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
-        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">--</text>
-      <text x="912.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
-        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
-        heat.heatDrivers[i].lastLapTime > 0 ? heat.heatDrivers[i].lastLapTime.toFixed(3) : '--' }}</text>
-      <text x="1187.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
-        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
-        heat.heatDrivers[i].medianLapTime > 0 ? heat.heatDrivers[i].medianLapTime.toFixed(3) : '--' }}</text>
-      <text x="1462.5" [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="700"
-        [attr.fill]="lane.foreground_color" text-anchor="middle" font-family="monospace">{{
-        heat.heatDrivers[i].bestLapTime > 0 ? heat.heatDrivers[i].bestLapTime.toFixed(3) : '--' }}</text>
-      <!-- Vertical Lines -->
-      <line x1="500" y1="0" x2="500" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
-        stroke-opacity="0.15" />
-      <line x1="775" y1="0" x2="775" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
-        stroke-opacity="0.15" />
-      <line x1="1050" y1="0" x2="1050" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
-        stroke-opacity="0.15" />
-      <line x1="1325" y1="0" x2="1325" [attr.y2]="590 / track.lanes.length" stroke="black" stroke-width="2"
-        stroke-opacity="0.15" />
+
+      <!-- Dynamic columns -->
+      <text *ngFor="let column of columns; let colIndex = index"
+        [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)"
+        [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
+        [attr.fill]="lane.foreground_color" [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'"
+        font-family="monospace">{{ formatColumnValue(heat.heatDrivers[i], column) }}</text>
+
+      <!-- Vertical Lines between columns -->
+      <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width" y1="0"
+        [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="590 / track.lanes.length" stroke="black"
+        stroke-width="2" stroke-opacity="0.15" />
     </g>
   </svg>
 

@@ -4,6 +4,7 @@ import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
 import { Lane } from 'src/app/models/lane';
+import { ColumnDefinition } from 'src/app/models/column_definition';
 
 @Component({
     selector: 'app-raceday',
@@ -14,6 +15,7 @@ import { Lane } from 'src/app/models/lane';
 export class RacedayComponent {
     heat: Heat;
     track: Track;
+    columns: ColumnDefinition[];
 
     constructor() {
         this.track = new Track('Bright Plume Raceway', [
@@ -22,6 +24,16 @@ export class RacedayComponent {
             new Lane('black', '#3b82f6', 100),
             new Lane('black', '#fbbf24', 100),
         ]);
+
+        // Define columns to display
+        this.columns = [
+            new ColumnDefinition('NAME', 'driver.name', 480),
+            new ColumnDefinition('LAP', 'lapCount', 275),
+            new ColumnDefinition('LAP TIME', 'lastLapTime', 275),
+            new ColumnDefinition('MEDIAN LAP', 'medianLapTime', 275),
+            new ColumnDefinition('BEST LAP', 'bestLapTime', 275),
+        ];
+
         const drivers = [
             new HeatDriver(new Driver('Driver 1')),
             new HeatDriver(new Driver('Driver 2')),
@@ -34,5 +46,42 @@ export class RacedayComponent {
         drivers[3].addLapTime(3.333);
 
         this.heat = new Heat(1, drivers);
+    }
+
+    // Helper method to get column X position
+    getColumnX(columnIndex: number): number {
+        let x = 20 + 30; // Start position + left padding
+        for (let i = 0; i < columnIndex; i++) {
+            x += this.columns[i].width;
+        }
+        return x;
+    }
+
+    // Helper method to get column center X position
+    getColumnCenterX(columnIndex: number): number {
+        return this.getColumnX(columnIndex) + (this.columns[columnIndex].width / 2);
+    }
+
+    // Helper method to get value from HeatDriver using property path
+    getPropertyValue(heatDriver: HeatDriver, propertyPath: string): any {
+        const parts = propertyPath.split('.');
+        let value: any = heatDriver;
+        for (const part of parts) {
+            value = value[part];
+        }
+        return value;
+    }
+
+    // Helper method to format column value for display
+    formatColumnValue(heatDriver: HeatDriver, column: ColumnDefinition): string {
+        const value = this.getPropertyValue(heatDriver, column.propertyName);
+
+        // Format numeric lap times
+        if (column.propertyName.includes('LapTime')) {
+            return value > 0 ? value.toFixed(3) : '--';
+        }
+
+        // Return value as-is for other types
+        return value !== undefined && value !== null ? value.toString() : '--';
     }
 }

@@ -47,4 +47,8 @@ export class HeatDriver {
     get medianLapTime(): number {
         return this._medianLapTime;
     }
+
+    get lapCount(): number {
+        return this.laps.length;
+    }
 }
