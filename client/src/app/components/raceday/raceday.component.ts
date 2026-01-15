@@ -7,6 +7,9 @@ import { Lane } from 'src/app/models/lane';
 import { ColumnDefinition } from 'src/app/models/column_definition';
 import { TranslationService } from 'src/app/services/translation.service';
 
+/**
+ * The raceday component is the main component for the raceday screen.
+ */
 @Component({
     selector: 'app-raceday',
     templateUrl: './raceday.component.html',

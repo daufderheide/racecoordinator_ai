@@ -1,3 +1,7 @@
+/**
+ * A column definition for the heat driver table that can be used to customize
+ * the display of the race day screens.
+ */
 export class ColumnDefinition {
     readonly labelKey: string;
     readonly propertyName: string;

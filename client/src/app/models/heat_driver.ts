@@ -1,17 +1,24 @@
+import { calculateAverage, calculateMedian } from "src/app/utils/math";
+
 import { Driver } from "./driver";
 
 export class HeatDriver {
     readonly driver: Driver;
 
-    private laps: number[];
+    private laps!: number[];
 
-    private _bestLapTime: number;
-    private _lastLapTime: number;
-    private _averageLapTime: number;
-    private _medianLapTime: number;
+    // These are all updated by the addLapTime method.
+    private _bestLapTime!: number;
+    private _lastLapTime!: number;
+    private _averageLapTime!: number;
+    private _medianLapTime!: number;
 
     constructor(driver: Driver) {
         this.driver = driver;
+        this.reset();
+    }
+
+    reset(): void {
         this.laps = [];
 
         this._bestLapTime = 0;
@@ -28,8 +35,8 @@ export class HeatDriver {
         }
 
         this._lastLapTime = lapTime;
-        this._averageLapTime = this.laps.reduce((a, b) => a + b) / this.laps.length;
-        this._medianLapTime = this.laps.sort((a, b) => a - b)[Math.floor(this.laps.length / 2)];
+        this._averageLapTime = calculateAverage(this.laps);
+        this._medianLapTime = calculateMedian(this.laps);
     }
 
     get bestLapTime(): number {
