@@ -6,8 +6,8 @@ import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.
 
 const routes: Routes = [
     { path: '', component: HomeComponent },
-    { path: 'raceday', component: RacedayComponent },
-    { path: 'raceday-setup', component: RacedaySetupComponent },
+    { path: 'raceday', component: RacedayComponent, data: { animation: 'RacedayPage' } },
+    { path: 'raceday-setup', component: RacedaySetupComponent, data: { animation: 'RacedaySetupPage' } },
     { path: '**', redirectTo: '' }
 ];
 

@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { ChildrenOutletContexts } from '@angular/router';
+import { slideInAnimation } from './utils/animations';
 
 @Component({
   selector: 'app-root',
@@ -8,9 +10,18 @@ import { Component } from '@angular/core';
       <a routerLink="/" style="margin: 0 10px; text-decoration: none; color: blue;">Home</a>
       <a routerLink="/raceday-setup" style="margin: 0 10px; text-decoration: none; color: blue;">Raceday Setup</a>
     </nav>
-    <router-outlet></router-outlet>
+    <div [@routeAnimations]="getRouteAnimationData()">
+      <router-outlet></router-outlet>
+    </div>
   `,
+  animations: [slideInAnimation],
   styles: [],
   standalone: false
 })
-export class AppComponent { }
+export class AppComponent {
+  constructor(private contexts: ChildrenOutletContexts) { }
+
+  getRouteAnimationData() {
+    return this.contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
+  }
+}

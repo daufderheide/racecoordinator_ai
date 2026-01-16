@@ -21,6 +21,11 @@
     <!-- Background -->
     <rect width="1600" height="900" fill="url(#bgGradient)" />
 
+    <g *ngIf="!heat && errorMessage" class="error-message">
+      <text x="800" y="450" font-size="40" font-weight="700" fill="#ef4444" text-anchor="middle" filter="url(#glow)">{{
+        errorMessage }}</text>
+    </g>
+
     <ng-container *ngIf="heat">
       <!-- Header Section -->
       <g class="header">

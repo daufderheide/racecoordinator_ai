@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { Heat } from 'src/app/models/heat';
 import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
@@ -7,6 +7,7 @@ import { Lane } from 'src/app/models/lane';
 import { ColumnDefinition } from 'src/app/models/column_definition';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
+import { RaceService } from 'src/app/services/race.service';
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -17,14 +18,16 @@ import { DataService } from 'src/app/data.service';
     styleUrls: ['./raceday.component.css'],
     standalone: false
 })
-export class RacedayComponent {
+export class RacedayComponent implements OnInit {
     heat?: Heat;
     track: Track;
     columns: ColumnDefinition[];
+    errorMessage?: string;
 
     constructor(
         private translationService: TranslationService,
         private dataService: DataService,
+        private raceService: RaceService,
         private cdr: ChangeDetectorRef
     ) {
         this.track = new Track('Bright Plume Raceway', [
@@ -42,30 +45,36 @@ export class RacedayComponent {
             new ColumnDefinition('MEDIAN_LAP', 'medianLapTime', 275),
             new ColumnDefinition('BEST_LAP', 'bestLapTime', 275),
         ];
+    }
 
+    ngOnInit() {
+        console.log('RacedayComponent: Initializing...');
         this.loadDrivers();
     }
 
     private loadDrivers() {
-        this.dataService.getDrivers().subscribe({
-            next: (serverDrivers) => {
-                if (!serverDrivers) {
-                    return;
-                }
+        console.log('RacedayComponent: Loading drivers...');
+        const selectedDrivers = this.raceService.getRacingDrivers();
+        console.log('RacedayComponent: Selected drivers from service:', selectedDrivers);
 
-                const drivers = serverDrivers.map(d => {
-                    const heatDriver = new HeatDriver(new Driver(d.name, d.nickname || ''));
-                    // Add a dummy lap for now to match old behavior if needed
-                    heatDriver.addLapTime(Math.random() * 2 + 1);
-                    return heatDriver;
-                });
-                this.heat = new Heat(1, drivers);
-                this.cdr.detectChanges();
-            },
-            error: (err) => {
-                console.error('RacedayComponent: Error fetching drivers:', err);
+        if (selectedDrivers.length > 0) {
+            // Use drivers from setup
+            const drivers = selectedDrivers.map(d => new HeatDriver(d));
+
+            // Pad with Empty Lane if needed
+            const emptyLaneName = this.translationService.translate('EMPTY_LANE');
+            while (drivers.length < this.track.lanes.length) {
+                drivers.push(new HeatDriver(new Driver(emptyLaneName, '')));
             }
-        });
+
+            this.heat = new Heat(1, drivers);
+            this.cdr.detectChanges();
+        } else {
+            const errorMsg = this.translationService.translate('NO_DRIVERS_ERROR');
+            this.errorMessage = errorMsg;
+            this.cdr.detectChanges();
+            throw new Error(errorMsg);
+        }
     }
 
     // Get translated column label

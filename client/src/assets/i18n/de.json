@@ -3,5 +3,8 @@
     "LAP": "RUNDE",
     "LAP_TIME": "RUNDENZEIT",
     "MEDIAN_LAP": "MEDIAN RUNDE",
-    "BEST_LAP": "BESTE RUNDE"
+    "BEST_LAP": "BESTE RUNDE",
+    "EMPTY_LANE": "Leere Spur",
+    "NO_DRIVERS_ERROR": "Keine Fahrer für das Rennen ausgewählt.",
+    "START_RACE_TOOLTIP": "Füge mindestens einen Fahrer hinzu, bevor du das Rennen startest."
 }

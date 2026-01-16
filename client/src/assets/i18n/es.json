@@ -3,5 +3,8 @@
     "LAP": "VUELTA",
     "LAP_TIME": "TIEMPO DE VUELTA",
     "MEDIAN_LAP": "VUELTA MEDIANA",
-    "BEST_LAP": "MEJOR VUELTA"
+    "BEST_LAP": "MEJOR VUELTA",
+    "EMPTY_LANE": "Carril Vacío",
+    "NO_DRIVERS_ERROR": "No hay conductores seleccionados para la carrera.",
+    "START_RACE_TOOLTIP": "Añade al menos un conductor antes de empezar la carrera."
 }

@@ -3,5 +3,8 @@
     "LAP": "VOLTA",
     "LAP_TIME": "TEMPO DE VOLTA",
     "MEDIAN_LAP": "VOLTA MEDIANA",
-    "BEST_LAP": "MELHOR VOLTA"
+    "BEST_LAP": "MELHOR VOLTA",
+    "EMPTY_LANE": "Raia Vazia",
+    "NO_DRIVERS_ERROR": "Nenhum piloto selecionado para a corrida.",
+    "START_RACE_TOOLTIP": "Adicione pelo menos um piloto antes de começar a corrida."
 }

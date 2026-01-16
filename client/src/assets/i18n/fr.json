@@ -3,5 +3,8 @@
     "LAP": "TOUR",
     "LAP_TIME": "TEMPS DE TOUR",
     "MEDIAN_LAP": "TOUR MÉDIAN",
-    "BEST_LAP": "MEILLEUR TOUR"
+    "BEST_LAP": "MEILLEUR TOUR",
+    "EMPTY_LANE": "Voie Vide",
+    "NO_DRIVERS_ERROR": "Aucun pilote sélectionné pour la course.",
+    "START_RACE_TOOLTIP": "Ajoutez au moins un pilote avant de commencer la course."
 }

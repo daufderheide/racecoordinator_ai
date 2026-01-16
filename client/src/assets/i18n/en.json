@@ -3,5 +3,8 @@
     "LAP": "LAP",
     "LAP_TIME": "LAP TIME",
     "MEDIAN_LAP": "MEDIAN LAP",
-    "BEST_LAP": "BEST LAP"
+    "BEST_LAP": "BEST LAP",
+    "EMPTY_LANE": "Empty Lane",
+    "NO_DRIVERS_ERROR": "No drivers selected for the race.",
+    "START_RACE_TOOLTIP": "Add at least one driver before starting the race."
 }

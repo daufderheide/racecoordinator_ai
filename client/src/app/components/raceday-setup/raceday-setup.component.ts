@@ -2,6 +2,9 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { DataService } from '../../data.service';
 import { Driver } from '../../models/driver';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { RaceService } from '../../services/race.service';
+import { Router } from '@angular/router';
+import { TranslationService } from '../../services/translation.service';
 
 @Component({
   selector: 'app-raceday-setup',
@@ -20,7 +23,10 @@ export class RacedaySetupComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private raceService: RaceService,
+    private router: Router,
+    private translationService: TranslationService
   ) { }
 
   ngOnInit() {
@@ -97,7 +103,26 @@ export class RacedaySetupComponent implements OnInit {
   }
 
   startRace() {
-    console.log('Starting race with:', this.racingDrivers);
-    // Future implementation: navigate to race or trigger backend
+    console.log('RacedaySetupComponent: Starting race with:', this.racingDrivers);
+    this.raceService.setRacingDrivers(this.racingDrivers);
+    this.router.navigateByUrl('/raceday').then(
+      success => {
+        if (success) {
+          console.log('RacedaySetupComponent: Navigation to /raceday successful');
+        } else {
+          console.error('RacedaySetupComponent: Navigation to /raceday failed');
+        }
+      },
+      error => {
+        console.error('RacedaySetupComponent: Navigation error:', error);
+      }
+    );
+  }
+
+  getStartRaceTooltip(): string {
+    if (this.racingDrivers.length > 0) return '';
+    const translated = this.translationService.translate('START_RACE_TOOLTIP');
+    console.log('DEBUG: getStartRaceTooltip returning:', translated);
+    return translated;
   }
 }

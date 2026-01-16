@@ -147,8 +147,18 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.setup-btn:hover {
+.setup-btn:hover:not(:disabled) {
   background: linear-gradient(to bottom, #eee, #ccc);
+}
+
+.setup-btn:disabled {
+  background: #666;
+  color: #999;
+  border-color: #444;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .setup-btn.primary {

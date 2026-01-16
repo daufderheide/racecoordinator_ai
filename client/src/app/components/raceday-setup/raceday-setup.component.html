@@ -74,8 +74,9 @@
                     <span>Demo Mode</span>
                 </div>
 
-                <div style="text-align: center;">
-                    <button class="setup-btn primary" (click)="startRace()">Start Race</button>
+                <div style="text-align: center;" [title]="getStartRaceTooltip()">
+                    <button class="setup-btn primary" (click)="startRace()"
+                        [disabled]="racingDrivers.length === 0">Start Race</button>
                 </div>
             </div>
         </div>

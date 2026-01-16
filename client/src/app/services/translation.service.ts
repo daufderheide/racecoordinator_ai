@@ -34,8 +34,10 @@ export class TranslationService {
      * Load translations for a specific language
      */
     loadTranslations(language: string): void {
-        this.http.get(`assets/i18n/${language}.json`).subscribe({
+        console.log(`TranslationService: Loading translations for ${language}...`);
+        this.http.get(`/assets/i18n/${language}.json?t=${Date.now()}`).subscribe({
             next: (data) => {
+                console.log(`TranslationService: Loaded translations for ${language}:`, data);
                 this.translations = data as { [key: string]: any };
                 this.currentLanguage.next(language);
             },
