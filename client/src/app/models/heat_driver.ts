@@ -2,6 +2,9 @@ import { calculateAverage, calculateMedian } from "src/app/utils/math";
 
 import { Driver } from "./driver";
 
+/**
+ * Data for a driver in a specific heat.
+ */
 export class HeatDriver {
     readonly driver: Driver;
 

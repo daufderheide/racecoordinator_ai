@@ -53,6 +53,10 @@ export class TranslationService {
      * Get translated text by key
      */
     translate(key: string): string {
+        // TODO(aufderheide): Preload the en translation and use it
+        // as a fallback if the selected translation does have
+        // the requested key.  If even that doesn't have the key,
+        // return the key itself.
         return this.translations[key] || key;
     }
 

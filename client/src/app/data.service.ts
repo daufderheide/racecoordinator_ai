@@ -11,8 +11,13 @@ export class DataService {
   // Pointing to the Java server API
   private apiUrl = 'http://localhost:7070/api/hello';
   private protoUrl = 'http://localhost:7070/api/proto-hello';
+  private driversUrl = 'http://localhost:7070/api/drivers';
 
   constructor(private http: HttpClient) { }
+
+  getDrivers(): Observable<any[]> {
+    return this.http.get<any[]>(this.driversUrl);
+  }
 
   getData(): Observable<string> {
     // We expect text response "Hello from Java Server"

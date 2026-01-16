@@ -1,3 +1,8 @@
+/**
+ * A lane is a track position that a driver can occupy.  For digital races,
+ * each lane is effectively the car id the driver should use if asigned to
+ * race in that lane.
+ */
 export class Lane {
     readonly foreground_color: string;
     readonly background_color: string;
