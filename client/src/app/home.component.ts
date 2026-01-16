@@ -7,6 +7,10 @@ import { DataService } from './data.service';
     <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
       <h1>Hello World Home Page</h1>
       
+      <div style="margin: 20px 0;">
+        <button routerLink="/raceday-setup" style="padding: 12px 24px; font-size: 18px; cursor: pointer; background-color: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold;">Go to Raceday Setup</button>
+      </div>
+
       <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; display: inline-block; border-radius: 8px;">
         <h3>Message from Java Server:</h3>
         <p style="font-weight: bold; color: #007acc;">{{ serverData }}</p>
@@ -37,10 +41,6 @@ import { DataService } from './data.service';
           <button (click)="increaseRadius()" style="padding: 10px 20px; font-size: 16px; margin: 0 10px; cursor: pointer;">Grow</button>
           <button (click)="reset()" style="padding: 10px 20px; font-size: 16px; margin: 0 10px; cursor: pointer; background-color: #eee;">Reset</button>
         </div>
-      </div>
-      <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
-        <button routerLink="/raceday" style="padding: 12px 24px; font-size: 18px; cursor: pointer; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold;">Go to Race Dashboard</button>
-        <button routerLink="/raceday-setup" style="padding: 12px 24px; font-size: 18px; cursor: pointer; background-color: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold;">Go to Raceday Setup</button>
       </div>
     </div>
   `,

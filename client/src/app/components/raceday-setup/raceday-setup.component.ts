@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { DataService } from '../../data.service';
 import { Driver } from '../../models/driver';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -21,6 +21,8 @@ export class RacedaySetupComponent implements OnInit {
   seasonSelection: string = 'None';
   demoMode: boolean = false;
 
+  scale: number = 1;
+
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
@@ -30,7 +32,26 @@ export class RacedaySetupComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.updateScale();
     this.loadDrivers();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateScale();
+  }
+
+  private updateScale() {
+    const targetWidth = 1600;
+    const targetHeight = 900;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const scaleX = windowWidth / targetWidth;
+    const scaleY = windowHeight / targetHeight;
+
+    // Use specific logic to match "meet" behavior (contain)
+    this.scale = Math.min(scaleX, scaleY);
   }
 
   loadDrivers() {

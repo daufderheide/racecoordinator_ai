@@ -1,11 +1,25 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #000033;
+  overflow: hidden;
+  position: relative;
+}
+
 .setup-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  width: 1600px;
+  height: 900px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
   background: linear-gradient(135deg, #000033 0%, #000066 100%);
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .setup-header {

@@ -5,17 +5,18 @@ import { slideInAnimation } from './utils/animations';
 @Component({
   selector: 'app-root',
   template: `
-    <h1 style="text-align:center; font-family:sans-serif; color:#444;">Java + Angular App Wrapper</h1>
-    <nav style="text-align:center; margin-bottom: 20px;">
-      <a routerLink="/" style="margin: 0 10px; text-decoration: none; color: blue;">Home</a>
-      <a routerLink="/raceday-setup" style="margin: 0 10px; text-decoration: none; color: blue;">Raceday Setup</a>
-    </nav>
-    <div [@routeAnimations]="getRouteAnimationData()">
+    <div class="app-route-container" [@routeAnimations]="getRouteAnimationData()">
       <router-outlet></router-outlet>
     </div>
   `,
   animations: [slideInAnimation],
-  styles: [],
+  styles: [`
+    .app-route-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  `],
   standalone: false
 })
 export class AppComponent {
