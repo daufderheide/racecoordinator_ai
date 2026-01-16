@@ -38,8 +38,9 @@ import { DataService } from './data.service';
           <button (click)="reset()" style="padding: 10px 20px; font-size: 16px; margin: 0 10px; cursor: pointer; background-color: #eee;">Reset</button>
         </div>
       </div>
-      <div style="margin-top: 30px;">
+      <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
         <button routerLink="/raceday" style="padding: 12px 24px; font-size: 18px; cursor: pointer; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold;">Go to Race Dashboard</button>
+        <button routerLink="/raceday-setup" style="padding: 12px 24px; font-size: 18px; cursor: pointer; background-color: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold;">Go to Raceday Setup</button>
       </div>
     </div>
   `,

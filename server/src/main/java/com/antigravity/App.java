@@ -95,10 +95,14 @@ public class App {
         // Seed data if empty
         if (driverCollection.countDocuments() == 0) {
             List<Driver> initialDrivers = new ArrayList<>();
-            initialDrivers.add(new Driver("Driver 1"));
-            initialDrivers.add(new Driver("Driver 2"));
-            initialDrivers.add(new Driver("Driver 3"));
-            initialDrivers.add(new Driver("Driver 4"));
+            initialDrivers.add(new Driver("Abby", "Angel"));
+            initialDrivers.add(new Driver("Andrea", "The Pants"));
+            initialDrivers.add(new Driver("Austin", "Fart Goblin"));
+            initialDrivers.add(new Driver("Christine", "Peo Fuente"));
+            initialDrivers.add(new Driver("Dave", "Olden McGroin"));
+            initialDrivers.add(new Driver("Gene", "Swamper Gene"));
+            initialDrivers.add(new Driver("Meyer", "Bull Dog"));
+            initialDrivers.add(new Driver("Noah Jack", "Boy Wonder"));
             driverCollection.insertMany(initialDrivers);
         }
         System.out.println("Connected to MongoDB successfully.");

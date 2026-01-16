@@ -54,7 +54,7 @@ export class RacedayComponent {
                 }
 
                 const drivers = serverDrivers.map(d => {
-                    const heatDriver = new HeatDriver(new Driver(d.name));
+                    const heatDriver = new HeatDriver(new Driver(d.name, d.nickname || ''));
                     // Add a dummy lap for now to match old behavior if needed
                     heatDriver.addLapTime(Math.random() * 2 + 1);
                     return heatDriver;

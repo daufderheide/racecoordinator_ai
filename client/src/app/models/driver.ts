@@ -4,8 +4,10 @@
  */
 export class Driver {
     readonly name: string;
+    readonly nickname: string;
 
-    constructor(name: string) {
+    constructor(name: string, nickname: string) {
         this.name = name;
+        this.nickname = nickname;
     }
 }   
