@@ -64,7 +64,8 @@
           [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)"
           [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
           [attr.fill]="lane.foreground_color" [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'"
-          font-family="monospace">{{ formatColumnValue(heat.heatDrivers[i], column) }}</text>
+          font-family="monospace" appSvgTextScaler [maxWidth]="column.width" [scaleToFit]="column.scaleToFit">{{
+          formatColumnValue(heat.heatDrivers[i], column) }}</text>
 
         <!-- Vertical Lines between columns -->
         <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"

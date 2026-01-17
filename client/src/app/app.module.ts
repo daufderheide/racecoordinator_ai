@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { RaceService } from './services/race.service';
 import { TranslatePipe } from './pipes/translate.pipe';
+import { SvgTextScalerDirective } from './directives/svg-text-scaler.directive';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { TranslatePipe } from './pipes/translate.pipe';
     HomeComponent,
     RacedayComponent,
     RacedaySetupComponent,
-    TranslatePipe
+    TranslatePipe,
+    SvgTextScalerDirective
   ],
   imports: [
     BrowserModule,

@@ -32,7 +32,7 @@ export class RacedayComponent implements OnInit {
     ) {
         // Define columns to display with translation keys
         this.columns = [
-            new ColumnDefinition('RD_COL_NAME', 'driver.name', 480),
+            new ColumnDefinition('RD_COL_NAME', 'driver.nickname', 480, true),
             new ColumnDefinition('RD_COL_LAP', 'lapCount', 275),
             new ColumnDefinition('RD_COL_LAP_TIME', 'lastLapTime', 275),
             new ColumnDefinition('RD_COL_MEDIAN_LAP', 'medianLapTime', 275),

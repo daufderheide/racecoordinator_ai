@@ -6,10 +6,12 @@ export class ColumnDefinition {
     readonly labelKey: string;
     readonly propertyName: string;
     readonly width: number;
+    readonly scaleToFit: boolean;
 
-    constructor(labelKey: string, propertyName: string, width: number) {
+    constructor(labelKey: string, propertyName: string, width: number, scaleToFit: boolean = false) {
         this.labelKey = labelKey;
         this.propertyName = propertyName;
         this.width = width;
+        this.scaleToFit = scaleToFit;
     }
 }
