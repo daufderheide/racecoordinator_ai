@@ -120,6 +120,24 @@ public class App {
             ctx.json(tracks);
         });
 
+        app.get("/api/races", ctx -> {
+            List<com.antigravity.models.Race> races = new ArrayList<>();
+            MongoCollection<com.antigravity.models.Race> raceCollection = database.getCollection("races",
+                    com.antigravity.models.Race.class);
+            raceCollection.find().forEach(races::add);
+
+            List<java.util.Map<String, Object>> response = new ArrayList<>();
+            for (com.antigravity.models.Race race : races) {
+                com.antigravity.models.Track track = trackCollection
+                        .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
+                java.util.Map<String, Object> raceMap = new java.util.HashMap<>();
+                raceMap.put("name", race.getName());
+                raceMap.put("track", track);
+                response.add(raceMap);
+            }
+            ctx.json(response);
+        });
+
         app.post("/api/proto-hello", ctx -> {
             try {
                 HelloRequest request = HelloRequest.parseFrom(ctx.bodyAsBytes());

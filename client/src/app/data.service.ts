@@ -13,11 +13,16 @@ export class DataService {
   private protoUrl = 'http://localhost:7070/api/proto-hello';
   private driversUrl = 'http://localhost:7070/api/drivers';
   private tracksUrl = 'http://localhost:7070/api/tracks';
+  private racesUrl = 'http://localhost:7070/api/races';
 
   constructor(private http: HttpClient) { }
 
   getDrivers(): Observable<any[]> {
     return this.http.get<any[]>(this.driversUrl);
+  }
+
+  getRaces(): Observable<any[]> {
+    return this.http.get<any[]>(this.racesUrl);
   }
 
   getTracks(): Observable<any[]> {
