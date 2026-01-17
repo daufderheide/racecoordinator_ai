@@ -1,18 +1,14 @@
 package com.antigravity;
 
+import com.antigravity.handlers.DatabaseTaskHandler;
+import com.antigravity.handlers.ClientCommandTaskHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 
-import com.antigravity.proto.InitializeRaceRequest;
-import com.antigravity.proto.InitializeRaceResponse;
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import com.antigravity.models.Driver;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
@@ -34,8 +30,6 @@ import de.flapdoodle.embed.process.io.Slf4jLevel;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -87,9 +81,6 @@ public class App {
 
         mongoClient = MongoClients.create(settings);
         MongoDatabase database = mongoClient.getDatabase("racecoordinator");
-        MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
-        MongoCollection<com.antigravity.models.Track> trackCollection = database.getCollection("tracks",
-                com.antigravity.models.Track.class);
 
         // Force a connection check - this will throw an exception if MongoDB is not
         // reachable within the timeout
@@ -107,53 +98,8 @@ public class App {
             config.enableCorsForAllOrigins();
         }).start(7070);
 
-        app.get("/api/drivers", ctx -> {
-            List<Driver> drivers = new ArrayList<>();
-            driverCollection.find().forEach(drivers::add);
-            ctx.json(drivers);
-        });
-
-        app.get("/api/tracks", ctx -> {
-            List<com.antigravity.models.Track> tracks = new ArrayList<>();
-            trackCollection.find().forEach(tracks::add);
-            ctx.json(tracks);
-        });
-
-        app.get("/api/races", ctx -> {
-            List<com.antigravity.models.Race> races = new ArrayList<>();
-            MongoCollection<com.antigravity.models.Race> raceCollection = database.getCollection("races",
-                    com.antigravity.models.Race.class);
-            raceCollection.find().forEach(races::add);
-
-            List<java.util.Map<String, Object>> response = new ArrayList<>();
-            for (com.antigravity.models.Race race : races) {
-                com.antigravity.models.Track track = trackCollection
-                        .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
-                java.util.Map<String, Object> raceMap = new java.util.HashMap<>();
-                raceMap.put("name", race.getName());
-                raceMap.put("entity_id", race.getEntityId());
-                raceMap.put("track", track);
-                response.add(raceMap);
-            }
-            ctx.json(response);
-        });
-
-        app.post("/api/initialize-race", ctx -> {
-            try {
-                InitializeRaceRequest request = InitializeRaceRequest.parseFrom(ctx.bodyAsBytes());
-                System.out.println("InitializeRaceRequest received: race_id=" + request.getRaceId() + ", driver_ids="
-                        + request.getDriverIdsList());
-
-                InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Race initialized successfully")
-                        .build();
-                ctx.contentType("application/octet-stream").result(response.toByteArray());
-            } catch (InvalidProtocolBufferException e) {
-                System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
-                ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
-            }
-        });
+        new DatabaseTaskHandler(database, app);
+        new ClientCommandTaskHandler(app);
     }
 
     private static void startEmbeddedMongo() {

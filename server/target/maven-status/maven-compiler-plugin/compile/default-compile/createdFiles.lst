@@ -4,4 +4,4 @@ com/antigravity/service/DatabaseService.class
 com/antigravity/models/Track.class
 com/antigravity/models/Lane.class
 com/antigravity/models/Driver.class
-com/antigravity/App.class
+com/antigravity/handlers/DatabaseTaskHandler.class

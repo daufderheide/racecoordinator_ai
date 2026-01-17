@@ -1,4 +1,6 @@
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/App.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/handlers/ClientCommandTaskHandler.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/handlers/DatabaseTaskHandler.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Driver.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Lane.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Model.java
