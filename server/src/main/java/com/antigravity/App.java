@@ -4,6 +4,8 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import com.antigravity.proto.HelloRequest;
 import com.antigravity.proto.HelloResponse;
+import com.antigravity.proto.InitializeRaceRequest;
+import com.antigravity.proto.InitializeRaceResponse;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import com.antigravity.models.Driver;
@@ -152,6 +154,23 @@ public class App {
                         .build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (InvalidProtocolBufferException e) {
+                ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
+            }
+        });
+
+        app.post("/api/initialize-race", ctx -> {
+            try {
+                InitializeRaceRequest request = InitializeRaceRequest.parseFrom(ctx.bodyAsBytes());
+                System.out.println("InitializeRaceRequest received: race_id=" + request.getRaceId() + ", driver_ids="
+                        + request.getDriverIdsList());
+
+                InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Race initialized successfully")
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            } catch (InvalidProtocolBufferException e) {
+                System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
                 ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
             }
         });

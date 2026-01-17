@@ -9,4 +9,8 @@
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/HelloRequestOrBuilder.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/HelloResponse.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/HelloResponseOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceRequest.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceRequestOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponse.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponseOrBuilder.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/Message.java

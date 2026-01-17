@@ -195,6 +195,13 @@ export class RacedaySetupComponent implements OnInit {
       const settings = new Settings(this.selectedRace.entity_id, this.racingDrivers.map(d => d.entity_id));
       this.settingsService.saveSettings(settings);
 
+      // Send start race message to server
+      const driverIds = this.racingDrivers.map(d => d.entity_id);
+      this.dataService.initializeRace(this.selectedRace.entity_id, driverIds).subscribe({
+        next: (success) => console.log('RacedaySetupComponent: Race initialized on server:', success),
+        error: (err) => console.error('RacedaySetupComponent: Error initializing race on server:', err)
+      });
+
       this.raceService.setRacingDrivers(this.racingDrivers);
       this.raceService.setTrack(this.selectedTrack);
       this.raceService.setRace(this.selectedRace);

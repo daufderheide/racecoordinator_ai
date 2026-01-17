@@ -25,6 +25,16 @@ public final class Message {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_antigravity_HelloResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_antigravity_InitializeRaceRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_antigravity_InitializeRaceRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_antigravity_InitializeRaceResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_antigravity_InitializeRaceResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -36,8 +46,11 @@ public final class Message {
     java.lang.String[] descriptorData = {
       "\n\rmessage.proto\022\017com.antigravity\"\034\n\014Hell" +
       "oRequest\022\014\n\004name\030\001 \001(\t\"!\n\rHelloResponse\022" +
-      "\020\n\010greeting\030\001 \001(\tB\031\n\025com.antigravity.pro" +
-      "toP\001b\006proto3"
+      "\020\n\010greeting\030\001 \001(\t\"<\n\025InitializeRaceReque" +
+      "st\022\017\n\007race_id\030\001 \001(\t\022\022\n\ndriver_ids\030\002 \003(\t\"" +
+      ":\n\026InitializeRaceResponse\022\017\n\007success\030\001 \001" +
+      "(\010\022\017\n\007message\030\002 \001(\tB\031\n\025com.antigravity.p" +
+      "rotoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -55,6 +68,18 @@ public final class Message {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_antigravity_HelloResponse_descriptor,
         new java.lang.String[] { "Greeting", });
+    internal_static_com_antigravity_InitializeRaceRequest_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_com_antigravity_InitializeRaceRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_antigravity_InitializeRaceRequest_descriptor,
+        new java.lang.String[] { "RaceId", "DriverIds", });
+    internal_static_com_antigravity_InitializeRaceResponse_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_com_antigravity_InitializeRaceResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_antigravity_InitializeRaceResponse_descriptor,
+        new java.lang.String[] { "Success", "Message", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
