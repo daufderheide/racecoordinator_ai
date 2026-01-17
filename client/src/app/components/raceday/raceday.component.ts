@@ -32,11 +32,11 @@ export class RacedayComponent implements OnInit {
     ) {
         // Define columns to display with translation keys
         this.columns = [
-            new ColumnDefinition('NAME', 'driver.name', 480),
-            new ColumnDefinition('LAP', 'lapCount', 275),
-            new ColumnDefinition('LAP_TIME', 'lastLapTime', 275),
-            new ColumnDefinition('MEDIAN_LAP', 'medianLapTime', 275),
-            new ColumnDefinition('BEST_LAP', 'bestLapTime', 275),
+            new ColumnDefinition('RD_COL_NAME', 'driver.name', 480),
+            new ColumnDefinition('RD_COL_LAP', 'lapCount', 275),
+            new ColumnDefinition('RD_COL_LAP_TIME', 'lastLapTime', 275),
+            new ColumnDefinition('RD_COL_MEDIAN_LAP', 'medianLapTime', 275),
+            new ColumnDefinition('RD_COL_BEST_LAP', 'bestLapTime', 275),
         ];
     }
 
@@ -68,7 +68,7 @@ export class RacedayComponent implements OnInit {
             const drivers = selectedDrivers.map(d => new HeatDriver(d));
 
             // Pad with Empty Lane if needed
-            const emptyLaneName = this.translationService.translate('EMPTY_LANE');
+            const emptyLaneName = this.translationService.translate('RD_EMPTY_LANE');
             while (drivers.length < this.track.lanes.length) {
                 drivers.push(new HeatDriver(new Driver(emptyLaneName, '')));
             }
@@ -76,7 +76,7 @@ export class RacedayComponent implements OnInit {
             this.heat = new Heat(1, drivers);
             this.cdr.detectChanges();
         } else {
-            const errorMsg = this.translationService.translate('NO_DRIVERS_ERROR');
+            const errorMsg = this.translationService.translate('RD_ERROR_NO_DRIVERS');
             this.errorMessage = errorMsg;
             this.cdr.detectChanges();
             throw new Error(errorMsg);

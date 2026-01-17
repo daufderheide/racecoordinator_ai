@@ -1,20 +1,20 @@
 <div class="setup-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
     <div class="setup-header">
-        <span>{{ 'SETUP_HEADER_FILE' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_CAR_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_DRIVER_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_TRACK_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_RACE_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_EVENT_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_SEASON_SETUP' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_OPTIONS' | translate }}</span>
-        <span>{{ 'SETUP_HEADER_ABOUT' | translate }}</span>
+        <span>{{ 'RDS_HEADER_FILE' | translate }}</span>
+        <span>{{ 'RDS_HEADER_CAR_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_DRIVER_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_TRACK_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_RACE_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_EVENT_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_SEASON_SETUP' | translate }}</span>
+        <span>{{ 'RDS_HEADER_OPTIONS' | translate }}</span>
+        <span>{{ 'RDS_HEADER_ABOUT' | translate }}</span>
     </div>
 
     <div class="main-content" cdkDropListGroup>
         <!-- Drivers Available Column -->
         <div class="column drivers-available">
-            <div class="column-title">{{ 'DRIVERS_AVAILABLE' | translate }}</div>
+            <div class="column-title">{{ 'RDS_DRIVERS_AVAILABLE' | translate }}</div>
             <div class="scroll-area" id="available-list" cdkDropList [cdkDropListData]="availableDrivers"
                 (cdkDropListDropped)="drop($event)">
                 <div *ngFor="let driver of availableDrivers" class="driver-card" cdkDrag
@@ -37,27 +37,27 @@
 
         <!-- Options Column -->
         <div class="column options-panel">
-            <div class="column-title">{{ 'OPTIONS' | translate }}</div>
+            <div class="column-title">{{ 'RDS_OPTIONS_TITLE' | translate }}</div>
             <div class="options-controls">
                 <div class="btn-group">
-                    <button class="setup-btn" (click)="addAll()">{{ 'ADD_ALL' | translate }}</button>
-                    <button class="setup-btn" (click)="randomize()">{{ 'RANDOMIZE' | translate }}</button>
+                    <button class="setup-btn" (click)="addAll()">{{ 'RDS_BTN_ADD_ALL' | translate }}</button>
+                    <button class="setup-btn" (click)="randomize()">{{ 'RDS_BTN_RANDOMIZE' | translate }}</button>
                     <button class="setup-btn" (click)="removeAll()">
-                        {{ 'REMOVE_ALL' | translate }}</button>
+                        {{ 'RDS_BTN_REMOVE_ALL' | translate }}</button>
                 </div>
 
                 <div class="settings-box">
                     <div
                         style="font-weight: bold; margin-top: -25px; background: #000044; display: inline-block; padding: 0 5px;">
-                        {{ 'RACE_TYPE' | translate }}</div>
+                        {{ 'RDS_RACE_TYPE_LABEL' | translate }}</div>
                     <label><input type="radio" name="raceType" value="single" [(ngModel)]="raceType"> {{
-                        'RACE_TYPE_SINGLE' | translate }}</label>
+                        'RDS_RACE_TYPE_SINGLE' | translate }}</label>
                     <label><input type="radio" name="raceType" value="event" [(ngModel)]="raceType"> {{
-                        'RACE_TYPE_EVENT' | translate }}</label>
+                        'RDS_RACE_TYPE_EVENT' | translate }}</label>
                 </div>
 
                 <div class="selection-group">
-                    <label>{{ 'RACE_EVENT_SELECTION' | translate }}</label>
+                    <label>{{ 'RDS_RACE_EVENT_SELECT' | translate }}</label>
                     <select [(ngModel)]="raceSelection">
                         <option>Round Robin</option>
                         <option>Bracket</option>
@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="selection-group">
-                    <label>{{ 'SEASON_SELECTION' | translate }}</label>
+                    <label>{{ 'RDS_SEASON_SELECT' | translate }}</label>
                     <select [(ngModel)]="seasonSelection">
                         <option>None</option>
                         <option>2026 Winter Cup</option>
@@ -74,19 +74,19 @@
 
                 <div class="demo-checkbox" (click)="demoMode = !demoMode">
                     <div class="demo-box" [style.background-color]="demoMode ? '#3b82f6' : 'white'"></div>
-                    <span>{{ 'DEMO_MODE' | translate }}</span>
+                    <span>{{ 'RDS_DEMO_MODE' | translate }}</span>
                 </div>
 
                 <div style="text-align: center;" [title]="getStartRaceTooltip()">
                     <button class="setup-btn primary" (click)="startRace()" [disabled]="racingDrivers.length === 0">{{
-                        'START_RACE' | translate }}</button>
+                        'RDS_BTN_START_RACE' | translate }}</button>
                 </div>
             </div>
         </div>
 
         <!-- Drivers Racing Column -->
         <div class="column drivers-racing">
-            <div class="column-title">{{ 'DRIVERS_RACING' | translate }}</div>
+            <div class="column-title">{{ 'RDS_DRIVERS_RACING' | translate }}</div>
             <div class="scroll-area" id="racing-list" cdkDropList [cdkDropListData]="racingDrivers"
                 (cdkDropListDropped)="drop($event)">
                 <div *ngFor="let driver of racingDrivers" class="driver-card" cdkDrag
@@ -98,9 +98,9 @@
                         </svg>
                     </div>
                     <div class="driver-info">
-                        <div><span class="label">{{ 'LABEL_NAME' | translate }}</span> <span
+                        <div><span class="label">{{ 'RDS_LABEL_NAME' | translate }}</span> <span
                                 class="value">{{driver.name}}</span></div>
-                        <div><span class="label">{{ 'LABEL_NICKNAME' | translate }}</span> <span
+                        <div><span class="label">{{ 'RDS_LABEL_NICKNAME' | translate }}</span> <span
                                 class="value">{{driver.nickname}}</span></div>
                     </div>
                 </div>
@@ -111,7 +111,8 @@
     <div class="footer-image">
         <svg width="200" height="100" viewBox="0 0 200 100">
             <rect width="200" height="100" fill="rgba(0,0,0,0.5)" />
-            <text x="10" y="50" fill="white" font-size="20" font-style="italic">{{ 'FOOTER_TITLE' | translate }}</text>
+            <text x="10" y="50" fill="white" font-size="20" font-style="italic">{{ 'RDS_FOOTER_TITLE' | translate
+                }}</text>
             <path d="M10,60 L190,60" stroke="white" stroke-width="2" />
         </svg>
     </div>

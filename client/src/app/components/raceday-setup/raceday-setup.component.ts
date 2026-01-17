@@ -165,7 +165,7 @@ export class RacedaySetupComponent implements OnInit {
 
   getStartRaceTooltip(): string {
     if (this.racingDrivers.length > 0) return '';
-    const translated = this.translationService.translate('START_RACE_TOOLTIP');
+    const translated = this.translationService.translate('RDS_START_RACE_TOOLTIP');
     console.log('DEBUG: getStartRaceTooltip returning:', translated);
     return translated;
   }
