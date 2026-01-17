@@ -19,6 +19,9 @@ public class DatabaseService {
         resetDrivers(database);
         Track track = resetTracks(database);
         resetRaces(database, track);
+        // Must be called last to ensure things like races are
+        // properly setup and initialized.
+        resetSettings(database);
 
         System.out.println("Database reset complete.");
     }
@@ -94,6 +97,30 @@ public class DatabaseService {
 
         raceCollection.insertOne(race);
         System.out.println("Races reset.");
+    }
+
+    private void resetSettings(MongoDatabase database) {
+        MongoCollection<com.antigravity.models.Settings> settingsCollection = database.getCollection("settings",
+                com.antigravity.models.Settings.class);
+
+        if (settingsCollection.countDocuments() > 0) {
+            System.out.println("Settings already exist, skipping reset.");
+            return;
+        }
+
+        MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
+        List<Race> races = new ArrayList<>();
+        raceCollection.find().forEach(races::add);
+
+        races.sort((r1, r2) -> r1.getName().compareToIgnoreCase(r2.getName()));
+
+        com.antigravity.models.Settings settings = new com.antigravity.models.Settings();
+        if (!races.isEmpty()) {
+            settings.setSelectedRaceId(races.get(0).getEntityId());
+        }
+
+        settingsCollection.insertOne(settings);
+        System.out.println("Settings initialized with default race.");
     }
 
     private String getNextSequence(MongoDatabase database, String collectionName) {

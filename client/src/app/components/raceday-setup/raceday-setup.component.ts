@@ -5,8 +5,10 @@ import { Track } from '../../models/track';
 import { Race } from '../../models/race';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RaceService } from '../../services/race.service';
+import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
+import { Settings } from '../../models/settings';
 
 @Component({
   selector: 'app-raceday-setup',
@@ -41,9 +43,52 @@ export class RacedaySetupComponent implements OnInit {
 
   ngOnInit() {
     this.updateScale();
-    this.loadDrivers();
     this.loadTracks();
-    this.loadRaces();
+
+    forkJoin({
+      drivers: this.dataService.getDrivers(),
+      races: this.dataService.getRaces(),
+      settings: this.dataService.getSettings()
+    }).subscribe({
+      next: (result) => {
+        const drivers = result.drivers.map(d => new Driver(d.entity_id, d.name, d.nickname || ''));
+        const races = result.races;
+        const settings = result.settings;
+
+        // Races setup
+        this.races = races.sort((a: any, b: any) => a.name.localeCompare(b.name));
+        if (settings && settings.selectedRaceId) {
+          this.selectedRace = this.races.find(r => r.entity_id === settings.selectedRaceId);
+        }
+        if (!this.selectedRace && this.races.length > 0) {
+          this.selectedRace = this.races[0];
+          console.log('RacedaySetupComponent: Selected default race:', this.selectedRace);
+        }
+
+        // Drivers setup
+        if (settings && settings.selectedDriverIds) {
+          this.racingDrivers = [];
+          this.availableDrivers = [];
+          const driverMap = new Map(drivers.map(d => [d.entity_id, d]));
+
+          // Add selected drivers in order
+          for (const id of settings.selectedDriverIds) {
+            const d = driverMap.get(id);
+            if (d) {
+              this.racingDrivers.push(d);
+              driverMap.delete(id);
+            }
+          }
+          // Remaining go to available
+          this.availableDrivers = Array.from(driverMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+          this.availableDrivers = drivers.sort((a, b) => a.name.localeCompare(b.name));
+          this.racingDrivers = [];
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error loading initial data', err)
+    });
 
     this.translationService.getTranslationsLoaded().subscribe(loaded => {
       this.translationsLoaded = loaded;
@@ -69,17 +114,7 @@ export class RacedaySetupComponent implements OnInit {
     this.scale = Math.min(scaleX, scaleY);
   }
 
-  loadDrivers() {
-    this.dataService.getDrivers().subscribe({
-      next: (data) => {
-        this.availableDrivers = data
-          .map(d => new Driver(d.entity_id, d.name, d.nickname || ''))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error loading drivers', err)
-    });
-  }
+
 
   loadTracks() {
     this.dataService.getTracks().subscribe({
@@ -154,6 +189,13 @@ export class RacedaySetupComponent implements OnInit {
   startRace() {
     console.log('RacedaySetupComponent: Starting race with:', this.racingDrivers);
     if (this.selectedRace && this.selectedTrack) {
+      // Save settings
+      const settings = new Settings(this.selectedRace.entity_id, this.racingDrivers.map(d => d.entity_id));
+      this.dataService.saveSettings(settings).subscribe({
+        next: () => console.log('Settings saved'),
+        error: (err) => console.error('Error saving settings', err)
+      });
+
       this.raceService.setRacingDrivers(this.racingDrivers);
       this.raceService.setTrack(this.selectedTrack);
       this.raceService.setRace(this.selectedRace);
@@ -182,17 +224,5 @@ export class RacedaySetupComponent implements OnInit {
     return translated;
   }
 
-  loadRaces() {
-    this.dataService.getRaces().subscribe({
-      next: (data) => {
-        this.races = data.sort((a, b) => a.name.localeCompare(b.name));
-        if (this.races.length > 0) {
-          this.selectedRace = this.races[0];
-          console.log('RacedaySetupComponent: Selected default race:', this.selectedRace);
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error loading races', err)
-    });
-  }
+
 }

@@ -137,10 +137,36 @@ public class App {
                         .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
                 java.util.Map<String, Object> raceMap = new java.util.HashMap<>();
                 raceMap.put("name", race.getName());
+                raceMap.put("entity_id", race.getEntityId());
                 raceMap.put("track", track);
                 response.add(raceMap);
             }
             ctx.json(response);
+        });
+
+        MongoCollection<com.antigravity.models.Settings> settingsCollection = database.getCollection("settings",
+                com.antigravity.models.Settings.class);
+
+        app.get("/api/settings", ctx -> {
+            com.antigravity.models.Settings appSettings = settingsCollection.find().first();
+            if (appSettings == null) {
+                appSettings = new com.antigravity.models.Settings();
+                settingsCollection.insertOne(appSettings);
+            }
+            ctx.json(appSettings);
+        });
+
+        app.post("/api/settings", ctx -> {
+            com.antigravity.models.Settings newSettings = ctx.bodyAsClass(com.antigravity.models.Settings.class);
+            com.antigravity.models.Settings existing = settingsCollection.find().first();
+            if (existing != null) {
+                newSettings.setId(existing.getId());
+                settingsCollection.replaceOne(com.mongodb.client.model.Filters.eq("_id", existing.getId()),
+                        newSettings);
+            } else {
+                settingsCollection.insertOne(newSettings);
+            }
+            ctx.json(newSettings);
         });
 
         app.post("/api/proto-hello", ctx -> {
