@@ -1,6 +1,6 @@
 package com.antigravity.models;
 
-public class Lane {
+public class Lane extends Model {
     private String background_color;
     private String foreground_color;
     private int length;

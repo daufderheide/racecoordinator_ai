@@ -3,7 +3,7 @@ package com.antigravity.models;
 import org.bson.types.ObjectId;
 import java.util.List;
 
-public class Track {
+public class Track extends Model {
     private ObjectId id;
     private String name;
     private List<Lane> lanes;

@@ -70,7 +70,7 @@ export class RacedayComponent implements OnInit {
             // Pad with Empty Lane if needed
             const emptyLaneName = this.translationService.translate('RD_EMPTY_LANE');
             while (drivers.length < this.track.lanes.length) {
-                drivers.push(new HeatDriver(new Driver(emptyLaneName, '')));
+                drivers.push(new HeatDriver(new Driver('', emptyLaneName, '')));
             }
 
             this.heat = new Heat(1, drivers);

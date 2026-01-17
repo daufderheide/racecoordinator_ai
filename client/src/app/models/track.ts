@@ -1,3 +1,4 @@
+import { Model } from "./model";
 import { Lane } from "./lane";
 
 /**
@@ -7,11 +8,13 @@ import { Lane } from "./lane";
  * at the same time and it includes the hardware connected to the track that handles
  * everything from lap counting, to lane power and visual effects like led lights.
  */
-export class Track {
+export class Track implements Model {
+    readonly entity_id: string;
     readonly name: string;
     readonly lanes: Lane[];
 
-    constructor(name: string, lanes: Lane[]) {
+    constructor(entity_id: string, name: string, lanes: Lane[]) {
+        this.entity_id = entity_id;
         this.name = name;
         this.lanes = lanes;
     }

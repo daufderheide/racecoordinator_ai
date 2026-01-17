@@ -62,7 +62,7 @@ export class RacedaySetupComponent implements OnInit {
     this.dataService.getDrivers().subscribe({
       next: (data) => {
         this.availableDrivers = data
-          .map(d => new Driver(d.name, d.nickname || ''))
+          .map(d => new Driver(d.entity_id, d.name, d.nickname || ''))
           .sort((a, b) => a.name.localeCompare(b.name));
         this.cdr.detectChanges();
       },
