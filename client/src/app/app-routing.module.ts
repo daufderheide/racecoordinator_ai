@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './home.component';
+
 import { RacedayComponent } from './components/raceday/raceday.component';
 import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
 
 const routes: Routes = [
-    { path: '', component: HomeComponent },
+    { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
     { path: 'raceday', component: RacedayComponent, data: { animation: 'RacedayPage' } },
     { path: 'raceday-setup', component: RacedaySetupComponent, data: { animation: 'RacedaySetupPage' } },
     { path: '**', redirectTo: '' }

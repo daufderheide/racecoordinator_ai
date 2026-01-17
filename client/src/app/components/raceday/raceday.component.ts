@@ -1,4 +1,5 @@
 import { Component, ChangeDetectorRef, OnInit, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 import { Heat } from 'src/app/models/heat';
 import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
@@ -28,6 +29,7 @@ export class RacedayComponent implements OnInit {
         private translationService: TranslationService,
         private dataService: DataService,
         private raceService: RaceService,
+        private router: Router,
         private cdr: ChangeDetectorRef
     ) {
         // Define columns to display with translation keys
@@ -201,6 +203,9 @@ export class RacedayComponent implements OnInit {
 
     onFileMenuSelect(action: string) {
         console.log('File Menu Action Selected:', action);
+        if (action === 'EXIT') {
+            this.router.navigate(['/raceday-setup']);
+        }
         this.isFileMenuOpen = false;
     }
 

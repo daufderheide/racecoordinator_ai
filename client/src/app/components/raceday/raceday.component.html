@@ -4,7 +4,7 @@
       <div class="menu-wrapper">
         <button class="menu-button-top" (click)="toggleFileMenu()">{{ 'RD_MENU_FILE' | translate }}</button>
         <div *ngIf="isFileMenuOpen" class="menu-dropdown top-dropdown">
-          <div class="menu-item" routerLink="/" (click)="onFileMenuSelect('EXIT')">{{ 'RD_MENU_EXIT' | translate }}
+          <div class="menu-item" (click)="onFileMenuSelect('EXIT')">{{ 'RD_MENU_EXIT' | translate }}
           </div>
         </div>
       </div>
