@@ -4,7 +4,7 @@ import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
 import { Lane } from 'src/app/models/lane';
-import { ColumnDefinition } from 'src/app/models/column_definition';
+import { ColumnDefinition } from './column_definition';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
