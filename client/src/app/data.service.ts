@@ -14,17 +14,10 @@ export class DataService {
   private driversUrl = 'http://localhost:7070/api/drivers';
   private tracksUrl = 'http://localhost:7070/api/tracks';
   private racesUrl = 'http://localhost:7070/api/races';
-  private settingsUrl = 'http://localhost:7070/api/settings';
 
   constructor(private http: HttpClient) { }
 
-  getSettings(): Observable<any> {
-    return this.http.get<any>(this.settingsUrl);
-  }
 
-  saveSettings(settings: any): Observable<any> {
-    return this.http.post<any>(this.settingsUrl, settings);
-  }
 
   getDrivers(): Observable<any[]> {
     return this.http.get<any[]>(this.driversUrl);

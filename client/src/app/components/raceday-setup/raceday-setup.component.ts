@@ -8,6 +8,7 @@ import { RaceService } from '../../services/race.service';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
+import { SettingsService } from '../../services/settings.service';
 import { Settings } from '../../models/settings';
 
 @Component({
@@ -38,7 +39,8 @@ export class RacedaySetupComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private raceService: RaceService,
     private router: Router,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private settingsService: SettingsService
   ) { }
 
   ngOnInit() {
@@ -47,18 +49,18 @@ export class RacedaySetupComponent implements OnInit {
 
     forkJoin({
       drivers: this.dataService.getDrivers(),
-      races: this.dataService.getRaces(),
-      settings: this.dataService.getSettings()
+      races: this.dataService.getRaces()
     }).subscribe({
       next: (result) => {
         const drivers = result.drivers.map(d => new Driver(d.entity_id, d.name, d.nickname || ''));
         const races = result.races;
-        const settings = result.settings;
-
         // Races setup
+        const localSettings = this.settingsService.getSettings();
+
+
         this.races = races.sort((a: any, b: any) => a.name.localeCompare(b.name));
-        if (settings && settings.selectedRaceId) {
-          this.selectedRace = this.races.find(r => r.entity_id === settings.selectedRaceId);
+        if (localSettings && localSettings.selectedRaceId) {
+          this.selectedRace = this.races.find(r => r.entity_id === localSettings.selectedRaceId);
         }
         if (!this.selectedRace && this.races.length > 0) {
           this.selectedRace = this.races[0];
@@ -66,13 +68,13 @@ export class RacedaySetupComponent implements OnInit {
         }
 
         // Drivers setup
-        if (settings && settings.selectedDriverIds) {
+        if (localSettings && localSettings.selectedDriverIds) {
           this.racingDrivers = [];
           this.availableDrivers = [];
           const driverMap = new Map(drivers.map(d => [d.entity_id, d]));
 
           // Add selected drivers in order
-          for (const id of settings.selectedDriverIds) {
+          for (const id of localSettings.selectedDriverIds) {
             const d = driverMap.get(id);
             if (d) {
               this.racingDrivers.push(d);
@@ -191,10 +193,7 @@ export class RacedaySetupComponent implements OnInit {
     if (this.selectedRace && this.selectedTrack) {
       // Save settings
       const settings = new Settings(this.selectedRace.entity_id, this.racingDrivers.map(d => d.entity_id));
-      this.dataService.saveSettings(settings).subscribe({
-        next: () => console.log('Settings saved'),
-        error: (err) => console.error('Error saving settings', err)
-      });
+      this.settingsService.saveSettings(settings);
 
       this.raceService.setRacingDrivers(this.racingDrivers);
       this.raceService.setTrack(this.selectedTrack);

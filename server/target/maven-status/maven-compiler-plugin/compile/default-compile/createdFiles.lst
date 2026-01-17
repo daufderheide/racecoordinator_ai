@@ -2,6 +2,7 @@ com/antigravity/proto/HelloResponse.class
 com/antigravity/models/Race.class
 com/antigravity/models/Model.class
 com/antigravity/service/DatabaseService.class
+com/antigravity/proto/HelloRequest.class
 com/antigravity/proto/HelloResponse$1.class
 com/antigravity/models/Track.class
 com/antigravity/proto/HelloRequest$Builder.class
@@ -10,4 +11,6 @@ com/antigravity/proto/HelloRequest$1.class
 com/antigravity/proto/Message.class
 com/antigravity/models/Driver.class
 com/antigravity/proto/HelloResponseOrBuilder.class
+com/antigravity/proto/HelloRequestOrBuilder.class
+com/antigravity/App.class
 com/antigravity/proto/HelloResponse$Builder.class
