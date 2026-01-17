@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Track } from '../models/track';
 import { Driver } from '../models/driver';
 import { BehaviorSubject } from 'rxjs';
 
@@ -9,11 +10,22 @@ export class RaceService {
     private racingDriversSubject = new BehaviorSubject<Driver[]>([]);
     racingDrivers$ = this.racingDriversSubject.asObservable();
 
+    private trackSubject = new BehaviorSubject<Track | undefined>(undefined);
+    track$ = this.trackSubject.asObservable();
+
     setRacingDrivers(drivers: Driver[]) {
         this.racingDriversSubject.next(drivers);
     }
 
     getRacingDrivers(): Driver[] {
         return this.racingDriversSubject.getValue();
+    }
+
+    setTrack(track: Track) {
+        this.trackSubject.next(track);
+    }
+
+    getTrack(): Track | undefined {
+        return this.trackSubject.getValue();
     }
 }

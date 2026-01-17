@@ -87,6 +87,8 @@ public class App {
         mongoClient = MongoClients.create(settings);
         MongoDatabase database = mongoClient.getDatabase("racecoordinator");
         MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
+        MongoCollection<com.antigravity.models.Track> trackCollection = database.getCollection("tracks",
+                com.antigravity.models.Track.class);
 
         // Force a connection check - this will throw an exception if MongoDB is not
         // reachable within the timeout
@@ -105,6 +107,21 @@ public class App {
             initialDrivers.add(new Driver("Noah Jack", "Boy Wonder"));
             driverCollection.insertMany(initialDrivers);
         }
+
+        // Seed Track data if empty
+        // Ensure default track exists with correct data (delete old if exists to fix
+        // colors)
+        trackCollection.deleteMany(new org.bson.Document("name", "Bright Plume Raceway"));
+
+        List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+        // Client expects: background_color=COLOR, foreground_color=BLACK
+        lanes.add(new com.antigravity.models.Lane("#ef4444", "black", 100)); // Red
+        lanes.add(new com.antigravity.models.Lane("#ffffff", "black", 100)); // White
+        lanes.add(new com.antigravity.models.Lane("#3b82f6", "black", 100)); // Blue
+        lanes.add(new com.antigravity.models.Lane("#fbbf24", "black", 100)); // Yellow
+
+        com.antigravity.models.Track track = new com.antigravity.models.Track("Bright Plume Raceway", lanes);
+        trackCollection.insertOne(track);
         System.out.println("Connected to MongoDB successfully.");
 
         app = Javalin.create(config -> {
@@ -123,6 +140,12 @@ public class App {
             List<Driver> drivers = new ArrayList<>();
             driverCollection.find().forEach(drivers::add);
             ctx.json(drivers);
+        });
+
+        app.get("/api/tracks", ctx -> {
+            List<com.antigravity.models.Track> tracks = new ArrayList<>();
+            trackCollection.find().forEach(tracks::add);
+            ctx.json(tracks);
         });
 
         app.post("/api/proto-hello", ctx -> {

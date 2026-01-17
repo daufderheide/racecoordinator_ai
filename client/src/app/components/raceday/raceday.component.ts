@@ -20,7 +20,7 @@ import { RaceService } from 'src/app/services/race.service';
 })
 export class RacedayComponent implements OnInit {
     heat?: Heat;
-    track: Track;
+    track!: Track;
     columns: ColumnDefinition[];
     errorMessage?: string;
 
@@ -30,13 +30,6 @@ export class RacedayComponent implements OnInit {
         private raceService: RaceService,
         private cdr: ChangeDetectorRef
     ) {
-        this.track = new Track('Bright Plume Raceway', [
-            new Lane('black', '#ef4444', 100),
-            new Lane('black', '#ffffff', 100),
-            new Lane('black', '#3b82f6', 100),
-            new Lane('black', '#fbbf24', 100),
-        ]);
-
         // Define columns to display with translation keys
         this.columns = [
             new ColumnDefinition('NAME', 'driver.name', 480),
@@ -49,11 +42,24 @@ export class RacedayComponent implements OnInit {
 
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
-        this.loadDrivers();
+        this.loadRaceData();
     }
 
-    private loadDrivers() {
-        console.log('RacedayComponent: Loading drivers...');
+    private loadRaceData() {
+        console.log('RacedayComponent: Loading race data...');
+        const selectedTrack = this.raceService.getTrack();
+
+        if (!selectedTrack) {
+            // TODO(aufderheide): throw an exception if there's not track.
+            const errorMsg = 'No Track Selected!'; // Could translate if needed
+            this.errorMessage = errorMsg;
+            console.error(errorMsg);
+            // Optionally redirect back to setup
+            return;
+        }
+
+        this.track = selectedTrack;
+
         const selectedDrivers = this.raceService.getRacingDrivers();
         console.log('RacedayComponent: Selected drivers from service:', selectedDrivers);
 

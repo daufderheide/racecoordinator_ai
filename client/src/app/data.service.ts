@@ -12,11 +12,16 @@ export class DataService {
   private apiUrl = 'http://localhost:7070/api/hello';
   private protoUrl = 'http://localhost:7070/api/proto-hello';
   private driversUrl = 'http://localhost:7070/api/drivers';
+  private tracksUrl = 'http://localhost:7070/api/tracks';
 
   constructor(private http: HttpClient) { }
 
   getDrivers(): Observable<any[]> {
     return this.http.get<any[]>(this.driversUrl);
+  }
+
+  getTracks(): Observable<any[]> {
+    return this.http.get<any[]>(this.tracksUrl);
   }
 
   getData(): Observable<string> {
