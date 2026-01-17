@@ -7,11 +7,22 @@ export class ColumnDefinition {
     readonly propertyName: string;
     readonly width: number;
     readonly scaleToFit: boolean;
+    readonly textAnchor: 'start' | 'middle' | 'end';
+    readonly padding: number;
 
-    constructor(labelKey: string, propertyName: string, width: number, scaleToFit: boolean = false) {
+    constructor(
+        labelKey: string,
+        propertyName: string,
+        width: number,
+        scaleToFit: boolean = false,
+        textAnchor: 'start' | 'middle' | 'end' = 'middle',
+        padding: number = 0
+    ) {
         this.labelKey = labelKey;
         this.propertyName = propertyName;
         this.width = width;
         this.scaleToFit = scaleToFit;
+        this.textAnchor = textAnchor;
+        this.padding = padding;
     }
 }

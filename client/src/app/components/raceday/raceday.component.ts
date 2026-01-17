@@ -32,7 +32,7 @@ export class RacedayComponent implements OnInit {
     ) {
         // Define columns to display with translation keys
         this.columns = [
-            new ColumnDefinition('RD_COL_NAME', 'driver.nickname', 480, true),
+            new ColumnDefinition('RD_COL_NAME', 'driver.nickname', 480, true, 'start', 30),
             new ColumnDefinition('RD_COL_LAP', 'lapCount', 275),
             new ColumnDefinition('RD_COL_LAP_TIME', 'lastLapTime', 275),
             new ColumnDefinition('RD_COL_MEDIAN_LAP', 'medianLapTime', 275),
@@ -70,7 +70,7 @@ export class RacedayComponent implements OnInit {
             // Pad with Empty Lane if needed
             const emptyLaneName = this.translationService.translate('RD_EMPTY_LANE');
             while (drivers.length < this.track.lanes.length) {
-                drivers.push(new HeatDriver(new Driver('', emptyLaneName, '')));
+                drivers.push(new HeatDriver(new Driver('', emptyLaneName, emptyLaneName)));
             }
 
             this.heat = new Heat(1, drivers);
@@ -90,7 +90,7 @@ export class RacedayComponent implements OnInit {
 
     // Helper method to get column X position
     getColumnX(columnIndex: number): number {
-        let x = 20 + 30; // Start position + left padding
+        let x = 20; // Start position
         for (let i = 0; i < columnIndex; i++) {
             x += this.columns[i].width;
         }
@@ -100,6 +100,21 @@ export class RacedayComponent implements OnInit {
     // Helper method to get column center X position
     getColumnCenterX(columnIndex: number): number {
         return this.getColumnX(columnIndex) + (this.columns[columnIndex].width / 2);
+    }
+
+    // Helper method to get column text X position
+    getColumnTextX(columnIndex: number): number {
+        const column = this.columns[columnIndex];
+        if (column.textAnchor === 'start') {
+            return this.getColumnX(columnIndex) + column.padding;
+        }
+        return this.getColumnCenterX(columnIndex);
+    }
+
+    // Helper method to get max width for column text
+    getColumnMaxWidth(columnIndex: number): number {
+        const column = this.columns[columnIndex];
+        return column.width - (column.padding * 2);
     }
 
     // Helper method to get value from HeatDriver using property path

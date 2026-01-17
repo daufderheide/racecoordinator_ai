@@ -48,9 +48,8 @@
 
       <!-- Table Headers -->
       <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8">
-        <text *ngFor="let column of columns; let colIndex = index"
-          [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)" y="280"
-          [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'">{{ getColumnLabel(column) }}</text>
+        <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)" y="280"
+          [attr.text-anchor]="column.textAnchor">{{ getColumnLabel(column) }}</text>
       </g>
 
       <!-- Rows -->
@@ -60,11 +59,10 @@
           rx="4" />
 
         <!-- Dynamic columns -->
-        <text *ngFor="let column of columns; let colIndex = index"
-          [attr.x]="colIndex === 0 ? getColumnX(colIndex) : getColumnCenterX(colIndex)"
+        <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)"
           [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
-          [attr.fill]="lane.foreground_color" [attr.text-anchor]="colIndex === 0 ? 'start' : 'middle'"
-          font-family="monospace" appSvgTextScaler [maxWidth]="column.width" [scaleToFit]="column.scaleToFit">{{
+          [attr.fill]="lane.foreground_color" [attr.text-anchor]="column.textAnchor" font-family="monospace"
+          appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{
           formatColumnValue(heat.heatDrivers[i], column) }}</text>
 
         <!-- Vertical Lines between columns -->
