@@ -4,14 +4,6 @@ package com.antigravity;
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 
-message HelloRequest {
-  string name = 1;
-}
-
-message HelloResponse {
-  string greeting = 1;
-}
-
 message InitializeRaceRequest {
   string race_id = 1;
   repeated string driver_ids = 2;

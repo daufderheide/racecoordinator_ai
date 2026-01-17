@@ -2,8 +2,7 @@ package com.antigravity;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-import com.antigravity.proto.HelloRequest;
-import com.antigravity.proto.HelloResponse;
+
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.proto.InitializeRaceResponse;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -108,13 +107,6 @@ public class App {
             config.enableCorsForAllOrigins();
         }).start(7070);
 
-        app.get("/api/hello", ctx -> {
-            HelloResponse response = HelloResponse.newBuilder()
-                    .setGreeting("Hello from Java Server")
-                    .build();
-            ctx.contentType("application/octet-stream").result(response.toByteArray());
-        });
-
         app.get("/api/drivers", ctx -> {
             List<Driver> drivers = new ArrayList<>();
             driverCollection.find().forEach(drivers::add);
@@ -144,18 +136,6 @@ public class App {
                 response.add(raceMap);
             }
             ctx.json(response);
-        });
-
-        app.post("/api/proto-hello", ctx -> {
-            try {
-                HelloRequest request = HelloRequest.parseFrom(ctx.bodyAsBytes());
-                HelloResponse response = HelloResponse.newBuilder()
-                        .setGreeting("Hello " + request.getName() + " from Protobuf!")
-                        .build();
-                ctx.contentType("application/octet-stream").result(response.toByteArray());
-            } catch (InvalidProtocolBufferException e) {
-                ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
-            }
         });
 
         app.post("/api/initialize-race", ctx -> {
