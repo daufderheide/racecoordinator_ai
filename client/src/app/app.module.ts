@@ -11,13 +11,15 @@ import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { RaceService } from './services/race.service';
+import { TranslatePipe } from './pipes/translate.pipe';
 
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
     RacedayComponent,
-    RacedaySetupComponent
+    RacedaySetupComponent,
+    TranslatePipe
   ],
   imports: [
     BrowserModule,
