@@ -7,6 +7,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 })
 export class TranslationService {
     private currentLanguage = new BehaviorSubject<string>('en');
+    private translationsLoaded = new BehaviorSubject<boolean>(false);
     private translations: { [key: string]: any } = {};
     private supportedLanguages = ['en', 'es', 'fr', 'de', 'pt'];
 
@@ -35,11 +36,13 @@ export class TranslationService {
      */
     loadTranslations(language: string): void {
         console.log(`TranslationService: Loading translations for ${language}...`);
+        this.translationsLoaded.next(false);
         this.http.get(`/assets/i18n/${language}.json?t=${Date.now()}`).subscribe({
             next: (data) => {
                 console.log(`TranslationService: Loaded translations for ${language}:`, data);
                 this.translations = data as { [key: string]: any };
                 this.currentLanguage.next(language);
+                this.translationsLoaded.next(true);
             },
             error: (error) => {
                 console.error(`Failed to load translations for language: ${language}`, error);
@@ -74,6 +77,13 @@ export class TranslationService {
      */
     getCurrentLanguage(): Observable<string> {
         return this.currentLanguage.asObservable();
+    }
+
+    /**
+     * Get the translations loaded state as an observable
+     */
+    getTranslationsLoaded(): Observable<boolean> {
+        return this.translationsLoaded.asObservable();
     }
 
     /**

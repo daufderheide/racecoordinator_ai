@@ -30,8 +30,18 @@ export class DataService {
   }
 
   getData(): Observable<string> {
-    // We expect text response "Hello from Java Server"
-    return this.http.get(this.apiUrl, { responseType: 'text' });
+    const headers = new HttpHeaders({
+      'Accept': 'application/octet-stream'
+    });
+    return this.http.get(this.apiUrl, {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const helloResponse = com.antigravity.HelloResponse.decode(new Uint8Array(response as any));
+        return helloResponse.greeting;
+      })
+    );
   }
 
   getProtoData(name: string): Observable<string> {

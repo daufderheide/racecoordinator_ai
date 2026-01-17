@@ -1,4 +1,5 @@
 {
+    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
     "RDS_BTN_ADD_ALL": "Tout ajouter >>",
     "RDS_BTN_RANDOMIZE": "Aléatoire >>",
     "RDS_BTN_REMOVE_ALL": "<< Tout retirer",
@@ -31,5 +32,20 @@
     "RD_COL_MEDIAN_LAP": "TOUR MÉDIAN",
     "RD_COL_NAME": "NOM",
     "RD_EMPTY_LANE": "Voie Vide",
-    "RD_ERROR_NO_DRIVERS": "Aucun pilote sélectionné pour la course."
+    "RD_ERROR_NO_DRIVERS": "Aucun pilote sélectionné pour la course.",
+    "RD_MENU_ADD_LAP": "Ajouter Tour/Sections",
+    "RD_MENU_DEFER": "Reporter la Manche",
+    "RD_MENU_EDIT_LAPS": "Éditer les Tours",
+    "RD_MENU_EXIT": "Quitter vers l'Accueil",
+    "RD_MENU_FILE": "Fichier",
+    "RD_MENU_MODIFY": "Modifier les Manches",
+    "RD_MENU_NEXT_HEAT": "Manche Suivante",
+    "RD_MENU_PAUSE": "Mettre en Pause la Manche",
+    "RD_MENU_RACE_DIRECTOR": "Directeur de Course",
+    "RD_MENU_RESTART": "Redémarrer la Manche",
+    "RD_MENU_SKIP_HEAT": "Sauter la Manche",
+    "RD_MENU_SKIP_RACE": "Sauter la Course",
+    "RD_MENU_START_RESUME": "Démarrer/Reprendre la Manche",
+    "RD_MENU_TRACK_POWER": "Puissance de Piste",
+    "RD_MENU_WINDOWS": "Fenêtres"
 }

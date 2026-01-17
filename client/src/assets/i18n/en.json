@@ -1,4 +1,5 @@
 {
+    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
     "RDS_BTN_ADD_ALL": "Add All >>",
     "RDS_BTN_RANDOMIZE": "Randomize >>",
     "RDS_BTN_REMOVE_ALL": "<< Remove All",
@@ -31,5 +32,20 @@
     "RD_COL_MEDIAN_LAP": "MEDIAN LAP",
     "RD_COL_NAME": "NAME",
     "RD_EMPTY_LANE": "Empty Lane",
-    "RD_ERROR_NO_DRIVERS": "No drivers selected for the race."
+    "RD_ERROR_NO_DRIVERS": "No drivers selected for the race.",
+    "RD_MENU_ADD_LAP": "Add Lap/Sections",
+    "RD_MENU_DEFER": "Defer Heat",
+    "RD_MENU_EDIT_LAPS": "Edit Laps",
+    "RD_MENU_EXIT": "Exit to Home",
+    "RD_MENU_FILE": "File",
+    "RD_MENU_MODIFY": "Modify Heats",
+    "RD_MENU_NEXT_HEAT": "Next Heat",
+    "RD_MENU_PAUSE": "Pause Heat",
+    "RD_MENU_RACE_DIRECTOR": "Race Director",
+    "RD_MENU_RESTART": "Restart Heat",
+    "RD_MENU_SKIP_HEAT": "Skip Heat",
+    "RD_MENU_SKIP_RACE": "Skip Race",
+    "RD_MENU_START_RESUME": "Start/Resume Heat",
+    "RD_MENU_TRACK_POWER": "Track Power",
+    "RD_MENU_WINDOWS": "Windows"
 }

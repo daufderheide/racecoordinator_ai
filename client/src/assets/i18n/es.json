@@ -1,4 +1,5 @@
 {
+    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
     "RDS_BTN_ADD_ALL": "Agregar todo >>",
     "RDS_BTN_RANDOMIZE": "Aleatorizar >>",
     "RDS_BTN_REMOVE_ALL": "<< Eliminar todo",
@@ -31,5 +32,20 @@
     "RD_COL_MEDIAN_LAP": "VUELTA MEDIANA",
     "RD_COL_NAME": "NOMBRE",
     "RD_EMPTY_LANE": "Carril Vacío",
-    "RD_ERROR_NO_DRIVERS": "No hay conductores seleccionados para la carrera."
+    "RD_ERROR_NO_DRIVERS": "No hay conductores seleccionados para la carrera.",
+    "RD_MENU_ADD_LAP": "Añadir Vuelta/Secciones",
+    "RD_MENU_DEFER": "Aplazar Manga",
+    "RD_MENU_EDIT_LAPS": "Editar Vueltas",
+    "RD_MENU_EXIT": "Salir al Inicio",
+    "RD_MENU_FILE": "Archivo",
+    "RD_MENU_MODIFY": "Modificar Mangas",
+    "RD_MENU_NEXT_HEAT": "Siguiente Manga",
+    "RD_MENU_PAUSE": "Pausar Manga",
+    "RD_MENU_RACE_DIRECTOR": "Director de Carrera",
+    "RD_MENU_RESTART": "Reiniciar Manga",
+    "RD_MENU_SKIP_HEAT": "Saltar Manga",
+    "RD_MENU_SKIP_RACE": "Saltar Carrera",
+    "RD_MENU_START_RESUME": "Iniciar/Reanudar Manga",
+    "RD_MENU_TRACK_POWER": "Energía de Pista",
+    "RD_MENU_WINDOWS": "Ventanas"
 }

@@ -1,4 +1,5 @@
-<div class="setup-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+<div class="setup-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+    *ngIf="translationsLoaded">
     <div class="setup-header">
         <span>{{ 'RDS_HEADER_FILE' | translate }}</span>
         <span>{{ 'RDS_HEADER_CAR_SETUP' | translate }}</span>

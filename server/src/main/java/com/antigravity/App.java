@@ -106,7 +106,12 @@ public class App {
             config.enableCorsForAllOrigins();
         }).start(7070);
 
-        app.get("/api/hello", ctx -> ctx.result("Hello from Java Server"));
+        app.get("/api/hello", ctx -> {
+            HelloResponse response = HelloResponse.newBuilder()
+                    .setGreeting("Hello from Java Server")
+                    .build();
+            ctx.contentType("application/octet-stream").result(response.toByteArray());
+        });
 
         app.get("/api/drivers", ctx -> {
             List<Driver> drivers = new ArrayList<>();

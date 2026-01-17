@@ -31,7 +31,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.21.12</version>
+      <version>3.25.5</version>
     </dependency>
     <dependency>
       <groupId>org.mongodb</groupId>
@@ -65,7 +65,7 @@
         <artifactId>protobuf-maven-plugin</artifactId>
         <version>0.6.1</version>
         <configuration>
-          <protocArtifact>com.google.protobuf:protoc:3.21.12:exe:${os.detected.classifier}</protocArtifact>
+          <protocArtifact>com.google.protobuf:protoc:3.25.5:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>../proto</protoSourceRoot>
         </configuration>
         <executions>

@@ -1,4 +1,5 @@
 {
+    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
     "RDS_BTN_ADD_ALL": "Adicionar todos >>",
     "RDS_BTN_RANDOMIZE": "Aleatório >>",
     "RDS_BTN_REMOVE_ALL": "<< Remover todos",
@@ -31,5 +32,20 @@
     "RD_COL_MEDIAN_LAP": "VOLTA MEDIANA",
     "RD_COL_NAME": "NOME",
     "RD_EMPTY_LANE": "Raia Vazia",
-    "RD_ERROR_NO_DRIVERS": "Nenhum piloto selecionado para a corrida."
+    "RD_ERROR_NO_DRIVERS": "Nenhum piloto selecionado para a corrida.",
+    "RD_MENU_ADD_LAP": "Adicionar Volta/Seções",
+    "RD_MENU_DEFER": "Adiar Bateria",
+    "RD_MENU_EDIT_LAPS": "Editar Voltas",
+    "RD_MENU_EXIT": "Sair para o Início",
+    "RD_MENU_FILE": "Arquivo",
+    "RD_MENU_MODIFY": "Modificar Baterias",
+    "RD_MENU_NEXT_HEAT": "Próxima Bateria",
+    "RD_MENU_PAUSE": "Pausar Bateria",
+    "RD_MENU_RACE_DIRECTOR": "Diretor de Prova",
+    "RD_MENU_RESTART": "Reiniciar Bateria",
+    "RD_MENU_SKIP_HEAT": "Pular Bateria",
+    "RD_MENU_SKIP_RACE": "Pular Corrida",
+    "RD_MENU_START_RESUME": "Iniciar/Retomar Bateria",
+    "RD_MENU_TRACK_POWER": "Energia da Pista",
+    "RD_MENU_WINDOWS": "Janelas"
 }

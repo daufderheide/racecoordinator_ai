@@ -29,6 +29,7 @@ export class RacedaySetupComponent implements OnInit {
   demoMode: boolean = false;
 
   scale: number = 1;
+  translationsLoaded: boolean = false;
 
   constructor(
     private dataService: DataService,
@@ -43,6 +44,11 @@ export class RacedaySetupComponent implements OnInit {
     this.loadDrivers();
     this.loadTracks();
     this.loadRaces();
+
+    this.translationService.getTranslationsLoaded().subscribe(loaded => {
+      this.translationsLoaded = loaded;
+      this.cdr.detectChanges();
+    });
   }
 
   @HostListener('window:resize')

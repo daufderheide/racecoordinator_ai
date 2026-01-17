@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, HostListener } from '@angular/core';
 import { Heat } from 'src/app/models/heat';
 import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
@@ -40,9 +40,20 @@ export class RacedayComponent implements OnInit {
         ];
     }
 
+    startResumeShortcut: string = 'Ctrl+S';
+
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
+        this.detectShortcutKey();
+        this.updateScale();
         this.loadRaceData();
+    }
+
+    private detectShortcutKey() {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+        if (isMac) {
+            this.startResumeShortcut = 'Cmd+S';
+        }
     }
 
     private loadRaceData() {
@@ -145,5 +156,60 @@ export class RacedayComponent implements OnInit {
 
         // Return value as-is for other types
         return value !== undefined && value !== null ? value.toString() : '--';
+    }
+
+    // Menu logic
+    isMenuOpen = false;
+    isFileMenuOpen = false;
+    scale: number = 1;
+
+
+
+    @HostListener('window:resize')
+    onResize() {
+        this.updateScale();
+    }
+
+    private updateScale() {
+        const targetWidth = 1600;
+        const targetHeight = 930; // 900 (SVG) + 30 (Menu)
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        const scaleX = windowWidth / targetWidth;
+        const scaleY = windowHeight / targetHeight;
+
+        this.scale = Math.min(scaleX, scaleY);
+    }
+
+    toggleMenu() {
+        console.log('Toggling Race Director menu. Current state:', this.isMenuOpen);
+        this.isMenuOpen = !this.isMenuOpen;
+        this.isFileMenuOpen = false; // Close other menus
+    }
+
+    toggleFileMenu() {
+        console.log('Toggling File menu. Current state:', this.isFileMenuOpen);
+        this.isFileMenuOpen = !this.isFileMenuOpen;
+        this.isMenuOpen = false; // Close other menus
+    }
+
+    onMenuSelect(action: string) {
+        console.log('Menu Action Selected:', action);
+        this.isMenuOpen = false;
+    }
+
+    onFileMenuSelect(action: string) {
+        console.log('File Menu Action Selected:', action);
+        this.isFileMenuOpen = false;
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        // Ctrl+S or Cmd+S for Start/Resume
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+            event.preventDefault(); // Prevent browser save dialog
+            this.onMenuSelect('START_RESUME');
+        }
     }
 }

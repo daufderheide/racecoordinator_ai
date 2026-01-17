@@ -18,35 +18,119 @@
   position: relative;
 }
 
-.dashboard-svg {
-  width: 100%;
-  height: 100%;
-  max-width: 100vw;
-  max-height: 100vh;
-}
-
-.controls {
+.scalable-content {
   position: absolute;
-  bottom: 20px;
-  width: 100%;
+  top: 50%;
+  left: 50%;
+  width: 1600px;
+  height: 930px;
+  transform-origin: center center;
   display: flex;
-  justify-content: center;
-  pointer-events: none;
+  flex-direction: column;
 }
 
-.back-button {
+.dashboard-svg {
+  width: 1600px;
+  height: 900px;
+  display: block;
+  flex: none;
+  /* Disable flex scaling */
+}
+
+/* Menu Styles */
+/* Menu Styles */
+.menu-bar {
+  /* Layout: relative in flex container, so no position absolute */
+  position: relative;
+  width: 100%;
+  height: 30px;
+  flex: 0 0 30px;
+  /* Fixed height */
+  background-color: #1a2332;
+  /* Dark theme */
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-family: sans-serif;
+  border-bottom: 1px solid #2d3748;
+  box-sizing: border-box;
+  /* Fix width issue */
+}
+
+.menu-wrapper {
+  position: relative;
   pointer-events: auto;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  backdrop-filter: blur(5px);
-  transition: all 0.2s;
 }
 
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.menu-button-top {
+  background: transparent;
+  color: #e2e8f0;
+  /* Light text */
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.menu-button-top:hover {
+  background-color: #334155;
+  /* Slightly lighter on hover */
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #1e293b;
+  /* Dark dropdown background */
+  color: #f1f5f9;
+  /* Light text */
+  border: 1px solid #475569;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  min-width: 200px;
+  z-index: 1001;
+  padding: 5px 0;
+  text-align: left;
+  border-radius: 0 0 4px 4px;
+}
+
+.menu-item {
+  padding: 8px 20px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #f1f5f9;
+  white-space: nowrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-shortcut {
+  color: #94a3b8;
+  /* Lighter/Muted text */
+  margin-left: 20px;
+  font-size: 11px;
+}
+
+.menu-item:hover:not(.disabled) {
+  background-color: #3b82f6;
+  /* Blue highlight */
+  color: white;
+}
+
+.menu-item.disabled {
+  color: #64748b;
+  /* Muted text for disabled */
+  cursor: default;
+}
+
+.menu-separator {
+  height: 1px;
+  background-color: #475569;
+  /* Darker separator */
+  margin: 4px 0;
 }
