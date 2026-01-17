@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/cor
 import { DataService } from '../../data.service';
 import { Driver } from '../../models/driver';
 import { Track } from '../../models/track';
+import { Race } from '../../models/race';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { RaceService } from '../../services/race.service';
 import { Router } from '@angular/router';
@@ -18,6 +19,9 @@ export class RacedaySetupComponent implements OnInit {
   racingDrivers: Driver[] = [];
   tracks: Track[] = [];
   selectedTrack?: Track;
+
+  races: Race[] = [];
+  selectedRace?: Race;
 
   raceType: string = 'single';
   raceSelection: string = 'Round Robin';
@@ -38,6 +42,7 @@ export class RacedaySetupComponent implements OnInit {
     this.updateScale();
     this.loadDrivers();
     this.loadTracks();
+    this.loadRaces();
   }
 
   @HostListener('window:resize')
@@ -142,9 +147,10 @@ export class RacedaySetupComponent implements OnInit {
 
   startRace() {
     console.log('RacedaySetupComponent: Starting race with:', this.racingDrivers);
-    if (this.selectedTrack) {
+    if (this.selectedRace && this.selectedTrack) {
       this.raceService.setRacingDrivers(this.racingDrivers);
       this.raceService.setTrack(this.selectedTrack);
+      this.raceService.setRace(this.selectedRace);
       this.router.navigateByUrl('/raceday').then(
         success => {
           if (success) {
@@ -158,7 +164,7 @@ export class RacedaySetupComponent implements OnInit {
         }
       );
     } else {
-      console.error('No track selected!');
+      console.error('No race or track selected!');
       // Ideally show a message to the user
     }
   }
@@ -168,5 +174,19 @@ export class RacedaySetupComponent implements OnInit {
     const translated = this.translationService.translate('RDS_START_RACE_TOOLTIP');
     console.log('DEBUG: getStartRaceTooltip returning:', translated);
     return translated;
+  }
+
+  loadRaces() {
+    this.dataService.getRaces().subscribe({
+      next: (data) => {
+        this.races = data.sort((a, b) => a.name.localeCompare(b.name));
+        if (this.races.length > 0) {
+          this.selectedRace = this.races[0];
+          console.log('RacedaySetupComponent: Selected default race:', this.selectedRace);
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error loading races', err)
+    });
   }
 }

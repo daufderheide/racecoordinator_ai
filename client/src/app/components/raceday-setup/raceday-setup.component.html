@@ -58,9 +58,8 @@
 
                 <div class="selection-group">
                     <label>{{ 'RDS_RACE_EVENT_SELECT' | translate }}</label>
-                    <select [(ngModel)]="raceSelection">
-                        <option>Round Robin</option>
-                        <option>Bracket</option>
+                    <select [(ngModel)]="selectedRace">
+                        <option *ngFor="let race of races" [ngValue]="race">{{race.name}}</option>
                     </select>
                 </div>
 

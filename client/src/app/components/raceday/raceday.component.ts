@@ -48,25 +48,17 @@ export class RacedayComponent implements OnInit {
     private loadRaceData() {
         console.log('RacedayComponent: Loading race data...');
 
-        this.dataService.getRaces().subscribe({
-            next: (races) => {
-                if (races && races.length > 0) {
-                    // For now, just use the first race
-                    const race = races[0];
-                    console.log('RacedayComponent: Received race from server:', race);
-                    this.track = race.track;
-                    this.initializeHeat();
-                } else {
-                    const errorMsg = 'No Races Found on Server!';
-                    this.errorMessage = errorMsg;
-                    console.error(errorMsg);
-                }
-            },
-            error: (err) => {
-                console.error('Error fetching races:', err);
-                this.errorMessage = 'Error fetching race data from server.';
-            }
-        });
+        const race = this.raceService.getRace();
+        if (race) {
+            console.log('RacedayComponent: using selected race:', race);
+            this.track = race.track;
+            this.initializeHeat();
+        } else {
+            const errorMsg = 'Error: No race selected. Please start from setup.';
+            this.errorMessage = errorMsg;
+            console.error(errorMsg);
+            throw new Error(errorMsg);
+        }
     }
 
     private initializeHeat() {
