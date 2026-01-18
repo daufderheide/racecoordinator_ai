@@ -27,6 +27,22 @@ public class Race {
         RaceManager.getInstance().broadcast(message);
     }
 
+    public synchronized void changeState(IRaceState newState) {
+        if (state != null) {
+            state.exit(this);
+        }
+        state = newState;
+        state.enter(this);
+    }
+
+    public void startRace() {
+        if (!(state instanceof NotStarted)) {
+            throw new IllegalStateException("Cannot start race: Race is not in NotStarted state.");
+        }
+        System.out.println("Race.startRace() called. Transitioning to Starting state.");
+        changeState(new com.antigravity.race.states.Starting());
+    }
+
     public void stop() {
         if (state != null) {
             state.exit(this);

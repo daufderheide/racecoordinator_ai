@@ -523,6 +523,412 @@ export const com = $root.com = (() => {
             return InitializeRaceResponse;
         })();
 
+        antigravity.StartRaceRequest = (function() {
+
+            /**
+             * Properties of a StartRaceRequest.
+             * @memberof com.antigravity
+             * @interface IStartRaceRequest
+             */
+
+            /**
+             * Constructs a new StartRaceRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a StartRaceRequest.
+             * @implements IStartRaceRequest
+             * @constructor
+             * @param {com.antigravity.IStartRaceRequest=} [properties] Properties to set
+             */
+            function StartRaceRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new StartRaceRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {com.antigravity.IStartRaceRequest=} [properties] Properties to set
+             * @returns {com.antigravity.StartRaceRequest} StartRaceRequest instance
+             */
+            StartRaceRequest.create = function create(properties) {
+                return new StartRaceRequest(properties);
+            };
+
+            /**
+             * Encodes the specified StartRaceRequest message. Does not implicitly {@link com.antigravity.StartRaceRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {com.antigravity.IStartRaceRequest} message StartRaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StartRaceRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified StartRaceRequest message, length delimited. Does not implicitly {@link com.antigravity.StartRaceRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {com.antigravity.IStartRaceRequest} message StartRaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StartRaceRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a StartRaceRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.StartRaceRequest} StartRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StartRaceRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.StartRaceRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a StartRaceRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.StartRaceRequest} StartRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StartRaceRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a StartRaceRequest message.
+             * @function verify
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            StartRaceRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a StartRaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.StartRaceRequest} StartRaceRequest
+             */
+            StartRaceRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.StartRaceRequest)
+                    return object;
+                return new $root.com.antigravity.StartRaceRequest();
+            };
+
+            /**
+             * Creates a plain object from a StartRaceRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {com.antigravity.StartRaceRequest} message StartRaceRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            StartRaceRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this StartRaceRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.StartRaceRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            StartRaceRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for StartRaceRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.StartRaceRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            StartRaceRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.StartRaceRequest";
+            };
+
+            return StartRaceRequest;
+        })();
+
+        antigravity.StartRaceResponse = (function() {
+
+            /**
+             * Properties of a StartRaceResponse.
+             * @memberof com.antigravity
+             * @interface IStartRaceResponse
+             * @property {boolean|null} [success] StartRaceResponse success
+             * @property {string|null} [message] StartRaceResponse message
+             */
+
+            /**
+             * Constructs a new StartRaceResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a StartRaceResponse.
+             * @implements IStartRaceResponse
+             * @constructor
+             * @param {com.antigravity.IStartRaceResponse=} [properties] Properties to set
+             */
+            function StartRaceResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * StartRaceResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.StartRaceResponse
+             * @instance
+             */
+            StartRaceResponse.prototype.success = false;
+
+            /**
+             * StartRaceResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.StartRaceResponse
+             * @instance
+             */
+            StartRaceResponse.prototype.message = "";
+
+            /**
+             * Creates a new StartRaceResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {com.antigravity.IStartRaceResponse=} [properties] Properties to set
+             * @returns {com.antigravity.StartRaceResponse} StartRaceResponse instance
+             */
+            StartRaceResponse.create = function create(properties) {
+                return new StartRaceResponse(properties);
+            };
+
+            /**
+             * Encodes the specified StartRaceResponse message. Does not implicitly {@link com.antigravity.StartRaceResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {com.antigravity.IStartRaceResponse} message StartRaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StartRaceResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified StartRaceResponse message, length delimited. Does not implicitly {@link com.antigravity.StartRaceResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {com.antigravity.IStartRaceResponse} message StartRaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StartRaceResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a StartRaceResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.StartRaceResponse} StartRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StartRaceResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.StartRaceResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a StartRaceResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.StartRaceResponse} StartRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StartRaceResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a StartRaceResponse message.
+             * @function verify
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            StartRaceResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a StartRaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.StartRaceResponse} StartRaceResponse
+             */
+            StartRaceResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.StartRaceResponse)
+                    return object;
+                let message = new $root.com.antigravity.StartRaceResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a StartRaceResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {com.antigravity.StartRaceResponse} message StartRaceResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            StartRaceResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this StartRaceResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.StartRaceResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            StartRaceResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for StartRaceResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.StartRaceResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            StartRaceResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.StartRaceResponse";
+            };
+
+            return StartRaceResponse;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**

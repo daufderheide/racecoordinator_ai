@@ -243,6 +243,17 @@ export class RacedayComponent implements OnInit {
 
     onMenuSelect(action: string) {
         console.log('Menu Action Selected:', action);
+        if (action === 'START_RESUME') {
+            this.dataService.startRace().subscribe(success => {
+                if (success) {
+                    console.log('Race start command sent successfully');
+                } else {
+                    console.error('Failed to send race start command');
+                }
+            }, error => {
+                console.error('Error starting race:', error);
+            });
+        }
         this.isMenuOpen = false;
     }
 

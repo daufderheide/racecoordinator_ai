@@ -218,6 +218,200 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a StartRaceRequest. */
+        interface IStartRaceRequest {
+        }
+
+        /** Represents a StartRaceRequest. */
+        class StartRaceRequest implements IStartRaceRequest {
+
+            /**
+             * Constructs a new StartRaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IStartRaceRequest);
+
+            /**
+             * Creates a new StartRaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StartRaceRequest instance
+             */
+            public static create(properties?: com.antigravity.IStartRaceRequest): com.antigravity.StartRaceRequest;
+
+            /**
+             * Encodes the specified StartRaceRequest message. Does not implicitly {@link com.antigravity.StartRaceRequest.verify|verify} messages.
+             * @param message StartRaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IStartRaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StartRaceRequest message, length delimited. Does not implicitly {@link com.antigravity.StartRaceRequest.verify|verify} messages.
+             * @param message StartRaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IStartRaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StartRaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StartRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.StartRaceRequest;
+
+            /**
+             * Decodes a StartRaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StartRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.StartRaceRequest;
+
+            /**
+             * Verifies a StartRaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StartRaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StartRaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.StartRaceRequest;
+
+            /**
+             * Creates a plain object from a StartRaceRequest message. Also converts values to other types if specified.
+             * @param message StartRaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.StartRaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StartRaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StartRaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StartRaceResponse. */
+        interface IStartRaceResponse {
+
+            /** StartRaceResponse success */
+            success?: (boolean|null);
+
+            /** StartRaceResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a StartRaceResponse. */
+        class StartRaceResponse implements IStartRaceResponse {
+
+            /**
+             * Constructs a new StartRaceResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IStartRaceResponse);
+
+            /** StartRaceResponse success. */
+            public success: boolean;
+
+            /** StartRaceResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new StartRaceResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StartRaceResponse instance
+             */
+            public static create(properties?: com.antigravity.IStartRaceResponse): com.antigravity.StartRaceResponse;
+
+            /**
+             * Encodes the specified StartRaceResponse message. Does not implicitly {@link com.antigravity.StartRaceResponse.verify|verify} messages.
+             * @param message StartRaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IStartRaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StartRaceResponse message, length delimited. Does not implicitly {@link com.antigravity.StartRaceResponse.verify|verify} messages.
+             * @param message StartRaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IStartRaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StartRaceResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StartRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.StartRaceResponse;
+
+            /**
+             * Decodes a StartRaceResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StartRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.StartRaceResponse;
+
+            /**
+             * Verifies a StartRaceResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StartRaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StartRaceResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.StartRaceResponse;
+
+            /**
+             * Creates a plain object from a StartRaceResponse message. Also converts values to other types if specified.
+             * @param message StartRaceResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.StartRaceResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StartRaceResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StartRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 

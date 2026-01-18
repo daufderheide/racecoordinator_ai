@@ -14,6 +14,7 @@ public class ClientCommandTaskHandler {
     public ClientCommandTaskHandler(MongoDatabase database, io.javalin.Javalin app) {
         this.database = database;
         app.post("/api/initialize-race", this::initializeRace);
+        app.post("/api/start-race", this::startRace);
     }
 
     public void initializeRace(Context ctx) {
@@ -42,6 +43,37 @@ public class ClientCommandTaskHandler {
         } catch (InvalidProtocolBufferException e) {
             System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
             ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
+        }
+    }
+
+    public void startRace(Context ctx) {
+        try {
+            com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
+            if (race == null) {
+                ctx.status(404).result("No active race found");
+                return;
+            }
+
+            try {
+                race.startRace();
+
+                com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Race started successfully")
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            } catch (IllegalStateException e) {
+                com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
+                        .setSuccess(false)
+                        .setMessage(e.getMessage())
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error processing startRace: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
         }
     }
 }
