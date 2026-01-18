@@ -728,6 +728,499 @@ export const com = $root.com = (() => {
             return RaceTime;
         })();
 
+        antigravity.Lap = (function() {
+
+            /**
+             * Properties of a Lap.
+             * @memberof com.antigravity
+             * @interface ILap
+             * @property {number|null} [lane] Lap lane
+             * @property {number|null} [lapTime] Lap lapTime
+             */
+
+            /**
+             * Constructs a new Lap.
+             * @memberof com.antigravity
+             * @classdesc Represents a Lap.
+             * @implements ILap
+             * @constructor
+             * @param {com.antigravity.ILap=} [properties] Properties to set
+             */
+            function Lap(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Lap lane.
+             * @member {number} lane
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.lane = 0;
+
+            /**
+             * Lap lapTime.
+             * @member {number} lapTime
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.lapTime = 0;
+
+            /**
+             * Creates a new Lap instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {com.antigravity.ILap=} [properties] Properties to set
+             * @returns {com.antigravity.Lap} Lap instance
+             */
+            Lap.create = function create(properties) {
+                return new Lap(properties);
+            };
+
+            /**
+             * Encodes the specified Lap message. Does not implicitly {@link com.antigravity.Lap.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {com.antigravity.ILap} message Lap message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Lap.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
+                    writer.uint32(/* id 2, wireType 5 =*/21).float(message.lapTime);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Lap message, length delimited. Does not implicitly {@link com.antigravity.Lap.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {com.antigravity.ILap} message Lap message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Lap.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a Lap message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Lap} Lap
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Lap.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Lap();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lane = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.lapTime = reader.float();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a Lap message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Lap} Lap
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Lap.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a Lap message.
+             * @function verify
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Lap.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    if (!$util.isInteger(message.lane))
+                        return "lane: integer expected";
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    if (typeof message.lapTime !== "number")
+                        return "lapTime: number expected";
+                return null;
+            };
+
+            /**
+             * Creates a Lap message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Lap} Lap
+             */
+            Lap.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Lap)
+                    return object;
+                let message = new $root.com.antigravity.Lap();
+                if (object.lane != null)
+                    message.lane = object.lane | 0;
+                if (object.lapTime != null)
+                    message.lapTime = Number(object.lapTime);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a Lap message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {com.antigravity.Lap} message Lap
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Lap.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.lane = 0;
+                    object.lapTime = 0;
+                }
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    object.lane = message.lane;
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    object.lapTime = options.json && !isFinite(message.lapTime) ? String(message.lapTime) : message.lapTime;
+                return object;
+            };
+
+            /**
+             * Converts this Lap to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Lap
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Lap.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Lap
+             * @function getTypeUrl
+             * @memberof com.antigravity.Lap
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Lap.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Lap";
+            };
+
+            return Lap;
+        })();
+
+        antigravity.RaceData = (function() {
+
+            /**
+             * Properties of a RaceData.
+             * @memberof com.antigravity
+             * @interface IRaceData
+             * @property {com.antigravity.IRaceTime|null} [raceTime] RaceData raceTime
+             * @property {com.antigravity.ILap|null} [lap] RaceData lap
+             */
+
+            /**
+             * Constructs a new RaceData.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceData.
+             * @implements IRaceData
+             * @constructor
+             * @param {com.antigravity.IRaceData=} [properties] Properties to set
+             */
+            function RaceData(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceData raceTime.
+             * @member {com.antigravity.IRaceTime|null|undefined} raceTime
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.raceTime = null;
+
+            /**
+             * RaceData lap.
+             * @member {com.antigravity.ILap|null|undefined} lap
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.lap = null;
+
+            // OneOf field names bound to virtual getters and setters
+            let $oneOfFields;
+
+            /**
+             * RaceData data.
+             * @member {"raceTime"|"lap"|undefined} data
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            Object.defineProperty(RaceData.prototype, "data", {
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap"]),
+                set: $util.oneOfSetter($oneOfFields)
+            });
+
+            /**
+             * Creates a new RaceData instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {com.antigravity.IRaceData=} [properties] Properties to set
+             * @returns {com.antigravity.RaceData} RaceData instance
+             */
+            RaceData.create = function create(properties) {
+                return new RaceData(properties);
+            };
+
+            /**
+             * Encodes the specified RaceData message. Does not implicitly {@link com.antigravity.RaceData.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {com.antigravity.IRaceData} message RaceData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceData.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.raceTime != null && Object.hasOwnProperty.call(message, "raceTime"))
+                    $root.com.antigravity.RaceTime.encode(message.raceTime, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.lap != null && Object.hasOwnProperty.call(message, "lap"))
+                    $root.com.antigravity.Lap.encode(message.lap, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceData message, length delimited. Does not implicitly {@link com.antigravity.RaceData.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {com.antigravity.IRaceData} message RaceData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceData.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceData message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceData} RaceData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceData.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceData();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.raceTime = $root.com.antigravity.RaceTime.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.lap = $root.com.antigravity.Lap.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceData message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceData} RaceData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceData.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceData message.
+             * @function verify
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceData.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                let properties = {};
+                if (message.raceTime != null && message.hasOwnProperty("raceTime")) {
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.RaceTime.verify(message.raceTime);
+                        if (error)
+                            return "raceTime." + error;
+                    }
+                }
+                if (message.lap != null && message.hasOwnProperty("lap")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.Lap.verify(message.lap);
+                        if (error)
+                            return "lap." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a RaceData message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceData} RaceData
+             */
+            RaceData.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceData)
+                    return object;
+                let message = new $root.com.antigravity.RaceData();
+                if (object.raceTime != null) {
+                    if (typeof object.raceTime !== "object")
+                        throw TypeError(".com.antigravity.RaceData.raceTime: object expected");
+                    message.raceTime = $root.com.antigravity.RaceTime.fromObject(object.raceTime);
+                }
+                if (object.lap != null) {
+                    if (typeof object.lap !== "object")
+                        throw TypeError(".com.antigravity.RaceData.lap: object expected");
+                    message.lap = $root.com.antigravity.Lap.fromObject(object.lap);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceData message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {com.antigravity.RaceData} message RaceData
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceData.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (message.raceTime != null && message.hasOwnProperty("raceTime")) {
+                    object.raceTime = $root.com.antigravity.RaceTime.toObject(message.raceTime, options);
+                    if (options.oneofs)
+                        object.data = "raceTime";
+                }
+                if (message.lap != null && message.hasOwnProperty("lap")) {
+                    object.lap = $root.com.antigravity.Lap.toObject(message.lap, options);
+                    if (options.oneofs)
+                        object.data = "lap";
+                }
+                return object;
+            };
+
+            /**
+             * Converts this RaceData to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceData
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceData.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceData
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceData
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceData.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceData";
+            };
+
+            return RaceData;
+        })();
+
         return antigravity;
     })();
 

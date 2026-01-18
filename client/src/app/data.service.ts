@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { com } from './proto/message';
 import { map } from 'rxjs/operators';
 
@@ -54,6 +54,7 @@ export class DataService {
 
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
+  private lapSubject = new Subject<com.antigravity.ILap>();
 
   public connectToRaceDataSocket() {
     if (this.raceDataSocket) {
@@ -65,15 +66,19 @@ export class DataService {
       console.log('Connected to Race Data WebSocket');
     };
     this.raceDataSocket.onmessage = (event) => {
-      console.log('WS: Message received', event.data);
+      // console.log('WS: Message received', event.data);
       try {
         const arrayBuffer = event.data as ArrayBuffer;
-        console.log('WS: ArrayBuffer byteLength', arrayBuffer.byteLength);
-        const raceTime = com.antigravity.RaceTime.decode(new Uint8Array(arrayBuffer));
-        console.log('WS: Decoded RaceTime', raceTime);
-        this.raceTimeSubject.next(raceTime.time);
+        // console.log('WS: ArrayBuffer byteLength', arrayBuffer.byteLength);
+        const raceData = com.antigravity.RaceData.decode(new Uint8Array(arrayBuffer));
+
+        if (raceData.raceTime) {
+          this.raceTimeSubject.next(raceData.raceTime.time!);
+        } else if (raceData.lap) {
+          this.lapSubject.next(raceData.lap);
+        }
       } catch (e) {
-        console.error('Error parsing race time message', e);
+        console.error('Error parsing race data message', e);
       }
     };
     this.raceDataSocket.onclose = () => {
@@ -84,6 +89,8 @@ export class DataService {
   public getRaceTime(): Observable<number> {
     return this.raceTimeSubject.asObservable();
   }
-}
 
-import { BehaviorSubject } from 'rxjs';
+  public getLaps(): Observable<com.antigravity.ILap> {
+    return this.lapSubject.asObservable();
+  }
+}

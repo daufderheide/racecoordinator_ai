@@ -1,7 +1,0 @@
-com/antigravity/models/Model.class
-com/antigravity/models/Track.class
-com/antigravity/models/Lane.class
-com/antigravity/models/Driver.class
-com/antigravity/protocols/IProtocol.class
-com/antigravity/protocols/demo/Demo.class
-com/antigravity/protocols/DefaultProtocol.class

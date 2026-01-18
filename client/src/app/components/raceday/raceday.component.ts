@@ -84,6 +84,16 @@ export class RacedayComponent implements OnInit {
             this.time = time;
             this.cdr.detectChanges();
         });
+
+        this.dataService.getLaps().subscribe(lap => {
+            if (this.heat && this.heat.heatDrivers && lap && lap.lane !== null && lap.lane !== undefined) {
+                const driver = this.heat.heatDrivers[lap.lane];
+                if (driver) {
+                    driver.addLapTime(lap.lapTime!);
+                    this.cdr.detectChanges();
+                }
+            }
+        });
     }
 
     private detectShortcutKey() {

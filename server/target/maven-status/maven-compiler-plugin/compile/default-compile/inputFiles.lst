@@ -19,6 +19,12 @@
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceRequestOrBuilder.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponse.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponseOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/Lap.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/LapOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/LapProto.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceData.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceDataOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceDataProto.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTime.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTimeOrBuilder.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTimeProto.java
