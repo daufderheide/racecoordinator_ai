@@ -3,6 +3,7 @@ package com.antigravity;
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
+option java_outer_classname = "InitializeRaceProto";
 
 message InitializeRaceRequest {
   string race_id = 1;
@@ -13,8 +14,4 @@ message InitializeRaceRequest {
 message InitializeRaceResponse {
   bool success = 1;
   string message = 2;
-}
-
-message RaceTime {
-  float time = 1;
 }

@@ -11,10 +11,11 @@
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/race/states/IRaceState.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/race/states/NotStarted.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/service/DatabaseService.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceProto.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceRequest.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceRequestOrBuilder.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponse.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/InitializeRaceResponseOrBuilder.java
-/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/Message.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTime.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTimeOrBuilder.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/target/generated-sources/protobuf/java/com/antigravity/proto/RaceTimeProto.java
