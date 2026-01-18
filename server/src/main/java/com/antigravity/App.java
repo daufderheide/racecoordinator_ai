@@ -46,27 +46,27 @@ public class App {
 
         // Add a shutdown hook to stop the embedded MongoDB server
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Shutting down server...");
+            logger.info("Shutting down server...");
             if (app != null) {
                 try {
                     app.stop();
                 } catch (Exception e) {
-                    System.err.println("Error stopping Javalin: " + e.getMessage());
+                    logger.error("Error stopping Javalin: " + e.getMessage());
                 }
             }
             if (mongoClient != null) {
                 try {
                     mongoClient.close();
                 } catch (Exception e) {
-                    System.err.println("Error closing MongoClient: " + e.getMessage());
+                    logger.error("Error closing MongoClient: " + e.getMessage());
                 }
             }
             if (mongodProcess != null) {
-                System.out.println("Stopping embedded MongoDB...");
+                logger.info("Stopping embedded MongoDB...");
                 mongodProcess.close();
-                System.out.println("Embedded MongoDB stopped.");
+                logger.info("Embedded MongoDB stopped.");
             }
-            System.out.println("Server stopped.");
+            logger.info("Server stopped.");
         }));
 
         // MongoDB Setup
