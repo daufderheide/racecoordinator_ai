@@ -1,7 +1,7 @@
 package com.antigravity.handlers;
 
 import com.antigravity.proto.InitializeRaceRequest;
-import com.antigravity.proto.InitializeRaceRequest;
+
 import com.antigravity.proto.InitializeRaceResponse;
 import com.antigravity.proto.PauseRaceResponse;
 import com.antigravity.service.DatabaseService;
@@ -20,13 +20,14 @@ public class ClientCommandTaskHandler {
         app.post("/api/pause-race", this::pauseRace);
     }
 
-    public void initializeRace(Context ctx) {
+    private void initializeRace(Context ctx) {
         try {
             InitializeRaceRequest request = InitializeRaceRequest.parseFrom(ctx.bodyAsBytes());
             System.out.println("InitializeRaceRequest received: race_id=" + request.getRaceId() + ", driver_ids="
                     + request.getDriverIdsList());
 
-            com.antigravity.models.Race raceModel = new DatabaseService().getRace(database, request.getRaceId());
+            DatabaseService dbService = new DatabaseService();
+            com.antigravity.models.Race raceModel = dbService.getRace(database, request.getRaceId());
 
             if (raceModel == null) {
                 ctx.status(404).result("Race not found");
@@ -34,7 +35,8 @@ public class ClientCommandTaskHandler {
             }
 
             // Create the runtime race instance
-            com.antigravity.race.Race race = new com.antigravity.race.Race(raceModel, request.getIsDemoMode());
+            com.antigravity.race.Race race = new com.antigravity.race.Race(database, raceModel,
+                    request.getIsDemoMode());
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 
@@ -49,7 +51,7 @@ public class ClientCommandTaskHandler {
         }
     }
 
-    public void startRace(Context ctx) {
+    private void startRace(Context ctx) {
         try {
             com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
             if (race == null) {
@@ -80,7 +82,7 @@ public class ClientCommandTaskHandler {
         }
     }
 
-    public void pauseRace(Context ctx) {
+    private void pauseRace(Context ctx) {
         try {
             com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
             if (race == null) {

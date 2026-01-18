@@ -3,15 +3,97 @@ package com.antigravity.protocols.demo;
 import com.antigravity.protocols.DefaultProtocol;
 
 public class Demo extends DefaultProtocol {
+    private java.util.concurrent.ScheduledExecutorService scheduler;
+    private java.util.concurrent.ScheduledFuture<?> timerHandle;
+    private java.util.Random random = new java.util.Random();
+
+    private class LaneState {
+        long currentLapElapsedTime = 0;
+        long targetLapDuration;
+        long currentLapStartTime = 0;
+
+        LaneState() {
+            setNextTarget();
+        }
+
+        void setNextTarget() {
+            // Random lap time between 3s and 5s
+            targetLapDuration = 3000 + random.nextInt(2001);
+        }
+    }
+
+    private LaneState[] laneStates;
+
     public Demo(int numLanes) {
-        super();
+        super(numLanes);
+        laneStates = new LaneState[numLanes];
+        for (int i = 0; i < numLanes; i++) {
+            laneStates[i] = new LaneState();
+        }
     }
 
+    @Override
     public void startTimer() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            return;
+        }
+        scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
 
+        // Restore start times based on elapsed time
+        long nowMs = System.currentTimeMillis();
+        for (LaneState state : laneStates) {
+            state.currentLapStartTime = nowMs - state.currentLapElapsedTime;
+        }
+
+        Runnable lapGenerator = new Runnable() {
+            public void run() {
+                try {
+                    long nowMs = System.currentTimeMillis();
+                    for (int i = 0; i < laneStates.length; i++) {
+                        LaneState state = laneStates[i];
+                        long totalElapsed = nowMs - state.currentLapStartTime;
+
+                        if (totalElapsed >= state.targetLapDuration) {
+                            float lapTime = totalElapsed / 1000.0f;
+
+                            if (listener != null) {
+                                listener.onLap(i, lapTime);
+                            }
+
+                            // Reset for next lap
+                            state.currentLapElapsedTime = 0;
+                            // The start time for the next lap is effectively "now"
+                            // but closely aligned to when the previous one finished to avoid drift?
+                            // For simplicity in this demo, just resetting to now is fine,
+                            // or we could add the overshoot to the next lap if we wanted perfect precision.
+                            // Let's stick to "now" for simple restart logic.
+                            state.currentLapStartTime = nowMs;
+                            state.setNextTarget();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        timerHandle = scheduler.scheduleAtFixedRate(lapGenerator, 0, 50, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
+    @Override
     public void stopTimer() {
+        if (timerHandle != null) {
+            timerHandle.cancel(true);
+        }
+        if (scheduler != null) {
+            scheduler.shutdown();
+        }
+        scheduler = null; // Ensure we can restart it
 
+        // Save state
+        long nowMs = System.currentTimeMillis();
+        for (LaneState state : laneStates) {
+            state.currentLapElapsedTime = nowMs - state.currentLapStartTime;
+        }
     }
 }

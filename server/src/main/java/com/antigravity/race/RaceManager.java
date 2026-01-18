@@ -1,6 +1,5 @@
 package com.antigravity.race;
 
-import com.antigravity.proto.RaceTime;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.util.Collections;
@@ -51,7 +50,6 @@ public class RaceManager {
         // Javalin websockets support send(Object) or send(ByteBuffer).
         // Since it's protobuf, sending bytes is safest.
         byte[] bytes = message.toByteArray();
-        System.out.println("RaceManager: Broadcasting " + bytes.length + " bytes.");
 
         sessions.stream()
                 .filter(ctx -> ctx.session.isOpen())

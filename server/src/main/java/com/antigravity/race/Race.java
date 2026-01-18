@@ -1,23 +1,51 @@
 package com.antigravity.race;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.antigravity.protocols.DefaultProtocol;
+import com.antigravity.protocols.demo.Demo;
+import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.NotStarted;
 
-public class Race {
+import com.antigravity.models.Track;
+import com.antigravity.service.DatabaseService;
+import com.mongodb.client.MongoDatabase;
+
+public class Race implements ProtocolListener {
     private com.antigravity.models.Race model;
+
+    private Track track;
+    private ProtocolDelegate protocols;
+
     private IRaceState state;
-    private boolean isDemoMode;
     private float accumulatedRaceTime = 0.0f;
 
-    public Race(com.antigravity.models.Race model, boolean isDemoMode) {
+    public Race(MongoDatabase database, com.antigravity.models.Race model, boolean isDemoMode) {
         this.model = model;
-        this.isDemoMode = isDemoMode;
+
+        DatabaseService dbService = new DatabaseService();
+        this.track = dbService.getTrack(database, model.getTrackEntityId());
+
+        this.createProtocols(isDemoMode);
+
         this.state = new NotStarted();
         this.state.enter(this);
     }
 
-    public boolean isDemoMode() {
-        return isDemoMode;
+    private void createProtocols(boolean isDemoMode) {
+        List<IProtocol> protocols = new ArrayList<>();
+        if (isDemoMode) {
+            Demo protocol = new Demo(this.track.getLanes().size());
+            protocols.add(protocol);
+        } else {
+            throw new IllegalArgumentException("isDemoMode must be true");
+        }
+        this.protocols = new ProtocolDelegate(protocols);
+        this.protocols.setListener(this);
     }
 
     public com.antigravity.models.Race getRaceModel() {
@@ -78,5 +106,32 @@ public class Race {
         if (state != null) {
             state.exit(this);
         }
+    }
+
+    public void startProtocols() {
+        if (protocols != null) {
+            protocols.startTimer();
+        }
+    }
+
+    public void stopProtocols() {
+        if (protocols != null) {
+            protocols.stopTimer();
+        }
+    }
+
+    @Override
+    public void onLap(int lane, float lapTime) {
+        System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
+        com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
+                .setLane(lane)
+                .setLapTime(lapTime)
+                .build();
+
+        com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()
+                .setLap(lapMsg)
+                .build();
+
+        broadcast(lapDataMsg);
     }
 }

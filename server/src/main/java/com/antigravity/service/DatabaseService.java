@@ -117,4 +117,9 @@ public class DatabaseService {
         MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
         return raceCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
     }
+
+    public Track getTrack(MongoDatabase database, String entityId) {
+        MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
+        return trackCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    }
 }
