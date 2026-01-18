@@ -29,3 +29,6 @@ yarn-error.log*
 
 # Mongodb
 server/mongodb_data
+
+# Maven
+server/target
