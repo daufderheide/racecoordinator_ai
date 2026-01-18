@@ -122,4 +122,19 @@ public class DatabaseService {
         MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
         return trackCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
     }
+
+    public Driver getDriver(MongoDatabase database, String entityId) {
+        MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
+        return driverCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    }
+
+    public List<Driver> getDrivers(MongoDatabase database, List<String> entityIds) {
+        MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
+        List<Driver> drivers = new ArrayList<>();
+        // Using $in filter would be more efficient, but looping is fine for small
+        // numbers
+        driverCollection.find(com.mongodb.client.model.Filters.in("entity_id", entityIds))
+                .into(drivers);
+        return drivers;
+    }
 }

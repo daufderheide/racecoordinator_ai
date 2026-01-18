@@ -53,6 +53,10 @@ public class Race {
         return model;
     }
 
+    public com.antigravity.models.Track getTrack() {
+        return track;
+    }
+
     public float getSafeRaceTime() {
         return accumulatedRaceTime;
     }

@@ -124,7 +124,6 @@ export class RacedayComponent implements OnInit {
     private initializeHeat() {
         if (!this.track) return;
 
-
         const selectedDrivers = this.raceService.getRacingDrivers();
         console.log('RacedayComponent: Selected drivers from service:', selectedDrivers);
 

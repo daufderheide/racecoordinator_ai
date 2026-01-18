@@ -23,10 +23,6 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.flapdoodle.embed.process.io.ProcessOutput;
-import de.flapdoodle.embed.process.io.Processors;
-import de.flapdoodle.embed.process.io.Slf4jLevel;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -120,11 +116,7 @@ public class App {
             }
 
             mongodProcess = Mongod.instance()
-                    .withProcessOutput(Start.to(ProcessOutput.class).initializedWith(ProcessOutput.builder()
-                            .output(Processors.logTo(logger, Slf4jLevel.INFO))
-                            .error(Processors.logTo(logger, Slf4jLevel.ERROR))
-                            .commands(Processors.logTo(logger, Slf4jLevel.DEBUG))
-                            .build()))
+
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
                             .initializedWith(Net.of("localhost", MONGO_PORT, Network.localhostIsIPv6())))

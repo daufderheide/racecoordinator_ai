@@ -40,9 +40,44 @@ public class ClientCommandTaskHandler {
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 
+            java.util.List<com.antigravity.proto.LaneModel> laneModels = new java.util.ArrayList<>();
+            for (com.antigravity.models.Lane lane : race.getTrack().getLanes()) {
+                laneModels.add(com.antigravity.proto.LaneModel.newBuilder()
+                        .setBackgroundColor(lane.getBackground_color())
+                        .setForegroundColor(lane.getForeground_color())
+                        .setLength(lane.getLength())
+                        .build());
+            }
+
+            com.antigravity.models.Track track = race.getTrack();
+            com.antigravity.proto.TrackModel trackProto = com.antigravity.proto.TrackModel.newBuilder()
+                    .setName(track.getName())
+                    .setEntityId(track.getEntityId() != null ? track.getEntityId() : "")
+                    .addAllLanes(laneModels)
+                    .build();
+
+            com.antigravity.proto.RaceModel raceProto = com.antigravity.proto.RaceModel.newBuilder()
+                    .setName(race.getRaceModel().getName())
+                    .setEntityId(race.getRaceModel().getEntityId() != null ? race.getRaceModel().getEntityId() : "")
+                    .setTrack(trackProto)
+                    .build();
+
+            java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
+                    request.getDriverIdsList());
+            java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
+            for (com.antigravity.models.Driver driver : drivers) {
+                driverModels.add(com.antigravity.proto.DriverModel.newBuilder()
+                        .setName(driver.getName())
+                        .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
+                        .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
+                        .build());
+            }
+
             InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
                     .setSuccess(true)
                     .setMessage("Race initialized successfully")
+                    .setRace(raceProto)
+                    .addAllDrivers(driverModels)
                     .build();
             ctx.contentType("application/octet-stream").result(response.toByteArray());
         } catch (InvalidProtocolBufferException e) {

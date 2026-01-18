@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { DataService } from '../../data.service';
 import { Driver } from '../../models/driver';
+import { Lane } from '../../models/lane';
 import { Track } from '../../models/track';
 import { Race } from '../../models/race';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
@@ -10,6 +11,8 @@ import { Router } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 import { SettingsService } from '../../services/settings.service';
 import { Settings } from '../../models/settings';
+import { RaceConverter } from '../../converters/race.converter';
+import { DriverConverter } from '../../converters/driver.converter';
 
 @Component({
   selector: 'app-raceday-setup',
@@ -20,8 +23,7 @@ import { Settings } from '../../models/settings';
 export class RacedaySetupComponent implements OnInit {
   availableDrivers: Driver[] = [];
   racingDrivers: Driver[] = [];
-  tracks: Track[] = [];
-  selectedTrack?: Track;
+
 
   races: Race[] = [];
   selectedRace?: Race;
@@ -45,7 +47,6 @@ export class RacedaySetupComponent implements OnInit {
 
   ngOnInit() {
     this.updateScale();
-    this.loadTracks();
 
     forkJoin({
       drivers: this.dataService.getDrivers(),
@@ -116,21 +117,6 @@ export class RacedaySetupComponent implements OnInit {
     this.scale = Math.min(scaleX, scaleY);
   }
 
-
-
-  loadTracks() {
-    this.dataService.getTracks().subscribe({
-      next: (data) => {
-        this.tracks = data;
-        if (this.tracks.length > 0) {
-          this.selectedTrack = this.tracks[0];
-          console.log('RacedaySetupComponent: Selected default track:', this.selectedTrack);
-        }
-      },
-      error: (err) => console.error('Error loading tracks', err)
-    });
-  }
-
   addAll() {
     this.racingDrivers = [...this.racingDrivers, ...this.availableDrivers];
     this.availableDrivers = [];
@@ -190,7 +176,7 @@ export class RacedaySetupComponent implements OnInit {
 
   startRace(isDemo: boolean = false) {
     console.log(`RacedaySetupComponent: Starting race (demo=${isDemo}) with:`, this.racingDrivers);
-    if (this.selectedRace && this.selectedTrack) {
+    if (this.selectedRace) {
       // Save settings
       const settings = new Settings(this.selectedRace.entity_id, this.racingDrivers.map(d => d.entity_id));
       this.settingsService.saveSettings(settings);
@@ -198,27 +184,39 @@ export class RacedaySetupComponent implements OnInit {
       // Send start race message to server
       const driverIds = this.racingDrivers.map(d => d.entity_id);
       this.dataService.initializeRace(this.selectedRace.entity_id, driverIds, isDemo).subscribe({
-        next: (success) => console.log('RacedaySetupComponent: Race initialized on server:', success),
-        error: (err) => console.error('RacedaySetupComponent: Error initializing race on server:', err)
-      });
+        next: (response) => {
+          console.log('RacedaySetupComponent: Race initialized on server:', response.success);
+          if (response.race) {
+            console.log('Received Race Model:', response.race);
+            // Convert Proto RaceModel to App Race Model
+            const race = RaceConverter.fromProto(response.race);
 
-      this.raceService.setRacingDrivers(this.racingDrivers);
-      this.raceService.setTrack(this.selectedTrack);
-      this.raceService.setRace(this.selectedRace);
-      this.router.navigateByUrl('/raceday').then(
-        success => {
-          if (success) {
-            console.log('RacedaySetupComponent: Navigation to /raceday successful');
-          } else {
-            console.error('RacedaySetupComponent: Navigation to /raceday failed');
+            let drivers = this.racingDrivers;
+            if (response.drivers && response.drivers.length > 0) {
+              drivers = response.drivers.map(d => DriverConverter.fromProto(d));
+            }
+
+            this.raceService.setRacingDrivers(drivers);
+            this.raceService.setRace(race);
+
+            this.router.navigateByUrl('/raceday').then(
+              success => {
+                if (success) {
+                  console.log('RacedaySetupComponent: Navigation to /raceday successful');
+                } else {
+                  console.error('RacedaySetupComponent: Navigation to /raceday failed');
+                }
+              },
+              error => {
+                console.error('RacedaySetupComponent: Navigation error:', error);
+              }
+            );
           }
         },
-        error => {
-          console.error('RacedaySetupComponent: Navigation error:', error);
-        }
-      );
+        error: (err) => console.error('RacedaySetupComponent: Error initializing race on server:', err)
+      });
     } else {
-      console.error('No race or track selected!');
+      console.error('No race selected!');
       // Ideally show a message to the user
     }
   }
@@ -229,6 +227,4 @@ export class RacedaySetupComponent implements OnInit {
     console.log('DEBUG: getStartRaceTooltip returning:', translated);
     return translated;
   }
-
-
 }

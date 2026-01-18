@@ -32,7 +32,7 @@ export class DataService {
 
 
 
-  initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<boolean> {
+  initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<com.antigravity.InitializeRaceResponse> {
     const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
     const buffer = com.antigravity.InitializeRaceRequest.encode(request).finish();
 
@@ -46,8 +46,7 @@ export class DataService {
       responseType: 'arraybuffer'
     }).pipe(
       map(response => {
-        const initResponse = com.antigravity.InitializeRaceResponse.decode(new Uint8Array(response as any));
-        return initResponse.success;
+        return com.antigravity.InitializeRaceResponse.decode(new Uint8Array(response as any));
       })
     );
   }

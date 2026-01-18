@@ -11,9 +11,6 @@ export class RaceService {
     private racingDriversSubject = new BehaviorSubject<Driver[]>([]);
     racingDrivers$ = this.racingDriversSubject.asObservable();
 
-    private trackSubject = new BehaviorSubject<Track | undefined>(undefined);
-    track$ = this.trackSubject.asObservable();
-
     private selectedRaceSubject = new BehaviorSubject<Race | undefined>(undefined);
     selectedRace$ = this.selectedRaceSubject.asObservable();
 
@@ -23,14 +20,6 @@ export class RaceService {
 
     getRacingDrivers(): Driver[] {
         return this.racingDriversSubject.getValue();
-    }
-
-    setTrack(track: Track) {
-        this.trackSubject.next(track);
-    }
-
-    getTrack(): Track | undefined {
-        return this.trackSubject.getValue();
     }
 
     setRace(race: Race) {
