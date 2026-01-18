@@ -25,6 +25,11 @@ public final class Message {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_antigravity_InitializeRaceResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_antigravity_RaceTime_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_antigravity_RaceTime_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -37,8 +42,9 @@ public final class Message {
       "\n\rmessage.proto\022\017com.antigravity\"<\n\025Init" +
       "ializeRaceRequest\022\017\n\007race_id\030\001 \001(\t\022\022\n\ndr" +
       "iver_ids\030\002 \003(\t\":\n\026InitializeRaceResponse" +
-      "\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\tB\031\n\025co" +
-      "m.antigravity.protoP\001b\006proto3"
+      "\022\017\n\007success\030\001 \001(\010\022\017\n\007message\030\002 \001(\t\"\030\n\010Ra" +
+      "ceTime\022\014\n\004time\030\001 \001(\002B\031\n\025com.antigravity." +
+      "protoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -56,6 +62,12 @@ public final class Message {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_antigravity_InitializeRaceResponse_descriptor,
         new java.lang.String[] { "Success", "Message", });
+    internal_static_com_antigravity_RaceTime_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_com_antigravity_RaceTime_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_antigravity_RaceTime_descriptor,
+        new java.lang.String[] { "Time", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

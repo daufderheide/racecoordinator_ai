@@ -13,3 +13,7 @@ message InitializeRaceResponse {
   bool success = 1;
   string message = 2;
 }
+
+message RaceTime {
+  float time = 1;
+}

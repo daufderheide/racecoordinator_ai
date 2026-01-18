@@ -98,8 +98,17 @@ public class App {
             config.enableCorsForAllOrigins();
         }).start(7070);
 
+        app.ws("/api/race-data", ws -> {
+            ws.onConnect(ctx -> {
+                com.antigravity.race.RaceManager.getInstance().addSession(ctx);
+            });
+            ws.onClose(ctx -> {
+                com.antigravity.race.RaceManager.getInstance().removeSession(ctx);
+            });
+        });
+
         new DatabaseTaskHandler(database, app);
-        new ClientCommandTaskHandler(app);
+        new ClientCommandTaskHandler(database, app);
     }
 
     private static void startEmbeddedMongo() {

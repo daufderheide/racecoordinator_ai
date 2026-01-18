@@ -10,7 +10,7 @@ export namespace com {
         interface IHelloRequest {
 
             /** HelloRequest name */
-            name?: (string|null);
+            name?: (string | null);
         }
 
         /** Represents a HelloRequest. */
@@ -56,7 +56,7 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HelloRequest;
+            public static decode(reader: ($protobuf.Reader | Uint8Array), length?: number): com.antigravity.HelloRequest;
 
             /**
              * Decodes a HelloRequest message from the specified reader or buffer, length delimited.
@@ -65,14 +65,14 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HelloRequest;
+            public static decodeDelimited(reader: ($protobuf.Reader | Uint8Array)): com.antigravity.HelloRequest;
 
             /**
              * Verifies a HelloRequest message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
-            public static verify(message: { [k: string]: any }): (string|null);
+            public static verify(message: { [k: string]: any }): (string | null);
 
             /**
              * Creates a HelloRequest message from a plain object. Also converts values to their respective internal types.
@@ -107,7 +107,7 @@ export namespace com {
         interface IHelloResponse {
 
             /** HelloResponse greeting */
-            greeting?: (string|null);
+            greeting?: (string | null);
         }
 
         /** Represents a HelloResponse. */
@@ -153,7 +153,7 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HelloResponse;
+            public static decode(reader: ($protobuf.Reader | Uint8Array), length?: number): com.antigravity.HelloResponse;
 
             /**
              * Decodes a HelloResponse message from the specified reader or buffer, length delimited.
@@ -162,14 +162,14 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HelloResponse;
+            public static decodeDelimited(reader: ($protobuf.Reader | Uint8Array)): com.antigravity.HelloResponse;
 
             /**
              * Verifies a HelloResponse message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
-            public static verify(message: { [k: string]: any }): (string|null);
+            public static verify(message: { [k: string]: any }): (string | null);
 
             /**
              * Creates a HelloResponse message from a plain object. Also converts values to their respective internal types.
@@ -204,10 +204,10 @@ export namespace com {
         interface IInitializeRaceRequest {
 
             /** InitializeRaceRequest raceId */
-            raceId?: (string|null);
+            raceId?: (string | null);
 
             /** InitializeRaceRequest driverIds */
-            driverIds?: (string[]|null);
+            driverIds?: (string[] | null);
         }
 
         /** Represents an InitializeRaceRequest. */
@@ -256,7 +256,7 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InitializeRaceRequest;
+            public static decode(reader: ($protobuf.Reader | Uint8Array), length?: number): com.antigravity.InitializeRaceRequest;
 
             /**
              * Decodes an InitializeRaceRequest message from the specified reader or buffer, length delimited.
@@ -265,14 +265,14 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InitializeRaceRequest;
+            public static decodeDelimited(reader: ($protobuf.Reader | Uint8Array)): com.antigravity.InitializeRaceRequest;
 
             /**
              * Verifies an InitializeRaceRequest message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
-            public static verify(message: { [k: string]: any }): (string|null);
+            public static verify(message: { [k: string]: any }): (string | null);
 
             /**
              * Creates an InitializeRaceRequest message from a plain object. Also converts values to their respective internal types.
@@ -307,10 +307,10 @@ export namespace com {
         interface IInitializeRaceResponse {
 
             /** InitializeRaceResponse success */
-            success?: (boolean|null);
+            success?: (boolean | null);
 
             /** InitializeRaceResponse message */
-            message?: (string|null);
+            message?: (string | null);
         }
 
         /** Represents an InitializeRaceResponse. */
@@ -359,7 +359,7 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InitializeRaceResponse;
+            public static decode(reader: ($protobuf.Reader | Uint8Array), length?: number): com.antigravity.InitializeRaceResponse;
 
             /**
              * Decodes an InitializeRaceResponse message from the specified reader or buffer, length delimited.
@@ -368,14 +368,14 @@ export namespace com {
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InitializeRaceResponse;
+            public static decodeDelimited(reader: ($protobuf.Reader | Uint8Array)): com.antigravity.InitializeRaceResponse;
 
             /**
              * Verifies an InitializeRaceResponse message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
-            public static verify(message: { [k: string]: any }): (string|null);
+            public static verify(message: { [k: string]: any }): (string | null);
 
             /**
              * Creates an InitializeRaceResponse message from a plain object. Also converts values to their respective internal types.
@@ -400,6 +400,102 @@ export namespace com {
 
             /**
              * Gets the default type url for InitializeRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+        /** Properties of a RaceTime. */
+        interface IRaceTime {
+
+            /** RaceTime time */
+            time?: (number | null);
+        }
+
+        /** Represents a RaceTime. */
+        class RaceTime implements IRaceTime {
+
+            /**
+             * Constructs a new RaceTime.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRaceTime);
+
+            /** RaceTime time. */
+            public time: number;
+
+            /**
+             * Creates a new RaceTime instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RaceTime instance
+             */
+            public static create(properties?: com.antigravity.IRaceTime): com.antigravity.RaceTime;
+
+            /**
+             * Encodes the specified RaceTime message. Does not implicitly {@link com.antigravity.RaceTime.verify|verify} messages.
+             * @param message RaceTime message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRaceTime, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RaceTime message, length delimited. Does not implicitly {@link com.antigravity.RaceTime.verify|verify} messages.
+             * @param message RaceTime message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRaceTime, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RaceTime message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RaceTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader | Uint8Array), length?: number): com.antigravity.RaceTime;
+
+            /**
+             * Decodes a RaceTime message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RaceTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader | Uint8Array)): com.antigravity.RaceTime;
+
+            /**
+             * Verifies a RaceTime message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string | null);
+
+            /**
+             * Creates a RaceTime message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RaceTime
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceTime;
+
+            /**
+             * Creates a plain object from a RaceTime message. Also converts values to other types if specified.
+             * @param message RaceTime
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RaceTime, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RaceTime to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RaceTime
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

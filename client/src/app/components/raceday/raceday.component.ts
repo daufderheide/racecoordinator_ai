@@ -20,10 +20,15 @@ import { RaceService } from 'src/app/services/race.service';
     standalone: false
 })
 export class RacedayComponent implements OnInit {
-    heat?: Heat;
-    track!: Track;
-    columns: ColumnDefinition[];
-    errorMessage?: string;
+    protected heat?: Heat;
+    protected track!: Track;
+    protected columns: ColumnDefinition[];
+    protected errorMessage?: string;
+    protected startResumeShortcut: string = 'Ctrl+S';
+    protected time: number = 0;
+    protected timeFormat: string = '1.0-0';
+
+    private previousTime: number = 0;
 
     constructor(
         private translationService: TranslationService,
@@ -42,13 +47,43 @@ export class RacedayComponent implements OnInit {
         ];
     }
 
-    startResumeShortcut: string = 'Ctrl+S';
-
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
         this.detectShortcutKey();
         this.updateScale();
         this.loadRaceData();
+
+        this.dataService.connectToRaceDataSocket();
+        this.dataService.getRaceTime().subscribe(time => {
+            // Determine timer direction and format
+            // If new time > previous time (and not 0 reset), it's increasing -> Whole Numbers
+            // If new time < previous time, it's decreasing -> Check for < 10s
+
+            if (time > this.previousTime) {
+                // Increasing
+                this.timeFormat = '1.0-0';
+            } else if (time < this.previousTime) {
+                // Decreasing
+                if (time < 10) {
+                    this.timeFormat = '1.2-2';
+                } else {
+                    this.timeFormat = '1.0-0';
+                }
+            } else {
+                // Equal (paused or no change), keep previous format or default? 
+                // If 0, assume default
+                if (time === 0) this.timeFormat = '1.0-0';
+            }
+
+            // Fallback for initial state or reset
+            if (this.previousTime === 0 && time > 0) {
+                this.timeFormat = '1.0-0';
+            }
+
+            this.previousTime = this.time; // Store LAST displayed time, which is now current
+            this.time = time;
+            this.cdr.detectChanges();
+        });
     }
 
     private detectShortcutKey() {

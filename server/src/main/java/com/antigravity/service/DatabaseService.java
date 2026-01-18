@@ -112,4 +112,9 @@ public class DatabaseService {
         MongoCollection<Document> counters = database.getCollection("counters");
         counters.deleteOne(com.mongodb.client.model.Filters.eq("_id", collectionName));
     }
+
+    public Race getRace(MongoDatabase database, String entityId) {
+        MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
+        return raceCollection.find(com.mongodb.client.model.Filters.eq("entity_id", entityId)).first();
+    }
 }

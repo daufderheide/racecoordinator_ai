@@ -51,4 +51,39 @@ export class DataService {
       })
     );
   }
+
+  private raceDataSocket?: WebSocket;
+  private raceTimeSubject = new BehaviorSubject<number>(0);
+
+  public connectToRaceDataSocket() {
+    if (this.raceDataSocket) {
+      this.raceDataSocket.close();
+    }
+    this.raceDataSocket = new WebSocket('ws://localhost:7070/api/race-data');
+    this.raceDataSocket.binaryType = 'arraybuffer';
+    this.raceDataSocket.onopen = () => {
+      console.log('Connected to Race Data WebSocket');
+    };
+    this.raceDataSocket.onmessage = (event) => {
+      console.log('WS: Message received', event.data);
+      try {
+        const arrayBuffer = event.data as ArrayBuffer;
+        console.log('WS: ArrayBuffer byteLength', arrayBuffer.byteLength);
+        const raceTime = com.antigravity.RaceTime.decode(new Uint8Array(arrayBuffer));
+        console.log('WS: Decoded RaceTime', raceTime);
+        this.raceTimeSubject.next(raceTime.time);
+      } catch (e) {
+        console.error('Error parsing race time message', e);
+      }
+    };
+    this.raceDataSocket.onclose = () => {
+      console.log('Race Data WebSocket closed');
+    };
+  }
+
+  public getRaceTime(): Observable<number> {
+    return this.raceTimeSubject.asObservable();
+  }
 }
+
+import { BehaviorSubject } from 'rxjs';

@@ -16,7 +16,7 @@ export const com = $root.com = (() => {
      */
     const com = {};
 
-    com.antigravity = (function() {
+    com.antigravity = (function () {
 
         /**
          * Namespace antigravity.
@@ -25,7 +25,7 @@ export const com = $root.com = (() => {
          */
         const antigravity = {};
 
-        antigravity.HelloRequest = (function() {
+        antigravity.HelloRequest = (function () {
 
             /**
              * Properties of a HelloRequest.
@@ -119,13 +119,13 @@ export const com = $root.com = (() => {
                     if (tag === error)
                         break;
                     switch (tag >>> 3) {
-                    case 1: {
+                        case 1: {
                             message.name = reader.string();
                             break;
                         }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
                     }
                 }
                 return message;
@@ -230,7 +230,7 @@ export const com = $root.com = (() => {
             return HelloRequest;
         })();
 
-        antigravity.HelloResponse = (function() {
+        antigravity.HelloResponse = (function () {
 
             /**
              * Properties of a HelloResponse.
@@ -324,13 +324,13 @@ export const com = $root.com = (() => {
                     if (tag === error)
                         break;
                     switch (tag >>> 3) {
-                    case 1: {
+                        case 1: {
                             message.greeting = reader.string();
                             break;
                         }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
                     }
                 }
                 return message;
@@ -435,7 +435,7 @@ export const com = $root.com = (() => {
             return HelloResponse;
         })();
 
-        antigravity.InitializeRaceRequest = (function() {
+        antigravity.InitializeRaceRequest = (function () {
 
             /**
              * Properties of an InitializeRaceRequest.
@@ -542,19 +542,19 @@ export const com = $root.com = (() => {
                     if (tag === error)
                         break;
                     switch (tag >>> 3) {
-                    case 1: {
+                        case 1: {
                             message.raceId = reader.string();
                             break;
                         }
-                    case 2: {
+                        case 2: {
                             if (!(message.driverIds && message.driverIds.length))
                                 message.driverIds = [];
                             message.driverIds.push(reader.string());
                             break;
                         }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
                     }
                 }
                 return message;
@@ -680,7 +680,7 @@ export const com = $root.com = (() => {
             return InitializeRaceRequest;
         })();
 
-        antigravity.InitializeRaceResponse = (function() {
+        antigravity.InitializeRaceResponse = (function () {
 
             /**
              * Properties of an InitializeRaceResponse.
@@ -785,17 +785,17 @@ export const com = $root.com = (() => {
                     if (tag === error)
                         break;
                     switch (tag >>> 3) {
-                    case 1: {
+                        case 1: {
                             message.success = reader.bool();
                             break;
                         }
-                    case 2: {
+                        case 2: {
                             message.message = reader.string();
                             break;
                         }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
                     }
                 }
                 return message;
@@ -907,6 +907,211 @@ export const com = $root.com = (() => {
             };
 
             return InitializeRaceResponse;
+        })();
+
+        antigravity.RaceTime = (function () {
+
+            /**
+             * Properties of a RaceTime.
+             * @memberof com.antigravity
+             * @interface IRaceTime
+             * @property {number|null} [time] RaceTime time
+             */
+
+            /**
+             * Constructs a new RaceTime.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceTime.
+             * @implements IRaceTime
+             * @constructor
+             * @param {com.antigravity.IRaceTime=} [properties] Properties to set
+             */
+            function RaceTime(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceTime time.
+             * @member {number} time
+             * @memberof com.antigravity.RaceTime
+             * @instance
+             */
+            RaceTime.prototype.time = 0;
+
+            /**
+             * Creates a new RaceTime instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {com.antigravity.IRaceTime=} [properties] Properties to set
+             * @returns {com.antigravity.RaceTime} RaceTime instance
+             */
+            RaceTime.create = function create(properties) {
+                return new RaceTime(properties);
+            };
+
+            /**
+             * Encodes the specified RaceTime message. Does not implicitly {@link com.antigravity.RaceTime.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {com.antigravity.IRaceTime} message RaceTime message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceTime.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.time != null && Object.hasOwnProperty.call(message, "time"))
+                    writer.uint32(/* id 1, wireType 5 =*/13).float(message.time);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceTime message, length delimited. Does not implicitly {@link com.antigravity.RaceTime.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {com.antigravity.IRaceTime} message RaceTime message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceTime.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceTime message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceTime} RaceTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceTime.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceTime();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                        case 1: {
+                            message.time = reader.float();
+                            break;
+                        }
+                        default:
+                            reader.skipType(tag & 7);
+                            break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceTime message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceTime} RaceTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceTime.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceTime message.
+             * @function verify
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceTime.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.time != null && message.hasOwnProperty("time"))
+                    if (typeof message.time !== "number")
+                        return "time: number expected";
+                return null;
+            };
+
+            /**
+             * Creates a RaceTime message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceTime} RaceTime
+             */
+            RaceTime.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceTime)
+                    return object;
+                let message = new $root.com.antigravity.RaceTime();
+                if (object.time != null)
+                    message.time = Number(object.time);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceTime message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {com.antigravity.RaceTime} message RaceTime
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceTime.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.time = 0;
+                if (message.time != null && message.hasOwnProperty("time"))
+                    object.time = options.json && !isFinite(message.time) ? String(message.time) : message.time;
+                return object;
+            };
+
+            /**
+             * Converts this RaceTime to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceTime
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceTime.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceTime
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceTime
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceTime.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceTime";
+            };
+
+            return RaceTime;
         })();
 
         return antigravity;
