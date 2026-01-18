@@ -1,10 +1,7 @@
 com/antigravity/models/Model.class
-com/antigravity/service/DatabaseService.class
 com/antigravity/models/Track.class
 com/antigravity/models/Lane.class
-com/antigravity/race/Race.class
 com/antigravity/models/Driver.class
-com/antigravity/race/states/NotStarted$1.class
-com/antigravity/models/Race.class
-com/antigravity/race/states/IRaceState.class
-com/antigravity/handlers/DatabaseTaskHandler.class
+com/antigravity/protocols/IProtocol.class
+com/antigravity/protocols/demo/Demo.class
+com/antigravity/protocols/DefaultProtocol.class

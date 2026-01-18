@@ -6,6 +6,9 @@
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Model.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Race.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/models/Track.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/protocols/DefaultProtocol.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/protocols/IProtocol.java
+/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/protocols/demo/Demo.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/race/Race.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/race/RaceManager.java
 /Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_antigravity/server/src/main/java/com/antigravity/race/states/IRaceState.java
