@@ -44,4 +44,10 @@ public interface InitializeRaceRequestOrBuilder extends
    */
   com.google.protobuf.ByteString
       getDriverIdsBytes(int index);
+
+  /**
+   * <code>bool is_demo_mode = 3;</code>
+   * @return The isDemoMode.
+   */
+  boolean getIsDemoMode();
 }

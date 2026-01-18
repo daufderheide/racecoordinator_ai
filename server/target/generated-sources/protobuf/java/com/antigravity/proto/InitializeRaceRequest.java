@@ -118,6 +118,17 @@ private static final long serialVersionUID = 0L;
     return driverIds_.getByteString(index);
   }
 
+  public static final int IS_DEMO_MODE_FIELD_NUMBER = 3;
+  private boolean isDemoMode_ = false;
+  /**
+   * <code>bool is_demo_mode = 3;</code>
+   * @return The isDemoMode.
+   */
+  @java.lang.Override
+  public boolean getIsDemoMode() {
+    return isDemoMode_;
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -137,6 +148,9 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < driverIds_.size(); i++) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 2, driverIds_.getRaw(i));
+    }
+    if (isDemoMode_ != false) {
+      output.writeBool(3, isDemoMode_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -158,6 +172,10 @@ private static final long serialVersionUID = 0L;
       size += dataSize;
       size += 1 * getDriverIdsList().size();
     }
+    if (isDemoMode_ != false) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(3, isDemoMode_);
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -177,6 +195,8 @@ private static final long serialVersionUID = 0L;
         .equals(other.getRaceId())) return false;
     if (!getDriverIdsList()
         .equals(other.getDriverIdsList())) return false;
+    if (getIsDemoMode()
+        != other.getIsDemoMode()) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -194,6 +214,9 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + DRIVER_IDS_FIELD_NUMBER;
       hash = (53 * hash) + getDriverIdsList().hashCode();
     }
+    hash = (37 * hash) + IS_DEMO_MODE_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+        getIsDemoMode());
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -328,6 +351,7 @@ private static final long serialVersionUID = 0L;
       raceId_ = "";
       driverIds_ =
           com.google.protobuf.LazyStringArrayList.emptyList();
+      isDemoMode_ = false;
       return this;
     }
 
@@ -367,6 +391,9 @@ private static final long serialVersionUID = 0L;
       if (((from_bitField0_ & 0x00000002) != 0)) {
         driverIds_.makeImmutable();
         result.driverIds_ = driverIds_;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.isDemoMode_ = isDemoMode_;
       }
     }
 
@@ -429,6 +456,9 @@ private static final long serialVersionUID = 0L;
         }
         onChanged();
       }
+      if (other.getIsDemoMode() != false) {
+        setIsDemoMode(other.getIsDemoMode());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -466,6 +496,11 @@ private static final long serialVersionUID = 0L;
               driverIds_.add(s);
               break;
             } // case 18
+            case 24: {
+              isDemoMode_ = input.readBool();
+              bitField0_ |= 0x00000004;
+              break;
+            } // case 24
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -662,6 +697,38 @@ private static final long serialVersionUID = 0L;
       ensureDriverIdsIsMutable();
       driverIds_.add(value);
       bitField0_ |= 0x00000002;
+      onChanged();
+      return this;
+    }
+
+    private boolean isDemoMode_ ;
+    /**
+     * <code>bool is_demo_mode = 3;</code>
+     * @return The isDemoMode.
+     */
+    @java.lang.Override
+    public boolean getIsDemoMode() {
+      return isDemoMode_;
+    }
+    /**
+     * <code>bool is_demo_mode = 3;</code>
+     * @param value The isDemoMode to set.
+     * @return This builder for chaining.
+     */
+    public Builder setIsDemoMode(boolean value) {
+
+      isDemoMode_ = value;
+      bitField0_ |= 0x00000004;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>bool is_demo_mode = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearIsDemoMode() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      isDemoMode_ = false;
       onChanged();
       return this;
     }

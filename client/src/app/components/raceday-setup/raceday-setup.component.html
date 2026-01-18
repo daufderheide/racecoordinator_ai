@@ -72,9 +72,10 @@
                     </select>
                 </div>
 
-                <div class="demo-checkbox" (click)="demoMode = !demoMode">
-                    <div class="demo-box" [style.background-color]="demoMode ? '#3b82f6' : 'white'"></div>
-                    <span>{{ 'RDS_DEMO_MODE' | translate }}</span>
+                <div style="text-align: center; margin-bottom: 10px;">
+                    <button class="setup-btn" (click)="startRace(true)" [disabled]="racingDrivers.length === 0">
+                        {{ 'RDS_DEMO_MODE' | translate }}
+                    </button>
                 </div>
 
                 <div style="text-align: center;" [title]="getStartRaceTooltip()">

@@ -32,8 +32,8 @@ export class DataService {
 
 
 
-  initializeRace(raceId: string, driverIds: string[]): Observable<boolean> {
-    const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds });
+  initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<boolean> {
+    const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
     const buffer = com.antigravity.InitializeRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({

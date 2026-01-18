@@ -30,7 +30,7 @@ public class ClientCommandTaskHandler {
             }
 
             // Create the runtime race instance
-            com.antigravity.race.Race race = new com.antigravity.race.Race(raceModel);
+            com.antigravity.race.Race race = new com.antigravity.race.Race(raceModel, request.getIsDemoMode());
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 

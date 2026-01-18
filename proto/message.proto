@@ -7,6 +7,7 @@ option java_multiple_files = true;
 message InitializeRaceRequest {
   string race_id = 1;
   repeated string driver_ids = 2;
+  bool is_demo_mode = 3;
 }
 
 message InitializeRaceResponse {

@@ -4,10 +4,8 @@ com/antigravity/proto/InitializeRaceRequest.class
 com/antigravity/models/Track.class
 com/antigravity/models/Lane.class
 com/antigravity/race/Race.class
-com/antigravity/proto/Message.class
 com/antigravity/models/Driver.class
 com/antigravity/race/states/NotStarted$1.class
-com/antigravity/proto/InitializeRaceResponse$Builder.class
 com/antigravity/App.class
 com/antigravity/proto/RaceTimeOrBuilder.class
 com/antigravity/models/Race.class
@@ -18,10 +16,7 @@ com/antigravity/proto/RaceTime$Builder.class
 com/antigravity/proto/RaceTime.class
 com/antigravity/race/states/NotStarted.class
 com/antigravity/proto/InitializeRaceRequest$1.class
-com/antigravity/proto/InitializeRaceResponseOrBuilder.class
-com/antigravity/proto/InitializeRaceResponse$1.class
 com/antigravity/proto/InitializeRaceRequestOrBuilder.class
 com/antigravity/proto/RaceTime$1.class
 com/antigravity/proto/InitializeRaceRequest$Builder.class
-com/antigravity/proto/InitializeRaceResponse.class
 com/antigravity/handlers/DatabaseTaskHandler.class

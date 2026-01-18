@@ -29,7 +29,7 @@ export class RacedaySetupComponent implements OnInit {
   raceType: string = 'single';
   raceSelection: string = 'Round Robin';
   seasonSelection: string = 'None';
-  demoMode: boolean = false;
+
 
   scale: number = 1;
   translationsLoaded: boolean = false;
@@ -188,8 +188,8 @@ export class RacedaySetupComponent implements OnInit {
     }
   }
 
-  startRace() {
-    console.log('RacedaySetupComponent: Starting race with:', this.racingDrivers);
+  startRace(isDemo: boolean = false) {
+    console.log(`RacedaySetupComponent: Starting race (demo=${isDemo}) with:`, this.racingDrivers);
     if (this.selectedRace && this.selectedTrack) {
       // Save settings
       const settings = new Settings(this.selectedRace.entity_id, this.racingDrivers.map(d => d.entity_id));
@@ -197,7 +197,7 @@ export class RacedaySetupComponent implements OnInit {
 
       // Send start race message to server
       const driverIds = this.racingDrivers.map(d => d.entity_id);
-      this.dataService.initializeRace(this.selectedRace.entity_id, driverIds).subscribe({
+      this.dataService.initializeRace(this.selectedRace.entity_id, driverIds, isDemo).subscribe({
         next: (success) => console.log('RacedaySetupComponent: Race initialized on server:', success),
         error: (err) => console.error('RacedaySetupComponent: Error initializing race on server:', err)
       });

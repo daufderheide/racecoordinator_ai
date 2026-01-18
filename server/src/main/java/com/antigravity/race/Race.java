@@ -6,11 +6,17 @@ import com.antigravity.race.states.NotStarted;
 public class Race {
     private com.antigravity.models.Race model;
     private IRaceState state;
+    private boolean isDemoMode;
 
-    public Race(com.antigravity.models.Race model) {
+    public Race(com.antigravity.models.Race model, boolean isDemoMode) {
         this.model = model;
+        this.isDemoMode = isDemoMode;
         this.state = new NotStarted();
         this.state.enter(this);
+    }
+
+    public boolean isDemoMode() {
+        return isDemoMode;
     }
 
     public com.antigravity.models.Race getRaceModel() {
