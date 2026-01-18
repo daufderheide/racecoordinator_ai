@@ -3,24 +3,25 @@ package com.antigravity.race;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;
-import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.NotStarted;
 
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
+import com.antigravity.race.handlers.ProtocolHandler;
 
-public class Race implements ProtocolListener {
+public class Race {
+    // Data based on the race model configuration
     private com.antigravity.models.Race model;
-
     private Track track;
+
     private ProtocolDelegate protocols;
 
+    // Dynamic race data
     private IRaceState state;
     private float accumulatedRaceTime = 0.0f;
 
@@ -45,7 +46,7 @@ public class Race implements ProtocolListener {
             throw new IllegalArgumentException("isDemoMode must be true");
         }
         this.protocols = new ProtocolDelegate(protocols);
-        this.protocols.setListener(this);
+        this.protocols.setListener(new ProtocolHandler(this));
     }
 
     public com.antigravity.models.Race getRaceModel() {
@@ -109,29 +110,10 @@ public class Race implements ProtocolListener {
     }
 
     public void startProtocols() {
-        if (protocols != null) {
-            protocols.startTimer();
-        }
+        protocols.startTimer();
     }
 
     public void stopProtocols() {
-        if (protocols != null) {
-            protocols.stopTimer();
-        }
-    }
-
-    @Override
-    public void onLap(int lane, float lapTime) {
-        System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
-        com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
-                .setLane(lane)
-                .setLapTime(lapTime)
-                .build();
-
-        com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()
-                .setLap(lapMsg)
-                .build();
-
-        broadcast(lapDataMsg);
+        protocols.stopTimer();
     }
 }
