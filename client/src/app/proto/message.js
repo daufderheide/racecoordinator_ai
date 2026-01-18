@@ -929,6 +929,412 @@ export const com = $root.com = (() => {
             return StartRaceResponse;
         })();
 
+        antigravity.PauseRaceRequest = (function() {
+
+            /**
+             * Properties of a PauseRaceRequest.
+             * @memberof com.antigravity
+             * @interface IPauseRaceRequest
+             */
+
+            /**
+             * Constructs a new PauseRaceRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a PauseRaceRequest.
+             * @implements IPauseRaceRequest
+             * @constructor
+             * @param {com.antigravity.IPauseRaceRequest=} [properties] Properties to set
+             */
+            function PauseRaceRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new PauseRaceRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {com.antigravity.IPauseRaceRequest=} [properties] Properties to set
+             * @returns {com.antigravity.PauseRaceRequest} PauseRaceRequest instance
+             */
+            PauseRaceRequest.create = function create(properties) {
+                return new PauseRaceRequest(properties);
+            };
+
+            /**
+             * Encodes the specified PauseRaceRequest message. Does not implicitly {@link com.antigravity.PauseRaceRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {com.antigravity.IPauseRaceRequest} message PauseRaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            PauseRaceRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified PauseRaceRequest message, length delimited. Does not implicitly {@link com.antigravity.PauseRaceRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {com.antigravity.IPauseRaceRequest} message PauseRaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            PauseRaceRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a PauseRaceRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.PauseRaceRequest} PauseRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            PauseRaceRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.PauseRaceRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a PauseRaceRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.PauseRaceRequest} PauseRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            PauseRaceRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a PauseRaceRequest message.
+             * @function verify
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            PauseRaceRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a PauseRaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.PauseRaceRequest} PauseRaceRequest
+             */
+            PauseRaceRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.PauseRaceRequest)
+                    return object;
+                return new $root.com.antigravity.PauseRaceRequest();
+            };
+
+            /**
+             * Creates a plain object from a PauseRaceRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {com.antigravity.PauseRaceRequest} message PauseRaceRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            PauseRaceRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this PauseRaceRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.PauseRaceRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            PauseRaceRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for PauseRaceRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.PauseRaceRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            PauseRaceRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.PauseRaceRequest";
+            };
+
+            return PauseRaceRequest;
+        })();
+
+        antigravity.PauseRaceResponse = (function() {
+
+            /**
+             * Properties of a PauseRaceResponse.
+             * @memberof com.antigravity
+             * @interface IPauseRaceResponse
+             * @property {boolean|null} [success] PauseRaceResponse success
+             * @property {string|null} [message] PauseRaceResponse message
+             */
+
+            /**
+             * Constructs a new PauseRaceResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a PauseRaceResponse.
+             * @implements IPauseRaceResponse
+             * @constructor
+             * @param {com.antigravity.IPauseRaceResponse=} [properties] Properties to set
+             */
+            function PauseRaceResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * PauseRaceResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.PauseRaceResponse
+             * @instance
+             */
+            PauseRaceResponse.prototype.success = false;
+
+            /**
+             * PauseRaceResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.PauseRaceResponse
+             * @instance
+             */
+            PauseRaceResponse.prototype.message = "";
+
+            /**
+             * Creates a new PauseRaceResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {com.antigravity.IPauseRaceResponse=} [properties] Properties to set
+             * @returns {com.antigravity.PauseRaceResponse} PauseRaceResponse instance
+             */
+            PauseRaceResponse.create = function create(properties) {
+                return new PauseRaceResponse(properties);
+            };
+
+            /**
+             * Encodes the specified PauseRaceResponse message. Does not implicitly {@link com.antigravity.PauseRaceResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {com.antigravity.IPauseRaceResponse} message PauseRaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            PauseRaceResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified PauseRaceResponse message, length delimited. Does not implicitly {@link com.antigravity.PauseRaceResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {com.antigravity.IPauseRaceResponse} message PauseRaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            PauseRaceResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a PauseRaceResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.PauseRaceResponse} PauseRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            PauseRaceResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.PauseRaceResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a PauseRaceResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.PauseRaceResponse} PauseRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            PauseRaceResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a PauseRaceResponse message.
+             * @function verify
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            PauseRaceResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a PauseRaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.PauseRaceResponse} PauseRaceResponse
+             */
+            PauseRaceResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.PauseRaceResponse)
+                    return object;
+                let message = new $root.com.antigravity.PauseRaceResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a PauseRaceResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {com.antigravity.PauseRaceResponse} message PauseRaceResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            PauseRaceResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this PauseRaceResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.PauseRaceResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            PauseRaceResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for PauseRaceResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.PauseRaceResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            PauseRaceResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.PauseRaceResponse";
+            };
+
+            return PauseRaceResponse;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**

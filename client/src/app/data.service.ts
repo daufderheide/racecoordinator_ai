@@ -72,6 +72,26 @@ export class DataService {
     );
   }
 
+  pauseRace(): Observable<boolean> {
+    const request = com.antigravity.PauseRaceRequest.create({});
+    const buffer = com.antigravity.PauseRaceRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post('http://localhost:7070/api/pause-race', new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const pauseResponse = com.antigravity.PauseRaceResponse.decode(new Uint8Array(response as any));
+        return pauseResponse.success;
+      })
+    );
+  }
+
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();

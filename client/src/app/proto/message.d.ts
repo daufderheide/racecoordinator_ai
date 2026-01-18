@@ -412,6 +412,200 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a PauseRaceRequest. */
+        interface IPauseRaceRequest {
+        }
+
+        /** Represents a PauseRaceRequest. */
+        class PauseRaceRequest implements IPauseRaceRequest {
+
+            /**
+             * Constructs a new PauseRaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IPauseRaceRequest);
+
+            /**
+             * Creates a new PauseRaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PauseRaceRequest instance
+             */
+            public static create(properties?: com.antigravity.IPauseRaceRequest): com.antigravity.PauseRaceRequest;
+
+            /**
+             * Encodes the specified PauseRaceRequest message. Does not implicitly {@link com.antigravity.PauseRaceRequest.verify|verify} messages.
+             * @param message PauseRaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IPauseRaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PauseRaceRequest message, length delimited. Does not implicitly {@link com.antigravity.PauseRaceRequest.verify|verify} messages.
+             * @param message PauseRaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IPauseRaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PauseRaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PauseRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.PauseRaceRequest;
+
+            /**
+             * Decodes a PauseRaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PauseRaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.PauseRaceRequest;
+
+            /**
+             * Verifies a PauseRaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PauseRaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PauseRaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.PauseRaceRequest;
+
+            /**
+             * Creates a plain object from a PauseRaceRequest message. Also converts values to other types if specified.
+             * @param message PauseRaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.PauseRaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PauseRaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PauseRaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a PauseRaceResponse. */
+        interface IPauseRaceResponse {
+
+            /** PauseRaceResponse success */
+            success?: (boolean|null);
+
+            /** PauseRaceResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a PauseRaceResponse. */
+        class PauseRaceResponse implements IPauseRaceResponse {
+
+            /**
+             * Constructs a new PauseRaceResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IPauseRaceResponse);
+
+            /** PauseRaceResponse success. */
+            public success: boolean;
+
+            /** PauseRaceResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new PauseRaceResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PauseRaceResponse instance
+             */
+            public static create(properties?: com.antigravity.IPauseRaceResponse): com.antigravity.PauseRaceResponse;
+
+            /**
+             * Encodes the specified PauseRaceResponse message. Does not implicitly {@link com.antigravity.PauseRaceResponse.verify|verify} messages.
+             * @param message PauseRaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IPauseRaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PauseRaceResponse message, length delimited. Does not implicitly {@link com.antigravity.PauseRaceResponse.verify|verify} messages.
+             * @param message PauseRaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IPauseRaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PauseRaceResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns PauseRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.PauseRaceResponse;
+
+            /**
+             * Decodes a PauseRaceResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns PauseRaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.PauseRaceResponse;
+
+            /**
+             * Verifies a PauseRaceResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PauseRaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PauseRaceResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.PauseRaceResponse;
+
+            /**
+             * Creates a plain object from a PauseRaceResponse message. Also converts values to other types if specified.
+             * @param message PauseRaceResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.PauseRaceResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PauseRaceResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for PauseRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 

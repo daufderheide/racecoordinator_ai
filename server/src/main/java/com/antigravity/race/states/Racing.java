@@ -9,7 +9,6 @@ public class Racing implements IRaceState {
         System.out.println("Racing state entered. Race started!");
         scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
         final Runnable ticker = new Runnable() {
-            float currentTime = 0.0f;
             long lastTime = 0;
 
             // Lap simulation fields
@@ -27,11 +26,11 @@ public class Racing implements IRaceState {
 
                     float delta = (now - lastTime) / 1_000_000_000.0f;
                     lastTime = now;
-                    currentTime += delta;
+                    race.addRaceTime(delta);
 
                     // Broadcast RaceTime message wrapped in RaceData
                     com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
-                            .setTime(currentTime)
+                            .setTime(race.getSafeRaceTime())
                             .build();
 
                     com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()

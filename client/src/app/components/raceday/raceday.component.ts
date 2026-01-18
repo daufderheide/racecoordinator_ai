@@ -25,6 +25,7 @@ export class RacedayComponent implements OnInit {
     protected columns: ColumnDefinition[];
     protected errorMessage?: string;
     protected startResumeShortcut: string = 'Ctrl+S';
+    protected pauseShortcut: string = 'Ctrl+P';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
 
@@ -100,6 +101,7 @@ export class RacedayComponent implements OnInit {
         const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
         if (isMac) {
             this.startResumeShortcut = 'Cmd+S';
+            this.pauseShortcut = 'Cmd+P';
         }
     }
 
@@ -253,6 +255,16 @@ export class RacedayComponent implements OnInit {
             }, error => {
                 console.error('Error starting race:', error);
             });
+        } else if (action === 'PAUSE') {
+            this.dataService.pauseRace().subscribe(success => {
+                if (success) {
+                    console.log('Race pause command sent successfully');
+                } else {
+                    console.error('Failed to send race pause command');
+                }
+            }, error => {
+                console.error('Error pausing race:', error);
+            });
         }
         this.isMenuOpen = false;
     }
@@ -267,10 +279,18 @@ export class RacedayComponent implements OnInit {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
+        const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
         // Ctrl+S or Cmd+S for Start/Resume
-        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        if (isCtrlOrCmd && event.key === 's') {
             event.preventDefault(); // Prevent browser save dialog
             this.onMenuSelect('START_RESUME');
+        }
+
+        // Ctrl+P or Cmd+P for Pause
+        if (isCtrlOrCmd && event.key === 'p') {
+            event.preventDefault(); // Prevent print dialog
+            this.onMenuSelect('PAUSE');
         }
     }
 }
