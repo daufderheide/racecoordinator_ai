@@ -7,6 +7,9 @@ import com.antigravity.proto.PauseRaceResponse;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.antigravity.converters.DriverConverter;
+import com.antigravity.converters.RaceConverter;
+import com.antigravity.converters.TrackConverter;
 import io.javalin.http.Context;
 
 public class ClientCommandTaskHandler {
@@ -40,44 +43,16 @@ public class ClientCommandTaskHandler {
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 
-            java.util.List<com.antigravity.proto.LaneModel> laneModels = new java.util.ArrayList<>();
-            for (com.antigravity.models.Lane lane : race.getTrack().getLanes()) {
-                laneModels.add(com.antigravity.proto.LaneModel.newBuilder()
-                        .setBackgroundColor(lane.getBackground_color())
-                        .setForegroundColor(lane.getForeground_color())
-                        .setLength(lane.getLength())
-                        .build());
-            }
-
             com.antigravity.models.Track track = race.getTrack();
-            com.antigravity.proto.TrackModel trackProto = com.antigravity.proto.TrackModel.newBuilder()
-                    .setName(track.getName())
-                    .setModel(com.antigravity.proto.Model.newBuilder()
-                            .setEntityId(track.getEntityId() != null ? track.getEntityId() : "")
-                            .build())
-                    .addAllLanes(laneModels)
-                    .build();
+            com.antigravity.proto.TrackModel trackProto = TrackConverter.toProto(track);
 
-            com.antigravity.proto.RaceModel raceProto = com.antigravity.proto.RaceModel.newBuilder()
-                    .setName(race.getRaceModel().getName())
-                    .setModel(com.antigravity.proto.Model.newBuilder()
-                            .setEntityId(
-                                    race.getRaceModel().getEntityId() != null ? race.getRaceModel().getEntityId() : "")
-                            .build())
-                    .setTrack(trackProto)
-                    .build();
+            com.antigravity.proto.RaceModel raceProto = RaceConverter.toProto(race.getRaceModel(), trackProto);
 
             java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
                     request.getDriverIdsList());
             java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
             for (com.antigravity.models.Driver driver : drivers) {
-                driverModels.add(com.antigravity.proto.DriverModel.newBuilder()
-                        .setName(driver.getName())
-                        .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
-                        .setModel(com.antigravity.proto.Model.newBuilder()
-                                .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
-                                .build())
-                        .build());
+                driverModels.add(DriverConverter.toProto(driver));
             }
 
             InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
