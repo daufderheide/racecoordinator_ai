@@ -1,4 +1,4 @@
-package com.antigravity.models;
+package com.antigravity.race;
 
 public class DriverHeatData {
     private RaceParticpant driver;

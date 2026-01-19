@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.antigravity.models.Driver;
-import com.antigravity.models.DriverHeatData;
-import com.antigravity.models.Heat;
-import com.antigravity.models.RaceParticpant;
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.Heat;
+import com.antigravity.race.RaceParticpant;
 import com.antigravity.race.Race;
 
 public class HeatBuilder {

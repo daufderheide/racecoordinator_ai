@@ -3,7 +3,7 @@ package com.antigravity.race;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antigravity.models.Heat;
+import com.antigravity.race.Heat;
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;

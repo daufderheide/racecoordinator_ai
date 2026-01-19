@@ -1,4 +1,6 @@
-package com.antigravity.models;
+package com.antigravity.race;
+
+import com.antigravity.models.Driver;
 
 public class RaceParticpant {
     private Driver driver;

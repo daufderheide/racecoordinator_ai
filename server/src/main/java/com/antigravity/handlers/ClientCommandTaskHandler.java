@@ -11,7 +11,7 @@ import com.antigravity.converters.DriverConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.TrackConverter;
 import io.javalin.http.Context;
-import com.antigravity.models.RaceParticpant;
+import com.antigravity.race.RaceParticpant;
 
 import java.util.stream.Collectors;
 
