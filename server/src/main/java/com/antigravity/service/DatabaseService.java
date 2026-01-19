@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.models.Driver;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
@@ -92,6 +93,7 @@ public class DatabaseService {
         resetSequence(database, "races");
 
         Race race = new Race("Round Robin", track.getEntityId());
+        race.setHeatRotationType(HeatRotationType.RoundRobin);
         race.setEntityId(getNextSequence(database, "races"));
 
         raceCollection.insertOne(race);

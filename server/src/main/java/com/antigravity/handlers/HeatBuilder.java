@@ -1,0 +1,107 @@
+package com.antigravity.handlers;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.antigravity.models.Driver;
+import com.antigravity.models.DriverHeatData;
+import com.antigravity.models.Heat;
+import com.antigravity.models.RaceParticpant;
+import com.antigravity.race.Race;
+
+public class HeatBuilder {
+    public static List<Heat> buildHeats(
+            Race race,
+            List<RaceParticpant> drivers) {
+
+        int numLanes = race.getTrack().getLanes().size();
+        switch (race.getRaceModel().getHeatRotationType()) {
+            case RoundRobin:
+                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false);
+            case FriendlyRoundRobin:
+                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), true);
+            case EuropeanRoundRobin:
+                return GetRoundRobinHeats(drivers, numLanes, getEuroRoundRobinRotationSequence(numLanes), false);
+            default:
+                return null;
+        }
+    }
+
+    private static List<Integer> getRoundRobinRotationSequence(int numLanes) {
+        List<Integer> rotationSequence = new ArrayList<>();
+        for (int i = 0; i < numLanes; i++) {
+            rotationSequence.add((i + 1));
+        }
+        return rotationSequence;
+    }
+
+    private static List<Integer> getEuroRoundRobinRotationSequence(int numLanes) {
+        List<Integer> rotationSequence = new ArrayList<>();
+
+        // Odd lanes first (0 based) in incrementing order
+        // [1, 3, 5, 7, ..]
+        for (int i = 0; i < numLanes; i += 2) {
+            rotationSequence.add((i + 1));
+        }
+
+        // Even lanes next, in decrementing order
+        // [.., 8, 6, 4, 2]
+        int evenLane = numLanes;
+        if (numLanes % 2 != 0) {
+            evenLane = numLanes - 1;
+        }
+        for (int i = numLanes; i > 1; i -= 2) {
+            rotationSequence.add(evenLane);
+            evenLane -= 2;
+        }
+        return rotationSequence;
+    }
+
+    private static List<Heat> GetRoundRobinHeats(
+            List<RaceParticpant> drivers,
+            int numLanes,
+            List<Integer> rotationSequence,
+            boolean friendly) {
+        List<Heat> heatList = new ArrayList<>();
+
+        int numHeats;
+        if (drivers.size() > rotationSequence.size()) {
+            numHeats = drivers.size();
+        } else {
+            numHeats = rotationSequence.size();
+        }
+
+        for (int h = 0; h < numHeats; h++) {
+            List<DriverHeatData> heatDrivers = new ArrayList<>();
+
+            // First put an empty lane everywhere
+            for (long laneIdx = 0; laneIdx < numLanes; laneIdx++) {
+                heatDrivers.add(new DriverHeatData(new RaceParticpant(Driver.EMPTY_DRIVER)));
+            }
+
+            // Now use the rotation sequence to fill in the drivers
+            for (int d = 0; d < drivers.size(); d++) {
+                int v = (h + d) % numHeats;
+                if (v < rotationSequence.size()) {
+                    int lane = rotationSequence.get(v);
+                    if (lane > 0) {
+                        lane--;
+                        if (lane < numLanes) {
+                            int idx = d;
+                            if (friendly) {
+                                // Swap the order of the initial group of sitouts so that the
+                                // first sit out rotated in is the lowest seed.
+                                if (d >= numLanes) {
+                                    idx = drivers.size() - (d - numLanes) - 1;
+                                }
+                            }
+                            heatDrivers.add(new DriverHeatData(drivers.get(idx)));
+                        }
+                    }
+                }
+            }
+            heatList.add(new Heat(heatDrivers));
+        }
+        return heatList;
+    }
+}

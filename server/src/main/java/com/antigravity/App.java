@@ -15,6 +15,9 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.mongo.types.DatabaseDir;
+import de.flapdoodle.embed.process.io.ProcessOutput;
+import de.flapdoodle.embed.process.io.Processors;
+import de.flapdoodle.embed.process.io.Slf4jLevel;
 import de.flapdoodle.embed.process.runtime.Network;
 import de.flapdoodle.reverse.TransitionWalker;
 import de.flapdoodle.reverse.transitions.Start;
@@ -120,6 +123,11 @@ public class App {
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
                             .initializedWith(Net.of("localhost", MONGO_PORT, Network.localhostIsIPv6())))
+                    .withProcessOutput(Start.to(ProcessOutput.class).initializedWith(ProcessOutput.builder()
+                            .output(Processors.logTo(logger, Slf4jLevel.INFO))
+                            .error(Processors.logTo(logger, Slf4jLevel.ERROR))
+                            .commands(Processors.named("[console>]", Processors.logTo(logger, Slf4jLevel.DEBUG)))
+                            .build()))
                     .start(Version.Main.V4_4);
 
             System.out.println("Embedded MongoDB started with storage at " + dataDir);

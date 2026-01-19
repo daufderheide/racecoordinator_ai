@@ -1,6 +1,8 @@
 package com.antigravity.models;
 
 public class Driver extends Model {
+    public static final Driver EMPTY_DRIVER = new Driver("Empty", "Empty");
+
     private String name;
     private String nickname;
 

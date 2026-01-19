@@ -11,6 +11,9 @@ import com.antigravity.converters.DriverConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.TrackConverter;
 import io.javalin.http.Context;
+import com.antigravity.models.RaceParticpant;
+
+import java.util.stream.Collectors;
 
 public class ClientCommandTaskHandler {
 
@@ -50,10 +53,14 @@ public class ClientCommandTaskHandler {
 
             java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
                     request.getDriverIdsList());
+
             java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
             for (com.antigravity.models.Driver driver : drivers) {
                 driverModels.add(DriverConverter.toProto(driver));
             }
+
+            race.setHeats(HeatBuilder.buildHeats(race,
+                    drivers.stream().map(RaceParticpant::new).collect(Collectors.toList())));
 
             InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
                     .setSuccess(true)

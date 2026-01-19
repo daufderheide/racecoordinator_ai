@@ -3,6 +3,7 @@ package com.antigravity.race;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.antigravity.models.Heat;
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;
@@ -18,6 +19,7 @@ public class Race {
     // Data based on the race model configuration
     private com.antigravity.models.Race model;
     private Track track;
+    private List<Heat> heats;
 
     private ProtocolDelegate protocols;
 
@@ -55,6 +57,14 @@ public class Race {
 
     public com.antigravity.models.Track getTrack() {
         return track;
+    }
+
+    public List<Heat> getHeats() {
+        return heats;
+    }
+
+    public void setHeats(List<Heat> heats) {
+        this.heats = heats;
     }
 
     public float getSafeRaceTime() {
