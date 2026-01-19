@@ -1,0 +1,14 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "DriverModelProto";
+
+message DriverModel {
+  Model model = 1;
+  string name = 2;
+  string nickname = 3;
+}

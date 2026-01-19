@@ -1,0 +1,12 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "LaneModelProto";
+
+message LaneModel {
+  string background_color = 1;
+  string foreground_color = 2;
+  int32 length = 3;
+}

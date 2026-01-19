@@ -13,7 +13,7 @@ export class RaceConverter {
         }
 
         return new Race(
-            proto.entityId || '',
+            proto.model?.entityId || '',
             proto.name || '',
             track
         );

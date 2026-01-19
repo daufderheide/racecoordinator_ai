@@ -52,13 +52,18 @@ public class ClientCommandTaskHandler {
             com.antigravity.models.Track track = race.getTrack();
             com.antigravity.proto.TrackModel trackProto = com.antigravity.proto.TrackModel.newBuilder()
                     .setName(track.getName())
-                    .setEntityId(track.getEntityId() != null ? track.getEntityId() : "")
+                    .setModel(com.antigravity.proto.Model.newBuilder()
+                            .setEntityId(track.getEntityId() != null ? track.getEntityId() : "")
+                            .build())
                     .addAllLanes(laneModels)
                     .build();
 
             com.antigravity.proto.RaceModel raceProto = com.antigravity.proto.RaceModel.newBuilder()
                     .setName(race.getRaceModel().getName())
-                    .setEntityId(race.getRaceModel().getEntityId() != null ? race.getRaceModel().getEntityId() : "")
+                    .setModel(com.antigravity.proto.Model.newBuilder()
+                            .setEntityId(
+                                    race.getRaceModel().getEntityId() != null ? race.getRaceModel().getEntityId() : "")
+                            .build())
                     .setTrack(trackProto)
                     .build();
 
@@ -69,7 +74,9 @@ public class ClientCommandTaskHandler {
                 driverModels.add(com.antigravity.proto.DriverModel.newBuilder()
                         .setName(driver.getName())
                         .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
-                        .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
+                        .setModel(com.antigravity.proto.Model.newBuilder()
+                                .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
+                                .build())
                         .build());
             }
 

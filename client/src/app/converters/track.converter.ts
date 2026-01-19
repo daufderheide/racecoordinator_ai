@@ -9,7 +9,7 @@ export class TrackConverter {
         }
         const lanes = proto.lanes.map(l => LaneConverter.fromProto(l));
         return new Track(
-            proto.entityId || '',
+            proto.model?.entityId || '',
             proto.name || '',
             lanes
         );

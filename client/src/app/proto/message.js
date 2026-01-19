@@ -294,1041 +294,6 @@ export const com = $root.com = (() => {
             return InitializeRaceRequest;
         })();
 
-        antigravity.LaneModel = (function() {
-
-            /**
-             * Properties of a LaneModel.
-             * @memberof com.antigravity
-             * @interface ILaneModel
-             * @property {string|null} [backgroundColor] LaneModel backgroundColor
-             * @property {string|null} [foregroundColor] LaneModel foregroundColor
-             * @property {number|null} [length] LaneModel length
-             */
-
-            /**
-             * Constructs a new LaneModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a LaneModel.
-             * @implements ILaneModel
-             * @constructor
-             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
-             */
-            function LaneModel(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * LaneModel backgroundColor.
-             * @member {string} backgroundColor
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.backgroundColor = "";
-
-            /**
-             * LaneModel foregroundColor.
-             * @member {string} foregroundColor
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.foregroundColor = "";
-
-            /**
-             * LaneModel length.
-             * @member {number} length
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.length = 0;
-
-            /**
-             * Creates a new LaneModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
-             * @returns {com.antigravity.LaneModel} LaneModel instance
-             */
-            LaneModel.create = function create(properties) {
-                return new LaneModel(properties);
-            };
-
-            /**
-             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            LaneModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.backgroundColor != null && Object.hasOwnProperty.call(message, "backgroundColor"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.backgroundColor);
-                if (message.foregroundColor != null && Object.hasOwnProperty.call(message, "foregroundColor"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.foregroundColor);
-                if (message.length != null && Object.hasOwnProperty.call(message, "length"))
-                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            LaneModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.LaneModel} LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            LaneModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LaneModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.backgroundColor = reader.string();
-                            break;
-                        }
-                    case 2: {
-                            message.foregroundColor = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.length = reader.int32();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.LaneModel} LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            LaneModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a LaneModel message.
-             * @function verify
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            LaneModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
-                    if (!$util.isString(message.backgroundColor))
-                        return "backgroundColor: string expected";
-                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
-                    if (!$util.isString(message.foregroundColor))
-                        return "foregroundColor: string expected";
-                if (message.length != null && message.hasOwnProperty("length"))
-                    if (!$util.isInteger(message.length))
-                        return "length: integer expected";
-                return null;
-            };
-
-            /**
-             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.LaneModel} LaneModel
-             */
-            LaneModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.LaneModel)
-                    return object;
-                let message = new $root.com.antigravity.LaneModel();
-                if (object.backgroundColor != null)
-                    message.backgroundColor = String(object.backgroundColor);
-                if (object.foregroundColor != null)
-                    message.foregroundColor = String(object.foregroundColor);
-                if (object.length != null)
-                    message.length = object.length | 0;
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.LaneModel} message LaneModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            LaneModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.backgroundColor = "";
-                    object.foregroundColor = "";
-                    object.length = 0;
-                }
-                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
-                    object.backgroundColor = message.backgroundColor;
-                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
-                    object.foregroundColor = message.foregroundColor;
-                if (message.length != null && message.hasOwnProperty("length"))
-                    object.length = message.length;
-                return object;
-            };
-
-            /**
-             * Converts this LaneModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            LaneModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for LaneModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            LaneModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.LaneModel";
-            };
-
-            return LaneModel;
-        })();
-
-        antigravity.TrackModel = (function() {
-
-            /**
-             * Properties of a TrackModel.
-             * @memberof com.antigravity
-             * @interface ITrackModel
-             * @property {string|null} [name] TrackModel name
-             * @property {string|null} [entityId] TrackModel entityId
-             * @property {Array.<com.antigravity.ILaneModel>|null} [lanes] TrackModel lanes
-             */
-
-            /**
-             * Constructs a new TrackModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a TrackModel.
-             * @implements ITrackModel
-             * @constructor
-             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
-             */
-            function TrackModel(properties) {
-                this.lanes = [];
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * TrackModel name.
-             * @member {string} name
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.name = "";
-
-            /**
-             * TrackModel entityId.
-             * @member {string} entityId
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.entityId = "";
-
-            /**
-             * TrackModel lanes.
-             * @member {Array.<com.antigravity.ILaneModel>} lanes
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.lanes = $util.emptyArray;
-
-            /**
-             * Creates a new TrackModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
-             * @returns {com.antigravity.TrackModel} TrackModel instance
-             */
-            TrackModel.create = function create(properties) {
-                return new TrackModel(properties);
-            };
-
-            /**
-             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TrackModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
-                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.entityId);
-                if (message.lanes != null && message.lanes.length)
-                    for (let i = 0; i < message.lanes.length; ++i)
-                        $root.com.antigravity.LaneModel.encode(message.lanes[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                return writer;
-            };
-
-            /**
-             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TrackModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.TrackModel} TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TrackModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TrackModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 2: {
-                            message.entityId = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            if (!(message.lanes && message.lanes.length))
-                                message.lanes = [];
-                            message.lanes.push($root.com.antigravity.LaneModel.decode(reader, reader.uint32()));
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.TrackModel} TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TrackModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a TrackModel message.
-             * @function verify
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            TrackModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    if (!$util.isString(message.entityId))
-                        return "entityId: string expected";
-                if (message.lanes != null && message.hasOwnProperty("lanes")) {
-                    if (!Array.isArray(message.lanes))
-                        return "lanes: array expected";
-                    for (let i = 0; i < message.lanes.length; ++i) {
-                        let error = $root.com.antigravity.LaneModel.verify(message.lanes[i]);
-                        if (error)
-                            return "lanes." + error;
-                    }
-                }
-                return null;
-            };
-
-            /**
-             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.TrackModel} TrackModel
-             */
-            TrackModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.TrackModel)
-                    return object;
-                let message = new $root.com.antigravity.TrackModel();
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.entityId != null)
-                    message.entityId = String(object.entityId);
-                if (object.lanes) {
-                    if (!Array.isArray(object.lanes))
-                        throw TypeError(".com.antigravity.TrackModel.lanes: array expected");
-                    message.lanes = [];
-                    for (let i = 0; i < object.lanes.length; ++i) {
-                        if (typeof object.lanes[i] !== "object")
-                            throw TypeError(".com.antigravity.TrackModel.lanes: object expected");
-                        message.lanes[i] = $root.com.antigravity.LaneModel.fromObject(object.lanes[i]);
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.TrackModel} message TrackModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            TrackModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.arrays || options.defaults)
-                    object.lanes = [];
-                if (options.defaults) {
-                    object.name = "";
-                    object.entityId = "";
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    object.entityId = message.entityId;
-                if (message.lanes && message.lanes.length) {
-                    object.lanes = [];
-                    for (let j = 0; j < message.lanes.length; ++j)
-                        object.lanes[j] = $root.com.antigravity.LaneModel.toObject(message.lanes[j], options);
-                }
-                return object;
-            };
-
-            /**
-             * Converts this TrackModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            TrackModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for TrackModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            TrackModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.TrackModel";
-            };
-
-            return TrackModel;
-        })();
-
-        antigravity.RaceModel = (function() {
-
-            /**
-             * Properties of a RaceModel.
-             * @memberof com.antigravity
-             * @interface IRaceModel
-             * @property {string|null} [name] RaceModel name
-             * @property {string|null} [entityId] RaceModel entityId
-             * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
-             */
-
-            /**
-             * Constructs a new RaceModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a RaceModel.
-             * @implements IRaceModel
-             * @constructor
-             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
-             */
-            function RaceModel(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * RaceModel name.
-             * @member {string} name
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.name = "";
-
-            /**
-             * RaceModel entityId.
-             * @member {string} entityId
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.entityId = "";
-
-            /**
-             * RaceModel track.
-             * @member {com.antigravity.ITrackModel|null|undefined} track
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.track = null;
-
-            /**
-             * Creates a new RaceModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
-             * @returns {com.antigravity.RaceModel} RaceModel instance
-             */
-            RaceModel.create = function create(properties) {
-                return new RaceModel(properties);
-            };
-
-            /**
-             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            RaceModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
-                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.entityId);
-                if (message.track != null && Object.hasOwnProperty.call(message, "track"))
-                    $root.com.antigravity.TrackModel.encode(message.track, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                return writer;
-            };
-
-            /**
-             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            RaceModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.RaceModel} RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            RaceModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 2: {
-                            message.entityId = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.track = $root.com.antigravity.TrackModel.decode(reader, reader.uint32());
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.RaceModel} RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            RaceModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a RaceModel message.
-             * @function verify
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            RaceModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    if (!$util.isString(message.entityId))
-                        return "entityId: string expected";
-                if (message.track != null && message.hasOwnProperty("track")) {
-                    let error = $root.com.antigravity.TrackModel.verify(message.track);
-                    if (error)
-                        return "track." + error;
-                }
-                return null;
-            };
-
-            /**
-             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.RaceModel} RaceModel
-             */
-            RaceModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.RaceModel)
-                    return object;
-                let message = new $root.com.antigravity.RaceModel();
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.entityId != null)
-                    message.entityId = String(object.entityId);
-                if (object.track != null) {
-                    if (typeof object.track !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.track: object expected");
-                    message.track = $root.com.antigravity.TrackModel.fromObject(object.track);
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.RaceModel} message RaceModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            RaceModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.name = "";
-                    object.entityId = "";
-                    object.track = null;
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    object.entityId = message.entityId;
-                if (message.track != null && message.hasOwnProperty("track"))
-                    object.track = $root.com.antigravity.TrackModel.toObject(message.track, options);
-                return object;
-            };
-
-            /**
-             * Converts this RaceModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            RaceModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for RaceModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            RaceModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.RaceModel";
-            };
-
-            return RaceModel;
-        })();
-
-        antigravity.DriverModel = (function() {
-
-            /**
-             * Properties of a DriverModel.
-             * @memberof com.antigravity
-             * @interface IDriverModel
-             * @property {string|null} [name] DriverModel name
-             * @property {string|null} [nickname] DriverModel nickname
-             * @property {string|null} [entityId] DriverModel entityId
-             */
-
-            /**
-             * Constructs a new DriverModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a DriverModel.
-             * @implements IDriverModel
-             * @constructor
-             * @param {com.antigravity.IDriverModel=} [properties] Properties to set
-             */
-            function DriverModel(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * DriverModel name.
-             * @member {string} name
-             * @memberof com.antigravity.DriverModel
-             * @instance
-             */
-            DriverModel.prototype.name = "";
-
-            /**
-             * DriverModel nickname.
-             * @member {string} nickname
-             * @memberof com.antigravity.DriverModel
-             * @instance
-             */
-            DriverModel.prototype.nickname = "";
-
-            /**
-             * DriverModel entityId.
-             * @member {string} entityId
-             * @memberof com.antigravity.DriverModel
-             * @instance
-             */
-            DriverModel.prototype.entityId = "";
-
-            /**
-             * Creates a new DriverModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {com.antigravity.IDriverModel=} [properties] Properties to set
-             * @returns {com.antigravity.DriverModel} DriverModel instance
-             */
-            DriverModel.create = function create(properties) {
-                return new DriverModel(properties);
-            };
-
-            /**
-             * Encodes the specified DriverModel message. Does not implicitly {@link com.antigravity.DriverModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {com.antigravity.IDriverModel} message DriverModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            DriverModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
-                if (message.nickname != null && Object.hasOwnProperty.call(message, "nickname"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.nickname);
-                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
-                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.entityId);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified DriverModel message, length delimited. Does not implicitly {@link com.antigravity.DriverModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {com.antigravity.IDriverModel} message DriverModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            DriverModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a DriverModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.DriverModel} DriverModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            DriverModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DriverModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 2: {
-                            message.nickname = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.entityId = reader.string();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a DriverModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.DriverModel} DriverModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            DriverModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a DriverModel message.
-             * @function verify
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            DriverModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.nickname != null && message.hasOwnProperty("nickname"))
-                    if (!$util.isString(message.nickname))
-                        return "nickname: string expected";
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    if (!$util.isString(message.entityId))
-                        return "entityId: string expected";
-                return null;
-            };
-
-            /**
-             * Creates a DriverModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.DriverModel} DriverModel
-             */
-            DriverModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.DriverModel)
-                    return object;
-                let message = new $root.com.antigravity.DriverModel();
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.nickname != null)
-                    message.nickname = String(object.nickname);
-                if (object.entityId != null)
-                    message.entityId = String(object.entityId);
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a DriverModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {com.antigravity.DriverModel} message DriverModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            DriverModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.name = "";
-                    object.nickname = "";
-                    object.entityId = "";
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.nickname != null && message.hasOwnProperty("nickname"))
-                    object.nickname = message.nickname;
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    object.entityId = message.entityId;
-                return object;
-            };
-
-            /**
-             * Converts this DriverModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.DriverModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            DriverModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for DriverModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.DriverModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            DriverModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.DriverModel";
-            };
-
-            return DriverModel;
-        })();
-
         antigravity.InitializeRaceResponse = (function() {
 
             /**
@@ -1629,6 +594,1261 @@ export const com = $root.com = (() => {
             };
 
             return InitializeRaceResponse;
+        })();
+
+        antigravity.RaceModel = (function() {
+
+            /**
+             * Properties of a RaceModel.
+             * @memberof com.antigravity
+             * @interface IRaceModel
+             * @property {com.antigravity.IModel|null} [model] RaceModel model
+             * @property {string|null} [name] RaceModel name
+             * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
+             */
+
+            /**
+             * Constructs a new RaceModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceModel.
+             * @implements IRaceModel
+             * @constructor
+             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
+             */
+            function RaceModel(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.model = null;
+
+            /**
+             * RaceModel name.
+             * @member {string} name
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.name = "";
+
+            /**
+             * RaceModel track.
+             * @member {com.antigravity.ITrackModel|null|undefined} track
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.track = null;
+
+            /**
+             * Creates a new RaceModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
+             * @returns {com.antigravity.RaceModel} RaceModel instance
+             */
+            RaceModel.create = function create(properties) {
+                return new RaceModel(properties);
+            };
+
+            /**
+             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.track != null && Object.hasOwnProperty.call(message, "track"))
+                    $root.com.antigravity.TrackModel.encode(message.track, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceModel} RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.track = $root.com.antigravity.TrackModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceModel} RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceModel message.
+             * @function verify
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.track != null && message.hasOwnProperty("track")) {
+                    let error = $root.com.antigravity.TrackModel.verify(message.track);
+                    if (error)
+                        return "track." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceModel} RaceModel
+             */
+            RaceModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceModel)
+                    return object;
+                let message = new $root.com.antigravity.RaceModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.track != null) {
+                    if (typeof object.track !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.track: object expected");
+                    message.track = $root.com.antigravity.TrackModel.fromObject(object.track);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.RaceModel} message RaceModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.track = null;
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.track != null && message.hasOwnProperty("track"))
+                    object.track = $root.com.antigravity.TrackModel.toObject(message.track, options);
+                return object;
+            };
+
+            /**
+             * Converts this RaceModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceModel";
+            };
+
+            return RaceModel;
+        })();
+
+        antigravity.TrackModel = (function() {
+
+            /**
+             * Properties of a TrackModel.
+             * @memberof com.antigravity
+             * @interface ITrackModel
+             * @property {com.antigravity.IModel|null} [model] TrackModel model
+             * @property {string|null} [name] TrackModel name
+             * @property {Array.<com.antigravity.ILaneModel>|null} [lanes] TrackModel lanes
+             */
+
+            /**
+             * Constructs a new TrackModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a TrackModel.
+             * @implements ITrackModel
+             * @constructor
+             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
+             */
+            function TrackModel(properties) {
+                this.lanes = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * TrackModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.model = null;
+
+            /**
+             * TrackModel name.
+             * @member {string} name
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.name = "";
+
+            /**
+             * TrackModel lanes.
+             * @member {Array.<com.antigravity.ILaneModel>} lanes
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.lanes = $util.emptyArray;
+
+            /**
+             * Creates a new TrackModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
+             * @returns {com.antigravity.TrackModel} TrackModel instance
+             */
+            TrackModel.create = function create(properties) {
+                return new TrackModel(properties);
+            };
+
+            /**
+             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TrackModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.lanes != null && message.lanes.length)
+                    for (let i = 0; i < message.lanes.length; ++i)
+                        $root.com.antigravity.LaneModel.encode(message.lanes[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TrackModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.TrackModel} TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TrackModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TrackModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            if (!(message.lanes && message.lanes.length))
+                                message.lanes = [];
+                            message.lanes.push($root.com.antigravity.LaneModel.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.TrackModel} TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TrackModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a TrackModel message.
+             * @function verify
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            TrackModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.lanes != null && message.hasOwnProperty("lanes")) {
+                    if (!Array.isArray(message.lanes))
+                        return "lanes: array expected";
+                    for (let i = 0; i < message.lanes.length; ++i) {
+                        let error = $root.com.antigravity.LaneModel.verify(message.lanes[i]);
+                        if (error)
+                            return "lanes." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.TrackModel} TrackModel
+             */
+            TrackModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.TrackModel)
+                    return object;
+                let message = new $root.com.antigravity.TrackModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.TrackModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.lanes) {
+                    if (!Array.isArray(object.lanes))
+                        throw TypeError(".com.antigravity.TrackModel.lanes: array expected");
+                    message.lanes = [];
+                    for (let i = 0; i < object.lanes.length; ++i) {
+                        if (typeof object.lanes[i] !== "object")
+                            throw TypeError(".com.antigravity.TrackModel.lanes: object expected");
+                        message.lanes[i] = $root.com.antigravity.LaneModel.fromObject(object.lanes[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.TrackModel} message TrackModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            TrackModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.lanes = [];
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.lanes && message.lanes.length) {
+                    object.lanes = [];
+                    for (let j = 0; j < message.lanes.length; ++j)
+                        object.lanes[j] = $root.com.antigravity.LaneModel.toObject(message.lanes[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this TrackModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            TrackModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for TrackModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            TrackModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.TrackModel";
+            };
+
+            return TrackModel;
+        })();
+
+        antigravity.LaneModel = (function() {
+
+            /**
+             * Properties of a LaneModel.
+             * @memberof com.antigravity
+             * @interface ILaneModel
+             * @property {string|null} [backgroundColor] LaneModel backgroundColor
+             * @property {string|null} [foregroundColor] LaneModel foregroundColor
+             * @property {number|null} [length] LaneModel length
+             */
+
+            /**
+             * Constructs a new LaneModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a LaneModel.
+             * @implements ILaneModel
+             * @constructor
+             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
+             */
+            function LaneModel(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * LaneModel backgroundColor.
+             * @member {string} backgroundColor
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.backgroundColor = "";
+
+            /**
+             * LaneModel foregroundColor.
+             * @member {string} foregroundColor
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.foregroundColor = "";
+
+            /**
+             * LaneModel length.
+             * @member {number} length
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.length = 0;
+
+            /**
+             * Creates a new LaneModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
+             * @returns {com.antigravity.LaneModel} LaneModel instance
+             */
+            LaneModel.create = function create(properties) {
+                return new LaneModel(properties);
+            };
+
+            /**
+             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LaneModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.backgroundColor != null && Object.hasOwnProperty.call(message, "backgroundColor"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.backgroundColor);
+                if (message.foregroundColor != null && Object.hasOwnProperty.call(message, "foregroundColor"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.foregroundColor);
+                if (message.length != null && Object.hasOwnProperty.call(message, "length"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LaneModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.LaneModel} LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LaneModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LaneModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.backgroundColor = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.foregroundColor = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.length = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.LaneModel} LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LaneModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a LaneModel message.
+             * @function verify
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            LaneModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
+                    if (!$util.isString(message.backgroundColor))
+                        return "backgroundColor: string expected";
+                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
+                    if (!$util.isString(message.foregroundColor))
+                        return "foregroundColor: string expected";
+                if (message.length != null && message.hasOwnProperty("length"))
+                    if (!$util.isInteger(message.length))
+                        return "length: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.LaneModel} LaneModel
+             */
+            LaneModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.LaneModel)
+                    return object;
+                let message = new $root.com.antigravity.LaneModel();
+                if (object.backgroundColor != null)
+                    message.backgroundColor = String(object.backgroundColor);
+                if (object.foregroundColor != null)
+                    message.foregroundColor = String(object.foregroundColor);
+                if (object.length != null)
+                    message.length = object.length | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.LaneModel} message LaneModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            LaneModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.backgroundColor = "";
+                    object.foregroundColor = "";
+                    object.length = 0;
+                }
+                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
+                    object.backgroundColor = message.backgroundColor;
+                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
+                    object.foregroundColor = message.foregroundColor;
+                if (message.length != null && message.hasOwnProperty("length"))
+                    object.length = message.length;
+                return object;
+            };
+
+            /**
+             * Converts this LaneModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            LaneModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for LaneModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            LaneModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.LaneModel";
+            };
+
+            return LaneModel;
+        })();
+
+        antigravity.Model = (function() {
+
+            /**
+             * Properties of a Model.
+             * @memberof com.antigravity
+             * @interface IModel
+             * @property {string|null} [entityId] Model entityId
+             */
+
+            /**
+             * Constructs a new Model.
+             * @memberof com.antigravity
+             * @classdesc Represents a Model.
+             * @implements IModel
+             * @constructor
+             * @param {com.antigravity.IModel=} [properties] Properties to set
+             */
+            function Model(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Model entityId.
+             * @member {string} entityId
+             * @memberof com.antigravity.Model
+             * @instance
+             */
+            Model.prototype.entityId = "";
+
+            /**
+             * Creates a new Model instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel=} [properties] Properties to set
+             * @returns {com.antigravity.Model} Model instance
+             */
+            Model.create = function create(properties) {
+                return new Model(properties);
+            };
+
+            /**
+             * Encodes the specified Model message. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel} message Model message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Model.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.entityId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Model message, length delimited. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel} message Model message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Model.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a Model message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Model} Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Model.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Model();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.entityId = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a Model message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Model} Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Model.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a Model message.
+             * @function verify
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Model.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.entityId != null && message.hasOwnProperty("entityId"))
+                    if (!$util.isString(message.entityId))
+                        return "entityId: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a Model message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Model} Model
+             */
+            Model.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Model)
+                    return object;
+                let message = new $root.com.antigravity.Model();
+                if (object.entityId != null)
+                    message.entityId = String(object.entityId);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a Model message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.Model} message Model
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Model.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.entityId = "";
+                if (message.entityId != null && message.hasOwnProperty("entityId"))
+                    object.entityId = message.entityId;
+                return object;
+            };
+
+            /**
+             * Converts this Model to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Model
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Model.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Model
+             * @function getTypeUrl
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Model.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Model";
+            };
+
+            return Model;
+        })();
+
+        antigravity.DriverModel = (function() {
+
+            /**
+             * Properties of a DriverModel.
+             * @memberof com.antigravity
+             * @interface IDriverModel
+             * @property {com.antigravity.IModel|null} [model] DriverModel model
+             * @property {string|null} [name] DriverModel name
+             * @property {string|null} [nickname] DriverModel nickname
+             */
+
+            /**
+             * Constructs a new DriverModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a DriverModel.
+             * @implements IDriverModel
+             * @constructor
+             * @param {com.antigravity.IDriverModel=} [properties] Properties to set
+             */
+            function DriverModel(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DriverModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.model = null;
+
+            /**
+             * DriverModel name.
+             * @member {string} name
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.name = "";
+
+            /**
+             * DriverModel nickname.
+             * @member {string} nickname
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.nickname = "";
+
+            /**
+             * Creates a new DriverModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {com.antigravity.IDriverModel=} [properties] Properties to set
+             * @returns {com.antigravity.DriverModel} DriverModel instance
+             */
+            DriverModel.create = function create(properties) {
+                return new DriverModel(properties);
+            };
+
+            /**
+             * Encodes the specified DriverModel message. Does not implicitly {@link com.antigravity.DriverModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {com.antigravity.IDriverModel} message DriverModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DriverModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.nickname != null && Object.hasOwnProperty.call(message, "nickname"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.nickname);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DriverModel message, length delimited. Does not implicitly {@link com.antigravity.DriverModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {com.antigravity.IDriverModel} message DriverModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DriverModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DriverModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DriverModel} DriverModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DriverModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DriverModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.nickname = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DriverModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DriverModel} DriverModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DriverModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DriverModel message.
+             * @function verify
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DriverModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.nickname != null && message.hasOwnProperty("nickname"))
+                    if (!$util.isString(message.nickname))
+                        return "nickname: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a DriverModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DriverModel} DriverModel
+             */
+            DriverModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DriverModel)
+                    return object;
+                let message = new $root.com.antigravity.DriverModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.DriverModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.nickname != null)
+                    message.nickname = String(object.nickname);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DriverModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {com.antigravity.DriverModel} message DriverModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DriverModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.nickname = "";
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.nickname != null && message.hasOwnProperty("nickname"))
+                    object.nickname = message.nickname;
+                return object;
+            };
+
+            /**
+             * Converts this DriverModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DriverModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DriverModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.DriverModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DriverModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DriverModel";
+            };
+
+            return DriverModel;
         })();
 
         antigravity.StartRaceRequest = (function() {

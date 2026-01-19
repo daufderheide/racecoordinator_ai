@@ -1,6 +1,9 @@
 syntax = "proto3";
 package com.antigravity;
 
+import "client/race_model.proto";
+import "client/driver_model.proto";
+
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "InitializeRaceProto";
@@ -9,30 +12,6 @@ message InitializeRaceRequest {
   string race_id = 1;
   repeated string driver_ids = 2;
   bool is_demo_mode = 3;
-}
-
-message LaneModel {
-  string background_color = 1;
-  string foreground_color = 2;
-  int32 length = 3;
-}
-
-message TrackModel {
-  string name = 1;
-  string entity_id = 2;
-  repeated LaneModel lanes = 3;
-}
-
-message RaceModel {
-  string name = 1;
-  string entity_id = 2;
-  TrackModel track = 3;
-}
-
-message DriverModel {
-  string name = 1;
-  string nickname = 2;
-  string entity_id = 3;
 }
 
 message InitializeRaceResponse {

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/track_model.proto";
+import "client/model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RaceModelProto";
+
+message RaceModel {
+  Model model = 1;
+  string name = 2;
+  TrackModel track = 3;
+}
