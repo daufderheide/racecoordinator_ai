@@ -1,9 +1,12 @@
 package com.antigravity.race;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class DriverHeatData {
     private RaceParticipant driver;
 
-    private java.util.List<Float> laps = new java.util.ArrayList<>();
+    private ArrayList<Float> laps = new ArrayList<>();
 
     private float bestLapTime = 0.0f;
 
@@ -34,6 +37,7 @@ public class DriverHeatData {
     }
 
     public float getAverageLapTime() {
+        // TODO(aufderheide): Extract the calculation into a utility class
         if (laps.isEmpty()) {
             return 0.0f;
         }
@@ -45,11 +49,12 @@ public class DriverHeatData {
     }
 
     public float getMedianLapTime() {
+        // TODO(aufderheide): Extract the calculation into a utility class
         if (laps.isEmpty()) {
             return 0.0f;
         }
-        java.util.List<Float> sortedLaps = new java.util.ArrayList<>(laps);
-        java.util.Collections.sort(sortedLaps);
+        ArrayList<Float> sortedLaps = new ArrayList<>(laps);
+        Collections.sort(sortedLaps);
         int middle = sortedLaps.size() / 2;
         if (sortedLaps.size() % 2 == 1) {
             return sortedLaps.get(middle);
