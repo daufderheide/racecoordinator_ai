@@ -34,18 +34,14 @@ public class DatabaseService {
         resetSequence(database, "drivers");
 
         List<Driver> initialDrivers = new ArrayList<>();
-        initialDrivers.add(new Driver("Abby", "Angel"));
-        initialDrivers.add(new Driver("Andrea", "The Pants"));
-        initialDrivers.add(new Driver("Austin", "Fart Goblin"));
-        initialDrivers.add(new Driver("Christine", "Peo Fuente"));
-        initialDrivers.add(new Driver("Dave", "Olden McGroin"));
-        initialDrivers.add(new Driver("Gene", "Swamper Gene"));
-        initialDrivers.add(new Driver("Meyer", "Bull Dog"));
-        initialDrivers.add(new Driver("Noah Jack", "Boy Wonder"));
-
-        for (Driver driver : initialDrivers) {
-            driver.setEntityId(getNextSequence(database, "drivers"));
-        }
+        initialDrivers.add(new Driver("Abby", "Angel", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Andrea", "The Pants", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Austin", "Fart Goblin", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Christine", "Peo Fuente", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Dave", "Olden McGroin", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Gene", "Swamper Gene", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Meyer", "Bull Dog", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Noah Jack", "Boy Wonder", getNextSequence(database, "drivers"), null));
 
         driverCollection.insertMany(initialDrivers);
         System.out.println("Drivers reset.");
@@ -61,24 +57,19 @@ public class DatabaseService {
 
         List<Lane> lanes = new ArrayList<>();
         // Client expects: background_color=COLOR, foreground_color=BLACK
-        Lane l1 = new Lane("#ef4444", "black", 100);
-        l1.setEntityId(getNextSequence(database, "lanes"));
+        Lane l1 = new Lane("#ef4444", "black", 100, getNextSequence(database, "lanes"), null);
         lanes.add(l1);
 
-        Lane l2 = new Lane("#ffffff", "black", 100);
-        l2.setEntityId(getNextSequence(database, "lanes"));
+        Lane l2 = new Lane("#ffffff", "black", 100, getNextSequence(database, "lanes"), null);
         lanes.add(l2);
 
-        Lane l3 = new Lane("#3b82f6", "black", 100);
-        l3.setEntityId(getNextSequence(database, "lanes"));
+        Lane l3 = new Lane("#3b82f6", "black", 100, getNextSequence(database, "lanes"), null);
         lanes.add(l3);
 
-        Lane l4 = new Lane("#fbbf24", "black", 100);
-        l4.setEntityId(getNextSequence(database, "lanes"));
+        Lane l4 = new Lane("#fbbf24", "black", 100, getNextSequence(database, "lanes"), null);
         lanes.add(l4);
 
-        Track track = new Track("Bright Plume Raceway", lanes);
-        track.setEntityId(getNextSequence(database, "tracks"));
+        Track track = new Track("Bright Plume Raceway", lanes, getNextSequence(database, "tracks"), null);
 
         trackCollection.insertOne(track);
         System.out.println("Tracks reset.");
@@ -92,9 +83,8 @@ public class DatabaseService {
         // Reset sequence
         resetSequence(database, "races");
 
-        Race race = new Race("Round Robin", track.getEntityId());
-        race.setHeatRotationType(HeatRotationType.RoundRobin);
-        race.setEntityId(getNextSequence(database, "races"));
+        Race race = new Race("Round Robin", track.getEntityId(), HeatRotationType.RoundRobin,
+                getNextSequence(database, "races"), null);
 
         raceCollection.insertOne(race);
         System.out.println("Races reset.");
