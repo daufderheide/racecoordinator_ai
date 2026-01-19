@@ -13,4 +13,5 @@ message FullUpdate {
   RaceModel race = 1;
   repeated DriverModel drivers = 2;
   repeated Heat heats = 3;
+  Heat current_heat = 4;
 }

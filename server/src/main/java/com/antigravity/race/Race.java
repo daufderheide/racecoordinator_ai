@@ -8,11 +8,10 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.NotStarted;
-
+import com.antigravity.handlers.ProtocolHandler;
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
-import com.antigravity.race.handlers.ProtocolHandler;
 
 public class Race {
     // Data based on the race model configuration
@@ -20,6 +19,7 @@ public class Race {
     private Track track;
     private List<RaceParticipant> drivers;
     private List<Heat> heats;
+    private Heat currentHeat;
 
     private ProtocolDelegate protocols;
 
@@ -37,6 +37,7 @@ public class Race {
         DatabaseService dbService = new DatabaseService();
         this.track = dbService.getTrack(database, model.getTrackEntityId());
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
+        this.currentHeat = this.heats.get(0);
 
         this.createProtocols(isDemoMode);
 
@@ -72,7 +73,11 @@ public class Race {
         this.heats = heats;
     }
 
-    public float getSafeRaceTime() {
+    public Heat getCurrentHeat() {
+        return currentHeat;
+    }
+
+    public float getRaceTime() {
         return accumulatedRaceTime;
     }
 
@@ -134,5 +139,9 @@ public class Race {
 
     public void stopProtocols() {
         protocols.stopTimer();
+    }
+
+    public boolean isRacing() {
+        return state instanceof com.antigravity.race.states.Racing;
     }
 }

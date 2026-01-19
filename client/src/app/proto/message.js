@@ -2779,6 +2779,10 @@ export const com = $root.com = (() => {
              * @interface ILap
              * @property {number|null} [lane] Lap lane
              * @property {number|null} [lapTime] Lap lapTime
+             * @property {number|null} [lapNumber] Lap lapNumber
+             * @property {number|null} [averageLapTime] Lap averageLapTime
+             * @property {number|null} [medianLapTime] Lap medianLapTime
+             * @property {number|null} [bestLapTime] Lap bestLapTime
              */
 
             /**
@@ -2813,6 +2817,38 @@ export const com = $root.com = (() => {
             Lap.prototype.lapTime = 0;
 
             /**
+             * Lap lapNumber.
+             * @member {number} lapNumber
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.lapNumber = 0;
+
+            /**
+             * Lap averageLapTime.
+             * @member {number} averageLapTime
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.averageLapTime = 0;
+
+            /**
+             * Lap medianLapTime.
+             * @member {number} medianLapTime
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.medianLapTime = 0;
+
+            /**
+             * Lap bestLapTime.
+             * @member {number} bestLapTime
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.bestLapTime = 0;
+
+            /**
              * Creates a new Lap instance using the specified properties.
              * @function create
              * @memberof com.antigravity.Lap
@@ -2840,6 +2876,14 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
                 if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
                     writer.uint32(/* id 2, wireType 5 =*/21).float(message.lapTime);
+                if (message.lapNumber != null && Object.hasOwnProperty.call(message, "lapNumber"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.lapNumber);
+                if (message.averageLapTime != null && Object.hasOwnProperty.call(message, "averageLapTime"))
+                    writer.uint32(/* id 4, wireType 5 =*/37).float(message.averageLapTime);
+                if (message.medianLapTime != null && Object.hasOwnProperty.call(message, "medianLapTime"))
+                    writer.uint32(/* id 5, wireType 5 =*/45).float(message.medianLapTime);
+                if (message.bestLapTime != null && Object.hasOwnProperty.call(message, "bestLapTime"))
+                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.bestLapTime);
                 return writer;
             };
 
@@ -2884,6 +2928,22 @@ export const com = $root.com = (() => {
                             message.lapTime = reader.float();
                             break;
                         }
+                    case 3: {
+                            message.lapNumber = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.averageLapTime = reader.float();
+                            break;
+                        }
+                    case 5: {
+                            message.medianLapTime = reader.float();
+                            break;
+                        }
+                    case 6: {
+                            message.bestLapTime = reader.float();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -2925,6 +2985,18 @@ export const com = $root.com = (() => {
                 if (message.lapTime != null && message.hasOwnProperty("lapTime"))
                     if (typeof message.lapTime !== "number")
                         return "lapTime: number expected";
+                if (message.lapNumber != null && message.hasOwnProperty("lapNumber"))
+                    if (!$util.isInteger(message.lapNumber))
+                        return "lapNumber: integer expected";
+                if (message.averageLapTime != null && message.hasOwnProperty("averageLapTime"))
+                    if (typeof message.averageLapTime !== "number")
+                        return "averageLapTime: number expected";
+                if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
+                    if (typeof message.medianLapTime !== "number")
+                        return "medianLapTime: number expected";
+                if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
+                    if (typeof message.bestLapTime !== "number")
+                        return "bestLapTime: number expected";
                 return null;
             };
 
@@ -2944,6 +3016,14 @@ export const com = $root.com = (() => {
                     message.lane = object.lane | 0;
                 if (object.lapTime != null)
                     message.lapTime = Number(object.lapTime);
+                if (object.lapNumber != null)
+                    message.lapNumber = object.lapNumber | 0;
+                if (object.averageLapTime != null)
+                    message.averageLapTime = Number(object.averageLapTime);
+                if (object.medianLapTime != null)
+                    message.medianLapTime = Number(object.medianLapTime);
+                if (object.bestLapTime != null)
+                    message.bestLapTime = Number(object.bestLapTime);
                 return message;
             };
 
@@ -2963,11 +3043,23 @@ export const com = $root.com = (() => {
                 if (options.defaults) {
                     object.lane = 0;
                     object.lapTime = 0;
+                    object.lapNumber = 0;
+                    object.averageLapTime = 0;
+                    object.medianLapTime = 0;
+                    object.bestLapTime = 0;
                 }
                 if (message.lane != null && message.hasOwnProperty("lane"))
                     object.lane = message.lane;
                 if (message.lapTime != null && message.hasOwnProperty("lapTime"))
                     object.lapTime = options.json && !isFinite(message.lapTime) ? String(message.lapTime) : message.lapTime;
+                if (message.lapNumber != null && message.hasOwnProperty("lapNumber"))
+                    object.lapNumber = message.lapNumber;
+                if (message.averageLapTime != null && message.hasOwnProperty("averageLapTime"))
+                    object.averageLapTime = options.json && !isFinite(message.averageLapTime) ? String(message.averageLapTime) : message.averageLapTime;
+                if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
+                    object.medianLapTime = options.json && !isFinite(message.medianLapTime) ? String(message.medianLapTime) : message.medianLapTime;
+                if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
+                    object.bestLapTime = options.json && !isFinite(message.bestLapTime) ? String(message.bestLapTime) : message.bestLapTime;
                 return object;
             };
 
@@ -3308,6 +3400,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IRaceModel|null} [race] FullUpdate race
              * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] FullUpdate drivers
              * @property {Array.<com.antigravity.IHeat>|null} [heats] FullUpdate heats
+             * @property {com.antigravity.IHeat|null} [currentHeat] FullUpdate currentHeat
              */
 
             /**
@@ -3352,6 +3445,14 @@ export const com = $root.com = (() => {
             FullUpdate.prototype.heats = $util.emptyArray;
 
             /**
+             * FullUpdate currentHeat.
+             * @member {com.antigravity.IHeat|null|undefined} currentHeat
+             * @memberof com.antigravity.FullUpdate
+             * @instance
+             */
+            FullUpdate.prototype.currentHeat = null;
+
+            /**
              * Creates a new FullUpdate instance using the specified properties.
              * @function create
              * @memberof com.antigravity.FullUpdate
@@ -3383,6 +3484,8 @@ export const com = $root.com = (() => {
                 if (message.heats != null && message.heats.length)
                     for (let i = 0; i < message.heats.length; ++i)
                         $root.com.antigravity.Heat.encode(message.heats[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.currentHeat != null && Object.hasOwnProperty.call(message, "currentHeat"))
+                    $root.com.antigravity.Heat.encode(message.currentHeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 return writer;
             };
 
@@ -3433,6 +3536,10 @@ export const com = $root.com = (() => {
                             if (!(message.heats && message.heats.length))
                                 message.heats = [];
                             message.heats.push($root.com.antigravity.Heat.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    case 4: {
+                            message.currentHeat = $root.com.antigravity.Heat.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -3493,6 +3600,11 @@ export const com = $root.com = (() => {
                             return "heats." + error;
                     }
                 }
+                if (message.currentHeat != null && message.hasOwnProperty("currentHeat")) {
+                    let error = $root.com.antigravity.Heat.verify(message.currentHeat);
+                    if (error)
+                        return "currentHeat." + error;
+                }
                 return null;
             };
 
@@ -3533,6 +3645,11 @@ export const com = $root.com = (() => {
                         message.heats[i] = $root.com.antigravity.Heat.fromObject(object.heats[i]);
                     }
                 }
+                if (object.currentHeat != null) {
+                    if (typeof object.currentHeat !== "object")
+                        throw TypeError(".com.antigravity.FullUpdate.currentHeat: object expected");
+                    message.currentHeat = $root.com.antigravity.Heat.fromObject(object.currentHeat);
+                }
                 return message;
             };
 
@@ -3553,8 +3670,10 @@ export const com = $root.com = (() => {
                     object.drivers = [];
                     object.heats = [];
                 }
-                if (options.defaults)
+                if (options.defaults) {
                     object.race = null;
+                    object.currentHeat = null;
+                }
                 if (message.race != null && message.hasOwnProperty("race"))
                     object.race = $root.com.antigravity.RaceModel.toObject(message.race, options);
                 if (message.drivers && message.drivers.length) {
@@ -3567,6 +3686,8 @@ export const com = $root.com = (() => {
                     for (let j = 0; j < message.heats.length; ++j)
                         object.heats[j] = $root.com.antigravity.Heat.toObject(message.heats[j], options);
                 }
+                if (message.currentHeat != null && message.hasOwnProperty("currentHeat"))
+                    object.currentHeat = $root.com.antigravity.Heat.toObject(message.currentHeat, options);
                 return object;
             };
 
@@ -3606,6 +3727,7 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IHeat
              * @property {Array.<com.antigravity.IDriverHeatData>|null} [heatDrivers] Heat heatDrivers
+             * @property {number|null} [heatNumber] Heat heatNumber
              */
 
             /**
@@ -3631,6 +3753,14 @@ export const com = $root.com = (() => {
              * @instance
              */
             Heat.prototype.heatDrivers = $util.emptyArray;
+
+            /**
+             * Heat heatNumber.
+             * @member {number} heatNumber
+             * @memberof com.antigravity.Heat
+             * @instance
+             */
+            Heat.prototype.heatNumber = 0;
 
             /**
              * Creates a new Heat instance using the specified properties.
@@ -3659,6 +3789,8 @@ export const com = $root.com = (() => {
                 if (message.heatDrivers != null && message.heatDrivers.length)
                     for (let i = 0; i < message.heatDrivers.length; ++i)
                         $root.com.antigravity.DriverHeatData.encode(message.heatDrivers[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.heatNumber != null && Object.hasOwnProperty.call(message, "heatNumber"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.heatNumber);
                 return writer;
             };
 
@@ -3699,6 +3831,10 @@ export const com = $root.com = (() => {
                             if (!(message.heatDrivers && message.heatDrivers.length))
                                 message.heatDrivers = [];
                             message.heatDrivers.push($root.com.antigravity.DriverHeatData.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    case 2: {
+                            message.heatNumber = reader.int32();
                             break;
                         }
                     default:
@@ -3745,6 +3881,9 @@ export const com = $root.com = (() => {
                             return "heatDrivers." + error;
                     }
                 }
+                if (message.heatNumber != null && message.hasOwnProperty("heatNumber"))
+                    if (!$util.isInteger(message.heatNumber))
+                        return "heatNumber: integer expected";
                 return null;
             };
 
@@ -3770,6 +3909,8 @@ export const com = $root.com = (() => {
                         message.heatDrivers[i] = $root.com.antigravity.DriverHeatData.fromObject(object.heatDrivers[i]);
                     }
                 }
+                if (object.heatNumber != null)
+                    message.heatNumber = object.heatNumber | 0;
                 return message;
             };
 
@@ -3788,11 +3929,15 @@ export const com = $root.com = (() => {
                 let object = {};
                 if (options.arrays || options.defaults)
                     object.heatDrivers = [];
+                if (options.defaults)
+                    object.heatNumber = 0;
                 if (message.heatDrivers && message.heatDrivers.length) {
                     object.heatDrivers = [];
                     for (let j = 0; j < message.heatDrivers.length; ++j)
                         object.heatDrivers[j] = $root.com.antigravity.DriverHeatData.toObject(message.heatDrivers[j], options);
                 }
+                if (message.heatNumber != null && message.hasOwnProperty("heatNumber"))
+                    object.heatNumber = message.heatNumber;
                 return object;
             };
 

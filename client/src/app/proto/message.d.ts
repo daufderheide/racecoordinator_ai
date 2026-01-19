@@ -1238,6 +1238,18 @@ export namespace com {
 
             /** Lap lapTime */
             lapTime?: (number|null);
+
+            /** Lap lapNumber */
+            lapNumber?: (number|null);
+
+            /** Lap averageLapTime */
+            averageLapTime?: (number|null);
+
+            /** Lap medianLapTime */
+            medianLapTime?: (number|null);
+
+            /** Lap bestLapTime */
+            bestLapTime?: (number|null);
         }
 
         /** Represents a Lap. */
@@ -1254,6 +1266,18 @@ export namespace com {
 
             /** Lap lapTime. */
             public lapTime: number;
+
+            /** Lap lapNumber. */
+            public lapNumber: number;
+
+            /** Lap averageLapTime. */
+            public averageLapTime: number;
+
+            /** Lap medianLapTime. */
+            public medianLapTime: number;
+
+            /** Lap bestLapTime. */
+            public bestLapTime: number;
 
             /**
              * Creates a new Lap instance using the specified properties.
@@ -1456,6 +1480,9 @@ export namespace com {
 
             /** FullUpdate heats */
             heats?: (com.antigravity.IHeat[]|null);
+
+            /** FullUpdate currentHeat */
+            currentHeat?: (com.antigravity.IHeat|null);
         }
 
         /** Represents a FullUpdate. */
@@ -1475,6 +1502,9 @@ export namespace com {
 
             /** FullUpdate heats. */
             public heats: com.antigravity.IHeat[];
+
+            /** FullUpdate currentHeat. */
+            public currentHeat?: (com.antigravity.IHeat|null);
 
             /**
              * Creates a new FullUpdate instance using the specified properties.
@@ -1559,6 +1589,9 @@ export namespace com {
 
             /** Heat heatDrivers */
             heatDrivers?: (com.antigravity.IDriverHeatData[]|null);
+
+            /** Heat heatNumber */
+            heatNumber?: (number|null);
         }
 
         /** Represents a Heat. */
@@ -1572,6 +1605,9 @@ export namespace com {
 
             /** Heat heatDrivers. */
             public heatDrivers: com.antigravity.IDriverHeatData[];
+
+            /** Heat heatNumber. */
+            public heatNumber: number;
 
             /**
              * Creates a new Heat instance using the specified properties.

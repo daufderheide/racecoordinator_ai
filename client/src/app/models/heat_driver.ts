@@ -1,4 +1,4 @@
-import { calculateAverage, calculateMedian } from "src/app/utils/math";
+
 
 import { RaceParticipant } from "./race-participant";
 import { Driver } from "./driver";
@@ -35,16 +35,29 @@ export class HeatDriver {
         this._medianLapTime = 0;
     }
 
-    addLapTime(lapTime: number): void {
-        this.laps.push(lapTime);
+    addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number): void {
+        const lapIndex = lapNumber - 1;
 
-        if (lapTime < this._bestLapTime || this._bestLapTime === 0) {
-            this._bestLapTime = lapTime;
+        // Fill missing laps with 0
+        while (this.laps.length < lapIndex) {
+            this.laps.push(0);
         }
 
-        this._lastLapTime = lapTime;
-        this._averageLapTime = calculateAverage(this.laps);
-        this._medianLapTime = calculateMedian(this.laps);
+        // Store or update the lap time
+        if (this.laps.length <= lapIndex) {
+            this.laps.push(lapTime);
+        } else {
+            this.laps[lapIndex] = lapTime;
+        }
+
+        this._bestLapTime = bestLapTime;
+        this._averageLapTime = averageLapTime;
+        this._medianLapTime = medianLapTime;
+
+        // Only update lastLapTime if we just updated the latest lap
+        if (lapIndex === this.laps.length - 1) {
+            this._lastLapTime = lapTime;
+        }
     }
 
     get bestLapTime(): number {

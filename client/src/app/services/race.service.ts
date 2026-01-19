@@ -3,6 +3,7 @@ import { Track } from '../models/track';
 import { Driver } from '../models/driver';
 import { Race } from '../models/race';
 import { BehaviorSubject } from 'rxjs';
+import { Heat } from '../models/heat';
 
 @Injectable({
     providedIn: 'root'
@@ -30,14 +31,25 @@ export class RaceService {
         return this.selectedRaceSubject.getValue();
     }
 
-    private heatsSubject = new BehaviorSubject<any[]>([]);
+    private heatsSubject = new BehaviorSubject<Heat[]>([]);
     heats$ = this.heatsSubject.asObservable();
 
-    setHeats(heats: any[]) {
+    setHeats(heats: Heat[]) {
         this.heatsSubject.next(heats);
     }
 
-    getHeats(): any[] {
+    getHeats(): Heat[] {
         return this.heatsSubject.getValue();
+    }
+
+    private currentHeatSubject = new BehaviorSubject<Heat | undefined>(undefined);
+    currentHeat$ = this.currentHeatSubject.asObservable();
+
+    setCurrentHeat(heat: Heat) {
+        this.currentHeatSubject.next(heat);
+    }
+
+    getCurrentHeat(): Heat | undefined {
+        return this.currentHeatSubject.getValue();
     }
 }

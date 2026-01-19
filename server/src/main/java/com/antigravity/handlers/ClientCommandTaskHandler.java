@@ -69,6 +69,7 @@ public class ClientCommandTaskHandler {
                     .setRace(raceProto)
                     .addAllDrivers(driverModels)
                     .addAllHeats(heatProtos)
+                    .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(race.getCurrentHeat()))
                     .build();
 
             com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()

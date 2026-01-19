@@ -9,4 +9,5 @@ option java_outer_classname = "HeatProto";
 
 message Heat {
   repeated DriverHeatData heat_drivers = 1;
+  int32 heat_number = 2;
 }

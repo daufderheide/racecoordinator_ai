@@ -75,6 +75,11 @@ export class RacedayComponent implements OnInit {
                     this.raceService.setHeats(heats);
                 }
 
+                if (update.currentHeat) {
+                    const currentHeat = HeatConverter.fromProto(update.currentHeat);
+                    this.raceService.setCurrentHeat(currentHeat);
+                }
+
                 this.loadRaceData();
             }
         });
@@ -115,7 +120,7 @@ export class RacedayComponent implements OnInit {
             if (this.heat && this.heat.heatDrivers && lap && lap.lane !== null && lap.lane !== undefined) {
                 const driver = this.heat.heatDrivers[lap.lane];
                 if (driver) {
-                    driver.addLapTime(lap.lapTime!);
+                    driver.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
                     this.cdr.detectChanges();
                 }
             }
@@ -155,8 +160,7 @@ export class RacedayComponent implements OnInit {
         if (heats && heats.length > 0) {
             console.log('RacedayComponent: Using heats from server:', heats);
             this.totalHeats = heats.length;
-            // Start with the first heat
-            this.heat = heats[0];
+            this.heat = this.raceService.getCurrentHeat();
             this.cdr.detectChanges();
         } else {
             console.warn('RacedayComponent: No heats available from server.');

@@ -13,6 +13,7 @@ public class HeatConverter {
                 .addAllHeatDrivers(heat.getDrivers().stream()
                         .map(HeatConverter::toProto)
                         .collect(Collectors.toList()))
+                .setHeatNumber(heat.getHeatNumber())
                 .build();
     }
 

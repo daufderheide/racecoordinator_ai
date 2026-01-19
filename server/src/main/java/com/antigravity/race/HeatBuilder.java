@@ -98,7 +98,7 @@ public class HeatBuilder {
                     }
                 }
             }
-            heatList.add(new Heat(heatDrivers));
+            heatList.add(new Heat(h + 1, heatDrivers));
         }
         return heatList;
     }

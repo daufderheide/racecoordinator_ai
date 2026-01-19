@@ -26,7 +26,7 @@ public class Racing implements IRaceState {
 
                     // Broadcast RaceTime message wrapped in RaceData
                     com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
-                            .setTime(race.getSafeRaceTime())
+                            .setTime(race.getRaceTime())
                             .build();
 
                     com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
