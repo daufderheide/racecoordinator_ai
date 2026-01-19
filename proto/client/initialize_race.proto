@@ -16,7 +16,4 @@ message InitializeRaceRequest {
 
 message InitializeRaceResponse {
   bool success = 1;
-  string message = 2;
-  RaceModel race = 3;
-  repeated DriverModel drivers = 4;
 }

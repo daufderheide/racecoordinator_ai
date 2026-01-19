@@ -3,6 +3,7 @@ package com.antigravity;
 
 import "server/race_time.proto";
 import "server/lap.proto";
+import "server/full_update.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -12,5 +13,6 @@ message RaceData {
   oneof data {
     RaceTime race_time = 1;
     Lap lap = 2;
+    FullUpdate full_update = 3;
   }
 }

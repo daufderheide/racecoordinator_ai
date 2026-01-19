@@ -1,9 +1,13 @@
 package com.antigravity.race;
 
 public class DriverHeatData {
-    private RaceParticpant driver;
+    private RaceParticipant driver;
 
-    public DriverHeatData(RaceParticpant driver) {
+    public DriverHeatData(RaceParticipant driver) {
         this.driver = driver;
+    }
+
+    public RaceParticipant getDriver() {
+        return driver;
     }
 }

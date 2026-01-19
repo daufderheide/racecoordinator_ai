@@ -3,7 +3,6 @@ package com.antigravity.race;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.antigravity.race.Heat;
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;
@@ -19,6 +18,7 @@ public class Race {
     // Data based on the race model configuration
     private com.antigravity.models.Race model;
     private Track track;
+    private List<RaceParticipant> drivers;
     private List<Heat> heats;
 
     private ProtocolDelegate protocols;
@@ -27,11 +27,16 @@ public class Race {
     private IRaceState state;
     private float accumulatedRaceTime = 0.0f;
 
-    public Race(MongoDatabase database, com.antigravity.models.Race model, boolean isDemoMode) {
+    public Race(MongoDatabase database,
+            com.antigravity.models.Race model,
+            List<RaceParticipant> drivers,
+            boolean isDemoMode) {
         this.model = model;
+        this.drivers = drivers;
 
         DatabaseService dbService = new DatabaseService();
         this.track = dbService.getTrack(database, model.getTrackEntityId());
+        this.heats = HeatBuilder.buildHeats(this, this.drivers);
 
         this.createProtocols(isDemoMode);
 

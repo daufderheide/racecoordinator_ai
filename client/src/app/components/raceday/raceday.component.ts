@@ -5,10 +5,14 @@ import { HeatDriver } from 'src/app/models/heat_driver';
 import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
 import { Lane } from 'src/app/models/lane';
-import { ColumnDefinition } from './column_definition';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
+import { RaceConverter } from 'src/app/converters/race.converter';
+import { DriverConverter } from 'src/app/converters/driver.converter';
+import { HeatConverter } from 'src/app/converters/heat.converter';
+
+import { ColumnDefinition } from './column_definition';
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -52,7 +56,28 @@ export class RacedayComponent implements OnInit {
         console.log('RacedayComponent: Initializing...');
         this.detectShortcutKey();
         this.updateScale();
-        this.loadRaceData();
+
+        // Listen for FullUpdate to initialize race data
+        this.dataService.getFullUpdate().subscribe(update => {
+            console.log('RacedayComponent: Received FullUpdate:', update);
+            if (update.race) {
+                const race = RaceConverter.fromProto(update.race);
+                let drivers: Driver[] = [];
+                if (update.drivers) {
+                    drivers = update.drivers.map(d => DriverConverter.fromProto(d));
+                }
+
+                this.raceService.setRacingDrivers(drivers);
+                this.raceService.setRace(race);
+
+                if (update.heats) {
+                    const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
+                    this.raceService.setHeats(heats);
+                }
+
+                this.loadRaceData();
+            }
+        });
 
         this.dataService.connectToRaceDataSocket();
         this.dataService.getRaceTime().subscribe(time => {
@@ -114,36 +139,27 @@ export class RacedayComponent implements OnInit {
             this.track = race.track;
             this.initializeHeat();
         } else {
-            const errorMsg = 'Error: No race selected. Please start from setup.';
-            this.errorMessage = errorMsg;
-            console.error(errorMsg);
-            throw new Error(errorMsg);
+            console.log('RacedayComponent: Waiting for race data...');
+            // Do not throw error, wait for FullUpdate
         }
     }
+
+    protected totalHeats: number = 0;
+
+    // ... existing properties ...
 
     private initializeHeat() {
         if (!this.track) return;
 
-        const selectedDrivers = this.raceService.getRacingDrivers();
-        console.log('RacedayComponent: Selected drivers from service:', selectedDrivers);
-
-        if (selectedDrivers.length > 0) {
-            // Use drivers from setup
-            const drivers = selectedDrivers.map(d => new HeatDriver(d));
-
-            // Pad with Empty Lane if needed
-            const emptyLaneName = this.translationService.translate('RD_EMPTY_LANE');
-            while (drivers.length < this.track.lanes.length) {
-                drivers.push(new HeatDriver(new Driver('', emptyLaneName, emptyLaneName)));
-            }
-
-            this.heat = new Heat(1, drivers);
+        const heats = this.raceService.getHeats();
+        if (heats && heats.length > 0) {
+            console.log('RacedayComponent: Using heats from server:', heats);
+            this.totalHeats = heats.length;
+            // Start with the first heat
+            this.heat = heats[0];
             this.cdr.detectChanges();
         } else {
-            const errorMsg = this.translationService.translate('RD_ERROR_NO_DRIVERS');
-            this.errorMessage = errorMsg;
-            this.cdr.detectChanges();
-            throw new Error(errorMsg);
+            console.warn('RacedayComponent: No heats available from server.');
         }
     }
 

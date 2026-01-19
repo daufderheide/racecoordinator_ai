@@ -1,18 +1,16 @@
-package com.antigravity.handlers;
+package com.antigravity.race;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.antigravity.models.Driver;
-import com.antigravity.race.DriverHeatData;
-import com.antigravity.race.Heat;
-import com.antigravity.race.RaceParticpant;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
 
 public class HeatBuilder {
     public static List<Heat> buildHeats(
             Race race,
-            List<RaceParticpant> drivers) {
+            List<RaceParticipant> drivers) {
 
         int numLanes = race.getTrack().getLanes().size();
         switch (race.getRaceModel().getHeatRotationType()) {
@@ -58,7 +56,7 @@ public class HeatBuilder {
     }
 
     private static List<Heat> GetRoundRobinHeats(
-            List<RaceParticpant> drivers,
+            List<RaceParticipant> drivers,
             int numLanes,
             List<Integer> rotationSequence,
             boolean friendly) {
@@ -76,7 +74,7 @@ public class HeatBuilder {
 
             // First put an empty lane everywhere
             for (long laneIdx = 0; laneIdx < numLanes; laneIdx++) {
-                heatDrivers.add(new DriverHeatData(new RaceParticpant(Driver.EMPTY_DRIVER)));
+                heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
             }
 
             // Now use the rotation sequence to fill in the drivers
@@ -95,7 +93,7 @@ public class HeatBuilder {
                                     idx = drivers.size() - (d - numLanes) - 1;
                                 }
                             }
-                            heatDrivers.add(new DriverHeatData(drivers.get(idx)));
+                            heatDrivers.set(lane, new DriverHeatData(drivers.get(idx)));
                         }
                     }
                 }

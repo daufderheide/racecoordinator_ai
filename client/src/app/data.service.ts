@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
+import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs';
 import { com } from './proto/message';
 import { map } from 'rxjs/operators';
 
@@ -16,8 +16,6 @@ export class DataService {
 
   constructor(private http: HttpClient) { }
 
-
-
   getDrivers(): Observable<any[]> {
     return this.http.get<any[]>(this.driversUrl);
   }
@@ -29,8 +27,6 @@ export class DataService {
   getTracks(): Observable<any[]> {
     return this.http.get<any[]>(this.tracksUrl);
   }
-
-
 
   initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<com.antigravity.InitializeRaceResponse> {
     const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
@@ -94,6 +90,7 @@ export class DataService {
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();
+  private fullUpdateSubject = new ReplaySubject<com.antigravity.IFullUpdate>(1);
 
   public connectToRaceDataSocket() {
     if (this.raceDataSocket) {
@@ -115,6 +112,9 @@ export class DataService {
           this.raceTimeSubject.next(raceData.raceTime.time!);
         } else if (raceData.lap) {
           this.lapSubject.next(raceData.lap);
+        } else if (raceData.fullUpdate) {
+          console.log('WS: Received FullUpdate', raceData.fullUpdate);
+          this.fullUpdateSubject.next(raceData.fullUpdate);
         }
       } catch (e) {
         console.error('Error parsing race data message', e);
@@ -131,5 +131,9 @@ export class DataService {
 
   public getLaps(): Observable<com.antigravity.ILap> {
     return this.lapSubject.asObservable();
+  }
+
+  public getFullUpdate(): Observable<com.antigravity.IFullUpdate> {
+    return this.fullUpdateSubject.asObservable();
   }
 }

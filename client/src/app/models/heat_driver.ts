@@ -1,12 +1,13 @@
 import { calculateAverage, calculateMedian } from "src/app/utils/math";
 
+import { RaceParticipant } from "./race-participant";
 import { Driver } from "./driver";
 
 /**
  * Data for a driver in a specific heat.
  */
 export class HeatDriver {
-    readonly driver: Driver;
+    readonly participant: RaceParticipant;
 
     private laps!: number[];
 
@@ -16,9 +17,13 @@ export class HeatDriver {
     private _averageLapTime!: number;
     private _medianLapTime!: number;
 
-    constructor(driver: Driver) {
-        this.driver = driver;
+    constructor(participant: RaceParticipant) {
+        this.participant = participant;
         this.reset();
+    }
+
+    get driver(): Driver {
+        return this.participant.driver;
     }
 
     reset(): void {

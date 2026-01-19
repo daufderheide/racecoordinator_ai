@@ -11,7 +11,7 @@ import com.antigravity.converters.DriverConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.TrackConverter;
 import io.javalin.http.Context;
-import com.antigravity.race.RaceParticpant;
+import com.antigravity.race.RaceParticipant;
 
 import java.util.stream.Collectors;
 
@@ -41,7 +41,12 @@ public class ClientCommandTaskHandler {
             }
 
             // Create the runtime race instance
-            com.antigravity.race.Race race = new com.antigravity.race.Race(database, raceModel,
+            java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
+                    request.getDriverIdsList());
+
+            com.antigravity.race.Race race = new com.antigravity.race.Race(
+                    database, raceModel,
+                    drivers.stream().map(RaceParticipant::new).collect(Collectors.toList()),
                     request.getIsDemoMode());
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
@@ -51,22 +56,29 @@ public class ClientCommandTaskHandler {
 
             com.antigravity.proto.RaceModel raceProto = RaceConverter.toProto(race.getRaceModel(), trackProto);
 
-            java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
-                    request.getDriverIdsList());
-
             java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
             for (com.antigravity.models.Driver driver : drivers) {
                 driverModels.add(DriverConverter.toProto(driver));
             }
 
-            race.setHeats(HeatBuilder.buildHeats(race,
-                    drivers.stream().map(RaceParticpant::new).collect(Collectors.toList())));
+            java.util.List<com.antigravity.proto.Heat> heatProtos = race.getHeats().stream()
+                    .map(com.antigravity.converters.HeatConverter::toProto)
+                    .collect(Collectors.toList());
+
+            com.antigravity.proto.FullUpdate fullUpdate = com.antigravity.proto.FullUpdate.newBuilder()
+                    .setRace(raceProto)
+                    .addAllDrivers(driverModels)
+                    .addAllHeats(heatProtos)
+                    .build();
+
+            com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
+                    .setFullUpdate(fullUpdate)
+                    .build();
+
+            race.broadcast(raceData);
 
             InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
                     .setSuccess(true)
-                    .setMessage("Race initialized successfully")
-                    .setRace(raceProto)
-                    .addAllDrivers(driverModels)
                     .build();
             ctx.contentType("application/octet-stream").result(response.toByteArray());
         } catch (InvalidProtocolBufferException e) {

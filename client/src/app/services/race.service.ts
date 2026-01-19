@@ -29,4 +29,15 @@ export class RaceService {
     getRace(): Race | undefined {
         return this.selectedRaceSubject.getValue();
     }
+
+    private heatsSubject = new BehaviorSubject<any[]>([]);
+    heats$ = this.heatsSubject.asObservable();
+
+    setHeats(heats: any[]) {
+        this.heatsSubject.next(heats);
+    }
+
+    getHeats(): any[] {
+        return this.heatsSubject.getValue();
+    }
 }

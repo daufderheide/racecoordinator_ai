@@ -301,9 +301,6 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IInitializeRaceResponse
              * @property {boolean|null} [success] InitializeRaceResponse success
-             * @property {string|null} [message] InitializeRaceResponse message
-             * @property {com.antigravity.IRaceModel|null} [race] InitializeRaceResponse race
-             * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] InitializeRaceResponse drivers
              */
 
             /**
@@ -315,7 +312,6 @@ export const com = $root.com = (() => {
              * @param {com.antigravity.IInitializeRaceResponse=} [properties] Properties to set
              */
             function InitializeRaceResponse(properties) {
-                this.drivers = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -329,30 +325,6 @@ export const com = $root.com = (() => {
              * @instance
              */
             InitializeRaceResponse.prototype.success = false;
-
-            /**
-             * InitializeRaceResponse message.
-             * @member {string} message
-             * @memberof com.antigravity.InitializeRaceResponse
-             * @instance
-             */
-            InitializeRaceResponse.prototype.message = "";
-
-            /**
-             * InitializeRaceResponse race.
-             * @member {com.antigravity.IRaceModel|null|undefined} race
-             * @memberof com.antigravity.InitializeRaceResponse
-             * @instance
-             */
-            InitializeRaceResponse.prototype.race = null;
-
-            /**
-             * InitializeRaceResponse drivers.
-             * @member {Array.<com.antigravity.IDriverModel>} drivers
-             * @memberof com.antigravity.InitializeRaceResponse
-             * @instance
-             */
-            InitializeRaceResponse.prototype.drivers = $util.emptyArray;
 
             /**
              * Creates a new InitializeRaceResponse instance using the specified properties.
@@ -380,13 +352,6 @@ export const com = $root.com = (() => {
                     writer = $Writer.create();
                 if (message.success != null && Object.hasOwnProperty.call(message, "success"))
                     writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
-                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
-                if (message.race != null && Object.hasOwnProperty.call(message, "race"))
-                    $root.com.antigravity.RaceModel.encode(message.race, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                if (message.drivers != null && message.drivers.length)
-                    for (let i = 0; i < message.drivers.length; ++i)
-                        $root.com.antigravity.DriverModel.encode(message.drivers[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 return writer;
             };
 
@@ -427,20 +392,6 @@ export const com = $root.com = (() => {
                             message.success = reader.bool();
                             break;
                         }
-                    case 2: {
-                            message.message = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.race = $root.com.antigravity.RaceModel.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 4: {
-                            if (!(message.drivers && message.drivers.length))
-                                message.drivers = [];
-                            message.drivers.push($root.com.antigravity.DriverModel.decode(reader, reader.uint32()));
-                            break;
-                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -479,23 +430,6 @@ export const com = $root.com = (() => {
                 if (message.success != null && message.hasOwnProperty("success"))
                     if (typeof message.success !== "boolean")
                         return "success: boolean expected";
-                if (message.message != null && message.hasOwnProperty("message"))
-                    if (!$util.isString(message.message))
-                        return "message: string expected";
-                if (message.race != null && message.hasOwnProperty("race")) {
-                    let error = $root.com.antigravity.RaceModel.verify(message.race);
-                    if (error)
-                        return "race." + error;
-                }
-                if (message.drivers != null && message.hasOwnProperty("drivers")) {
-                    if (!Array.isArray(message.drivers))
-                        return "drivers: array expected";
-                    for (let i = 0; i < message.drivers.length; ++i) {
-                        let error = $root.com.antigravity.DriverModel.verify(message.drivers[i]);
-                        if (error)
-                            return "drivers." + error;
-                    }
-                }
                 return null;
             };
 
@@ -513,23 +447,6 @@ export const com = $root.com = (() => {
                 let message = new $root.com.antigravity.InitializeRaceResponse();
                 if (object.success != null)
                     message.success = Boolean(object.success);
-                if (object.message != null)
-                    message.message = String(object.message);
-                if (object.race != null) {
-                    if (typeof object.race !== "object")
-                        throw TypeError(".com.antigravity.InitializeRaceResponse.race: object expected");
-                    message.race = $root.com.antigravity.RaceModel.fromObject(object.race);
-                }
-                if (object.drivers) {
-                    if (!Array.isArray(object.drivers))
-                        throw TypeError(".com.antigravity.InitializeRaceResponse.drivers: array expected");
-                    message.drivers = [];
-                    for (let i = 0; i < object.drivers.length; ++i) {
-                        if (typeof object.drivers[i] !== "object")
-                            throw TypeError(".com.antigravity.InitializeRaceResponse.drivers: object expected");
-                        message.drivers[i] = $root.com.antigravity.DriverModel.fromObject(object.drivers[i]);
-                    }
-                }
                 return message;
             };
 
@@ -546,24 +463,10 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.arrays || options.defaults)
-                    object.drivers = [];
-                if (options.defaults) {
+                if (options.defaults)
                     object.success = false;
-                    object.message = "";
-                    object.race = null;
-                }
                 if (message.success != null && message.hasOwnProperty("success"))
                     object.success = message.success;
-                if (message.message != null && message.hasOwnProperty("message"))
-                    object.message = message.message;
-                if (message.race != null && message.hasOwnProperty("race"))
-                    object.race = $root.com.antigravity.RaceModel.toObject(message.race, options);
-                if (message.drivers && message.drivers.length) {
-                    object.drivers = [];
-                    for (let j = 0; j < message.drivers.length; ++j)
-                        object.drivers[j] = $root.com.antigravity.DriverModel.toObject(message.drivers[j], options);
-                }
                 return object;
             };
 
@@ -3105,6 +3008,7 @@ export const com = $root.com = (() => {
              * @interface IRaceData
              * @property {com.antigravity.IRaceTime|null} [raceTime] RaceData raceTime
              * @property {com.antigravity.ILap|null} [lap] RaceData lap
+             * @property {com.antigravity.IFullUpdate|null} [fullUpdate] RaceData fullUpdate
              */
 
             /**
@@ -3138,17 +3042,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.lap = null;
 
+            /**
+             * RaceData fullUpdate.
+             * @member {com.antigravity.IFullUpdate|null|undefined} fullUpdate
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.fullUpdate = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|undefined} data
+             * @member {"raceTime"|"lap"|"fullUpdate"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "fullUpdate"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -3180,6 +3092,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.RaceTime.encode(message.raceTime, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
                 if (message.lap != null && Object.hasOwnProperty.call(message, "lap"))
                     $root.com.antigravity.Lap.encode(message.lap, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                if (message.fullUpdate != null && Object.hasOwnProperty.call(message, "fullUpdate"))
+                    $root.com.antigravity.FullUpdate.encode(message.fullUpdate, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
                 return writer;
             };
 
@@ -3222,6 +3136,10 @@ export const com = $root.com = (() => {
                         }
                     case 2: {
                             message.lap = $root.com.antigravity.Lap.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 3: {
+                            message.fullUpdate = $root.com.antigravity.FullUpdate.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -3278,6 +3196,16 @@ export const com = $root.com = (() => {
                             return "lap." + error;
                     }
                 }
+                if (message.fullUpdate != null && message.hasOwnProperty("fullUpdate")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.FullUpdate.verify(message.fullUpdate);
+                        if (error)
+                            return "fullUpdate." + error;
+                    }
+                }
                 return null;
             };
 
@@ -3302,6 +3230,11 @@ export const com = $root.com = (() => {
                     if (typeof object.lap !== "object")
                         throw TypeError(".com.antigravity.RaceData.lap: object expected");
                     message.lap = $root.com.antigravity.Lap.fromObject(object.lap);
+                }
+                if (object.fullUpdate != null) {
+                    if (typeof object.fullUpdate !== "object")
+                        throw TypeError(".com.antigravity.RaceData.fullUpdate: object expected");
+                    message.fullUpdate = $root.com.antigravity.FullUpdate.fromObject(object.fullUpdate);
                 }
                 return message;
             };
@@ -3328,6 +3261,11 @@ export const com = $root.com = (() => {
                     object.lap = $root.com.antigravity.Lap.toObject(message.lap, options);
                     if (options.oneofs)
                         object.data = "lap";
+                }
+                if (message.fullUpdate != null && message.hasOwnProperty("fullUpdate")) {
+                    object.fullUpdate = $root.com.antigravity.FullUpdate.toObject(message.fullUpdate, options);
+                    if (options.oneofs)
+                        object.data = "fullUpdate";
                 }
                 return object;
             };
@@ -3359,6 +3297,952 @@ export const com = $root.com = (() => {
             };
 
             return RaceData;
+        })();
+
+        antigravity.FullUpdate = (function() {
+
+            /**
+             * Properties of a FullUpdate.
+             * @memberof com.antigravity
+             * @interface IFullUpdate
+             * @property {com.antigravity.IRaceModel|null} [race] FullUpdate race
+             * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] FullUpdate drivers
+             * @property {Array.<com.antigravity.IHeat>|null} [heats] FullUpdate heats
+             */
+
+            /**
+             * Constructs a new FullUpdate.
+             * @memberof com.antigravity
+             * @classdesc Represents a FullUpdate.
+             * @implements IFullUpdate
+             * @constructor
+             * @param {com.antigravity.IFullUpdate=} [properties] Properties to set
+             */
+            function FullUpdate(properties) {
+                this.drivers = [];
+                this.heats = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * FullUpdate race.
+             * @member {com.antigravity.IRaceModel|null|undefined} race
+             * @memberof com.antigravity.FullUpdate
+             * @instance
+             */
+            FullUpdate.prototype.race = null;
+
+            /**
+             * FullUpdate drivers.
+             * @member {Array.<com.antigravity.IDriverModel>} drivers
+             * @memberof com.antigravity.FullUpdate
+             * @instance
+             */
+            FullUpdate.prototype.drivers = $util.emptyArray;
+
+            /**
+             * FullUpdate heats.
+             * @member {Array.<com.antigravity.IHeat>} heats
+             * @memberof com.antigravity.FullUpdate
+             * @instance
+             */
+            FullUpdate.prototype.heats = $util.emptyArray;
+
+            /**
+             * Creates a new FullUpdate instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {com.antigravity.IFullUpdate=} [properties] Properties to set
+             * @returns {com.antigravity.FullUpdate} FullUpdate instance
+             */
+            FullUpdate.create = function create(properties) {
+                return new FullUpdate(properties);
+            };
+
+            /**
+             * Encodes the specified FullUpdate message. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {com.antigravity.IFullUpdate} message FullUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            FullUpdate.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.race != null && Object.hasOwnProperty.call(message, "race"))
+                    $root.com.antigravity.RaceModel.encode(message.race, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.drivers != null && message.drivers.length)
+                    for (let i = 0; i < message.drivers.length; ++i)
+                        $root.com.antigravity.DriverModel.encode(message.drivers[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                if (message.heats != null && message.heats.length)
+                    for (let i = 0; i < message.heats.length; ++i)
+                        $root.com.antigravity.Heat.encode(message.heats[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified FullUpdate message, length delimited. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {com.antigravity.IFullUpdate} message FullUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            FullUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a FullUpdate message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.FullUpdate} FullUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            FullUpdate.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.FullUpdate();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.race = $root.com.antigravity.RaceModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            if (!(message.drivers && message.drivers.length))
+                                message.drivers = [];
+                            message.drivers.push($root.com.antigravity.DriverModel.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    case 3: {
+                            if (!(message.heats && message.heats.length))
+                                message.heats = [];
+                            message.heats.push($root.com.antigravity.Heat.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a FullUpdate message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.FullUpdate} FullUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            FullUpdate.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a FullUpdate message.
+             * @function verify
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            FullUpdate.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.race != null && message.hasOwnProperty("race")) {
+                    let error = $root.com.antigravity.RaceModel.verify(message.race);
+                    if (error)
+                        return "race." + error;
+                }
+                if (message.drivers != null && message.hasOwnProperty("drivers")) {
+                    if (!Array.isArray(message.drivers))
+                        return "drivers: array expected";
+                    for (let i = 0; i < message.drivers.length; ++i) {
+                        let error = $root.com.antigravity.DriverModel.verify(message.drivers[i]);
+                        if (error)
+                            return "drivers." + error;
+                    }
+                }
+                if (message.heats != null && message.hasOwnProperty("heats")) {
+                    if (!Array.isArray(message.heats))
+                        return "heats: array expected";
+                    for (let i = 0; i < message.heats.length; ++i) {
+                        let error = $root.com.antigravity.Heat.verify(message.heats[i]);
+                        if (error)
+                            return "heats." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a FullUpdate message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.FullUpdate} FullUpdate
+             */
+            FullUpdate.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.FullUpdate)
+                    return object;
+                let message = new $root.com.antigravity.FullUpdate();
+                if (object.race != null) {
+                    if (typeof object.race !== "object")
+                        throw TypeError(".com.antigravity.FullUpdate.race: object expected");
+                    message.race = $root.com.antigravity.RaceModel.fromObject(object.race);
+                }
+                if (object.drivers) {
+                    if (!Array.isArray(object.drivers))
+                        throw TypeError(".com.antigravity.FullUpdate.drivers: array expected");
+                    message.drivers = [];
+                    for (let i = 0; i < object.drivers.length; ++i) {
+                        if (typeof object.drivers[i] !== "object")
+                            throw TypeError(".com.antigravity.FullUpdate.drivers: object expected");
+                        message.drivers[i] = $root.com.antigravity.DriverModel.fromObject(object.drivers[i]);
+                    }
+                }
+                if (object.heats) {
+                    if (!Array.isArray(object.heats))
+                        throw TypeError(".com.antigravity.FullUpdate.heats: array expected");
+                    message.heats = [];
+                    for (let i = 0; i < object.heats.length; ++i) {
+                        if (typeof object.heats[i] !== "object")
+                            throw TypeError(".com.antigravity.FullUpdate.heats: object expected");
+                        message.heats[i] = $root.com.antigravity.Heat.fromObject(object.heats[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a FullUpdate message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {com.antigravity.FullUpdate} message FullUpdate
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            FullUpdate.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults) {
+                    object.drivers = [];
+                    object.heats = [];
+                }
+                if (options.defaults)
+                    object.race = null;
+                if (message.race != null && message.hasOwnProperty("race"))
+                    object.race = $root.com.antigravity.RaceModel.toObject(message.race, options);
+                if (message.drivers && message.drivers.length) {
+                    object.drivers = [];
+                    for (let j = 0; j < message.drivers.length; ++j)
+                        object.drivers[j] = $root.com.antigravity.DriverModel.toObject(message.drivers[j], options);
+                }
+                if (message.heats && message.heats.length) {
+                    object.heats = [];
+                    for (let j = 0; j < message.heats.length; ++j)
+                        object.heats[j] = $root.com.antigravity.Heat.toObject(message.heats[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this FullUpdate to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.FullUpdate
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            FullUpdate.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for FullUpdate
+             * @function getTypeUrl
+             * @memberof com.antigravity.FullUpdate
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            FullUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.FullUpdate";
+            };
+
+            return FullUpdate;
+        })();
+
+        antigravity.Heat = (function() {
+
+            /**
+             * Properties of a Heat.
+             * @memberof com.antigravity
+             * @interface IHeat
+             * @property {Array.<com.antigravity.IDriverHeatData>|null} [heatDrivers] Heat heatDrivers
+             */
+
+            /**
+             * Constructs a new Heat.
+             * @memberof com.antigravity
+             * @classdesc Represents a Heat.
+             * @implements IHeat
+             * @constructor
+             * @param {com.antigravity.IHeat=} [properties] Properties to set
+             */
+            function Heat(properties) {
+                this.heatDrivers = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Heat heatDrivers.
+             * @member {Array.<com.antigravity.IDriverHeatData>} heatDrivers
+             * @memberof com.antigravity.Heat
+             * @instance
+             */
+            Heat.prototype.heatDrivers = $util.emptyArray;
+
+            /**
+             * Creates a new Heat instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {com.antigravity.IHeat=} [properties] Properties to set
+             * @returns {com.antigravity.Heat} Heat instance
+             */
+            Heat.create = function create(properties) {
+                return new Heat(properties);
+            };
+
+            /**
+             * Encodes the specified Heat message. Does not implicitly {@link com.antigravity.Heat.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {com.antigravity.IHeat} message Heat message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Heat.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.heatDrivers != null && message.heatDrivers.length)
+                    for (let i = 0; i < message.heatDrivers.length; ++i)
+                        $root.com.antigravity.DriverHeatData.encode(message.heatDrivers[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Heat message, length delimited. Does not implicitly {@link com.antigravity.Heat.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {com.antigravity.IHeat} message Heat message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Heat.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a Heat message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Heat} Heat
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Heat.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Heat();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            if (!(message.heatDrivers && message.heatDrivers.length))
+                                message.heatDrivers = [];
+                            message.heatDrivers.push($root.com.antigravity.DriverHeatData.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a Heat message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Heat} Heat
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Heat.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a Heat message.
+             * @function verify
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Heat.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.heatDrivers != null && message.hasOwnProperty("heatDrivers")) {
+                    if (!Array.isArray(message.heatDrivers))
+                        return "heatDrivers: array expected";
+                    for (let i = 0; i < message.heatDrivers.length; ++i) {
+                        let error = $root.com.antigravity.DriverHeatData.verify(message.heatDrivers[i]);
+                        if (error)
+                            return "heatDrivers." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a Heat message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Heat} Heat
+             */
+            Heat.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Heat)
+                    return object;
+                let message = new $root.com.antigravity.Heat();
+                if (object.heatDrivers) {
+                    if (!Array.isArray(object.heatDrivers))
+                        throw TypeError(".com.antigravity.Heat.heatDrivers: array expected");
+                    message.heatDrivers = [];
+                    for (let i = 0; i < object.heatDrivers.length; ++i) {
+                        if (typeof object.heatDrivers[i] !== "object")
+                            throw TypeError(".com.antigravity.Heat.heatDrivers: object expected");
+                        message.heatDrivers[i] = $root.com.antigravity.DriverHeatData.fromObject(object.heatDrivers[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a Heat message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {com.antigravity.Heat} message Heat
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Heat.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.heatDrivers = [];
+                if (message.heatDrivers && message.heatDrivers.length) {
+                    object.heatDrivers = [];
+                    for (let j = 0; j < message.heatDrivers.length; ++j)
+                        object.heatDrivers[j] = $root.com.antigravity.DriverHeatData.toObject(message.heatDrivers[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this Heat to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Heat
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Heat.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Heat
+             * @function getTypeUrl
+             * @memberof com.antigravity.Heat
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Heat.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Heat";
+            };
+
+            return Heat;
+        })();
+
+        antigravity.DriverHeatData = (function() {
+
+            /**
+             * Properties of a DriverHeatData.
+             * @memberof com.antigravity
+             * @interface IDriverHeatData
+             * @property {com.antigravity.IRaceParticipant|null} [driver] DriverHeatData driver
+             */
+
+            /**
+             * Constructs a new DriverHeatData.
+             * @memberof com.antigravity
+             * @classdesc Represents a DriverHeatData.
+             * @implements IDriverHeatData
+             * @constructor
+             * @param {com.antigravity.IDriverHeatData=} [properties] Properties to set
+             */
+            function DriverHeatData(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DriverHeatData driver.
+             * @member {com.antigravity.IRaceParticipant|null|undefined} driver
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.driver = null;
+
+            /**
+             * Creates a new DriverHeatData instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {com.antigravity.IDriverHeatData=} [properties] Properties to set
+             * @returns {com.antigravity.DriverHeatData} DriverHeatData instance
+             */
+            DriverHeatData.create = function create(properties) {
+                return new DriverHeatData(properties);
+            };
+
+            /**
+             * Encodes the specified DriverHeatData message. Does not implicitly {@link com.antigravity.DriverHeatData.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {com.antigravity.IDriverHeatData} message DriverHeatData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DriverHeatData.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.driver != null && Object.hasOwnProperty.call(message, "driver"))
+                    $root.com.antigravity.RaceParticipant.encode(message.driver, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DriverHeatData message, length delimited. Does not implicitly {@link com.antigravity.DriverHeatData.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {com.antigravity.IDriverHeatData} message DriverHeatData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DriverHeatData.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DriverHeatData message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DriverHeatData} DriverHeatData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DriverHeatData.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DriverHeatData();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.driver = $root.com.antigravity.RaceParticipant.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DriverHeatData message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DriverHeatData} DriverHeatData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DriverHeatData.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DriverHeatData message.
+             * @function verify
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DriverHeatData.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.driver != null && message.hasOwnProperty("driver")) {
+                    let error = $root.com.antigravity.RaceParticipant.verify(message.driver);
+                    if (error)
+                        return "driver." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates a DriverHeatData message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DriverHeatData} DriverHeatData
+             */
+            DriverHeatData.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DriverHeatData)
+                    return object;
+                let message = new $root.com.antigravity.DriverHeatData();
+                if (object.driver != null) {
+                    if (typeof object.driver !== "object")
+                        throw TypeError(".com.antigravity.DriverHeatData.driver: object expected");
+                    message.driver = $root.com.antigravity.RaceParticipant.fromObject(object.driver);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DriverHeatData message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {com.antigravity.DriverHeatData} message DriverHeatData
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DriverHeatData.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.driver = null;
+                if (message.driver != null && message.hasOwnProperty("driver"))
+                    object.driver = $root.com.antigravity.RaceParticipant.toObject(message.driver, options);
+                return object;
+            };
+
+            /**
+             * Converts this DriverHeatData to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DriverHeatData.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DriverHeatData
+             * @function getTypeUrl
+             * @memberof com.antigravity.DriverHeatData
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DriverHeatData.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DriverHeatData";
+            };
+
+            return DriverHeatData;
+        })();
+
+        antigravity.RaceParticipant = (function() {
+
+            /**
+             * Properties of a RaceParticipant.
+             * @memberof com.antigravity
+             * @interface IRaceParticipant
+             * @property {com.antigravity.IDriverModel|null} [driver] RaceParticipant driver
+             */
+
+            /**
+             * Constructs a new RaceParticipant.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceParticipant.
+             * @implements IRaceParticipant
+             * @constructor
+             * @param {com.antigravity.IRaceParticipant=} [properties] Properties to set
+             */
+            function RaceParticipant(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceParticipant driver.
+             * @member {com.antigravity.IDriverModel|null|undefined} driver
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.driver = null;
+
+            /**
+             * Creates a new RaceParticipant instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {com.antigravity.IRaceParticipant=} [properties] Properties to set
+             * @returns {com.antigravity.RaceParticipant} RaceParticipant instance
+             */
+            RaceParticipant.create = function create(properties) {
+                return new RaceParticipant(properties);
+            };
+
+            /**
+             * Encodes the specified RaceParticipant message. Does not implicitly {@link com.antigravity.RaceParticipant.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {com.antigravity.IRaceParticipant} message RaceParticipant message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceParticipant.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.driver != null && Object.hasOwnProperty.call(message, "driver"))
+                    $root.com.antigravity.DriverModel.encode(message.driver, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceParticipant message, length delimited. Does not implicitly {@link com.antigravity.RaceParticipant.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {com.antigravity.IRaceParticipant} message RaceParticipant message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceParticipant.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceParticipant message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceParticipant} RaceParticipant
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceParticipant.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceParticipant();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.driver = $root.com.antigravity.DriverModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceParticipant message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceParticipant} RaceParticipant
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceParticipant.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceParticipant message.
+             * @function verify
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceParticipant.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.driver != null && message.hasOwnProperty("driver")) {
+                    let error = $root.com.antigravity.DriverModel.verify(message.driver);
+                    if (error)
+                        return "driver." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates a RaceParticipant message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceParticipant} RaceParticipant
+             */
+            RaceParticipant.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceParticipant)
+                    return object;
+                let message = new $root.com.antigravity.RaceParticipant();
+                if (object.driver != null) {
+                    if (typeof object.driver !== "object")
+                        throw TypeError(".com.antigravity.RaceParticipant.driver: object expected");
+                    message.driver = $root.com.antigravity.DriverModel.fromObject(object.driver);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceParticipant message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {com.antigravity.RaceParticipant} message RaceParticipant
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceParticipant.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.driver = null;
+                if (message.driver != null && message.hasOwnProperty("driver"))
+                    object.driver = $root.com.antigravity.DriverModel.toObject(message.driver, options);
+                return object;
+            };
+
+            /**
+             * Converts this RaceParticipant to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceParticipant.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceParticipant
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceParticipant
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceParticipant.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceParticipant";
+            };
+
+            return RaceParticipant;
         })();
 
         return antigravity;

@@ -8,4 +8,8 @@ public class Heat {
     public Heat(List<DriverHeatData> drivers) {
         this.drivers = drivers;
     }
+
+    public List<DriverHeatData> getDrivers() {
+        return drivers;
+    }
 }

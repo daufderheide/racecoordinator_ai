@@ -120,15 +120,6 @@ export namespace com {
 
             /** InitializeRaceResponse success */
             success?: (boolean|null);
-
-            /** InitializeRaceResponse message */
-            message?: (string|null);
-
-            /** InitializeRaceResponse race */
-            race?: (com.antigravity.IRaceModel|null);
-
-            /** InitializeRaceResponse drivers */
-            drivers?: (com.antigravity.IDriverModel[]|null);
         }
 
         /** Represents an InitializeRaceResponse. */
@@ -142,15 +133,6 @@ export namespace com {
 
             /** InitializeRaceResponse success. */
             public success: boolean;
-
-            /** InitializeRaceResponse message. */
-            public message: string;
-
-            /** InitializeRaceResponse race. */
-            public race?: (com.antigravity.IRaceModel|null);
-
-            /** InitializeRaceResponse drivers. */
-            public drivers: com.antigravity.IDriverModel[];
 
             /**
              * Creates a new InitializeRaceResponse instance using the specified properties.
@@ -1359,6 +1341,9 @@ export namespace com {
 
             /** RaceData lap */
             lap?: (com.antigravity.ILap|null);
+
+            /** RaceData fullUpdate */
+            fullUpdate?: (com.antigravity.IFullUpdate|null);
         }
 
         /** Represents a RaceData. */
@@ -1376,8 +1361,11 @@ export namespace com {
             /** RaceData lap. */
             public lap?: (com.antigravity.ILap|null);
 
+            /** RaceData fullUpdate. */
+            public fullUpdate?: (com.antigravity.IFullUpdate|null);
+
             /** RaceData data. */
-            public data?: ("raceTime"|"lap");
+            public data?: ("raceTime"|"lap"|"fullUpdate");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -1451,6 +1439,406 @@ export namespace com {
 
             /**
              * Gets the default type url for RaceData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a FullUpdate. */
+        interface IFullUpdate {
+
+            /** FullUpdate race */
+            race?: (com.antigravity.IRaceModel|null);
+
+            /** FullUpdate drivers */
+            drivers?: (com.antigravity.IDriverModel[]|null);
+
+            /** FullUpdate heats */
+            heats?: (com.antigravity.IHeat[]|null);
+        }
+
+        /** Represents a FullUpdate. */
+        class FullUpdate implements IFullUpdate {
+
+            /**
+             * Constructs a new FullUpdate.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IFullUpdate);
+
+            /** FullUpdate race. */
+            public race?: (com.antigravity.IRaceModel|null);
+
+            /** FullUpdate drivers. */
+            public drivers: com.antigravity.IDriverModel[];
+
+            /** FullUpdate heats. */
+            public heats: com.antigravity.IHeat[];
+
+            /**
+             * Creates a new FullUpdate instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns FullUpdate instance
+             */
+            public static create(properties?: com.antigravity.IFullUpdate): com.antigravity.FullUpdate;
+
+            /**
+             * Encodes the specified FullUpdate message. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * @param message FullUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IFullUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified FullUpdate message, length delimited. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * @param message FullUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IFullUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a FullUpdate message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns FullUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.FullUpdate;
+
+            /**
+             * Decodes a FullUpdate message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns FullUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.FullUpdate;
+
+            /**
+             * Verifies a FullUpdate message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a FullUpdate message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns FullUpdate
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.FullUpdate;
+
+            /**
+             * Creates a plain object from a FullUpdate message. Also converts values to other types if specified.
+             * @param message FullUpdate
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.FullUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this FullUpdate to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for FullUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a Heat. */
+        interface IHeat {
+
+            /** Heat heatDrivers */
+            heatDrivers?: (com.antigravity.IDriverHeatData[]|null);
+        }
+
+        /** Represents a Heat. */
+        class Heat implements IHeat {
+
+            /**
+             * Constructs a new Heat.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IHeat);
+
+            /** Heat heatDrivers. */
+            public heatDrivers: com.antigravity.IDriverHeatData[];
+
+            /**
+             * Creates a new Heat instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Heat instance
+             */
+            public static create(properties?: com.antigravity.IHeat): com.antigravity.Heat;
+
+            /**
+             * Encodes the specified Heat message. Does not implicitly {@link com.antigravity.Heat.verify|verify} messages.
+             * @param message Heat message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IHeat, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Heat message, length delimited. Does not implicitly {@link com.antigravity.Heat.verify|verify} messages.
+             * @param message Heat message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IHeat, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Heat message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Heat
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Heat;
+
+            /**
+             * Decodes a Heat message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Heat
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Heat;
+
+            /**
+             * Verifies a Heat message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Heat message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Heat
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.Heat;
+
+            /**
+             * Creates a plain object from a Heat message. Also converts values to other types if specified.
+             * @param message Heat
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.Heat, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Heat to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Heat
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DriverHeatData. */
+        interface IDriverHeatData {
+
+            /** DriverHeatData driver */
+            driver?: (com.antigravity.IRaceParticipant|null);
+        }
+
+        /** Represents a DriverHeatData. */
+        class DriverHeatData implements IDriverHeatData {
+
+            /**
+             * Constructs a new DriverHeatData.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDriverHeatData);
+
+            /** DriverHeatData driver. */
+            public driver?: (com.antigravity.IRaceParticipant|null);
+
+            /**
+             * Creates a new DriverHeatData instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DriverHeatData instance
+             */
+            public static create(properties?: com.antigravity.IDriverHeatData): com.antigravity.DriverHeatData;
+
+            /**
+             * Encodes the specified DriverHeatData message. Does not implicitly {@link com.antigravity.DriverHeatData.verify|verify} messages.
+             * @param message DriverHeatData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDriverHeatData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DriverHeatData message, length delimited. Does not implicitly {@link com.antigravity.DriverHeatData.verify|verify} messages.
+             * @param message DriverHeatData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDriverHeatData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DriverHeatData message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DriverHeatData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DriverHeatData;
+
+            /**
+             * Decodes a DriverHeatData message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DriverHeatData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DriverHeatData;
+
+            /**
+             * Verifies a DriverHeatData message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DriverHeatData message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DriverHeatData
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DriverHeatData;
+
+            /**
+             * Creates a plain object from a DriverHeatData message. Also converts values to other types if specified.
+             * @param message DriverHeatData
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DriverHeatData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DriverHeatData to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DriverHeatData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RaceParticipant. */
+        interface IRaceParticipant {
+
+            /** RaceParticipant driver */
+            driver?: (com.antigravity.IDriverModel|null);
+        }
+
+        /** Represents a RaceParticipant. */
+        class RaceParticipant implements IRaceParticipant {
+
+            /**
+             * Constructs a new RaceParticipant.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRaceParticipant);
+
+            /** RaceParticipant driver. */
+            public driver?: (com.antigravity.IDriverModel|null);
+
+            /**
+             * Creates a new RaceParticipant instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RaceParticipant instance
+             */
+            public static create(properties?: com.antigravity.IRaceParticipant): com.antigravity.RaceParticipant;
+
+            /**
+             * Encodes the specified RaceParticipant message. Does not implicitly {@link com.antigravity.RaceParticipant.verify|verify} messages.
+             * @param message RaceParticipant message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRaceParticipant, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RaceParticipant message, length delimited. Does not implicitly {@link com.antigravity.RaceParticipant.verify|verify} messages.
+             * @param message RaceParticipant message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRaceParticipant, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RaceParticipant message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RaceParticipant
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RaceParticipant;
+
+            /**
+             * Decodes a RaceParticipant message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RaceParticipant
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RaceParticipant;
+
+            /**
+             * Verifies a RaceParticipant message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RaceParticipant message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RaceParticipant
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceParticipant;
+
+            /**
+             * Creates a plain object from a RaceParticipant message. Also converts values to other types if specified.
+             * @param message RaceParticipant
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RaceParticipant, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RaceParticipant to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RaceParticipant
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
