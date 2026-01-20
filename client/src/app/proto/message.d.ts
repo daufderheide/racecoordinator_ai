@@ -1377,6 +1377,9 @@ export namespace com {
 
             /** RaceData reactionTime */
             reactionTime?: (com.antigravity.IReactionTime|null);
+
+            /** RaceData standingsUpdate */
+            standingsUpdate?: (com.antigravity.IStandingsUpdate|null);
         }
 
         /** Represents a RaceData. */
@@ -1400,8 +1403,11 @@ export namespace com {
             /** RaceData reactionTime. */
             public reactionTime?: (com.antigravity.IReactionTime|null);
 
+            /** RaceData standingsUpdate. */
+            public standingsUpdate?: (com.antigravity.IStandingsUpdate|null);
+
             /** RaceData data. */
-            public data?: ("raceTime"|"lap"|"race"|"reactionTime");
+            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -1607,6 +1613,9 @@ export namespace com {
 
             /** Heat objectId */
             objectId?: (string|null);
+
+            /** Heat standings */
+            standings?: (string[]|null);
         }
 
         /** Represents a Heat. */
@@ -1626,6 +1635,9 @@ export namespace com {
 
             /** Heat objectId. */
             public objectId: string;
+
+            /** Heat standings. */
+            public standings: string[];
 
             /**
              * Creates a new Heat instance using the specified properties.
@@ -2008,6 +2020,206 @@ export namespace com {
 
             /**
              * Gets the default type url for ReactionTime
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a HeatPositionUpdate. */
+        interface IHeatPositionUpdate {
+
+            /** HeatPositionUpdate objectId */
+            objectId?: (string|null);
+
+            /** HeatPositionUpdate rank */
+            rank?: (number|null);
+        }
+
+        /** Represents a HeatPositionUpdate. */
+        class HeatPositionUpdate implements IHeatPositionUpdate {
+
+            /**
+             * Constructs a new HeatPositionUpdate.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IHeatPositionUpdate);
+
+            /** HeatPositionUpdate objectId. */
+            public objectId: string;
+
+            /** HeatPositionUpdate rank. */
+            public rank: number;
+
+            /**
+             * Creates a new HeatPositionUpdate instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns HeatPositionUpdate instance
+             */
+            public static create(properties?: com.antigravity.IHeatPositionUpdate): com.antigravity.HeatPositionUpdate;
+
+            /**
+             * Encodes the specified HeatPositionUpdate message. Does not implicitly {@link com.antigravity.HeatPositionUpdate.verify|verify} messages.
+             * @param message HeatPositionUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IHeatPositionUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified HeatPositionUpdate message, length delimited. Does not implicitly {@link com.antigravity.HeatPositionUpdate.verify|verify} messages.
+             * @param message HeatPositionUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IHeatPositionUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a HeatPositionUpdate message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns HeatPositionUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HeatPositionUpdate;
+
+            /**
+             * Decodes a HeatPositionUpdate message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns HeatPositionUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HeatPositionUpdate;
+
+            /**
+             * Verifies a HeatPositionUpdate message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a HeatPositionUpdate message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns HeatPositionUpdate
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.HeatPositionUpdate;
+
+            /**
+             * Creates a plain object from a HeatPositionUpdate message. Also converts values to other types if specified.
+             * @param message HeatPositionUpdate
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.HeatPositionUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this HeatPositionUpdate to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for HeatPositionUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a StandingsUpdate. */
+        interface IStandingsUpdate {
+
+            /** StandingsUpdate updates */
+            updates?: (com.antigravity.IHeatPositionUpdate[]|null);
+        }
+
+        /** Represents a StandingsUpdate. */
+        class StandingsUpdate implements IStandingsUpdate {
+
+            /**
+             * Constructs a new StandingsUpdate.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IStandingsUpdate);
+
+            /** StandingsUpdate updates. */
+            public updates: com.antigravity.IHeatPositionUpdate[];
+
+            /**
+             * Creates a new StandingsUpdate instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns StandingsUpdate instance
+             */
+            public static create(properties?: com.antigravity.IStandingsUpdate): com.antigravity.StandingsUpdate;
+
+            /**
+             * Encodes the specified StandingsUpdate message. Does not implicitly {@link com.antigravity.StandingsUpdate.verify|verify} messages.
+             * @param message StandingsUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IStandingsUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified StandingsUpdate message, length delimited. Does not implicitly {@link com.antigravity.StandingsUpdate.verify|verify} messages.
+             * @param message StandingsUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IStandingsUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a StandingsUpdate message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns StandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.StandingsUpdate;
+
+            /**
+             * Decodes a StandingsUpdate message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns StandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.StandingsUpdate;
+
+            /**
+             * Verifies a StandingsUpdate message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a StandingsUpdate message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns StandingsUpdate
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.StandingsUpdate;
+
+            /**
+             * Creates a plain object from a StandingsUpdate message. Also converts values to other types if specified.
+             * @param message StandingsUpdate
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.StandingsUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this StandingsUpdate to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for StandingsUpdate
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

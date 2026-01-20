@@ -7,6 +7,7 @@ import { Driver } from "../models/driver";
  * Data for a driver in a specific heat.
  */
 export class DriverHeatData {
+    readonly laneIndex: number;
     readonly objectId: string;
     readonly participant: RaceParticipant;
 
@@ -19,9 +20,10 @@ export class DriverHeatData {
     private _medianLapTime!: number;
     private _reactionTime: number = 0;
 
-    constructor(objectId: string, participant: RaceParticipant) {
+    constructor(objectId: string, participant: RaceParticipant, laneIndex: number) {
         this.objectId = objectId;
         this.participant = participant;
+        this.laneIndex = laneIndex;
         this.reset();
     }
 

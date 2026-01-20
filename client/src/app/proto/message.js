@@ -3125,6 +3125,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.ILap|null} [lap] RaceData lap
              * @property {com.antigravity.IRace|null} [race] RaceData race
              * @property {com.antigravity.IReactionTime|null} [reactionTime] RaceData reactionTime
+             * @property {com.antigravity.IStandingsUpdate|null} [standingsUpdate] RaceData standingsUpdate
              */
 
             /**
@@ -3174,17 +3175,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.reactionTime = null;
 
+            /**
+             * RaceData standingsUpdate.
+             * @member {com.antigravity.IStandingsUpdate|null|undefined} standingsUpdate
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.standingsUpdate = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"race"|"reactionTime"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -3220,6 +3229,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.Race.encode(message.race, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
                 if (message.reactionTime != null && Object.hasOwnProperty.call(message, "reactionTime"))
                     $root.com.antigravity.ReactionTime.encode(message.reactionTime, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.standingsUpdate != null && Object.hasOwnProperty.call(message, "standingsUpdate"))
+                    $root.com.antigravity.StandingsUpdate.encode(message.standingsUpdate, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
                 return writer;
             };
 
@@ -3270,6 +3281,10 @@ export const com = $root.com = (() => {
                         }
                     case 4: {
                             message.reactionTime = $root.com.antigravity.ReactionTime.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.standingsUpdate = $root.com.antigravity.StandingsUpdate.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -3346,6 +3361,16 @@ export const com = $root.com = (() => {
                             return "reactionTime." + error;
                     }
                 }
+                if (message.standingsUpdate != null && message.hasOwnProperty("standingsUpdate")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.StandingsUpdate.verify(message.standingsUpdate);
+                        if (error)
+                            return "standingsUpdate." + error;
+                    }
+                }
                 return null;
             };
 
@@ -3380,6 +3405,11 @@ export const com = $root.com = (() => {
                     if (typeof object.reactionTime !== "object")
                         throw TypeError(".com.antigravity.RaceData.reactionTime: object expected");
                     message.reactionTime = $root.com.antigravity.ReactionTime.fromObject(object.reactionTime);
+                }
+                if (object.standingsUpdate != null) {
+                    if (typeof object.standingsUpdate !== "object")
+                        throw TypeError(".com.antigravity.RaceData.standingsUpdate: object expected");
+                    message.standingsUpdate = $root.com.antigravity.StandingsUpdate.fromObject(object.standingsUpdate);
                 }
                 return message;
             };
@@ -3416,6 +3446,11 @@ export const com = $root.com = (() => {
                     object.reactionTime = $root.com.antigravity.ReactionTime.toObject(message.reactionTime, options);
                     if (options.oneofs)
                         object.data = "reactionTime";
+                }
+                if (message.standingsUpdate != null && message.hasOwnProperty("standingsUpdate")) {
+                    object.standingsUpdate = $root.com.antigravity.StandingsUpdate.toObject(message.standingsUpdate, options);
+                    if (options.oneofs)
+                        object.data = "standingsUpdate";
                 }
                 return object;
             };
@@ -3787,6 +3822,7 @@ export const com = $root.com = (() => {
              * @property {Array.<com.antigravity.IDriverHeatData>|null} [heatDrivers] Heat heatDrivers
              * @property {number|null} [heatNumber] Heat heatNumber
              * @property {string|null} [objectId] Heat objectId
+             * @property {Array.<string>|null} [standings] Heat standings
              */
 
             /**
@@ -3799,6 +3835,7 @@ export const com = $root.com = (() => {
              */
             function Heat(properties) {
                 this.heatDrivers = [];
+                this.standings = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -3828,6 +3865,14 @@ export const com = $root.com = (() => {
              * @instance
              */
             Heat.prototype.objectId = "";
+
+            /**
+             * Heat standings.
+             * @member {Array.<string>} standings
+             * @memberof com.antigravity.Heat
+             * @instance
+             */
+            Heat.prototype.standings = $util.emptyArray;
 
             /**
              * Creates a new Heat instance using the specified properties.
@@ -3860,6 +3905,9 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.heatNumber);
                 if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
                     writer.uint32(/* id 3, wireType 2 =*/26).string(message.objectId);
+                if (message.standings != null && message.standings.length)
+                    for (let i = 0; i < message.standings.length; ++i)
+                        writer.uint32(/* id 4, wireType 2 =*/34).string(message.standings[i]);
                 return writer;
             };
 
@@ -3908,6 +3956,12 @@ export const com = $root.com = (() => {
                         }
                     case 3: {
                             message.objectId = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            if (!(message.standings && message.standings.length))
+                                message.standings = [];
+                            message.standings.push(reader.string());
                             break;
                         }
                     default:
@@ -3960,6 +4014,13 @@ export const com = $root.com = (() => {
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     if (!$util.isString(message.objectId))
                         return "objectId: string expected";
+                if (message.standings != null && message.hasOwnProperty("standings")) {
+                    if (!Array.isArray(message.standings))
+                        return "standings: array expected";
+                    for (let i = 0; i < message.standings.length; ++i)
+                        if (!$util.isString(message.standings[i]))
+                            return "standings: string[] expected";
+                }
                 return null;
             };
 
@@ -3989,6 +4050,13 @@ export const com = $root.com = (() => {
                     message.heatNumber = object.heatNumber | 0;
                 if (object.objectId != null)
                     message.objectId = String(object.objectId);
+                if (object.standings) {
+                    if (!Array.isArray(object.standings))
+                        throw TypeError(".com.antigravity.Heat.standings: array expected");
+                    message.standings = [];
+                    for (let i = 0; i < object.standings.length; ++i)
+                        message.standings[i] = String(object.standings[i]);
+                }
                 return message;
             };
 
@@ -4005,8 +4073,10 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.arrays || options.defaults)
+                if (options.arrays || options.defaults) {
                     object.heatDrivers = [];
+                    object.standings = [];
+                }
                 if (options.defaults) {
                     object.heatNumber = 0;
                     object.objectId = "";
@@ -4020,6 +4090,11 @@ export const com = $root.com = (() => {
                     object.heatNumber = message.heatNumber;
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
+                if (message.standings && message.standings.length) {
+                    object.standings = [];
+                    for (let j = 0; j < message.standings.length; ++j)
+                        object.standings[j] = message.standings[j];
+                }
                 return object;
             };
 
@@ -4747,6 +4822,461 @@ export const com = $root.com = (() => {
             };
 
             return ReactionTime;
+        })();
+
+        antigravity.HeatPositionUpdate = (function() {
+
+            /**
+             * Properties of a HeatPositionUpdate.
+             * @memberof com.antigravity
+             * @interface IHeatPositionUpdate
+             * @property {string|null} [objectId] HeatPositionUpdate objectId
+             * @property {number|null} [rank] HeatPositionUpdate rank
+             */
+
+            /**
+             * Constructs a new HeatPositionUpdate.
+             * @memberof com.antigravity
+             * @classdesc Represents a HeatPositionUpdate.
+             * @implements IHeatPositionUpdate
+             * @constructor
+             * @param {com.antigravity.IHeatPositionUpdate=} [properties] Properties to set
+             */
+            function HeatPositionUpdate(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * HeatPositionUpdate objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @instance
+             */
+            HeatPositionUpdate.prototype.objectId = "";
+
+            /**
+             * HeatPositionUpdate rank.
+             * @member {number} rank
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @instance
+             */
+            HeatPositionUpdate.prototype.rank = 0;
+
+            /**
+             * Creates a new HeatPositionUpdate instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {com.antigravity.IHeatPositionUpdate=} [properties] Properties to set
+             * @returns {com.antigravity.HeatPositionUpdate} HeatPositionUpdate instance
+             */
+            HeatPositionUpdate.create = function create(properties) {
+                return new HeatPositionUpdate(properties);
+            };
+
+            /**
+             * Encodes the specified HeatPositionUpdate message. Does not implicitly {@link com.antigravity.HeatPositionUpdate.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {com.antigravity.IHeatPositionUpdate} message HeatPositionUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            HeatPositionUpdate.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
+                if (message.rank != null && Object.hasOwnProperty.call(message, "rank"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.rank);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified HeatPositionUpdate message, length delimited. Does not implicitly {@link com.antigravity.HeatPositionUpdate.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {com.antigravity.IHeatPositionUpdate} message HeatPositionUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            HeatPositionUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a HeatPositionUpdate message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.HeatPositionUpdate} HeatPositionUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            HeatPositionUpdate.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.HeatPositionUpdate();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.objectId = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.rank = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a HeatPositionUpdate message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.HeatPositionUpdate} HeatPositionUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            HeatPositionUpdate.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a HeatPositionUpdate message.
+             * @function verify
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            HeatPositionUpdate.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
+                if (message.rank != null && message.hasOwnProperty("rank"))
+                    if (!$util.isInteger(message.rank))
+                        return "rank: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a HeatPositionUpdate message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.HeatPositionUpdate} HeatPositionUpdate
+             */
+            HeatPositionUpdate.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.HeatPositionUpdate)
+                    return object;
+                let message = new $root.com.antigravity.HeatPositionUpdate();
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
+                if (object.rank != null)
+                    message.rank = object.rank | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a HeatPositionUpdate message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {com.antigravity.HeatPositionUpdate} message HeatPositionUpdate
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            HeatPositionUpdate.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.objectId = "";
+                    object.rank = 0;
+                }
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
+                if (message.rank != null && message.hasOwnProperty("rank"))
+                    object.rank = message.rank;
+                return object;
+            };
+
+            /**
+             * Converts this HeatPositionUpdate to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            HeatPositionUpdate.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for HeatPositionUpdate
+             * @function getTypeUrl
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            HeatPositionUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.HeatPositionUpdate";
+            };
+
+            return HeatPositionUpdate;
+        })();
+
+        antigravity.StandingsUpdate = (function() {
+
+            /**
+             * Properties of a StandingsUpdate.
+             * @memberof com.antigravity
+             * @interface IStandingsUpdate
+             * @property {Array.<com.antigravity.IHeatPositionUpdate>|null} [updates] StandingsUpdate updates
+             */
+
+            /**
+             * Constructs a new StandingsUpdate.
+             * @memberof com.antigravity
+             * @classdesc Represents a StandingsUpdate.
+             * @implements IStandingsUpdate
+             * @constructor
+             * @param {com.antigravity.IStandingsUpdate=} [properties] Properties to set
+             */
+            function StandingsUpdate(properties) {
+                this.updates = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * StandingsUpdate updates.
+             * @member {Array.<com.antigravity.IHeatPositionUpdate>} updates
+             * @memberof com.antigravity.StandingsUpdate
+             * @instance
+             */
+            StandingsUpdate.prototype.updates = $util.emptyArray;
+
+            /**
+             * Creates a new StandingsUpdate instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {com.antigravity.IStandingsUpdate=} [properties] Properties to set
+             * @returns {com.antigravity.StandingsUpdate} StandingsUpdate instance
+             */
+            StandingsUpdate.create = function create(properties) {
+                return new StandingsUpdate(properties);
+            };
+
+            /**
+             * Encodes the specified StandingsUpdate message. Does not implicitly {@link com.antigravity.StandingsUpdate.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {com.antigravity.IStandingsUpdate} message StandingsUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StandingsUpdate.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.updates != null && message.updates.length)
+                    for (let i = 0; i < message.updates.length; ++i)
+                        $root.com.antigravity.HeatPositionUpdate.encode(message.updates[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified StandingsUpdate message, length delimited. Does not implicitly {@link com.antigravity.StandingsUpdate.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {com.antigravity.IStandingsUpdate} message StandingsUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            StandingsUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a StandingsUpdate message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.StandingsUpdate} StandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StandingsUpdate.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.StandingsUpdate();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            if (!(message.updates && message.updates.length))
+                                message.updates = [];
+                            message.updates.push($root.com.antigravity.HeatPositionUpdate.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a StandingsUpdate message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.StandingsUpdate} StandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            StandingsUpdate.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a StandingsUpdate message.
+             * @function verify
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            StandingsUpdate.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.updates != null && message.hasOwnProperty("updates")) {
+                    if (!Array.isArray(message.updates))
+                        return "updates: array expected";
+                    for (let i = 0; i < message.updates.length; ++i) {
+                        let error = $root.com.antigravity.HeatPositionUpdate.verify(message.updates[i]);
+                        if (error)
+                            return "updates." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a StandingsUpdate message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.StandingsUpdate} StandingsUpdate
+             */
+            StandingsUpdate.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.StandingsUpdate)
+                    return object;
+                let message = new $root.com.antigravity.StandingsUpdate();
+                if (object.updates) {
+                    if (!Array.isArray(object.updates))
+                        throw TypeError(".com.antigravity.StandingsUpdate.updates: array expected");
+                    message.updates = [];
+                    for (let i = 0; i < object.updates.length; ++i) {
+                        if (typeof object.updates[i] !== "object")
+                            throw TypeError(".com.antigravity.StandingsUpdate.updates: object expected");
+                        message.updates[i] = $root.com.antigravity.HeatPositionUpdate.fromObject(object.updates[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a StandingsUpdate message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {com.antigravity.StandingsUpdate} message StandingsUpdate
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            StandingsUpdate.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.updates = [];
+                if (message.updates && message.updates.length) {
+                    object.updates = [];
+                    for (let j = 0; j < message.updates.length; ++j)
+                        object.updates[j] = $root.com.antigravity.HeatPositionUpdate.toObject(message.updates[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this StandingsUpdate to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.StandingsUpdate
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            StandingsUpdate.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for StandingsUpdate
+             * @function getTypeUrl
+             * @memberof com.antigravity.StandingsUpdate
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            StandingsUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.StandingsUpdate";
+            };
+
+            return StandingsUpdate;
         })();
 
         return antigravity;

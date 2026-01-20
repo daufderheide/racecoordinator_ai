@@ -96,17 +96,18 @@
         </g>
 
         <!-- Rows -->
-        <g *ngFor="let lane of track.lanes; let i = index"
+        <g *ngFor="let hd of sortedHeatDrivers; let i = index; trackBy: trackByDriverId" class="driver-row"
           [attr.transform]="'translate(0, ' + (310 + i * (590 / track.lanes.length)) + ')'">
-          <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length" [attr.fill]="lane.background_color"
-            rx="4" />
+          <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length"
+            [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
 
           <!-- Dynamic columns -->
           <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)"
             [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
-            [attr.fill]="lane.foreground_color" [attr.text-anchor]="column.textAnchor" font-family="monospace"
-            appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{
-            formatColumnValue(heat.heatDrivers[i], column) }}</text>
+            [attr.fill]="track.lanes[hd.laneIndex].foreground_color" [attr.text-anchor]="column.textAnchor"
+            font-family="monospace" appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex)"
+            [scaleToFit]="column.scaleToFit">{{
+            formatColumnValue(hd, column) }}</text>
 
           <!-- Vertical Lines between columns -->
           <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"

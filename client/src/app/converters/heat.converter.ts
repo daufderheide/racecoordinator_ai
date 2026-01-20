@@ -29,7 +29,7 @@ export class HeatConverter {
             () => {
                 let heatDrivers: Array<DriverHeatData | null> = [];
                 if (proto.heatDrivers) {
-                    heatDrivers = proto.heatDrivers.map(dProto => {
+                    heatDrivers = proto.heatDrivers.map((dProto, index) => {
                         if (dProto.driver) {
                             const partProto = dProto.driver;
                             let driver: Driver | undefined;
@@ -45,7 +45,7 @@ export class HeatConverter {
                             const participant = new RaceParticipant(driver, partProto.objectId || '');
                             const heatDriverId = dProto.objectId;
 
-                            return new DriverHeatData(heatDriverId || '', participant);
+                            return new DriverHeatData(heatDriverId || '', participant, index);
                         }
                         return null;
                     });
@@ -57,7 +57,8 @@ export class HeatConverter {
                 return new Heat(
                     objectId || '',
                     heatNumber !== -1 ? heatNumber : (proto.heatNumber || 0),
-                    validHeatDrivers
+                    validHeatDrivers,
+                    proto.standings || []
                 );
             }
         );

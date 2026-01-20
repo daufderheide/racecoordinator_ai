@@ -10,10 +10,12 @@ export class Heat {
     readonly objectId: string;
     readonly heatNumber: number;
     readonly heatDrivers: DriverHeatData[];
+    readonly standings: string[];
 
-    constructor(objectId: string, heatNumber: number, heatDrivers: DriverHeatData[]) {
+    constructor(objectId: string, heatNumber: number, heatDrivers: DriverHeatData[], standings: string[] = []) {
         this.objectId = objectId;
         this.heatNumber = heatNumber;
         this.heatDrivers = heatDrivers;
+        this.standings = standings;
     }
 }

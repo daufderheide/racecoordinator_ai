@@ -34,6 +34,7 @@ export class RacedayComponent implements OnInit {
     protected pauseShortcut: string = 'Ctrl+P';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
+    protected sortedHeatDrivers: DriverHeatData[] = [];
 
     private previousTime: number = 0;
 
@@ -149,6 +150,42 @@ export class RacedayComponent implements OnInit {
                 }
             }
         });
+
+        this.dataService.getStandingsUpdate().subscribe(update => {
+            console.log('RacedayComponent: Received Standings Update:', update);
+            if (this.heat && update.updates) {
+                const rankMap = new Map<string, number>();
+                update.updates.forEach(u => {
+                    if (u.objectId) rankMap.set(u.objectId, u.rank || 0);
+                });
+
+                this.sortHeatDrivers(rankMap);
+            }
+        });
+    }
+
+    private sortHeatDrivers(rankMap?: Map<string, number>) {
+        if (!this.heat) return;
+
+        if (rankMap) {
+            this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
+                const rankA = rankMap.get(a.objectId) || 999;
+                const rankB = rankMap.get(b.objectId) || 999;
+                return rankA - rankB;
+            });
+        } else if (this.heat.standings && this.heat.standings.length > 0) {
+            const standingsMap = new Map<string, number>();
+            this.heat.standings.forEach((sid, index) => standingsMap.set(sid, index + 1));
+
+            this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
+                const rankA = standingsMap.get(a.objectId) || 999;
+                const rankB = standingsMap.get(b.objectId) || 999;
+                return rankA - rankB;
+            });
+        } else {
+            this.sortedHeatDrivers = [...this.heat.heatDrivers];
+        }
+        this.cdr.detectChanges();
     }
 
     private detectShortcutKey() {
@@ -196,6 +233,7 @@ export class RacedayComponent implements OnInit {
                     }
                 });
             }
+            this.sortHeatDrivers();
             this.cdr.detectChanges();
         } else {
             console.warn('RacedayComponent: No heats available from server.');
@@ -346,5 +384,9 @@ export class RacedayComponent implements OnInit {
             event.preventDefault(); // Prevent print dialog
             this.onMenuSelect('PAUSE');
         }
+    }
+
+    protected trackByDriverId(index: number, hd: DriverHeatData): string {
+        return hd.objectId;
     }
 }
