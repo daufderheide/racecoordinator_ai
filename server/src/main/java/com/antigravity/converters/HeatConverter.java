@@ -22,6 +22,7 @@ public class HeatConverter {
                             .map(d -> toProto(d, sentObjectIds))
                             .collect(Collectors.toList()))
                     .setHeatNumber(heat.getHeatNumber())
+                    .addAllStandings(heat.getStandings())
                     .build();
         }
     }

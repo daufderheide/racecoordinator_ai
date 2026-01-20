@@ -1,0 +1,15 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "StandingsUpdateProto";
+
+message HeatPositionUpdate {
+  string objectId = 1;
+  int32 rank = 2;
+}
+
+message StandingsUpdate {
+  repeated HeatPositionUpdate updates = 1;
+}

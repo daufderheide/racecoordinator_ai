@@ -1,0 +1,107 @@
+package com.antigravity.race;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.antigravity.proto.HeatPositionUpdate;
+import com.antigravity.proto.StandingsUpdate;
+
+public class HeatStandings {
+  public enum SortType {
+    LAP_COUNT,
+    FASTEST_LAP,
+    TOTAL_TIME
+  }
+
+  public enum TieBreaker {
+    FASTEST_LAP_TIME,
+    MEDIAN_LAP_TIME,
+    AVERAGE_LAP_TIME
+  }
+
+  private final List<DriverHeatData> driverHeatData;
+  private final SortType sortType;
+  private final TieBreaker tieBreaker;
+  private List<String> currentStandings;
+
+  public HeatStandings(List<DriverHeatData> driverHeatData, SortType sortType, TieBreaker tieBreaker) {
+    this.driverHeatData = new ArrayList<>(driverHeatData);
+    this.sortType = sortType;
+    this.tieBreaker = tieBreaker;
+    this.currentStandings = this.calculateStandings();
+  }
+
+  public List<String> getStandings() {
+    return currentStandings;
+  }
+
+  public StandingsUpdate onLap(int lane, float lapTime) {
+    List<String> newStandings = calculateStandings();
+    StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
+    boolean changed = false;
+
+    for (int i = 0; i < newStandings.size(); i++) {
+      String objectId = newStandings.get(i);
+      if (i >= currentStandings.size() || !objectId.equals(currentStandings.get(i))) {
+        changed = true;
+        break;
+      }
+    }
+
+    if (changed) {
+      for (int i = 0; i < newStandings.size(); i++) {
+        String objectId = newStandings.get(i);
+        updateBuilder.addUpdates(HeatPositionUpdate.newBuilder()
+            .setObjectId(objectId)
+            .setRank(i + 1)
+            .build());
+      }
+      currentStandings = newStandings;
+      return updateBuilder.build();
+    }
+    return null;
+  }
+
+  private List<String> calculateStandings() {
+    return driverHeatData.stream()
+        .sorted(getComparator())
+        .map(DriverHeatData::getObjectId)
+        .collect(Collectors.toList());
+  }
+
+  private Comparator<DriverHeatData> getComparator() {
+    Comparator<DriverHeatData> comparator;
+
+    switch (sortType) {
+      case LAP_COUNT:
+        comparator = Comparator.comparingInt(DriverHeatData::getLapCount).reversed()
+            .thenComparing(Comparator.comparingDouble(DriverHeatData::getTotalTime));
+        break;
+      case FASTEST_LAP:
+        comparator = Comparator.comparingDouble(d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
+        break;
+      case TOTAL_TIME:
+        comparator = Comparator.comparingDouble(DriverHeatData::getTotalTime);
+        break;
+      default:
+        comparator = (d1, d2) -> 0;
+    }
+
+    return comparator.thenComparing(getTieBreakerComparator());
+  }
+
+  private Comparator<DriverHeatData> getTieBreakerComparator() {
+    switch (tieBreaker) {
+      case FASTEST_LAP_TIME:
+        return Comparator.comparingDouble(d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
+      case MEDIAN_LAP_TIME:
+        return Comparator.comparingDouble(d -> d.getMedianLapTime() == 0 ? Double.MAX_VALUE : d.getMedianLapTime());
+      case AVERAGE_LAP_TIME:
+        return Comparator.comparingDouble(d -> d.getAverageLapTime() == 0 ? Double.MAX_VALUE : d.getAverageLapTime());
+      default:
+        return (d1, d2) -> 0;
+    }
+  }
+}

@@ -20,6 +20,7 @@ public class Race implements ProtocolListener {
     private List<RaceParticipant> drivers;
     private List<Heat> heats;
     private Heat currentHeat;
+    private HeatStandings heatStandings;
 
     private ProtocolDelegate protocols;
 
@@ -38,6 +39,10 @@ public class Race implements ProtocolListener {
         this.track = dbService.getTrack(database, model.getTrackEntityId());
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
+        this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(),
+                HeatStandings.SortType.LAP_COUNT,
+                HeatStandings.TieBreaker.FASTEST_LAP_TIME);
+        this.currentHeat.setStandings(this.heatStandings.getStandings());
 
         this.createProtocols(isDemoMode);
 
@@ -75,6 +80,10 @@ public class Race implements ProtocolListener {
 
     public Heat getCurrentHeat() {
         return currentHeat;
+    }
+
+    public HeatStandings getHeatStandings() {
+        return heatStandings;
     }
 
     public float getRaceTime() {

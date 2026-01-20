@@ -87,14 +87,14 @@ public class Racing implements IRaceState {
             return;
         }
 
-        if (handleReactionTime(driverData, lapTime)) {
+        if (handleReactionTime(driverData, lapTime, lane)) {
             return;
         }
 
         handleLapTime(driverData, lapTime);
     }
 
-    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, float lapTime) {
+    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, float lapTime, int lane) {
         if (driverData.getReactionTime() == 0.0f) {
             driverData.setReactionTime(lapTime);
 
@@ -136,5 +136,13 @@ public class Racing implements IRaceState {
                 .build();
 
         this.race.broadcast(lapDataMsg);
+
+        com.antigravity.proto.StandingsUpdate standingsUpdate = this.race.getHeatStandings().onLap(0, effectiveLapTime);
+        if (standingsUpdate != null) {
+            com.antigravity.proto.RaceData standingsDataMsg = com.antigravity.proto.RaceData.newBuilder()
+                    .setStandingsUpdate(standingsUpdate)
+                    .build();
+            this.race.broadcast(standingsDataMsg);
+        }
     }
 }

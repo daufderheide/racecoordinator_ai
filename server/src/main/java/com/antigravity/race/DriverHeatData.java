@@ -75,4 +75,12 @@ public class DriverHeatData extends ServerToClientObject {
     public void setReactionTime(float reactionTime) {
         this.reactionTime = reactionTime;
     }
+
+    public float getTotalTime() {
+        float sum = 0.0f;
+        for (float time : laps) {
+            sum += time;
+        }
+        return sum;
+    }
 }
