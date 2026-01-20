@@ -1,4 +1,4 @@
-import { HeatDriver } from "./heat_driver";
+import { DriverHeatData } from "./driver_heat_data";
 
 /**
  * A heat is a single time on the track for a race.  A race will include one or
@@ -9,9 +9,9 @@ import { HeatDriver } from "./heat_driver";
 export class Heat {
     readonly objectId: string;
     readonly heatNumber: number;
-    readonly heatDrivers: HeatDriver[];
+    readonly heatDrivers: DriverHeatData[];
 
-    constructor(objectId: string, heatNumber: number, heatDrivers: HeatDriver[]) {
+    constructor(objectId: string, heatNumber: number, heatDrivers: DriverHeatData[]) {
         this.objectId = objectId;
         this.heatNumber = heatNumber;
         this.heatDrivers = heatDrivers;

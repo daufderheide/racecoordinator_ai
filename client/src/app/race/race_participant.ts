@@ -1,4 +1,4 @@
-import { Driver } from "./driver";
+import { Driver } from "../models/driver";
 
 export class RaceParticipant {
     readonly driver: Driver;

@@ -1,12 +1,12 @@
 
 
-import { RaceParticipant } from "./race-participant";
-import { Driver } from "./driver";
+import { RaceParticipant } from "./race_participant";
+import { Driver } from "../models/driver";
 
 /**
  * Data for a driver in a specific heat.
  */
-export class HeatDriver {
+export class DriverHeatData {
     readonly objectId: string;
     readonly participant: RaceParticipant;
 

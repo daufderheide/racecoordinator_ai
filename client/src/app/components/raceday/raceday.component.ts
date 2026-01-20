@@ -1,7 +1,7 @@
 import { Component, ChangeDetectorRef, OnInit, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
-import { Heat } from 'src/app/models/heat';
-import { HeatDriver } from 'src/app/models/heat_driver';
+import { Heat } from '../../race/heat';
+import { DriverHeatData } from '../../race/driver_heat_data';
 import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
 import { Lane } from 'src/app/models/lane';
@@ -223,7 +223,7 @@ export class RacedayComponent implements OnInit {
     }
 
     // Helper method to get value from HeatDriver using property path
-    getPropertyValue(heatDriver: HeatDriver, propertyPath: string): any {
+    getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
         if (!heatDriver) return undefined;
         const parts = propertyPath.split('.');
         let value: any = heatDriver;
@@ -235,7 +235,7 @@ export class RacedayComponent implements OnInit {
     }
 
     // Helper method to format column value for display
-    formatColumnValue(heatDriver: HeatDriver, column: ColumnDefinition): string {
+    formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition): string {
         const value = this.getPropertyValue(heatDriver, column.propertyName);
 
         // Format numeric lap times

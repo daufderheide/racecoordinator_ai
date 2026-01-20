@@ -3,7 +3,7 @@ import { Track } from '../models/track';
 import { Driver } from '../models/driver';
 import { Race } from '../models/race';
 import { BehaviorSubject } from 'rxjs';
-import { Heat } from '../models/heat';
+import { Heat } from '../race/heat';
 
 @Injectable({
     providedIn: 'root'
