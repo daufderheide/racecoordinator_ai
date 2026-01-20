@@ -1,7 +1,7 @@
 import { Race } from "../models/race";
 import { com } from "../proto/message";
 import { TrackConverter } from "./track.converter";
-import { ConverterCache } from "./converter-cache";
+import { ConverterCache } from "./converter_cache";
 
 export class RaceConverter {
     private static cache = new ConverterCache<Race>();

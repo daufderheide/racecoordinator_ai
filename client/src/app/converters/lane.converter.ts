@@ -1,6 +1,6 @@
 import { Lane } from "../models/lane";
 import { com } from "../proto/message";
-import { ConverterCache } from "./converter-cache";
+import { ConverterCache } from "./converter_cache";
 
 export class LaneConverter {
     private static cache = new ConverterCache<Lane>();

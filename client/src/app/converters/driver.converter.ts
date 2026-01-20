@@ -1,6 +1,6 @@
 import { Driver } from "../models/driver";
 import { com } from "../proto/message";
-import { ConverterCache } from "./converter-cache";
+import { ConverterCache } from "./converter_cache";
 
 export class DriverConverter {
     private static cache = new ConverterCache<Driver>();

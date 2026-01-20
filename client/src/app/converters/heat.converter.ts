@@ -4,7 +4,7 @@ import { DriverHeatData } from "../race/driver_heat_data";
 import { RaceParticipant } from "../race/race_participant";
 import { Driver } from "../models/driver";
 import { DriverConverter } from "./driver.converter";
-import { ConverterCache } from "./converter-cache";
+import { ConverterCache } from "./converter_cache";
 
 export class HeatConverter {
     private static participantCache = new Map<string, RaceParticipant>();
