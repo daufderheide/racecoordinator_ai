@@ -8,8 +8,33 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "RaceModelProto";
 
+message RaceScoring {
+  enum FinishMethod {
+    Lap = 0;
+    Timed = 1;
+  }
+
+  enum HeatRanking {
+    LAP_COUNT = 0;
+    FASTEST_LAP = 1;
+    TOTAL_TIME = 2;
+  }
+
+  enum TieBreaker {
+    FASTEST_LAP_TIME = 0;
+    MEDIAN_LAP_TIME = 1;
+    AVERAGE_LAP_TIME = 2;
+  }
+
+  FinishMethod finish_method = 1;
+  int64 finish_value = 2;
+  HeatRanking heat_ranking = 3;
+  TieBreaker heat_ranking_tiebreaker = 4;
+}
+
 message RaceModel {
   Model model = 1;
   string name = 2;
   TrackModel track = 3;
+  RaceScoring race_scoring = 4;
 }

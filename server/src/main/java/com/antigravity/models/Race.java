@@ -17,24 +17,30 @@ public class Race extends Model {
     @JsonProperty("heat_rotation_type")
     private final HeatRotationType heatRotationType;
 
+    @BsonProperty("race_scoring")
+    @JsonProperty("race_scoring")
+    private final RaceScoring raceScoring;
+
     @BsonCreator
     public Race(@BsonProperty("name") String name,
             @BsonProperty("track_entity_id") String trackEntityId,
             @BsonProperty("heat_rotation_type") HeatRotationType heatRotationType,
+            @BsonProperty("race_scoring") RaceScoring raceScoring,
             @BsonProperty("entity_id") String entityId,
             @BsonId ObjectId id) {
         super(id, entityId);
         this.name = name;
         this.trackEntityId = trackEntityId;
         this.heatRotationType = heatRotationType;
+        this.raceScoring = raceScoring;
     }
 
     public Race(String name, String trackEntityId) {
-        this(name, trackEntityId, HeatRotationType.RoundRobin, null, null);
+        this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null);
     }
 
-    public Race(String name, String trackEntityId, HeatRotationType heatRotationType) {
-        this(name, trackEntityId, heatRotationType, null, null);
+    public Race(String name, String trackEntityId, HeatRotationType heatRotationType, RaceScoring raceScoring) {
+        this(name, trackEntityId, heatRotationType, raceScoring, null, null);
     }
 
     public String getName() {
@@ -47,5 +53,9 @@ public class Race extends Model {
 
     public HeatRotationType getHeatRotationType() {
         return heatRotationType;
+    }
+
+    public RaceScoring getRaceScoring() {
+        return raceScoring;
     }
 }

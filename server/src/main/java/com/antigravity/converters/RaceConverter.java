@@ -18,12 +18,30 @@ public class RaceConverter {
                                         .build();
                 } else {
                         sentObjectIds.add(key);
-                        return com.antigravity.proto.RaceModel.newBuilder()
+                        com.antigravity.proto.RaceModel.Builder builder = com.antigravity.proto.RaceModel.newBuilder()
                                         .setModel(com.antigravity.proto.Model.newBuilder()
                                                         .setEntityId(race.getObjectId()).build())
                                         .setName(race.getName())
-                                        .setTrack(TrackConverter.toProto(track, sentObjectIds))
-                                        .build();
+                                        .setTrack(TrackConverter.toProto(track, sentObjectIds));
+
+                        if (race.getRaceScoring() != null) {
+                                com.antigravity.models.RaceScoring scoring = race.getRaceScoring();
+                                builder.setRaceScoring(com.antigravity.proto.RaceScoring.newBuilder()
+                                                .setFinishMethod(
+                                                                com.antigravity.proto.RaceScoring.FinishMethod
+                                                                                .valueOf(scoring.getFinishMethod()
+                                                                                                .name()))
+                                                .setFinishValue(scoring.getFinishValue())
+                                                .setHeatRanking(com.antigravity.proto.RaceScoring.HeatRanking
+                                                                .valueOf(scoring.getHeatRanking().name()))
+                                                .setHeatRankingTiebreaker(
+                                                                com.antigravity.proto.RaceScoring.TieBreaker
+                                                                                .valueOf(scoring.getHeatRankingTiebreaker()
+                                                                                                .name()))
+                                                .build());
+                        }
+
+                        return builder.build();
                 }
         }
 }

@@ -39,9 +39,16 @@ public class Race implements ProtocolListener {
         this.track = dbService.getTrack(database, model.getTrackEntityId());
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
-        this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(),
-                HeatStandings.SortType.LAP_COUNT,
-                HeatStandings.TieBreaker.FASTEST_LAP_TIME);
+        com.antigravity.models.RaceScoring scoring = model.getRaceScoring();
+        HeatStandings.SortType sortType = HeatStandings.SortType.LAP_COUNT;
+        HeatStandings.TieBreaker tieBreaker = HeatStandings.TieBreaker.FASTEST_LAP_TIME;
+
+        if (scoring != null) {
+            sortType = HeatStandings.SortType.valueOf(scoring.getHeatRanking().name());
+            tieBreaker = HeatStandings.TieBreaker.valueOf(scoring.getHeatRankingTiebreaker().name());
+        }
+
+        this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(), sortType, tieBreaker);
         this.currentHeat.setStandings(this.heatStandings.getStandings());
 
         this.createProtocols(isDemoMode);

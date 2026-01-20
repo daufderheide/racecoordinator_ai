@@ -83,8 +83,14 @@ public class DatabaseService {
         // Reset sequence
         resetSequence(database, "races");
 
+        com.antigravity.models.RaceScoring scoring = new com.antigravity.models.RaceScoring(
+                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                10,
+                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
+                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+
         Race race = new Race("Round Robin", track.getEntityId(), HeatRotationType.RoundRobin,
-                getNextSequence(database, "races"), null);
+                scoring, getNextSequence(database, "races"), null);
 
         raceCollection.insertOne(race);
         System.out.println("Races reset.");
