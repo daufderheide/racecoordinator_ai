@@ -6,14 +6,14 @@ import java.util.List;
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.NotStarted;
-import com.antigravity.handlers.ProtocolHandler;
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
 
-public class Race {
+public class Race implements ProtocolListener {
     // Data based on the race model configuration
     private com.antigravity.models.Race model;
     private Track track;
@@ -54,7 +54,7 @@ public class Race {
             throw new IllegalArgumentException("isDemoMode must be true");
         }
         this.protocols = new ProtocolDelegate(protocols);
-        this.protocols.setListener(new ProtocolHandler(this));
+        this.protocols.setListener(this);
     }
 
     public com.antigravity.models.Race getRaceModel() {
@@ -143,5 +143,10 @@ public class Race {
 
     public boolean isRacing() {
         return state instanceof com.antigravity.race.states.Racing;
+    }
+
+    @Override
+    public void onLap(int lane, float lapTime) {
+        state.onLap(lane, lapTime);
     }
 }

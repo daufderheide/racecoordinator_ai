@@ -3124,6 +3124,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IRaceTime|null} [raceTime] RaceData raceTime
              * @property {com.antigravity.ILap|null} [lap] RaceData lap
              * @property {com.antigravity.IRace|null} [race] RaceData race
+             * @property {com.antigravity.IReactionTime|null} [reactionTime] RaceData reactionTime
              */
 
             /**
@@ -3165,17 +3166,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.race = null;
 
+            /**
+             * RaceData reactionTime.
+             * @member {com.antigravity.IReactionTime|null|undefined} reactionTime
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.reactionTime = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"race"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|"reactionTime"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -3209,6 +3218,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.Lap.encode(message.lap, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
                 if (message.race != null && Object.hasOwnProperty.call(message, "race"))
                     $root.com.antigravity.Race.encode(message.race, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.reactionTime != null && Object.hasOwnProperty.call(message, "reactionTime"))
+                    $root.com.antigravity.ReactionTime.encode(message.reactionTime, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 return writer;
             };
 
@@ -3255,6 +3266,10 @@ export const com = $root.com = (() => {
                         }
                     case 3: {
                             message.race = $root.com.antigravity.Race.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 4: {
+                            message.reactionTime = $root.com.antigravity.ReactionTime.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -3321,6 +3336,16 @@ export const com = $root.com = (() => {
                             return "race." + error;
                     }
                 }
+                if (message.reactionTime != null && message.hasOwnProperty("reactionTime")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.ReactionTime.verify(message.reactionTime);
+                        if (error)
+                            return "reactionTime." + error;
+                    }
+                }
                 return null;
             };
 
@@ -3350,6 +3375,11 @@ export const com = $root.com = (() => {
                     if (typeof object.race !== "object")
                         throw TypeError(".com.antigravity.RaceData.race: object expected");
                     message.race = $root.com.antigravity.Race.fromObject(object.race);
+                }
+                if (object.reactionTime != null) {
+                    if (typeof object.reactionTime !== "object")
+                        throw TypeError(".com.antigravity.RaceData.reactionTime: object expected");
+                    message.reactionTime = $root.com.antigravity.ReactionTime.fromObject(object.reactionTime);
                 }
                 return message;
             };
@@ -3381,6 +3411,11 @@ export const com = $root.com = (() => {
                     object.race = $root.com.antigravity.Race.toObject(message.race, options);
                     if (options.oneofs)
                         object.data = "race";
+                }
+                if (message.reactionTime != null && message.hasOwnProperty("reactionTime")) {
+                    object.reactionTime = $root.com.antigravity.ReactionTime.toObject(message.reactionTime, options);
+                    if (options.oneofs)
+                        object.data = "reactionTime";
                 }
                 return object;
             };
@@ -4483,6 +4518,235 @@ export const com = $root.com = (() => {
             };
 
             return RaceParticipant;
+        })();
+
+        antigravity.ReactionTime = (function() {
+
+            /**
+             * Properties of a ReactionTime.
+             * @memberof com.antigravity
+             * @interface IReactionTime
+             * @property {string|null} [objectId] ReactionTime objectId
+             * @property {number|null} [reactionTime] ReactionTime reactionTime
+             */
+
+            /**
+             * Constructs a new ReactionTime.
+             * @memberof com.antigravity
+             * @classdesc Represents a ReactionTime.
+             * @implements IReactionTime
+             * @constructor
+             * @param {com.antigravity.IReactionTime=} [properties] Properties to set
+             */
+            function ReactionTime(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * ReactionTime objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.ReactionTime
+             * @instance
+             */
+            ReactionTime.prototype.objectId = "";
+
+            /**
+             * ReactionTime reactionTime.
+             * @member {number} reactionTime
+             * @memberof com.antigravity.ReactionTime
+             * @instance
+             */
+            ReactionTime.prototype.reactionTime = 0;
+
+            /**
+             * Creates a new ReactionTime instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {com.antigravity.IReactionTime=} [properties] Properties to set
+             * @returns {com.antigravity.ReactionTime} ReactionTime instance
+             */
+            ReactionTime.create = function create(properties) {
+                return new ReactionTime(properties);
+            };
+
+            /**
+             * Encodes the specified ReactionTime message. Does not implicitly {@link com.antigravity.ReactionTime.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {com.antigravity.IReactionTime} message ReactionTime message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ReactionTime.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
+                if (message.reactionTime != null && Object.hasOwnProperty.call(message, "reactionTime"))
+                    writer.uint32(/* id 2, wireType 5 =*/21).float(message.reactionTime);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ReactionTime message, length delimited. Does not implicitly {@link com.antigravity.ReactionTime.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {com.antigravity.IReactionTime} message ReactionTime message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ReactionTime.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a ReactionTime message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.ReactionTime} ReactionTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ReactionTime.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.ReactionTime();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.objectId = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.reactionTime = reader.float();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a ReactionTime message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.ReactionTime} ReactionTime
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ReactionTime.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a ReactionTime message.
+             * @function verify
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ReactionTime.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
+                if (message.reactionTime != null && message.hasOwnProperty("reactionTime"))
+                    if (typeof message.reactionTime !== "number")
+                        return "reactionTime: number expected";
+                return null;
+            };
+
+            /**
+             * Creates a ReactionTime message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.ReactionTime} ReactionTime
+             */
+            ReactionTime.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.ReactionTime)
+                    return object;
+                let message = new $root.com.antigravity.ReactionTime();
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
+                if (object.reactionTime != null)
+                    message.reactionTime = Number(object.reactionTime);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a ReactionTime message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {com.antigravity.ReactionTime} message ReactionTime
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ReactionTime.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.objectId = "";
+                    object.reactionTime = 0;
+                }
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
+                if (message.reactionTime != null && message.hasOwnProperty("reactionTime"))
+                    object.reactionTime = options.json && !isFinite(message.reactionTime) ? String(message.reactionTime) : message.reactionTime;
+                return object;
+            };
+
+            /**
+             * Converts this ReactionTime to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.ReactionTime
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ReactionTime.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for ReactionTime
+             * @function getTypeUrl
+             * @memberof com.antigravity.ReactionTime
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            ReactionTime.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.ReactionTime";
+            };
+
+            return ReactionTime;
         })();
 
         return antigravity;

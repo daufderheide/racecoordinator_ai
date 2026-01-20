@@ -11,14 +11,21 @@ public class Demo extends DefaultProtocol {
         long currentLapElapsedTime = 0;
         long targetLapDuration;
         long currentLapStartTime = 0;
+        boolean isFirstLap = true;
 
         LaneState() {
             setNextTarget();
         }
 
         void setNextTarget() {
-            // Random lap time between 3s and 5s
-            targetLapDuration = 3000 + random.nextInt(2001);
+            if (isFirstLap) {
+                // First lap is reaction time: (0, 0.5]s
+                targetLapDuration = 1 + random.nextInt(500);
+                isFirstLap = false;
+            } else {
+                // Regular lap time: [3s, 5s]
+                targetLapDuration = 3000 + random.nextInt(2001);
+            }
         }
     }
 

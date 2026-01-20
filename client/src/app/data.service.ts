@@ -90,6 +90,7 @@ export class DataService {
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();
+  private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
 
   public connectToRaceDataSocket() {
@@ -112,6 +113,8 @@ export class DataService {
           this.raceTimeSubject.next(raceData.raceTime.time!);
         } else if (raceData.lap) {
           this.lapSubject.next(raceData.lap);
+        } else if (raceData.reactionTime) {
+          this.reactionTimeSubject.next(raceData.reactionTime);
         } else if (raceData.race) {
           console.log('WS: Received Race', raceData.race);
           this.raceUpdateSubject.next(raceData.race);
@@ -131,6 +134,10 @@ export class DataService {
 
   public getLaps(): Observable<com.antigravity.ILap> {
     return this.lapSubject.asObservable();
+  }
+
+  public getReactionTimes(): Observable<com.antigravity.IReactionTime> {
+    return this.reactionTimeSubject.asObservable();
   }
 
   public getRaceUpdate(): Observable<com.antigravity.IRace> {

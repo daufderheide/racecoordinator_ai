@@ -13,4 +13,9 @@ public class Paused implements IRaceState {
     public void exit(Race race) {
         System.out.println("Paused state exited.");
     }
+
+    @Override
+    public void onLap(int lane, float lapTime) {
+        System.out.println("Paused: Ignored onLap - Race not in progress");
+    }
 }

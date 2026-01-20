@@ -17,6 +17,7 @@ export class DriverHeatData {
     private _lastLapTime!: number;
     private _averageLapTime!: number;
     private _medianLapTime!: number;
+    private _reactionTime: number = 0;
 
     constructor(objectId: string, participant: RaceParticipant) {
         this.objectId = objectId;
@@ -35,6 +36,7 @@ export class DriverHeatData {
         this._lastLapTime = 0;
         this._averageLapTime = 0;
         this._medianLapTime = 0;
+        this._reactionTime = 0;
     }
 
     addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number): void {
@@ -76,6 +78,14 @@ export class DriverHeatData {
 
     get medianLapTime(): number {
         return this._medianLapTime;
+    }
+
+    set reactionTime(value: number) {
+        this._reactionTime = value;
+    }
+
+    get reactionTime(): number {
+        return this._reactionTime;
     }
 
     get lapCount(): number {

@@ -139,6 +139,16 @@ export class RacedayComponent implements OnInit {
                 }
             }
         });
+
+        this.dataService.getReactionTimes().subscribe(rt => {
+            if (this.heat && this.heat.heatDrivers && rt && rt.objectId) {
+                const driver = this.heat.heatDrivers.find(d => d.objectId === rt.objectId);
+                if (driver) {
+                    driver.reactionTime = rt.reactionTime!;
+                    this.cdr.detectChanges();
+                }
+            }
+        });
     }
 
     private detectShortcutKey() {

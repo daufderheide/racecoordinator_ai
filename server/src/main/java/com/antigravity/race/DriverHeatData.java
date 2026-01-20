@@ -7,8 +7,8 @@ public class DriverHeatData extends ServerToClientObject {
     private RaceParticipant driver;
 
     private ArrayList<Float> laps = new ArrayList<>();
-
     private float bestLapTime = 0.0f;
+    private float reactionTime = 0.0f;
 
     public DriverHeatData(RaceParticipant driver) {
         super();
@@ -66,5 +66,13 @@ public class DriverHeatData extends ServerToClientObject {
 
     public float getBestLapTime() {
         return bestLapTime;
+    }
+
+    public float getReactionTime() {
+        return reactionTime;
+    }
+
+    public void setReactionTime(float reactionTime) {
+        this.reactionTime = reactionTime;
     }
 }

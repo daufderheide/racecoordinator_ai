@@ -4,9 +4,12 @@ public class Racing implements IRaceState {
     private java.util.concurrent.ScheduledExecutorService scheduler;
     private java.util.concurrent.ScheduledFuture<?> timerHandle;
 
+    private com.antigravity.race.Race race;
+
     @Override
     public void enter(com.antigravity.race.Race race) {
         System.out.println("Racing state entered. Race started!");
+        this.race = race;
         race.startProtocols();
         scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
         final Runnable ticker = new Runnable() {
@@ -54,5 +57,84 @@ public class Racing implements IRaceState {
         }
         race.stopProtocols();
         System.out.println("Racing state exited.");
+    }
+
+    @Override
+    public void onLap(int lane, float lapTime) {
+        System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
+
+        if (!this.race.isRacing()) {
+            System.out.println("Race: Ignored onLap - Race not in progress");
+            return;
+        }
+
+        com.antigravity.race.Heat currentHeat = this.race.getCurrentHeat();
+        if (currentHeat == null) {
+            System.out.println("Race: Ignored onLap - No current heat");
+            return;
+        }
+
+        java.util.List<com.antigravity.race.DriverHeatData> drivers = currentHeat.getDrivers();
+        if (lane < 0 || lane >= drivers.size()) {
+            System.out.println("Race: Ignored onLap - Invalid lane " + lane);
+            return;
+        }
+
+        com.antigravity.race.DriverHeatData driverData = drivers.get(lane);
+        if (driverData == null || driverData.getDriver() == null || driverData.getDriver().getDriver() == null
+                || driverData.getDriver().getDriver().getEntityId() == null) {
+            System.out.println("Race: Ignored onLap - Invalid driver/entity");
+            return;
+        }
+
+        if (handleReactionTime(driverData, lapTime)) {
+            return;
+        }
+
+        handleLapTime(driverData, lapTime);
+    }
+
+    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, float lapTime) {
+        if (driverData.getReactionTime() == 0.0f) {
+            driverData.setReactionTime(lapTime);
+
+            com.antigravity.proto.ReactionTime rtMsg = com.antigravity.proto.ReactionTime.newBuilder()
+                    .setObjectId(driverData.getObjectId())
+                    .setReactionTime(lapTime)
+                    .build();
+
+            com.antigravity.proto.RaceData rtDataMsg = com.antigravity.proto.RaceData.newBuilder()
+                    .setReactionTime(rtMsg)
+                    .build();
+
+            this.race.broadcast(rtDataMsg);
+            System.out.println("Race: Broadcasted reaction time for lane " + lane + ": " + lapTime);
+            return true;
+        }
+        return false;
+    }
+
+    private void handleLapTime(com.antigravity.race.DriverHeatData driverData, float lapTime) {
+        float effectiveLapTime = lapTime;
+        if (driverData.getLapCount() == 0) {
+            effectiveLapTime += driverData.getReactionTime();
+        }
+
+        driverData.addLap(effectiveLapTime);
+
+        com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
+                .setObjectId(driverData.getObjectId())
+                .setLapTime(effectiveLapTime)
+                .setLapNumber(driverData.getLapCount())
+                .setAverageLapTime(driverData.getAverageLapTime())
+                .setMedianLapTime(driverData.getMedianLapTime())
+                .setBestLapTime(driverData.getBestLapTime())
+                .build();
+
+        com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()
+                .setLap(lapMsg)
+                .build();
+
+        this.race.broadcast(lapDataMsg);
     }
 }

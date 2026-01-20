@@ -21,4 +21,9 @@ public class NotStarted implements IRaceState {
     public void exit(com.antigravity.race.Race race) {
         System.out.println("NotStarted state exited.");
     }
+
+    @Override
+    public void onLap(int lane, float lapTime) {
+        System.out.println("NotStarted: Ignored onLap - Race not in progress");
+    }
 }
