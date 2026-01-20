@@ -3123,7 +3123,7 @@ export const com = $root.com = (() => {
              * @interface IRaceData
              * @property {com.antigravity.IRaceTime|null} [raceTime] RaceData raceTime
              * @property {com.antigravity.ILap|null} [lap] RaceData lap
-             * @property {com.antigravity.IFullUpdate|null} [fullUpdate] RaceData fullUpdate
+             * @property {com.antigravity.IRace|null} [race] RaceData race
              */
 
             /**
@@ -3158,24 +3158,24 @@ export const com = $root.com = (() => {
             RaceData.prototype.lap = null;
 
             /**
-             * RaceData fullUpdate.
-             * @member {com.antigravity.IFullUpdate|null|undefined} fullUpdate
+             * RaceData race.
+             * @member {com.antigravity.IRace|null|undefined} race
              * @memberof com.antigravity.RaceData
              * @instance
              */
-            RaceData.prototype.fullUpdate = null;
+            RaceData.prototype.race = null;
 
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"fullUpdate"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "fullUpdate"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -3207,8 +3207,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.RaceTime.encode(message.raceTime, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
                 if (message.lap != null && Object.hasOwnProperty.call(message, "lap"))
                     $root.com.antigravity.Lap.encode(message.lap, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
-                if (message.fullUpdate != null && Object.hasOwnProperty.call(message, "fullUpdate"))
-                    $root.com.antigravity.FullUpdate.encode(message.fullUpdate, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.race != null && Object.hasOwnProperty.call(message, "race"))
+                    $root.com.antigravity.Race.encode(message.race, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
                 return writer;
             };
 
@@ -3254,7 +3254,7 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 3: {
-                            message.fullUpdate = $root.com.antigravity.FullUpdate.decode(reader, reader.uint32());
+                            message.race = $root.com.antigravity.Race.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -3311,14 +3311,14 @@ export const com = $root.com = (() => {
                             return "lap." + error;
                     }
                 }
-                if (message.fullUpdate != null && message.hasOwnProperty("fullUpdate")) {
+                if (message.race != null && message.hasOwnProperty("race")) {
                     if (properties.data === 1)
                         return "data: multiple values";
                     properties.data = 1;
                     {
-                        let error = $root.com.antigravity.FullUpdate.verify(message.fullUpdate);
+                        let error = $root.com.antigravity.Race.verify(message.race);
                         if (error)
-                            return "fullUpdate." + error;
+                            return "race." + error;
                     }
                 }
                 return null;
@@ -3346,10 +3346,10 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceData.lap: object expected");
                     message.lap = $root.com.antigravity.Lap.fromObject(object.lap);
                 }
-                if (object.fullUpdate != null) {
-                    if (typeof object.fullUpdate !== "object")
-                        throw TypeError(".com.antigravity.RaceData.fullUpdate: object expected");
-                    message.fullUpdate = $root.com.antigravity.FullUpdate.fromObject(object.fullUpdate);
+                if (object.race != null) {
+                    if (typeof object.race !== "object")
+                        throw TypeError(".com.antigravity.RaceData.race: object expected");
+                    message.race = $root.com.antigravity.Race.fromObject(object.race);
                 }
                 return message;
             };
@@ -3377,10 +3377,10 @@ export const com = $root.com = (() => {
                     if (options.oneofs)
                         object.data = "lap";
                 }
-                if (message.fullUpdate != null && message.hasOwnProperty("fullUpdate")) {
-                    object.fullUpdate = $root.com.antigravity.FullUpdate.toObject(message.fullUpdate, options);
+                if (message.race != null && message.hasOwnProperty("race")) {
+                    object.race = $root.com.antigravity.Race.toObject(message.race, options);
                     if (options.oneofs)
-                        object.data = "fullUpdate";
+                        object.data = "race";
                 }
                 return object;
             };
@@ -3414,27 +3414,27 @@ export const com = $root.com = (() => {
             return RaceData;
         })();
 
-        antigravity.FullUpdate = (function() {
+        antigravity.Race = (function() {
 
             /**
-             * Properties of a FullUpdate.
+             * Properties of a Race.
              * @memberof com.antigravity
-             * @interface IFullUpdate
-             * @property {com.antigravity.IRaceModel|null} [race] FullUpdate race
-             * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] FullUpdate drivers
-             * @property {Array.<com.antigravity.IHeat>|null} [heats] FullUpdate heats
-             * @property {com.antigravity.IHeat|null} [currentHeat] FullUpdate currentHeat
+             * @interface IRace
+             * @property {com.antigravity.IRaceModel|null} [race] Race race
+             * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] Race drivers
+             * @property {Array.<com.antigravity.IHeat>|null} [heats] Race heats
+             * @property {com.antigravity.IHeat|null} [currentHeat] Race currentHeat
              */
 
             /**
-             * Constructs a new FullUpdate.
+             * Constructs a new Race.
              * @memberof com.antigravity
-             * @classdesc Represents a FullUpdate.
-             * @implements IFullUpdate
+             * @classdesc Represents a Race.
+             * @implements IRace
              * @constructor
-             * @param {com.antigravity.IFullUpdate=} [properties] Properties to set
+             * @param {com.antigravity.IRace=} [properties] Properties to set
              */
-            function FullUpdate(properties) {
+            function Race(properties) {
                 this.drivers = [];
                 this.heats = [];
                 if (properties)
@@ -3444,59 +3444,59 @@ export const com = $root.com = (() => {
             }
 
             /**
-             * FullUpdate race.
+             * Race race.
              * @member {com.antigravity.IRaceModel|null|undefined} race
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @instance
              */
-            FullUpdate.prototype.race = null;
+            Race.prototype.race = null;
 
             /**
-             * FullUpdate drivers.
+             * Race drivers.
              * @member {Array.<com.antigravity.IDriverModel>} drivers
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @instance
              */
-            FullUpdate.prototype.drivers = $util.emptyArray;
+            Race.prototype.drivers = $util.emptyArray;
 
             /**
-             * FullUpdate heats.
+             * Race heats.
              * @member {Array.<com.antigravity.IHeat>} heats
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @instance
              */
-            FullUpdate.prototype.heats = $util.emptyArray;
+            Race.prototype.heats = $util.emptyArray;
 
             /**
-             * FullUpdate currentHeat.
+             * Race currentHeat.
              * @member {com.antigravity.IHeat|null|undefined} currentHeat
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @instance
              */
-            FullUpdate.prototype.currentHeat = null;
+            Race.prototype.currentHeat = null;
 
             /**
-             * Creates a new FullUpdate instance using the specified properties.
+             * Creates a new Race instance using the specified properties.
              * @function create
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
-             * @param {com.antigravity.IFullUpdate=} [properties] Properties to set
-             * @returns {com.antigravity.FullUpdate} FullUpdate instance
+             * @param {com.antigravity.IRace=} [properties] Properties to set
+             * @returns {com.antigravity.Race} Race instance
              */
-            FullUpdate.create = function create(properties) {
-                return new FullUpdate(properties);
+            Race.create = function create(properties) {
+                return new Race(properties);
             };
 
             /**
-             * Encodes the specified FullUpdate message. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * Encodes the specified Race message. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
              * @function encode
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
-             * @param {com.antigravity.IFullUpdate} message FullUpdate message or plain object to encode
+             * @param {com.antigravity.IRace} message Race message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            FullUpdate.encode = function encode(message, writer) {
+            Race.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
                 if (message.race != null && Object.hasOwnProperty.call(message, "race"))
@@ -3513,33 +3513,33 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Encodes the specified FullUpdate message, length delimited. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
+             * Encodes the specified Race message, length delimited. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
              * @function encodeDelimited
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
-             * @param {com.antigravity.IFullUpdate} message FullUpdate message or plain object to encode
+             * @param {com.antigravity.IRace} message Race message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            FullUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+            Race.encodeDelimited = function encodeDelimited(message, writer) {
                 return this.encode(message, writer).ldelim();
             };
 
             /**
-             * Decodes a FullUpdate message from the specified reader or buffer.
+             * Decodes a Race message from the specified reader or buffer.
              * @function decode
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.FullUpdate} FullUpdate
+             * @returns {com.antigravity.Race} Race
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            FullUpdate.decode = function decode(reader, length, error) {
+            Race.decode = function decode(reader, length, error) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.FullUpdate();
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Race();
                 while (reader.pos < end) {
                     let tag = reader.uint32();
                     if (tag === error)
@@ -3574,30 +3574,30 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Decodes a FullUpdate message from the specified reader or buffer, length delimited.
+             * Decodes a Race message from the specified reader or buffer, length delimited.
              * @function decodeDelimited
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.FullUpdate} FullUpdate
+             * @returns {com.antigravity.Race} Race
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            FullUpdate.decodeDelimited = function decodeDelimited(reader) {
+            Race.decodeDelimited = function decodeDelimited(reader) {
                 if (!(reader instanceof $Reader))
                     reader = new $Reader(reader);
                 return this.decode(reader, reader.uint32());
             };
 
             /**
-             * Verifies a FullUpdate message.
+             * Verifies a Race message.
              * @function verify
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
              * @param {Object.<string,*>} message Plain object to verify
              * @returns {string|null} `null` if valid, otherwise the reason why it is not
              */
-            FullUpdate.verify = function verify(message) {
+            Race.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
                 if (message.race != null && message.hasOwnProperty("race")) {
@@ -3632,60 +3632,60 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Creates a FullUpdate message from a plain object. Also converts values to their respective internal types.
+             * Creates a Race message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
              * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.FullUpdate} FullUpdate
+             * @returns {com.antigravity.Race} Race
              */
-            FullUpdate.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.FullUpdate)
+            Race.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Race)
                     return object;
-                let message = new $root.com.antigravity.FullUpdate();
+                let message = new $root.com.antigravity.Race();
                 if (object.race != null) {
                     if (typeof object.race !== "object")
-                        throw TypeError(".com.antigravity.FullUpdate.race: object expected");
+                        throw TypeError(".com.antigravity.Race.race: object expected");
                     message.race = $root.com.antigravity.RaceModel.fromObject(object.race);
                 }
                 if (object.drivers) {
                     if (!Array.isArray(object.drivers))
-                        throw TypeError(".com.antigravity.FullUpdate.drivers: array expected");
+                        throw TypeError(".com.antigravity.Race.drivers: array expected");
                     message.drivers = [];
                     for (let i = 0; i < object.drivers.length; ++i) {
                         if (typeof object.drivers[i] !== "object")
-                            throw TypeError(".com.antigravity.FullUpdate.drivers: object expected");
+                            throw TypeError(".com.antigravity.Race.drivers: object expected");
                         message.drivers[i] = $root.com.antigravity.DriverModel.fromObject(object.drivers[i]);
                     }
                 }
                 if (object.heats) {
                     if (!Array.isArray(object.heats))
-                        throw TypeError(".com.antigravity.FullUpdate.heats: array expected");
+                        throw TypeError(".com.antigravity.Race.heats: array expected");
                     message.heats = [];
                     for (let i = 0; i < object.heats.length; ++i) {
                         if (typeof object.heats[i] !== "object")
-                            throw TypeError(".com.antigravity.FullUpdate.heats: object expected");
+                            throw TypeError(".com.antigravity.Race.heats: object expected");
                         message.heats[i] = $root.com.antigravity.Heat.fromObject(object.heats[i]);
                     }
                 }
                 if (object.currentHeat != null) {
                     if (typeof object.currentHeat !== "object")
-                        throw TypeError(".com.antigravity.FullUpdate.currentHeat: object expected");
+                        throw TypeError(".com.antigravity.Race.currentHeat: object expected");
                     message.currentHeat = $root.com.antigravity.Heat.fromObject(object.currentHeat);
                 }
                 return message;
             };
 
             /**
-             * Creates a plain object from a FullUpdate message. Also converts values to other types if specified.
+             * Creates a plain object from a Race message. Also converts values to other types if specified.
              * @function toObject
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
-             * @param {com.antigravity.FullUpdate} message FullUpdate
+             * @param {com.antigravity.Race} message Race
              * @param {$protobuf.IConversionOptions} [options] Conversion options
              * @returns {Object.<string,*>} Plain object
              */
-            FullUpdate.toObject = function toObject(message, options) {
+            Race.toObject = function toObject(message, options) {
                 if (!options)
                     options = {};
                 let object = {};
@@ -3715,32 +3715,32 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Converts this FullUpdate to JSON.
+             * Converts this Race to JSON.
              * @function toJSON
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @instance
              * @returns {Object.<string,*>} JSON object
              */
-            FullUpdate.prototype.toJSON = function toJSON() {
+            Race.prototype.toJSON = function toJSON() {
                 return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
             };
 
             /**
-             * Gets the default type url for FullUpdate
+             * Gets the default type url for Race
              * @function getTypeUrl
-             * @memberof com.antigravity.FullUpdate
+             * @memberof com.antigravity.Race
              * @static
              * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns {string} The default type url
              */
-            FullUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            Race.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
                 if (typeUrlPrefix === undefined) {
                     typeUrlPrefix = "type.googleapis.com";
                 }
-                return typeUrlPrefix + "/com.antigravity.FullUpdate";
+                return typeUrlPrefix + "/com.antigravity.Race";
             };
 
-            return FullUpdate;
+            return Race;
         })();
 
         antigravity.Heat = (function() {

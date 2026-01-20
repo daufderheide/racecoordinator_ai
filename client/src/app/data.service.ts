@@ -90,7 +90,7 @@ export class DataService {
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();
-  private fullUpdateSubject = new ReplaySubject<com.antigravity.IFullUpdate>(1);
+  private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
 
   public connectToRaceDataSocket() {
     if (this.raceDataSocket) {
@@ -112,9 +112,9 @@ export class DataService {
           this.raceTimeSubject.next(raceData.raceTime.time!);
         } else if (raceData.lap) {
           this.lapSubject.next(raceData.lap);
-        } else if (raceData.fullUpdate) {
-          console.log('WS: Received FullUpdate', raceData.fullUpdate);
-          this.fullUpdateSubject.next(raceData.fullUpdate);
+        } else if (raceData.race) {
+          console.log('WS: Received Race', raceData.race);
+          this.raceUpdateSubject.next(raceData.race);
         }
       } catch (e) {
         console.error('Error parsing race data message', e);
@@ -133,7 +133,7 @@ export class DataService {
     return this.lapSubject.asObservable();
   }
 
-  public getFullUpdate(): Observable<com.antigravity.IFullUpdate> {
-    return this.fullUpdateSubject.asObservable();
+  public getRaceUpdate(): Observable<com.antigravity.IRace> {
+    return this.raceUpdateSubject.asObservable();
   }
 }

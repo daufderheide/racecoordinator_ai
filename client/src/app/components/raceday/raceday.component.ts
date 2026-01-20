@@ -67,9 +67,9 @@ export class RacedayComponent implements OnInit {
         this.detectShortcutKey();
         this.updateScale();
 
-        // Listen for FullUpdate to initialize race data
-        this.dataService.getFullUpdate().subscribe(update => {
-            console.log('RacedayComponent: Received FullUpdate:', update);
+        // Listen for Race Update to initialize race data
+        this.dataService.getRaceUpdate().subscribe(update => {
+            console.log('RacedayComponent: Received Race:', update);
             if (update.race) {
                 const race = RaceConverter.fromProto(update.race);
                 let drivers: Driver[] = [];
@@ -156,7 +156,7 @@ export class RacedayComponent implements OnInit {
             this.initializeHeat();
         } else {
             console.log('RacedayComponent: Waiting for race data...');
-            // Do not throw error, wait for FullUpdate
+            // Do not throw error, wait for Race
         }
     }
 

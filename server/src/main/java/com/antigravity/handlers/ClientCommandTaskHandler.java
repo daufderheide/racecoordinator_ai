@@ -67,7 +67,7 @@ public class ClientCommandTaskHandler {
                     .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
                     .collect(Collectors.toList());
 
-            com.antigravity.proto.FullUpdate fullUpdate = com.antigravity.proto.FullUpdate.newBuilder()
+            com.antigravity.proto.Race raceUpdate = com.antigravity.proto.Race.newBuilder()
                     .setRace(raceProto)
                     .addAllDrivers(driverModels)
                     .addAllHeats(heatProtos)
@@ -76,7 +76,7 @@ public class ClientCommandTaskHandler {
                     .build();
 
             com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
-                    .setFullUpdate(fullUpdate)
+                    .setRace(raceUpdate)
                     .build();
 
             race.broadcast(raceData);

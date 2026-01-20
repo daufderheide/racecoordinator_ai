@@ -1372,8 +1372,8 @@ export namespace com {
             /** RaceData lap */
             lap?: (com.antigravity.ILap|null);
 
-            /** RaceData fullUpdate */
-            fullUpdate?: (com.antigravity.IFullUpdate|null);
+            /** RaceData race */
+            race?: (com.antigravity.IRace|null);
         }
 
         /** Represents a RaceData. */
@@ -1391,11 +1391,11 @@ export namespace com {
             /** RaceData lap. */
             public lap?: (com.antigravity.ILap|null);
 
-            /** RaceData fullUpdate. */
-            public fullUpdate?: (com.antigravity.IFullUpdate|null);
+            /** RaceData race. */
+            public race?: (com.antigravity.IRace|null);
 
             /** RaceData data. */
-            public data?: ("raceTime"|"lap"|"fullUpdate");
+            public data?: ("raceTime"|"lap"|"race");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -1475,115 +1475,115 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
-        /** Properties of a FullUpdate. */
-        interface IFullUpdate {
+        /** Properties of a Race. */
+        interface IRace {
 
-            /** FullUpdate race */
+            /** Race race */
             race?: (com.antigravity.IRaceModel|null);
 
-            /** FullUpdate drivers */
+            /** Race drivers */
             drivers?: (com.antigravity.IDriverModel[]|null);
 
-            /** FullUpdate heats */
+            /** Race heats */
             heats?: (com.antigravity.IHeat[]|null);
 
-            /** FullUpdate currentHeat */
+            /** Race currentHeat */
             currentHeat?: (com.antigravity.IHeat|null);
         }
 
-        /** Represents a FullUpdate. */
-        class FullUpdate implements IFullUpdate {
+        /** Represents a Race. */
+        class Race implements IRace {
 
             /**
-             * Constructs a new FullUpdate.
+             * Constructs a new Race.
              * @param [properties] Properties to set
              */
-            constructor(properties?: com.antigravity.IFullUpdate);
+            constructor(properties?: com.antigravity.IRace);
 
-            /** FullUpdate race. */
+            /** Race race. */
             public race?: (com.antigravity.IRaceModel|null);
 
-            /** FullUpdate drivers. */
+            /** Race drivers. */
             public drivers: com.antigravity.IDriverModel[];
 
-            /** FullUpdate heats. */
+            /** Race heats. */
             public heats: com.antigravity.IHeat[];
 
-            /** FullUpdate currentHeat. */
+            /** Race currentHeat. */
             public currentHeat?: (com.antigravity.IHeat|null);
 
             /**
-             * Creates a new FullUpdate instance using the specified properties.
+             * Creates a new Race instance using the specified properties.
              * @param [properties] Properties to set
-             * @returns FullUpdate instance
+             * @returns Race instance
              */
-            public static create(properties?: com.antigravity.IFullUpdate): com.antigravity.FullUpdate;
+            public static create(properties?: com.antigravity.IRace): com.antigravity.Race;
 
             /**
-             * Encodes the specified FullUpdate message. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
-             * @param message FullUpdate message or plain object to encode
+             * Encodes the specified Race message. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
+             * @param message Race message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: com.antigravity.IFullUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified FullUpdate message, length delimited. Does not implicitly {@link com.antigravity.FullUpdate.verify|verify} messages.
-             * @param message FullUpdate message or plain object to encode
+             * Encodes the specified Race message, length delimited. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
+             * @param message Race message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: com.antigravity.IFullUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Decodes a FullUpdate message from the specified reader or buffer.
+             * Decodes a Race message from the specified reader or buffer.
              * @param reader Reader or buffer to decode from
              * @param [length] Message length if known beforehand
-             * @returns FullUpdate
+             * @returns Race
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.FullUpdate;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Race;
 
             /**
-             * Decodes a FullUpdate message from the specified reader or buffer, length delimited.
+             * Decodes a Race message from the specified reader or buffer, length delimited.
              * @param reader Reader or buffer to decode from
-             * @returns FullUpdate
+             * @returns Race
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.FullUpdate;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Race;
 
             /**
-             * Verifies a FullUpdate message.
+             * Verifies a Race message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
             public static verify(message: { [k: string]: any }): (string|null);
 
             /**
-             * Creates a FullUpdate message from a plain object. Also converts values to their respective internal types.
+             * Creates a Race message from a plain object. Also converts values to their respective internal types.
              * @param object Plain object
-             * @returns FullUpdate
+             * @returns Race
              */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.FullUpdate;
+            public static fromObject(object: { [k: string]: any }): com.antigravity.Race;
 
             /**
-             * Creates a plain object from a FullUpdate message. Also converts values to other types if specified.
-             * @param message FullUpdate
+             * Creates a plain object from a Race message. Also converts values to other types if specified.
+             * @param message Race
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: com.antigravity.FullUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: com.antigravity.Race, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
-             * Converts this FullUpdate to JSON.
+             * Converts this Race to JSON.
              * @returns JSON object
              */
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the default type url for FullUpdate
+             * Gets the default type url for Race
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
