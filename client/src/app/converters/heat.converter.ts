@@ -2,16 +2,64 @@ import { com } from "../proto/message";
 import { Heat } from "../models/heat";
 import { HeatDriver } from "../models/heat_driver";
 import { RaceParticipant } from "../models/race-participant";
+import { Driver } from "../models/driver";
 import { DriverConverter } from "./driver.converter";
+import { ConverterCache } from "./converter-cache";
 
 export class HeatConverter {
-    static fromProto(proto: com.antigravity.IHeat, heatNumber?: number): Heat {
-        const drivers = proto.heatDrivers?.map(hd => {
-            const driverModel = DriverConverter.fromProto(hd.driver!.driver!);
-            const participant = new RaceParticipant(driverModel);
-            return new HeatDriver(participant);
-        }) || [];
+    private static participantCache = new Map<string, RaceParticipant>();
+    private static heatCache = new ConverterCache<Heat>();
+    private static heatDriverCache = new Map<string, HeatDriver>();
 
-        return new Heat(proto.heatNumber || heatNumber || 0, drivers);
+    static clearCache() {
+        this.participantCache.clear();
+        this.heatCache.clear();
+        this.heatDriverCache.clear();
+    }
+
+    static fromProto(proto: com.antigravity.IHeat, heatNumber: number = -1): Heat {
+        // console.log('HeatConverter: Processing heat proto:', proto);
+        const objectId = proto.objectId;
+        // Is Reference if heatDrivers is empty/undefined
+        const isReference = (!proto.heatDrivers || proto.heatDrivers.length === 0);
+
+        return this.heatCache.process(
+            objectId,
+            isReference,
+            () => {
+                let heatDrivers: Array<HeatDriver | null> = [];
+                if (proto.heatDrivers) {
+                    heatDrivers = proto.heatDrivers.map(dProto => {
+                        if (dProto.driver) {
+                            const partProto = dProto.driver;
+                            let driver: Driver | undefined;
+
+                            if (partProto.driver) {
+                                driver = DriverConverter.fromProto(partProto.driver);
+                            }
+
+                            if (!driver) {
+                                return null;
+                            }
+
+                            const participant = new RaceParticipant(driver, partProto.objectId || '');
+                            const heatDriverId = dProto.objectId;
+
+                            return new HeatDriver(heatDriverId || '', participant);
+                        }
+                        return null;
+                    });
+                }
+
+                const validHeatDrivers = heatDrivers.filter((d): d is HeatDriver => d !== null);
+                console.log(`HeatConverter: Processed ${validHeatDrivers.length} valid drivers for heat ${heatNumber}`);
+
+                return new Heat(
+                    objectId || '',
+                    heatNumber !== -1 ? heatNumber : (proto.heatNumber || 0),
+                    validHeatDrivers
+                );
+            }
+        );
     }
 }

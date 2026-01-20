@@ -52,24 +52,27 @@ public class ClientCommandTaskHandler {
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 
             com.antigravity.models.Track track = race.getTrack();
-            com.antigravity.proto.TrackModel trackProto = TrackConverter.toProto(track);
+            // com.antigravity.proto.TrackModel trackProto = TrackConverter.toProto(track);
 
-            com.antigravity.proto.RaceModel raceProto = RaceConverter.toProto(race.getRaceModel(), trackProto);
+            java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+            com.antigravity.proto.RaceModel raceProto = RaceConverter.toProto(race.getRaceModel(), track,
+                    sentObjectIds);
 
             java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
             for (com.antigravity.models.Driver driver : drivers) {
-                driverModels.add(DriverConverter.toProto(driver));
+                driverModels.add(DriverConverter.toProto(driver, sentObjectIds));
             }
 
             java.util.List<com.antigravity.proto.Heat> heatProtos = race.getHeats().stream()
-                    .map(com.antigravity.converters.HeatConverter::toProto)
+                    .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
                     .collect(Collectors.toList());
 
             com.antigravity.proto.FullUpdate fullUpdate = com.antigravity.proto.FullUpdate.newBuilder()
                     .setRace(raceProto)
                     .addAllDrivers(driverModels)
                     .addAllHeats(heatProtos)
-                    .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(race.getCurrentHeat()))
+                    .setCurrentHeat(
+                            com.antigravity.converters.HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
                     .build();
 
             com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
@@ -85,6 +88,10 @@ public class ClientCommandTaskHandler {
         } catch (InvalidProtocolBufferException e) {
             System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
             ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error initializing race: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.toString());
         }
     }
 

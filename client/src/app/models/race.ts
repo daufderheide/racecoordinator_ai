@@ -11,4 +11,8 @@ export class Race implements Model {
         this.name = name;
         this.track = track;
     }
+
+    get objectId(): string {
+        return this.entity_id;
+    }
 }

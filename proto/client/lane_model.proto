@@ -9,4 +9,5 @@ message LaneModel {
   string background_color = 1;
   string foreground_color = 2;
   int32 length = 3;
+  string object_id = 4;
 }

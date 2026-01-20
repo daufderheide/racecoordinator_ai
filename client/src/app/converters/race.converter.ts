@@ -1,21 +1,37 @@
 import { Race } from "../models/race";
 import { com } from "../proto/message";
 import { TrackConverter } from "./track.converter";
-import { Track } from "../models/track";
+import { ConverterCache } from "./converter-cache";
 
 export class RaceConverter {
-    static fromProto(proto: com.antigravity.IRaceModel): Race {
-        let track: Track;
-        if (proto.track) {
-            track = TrackConverter.fromProto(proto.track);
-        } else {
-            throw new Error("RaceConverter: proto.track is undefined");
-        }
+    private static cache = new ConverterCache<Race>();
 
-        return new Race(
-            proto.model?.entityId || '',
-            proto.name || '',
-            track
+    static clearCache() {
+        this.cache.clear();
+    }
+
+    static fromProto(proto: com.antigravity.IRaceModel): Race {
+        const objectId = proto.model?.entityId;
+        const isReference = !proto.track;
+
+        return this.cache.process(
+            objectId,
+            isReference,
+            () => {
+                return new Race(
+                    objectId || '',
+                    proto.name || '',
+                    TrackConverter.fromProto(proto.track!)
+                );
+            },
+            () => {
+                if (!proto.track) {
+                    if (!objectId) {
+                        throw new Error("RaceConverter: proto.track is undefined and no objectId");
+                    }
+                    throw new Error("RaceConverter: proto.track is undefined for new/full Race");
+                }
+            }
         );
     }
 }

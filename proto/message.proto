@@ -1,0 +1,19 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/driver_model.proto";
+import "client/initialize_race.proto";
+import "client/lane_model.proto";
+import "client/model.proto";
+import "client/pause_race.proto";
+import "client/race_model.proto";
+import "client/start_race.proto";
+import "client/track_model.proto";
+
+import "server/full_update.proto";
+import "server/heat.proto";
+import "server/heat_data.proto";
+import "server/lap.proto";
+import "server/race_data.proto";
+import "server/race_participant.proto";
+import "server/race_time.proto";

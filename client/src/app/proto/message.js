@@ -1049,6 +1049,7 @@ export const com = $root.com = (() => {
              * @property {string|null} [backgroundColor] LaneModel backgroundColor
              * @property {string|null} [foregroundColor] LaneModel foregroundColor
              * @property {number|null} [length] LaneModel length
+             * @property {string|null} [objectId] LaneModel objectId
              */
 
             /**
@@ -1091,6 +1092,14 @@ export const com = $root.com = (() => {
             LaneModel.prototype.length = 0;
 
             /**
+             * LaneModel objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.objectId = "";
+
+            /**
              * Creates a new LaneModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.LaneModel
@@ -1120,6 +1129,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.foregroundColor);
                 if (message.length != null && Object.hasOwnProperty.call(message, "length"))
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.objectId);
                 return writer;
             };
 
@@ -1168,6 +1179,10 @@ export const com = $root.com = (() => {
                             message.length = reader.int32();
                             break;
                         }
+                    case 4: {
+                            message.objectId = reader.string();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -1212,6 +1227,9 @@ export const com = $root.com = (() => {
                 if (message.length != null && message.hasOwnProperty("length"))
                     if (!$util.isInteger(message.length))
                         return "length: integer expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
                 return null;
             };
 
@@ -1233,6 +1251,8 @@ export const com = $root.com = (() => {
                     message.foregroundColor = String(object.foregroundColor);
                 if (object.length != null)
                     message.length = object.length | 0;
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
                 return message;
             };
 
@@ -1253,6 +1273,7 @@ export const com = $root.com = (() => {
                     object.backgroundColor = "";
                     object.foregroundColor = "";
                     object.length = 0;
+                    object.objectId = "";
                 }
                 if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
                     object.backgroundColor = message.backgroundColor;
@@ -1260,6 +1281,8 @@ export const com = $root.com = (() => {
                     object.foregroundColor = message.foregroundColor;
                 if (message.length != null && message.hasOwnProperty("length"))
                     object.length = message.length;
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
                 return object;
             };
 
@@ -3728,6 +3751,7 @@ export const com = $root.com = (() => {
              * @interface IHeat
              * @property {Array.<com.antigravity.IDriverHeatData>|null} [heatDrivers] Heat heatDrivers
              * @property {number|null} [heatNumber] Heat heatNumber
+             * @property {string|null} [objectId] Heat objectId
              */
 
             /**
@@ -3763,6 +3787,14 @@ export const com = $root.com = (() => {
             Heat.prototype.heatNumber = 0;
 
             /**
+             * Heat objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.Heat
+             * @instance
+             */
+            Heat.prototype.objectId = "";
+
+            /**
              * Creates a new Heat instance using the specified properties.
              * @function create
              * @memberof com.antigravity.Heat
@@ -3791,6 +3823,8 @@ export const com = $root.com = (() => {
                         $root.com.antigravity.DriverHeatData.encode(message.heatDrivers[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
                 if (message.heatNumber != null && Object.hasOwnProperty.call(message, "heatNumber"))
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.heatNumber);
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.objectId);
                 return writer;
             };
 
@@ -3835,6 +3869,10 @@ export const com = $root.com = (() => {
                         }
                     case 2: {
                             message.heatNumber = reader.int32();
+                            break;
+                        }
+                    case 3: {
+                            message.objectId = reader.string();
                             break;
                         }
                     default:
@@ -3884,6 +3922,9 @@ export const com = $root.com = (() => {
                 if (message.heatNumber != null && message.hasOwnProperty("heatNumber"))
                     if (!$util.isInteger(message.heatNumber))
                         return "heatNumber: integer expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
                 return null;
             };
 
@@ -3911,6 +3952,8 @@ export const com = $root.com = (() => {
                 }
                 if (object.heatNumber != null)
                     message.heatNumber = object.heatNumber | 0;
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
                 return message;
             };
 
@@ -3929,8 +3972,10 @@ export const com = $root.com = (() => {
                 let object = {};
                 if (options.arrays || options.defaults)
                     object.heatDrivers = [];
-                if (options.defaults)
+                if (options.defaults) {
                     object.heatNumber = 0;
+                    object.objectId = "";
+                }
                 if (message.heatDrivers && message.heatDrivers.length) {
                     object.heatDrivers = [];
                     for (let j = 0; j < message.heatDrivers.length; ++j)
@@ -3938,6 +3983,8 @@ export const com = $root.com = (() => {
                 }
                 if (message.heatNumber != null && message.hasOwnProperty("heatNumber"))
                     object.heatNumber = message.heatNumber;
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
                 return object;
             };
 
@@ -3977,6 +4024,7 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IDriverHeatData
              * @property {com.antigravity.IRaceParticipant|null} [driver] DriverHeatData driver
+             * @property {string|null} [objectId] DriverHeatData objectId
              */
 
             /**
@@ -4001,6 +4049,14 @@ export const com = $root.com = (() => {
              * @instance
              */
             DriverHeatData.prototype.driver = null;
+
+            /**
+             * DriverHeatData objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.objectId = "";
 
             /**
              * Creates a new DriverHeatData instance using the specified properties.
@@ -4028,6 +4084,8 @@ export const com = $root.com = (() => {
                     writer = $Writer.create();
                 if (message.driver != null && Object.hasOwnProperty.call(message, "driver"))
                     $root.com.antigravity.RaceParticipant.encode(message.driver, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.objectId);
                 return writer;
             };
 
@@ -4066,6 +4124,10 @@ export const com = $root.com = (() => {
                     switch (tag >>> 3) {
                     case 1: {
                             message.driver = $root.com.antigravity.RaceParticipant.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.objectId = reader.string();
                             break;
                         }
                     default:
@@ -4108,6 +4170,9 @@ export const com = $root.com = (() => {
                     if (error)
                         return "driver." + error;
                 }
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
                 return null;
             };
 
@@ -4128,6 +4193,8 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.DriverHeatData.driver: object expected");
                     message.driver = $root.com.antigravity.RaceParticipant.fromObject(object.driver);
                 }
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
                 return message;
             };
 
@@ -4144,10 +4211,14 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.defaults)
+                if (options.defaults) {
                     object.driver = null;
+                    object.objectId = "";
+                }
                 if (message.driver != null && message.hasOwnProperty("driver"))
                     object.driver = $root.com.antigravity.RaceParticipant.toObject(message.driver, options);
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
                 return object;
             };
 
@@ -4186,6 +4257,7 @@ export const com = $root.com = (() => {
              * Properties of a RaceParticipant.
              * @memberof com.antigravity
              * @interface IRaceParticipant
+             * @property {string|null} [objectId] RaceParticipant objectId
              * @property {com.antigravity.IDriverModel|null} [driver] RaceParticipant driver
              */
 
@@ -4203,6 +4275,14 @@ export const com = $root.com = (() => {
                         if (properties[keys[i]] != null)
                             this[keys[i]] = properties[keys[i]];
             }
+
+            /**
+             * RaceParticipant objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.objectId = "";
 
             /**
              * RaceParticipant driver.
@@ -4236,8 +4316,10 @@ export const com = $root.com = (() => {
             RaceParticipant.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.driver != null && Object.hasOwnProperty.call(message, "driver"))
-                    $root.com.antigravity.DriverModel.encode(message.driver, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                    $root.com.antigravity.DriverModel.encode(message.driver, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
                 return writer;
             };
 
@@ -4275,6 +4357,10 @@ export const com = $root.com = (() => {
                         break;
                     switch (tag >>> 3) {
                     case 1: {
+                            message.objectId = reader.string();
+                            break;
+                        }
+                    case 2: {
                             message.driver = $root.com.antigravity.DriverModel.decode(reader, reader.uint32());
                             break;
                         }
@@ -4313,6 +4399,9 @@ export const com = $root.com = (() => {
             RaceParticipant.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
                 if (message.driver != null && message.hasOwnProperty("driver")) {
                     let error = $root.com.antigravity.DriverModel.verify(message.driver);
                     if (error)
@@ -4333,6 +4422,8 @@ export const com = $root.com = (() => {
                 if (object instanceof $root.com.antigravity.RaceParticipant)
                     return object;
                 let message = new $root.com.antigravity.RaceParticipant();
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
                 if (object.driver != null) {
                     if (typeof object.driver !== "object")
                         throw TypeError(".com.antigravity.RaceParticipant.driver: object expected");
@@ -4354,8 +4445,12 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.defaults)
+                if (options.defaults) {
+                    object.objectId = "";
                     object.driver = null;
+                }
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
                 if (message.driver != null && message.hasOwnProperty("driver"))
                     object.driver = $root.com.antigravity.DriverModel.toObject(message.driver, options);
                 return object;

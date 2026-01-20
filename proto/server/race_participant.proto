@@ -8,5 +8,6 @@ option java_multiple_files = true;
 option java_outer_classname = "RaceParticipantProto";
 
 message RaceParticipant {
-  DriverModel driver = 1;
+  string object_id = 1;
+  DriverModel driver = 2;
 }

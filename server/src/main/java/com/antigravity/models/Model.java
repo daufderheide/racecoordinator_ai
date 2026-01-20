@@ -6,7 +6,7 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Model {
+public class Model extends com.antigravity.race.ServerToClientObject {
     private final ObjectId id;
 
     @BsonProperty("entity_id")
@@ -15,6 +15,7 @@ public class Model {
 
     @BsonCreator
     public Model(@BsonId ObjectId id, @BsonProperty("entity_id") String entityId) {
+        super(entityId);
         this.id = id;
         this.entityId = entityId;
     }

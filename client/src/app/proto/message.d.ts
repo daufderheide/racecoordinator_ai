@@ -441,6 +441,9 @@ export namespace com {
 
             /** LaneModel length */
             length?: (number|null);
+
+            /** LaneModel objectId */
+            objectId?: (string|null);
         }
 
         /** Represents a LaneModel. */
@@ -460,6 +463,9 @@ export namespace com {
 
             /** LaneModel length. */
             public length: number;
+
+            /** LaneModel objectId. */
+            public objectId: string;
 
             /**
              * Creates a new LaneModel instance using the specified properties.
@@ -1592,6 +1598,9 @@ export namespace com {
 
             /** Heat heatNumber */
             heatNumber?: (number|null);
+
+            /** Heat objectId */
+            objectId?: (string|null);
         }
 
         /** Represents a Heat. */
@@ -1608,6 +1617,9 @@ export namespace com {
 
             /** Heat heatNumber. */
             public heatNumber: number;
+
+            /** Heat objectId. */
+            public objectId: string;
 
             /**
              * Creates a new Heat instance using the specified properties.
@@ -1692,6 +1704,9 @@ export namespace com {
 
             /** DriverHeatData driver */
             driver?: (com.antigravity.IRaceParticipant|null);
+
+            /** DriverHeatData objectId */
+            objectId?: (string|null);
         }
 
         /** Represents a DriverHeatData. */
@@ -1705,6 +1720,9 @@ export namespace com {
 
             /** DriverHeatData driver. */
             public driver?: (com.antigravity.IRaceParticipant|null);
+
+            /** DriverHeatData objectId. */
+            public objectId: string;
 
             /**
              * Creates a new DriverHeatData instance using the specified properties.
@@ -1787,6 +1805,9 @@ export namespace com {
         /** Properties of a RaceParticipant. */
         interface IRaceParticipant {
 
+            /** RaceParticipant objectId */
+            objectId?: (string|null);
+
             /** RaceParticipant driver */
             driver?: (com.antigravity.IDriverModel|null);
         }
@@ -1799,6 +1820,9 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceParticipant);
+
+            /** RaceParticipant objectId. */
+            public objectId: string;
 
             /** RaceParticipant driver. */
             public driver?: (com.antigravity.IDriverModel|null);

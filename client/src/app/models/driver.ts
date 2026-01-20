@@ -14,4 +14,8 @@ export class Driver implements Model {
         this.name = name;
         this.nickname = nickname;
     }
+
+    get objectId(): string {
+        return this.entity_id;
+    }
 }   

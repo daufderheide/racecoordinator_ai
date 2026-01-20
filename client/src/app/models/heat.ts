@@ -7,10 +7,12 @@ import { HeatDriver } from "./heat_driver";
  * configured.
  */
 export class Heat {
+    readonly objectId: string;
     readonly heatNumber: number;
     readonly heatDrivers: HeatDriver[];
 
-    constructor(heatNumber: number, heatDrivers: HeatDriver[]) {
+    constructor(objectId: string, heatNumber: number, heatDrivers: HeatDriver[]) {
+        this.objectId = objectId;
         this.heatNumber = heatNumber;
         this.heatDrivers = heatDrivers;
     }

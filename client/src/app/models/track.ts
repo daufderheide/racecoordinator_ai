@@ -18,4 +18,8 @@ export class Track implements Model {
         this.name = name;
         this.lanes = lanes;
     }
+
+    get objectId(): string {
+        return this.entity_id;
+    }
 }

@@ -3,7 +3,7 @@ package com.antigravity.race;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class DriverHeatData {
+public class DriverHeatData extends ServerToClientObject {
     private RaceParticipant driver;
 
     private ArrayList<Float> laps = new ArrayList<>();
@@ -11,6 +11,7 @@ public class DriverHeatData {
     private float bestLapTime = 0.0f;
 
     public DriverHeatData(RaceParticipant driver) {
+        super();
         this.driver = driver;
     }
 

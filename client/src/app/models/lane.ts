@@ -17,4 +17,8 @@ export class Lane implements Model {
         this.background_color = background_color;
         this.length = length;
     }
+
+    get objectId(): string {
+        return this.entity_id;
+    }
 }

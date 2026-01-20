@@ -11,6 +11,8 @@ import { RaceService } from 'src/app/services/race.service';
 import { RaceConverter } from 'src/app/converters/race.converter';
 import { DriverConverter } from 'src/app/converters/driver.converter';
 import { HeatConverter } from 'src/app/converters/heat.converter';
+import { TrackConverter } from 'src/app/converters/track.converter';
+import { LaneConverter } from 'src/app/converters/lane.converter';
 
 import { ColumnDefinition } from './column_definition';
 
@@ -44,7 +46,7 @@ export class RacedayComponent implements OnInit {
     ) {
         // Define columns to display with translation keys
         this.columns = [
-            new ColumnDefinition('RD_COL_NAME', 'driver.nickname', 480, true, 'start', 30),
+            new ColumnDefinition('RD_COL_NAME', 'driver.name', 480, true, 'start', 30),
             new ColumnDefinition('RD_COL_LAP', 'lapCount', 275),
             new ColumnDefinition('RD_COL_LAP_TIME', 'lastLapTime', 275),
             new ColumnDefinition('RD_COL_MEDIAN_LAP', 'medianLapTime', 275),
@@ -54,6 +56,14 @@ export class RacedayComponent implements OnInit {
 
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
+
+        // Clear caches to ensure fresh data for new race
+        RaceConverter.clearCache();
+        DriverConverter.clearCache();
+        HeatConverter.clearCache();
+        TrackConverter.clearCache();
+        LaneConverter.clearCache();
+
         this.detectShortcutKey();
         this.updateScale();
 
@@ -141,6 +151,7 @@ export class RacedayComponent implements OnInit {
         const race = this.raceService.getRace();
         if (race) {
             console.log('RacedayComponent: using selected race:', race);
+            console.log('RacedayComponent: Race tracks/lanes:', race.track, race.track?.lanes);
             this.track = race.track;
             this.initializeHeat();
         } else {
@@ -161,6 +172,16 @@ export class RacedayComponent implements OnInit {
             console.log('RacedayComponent: Using heats from server:', heats);
             this.totalHeats = heats.length;
             this.heat = this.raceService.getCurrentHeat();
+            console.log('RacedayComponent: Current Heat:', this.heat);
+            if (this.heat) {
+                console.log('RacedayComponent: Heat drivers:', this.heat.heatDrivers);
+                this.heat.heatDrivers.forEach((hd, idx) => {
+                    console.log(`Driver ${idx}:`, hd);
+                    if (hd) {
+                        console.log(`Driver ${idx} details:`, hd.participant?.driver?.name);
+                    }
+                });
+            }
             this.cdr.detectChanges();
         } else {
             console.warn('RacedayComponent: No heats available from server.');
