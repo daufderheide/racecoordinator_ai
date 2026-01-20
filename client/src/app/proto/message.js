@@ -2800,7 +2800,7 @@ export const com = $root.com = (() => {
              * Properties of a Lap.
              * @memberof com.antigravity
              * @interface ILap
-             * @property {number|null} [lane] Lap lane
+             * @property {string|null} [objectId] Lap objectId
              * @property {number|null} [lapTime] Lap lapTime
              * @property {number|null} [lapNumber] Lap lapNumber
              * @property {number|null} [averageLapTime] Lap averageLapTime
@@ -2824,12 +2824,12 @@ export const com = $root.com = (() => {
             }
 
             /**
-             * Lap lane.
-             * @member {number} lane
+             * Lap objectId.
+             * @member {string} objectId
              * @memberof com.antigravity.Lap
              * @instance
              */
-            Lap.prototype.lane = 0;
+            Lap.prototype.objectId = "";
 
             /**
              * Lap lapTime.
@@ -2895,8 +2895,8 @@ export const com = $root.com = (() => {
             Lap.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
-                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
                     writer.uint32(/* id 2, wireType 5 =*/21).float(message.lapTime);
                 if (message.lapNumber != null && Object.hasOwnProperty.call(message, "lapNumber"))
@@ -2944,7 +2944,7 @@ export const com = $root.com = (() => {
                         break;
                     switch (tag >>> 3) {
                     case 1: {
-                            message.lane = reader.int32();
+                            message.objectId = reader.string();
                             break;
                         }
                     case 2: {
@@ -3002,9 +3002,9 @@ export const com = $root.com = (() => {
             Lap.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
-                if (message.lane != null && message.hasOwnProperty("lane"))
-                    if (!$util.isInteger(message.lane))
-                        return "lane: integer expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
                 if (message.lapTime != null && message.hasOwnProperty("lapTime"))
                     if (typeof message.lapTime !== "number")
                         return "lapTime: number expected";
@@ -3035,8 +3035,8 @@ export const com = $root.com = (() => {
                 if (object instanceof $root.com.antigravity.Lap)
                     return object;
                 let message = new $root.com.antigravity.Lap();
-                if (object.lane != null)
-                    message.lane = object.lane | 0;
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
                 if (object.lapTime != null)
                     message.lapTime = Number(object.lapTime);
                 if (object.lapNumber != null)
@@ -3064,15 +3064,15 @@ export const com = $root.com = (() => {
                     options = {};
                 let object = {};
                 if (options.defaults) {
-                    object.lane = 0;
+                    object.objectId = "";
                     object.lapTime = 0;
                     object.lapNumber = 0;
                     object.averageLapTime = 0;
                     object.medianLapTime = 0;
                     object.bestLapTime = 0;
                 }
-                if (message.lane != null && message.hasOwnProperty("lane"))
-                    object.lane = message.lane;
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
                 if (message.lapTime != null && message.hasOwnProperty("lapTime"))
                     object.lapTime = options.json && !isFinite(message.lapTime) ? String(message.lapTime) : message.lapTime;
                 if (message.lapNumber != null && message.hasOwnProperty("lapNumber"))

@@ -40,7 +40,7 @@ public class ProtocolHandler implements ProtocolListener {
         driverData.addLap(lapTime);
 
         com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
-                .setLane(lane)
+                .setObjectId(driverData.getObjectId())
                 .setLapTime(lapTime)
                 .setLapNumber(driverData.getLapCount())
                 .setAverageLapTime(driverData.getAverageLapTime())

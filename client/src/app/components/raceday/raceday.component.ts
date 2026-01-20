@@ -127,11 +127,15 @@ export class RacedayComponent implements OnInit {
         });
 
         this.dataService.getLaps().subscribe(lap => {
-            if (this.heat && this.heat.heatDrivers && lap && lap.lane !== null && lap.lane !== undefined) {
-                const driver = this.heat.heatDrivers[lap.lane];
+            // Locate driver by objectId from the lap message
+            if (this.heat && this.heat.heatDrivers && lap && lap.objectId) {
+                const driver = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
                 if (driver) {
                     driver.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
                     this.cdr.detectChanges();
+                } else {
+                    // Throw error if driver not found for given objectId
+                    throw new Error(`Lap objectId ${lap.objectId} not found among heat drivers`);
                 }
             }
         });

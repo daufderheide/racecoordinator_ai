@@ -1239,8 +1239,8 @@ export namespace com {
         /** Properties of a Lap. */
         interface ILap {
 
-            /** Lap lane */
-            lane?: (number|null);
+            /** Lap objectId */
+            objectId?: (string|null);
 
             /** Lap lapTime */
             lapTime?: (number|null);
@@ -1267,8 +1267,8 @@ export namespace com {
              */
             constructor(properties?: com.antigravity.ILap);
 
-            /** Lap lane. */
-            public lane: number;
+            /** Lap objectId. */
+            public objectId: string;
 
             /** Lap lapTime. */
             public lapTime: number;
