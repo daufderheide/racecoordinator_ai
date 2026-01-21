@@ -22,6 +22,10 @@ public class Race implements ProtocolListener {
     private Heat currentHeat;
     private HeatStandings heatStandings;
 
+    public List<RaceParticipant> getDrivers() {
+        return drivers;
+    }
+
     private ProtocolDelegate protocols;
 
     // Dynamic race data
@@ -40,12 +44,12 @@ public class Race implements ProtocolListener {
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
         com.antigravity.models.RaceScoring scoring = model.getRaceScoring();
-        HeatStandings.SortType sortType = HeatStandings.SortType.LAP_COUNT;
-        HeatStandings.TieBreaker tieBreaker = HeatStandings.TieBreaker.FASTEST_LAP_TIME;
+        com.antigravity.models.RaceScoring.HeatRanking sortType = com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT;
+        com.antigravity.models.RaceScoring.HeatRankingTiebreaker tieBreaker = com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME;
 
         if (scoring != null) {
-            sortType = HeatStandings.SortType.valueOf(scoring.getHeatRanking().name());
-            tieBreaker = HeatStandings.TieBreaker.valueOf(scoring.getHeatRankingTiebreaker().name());
+            sortType = scoring.getHeatRanking();
+            tieBreaker = scoring.getHeatRankingTiebreaker();
         }
 
         this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(), sortType, tieBreaker);
@@ -164,5 +168,27 @@ public class Race implements ProtocolListener {
     @Override
     public void onLap(int lane, float lapTime) {
         state.onLap(lane, lapTime);
+    }
+
+    public boolean isLastHeat() {
+        return heats.indexOf(currentHeat) == heats.size() - 1;
+    }
+
+    public void moveToNextHeat() {
+        int currentIndex = heats.indexOf(currentHeat);
+        if (currentIndex < heats.size() - 1) {
+            currentHeat = heats.get(currentIndex + 1);
+
+            // Update heat standings for the new heat
+            this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(),
+                    this.heatStandings.getSortType(),
+                    this.heatStandings.getTieBreaker());
+            this.currentHeat.setStandings(this.heatStandings.getStandings());
+
+            changeState(new NotStarted());
+            broadcast(com.antigravity.proto.RaceData.newBuilder()
+                    .setRace(com.antigravity.converters.RaceConverter.toProto(this, new java.util.HashSet<>()))
+                    .build());
+        }
     }
 }

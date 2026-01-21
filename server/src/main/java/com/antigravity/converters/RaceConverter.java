@@ -44,4 +44,18 @@ public class RaceConverter {
                         return builder.build();
                 }
         }
+
+        public static com.antigravity.proto.Race toProto(com.antigravity.race.Race race,
+                        java.util.Set<String> sentObjectIds) {
+                return com.antigravity.proto.Race.newBuilder()
+                                .setRace(toProto(race.getRaceModel(), race.getTrack(), sentObjectIds))
+                                .addAllDrivers(race.getDrivers().stream()
+                                                .map(p -> DriverConverter.toProto(p.getDriver(), sentObjectIds))
+                                                .collect(java.util.stream.Collectors.toList()))
+                                .addAllHeats(race.getHeats().stream()
+                                                .map(h -> HeatConverter.toProto(h, sentObjectIds))
+                                                .collect(java.util.stream.Collectors.toList()))
+                                .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
+                                .build();
+        }
 }

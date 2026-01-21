@@ -84,8 +84,8 @@ public class DatabaseService {
         resetSequence(database, "races");
 
         com.antigravity.models.RaceScoring scoring = new com.antigravity.models.RaceScoring(
-                com.antigravity.models.RaceScoring.FinishMethod.Lap,
-                10,
+                com.antigravity.models.RaceScoring.FinishMethod.Timed,
+                45,
                 com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
                 com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 

@@ -10,6 +10,16 @@ public class Racing implements IRaceState {
     public void enter(com.antigravity.race.Race race) {
         System.out.println("Racing state entered. Race started!");
         this.race = race;
+
+        com.antigravity.models.RaceScoring scoring = race.getRaceModel().getRaceScoring();
+        if (scoring != null && scoring.getFinishMethod() == com.antigravity.models.RaceScoring.FinishMethod.Timed) {
+            // If starting fresh (time is 0), set it to finish value.
+            // If resuming (time > 0), assume it's already set.
+            if (race.getRaceTime() == 0) {
+                race.addRaceTime((float) scoring.getFinishValue());
+            }
+        }
+
         race.startProtocols();
         scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
         final Runnable ticker = new Runnable() {
@@ -25,11 +35,43 @@ public class Racing implements IRaceState {
 
                     float delta = (now - lastTime) / 1_000_000_000.0f;
                     lastTime = now;
-                    race.addRaceTime(delta);
+
+                    com.antigravity.models.RaceScoring scoring = race.getRaceModel().getRaceScoring();
+                    boolean isTimed = scoring != null
+                            && scoring.getFinishMethod() == com.antigravity.models.RaceScoring.FinishMethod.Timed;
+
+                    if (isTimed) {
+                        race.addRaceTime(-delta);
+                    } else {
+                        race.addRaceTime(delta);
+                    }
+
+                    // Check finish conditions
+                    boolean finished = false;
+                    if (scoring != null) {
+                        if (isTimed) {
+                            if (race.getRaceTime() <= 0) {
+                                race.resetRaceTime(); // Snap to 0? Or keep negative? Usually 0.
+                                finished = true;
+                            }
+                        } else {
+                            // Lap based
+                            long limit = scoring.getFinishValue();
+                            for (com.antigravity.race.DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
+                                if (driver.getLapCount() >= limit) {
+                                    finished = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
                     // Broadcast RaceTime message wrapped in RaceData
+                    // Ensure we don't send negative time for display if finished
+                    float displayTime = Math.max(0, race.getRaceTime());
+
                     com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
-                            .setTime(race.getRaceTime())
+                            .setTime(displayTime)
                             .build();
 
                     com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
@@ -37,6 +79,14 @@ public class Racing implements IRaceState {
                             .build();
 
                     race.broadcast(raceDataMsg);
+
+                    if (finished) {
+                        if (race.isLastHeat()) {
+                            race.changeState(new RaceOver());
+                        } else {
+                            race.changeState(new HeatOver());
+                        }
+                    }
 
                 } catch (Exception e) {
                     System.err.println("Error in Racing timer: " + e.getMessage());
@@ -92,6 +142,20 @@ public class Racing implements IRaceState {
         }
 
         handleLapTime(driverData, lapTime);
+
+        // Check for finish condition immediately after a lap (mainly for Lap based
+        // races)
+        com.antigravity.models.RaceScoring scoring = race.getRaceModel().getRaceScoring();
+        if (scoring != null && scoring.getFinishMethod() == com.antigravity.models.RaceScoring.FinishMethod.Lap) {
+            long limit = scoring.getFinishValue();
+            if (driverData.getLapCount() >= limit) {
+                if (race.isLastHeat()) {
+                    race.changeState(new RaceOver());
+                } else {
+                    race.changeState(new HeatOver());
+                }
+            }
+        }
     }
 
     private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, float lapTime, int lane) {

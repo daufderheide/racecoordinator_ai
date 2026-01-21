@@ -5,28 +5,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.antigravity.models.RaceScoring.HeatRanking;
+import com.antigravity.models.RaceScoring.HeatRankingTiebreaker;
 import com.antigravity.proto.HeatPositionUpdate;
 import com.antigravity.proto.StandingsUpdate;
 
 public class HeatStandings {
-  public enum SortType {
-    LAP_COUNT,
-    FASTEST_LAP,
-    TOTAL_TIME
-  }
-
-  public enum TieBreaker {
-    FASTEST_LAP_TIME,
-    MEDIAN_LAP_TIME,
-    AVERAGE_LAP_TIME
-  }
 
   private final List<DriverHeatData> driverHeatData;
-  private final SortType sortType;
-  private final TieBreaker tieBreaker;
+  private final HeatRanking sortType;
+  private final HeatRankingTiebreaker tieBreaker;
   private List<String> currentStandings;
 
-  public HeatStandings(List<DriverHeatData> driverHeatData, SortType sortType, TieBreaker tieBreaker) {
+  public HeatStandings(List<DriverHeatData> driverHeatData, HeatRanking sortType, HeatRankingTiebreaker tieBreaker) {
     this.driverHeatData = new ArrayList<>(driverHeatData);
     this.sortType = sortType;
     this.tieBreaker = tieBreaker;
@@ -35,6 +26,14 @@ public class HeatStandings {
 
   public List<String> getStandings() {
     return currentStandings;
+  }
+
+  public HeatRanking getSortType() {
+    return sortType;
+  }
+
+  public HeatRankingTiebreaker getTieBreaker() {
+    return tieBreaker;
   }
 
   public StandingsUpdate onLap(int lane, float lapTime) {
