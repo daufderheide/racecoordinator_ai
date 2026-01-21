@@ -40,4 +40,9 @@ public class RaceOver implements IRaceState {
   public void skipHeat(com.antigravity.race.Race race) {
     throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
   }
+
+  @Override
+  public void deferHeat(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+  }
 }

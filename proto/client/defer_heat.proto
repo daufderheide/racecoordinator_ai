@@ -1,0 +1,13 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "DeferHeatProto";
+
+message DeferHeatRequest {
+}
+
+message DeferHeatResponse {
+  bool success = 1;
+}

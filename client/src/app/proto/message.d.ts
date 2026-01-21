@@ -1865,6 +1865,194 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a DeferHeatRequest. */
+        interface IDeferHeatRequest {
+        }
+
+        /** Represents a DeferHeatRequest. */
+        class DeferHeatRequest implements IDeferHeatRequest {
+
+            /**
+             * Constructs a new DeferHeatRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDeferHeatRequest);
+
+            /**
+             * Creates a new DeferHeatRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeferHeatRequest instance
+             */
+            public static create(properties?: com.antigravity.IDeferHeatRequest): com.antigravity.DeferHeatRequest;
+
+            /**
+             * Encodes the specified DeferHeatRequest message. Does not implicitly {@link com.antigravity.DeferHeatRequest.verify|verify} messages.
+             * @param message DeferHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDeferHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeferHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.DeferHeatRequest.verify|verify} messages.
+             * @param message DeferHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDeferHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeferHeatRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeferHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DeferHeatRequest;
+
+            /**
+             * Decodes a DeferHeatRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeferHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DeferHeatRequest;
+
+            /**
+             * Verifies a DeferHeatRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeferHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeferHeatRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DeferHeatRequest;
+
+            /**
+             * Creates a plain object from a DeferHeatRequest message. Also converts values to other types if specified.
+             * @param message DeferHeatRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DeferHeatRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeferHeatRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeferHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeferHeatResponse. */
+        interface IDeferHeatResponse {
+
+            /** DeferHeatResponse success */
+            success?: (boolean|null);
+        }
+
+        /** Represents a DeferHeatResponse. */
+        class DeferHeatResponse implements IDeferHeatResponse {
+
+            /**
+             * Constructs a new DeferHeatResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDeferHeatResponse);
+
+            /** DeferHeatResponse success. */
+            public success: boolean;
+
+            /**
+             * Creates a new DeferHeatResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeferHeatResponse instance
+             */
+            public static create(properties?: com.antigravity.IDeferHeatResponse): com.antigravity.DeferHeatResponse;
+
+            /**
+             * Encodes the specified DeferHeatResponse message. Does not implicitly {@link com.antigravity.DeferHeatResponse.verify|verify} messages.
+             * @param message DeferHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDeferHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeferHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.DeferHeatResponse.verify|verify} messages.
+             * @param message DeferHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDeferHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeferHeatResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeferHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DeferHeatResponse;
+
+            /**
+             * Decodes a DeferHeatResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeferHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DeferHeatResponse;
+
+            /**
+             * Verifies a DeferHeatResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeferHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeferHeatResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DeferHeatResponse;
+
+            /**
+             * Creates a plain object from a DeferHeatResponse message. Also converts values to other types if specified.
+             * @param message DeferHeatResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DeferHeatResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeferHeatResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeferHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 

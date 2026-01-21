@@ -19,4 +19,6 @@ public interface IRaceState {
     void restartHeat(Race race);
 
     void skipHeat(Race race);
+
+    void deferHeat(Race race);
 }

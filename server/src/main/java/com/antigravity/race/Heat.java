@@ -36,4 +36,8 @@ public class Heat extends ServerToClientObject {
     public void setStandings(List<String> standings) {
         this.standings = standings;
     }
+
+    public void setHeatNumber(int heatNumber) {
+        this.heatNumber = heatNumber;
+    }
 }

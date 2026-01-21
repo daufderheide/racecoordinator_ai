@@ -40,4 +40,9 @@ public class HeatOver implements IRaceState {
   public void restartHeat(com.antigravity.race.Race race) {
     throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
   }
+
+  @Override
+  public void deferHeat(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+  }
 }

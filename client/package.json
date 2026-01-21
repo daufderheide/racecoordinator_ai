@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "proto:gen": "mkdir -p src/app/proto && pbjs -p ../proto -t static-module -w es6 -o src/app/proto/message.js ../proto/client/initialize_race.proto ../proto/client/start_race.proto ../proto/client/pause_race.proto ../proto/client/next_heat.proto ../proto/client/restart_heat.proto ../proto/client/skip_heat.proto ../proto/server/race_time.proto ../proto/server/lap.proto ../proto/server/race_data.proto ../proto/server/race.proto ../proto/server/race_participant.proto ../proto/server/heat_data.proto ../proto/server/heat.proto ../proto/server/reaction_time.proto ../proto/server/standings_update.proto && pbts -o src/app/proto/message.d.ts src/app/proto/message.js"
+    "proto:gen": "mkdir -p src/app/proto && pbjs -p ../proto -t static-module -w es6 -o src/app/proto/message.js ../proto/client/initialize_race.proto ../proto/client/start_race.proto ../proto/client/pause_race.proto ../proto/client/next_heat.proto ../proto/client/restart_heat.proto ../proto/client/skip_heat.proto ../proto/client/defer_heat.proto ../proto/server/race_time.proto ../proto/server/lap.proto ../proto/server/race_data.proto ../proto/server/race.proto ../proto/server/race_participant.proto ../proto/server/heat_data.proto ../proto/server/heat.proto ../proto/server/reaction_time.proto ../proto/server/standings_update.proto && pbts -o src/app/proto/message.d.ts src/app/proto/message.js"
   },
   "private": true,
   "dependencies": {

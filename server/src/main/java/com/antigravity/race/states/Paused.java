@@ -78,4 +78,9 @@ public class Paused implements IRaceState {
         System.out.println("Paused.skipHeat() called. Advancing to next heat.");
         Common.advanceToNextHeat(race);
     }
+
+    @Override
+    public void deferHeat(Race race) {
+        throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+    }
 }

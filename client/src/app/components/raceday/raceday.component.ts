@@ -33,6 +33,7 @@ export class RacedayComponent implements OnInit {
     protected nextHeatShortcut: string = 'Ctrl+N';
     protected restartHeatShortcut: string = 'Ctrl+R';
     protected skipHeatShortcut: string = 'Alt+F5';
+    protected deferHeatShortcut: string = 'Alt+F6';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
     protected sortedHeatDrivers: DriverHeatData[] = [];
@@ -192,6 +193,7 @@ export class RacedayComponent implements OnInit {
             this.nextHeatShortcut = 'Cmd+N';
             this.restartHeatShortcut = 'Cmd+R';
             this.skipHeatShortcut = 'Cmd+F5';
+            this.deferHeatShortcut = 'Cmd+F6';
         }
     }
 
@@ -397,6 +399,16 @@ export class RacedayComponent implements OnInit {
             }, error => {
                 console.error('Error skipping heat:', error);
             });
+        } else if (action === 'DEFER_HEAT') {
+            this.dataService.deferHeat().subscribe(success => {
+                if (success) {
+                    console.log('Defer heat command sent successfully');
+                } else {
+                    console.error('Failed to send defer heat command');
+                }
+            }, error => {
+                console.error('Error deferring heat:', error);
+            });
         }
         this.isMenuOpen = false;
     }
@@ -442,6 +454,13 @@ export class RacedayComponent implements OnInit {
         if (isSkipHeatKey) {
             event.preventDefault();
             this.onMenuSelect('SKIP_HEAT');
+        }
+
+        // Cmd+F6 or Alt+F6 for Defer Heat
+        const isDeferHeatKey = (isCtrlOrCmd && event.key === 'F6') || (event.altKey && event.key === 'F6');
+        if (isDeferHeatKey) {
+            event.preventDefault();
+            this.onMenuSelect('DEFER_HEAT');
         }
     }
 

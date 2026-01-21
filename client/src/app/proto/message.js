@@ -4237,6 +4237,388 @@ export const com = $root.com = (() => {
             return SkipHeatResponse;
         })();
 
+        antigravity.DeferHeatRequest = (function() {
+
+            /**
+             * Properties of a DeferHeatRequest.
+             * @memberof com.antigravity
+             * @interface IDeferHeatRequest
+             */
+
+            /**
+             * Constructs a new DeferHeatRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a DeferHeatRequest.
+             * @implements IDeferHeatRequest
+             * @constructor
+             * @param {com.antigravity.IDeferHeatRequest=} [properties] Properties to set
+             */
+            function DeferHeatRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new DeferHeatRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {com.antigravity.IDeferHeatRequest=} [properties] Properties to set
+             * @returns {com.antigravity.DeferHeatRequest} DeferHeatRequest instance
+             */
+            DeferHeatRequest.create = function create(properties) {
+                return new DeferHeatRequest(properties);
+            };
+
+            /**
+             * Encodes the specified DeferHeatRequest message. Does not implicitly {@link com.antigravity.DeferHeatRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {com.antigravity.IDeferHeatRequest} message DeferHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeferHeatRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DeferHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.DeferHeatRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {com.antigravity.IDeferHeatRequest} message DeferHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeferHeatRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DeferHeatRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DeferHeatRequest} DeferHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeferHeatRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DeferHeatRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DeferHeatRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DeferHeatRequest} DeferHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeferHeatRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DeferHeatRequest message.
+             * @function verify
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DeferHeatRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a DeferHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DeferHeatRequest} DeferHeatRequest
+             */
+            DeferHeatRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DeferHeatRequest)
+                    return object;
+                return new $root.com.antigravity.DeferHeatRequest();
+            };
+
+            /**
+             * Creates a plain object from a DeferHeatRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {com.antigravity.DeferHeatRequest} message DeferHeatRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DeferHeatRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this DeferHeatRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DeferHeatRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DeferHeatRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DeferHeatRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.DeferHeatRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DeferHeatRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DeferHeatRequest";
+            };
+
+            return DeferHeatRequest;
+        })();
+
+        antigravity.DeferHeatResponse = (function() {
+
+            /**
+             * Properties of a DeferHeatResponse.
+             * @memberof com.antigravity
+             * @interface IDeferHeatResponse
+             * @property {boolean|null} [success] DeferHeatResponse success
+             */
+
+            /**
+             * Constructs a new DeferHeatResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a DeferHeatResponse.
+             * @implements IDeferHeatResponse
+             * @constructor
+             * @param {com.antigravity.IDeferHeatResponse=} [properties] Properties to set
+             */
+            function DeferHeatResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DeferHeatResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.DeferHeatResponse
+             * @instance
+             */
+            DeferHeatResponse.prototype.success = false;
+
+            /**
+             * Creates a new DeferHeatResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {com.antigravity.IDeferHeatResponse=} [properties] Properties to set
+             * @returns {com.antigravity.DeferHeatResponse} DeferHeatResponse instance
+             */
+            DeferHeatResponse.create = function create(properties) {
+                return new DeferHeatResponse(properties);
+            };
+
+            /**
+             * Encodes the specified DeferHeatResponse message. Does not implicitly {@link com.antigravity.DeferHeatResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {com.antigravity.IDeferHeatResponse} message DeferHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeferHeatResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DeferHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.DeferHeatResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {com.antigravity.IDeferHeatResponse} message DeferHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeferHeatResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DeferHeatResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DeferHeatResponse} DeferHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeferHeatResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DeferHeatResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DeferHeatResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DeferHeatResponse} DeferHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeferHeatResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DeferHeatResponse message.
+             * @function verify
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DeferHeatResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                return null;
+            };
+
+            /**
+             * Creates a DeferHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DeferHeatResponse} DeferHeatResponse
+             */
+            DeferHeatResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DeferHeatResponse)
+                    return object;
+                let message = new $root.com.antigravity.DeferHeatResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DeferHeatResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {com.antigravity.DeferHeatResponse} message DeferHeatResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DeferHeatResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.success = false;
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                return object;
+            };
+
+            /**
+             * Converts this DeferHeatResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DeferHeatResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DeferHeatResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DeferHeatResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.DeferHeatResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DeferHeatResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DeferHeatResponse";
+            };
+
+            return DeferHeatResponse;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**
