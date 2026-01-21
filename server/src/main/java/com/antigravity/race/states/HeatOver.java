@@ -18,31 +18,12 @@ public class HeatOver implements IRaceState {
 
   @Override
   public void nextHeat(com.antigravity.race.Race race) {
-    java.util.List<com.antigravity.race.Heat> heats = race.getHeats();
-    com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
-    int currentIndex = heats.indexOf(currentHeat);
+    Common.advanceToNextHeat(race);
+  }
 
-    if (currentIndex < heats.size() - 1) {
-      // Logic moved from Race.moveToNextHeat
-      race.setCurrentHeat(heats.get(currentIndex + 1));
-      race.changeState(new NotStarted());
-
-      // Optimized update: only send currentHeat
-      java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
-      for (com.antigravity.race.RaceParticipant p : race.getDrivers()) {
-        sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
-      }
-
-      com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
-          .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
-          .build();
-
-      race.broadcast(com.antigravity.proto.RaceData.newBuilder()
-          .setRace(raceProto)
-          .build());
-    } else {
-      throw new IllegalStateException("No more heats available.");
-    }
+  @Override
+  public void skipHeat(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
   }
 
   @Override

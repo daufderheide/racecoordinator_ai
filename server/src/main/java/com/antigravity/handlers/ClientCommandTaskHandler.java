@@ -27,6 +27,7 @@ public class ClientCommandTaskHandler {
         app.post("/api/pause-race", this::pauseRace);
         app.post("/api/next-heat", this::nextHeat);
         app.post("/api/restart-heat", this::restartHeat);
+        app.post("/api/skip-heat", this::skipHeat);
     }
 
     private void initializeRace(Context ctx) {
@@ -217,6 +218,38 @@ public class ClientCommandTaskHandler {
             }
         } catch (Exception e) {
             System.err.println("Error processing restartHeat: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    private void skipHeat(Context ctx) {
+        try {
+            com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
+            if (race == null) {
+                ctx.status(404).result("No active race found");
+                return;
+            }
+
+            try {
+                race.skipHeat();
+
+                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse
+                        .newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Heat skipped successfully")
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            } catch (IllegalStateException e) {
+                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse
+                        .newBuilder()
+                        .setSuccess(false)
+                        .setMessage(e.getMessage())
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing skipHeat: " + e.getMessage());
             e.printStackTrace();
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
         }

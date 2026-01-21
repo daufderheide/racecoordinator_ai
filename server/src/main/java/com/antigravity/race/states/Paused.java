@@ -72,4 +72,10 @@ public class Paused implements IRaceState {
                     .build());
         }
     }
+
+    @Override
+    public void skipHeat(Race race) {
+        System.out.println("Paused.skipHeat() called. Advancing to next heat.");
+        Common.advanceToNextHeat(race);
+    }
 }

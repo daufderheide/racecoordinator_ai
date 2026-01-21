@@ -31,7 +31,10 @@
             <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
           </div>
           <div class="menu-item" (click)="onMenuSelect('DEFER')">{{ 'RD_MENU_DEFER' | translate }}</div>
-          <div class="menu-item" (click)="onMenuSelect('SKIP_HEAT')">{{ 'RD_MENU_SKIP_HEAT' | translate }}</div>
+          <div class="menu-item" (click)="onMenuSelect('SKIP_HEAT')">
+            <span>{{ 'RD_MENU_SKIP_HEAT' | translate }}</span>
+            <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
+          </div>
           <div class="menu-item" (click)="onMenuSelect('SKIP_RACE')">{{ 'RD_MENU_SKIP_RACE' | translate }}</div>
           <div class="menu-separator"></div>
           <div class="menu-item" (click)="onMenuSelect('MODIFY')">{{ 'RD_MENU_MODIFY' | translate }}</div>

@@ -32,6 +32,7 @@ export class RacedayComponent implements OnInit {
     protected pauseShortcut: string = 'Ctrl+P';
     protected nextHeatShortcut: string = 'Ctrl+N';
     protected restartHeatShortcut: string = 'Ctrl+R';
+    protected skipHeatShortcut: string = 'Alt+F5';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
     protected sortedHeatDrivers: DriverHeatData[] = [];
@@ -190,6 +191,7 @@ export class RacedayComponent implements OnInit {
             this.pauseShortcut = 'Cmd+P';
             this.nextHeatShortcut = 'Cmd+N';
             this.restartHeatShortcut = 'Cmd+R';
+            this.skipHeatShortcut = 'Cmd+F5';
         }
     }
 
@@ -385,6 +387,16 @@ export class RacedayComponent implements OnInit {
             }, error => {
                 console.error('Error restarting heat:', error);
             });
+        } else if (action === 'SKIP_HEAT') {
+            this.dataService.skipHeat().subscribe(success => {
+                if (success) {
+                    console.log('Skip heat command sent successfully');
+                } else {
+                    console.error('Failed to send skip heat command');
+                }
+            }, error => {
+                console.error('Error skipping heat:', error);
+            });
         }
         this.isMenuOpen = false;
     }
@@ -423,6 +435,13 @@ export class RacedayComponent implements OnInit {
         if (isCtrlOrCmd && event.key === 'r') {
             event.preventDefault(); // Prevent refresh
             this.onMenuSelect('RESTART_HEAT');
+        }
+
+        // Cmd+F5 or Alt+F5 for Skip Heat
+        const isSkipHeatKey = (isCtrlOrCmd && event.key === 'F5') || (event.altKey && event.key === 'F5');
+        if (isSkipHeatKey) {
+            event.preventDefault();
+            this.onMenuSelect('SKIP_HEAT');
         }
     }
 

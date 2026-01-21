@@ -3831,6 +3831,412 @@ export const com = $root.com = (() => {
             return RestartHeatResponse;
         })();
 
+        antigravity.SkipHeatRequest = (function() {
+
+            /**
+             * Properties of a SkipHeatRequest.
+             * @memberof com.antigravity
+             * @interface ISkipHeatRequest
+             */
+
+            /**
+             * Constructs a new SkipHeatRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a SkipHeatRequest.
+             * @implements ISkipHeatRequest
+             * @constructor
+             * @param {com.antigravity.ISkipHeatRequest=} [properties] Properties to set
+             */
+            function SkipHeatRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new SkipHeatRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {com.antigravity.ISkipHeatRequest=} [properties] Properties to set
+             * @returns {com.antigravity.SkipHeatRequest} SkipHeatRequest instance
+             */
+            SkipHeatRequest.create = function create(properties) {
+                return new SkipHeatRequest(properties);
+            };
+
+            /**
+             * Encodes the specified SkipHeatRequest message. Does not implicitly {@link com.antigravity.SkipHeatRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {com.antigravity.ISkipHeatRequest} message SkipHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkipHeatRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SkipHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.SkipHeatRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {com.antigravity.ISkipHeatRequest} message SkipHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkipHeatRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SkipHeatRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SkipHeatRequest} SkipHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkipHeatRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SkipHeatRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SkipHeatRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SkipHeatRequest} SkipHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkipHeatRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SkipHeatRequest message.
+             * @function verify
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SkipHeatRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a SkipHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SkipHeatRequest} SkipHeatRequest
+             */
+            SkipHeatRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SkipHeatRequest)
+                    return object;
+                return new $root.com.antigravity.SkipHeatRequest();
+            };
+
+            /**
+             * Creates a plain object from a SkipHeatRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {com.antigravity.SkipHeatRequest} message SkipHeatRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SkipHeatRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this SkipHeatRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SkipHeatRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SkipHeatRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SkipHeatRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.SkipHeatRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SkipHeatRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SkipHeatRequest";
+            };
+
+            return SkipHeatRequest;
+        })();
+
+        antigravity.SkipHeatResponse = (function() {
+
+            /**
+             * Properties of a SkipHeatResponse.
+             * @memberof com.antigravity
+             * @interface ISkipHeatResponse
+             * @property {boolean|null} [success] SkipHeatResponse success
+             * @property {string|null} [message] SkipHeatResponse message
+             */
+
+            /**
+             * Constructs a new SkipHeatResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a SkipHeatResponse.
+             * @implements ISkipHeatResponse
+             * @constructor
+             * @param {com.antigravity.ISkipHeatResponse=} [properties] Properties to set
+             */
+            function SkipHeatResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SkipHeatResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.SkipHeatResponse
+             * @instance
+             */
+            SkipHeatResponse.prototype.success = false;
+
+            /**
+             * SkipHeatResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.SkipHeatResponse
+             * @instance
+             */
+            SkipHeatResponse.prototype.message = "";
+
+            /**
+             * Creates a new SkipHeatResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {com.antigravity.ISkipHeatResponse=} [properties] Properties to set
+             * @returns {com.antigravity.SkipHeatResponse} SkipHeatResponse instance
+             */
+            SkipHeatResponse.create = function create(properties) {
+                return new SkipHeatResponse(properties);
+            };
+
+            /**
+             * Encodes the specified SkipHeatResponse message. Does not implicitly {@link com.antigravity.SkipHeatResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {com.antigravity.ISkipHeatResponse} message SkipHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkipHeatResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SkipHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.SkipHeatResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {com.antigravity.ISkipHeatResponse} message SkipHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkipHeatResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SkipHeatResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SkipHeatResponse} SkipHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkipHeatResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SkipHeatResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SkipHeatResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SkipHeatResponse} SkipHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkipHeatResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SkipHeatResponse message.
+             * @function verify
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SkipHeatResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a SkipHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SkipHeatResponse} SkipHeatResponse
+             */
+            SkipHeatResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SkipHeatResponse)
+                    return object;
+                let message = new $root.com.antigravity.SkipHeatResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SkipHeatResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {com.antigravity.SkipHeatResponse} message SkipHeatResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SkipHeatResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this SkipHeatResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SkipHeatResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SkipHeatResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SkipHeatResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.SkipHeatResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SkipHeatResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SkipHeatResponse";
+            };
+
+            return SkipHeatResponse;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**

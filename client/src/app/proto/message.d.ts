@@ -1671,6 +1671,200 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a SkipHeatRequest. */
+        interface ISkipHeatRequest {
+        }
+
+        /** Represents a SkipHeatRequest. */
+        class SkipHeatRequest implements ISkipHeatRequest {
+
+            /**
+             * Constructs a new SkipHeatRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISkipHeatRequest);
+
+            /**
+             * Creates a new SkipHeatRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SkipHeatRequest instance
+             */
+            public static create(properties?: com.antigravity.ISkipHeatRequest): com.antigravity.SkipHeatRequest;
+
+            /**
+             * Encodes the specified SkipHeatRequest message. Does not implicitly {@link com.antigravity.SkipHeatRequest.verify|verify} messages.
+             * @param message SkipHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISkipHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SkipHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.SkipHeatRequest.verify|verify} messages.
+             * @param message SkipHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISkipHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SkipHeatRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SkipHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SkipHeatRequest;
+
+            /**
+             * Decodes a SkipHeatRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SkipHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SkipHeatRequest;
+
+            /**
+             * Verifies a SkipHeatRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SkipHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SkipHeatRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SkipHeatRequest;
+
+            /**
+             * Creates a plain object from a SkipHeatRequest message. Also converts values to other types if specified.
+             * @param message SkipHeatRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SkipHeatRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SkipHeatRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SkipHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SkipHeatResponse. */
+        interface ISkipHeatResponse {
+
+            /** SkipHeatResponse success */
+            success?: (boolean|null);
+
+            /** SkipHeatResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a SkipHeatResponse. */
+        class SkipHeatResponse implements ISkipHeatResponse {
+
+            /**
+             * Constructs a new SkipHeatResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISkipHeatResponse);
+
+            /** SkipHeatResponse success. */
+            public success: boolean;
+
+            /** SkipHeatResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new SkipHeatResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SkipHeatResponse instance
+             */
+            public static create(properties?: com.antigravity.ISkipHeatResponse): com.antigravity.SkipHeatResponse;
+
+            /**
+             * Encodes the specified SkipHeatResponse message. Does not implicitly {@link com.antigravity.SkipHeatResponse.verify|verify} messages.
+             * @param message SkipHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISkipHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SkipHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.SkipHeatResponse.verify|verify} messages.
+             * @param message SkipHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISkipHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SkipHeatResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SkipHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SkipHeatResponse;
+
+            /**
+             * Decodes a SkipHeatResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SkipHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SkipHeatResponse;
+
+            /**
+             * Verifies a SkipHeatResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SkipHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SkipHeatResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SkipHeatResponse;
+
+            /**
+             * Creates a plain object from a SkipHeatResponse message. Also converts values to other types if specified.
+             * @param message SkipHeatResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SkipHeatResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SkipHeatResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SkipHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 

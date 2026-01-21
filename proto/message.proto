@@ -9,6 +9,8 @@ import "client/pause_race.proto";
 import "client/race_model.proto";
 import "client/start_race.proto";
 import "client/next_heat.proto";
+import "client/restart_heat.proto";
+import "client/skip_heat.proto";
 import "client/track_model.proto";
 
 import "server/race.proto";
