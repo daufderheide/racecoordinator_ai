@@ -15,4 +15,6 @@ public interface IRaceState {
     void pause(Race race);
 
     void nextHeat(Race race);
+
+    void restartHeat(Race race);
 }

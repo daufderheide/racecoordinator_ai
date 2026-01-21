@@ -3425,6 +3425,412 @@ export const com = $root.com = (() => {
             return NextHeatResponse;
         })();
 
+        antigravity.RestartHeatRequest = (function() {
+
+            /**
+             * Properties of a RestartHeatRequest.
+             * @memberof com.antigravity
+             * @interface IRestartHeatRequest
+             */
+
+            /**
+             * Constructs a new RestartHeatRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a RestartHeatRequest.
+             * @implements IRestartHeatRequest
+             * @constructor
+             * @param {com.antigravity.IRestartHeatRequest=} [properties] Properties to set
+             */
+            function RestartHeatRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new RestartHeatRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {com.antigravity.IRestartHeatRequest=} [properties] Properties to set
+             * @returns {com.antigravity.RestartHeatRequest} RestartHeatRequest instance
+             */
+            RestartHeatRequest.create = function create(properties) {
+                return new RestartHeatRequest(properties);
+            };
+
+            /**
+             * Encodes the specified RestartHeatRequest message. Does not implicitly {@link com.antigravity.RestartHeatRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {com.antigravity.IRestartHeatRequest} message RestartHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RestartHeatRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RestartHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.RestartHeatRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {com.antigravity.IRestartHeatRequest} message RestartHeatRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RestartHeatRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RestartHeatRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RestartHeatRequest} RestartHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RestartHeatRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RestartHeatRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RestartHeatRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RestartHeatRequest} RestartHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RestartHeatRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RestartHeatRequest message.
+             * @function verify
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RestartHeatRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a RestartHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RestartHeatRequest} RestartHeatRequest
+             */
+            RestartHeatRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RestartHeatRequest)
+                    return object;
+                return new $root.com.antigravity.RestartHeatRequest();
+            };
+
+            /**
+             * Creates a plain object from a RestartHeatRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {com.antigravity.RestartHeatRequest} message RestartHeatRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RestartHeatRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this RestartHeatRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RestartHeatRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RestartHeatRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RestartHeatRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.RestartHeatRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RestartHeatRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RestartHeatRequest";
+            };
+
+            return RestartHeatRequest;
+        })();
+
+        antigravity.RestartHeatResponse = (function() {
+
+            /**
+             * Properties of a RestartHeatResponse.
+             * @memberof com.antigravity
+             * @interface IRestartHeatResponse
+             * @property {boolean|null} [success] RestartHeatResponse success
+             * @property {string|null} [message] RestartHeatResponse message
+             */
+
+            /**
+             * Constructs a new RestartHeatResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a RestartHeatResponse.
+             * @implements IRestartHeatResponse
+             * @constructor
+             * @param {com.antigravity.IRestartHeatResponse=} [properties] Properties to set
+             */
+            function RestartHeatResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RestartHeatResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.RestartHeatResponse
+             * @instance
+             */
+            RestartHeatResponse.prototype.success = false;
+
+            /**
+             * RestartHeatResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.RestartHeatResponse
+             * @instance
+             */
+            RestartHeatResponse.prototype.message = "";
+
+            /**
+             * Creates a new RestartHeatResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {com.antigravity.IRestartHeatResponse=} [properties] Properties to set
+             * @returns {com.antigravity.RestartHeatResponse} RestartHeatResponse instance
+             */
+            RestartHeatResponse.create = function create(properties) {
+                return new RestartHeatResponse(properties);
+            };
+
+            /**
+             * Encodes the specified RestartHeatResponse message. Does not implicitly {@link com.antigravity.RestartHeatResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {com.antigravity.IRestartHeatResponse} message RestartHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RestartHeatResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RestartHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.RestartHeatResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {com.antigravity.IRestartHeatResponse} message RestartHeatResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RestartHeatResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RestartHeatResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RestartHeatResponse} RestartHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RestartHeatResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RestartHeatResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RestartHeatResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RestartHeatResponse} RestartHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RestartHeatResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RestartHeatResponse message.
+             * @function verify
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RestartHeatResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a RestartHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RestartHeatResponse} RestartHeatResponse
+             */
+            RestartHeatResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RestartHeatResponse)
+                    return object;
+                let message = new $root.com.antigravity.RestartHeatResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RestartHeatResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {com.antigravity.RestartHeatResponse} message RestartHeatResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RestartHeatResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this RestartHeatResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RestartHeatResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RestartHeatResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RestartHeatResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.RestartHeatResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RestartHeatResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RestartHeatResponse";
+            };
+
+            return RestartHeatResponse;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**

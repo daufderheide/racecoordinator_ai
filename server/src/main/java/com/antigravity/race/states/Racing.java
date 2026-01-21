@@ -226,4 +226,9 @@ public class Racing implements IRaceState {
         System.out.println("Racing.pause() called. Pausing race.");
         race.changeState(new com.antigravity.race.states.Paused());
     }
+
+    @Override
+    public void restartHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+    }
 }

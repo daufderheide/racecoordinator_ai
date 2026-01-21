@@ -83,4 +83,10 @@ public class DriverHeatData extends ServerToClientObject {
         }
         return sum;
     }
+
+    public void reset() {
+        laps.clear();
+        bestLapTime = 0.0f;
+        reactionTime = 0.0f;
+    }
 }

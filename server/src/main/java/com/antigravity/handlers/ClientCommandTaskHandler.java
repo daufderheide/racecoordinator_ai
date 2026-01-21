@@ -26,6 +26,7 @@ public class ClientCommandTaskHandler {
         app.post("/api/start-race", this::startRace);
         app.post("/api/pause-race", this::pauseRace);
         app.post("/api/next-heat", this::nextHeat);
+        app.post("/api/restart-heat", this::restartHeat);
     }
 
     private void initializeRace(Context ctx) {
@@ -83,11 +84,12 @@ public class ClientCommandTaskHandler {
 
             race.broadcast(raceData);
 
-            InitializeRaceResponse response = InitializeRaceResponse.newBuilder()
+            com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+                    .newBuilder()
                     .setSuccess(true)
                     .build();
             ctx.contentType("application/octet-stream").result(response.toByteArray());
-        } catch (InvalidProtocolBufferException e) {
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
             System.err.println("Error parsing InitializeRaceRequest: " + e.getMessage());
             ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
         } catch (Exception e) {
@@ -139,13 +141,13 @@ public class ClientCommandTaskHandler {
             try {
                 race.pauseRace();
 
-                PauseRaceResponse response = PauseRaceResponse.newBuilder()
+                com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
                         .setSuccess(true)
                         .setMessage("Race paused successfully")
                         .build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
-                PauseRaceResponse response = PauseRaceResponse.newBuilder()
+                com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
                         .setSuccess(false)
                         .setMessage(e.getMessage())
                         .build();
@@ -169,13 +171,13 @@ public class ClientCommandTaskHandler {
             try {
                 race.moveToNextHeat();
 
-                NextHeatResponse response = NextHeatResponse.newBuilder()
+                com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
                         .setSuccess(true)
                         .setMessage("Moved to next heat successfully")
                         .build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (Exception e) {
-                NextHeatResponse response = NextHeatResponse.newBuilder()
+                com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
                         .setSuccess(false)
                         .setMessage(e.getMessage())
                         .build();
@@ -183,6 +185,38 @@ public class ClientCommandTaskHandler {
             }
         } catch (Exception e) {
             System.err.println("Error processing nextHeat: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    private void restartHeat(Context ctx) {
+        try {
+            com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
+            if (race == null) {
+                ctx.status(404).result("No active race found");
+                return;
+            }
+
+            try {
+                race.restartHeat();
+
+                com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
+                        .newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Heat restarted successfully")
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            } catch (IllegalStateException e) {
+                com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
+                        .newBuilder()
+                        .setSuccess(false)
+                        .setMessage(e.getMessage())
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing restartHeat: " + e.getMessage());
             e.printStackTrace();
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
         }

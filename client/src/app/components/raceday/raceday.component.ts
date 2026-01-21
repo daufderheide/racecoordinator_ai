@@ -31,6 +31,7 @@ export class RacedayComponent implements OnInit {
     protected startResumeShortcut: string = 'Ctrl+S';
     protected pauseShortcut: string = 'Ctrl+P';
     protected nextHeatShortcut: string = 'Ctrl+N';
+    protected restartHeatShortcut: string = 'Ctrl+R';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
     protected sortedHeatDrivers: DriverHeatData[] = [];
@@ -188,6 +189,7 @@ export class RacedayComponent implements OnInit {
             this.startResumeShortcut = 'Cmd+S';
             this.pauseShortcut = 'Cmd+P';
             this.nextHeatShortcut = 'Cmd+N';
+            this.restartHeatShortcut = 'Cmd+R';
         }
     }
 
@@ -373,6 +375,16 @@ export class RacedayComponent implements OnInit {
             }, error => {
                 console.error('Error moving to next heat:', error);
             });
+        } else if (action === 'RESTART_HEAT') {
+            this.dataService.restartHeat().subscribe(success => {
+                if (success) {
+                    console.log('Restart heat command sent successfully');
+                } else {
+                    console.error('Failed to send restart heat command');
+                }
+            }, error => {
+                console.error('Error restarting heat:', error);
+            });
         }
         this.isMenuOpen = false;
     }
@@ -405,6 +417,12 @@ export class RacedayComponent implements OnInit {
         if (isCtrlOrCmd && event.key === 'n') {
             event.preventDefault(); // Prevent new window
             this.onMenuSelect('NEXT_HEAT');
+        }
+
+        // Ctrl+R or Cmd+R for Restart Heat
+        if (isCtrlOrCmd && event.key === 'r') {
+            event.preventDefault(); // Prevent refresh
+            this.onMenuSelect('RESTART_HEAT');
         }
     }
 

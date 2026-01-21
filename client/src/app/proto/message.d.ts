@@ -1477,6 +1477,200 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a RestartHeatRequest. */
+        interface IRestartHeatRequest {
+        }
+
+        /** Represents a RestartHeatRequest. */
+        class RestartHeatRequest implements IRestartHeatRequest {
+
+            /**
+             * Constructs a new RestartHeatRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRestartHeatRequest);
+
+            /**
+             * Creates a new RestartHeatRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RestartHeatRequest instance
+             */
+            public static create(properties?: com.antigravity.IRestartHeatRequest): com.antigravity.RestartHeatRequest;
+
+            /**
+             * Encodes the specified RestartHeatRequest message. Does not implicitly {@link com.antigravity.RestartHeatRequest.verify|verify} messages.
+             * @param message RestartHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRestartHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RestartHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.RestartHeatRequest.verify|verify} messages.
+             * @param message RestartHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRestartHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RestartHeatRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RestartHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RestartHeatRequest;
+
+            /**
+             * Decodes a RestartHeatRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RestartHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RestartHeatRequest;
+
+            /**
+             * Verifies a RestartHeatRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RestartHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RestartHeatRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RestartHeatRequest;
+
+            /**
+             * Creates a plain object from a RestartHeatRequest message. Also converts values to other types if specified.
+             * @param message RestartHeatRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RestartHeatRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RestartHeatRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RestartHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RestartHeatResponse. */
+        interface IRestartHeatResponse {
+
+            /** RestartHeatResponse success */
+            success?: (boolean|null);
+
+            /** RestartHeatResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a RestartHeatResponse. */
+        class RestartHeatResponse implements IRestartHeatResponse {
+
+            /**
+             * Constructs a new RestartHeatResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRestartHeatResponse);
+
+            /** RestartHeatResponse success. */
+            public success: boolean;
+
+            /** RestartHeatResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new RestartHeatResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RestartHeatResponse instance
+             */
+            public static create(properties?: com.antigravity.IRestartHeatResponse): com.antigravity.RestartHeatResponse;
+
+            /**
+             * Encodes the specified RestartHeatResponse message. Does not implicitly {@link com.antigravity.RestartHeatResponse.verify|verify} messages.
+             * @param message RestartHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRestartHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RestartHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.RestartHeatResponse.verify|verify} messages.
+             * @param message RestartHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRestartHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RestartHeatResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RestartHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RestartHeatResponse;
+
+            /**
+             * Decodes a RestartHeatResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RestartHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RestartHeatResponse;
+
+            /**
+             * Verifies a RestartHeatResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RestartHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RestartHeatResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RestartHeatResponse;
+
+            /**
+             * Creates a plain object from a RestartHeatResponse message. Also converts values to other types if specified.
+             * @param message RestartHeatResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RestartHeatResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RestartHeatResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RestartHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 

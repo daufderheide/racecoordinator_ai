@@ -34,4 +34,42 @@ public class Paused implements IRaceState {
     public void pause(Race race) {
         throw new IllegalStateException("Cannot pause race: Race is already in Paused state.");
     }
+
+    @Override
+    public void restartHeat(Race race) {
+        System.out.println("Paused.restartHeat() called. Resetting current heat.");
+
+        com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
+        if (currentHeat != null) {
+            // Reset all drivers in the heat
+            for (com.antigravity.race.DriverHeatData driverData : currentHeat.getDrivers()) {
+                driverData.reset();
+            }
+
+            // Reset standings to initial order
+            currentHeat.getHeatStandings().reset();
+
+            // Reset race time
+            race.resetRaceTime();
+
+            // Broadcast update to client
+            java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+            for (com.antigravity.race.RaceParticipant p : race.getDrivers()) {
+                sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
+            }
+
+            com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
+                    .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+                    .build();
+
+            race.broadcast(com.antigravity.proto.RaceData.newBuilder()
+                    .setRace(raceProto)
+                    .build());
+
+            // Also broadcast time reset
+            race.broadcast(com.antigravity.proto.RaceData.newBuilder()
+                    .setRaceTime(com.antigravity.proto.RaceTime.newBuilder().setTime(0.0f).build())
+                    .build());
+        }
+    }
 }

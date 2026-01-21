@@ -54,4 +54,9 @@ public class HeatOver implements IRaceState {
   public void pause(com.antigravity.race.Race race) {
     throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
   }
+
+  @Override
+  public void restartHeat(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+  }
 }

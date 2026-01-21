@@ -72,4 +72,9 @@ public class Starting implements IRaceState {
         race.resetRaceTime();
         race.changeState(new NotStarted());
     }
+
+    @Override
+    public void restartHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+    }
 }

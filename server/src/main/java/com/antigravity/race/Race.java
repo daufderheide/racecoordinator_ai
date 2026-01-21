@@ -117,6 +117,10 @@ public class Race implements ProtocolListener {
         state.pause(this);
     }
 
+    public void restartHeat() {
+        state.restartHeat(this);
+    }
+
     public void stop() {
         if (state != null) {
             state.exit(this);
