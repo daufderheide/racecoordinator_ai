@@ -42,7 +42,6 @@ public class Race implements ProtocolListener {
         this.track = dbService.getTrack(database, model.getTrackEntityId());
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
-        this.currentHeat = this.heats.get(0);
 
         this.createProtocols(isDemoMode);
 
@@ -165,8 +164,19 @@ public class Race implements ProtocolListener {
             currentHeat = heats.get(currentIndex + 1);
 
             changeState(new NotStarted());
+
+            // Optimized update: only send currentHeat
+            java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+            for (RaceParticipant p : drivers) {
+                sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
+            }
+
+            com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
+                    .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(this.currentHeat, sentObjectIds))
+                    .build();
+
             broadcast(com.antigravity.proto.RaceData.newBuilder()
-                    .setRace(com.antigravity.converters.RaceConverter.toProto(this, new java.util.HashSet<>()))
+                    .setRace(raceProto)
                     .build());
         }
     }

@@ -7,6 +7,7 @@ import com.antigravity.proto.RaceParticipant;
 import java.util.stream.Collectors;
 
 public class HeatConverter {
+    public static final String PARTICIPANT_PREFIX = "Participant_";
 
     public static Heat toProto(com.antigravity.race.Heat heat, java.util.Set<String> sentObjectIds) {
         String key = "Heat_" + heat.getObjectId();
@@ -45,7 +46,7 @@ public class HeatConverter {
 
     public static RaceParticipant toProto(com.antigravity.race.RaceParticipant participant,
             java.util.Set<String> sentObjectIds) {
-        String key = "Participant_" + participant.getObjectId();
+        String key = PARTICIPANT_PREFIX + participant.getObjectId();
         if (sentObjectIds.contains(key)) {
             return RaceParticipant.newBuilder()
                     .setObjectId(participant.getObjectId())

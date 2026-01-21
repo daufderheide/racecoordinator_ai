@@ -41,22 +41,20 @@ public class HeatStandings {
     StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
     boolean changed = false;
 
+    // Check for changes and build update only for changed positions
     for (int i = 0; i < newStandings.size(); i++) {
       String objectId = newStandings.get(i);
+      // If position i changed (was different objectId or list size grew)
       if (i >= currentStandings.size() || !objectId.equals(currentStandings.get(i))) {
         changed = true;
-        break;
-      }
-    }
-
-    if (changed) {
-      for (int i = 0; i < newStandings.size(); i++) {
-        String objectId = newStandings.get(i);
         updateBuilder.addUpdates(HeatPositionUpdate.newBuilder()
             .setObjectId(objectId)
             .setRank(i + 1)
             .build());
       }
+    }
+
+    if (changed) {
       currentStandings = newStandings;
       return updateBuilder.build();
     }

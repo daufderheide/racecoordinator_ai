@@ -61,6 +61,25 @@
     </extensions>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/protobuf/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.xolstice.maven.plugins</groupId>
         <artifactId>protobuf-maven-plugin</artifactId>
         <version>0.6.1</version>
@@ -68,7 +87,8 @@
           <protocArtifact>com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
         </configuration>
-        <executions>
+        <!-- Executions removed to rely on generate_protos.sh which handles path spaces better -->
+        <!-- <executions>
           <execution>
             <id>compile-protoc</id>
             <phase>generate-sources</phase>
@@ -77,7 +97,7 @@
               <goal>test-compile</goal>
             </goals>
           </execution>
-        </executions>
+        </executions> -->
       </plugin>
     </plugins>
   </build>

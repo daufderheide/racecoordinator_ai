@@ -2,9 +2,7 @@ import { Component, ChangeDetectorRef, OnInit, HostListener } from '@angular/cor
 import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
-import { Driver } from 'src/app/models/driver';
 import { Track } from 'src/app/models/track';
-import { Lane } from 'src/app/models/lane';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -56,6 +54,8 @@ export class RacedayComponent implements OnInit {
         ];
     }
 
+    protected driverRankings = new Map<string, number>();
+
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
 
@@ -72,26 +72,33 @@ export class RacedayComponent implements OnInit {
         // Listen for Race Update to initialize race data
         this.dataService.getRaceUpdate().subscribe(update => {
             console.log('RacedayComponent: Received Race:', update);
+            let raceDataChanged = false;
+
             if (update.race) {
                 const race = RaceConverter.fromProto(update.race);
-                let drivers: Driver[] = [];
-                if (update.drivers) {
-                    drivers = update.drivers.map(d => DriverConverter.fromProto(d));
-                }
-
-                this.raceService.setRacingDrivers(drivers);
                 this.raceService.setRace(race);
+                raceDataChanged = true;
+            }
 
-                if (update.heats) {
-                    const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
-                    this.raceService.setHeats(heats);
-                }
+            if (update.drivers && update.drivers.length > 0) {
+                const drivers = update.drivers.map(d => DriverConverter.fromProto(d));
+                this.raceService.setRacingDrivers(drivers);
+                raceDataChanged = true;
+            }
 
-                if (update.currentHeat) {
-                    const currentHeat = HeatConverter.fromProto(update.currentHeat);
-                    this.raceService.setCurrentHeat(currentHeat);
-                }
+            if (update.heats && update.heats.length > 0) {
+                const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
+                this.raceService.setHeats(heats);
+                raceDataChanged = true;
+            }
 
+            if (update.currentHeat) {
+                const currentHeat = HeatConverter.fromProto(update.currentHeat);
+                this.raceService.setCurrentHeat(currentHeat);
+                raceDataChanged = true;
+            }
+
+            if (raceDataChanged) {
                 this.loadRaceData();
             }
         });
@@ -113,7 +120,7 @@ export class RacedayComponent implements OnInit {
                     this.timeFormat = '1.0-0';
                 }
             } else {
-                // Equal (paused or no change), keep previous format or default? 
+                // Equal (paused or no change), keep previous format or default?
                 // If 0, assume default
                 if (time === 0) this.timeFormat = '1.0-0';
             }
@@ -155,37 +162,23 @@ export class RacedayComponent implements OnInit {
         this.dataService.getStandingsUpdate().subscribe(update => {
             console.log('RacedayComponent: Received Standings Update:', update);
             if (this.heat && update.updates) {
-                const rankMap = new Map<string, number>();
                 update.updates.forEach(u => {
-                    if (u.objectId) rankMap.set(u.objectId, u.rank || 0);
+                    if (u.objectId) this.driverRankings.set(u.objectId, u.rank || 0);
                 });
 
-                this.sortHeatDrivers(rankMap);
+                this.sortHeatDrivers();
             }
         });
     }
 
-    private sortHeatDrivers(rankMap?: Map<string, number>) {
+    private sortHeatDrivers() {
         if (!this.heat) return;
 
-        if (rankMap) {
-            this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
-                const rankA = rankMap.get(a.objectId) || 999;
-                const rankB = rankMap.get(b.objectId) || 999;
-                return rankA - rankB;
-            });
-        } else if (this.heat.standings && this.heat.standings.length > 0) {
-            const standingsMap = new Map<string, number>();
-            this.heat.standings.forEach((sid, index) => standingsMap.set(sid, index + 1));
-
-            this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
-                const rankA = standingsMap.get(a.objectId) || 999;
-                const rankB = standingsMap.get(b.objectId) || 999;
-                return rankA - rankB;
-            });
-        } else {
-            this.sortedHeatDrivers = [...this.heat.heatDrivers];
-        }
+        this.sortedHeatDrivers = [...this.heat.heatDrivers].sort((a, b) => {
+            const rankA = this.driverRankings.get(a.objectId) ?? 999;
+            const rankB = this.driverRankings.get(b.objectId) ?? 999;
+            return rankA - rankB;
+        });
         this.cdr.detectChanges();
     }
 
@@ -226,6 +219,9 @@ export class RacedayComponent implements OnInit {
             this.totalHeats = heats.length;
             this.heat = this.raceService.getCurrentHeat();
             console.log('RacedayComponent: Current Heat:', this.heat);
+
+            // Initialize rankings
+            this.driverRankings.clear();
             if (this.heat) {
                 console.log('RacedayComponent: Heat drivers:', this.heat.heatDrivers);
                 this.heat.heatDrivers.forEach((hd, idx) => {
@@ -234,7 +230,15 @@ export class RacedayComponent implements OnInit {
                         console.log(`Driver ${idx} details:`, hd.participant?.driver?.name);
                     }
                 });
+
+                if (this.heat.standings && this.heat.standings.length > 0) {
+                    this.heat.standings.forEach((sid, index) => this.driverRankings.set(sid, index + 1));
+                } else {
+                    // Default to initial order if no standings yet
+                    this.heat.heatDrivers.forEach((hd, index) => this.driverRankings.set(hd.objectId, index + 1));
+                }
             }
+
             this.sortHeatDrivers();
             this.cdr.detectChanges();
         } else {

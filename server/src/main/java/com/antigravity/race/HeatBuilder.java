@@ -12,10 +12,6 @@ public class HeatBuilder {
 
         int numLanes = race.getTrack().getLanes().size();
         com.antigravity.models.HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
-        if (rotationType == null) {
-            rotationType = com.antigravity.models.HeatRotationType.RoundRobin;
-        }
-
         switch (rotationType) {
             case RoundRobin:
                 return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false,
