@@ -87,6 +87,26 @@ export class DataService {
     );
   }
 
+  nextHeat(): Observable<boolean> {
+    const request = com.antigravity.NextHeatRequest.create({});
+    const buffer = com.antigravity.NextHeatRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post('http://localhost:7070/api/next-heat', new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const nextResponse = com.antigravity.NextHeatResponse.decode(new Uint8Array(response as any));
+        return nextResponse.success ?? false;
+      })
+    );
+  }
+
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();

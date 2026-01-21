@@ -32,19 +32,26 @@ export class HeatConverter {
                     heatDrivers = proto.heatDrivers.map((dProto, index) => {
                         if (dProto.driver) {
                             const partProto = dProto.driver;
-                            let driver: Driver | undefined;
+                            let participant: RaceParticipant | undefined;
 
-                            if (partProto.driver) {
-                                driver = DriverConverter.fromProto(partProto.driver);
+                            if (partProto.objectId && HeatConverter.participantCache.has(partProto.objectId)) {
+                                participant = HeatConverter.participantCache.get(partProto.objectId);
+                            } else if (partProto.driver) {
+                                const driver = DriverConverter.fromProto(partProto.driver);
+                                if (driver) {
+                                    participant = new RaceParticipant(driver, partProto.objectId || '');
+                                    if (partProto.objectId) {
+                                        HeatConverter.participantCache.set(partProto.objectId, participant);
+                                    }
+                                }
                             }
 
-                            if (!driver) {
+                            if (!participant) {
+                                console.warn(`HeatConverter: Failed to resolve participant for heat driver ${dProto.objectId}`);
                                 return null;
                             }
 
-                            const participant = new RaceParticipant(driver, partProto.objectId || '');
                             const heatDriverId = dProto.objectId;
-
                             return new DriverHeatData(heatDriverId || '', participant, index);
                         }
                         return null;

@@ -20,7 +20,6 @@ public class Race implements ProtocolListener {
     private List<RaceParticipant> drivers;
     private List<Heat> heats;
     private Heat currentHeat;
-    private HeatStandings heatStandings;
 
     public List<RaceParticipant> getDrivers() {
         return drivers;
@@ -43,17 +42,7 @@ public class Race implements ProtocolListener {
         this.track = dbService.getTrack(database, model.getTrackEntityId());
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
-        com.antigravity.models.RaceScoring scoring = model.getRaceScoring();
-        com.antigravity.models.RaceScoring.HeatRanking sortType = com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT;
-        com.antigravity.models.RaceScoring.HeatRankingTiebreaker tieBreaker = com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME;
-
-        if (scoring != null) {
-            sortType = scoring.getHeatRanking();
-            tieBreaker = scoring.getHeatRankingTiebreaker();
-        }
-
-        this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(), sortType, tieBreaker);
-        this.currentHeat.setStandings(this.heatStandings.getStandings());
+        this.currentHeat = this.heats.get(0);
 
         this.createProtocols(isDemoMode);
 
@@ -91,10 +80,6 @@ public class Race implements ProtocolListener {
 
     public Heat getCurrentHeat() {
         return currentHeat;
-    }
-
-    public HeatStandings getHeatStandings() {
-        return heatStandings;
     }
 
     public float getRaceTime() {
@@ -178,12 +163,6 @@ public class Race implements ProtocolListener {
         int currentIndex = heats.indexOf(currentHeat);
         if (currentIndex < heats.size() - 1) {
             currentHeat = heats.get(currentIndex + 1);
-
-            // Update heat standings for the new heat
-            this.heatStandings = new HeatStandings(this.currentHeat.getDrivers(),
-                    this.heatStandings.getSortType(),
-                    this.heatStandings.getTieBreaker());
-            this.currentHeat.setStandings(this.heatStandings.getStandings());
 
             changeState(new NotStarted());
             broadcast(com.antigravity.proto.RaceData.newBuilder()

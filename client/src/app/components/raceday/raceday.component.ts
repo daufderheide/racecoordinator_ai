@@ -32,6 +32,7 @@ export class RacedayComponent implements OnInit {
     protected errorMessage?: string;
     protected startResumeShortcut: string = 'Ctrl+S';
     protected pauseShortcut: string = 'Ctrl+P';
+    protected nextHeatShortcut: string = 'Ctrl+N';
     protected time: number = 0;
     protected timeFormat: string = '1.0-0';
     protected sortedHeatDrivers: DriverHeatData[] = [];
@@ -193,6 +194,7 @@ export class RacedayComponent implements OnInit {
         if (isMac) {
             this.startResumeShortcut = 'Cmd+S';
             this.pauseShortcut = 'Cmd+P';
+            this.nextHeatShortcut = 'Cmd+N';
         }
     }
 
@@ -357,6 +359,16 @@ export class RacedayComponent implements OnInit {
             }, error => {
                 console.error('Error pausing race:', error);
             });
+        } else if (action === 'NEXT_HEAT') {
+            this.dataService.nextHeat().subscribe(success => {
+                if (success) {
+                    console.log('Next heat command sent successfully');
+                } else {
+                    console.error('Failed to send next heat command');
+                }
+            }, error => {
+                console.error('Error moving to next heat:', error);
+            });
         }
         this.isMenuOpen = false;
     }
@@ -383,6 +395,12 @@ export class RacedayComponent implements OnInit {
         if (isCtrlOrCmd && event.key === 'p') {
             event.preventDefault(); // Prevent print dialog
             this.onMenuSelect('PAUSE');
+        }
+
+        // Ctrl+N or Cmd+N for Next Heat
+        if (isCtrlOrCmd && event.key === 'n') {
+            event.preventDefault(); // Prevent new window
+            this.onMenuSelect('NEXT_HEAT');
         }
     }
 

@@ -4,6 +4,7 @@ import com.antigravity.proto.InitializeRaceRequest;
 
 import com.antigravity.proto.InitializeRaceResponse;
 import com.antigravity.proto.PauseRaceResponse;
+import com.antigravity.proto.NextHeatResponse;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -24,6 +25,7 @@ public class ClientCommandTaskHandler {
         app.post("/api/initialize-race", this::initializeRace);
         app.post("/api/start-race", this::startRace);
         app.post("/api/pause-race", this::pauseRace);
+        app.post("/api/next-heat", this::nextHeat);
     }
 
     private void initializeRace(Context ctx) {
@@ -151,6 +153,36 @@ public class ClientCommandTaskHandler {
             }
         } catch (Exception e) {
             System.err.println("Error processing pauseRace: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    private void nextHeat(Context ctx) {
+        try {
+            com.antigravity.race.Race race = com.antigravity.race.RaceManager.getInstance().getRace();
+            if (race == null) {
+                ctx.status(404).result("No active race found");
+                return;
+            }
+
+            try {
+                race.moveToNextHeat();
+
+                NextHeatResponse response = NextHeatResponse.newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Moved to next heat successfully")
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            } catch (Exception e) {
+                NextHeatResponse response = NextHeatResponse.newBuilder()
+                        .setSuccess(false)
+                        .setMessage(e.getMessage())
+                        .build();
+                ctx.contentType("application/octet-stream").result(response.toByteArray());
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing nextHeat: " + e.getMessage());
             e.printStackTrace();
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
         }

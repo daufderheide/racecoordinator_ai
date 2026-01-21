@@ -18,11 +18,14 @@ public class HeatBuilder {
 
         switch (rotationType) {
             case RoundRobin:
-                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false);
+                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), false,
+                        race.getRaceModel().getRaceScoring());
             case FriendlyRoundRobin:
-                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), true);
+                return GetRoundRobinHeats(drivers, numLanes, getRoundRobinRotationSequence(numLanes), true,
+                        race.getRaceModel().getRaceScoring());
             case EuropeanRoundRobin:
-                return GetRoundRobinHeats(drivers, numLanes, getEuroRoundRobinRotationSequence(numLanes), false);
+                return GetRoundRobinHeats(drivers, numLanes, getEuroRoundRobinRotationSequence(numLanes), false,
+                        race.getRaceModel().getRaceScoring());
             default:
                 throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);
         }
@@ -62,7 +65,8 @@ public class HeatBuilder {
             List<RaceParticipant> drivers,
             int numLanes,
             List<Integer> rotationSequence,
-            boolean friendly) {
+            boolean friendly,
+            com.antigravity.models.RaceScoring scoring) {
         List<Heat> heatList = new ArrayList<>();
 
         int numHeats;
@@ -101,7 +105,7 @@ public class HeatBuilder {
                     }
                 }
             }
-            heatList.add(new Heat(h + 1, heatDrivers));
+            heatList.add(new Heat(h + 1, heatDrivers, scoring));
         }
         return heatList;
     }

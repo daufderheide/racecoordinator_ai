@@ -201,7 +201,8 @@ public class Racing implements IRaceState {
 
         this.race.broadcast(lapDataMsg);
 
-        com.antigravity.proto.StandingsUpdate standingsUpdate = this.race.getHeatStandings().onLap(0, effectiveLapTime);
+        com.antigravity.proto.StandingsUpdate standingsUpdate = this.race.getCurrentHeat().getHeatStandings().onLap(0,
+                effectiveLapTime);
         if (standingsUpdate != null) {
             com.antigravity.proto.RaceData standingsDataMsg = com.antigravity.proto.RaceData.newBuilder()
                     .setStandingsUpdate(standingsUpdate)

@@ -212,6 +212,144 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a RaceScoring. */
+        interface IRaceScoring {
+
+            /** RaceScoring finishMethod */
+            finishMethod?: (com.antigravity.RaceScoring.FinishMethod|null);
+
+            /** RaceScoring finishValue */
+            finishValue?: (number|Long|null);
+
+            /** RaceScoring heatRanking */
+            heatRanking?: (com.antigravity.RaceScoring.HeatRanking|null);
+
+            /** RaceScoring heatRankingTiebreaker */
+            heatRankingTiebreaker?: (com.antigravity.RaceScoring.TieBreaker|null);
+        }
+
+        /** Represents a RaceScoring. */
+        class RaceScoring implements IRaceScoring {
+
+            /**
+             * Constructs a new RaceScoring.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRaceScoring);
+
+            /** RaceScoring finishMethod. */
+            public finishMethod: com.antigravity.RaceScoring.FinishMethod;
+
+            /** RaceScoring finishValue. */
+            public finishValue: (number|Long);
+
+            /** RaceScoring heatRanking. */
+            public heatRanking: com.antigravity.RaceScoring.HeatRanking;
+
+            /** RaceScoring heatRankingTiebreaker. */
+            public heatRankingTiebreaker: com.antigravity.RaceScoring.TieBreaker;
+
+            /**
+             * Creates a new RaceScoring instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RaceScoring instance
+             */
+            public static create(properties?: com.antigravity.IRaceScoring): com.antigravity.RaceScoring;
+
+            /**
+             * Encodes the specified RaceScoring message. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
+             * @param message RaceScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRaceScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RaceScoring message, length delimited. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
+             * @param message RaceScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRaceScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RaceScoring message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RaceScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RaceScoring;
+
+            /**
+             * Decodes a RaceScoring message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RaceScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RaceScoring;
+
+            /**
+             * Verifies a RaceScoring message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RaceScoring message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RaceScoring
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceScoring;
+
+            /**
+             * Creates a plain object from a RaceScoring message. Also converts values to other types if specified.
+             * @param message RaceScoring
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RaceScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RaceScoring to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RaceScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace RaceScoring {
+
+            /** FinishMethod enum. */
+            enum FinishMethod {
+                Lap = 0,
+                Timed = 1
+            }
+
+            /** HeatRanking enum. */
+            enum HeatRanking {
+                LAP_COUNT = 0,
+                FASTEST_LAP = 1,
+                TOTAL_TIME = 2
+            }
+
+            /** TieBreaker enum. */
+            enum TieBreaker {
+                FASTEST_LAP_TIME = 0,
+                MEDIAN_LAP_TIME = 1,
+                AVERAGE_LAP_TIME = 2
+            }
+        }
+
         /** Properties of a RaceModel. */
         interface IRaceModel {
 
@@ -223,6 +361,9 @@ export namespace com {
 
             /** RaceModel track */
             track?: (com.antigravity.ITrackModel|null);
+
+            /** RaceModel raceScoring */
+            raceScoring?: (com.antigravity.IRaceScoring|null);
         }
 
         /** Represents a RaceModel. */
@@ -242,6 +383,9 @@ export namespace com {
 
             /** RaceModel track. */
             public track?: (com.antigravity.ITrackModel|null);
+
+            /** RaceModel raceScoring. */
+            public raceScoring?: (com.antigravity.IRaceScoring|null);
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -1133,6 +1277,200 @@ export namespace com {
 
             /**
              * Gets the default type url for PauseRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a NextHeatRequest. */
+        interface INextHeatRequest {
+        }
+
+        /** Represents a NextHeatRequest. */
+        class NextHeatRequest implements INextHeatRequest {
+
+            /**
+             * Constructs a new NextHeatRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.INextHeatRequest);
+
+            /**
+             * Creates a new NextHeatRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns NextHeatRequest instance
+             */
+            public static create(properties?: com.antigravity.INextHeatRequest): com.antigravity.NextHeatRequest;
+
+            /**
+             * Encodes the specified NextHeatRequest message. Does not implicitly {@link com.antigravity.NextHeatRequest.verify|verify} messages.
+             * @param message NextHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.INextHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified NextHeatRequest message, length delimited. Does not implicitly {@link com.antigravity.NextHeatRequest.verify|verify} messages.
+             * @param message NextHeatRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.INextHeatRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a NextHeatRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns NextHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.NextHeatRequest;
+
+            /**
+             * Decodes a NextHeatRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns NextHeatRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.NextHeatRequest;
+
+            /**
+             * Verifies a NextHeatRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a NextHeatRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns NextHeatRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.NextHeatRequest;
+
+            /**
+             * Creates a plain object from a NextHeatRequest message. Also converts values to other types if specified.
+             * @param message NextHeatRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.NextHeatRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this NextHeatRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for NextHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a NextHeatResponse. */
+        interface INextHeatResponse {
+
+            /** NextHeatResponse success */
+            success?: (boolean|null);
+
+            /** NextHeatResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a NextHeatResponse. */
+        class NextHeatResponse implements INextHeatResponse {
+
+            /**
+             * Constructs a new NextHeatResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.INextHeatResponse);
+
+            /** NextHeatResponse success. */
+            public success: boolean;
+
+            /** NextHeatResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new NextHeatResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns NextHeatResponse instance
+             */
+            public static create(properties?: com.antigravity.INextHeatResponse): com.antigravity.NextHeatResponse;
+
+            /**
+             * Encodes the specified NextHeatResponse message. Does not implicitly {@link com.antigravity.NextHeatResponse.verify|verify} messages.
+             * @param message NextHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.INextHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified NextHeatResponse message, length delimited. Does not implicitly {@link com.antigravity.NextHeatResponse.verify|verify} messages.
+             * @param message NextHeatResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.INextHeatResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a NextHeatResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns NextHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.NextHeatResponse;
+
+            /**
+             * Decodes a NextHeatResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns NextHeatResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.NextHeatResponse;
+
+            /**
+             * Verifies a NextHeatResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a NextHeatResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns NextHeatResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.NextHeatResponse;
+
+            /**
+             * Creates a plain object from a NextHeatResponse message. Also converts values to other types if specified.
+             * @param message NextHeatResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.NextHeatResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this NextHeatResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for NextHeatResponse
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

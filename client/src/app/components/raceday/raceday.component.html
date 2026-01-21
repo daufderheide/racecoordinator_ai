@@ -21,7 +21,10 @@
           </div>
           <div class="menu-separator"></div>
           <div class="menu-item" (click)="onMenuSelect('ADD_LAP')">{{ 'RD_MENU_ADD_LAP' | translate }}</div>
-          <div class="menu-item disabled">{{ 'RD_MENU_NEXT_HEAT' | translate }}</div>
+          <div class="menu-item" (click)="onMenuSelect('NEXT_HEAT')">
+            <span>{{ 'RD_MENU_NEXT_HEAT' | translate }}</span>
+            <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
+          </div>
           <div class="menu-separator"></div>
           <div class="menu-item disabled">{{ 'RD_MENU_RESTART' | translate }}</div>
           <div class="menu-item" (click)="onMenuSelect('DEFER')">{{ 'RD_MENU_DEFER' | translate }}</div>
