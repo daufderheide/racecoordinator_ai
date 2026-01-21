@@ -210,4 +210,20 @@ public class Racing implements IRaceState {
             this.race.broadcast(standingsDataMsg);
         }
     }
+
+    @Override
+    public void nextHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void start(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot start race: Race is already in Racing state.");
+    }
+
+    @Override
+    public void pause(com.antigravity.race.Race race) {
+        System.out.println("Racing.pause() called. Pausing race.");
+        race.changeState(new com.antigravity.race.states.Paused());
+    }
 }

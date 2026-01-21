@@ -9,4 +9,10 @@ public interface IRaceState {
 
     // From the protocol listener
     void onLap(int lane, float lapTime);
+
+    void start(Race race);
+
+    void pause(Race race);
+
+    void nextHeat(Race race);
 }

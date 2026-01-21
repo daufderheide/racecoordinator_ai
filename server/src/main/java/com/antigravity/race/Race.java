@@ -81,6 +81,10 @@ public class Race implements ProtocolListener {
         return currentHeat;
     }
 
+    public void setCurrentHeat(Heat currentHeat) {
+        this.currentHeat = currentHeat;
+    }
+
     public float getRaceTime() {
         return accumulatedRaceTime;
     }
@@ -106,29 +110,11 @@ public class Race implements ProtocolListener {
     }
 
     public void startRace() {
-        if (state instanceof com.antigravity.race.states.Paused) {
-            System.out.println("Race.startRace() called. Resuming from Paused state.");
-            changeState(new com.antigravity.race.states.Starting());
-        } else if (state instanceof NotStarted) {
-            System.out.println("Race.startRace() called. Starting new race.");
-            resetRaceTime();
-            changeState(new com.antigravity.race.states.Starting());
-        } else {
-            throw new IllegalStateException("Cannot start race: Race is not in NotStarted or Paused state.");
-        }
+        state.start(this);
     }
 
     public void pauseRace() {
-        if (state instanceof com.antigravity.race.states.Starting) {
-            System.out.println("Race.pauseRace() called. Cancelling start.");
-            resetRaceTime();
-            changeState(new NotStarted());
-        } else if (state instanceof com.antigravity.race.states.Racing) {
-            System.out.println("Race.pauseRace() called. Pausing race.");
-            changeState(new com.antigravity.race.states.Paused());
-        } else {
-            throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
-        }
+        state.pause(this);
     }
 
     public void stop() {
@@ -159,25 +145,6 @@ public class Race implements ProtocolListener {
     }
 
     public void moveToNextHeat() {
-        int currentIndex = heats.indexOf(currentHeat);
-        if (currentIndex < heats.size() - 1) {
-            currentHeat = heats.get(currentIndex + 1);
-
-            changeState(new NotStarted());
-
-            // Optimized update: only send currentHeat
-            java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
-            for (RaceParticipant p : drivers) {
-                sentObjectIds.add(com.antigravity.converters.HeatConverter.PARTICIPANT_PREFIX + p.getObjectId());
-            }
-
-            com.antigravity.proto.Race raceProto = com.antigravity.proto.Race.newBuilder()
-                    .setCurrentHeat(com.antigravity.converters.HeatConverter.toProto(this.currentHeat, sentObjectIds))
-                    .build();
-
-            broadcast(com.antigravity.proto.RaceData.newBuilder()
-                    .setRace(raceProto)
-                    .build());
-        }
+        state.nextHeat(this);
     }
 }

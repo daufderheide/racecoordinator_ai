@@ -26,4 +26,21 @@ public class NotStarted implements IRaceState {
     public void onLap(int lane, float lapTime) {
         System.out.println("NotStarted: Ignored onLap - Race not in progress");
     }
+
+    @Override
+    public void nextHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void start(com.antigravity.race.Race race) {
+        System.out.println("NotStarted.start() called. Starting new race.");
+        race.resetRaceTime();
+        race.changeState(new com.antigravity.race.states.Starting());
+    }
+
+    @Override
+    public void pause(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
+    }
 }

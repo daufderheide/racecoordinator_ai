@@ -55,4 +55,21 @@ public class Starting implements IRaceState {
         // TODO(aufderheide): Handle false start
         System.out.println("Starting: Ignored onLap - Race not in progress");
     }
+
+    @Override
+    public void nextHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void start(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot start race: Race is already in Starting state.");
+    }
+
+    @Override
+    public void pause(com.antigravity.race.Race race) {
+        System.out.println("Starting.pause() called. Cancelling start.");
+        race.resetRaceTime();
+        race.changeState(new NotStarted());
+    }
 }

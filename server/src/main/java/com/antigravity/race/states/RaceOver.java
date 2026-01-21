@@ -15,4 +15,19 @@ public class RaceOver implements IRaceState {
   public void onLap(int lane, float lapTime) {
     System.out.println("Race: Ignored onLap - Race is over");
   }
+
+  @Override
+  public void nextHeat(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
+  }
+
+  @Override
+  public void start(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot start race: Race is not in NotStarted or Paused state.");
+  }
+
+  @Override
+  public void pause(com.antigravity.race.Race race) {
+    throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
+  }
 }
