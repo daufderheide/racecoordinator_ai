@@ -451,6 +451,14 @@ export class RacedayComponent implements OnInit, OnDestroy {
         $event.returnValue = true;
     }
 
+    @HostListener('window:unload', ['$event'])
+    onUnload($event: any) {
+        if (this.leaderBoardWindow) {
+            this.leaderBoardWindow.close();
+            this.leaderBoardWindow = null;
+        }
+    }
+
     onFileMenuSelect(action: string) {
         console.log('File menu action:', action);
         // Assuming 'activeMenu' is a property that controls which menu is open.
