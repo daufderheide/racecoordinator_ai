@@ -44,6 +44,11 @@ public class Race implements ProtocolListener {
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
 
+        this.overallStandings = new OverallStandings(model.getRaceScoring());
+        // Default dropped heats to 0 or get from somewhere else if needed.
+        // Assuming 0 for now as per plan, user mentioned it's a config option on the
+        // class.
+
         this.createProtocols(isDemoMode);
 
         this.state = new NotStarted();
@@ -144,6 +149,27 @@ public class Race implements ProtocolListener {
         protocols.stopTimer();
     }
 
+    public void updateAndBroadcastOverallStandings() {
+        overallStandings.recalculate(this.drivers, this.heats);
+
+        // Broadcast updates
+        java.util.List<com.antigravity.proto.RaceParticipant> participants = new java.util.ArrayList<>();
+        java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+        for (RaceParticipant driver : this.drivers) {
+            participants.add(com.antigravity.converters.RaceParticipantConverter.toProto(driver, sentObjectIds));
+        }
+
+        com.antigravity.proto.OverallStandingsUpdate update = com.antigravity.proto.OverallStandingsUpdate.newBuilder()
+                .addAllParticipants(participants)
+                .build();
+
+        com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
+                .setOverallStandingsUpdate(update)
+                .build();
+
+        broadcast(raceData);
+    }
+
     public boolean isRacing() {
         return state instanceof com.antigravity.race.states.Racing;
     }
@@ -164,10 +190,10 @@ public class Race implements ProtocolListener {
         com.antigravity.proto.RaceModel raceProto = com.antigravity.converters.RaceConverter.toProto(model, track,
                 sentObjectIds);
 
-        java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
+        java.util.List<com.antigravity.proto.RaceParticipant> driverModels = new java.util.ArrayList<>();
         for (RaceParticipant participant : drivers) {
             driverModels
-                    .add(com.antigravity.converters.DriverConverter.toProto(participant.getDriver(), sentObjectIds));
+                    .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));
         }
 
         java.util.List<com.antigravity.proto.Heat> heatProtos = heats.stream()

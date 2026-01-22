@@ -28,8 +28,8 @@ export class AppComponent {
     this.dataService.connectToRaceDataSocket();
 
     this.dataService.getRaceUpdate().subscribe(update => {
-      console.log('AppComponent: Received Race Update, navigating to /raceday');
-      this.router.navigate(['/raceday']);
+      console.log('AppComponent: Received Race Update');
+      // Removed forced navigation to /raceday to allow other components to handle updates
     });
   }
 

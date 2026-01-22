@@ -1,0 +1,27 @@
+<div class="leader-board-container">
+  <div class="header" *ngIf="currentHeat$ | async as heat">
+    Heat {{ heat.heatNumber }} of {{ (raceService.heats$ | async)?.length }}
+  </div>
+
+  <div class="content">
+    <div class="leader-section" *ngIf="leader$ | async as leader">
+      <div class="leader-rank">({{ leader.rank }})</div>
+      <div class="leader-name">{{ leader.driver.name }}</div>
+      <div class="leader-stats">
+        <span class="laps">{{ leader.totalLaps }} Laps</span>
+        <span class="time">{{ leader.totalTime | number:'1.3-3' }}</span>
+      </div>
+    </div>
+
+    <div class="others-list">
+      <div class="other-row" *ngFor="let p of others$ | async">
+        <div class="rank">({{ p.rank }})</div>
+        <div class="name">{{ p.driver.name }}</div>
+        <div class="stats">
+          <span class="laps">{{ p.totalLaps | number:'1.0-0' }}</span>
+          <span class="time">{{ p.totalTime | number:'1.3-3' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5361,6 +5361,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IRace|null} [race] RaceData race
              * @property {com.antigravity.IReactionTime|null} [reactionTime] RaceData reactionTime
              * @property {com.antigravity.IStandingsUpdate|null} [standingsUpdate] RaceData standingsUpdate
+             * @property {com.antigravity.IOverallStandingsUpdate|null} [overallStandingsUpdate] RaceData overallStandingsUpdate
              */
 
             /**
@@ -5418,17 +5419,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.standingsUpdate = null;
 
+            /**
+             * RaceData overallStandingsUpdate.
+             * @member {com.antigravity.IOverallStandingsUpdate|null|undefined} overallStandingsUpdate
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.overallStandingsUpdate = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate", "overallStandingsUpdate"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -5466,6 +5475,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.ReactionTime.encode(message.reactionTime, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 if (message.standingsUpdate != null && Object.hasOwnProperty.call(message, "standingsUpdate"))
                     $root.com.antigravity.StandingsUpdate.encode(message.standingsUpdate, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                if (message.overallStandingsUpdate != null && Object.hasOwnProperty.call(message, "overallStandingsUpdate"))
+                    $root.com.antigravity.OverallStandingsUpdate.encode(message.overallStandingsUpdate, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
                 return writer;
             };
 
@@ -5520,6 +5531,10 @@ export const com = $root.com = (() => {
                         }
                     case 5: {
                             message.standingsUpdate = $root.com.antigravity.StandingsUpdate.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 6: {
+                            message.overallStandingsUpdate = $root.com.antigravity.OverallStandingsUpdate.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -5606,6 +5621,16 @@ export const com = $root.com = (() => {
                             return "standingsUpdate." + error;
                     }
                 }
+                if (message.overallStandingsUpdate != null && message.hasOwnProperty("overallStandingsUpdate")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    {
+                        let error = $root.com.antigravity.OverallStandingsUpdate.verify(message.overallStandingsUpdate);
+                        if (error)
+                            return "overallStandingsUpdate." + error;
+                    }
+                }
                 return null;
             };
 
@@ -5645,6 +5670,11 @@ export const com = $root.com = (() => {
                     if (typeof object.standingsUpdate !== "object")
                         throw TypeError(".com.antigravity.RaceData.standingsUpdate: object expected");
                     message.standingsUpdate = $root.com.antigravity.StandingsUpdate.fromObject(object.standingsUpdate);
+                }
+                if (object.overallStandingsUpdate != null) {
+                    if (typeof object.overallStandingsUpdate !== "object")
+                        throw TypeError(".com.antigravity.RaceData.overallStandingsUpdate: object expected");
+                    message.overallStandingsUpdate = $root.com.antigravity.OverallStandingsUpdate.fromObject(object.overallStandingsUpdate);
                 }
                 return message;
             };
@@ -5687,6 +5717,11 @@ export const com = $root.com = (() => {
                     if (options.oneofs)
                         object.data = "standingsUpdate";
                 }
+                if (message.overallStandingsUpdate != null && message.hasOwnProperty("overallStandingsUpdate")) {
+                    object.overallStandingsUpdate = $root.com.antigravity.OverallStandingsUpdate.toObject(message.overallStandingsUpdate, options);
+                    if (options.oneofs)
+                        object.data = "overallStandingsUpdate";
+                }
                 return object;
             };
 
@@ -5726,7 +5761,7 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IRace
              * @property {com.antigravity.IRaceModel|null} [race] Race race
-             * @property {Array.<com.antigravity.IDriverModel>|null} [drivers] Race drivers
+             * @property {Array.<com.antigravity.IRaceParticipant>|null} [drivers] Race drivers
              * @property {Array.<com.antigravity.IHeat>|null} [heats] Race heats
              * @property {com.antigravity.IHeat|null} [currentHeat] Race currentHeat
              */
@@ -5758,7 +5793,7 @@ export const com = $root.com = (() => {
 
             /**
              * Race drivers.
-             * @member {Array.<com.antigravity.IDriverModel>} drivers
+             * @member {Array.<com.antigravity.IRaceParticipant>} drivers
              * @memberof com.antigravity.Race
              * @instance
              */
@@ -5808,7 +5843,7 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.RaceModel.encode(message.race, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
                 if (message.drivers != null && message.drivers.length)
                     for (let i = 0; i < message.drivers.length; ++i)
-                        $root.com.antigravity.DriverModel.encode(message.drivers[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                        $root.com.antigravity.RaceParticipant.encode(message.drivers[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
                 if (message.heats != null && message.heats.length)
                     for (let i = 0; i < message.heats.length; ++i)
                         $root.com.antigravity.Heat.encode(message.heats[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
@@ -5857,7 +5892,7 @@ export const com = $root.com = (() => {
                     case 2: {
                             if (!(message.drivers && message.drivers.length))
                                 message.drivers = [];
-                            message.drivers.push($root.com.antigravity.DriverModel.decode(reader, reader.uint32()));
+                            message.drivers.push($root.com.antigravity.RaceParticipant.decode(reader, reader.uint32()));
                             break;
                         }
                     case 3: {
@@ -5914,7 +5949,7 @@ export const com = $root.com = (() => {
                     if (!Array.isArray(message.drivers))
                         return "drivers: array expected";
                     for (let i = 0; i < message.drivers.length; ++i) {
-                        let error = $root.com.antigravity.DriverModel.verify(message.drivers[i]);
+                        let error = $root.com.antigravity.RaceParticipant.verify(message.drivers[i]);
                         if (error)
                             return "drivers." + error;
                     }
@@ -5960,7 +5995,7 @@ export const com = $root.com = (() => {
                     for (let i = 0; i < object.drivers.length; ++i) {
                         if (typeof object.drivers[i] !== "object")
                             throw TypeError(".com.antigravity.Race.drivers: object expected");
-                        message.drivers[i] = $root.com.antigravity.DriverModel.fromObject(object.drivers[i]);
+                        message.drivers[i] = $root.com.antigravity.RaceParticipant.fromObject(object.drivers[i]);
                     }
                 }
                 if (object.heats) {
@@ -6007,7 +6042,7 @@ export const com = $root.com = (() => {
                 if (message.drivers && message.drivers.length) {
                     object.drivers = [];
                     for (let j = 0; j < message.drivers.length; ++j)
-                        object.drivers[j] = $root.com.antigravity.DriverModel.toObject(message.drivers[j], options);
+                        object.drivers[j] = $root.com.antigravity.RaceParticipant.toObject(message.drivers[j], options);
                 }
                 if (message.heats && message.heats.length) {
                     object.heats = [];
@@ -6604,6 +6639,12 @@ export const com = $root.com = (() => {
              * @interface IRaceParticipant
              * @property {string|null} [objectId] RaceParticipant objectId
              * @property {com.antigravity.IDriverModel|null} [driver] RaceParticipant driver
+             * @property {number|null} [rank] RaceParticipant rank
+             * @property {number|null} [totalLaps] RaceParticipant totalLaps
+             * @property {number|null} [totalTime] RaceParticipant totalTime
+             * @property {number|null} [bestLapTime] RaceParticipant bestLapTime
+             * @property {number|null} [averageLapTime] RaceParticipant averageLapTime
+             * @property {number|null} [medianLapTime] RaceParticipant medianLapTime
              */
 
             /**
@@ -6638,6 +6679,54 @@ export const com = $root.com = (() => {
             RaceParticipant.prototype.driver = null;
 
             /**
+             * RaceParticipant rank.
+             * @member {number} rank
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.rank = 0;
+
+            /**
+             * RaceParticipant totalLaps.
+             * @member {number} totalLaps
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.totalLaps = 0;
+
+            /**
+             * RaceParticipant totalTime.
+             * @member {number} totalTime
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.totalTime = 0;
+
+            /**
+             * RaceParticipant bestLapTime.
+             * @member {number} bestLapTime
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.bestLapTime = 0;
+
+            /**
+             * RaceParticipant averageLapTime.
+             * @member {number} averageLapTime
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.averageLapTime = 0;
+
+            /**
+             * RaceParticipant medianLapTime.
+             * @member {number} medianLapTime
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.medianLapTime = 0;
+
+            /**
              * Creates a new RaceParticipant instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceParticipant
@@ -6665,6 +6754,18 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.driver != null && Object.hasOwnProperty.call(message, "driver"))
                     $root.com.antigravity.DriverModel.encode(message.driver, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                if (message.rank != null && Object.hasOwnProperty.call(message, "rank"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.rank);
+                if (message.totalLaps != null && Object.hasOwnProperty.call(message, "totalLaps"))
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.totalLaps);
+                if (message.totalTime != null && Object.hasOwnProperty.call(message, "totalTime"))
+                    writer.uint32(/* id 5, wireType 5 =*/45).float(message.totalTime);
+                if (message.bestLapTime != null && Object.hasOwnProperty.call(message, "bestLapTime"))
+                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.bestLapTime);
+                if (message.averageLapTime != null && Object.hasOwnProperty.call(message, "averageLapTime"))
+                    writer.uint32(/* id 7, wireType 5 =*/61).float(message.averageLapTime);
+                if (message.medianLapTime != null && Object.hasOwnProperty.call(message, "medianLapTime"))
+                    writer.uint32(/* id 8, wireType 5 =*/69).float(message.medianLapTime);
                 return writer;
             };
 
@@ -6707,6 +6808,30 @@ export const com = $root.com = (() => {
                         }
                     case 2: {
                             message.driver = $root.com.antigravity.DriverModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 3: {
+                            message.rank = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.totalLaps = reader.int32();
+                            break;
+                        }
+                    case 5: {
+                            message.totalTime = reader.float();
+                            break;
+                        }
+                    case 6: {
+                            message.bestLapTime = reader.float();
+                            break;
+                        }
+                    case 7: {
+                            message.averageLapTime = reader.float();
+                            break;
+                        }
+                    case 8: {
+                            message.medianLapTime = reader.float();
                             break;
                         }
                     default:
@@ -6752,6 +6877,24 @@ export const com = $root.com = (() => {
                     if (error)
                         return "driver." + error;
                 }
+                if (message.rank != null && message.hasOwnProperty("rank"))
+                    if (!$util.isInteger(message.rank))
+                        return "rank: integer expected";
+                if (message.totalLaps != null && message.hasOwnProperty("totalLaps"))
+                    if (!$util.isInteger(message.totalLaps))
+                        return "totalLaps: integer expected";
+                if (message.totalTime != null && message.hasOwnProperty("totalTime"))
+                    if (typeof message.totalTime !== "number")
+                        return "totalTime: number expected";
+                if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
+                    if (typeof message.bestLapTime !== "number")
+                        return "bestLapTime: number expected";
+                if (message.averageLapTime != null && message.hasOwnProperty("averageLapTime"))
+                    if (typeof message.averageLapTime !== "number")
+                        return "averageLapTime: number expected";
+                if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
+                    if (typeof message.medianLapTime !== "number")
+                        return "medianLapTime: number expected";
                 return null;
             };
 
@@ -6774,6 +6917,18 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceParticipant.driver: object expected");
                     message.driver = $root.com.antigravity.DriverModel.fromObject(object.driver);
                 }
+                if (object.rank != null)
+                    message.rank = object.rank | 0;
+                if (object.totalLaps != null)
+                    message.totalLaps = object.totalLaps | 0;
+                if (object.totalTime != null)
+                    message.totalTime = Number(object.totalTime);
+                if (object.bestLapTime != null)
+                    message.bestLapTime = Number(object.bestLapTime);
+                if (object.averageLapTime != null)
+                    message.averageLapTime = Number(object.averageLapTime);
+                if (object.medianLapTime != null)
+                    message.medianLapTime = Number(object.medianLapTime);
                 return message;
             };
 
@@ -6793,11 +6948,29 @@ export const com = $root.com = (() => {
                 if (options.defaults) {
                     object.objectId = "";
                     object.driver = null;
+                    object.rank = 0;
+                    object.totalLaps = 0;
+                    object.totalTime = 0;
+                    object.bestLapTime = 0;
+                    object.averageLapTime = 0;
+                    object.medianLapTime = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
                 if (message.driver != null && message.hasOwnProperty("driver"))
                     object.driver = $root.com.antigravity.DriverModel.toObject(message.driver, options);
+                if (message.rank != null && message.hasOwnProperty("rank"))
+                    object.rank = message.rank;
+                if (message.totalLaps != null && message.hasOwnProperty("totalLaps"))
+                    object.totalLaps = message.totalLaps;
+                if (message.totalTime != null && message.hasOwnProperty("totalTime"))
+                    object.totalTime = options.json && !isFinite(message.totalTime) ? String(message.totalTime) : message.totalTime;
+                if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
+                    object.bestLapTime = options.json && !isFinite(message.bestLapTime) ? String(message.bestLapTime) : message.bestLapTime;
+                if (message.averageLapTime != null && message.hasOwnProperty("averageLapTime"))
+                    object.averageLapTime = options.json && !isFinite(message.averageLapTime) ? String(message.averageLapTime) : message.averageLapTime;
+                if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
+                    object.medianLapTime = options.json && !isFinite(message.medianLapTime) ? String(message.medianLapTime) : message.medianLapTime;
                 return object;
             };
 
@@ -7512,6 +7685,232 @@ export const com = $root.com = (() => {
             };
 
             return StandingsUpdate;
+        })();
+
+        antigravity.OverallStandingsUpdate = (function() {
+
+            /**
+             * Properties of an OverallStandingsUpdate.
+             * @memberof com.antigravity
+             * @interface IOverallStandingsUpdate
+             * @property {Array.<com.antigravity.IRaceParticipant>|null} [participants] OverallStandingsUpdate participants
+             */
+
+            /**
+             * Constructs a new OverallStandingsUpdate.
+             * @memberof com.antigravity
+             * @classdesc Represents an OverallStandingsUpdate.
+             * @implements IOverallStandingsUpdate
+             * @constructor
+             * @param {com.antigravity.IOverallStandingsUpdate=} [properties] Properties to set
+             */
+            function OverallStandingsUpdate(properties) {
+                this.participants = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * OverallStandingsUpdate participants.
+             * @member {Array.<com.antigravity.IRaceParticipant>} participants
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @instance
+             */
+            OverallStandingsUpdate.prototype.participants = $util.emptyArray;
+
+            /**
+             * Creates a new OverallStandingsUpdate instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {com.antigravity.IOverallStandingsUpdate=} [properties] Properties to set
+             * @returns {com.antigravity.OverallStandingsUpdate} OverallStandingsUpdate instance
+             */
+            OverallStandingsUpdate.create = function create(properties) {
+                return new OverallStandingsUpdate(properties);
+            };
+
+            /**
+             * Encodes the specified OverallStandingsUpdate message. Does not implicitly {@link com.antigravity.OverallStandingsUpdate.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {com.antigravity.IOverallStandingsUpdate} message OverallStandingsUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallStandingsUpdate.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.participants != null && message.participants.length)
+                    for (let i = 0; i < message.participants.length; ++i)
+                        $root.com.antigravity.RaceParticipant.encode(message.participants[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified OverallStandingsUpdate message, length delimited. Does not implicitly {@link com.antigravity.OverallStandingsUpdate.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {com.antigravity.IOverallStandingsUpdate} message OverallStandingsUpdate message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallStandingsUpdate.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an OverallStandingsUpdate message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.OverallStandingsUpdate} OverallStandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallStandingsUpdate.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.OverallStandingsUpdate();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            if (!(message.participants && message.participants.length))
+                                message.participants = [];
+                            message.participants.push($root.com.antigravity.RaceParticipant.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an OverallStandingsUpdate message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.OverallStandingsUpdate} OverallStandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallStandingsUpdate.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an OverallStandingsUpdate message.
+             * @function verify
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            OverallStandingsUpdate.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.participants != null && message.hasOwnProperty("participants")) {
+                    if (!Array.isArray(message.participants))
+                        return "participants: array expected";
+                    for (let i = 0; i < message.participants.length; ++i) {
+                        let error = $root.com.antigravity.RaceParticipant.verify(message.participants[i]);
+                        if (error)
+                            return "participants." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates an OverallStandingsUpdate message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.OverallStandingsUpdate} OverallStandingsUpdate
+             */
+            OverallStandingsUpdate.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.OverallStandingsUpdate)
+                    return object;
+                let message = new $root.com.antigravity.OverallStandingsUpdate();
+                if (object.participants) {
+                    if (!Array.isArray(object.participants))
+                        throw TypeError(".com.antigravity.OverallStandingsUpdate.participants: array expected");
+                    message.participants = [];
+                    for (let i = 0; i < object.participants.length; ++i) {
+                        if (typeof object.participants[i] !== "object")
+                            throw TypeError(".com.antigravity.OverallStandingsUpdate.participants: object expected");
+                        message.participants[i] = $root.com.antigravity.RaceParticipant.fromObject(object.participants[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an OverallStandingsUpdate message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {com.antigravity.OverallStandingsUpdate} message OverallStandingsUpdate
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            OverallStandingsUpdate.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.participants = [];
+                if (message.participants && message.participants.length) {
+                    object.participants = [];
+                    for (let j = 0; j < message.participants.length; ++j)
+                        object.participants[j] = $root.com.antigravity.RaceParticipant.toObject(message.participants[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this OverallStandingsUpdate to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            OverallStandingsUpdate.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for OverallStandingsUpdate
+             * @function getTypeUrl
+             * @memberof com.antigravity.OverallStandingsUpdate
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            OverallStandingsUpdate.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.OverallStandingsUpdate";
+            };
+
+            return OverallStandingsUpdate;
         })();
 
         return antigravity;

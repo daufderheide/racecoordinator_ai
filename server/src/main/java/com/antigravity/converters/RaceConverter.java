@@ -50,7 +50,7 @@ public class RaceConverter {
                 return com.antigravity.proto.Race.newBuilder()
                                 .setRace(toProto(race.getRaceModel(), race.getTrack(), sentObjectIds))
                                 .addAllDrivers(race.getDrivers().stream()
-                                                .map(p -> DriverConverter.toProto(p.getDriver(), sentObjectIds))
+                                                .map(p -> RaceParticipantConverter.toProto(p, sentObjectIds))
                                                 .collect(java.util.stream.Collectors.toList()))
                                 .addAllHeats(race.getHeats().stream()
                                                 .map(h -> HeatConverter.toProto(h, sentObjectIds))

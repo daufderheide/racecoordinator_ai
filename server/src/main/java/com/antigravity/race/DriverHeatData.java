@@ -30,6 +30,10 @@ public class DriverHeatData extends ServerToClientObject {
         return laps.size();
     }
 
+    public java.util.List<Float> getLaps() {
+        return java.util.Collections.unmodifiableList(laps);
+    }
+
     public float getLastLapTime() {
         if (laps.isEmpty()) {
             return 0.0f;

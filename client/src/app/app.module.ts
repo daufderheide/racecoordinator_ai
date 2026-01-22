@@ -14,6 +14,7 @@ import { RaceService } from './services/race.service';
 import { TranslatePipe } from './pipes/translate.pipe';
 import { SvgTextScalerDirective } from './directives/svg-text-scaler.directive';
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
+import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,9 @@ import { ConfirmationModalComponent } from './components/confirmation-modal/conf
     RacedaySetupComponent,
     TranslatePipe,
     SvgTextScalerDirective,
-    ConfirmationModalComponent
+    SvgTextScalerDirective,
+    ConfirmationModalComponent,
+    LeaderBoardComponent
   ],
   imports: [
     BrowserModule,

@@ -11,6 +11,7 @@ import { DriverConverter } from 'src/app/converters/driver.converter';
 import { HeatConverter } from 'src/app/converters/heat.converter';
 import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
+import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 
 import { ColumnDefinition } from './column_definition';
 
@@ -87,8 +88,8 @@ export class RacedayComponent implements OnInit {
             }
 
             if (update.drivers && update.drivers.length > 0) {
-                const drivers = update.drivers.map(d => DriverConverter.fromProto(d));
-                this.raceService.setRacingDrivers(drivers);
+                const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
+                this.raceService.setParticipants(participants);
                 raceDataChanged = true;
             }
 
@@ -172,6 +173,14 @@ export class RacedayComponent implements OnInit {
                 });
 
                 this.sortHeatDrivers();
+            }
+        });
+
+        this.dataService.getOverallStandingsUpdate().subscribe(update => {
+            console.log('RacedayComponent: Received Overall Standings Update:', update);
+            if (update.participants) {
+                const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
+                this.raceService.setParticipants(participants);
             }
         });
     }
@@ -451,7 +460,9 @@ export class RacedayComponent implements OnInit {
     onWindowMenuSelect(action: string) {
         console.log('Window menu action:', action);
         this.isWindowsMenuOpen = false;
-        // Navigation logic would go here
+        if (action === 'LEADER_BOARD') {
+            this.router.navigate(['/leaderboard']);
+        }
     }
 
     onExitConfirm() {

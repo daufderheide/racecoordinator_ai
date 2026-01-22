@@ -209,6 +209,8 @@ public class Racing implements IRaceState {
                     .build();
             this.race.broadcast(standingsDataMsg);
         }
+
+        this.race.updateAndBroadcastOverallStandings();
     }
 
     @Override

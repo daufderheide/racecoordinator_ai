@@ -2391,6 +2391,9 @@ export namespace com {
 
             /** RaceData standingsUpdate */
             standingsUpdate?: (com.antigravity.IStandingsUpdate|null);
+
+            /** RaceData overallStandingsUpdate */
+            overallStandingsUpdate?: (com.antigravity.IOverallStandingsUpdate|null);
         }
 
         /** Represents a RaceData. */
@@ -2417,8 +2420,11 @@ export namespace com {
             /** RaceData standingsUpdate. */
             public standingsUpdate?: (com.antigravity.IStandingsUpdate|null);
 
+            /** RaceData overallStandingsUpdate. */
+            public overallStandingsUpdate?: (com.antigravity.IOverallStandingsUpdate|null);
+
             /** RaceData data. */
-            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate");
+            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -2505,7 +2511,7 @@ export namespace com {
             race?: (com.antigravity.IRaceModel|null);
 
             /** Race drivers */
-            drivers?: (com.antigravity.IDriverModel[]|null);
+            drivers?: (com.antigravity.IRaceParticipant[]|null);
 
             /** Race heats */
             heats?: (com.antigravity.IHeat[]|null);
@@ -2527,7 +2533,7 @@ export namespace com {
             public race?: (com.antigravity.IRaceModel|null);
 
             /** Race drivers. */
-            public drivers: com.antigravity.IDriverModel[];
+            public drivers: com.antigravity.IRaceParticipant[];
 
             /** Race heats. */
             public heats: com.antigravity.IHeat[];
@@ -2839,6 +2845,24 @@ export namespace com {
 
             /** RaceParticipant driver */
             driver?: (com.antigravity.IDriverModel|null);
+
+            /** RaceParticipant rank */
+            rank?: (number|null);
+
+            /** RaceParticipant totalLaps */
+            totalLaps?: (number|null);
+
+            /** RaceParticipant totalTime */
+            totalTime?: (number|null);
+
+            /** RaceParticipant bestLapTime */
+            bestLapTime?: (number|null);
+
+            /** RaceParticipant averageLapTime */
+            averageLapTime?: (number|null);
+
+            /** RaceParticipant medianLapTime */
+            medianLapTime?: (number|null);
         }
 
         /** Represents a RaceParticipant. */
@@ -2855,6 +2879,24 @@ export namespace com {
 
             /** RaceParticipant driver. */
             public driver?: (com.antigravity.IDriverModel|null);
+
+            /** RaceParticipant rank. */
+            public rank: number;
+
+            /** RaceParticipant totalLaps. */
+            public totalLaps: number;
+
+            /** RaceParticipant totalTime. */
+            public totalTime: number;
+
+            /** RaceParticipant bestLapTime. */
+            public bestLapTime: number;
+
+            /** RaceParticipant averageLapTime. */
+            public averageLapTime: number;
+
+            /** RaceParticipant medianLapTime. */
+            public medianLapTime: number;
 
             /**
              * Creates a new RaceParticipant instance using the specified properties.
@@ -3231,6 +3273,103 @@ export namespace com {
 
             /**
              * Gets the default type url for StandingsUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an OverallStandingsUpdate. */
+        interface IOverallStandingsUpdate {
+
+            /** OverallStandingsUpdate participants */
+            participants?: (com.antigravity.IRaceParticipant[]|null);
+        }
+
+        /** Represents an OverallStandingsUpdate. */
+        class OverallStandingsUpdate implements IOverallStandingsUpdate {
+
+            /**
+             * Constructs a new OverallStandingsUpdate.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IOverallStandingsUpdate);
+
+            /** OverallStandingsUpdate participants. */
+            public participants: com.antigravity.IRaceParticipant[];
+
+            /**
+             * Creates a new OverallStandingsUpdate instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OverallStandingsUpdate instance
+             */
+            public static create(properties?: com.antigravity.IOverallStandingsUpdate): com.antigravity.OverallStandingsUpdate;
+
+            /**
+             * Encodes the specified OverallStandingsUpdate message. Does not implicitly {@link com.antigravity.OverallStandingsUpdate.verify|verify} messages.
+             * @param message OverallStandingsUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IOverallStandingsUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OverallStandingsUpdate message, length delimited. Does not implicitly {@link com.antigravity.OverallStandingsUpdate.verify|verify} messages.
+             * @param message OverallStandingsUpdate message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IOverallStandingsUpdate, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OverallStandingsUpdate message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OverallStandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallStandingsUpdate;
+
+            /**
+             * Decodes an OverallStandingsUpdate message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OverallStandingsUpdate
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallStandingsUpdate;
+
+            /**
+             * Verifies an OverallStandingsUpdate message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OverallStandingsUpdate message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OverallStandingsUpdate
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallStandingsUpdate;
+
+            /**
+             * Creates a plain object from an OverallStandingsUpdate message. Also converts values to other types if specified.
+             * @param message OverallStandingsUpdate
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.OverallStandingsUpdate, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OverallStandingsUpdate to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OverallStandingsUpdate
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
