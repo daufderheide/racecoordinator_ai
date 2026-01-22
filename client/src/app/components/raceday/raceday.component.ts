@@ -72,6 +72,9 @@ export class RacedayComponent implements OnInit {
         this.detectShortcutKey();
         this.updateScale();
 
+        // Subscribe to race data
+        this.dataService.updateRaceSubscription(true);
+
         // Listen for Race Update to initialize race data
         this.dataService.getRaceUpdate().subscribe(update => {
             console.log('RacedayComponent: Received Race:', update);
@@ -435,6 +438,7 @@ export class RacedayComponent implements OnInit {
     }
 
     onExitConfirm() {
+        this.dataService.updateRaceSubscription(false);
         this.showExitConfirmation = false;
         this.router.navigate(['/raceday-setup']);
     }

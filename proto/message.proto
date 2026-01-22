@@ -12,6 +12,7 @@ import "client/next_heat.proto";
 import "client/restart_heat.proto";
 import "client/skip_heat.proto";
 import "client/track_model.proto";
+import "client/race_subscription.proto";
 
 import "server/race.proto";
 import "server/heat.proto";

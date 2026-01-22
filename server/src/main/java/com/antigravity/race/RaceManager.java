@@ -10,6 +10,7 @@ public class RaceManager {
     private static RaceManager instance;
     private Race currentRace;
     private final Set<WsContext> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<WsContext> raceDataSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private RaceManager() {
     }
@@ -26,6 +27,20 @@ public class RaceManager {
             this.currentRace.stop();
         }
         this.currentRace = race;
+
+        if (this.currentRace != null) {
+            System.out.println("New race set. Resubscribing all " + sessions.size() + " connected sessions.");
+            raceDataSubscribers.addAll(sessions);
+
+            // Note: ClientCommandTaskHandler usually calls broadcast(snapshot) immediately
+            // after this.
+            // But to be safe and ensure correct state synchronization even if called from
+            // elsewhere:
+            // logic here is superfluous if broadcast is called, but harmless.
+            // Actually, ClientCommandTaskHandler calls createSnapshot() -> broadcast().
+            // If we add everyone to subscribers here, the subsequent broadcast will reach
+            // them.
+        }
     }
 
     public synchronized Race getRace() {
@@ -34,7 +49,10 @@ public class RaceManager {
 
     public void addSession(WsContext ctx) {
         sessions.add(ctx);
-        System.out.println("New WebSocket session added. Total sessions: " + sessions.size());
+        // Default to subscribed for backward compatibility and initial connection
+        raceDataSubscribers.add(ctx);
+        System.out.println("New WebSocket session added. Total sessions: " + sessions.size() + ", Subscribers: "
+                + raceDataSubscribers.size());
 
         if (currentRace != null) {
             com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();
@@ -44,33 +62,50 @@ public class RaceManager {
 
     public void removeSession(WsContext ctx) {
         sessions.remove(ctx);
-        System.out.println("WebSocket session removed. Total sessions: " + sessions.size());
+        raceDataSubscribers.remove(ctx);
+        System.out.println("WebSocket session removed. Total sessions: " + sessions.size() + ", Subscribers: "
+                + raceDataSubscribers.size());
 
-        if (sessions.isEmpty() && currentRace != null) {
-            System.out.println("Last client disconnected. Stopping and clearing current race.");
+        checkAndStopRace();
+    }
+
+    public void handleRaceSubscription(WsContext ctx, com.antigravity.proto.RaceSubscriptionRequest request) {
+        if (request.getSubscribe()) {
+            raceDataSubscribers.add(ctx);
+            System.out.println("Client subscribed to race data. Subscribers: " + raceDataSubscribers.size());
+            // Send current state immediately upon subscription if race exists
+            if (currentRace != null) {
+                com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();
+                ctx.send(java.nio.ByteBuffer.wrap(snapshot.toByteArray()));
+            }
+        } else {
+            raceDataSubscribers.remove(ctx);
+            System.out.println("Client unsubscribed from race data. Subscribers: " + raceDataSubscribers.size());
+            checkAndStopRace();
+        }
+    }
+
+    private void checkAndStopRace() {
+        if (raceDataSubscribers.isEmpty() && currentRace != null) {
+            System.out.println("Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
             setRace(null);
         }
     }
 
+    public boolean hasSubscribers() {
+        return !raceDataSubscribers.isEmpty();
+    }
+
     public void broadcast(GeneratedMessageV3 message) {
-        if (sessions.isEmpty()) {
+        if (raceDataSubscribers.isEmpty()) {
             return;
         }
-        // For now, assuming we send byte array or similar.
-        // Javalin websockets support send(Object) or send(ByteBuffer).
-        // Since it's protobuf, sending bytes is safest.
+
         byte[] bytes = message.toByteArray();
 
-        sessions.stream()
+        raceDataSubscribers.stream()
                 .filter(ctx -> ctx.session.isOpen())
                 .forEach(ctx -> {
-                    // Reset position to 0 for each send, though wrap() usually creates a new one
-                    // actually ByteBuffer.wrap backs the array, so it shares state.
-                    // To be safe for concurrent sends or multiple sends, duplicate (unnecessary for
-                    // wrap?)
-                    // Javalin/Jetty likely reads it.
-                    // Safest is to just wrap it fresh or use byte array if we trust it.
-                    // But we want to FORCE binary.
                     ctx.send(java.nio.ByteBuffer.wrap(bytes));
                 });
     }

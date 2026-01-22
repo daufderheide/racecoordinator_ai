@@ -37,6 +37,12 @@ public class ClientCommandTaskHandler {
                 return;
             }
 
+            if (com.antigravity.race.RaceManager.getInstance().hasSubscribers()
+                    && com.antigravity.race.RaceManager.getInstance().getRace() != null) {
+                ctx.status(409).result("Cannot start new race while client is watching existing race");
+                return;
+            }
+
             // Create the runtime race instance
             java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
                     request.getDriverIdsList());

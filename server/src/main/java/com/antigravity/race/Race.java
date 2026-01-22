@@ -156,6 +156,8 @@ public class Race implements ProtocolListener {
         return heats.indexOf(currentHeat) == heats.size() - 1;
     }
 
+    // TODO(aufderheide): This synchronize probably isn't enough. We need to lock
+    // the race object while we're creating the snapshot.
     public synchronized com.antigravity.proto.RaceData createSnapshot() {
         java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
         com.antigravity.proto.RaceModel raceProto = com.antigravity.converters.RaceConverter.toProto(model, track,

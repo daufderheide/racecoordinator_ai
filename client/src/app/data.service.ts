@@ -174,6 +174,17 @@ export class DataService {
   private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
 
+  public updateRaceSubscription(subscribe: boolean) {
+    if (this.raceDataSocket && this.raceDataSocket.readyState === WebSocket.OPEN) {
+      const request = com.antigravity.RaceSubscriptionRequest.create({ subscribe });
+      const buffer = com.antigravity.RaceSubscriptionRequest.encode(request).finish();
+      this.raceDataSocket.send(buffer);
+      console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
+    } else {
+      console.warn('Race Data WebSocket not open. Cannot send subscription request.');
+    }
+  }
+
   public connectToRaceDataSocket() {
     if (this.raceDataSocket) {
       this.raceDataSocket.close();

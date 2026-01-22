@@ -4619,6 +4619,211 @@ export const com = $root.com = (() => {
             return DeferHeatResponse;
         })();
 
+        antigravity.RaceSubscriptionRequest = (function() {
+
+            /**
+             * Properties of a RaceSubscriptionRequest.
+             * @memberof com.antigravity
+             * @interface IRaceSubscriptionRequest
+             * @property {boolean|null} [subscribe] RaceSubscriptionRequest subscribe
+             */
+
+            /**
+             * Constructs a new RaceSubscriptionRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceSubscriptionRequest.
+             * @implements IRaceSubscriptionRequest
+             * @constructor
+             * @param {com.antigravity.IRaceSubscriptionRequest=} [properties] Properties to set
+             */
+            function RaceSubscriptionRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceSubscriptionRequest subscribe.
+             * @member {boolean} subscribe
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @instance
+             */
+            RaceSubscriptionRequest.prototype.subscribe = false;
+
+            /**
+             * Creates a new RaceSubscriptionRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {com.antigravity.IRaceSubscriptionRequest=} [properties] Properties to set
+             * @returns {com.antigravity.RaceSubscriptionRequest} RaceSubscriptionRequest instance
+             */
+            RaceSubscriptionRequest.create = function create(properties) {
+                return new RaceSubscriptionRequest(properties);
+            };
+
+            /**
+             * Encodes the specified RaceSubscriptionRequest message. Does not implicitly {@link com.antigravity.RaceSubscriptionRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {com.antigravity.IRaceSubscriptionRequest} message RaceSubscriptionRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceSubscriptionRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.subscribe != null && Object.hasOwnProperty.call(message, "subscribe"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.subscribe);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceSubscriptionRequest message, length delimited. Does not implicitly {@link com.antigravity.RaceSubscriptionRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {com.antigravity.IRaceSubscriptionRequest} message RaceSubscriptionRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceSubscriptionRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceSubscriptionRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceSubscriptionRequest} RaceSubscriptionRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceSubscriptionRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceSubscriptionRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.subscribe = reader.bool();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceSubscriptionRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceSubscriptionRequest} RaceSubscriptionRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceSubscriptionRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceSubscriptionRequest message.
+             * @function verify
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceSubscriptionRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.subscribe != null && message.hasOwnProperty("subscribe"))
+                    if (typeof message.subscribe !== "boolean")
+                        return "subscribe: boolean expected";
+                return null;
+            };
+
+            /**
+             * Creates a RaceSubscriptionRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceSubscriptionRequest} RaceSubscriptionRequest
+             */
+            RaceSubscriptionRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceSubscriptionRequest)
+                    return object;
+                let message = new $root.com.antigravity.RaceSubscriptionRequest();
+                if (object.subscribe != null)
+                    message.subscribe = Boolean(object.subscribe);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceSubscriptionRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {com.antigravity.RaceSubscriptionRequest} message RaceSubscriptionRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceSubscriptionRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.subscribe = false;
+                if (message.subscribe != null && message.hasOwnProperty("subscribe"))
+                    object.subscribe = message.subscribe;
+                return object;
+            };
+
+            /**
+             * Converts this RaceSubscriptionRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceSubscriptionRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceSubscriptionRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceSubscriptionRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceSubscriptionRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceSubscriptionRequest";
+            };
+
+            return RaceSubscriptionRequest;
+        })();
+
         antigravity.RaceTime = (function() {
 
             /**

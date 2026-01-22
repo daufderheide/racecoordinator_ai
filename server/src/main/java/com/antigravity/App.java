@@ -104,6 +104,15 @@ public class App {
             ws.onClose(ctx -> {
                 com.antigravity.race.RaceManager.getInstance().removeSession(ctx);
             });
+            ws.onBinaryMessage(ctx -> {
+                try {
+                    com.antigravity.proto.RaceSubscriptionRequest request = com.antigravity.proto.RaceSubscriptionRequest
+                            .parseFrom(ctx.data());
+                    com.antigravity.race.RaceManager.getInstance().handleRaceSubscription(ctx, request);
+                } catch (Exception e) {
+                    // Ignore non-subscription messages or invalid protos
+                }
+            });
         });
 
         new DatabaseTaskHandler(database, app);
