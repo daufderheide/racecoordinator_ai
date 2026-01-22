@@ -50,5 +50,16 @@
     "RD_MENU_SKIP_RACE": "Skip Race",
     "RD_MENU_START_RESUME": "Start/Resume Heat",
     "RD_MENU_TRACK_POWER": "Track Power",
-    "RD_MENU_WINDOWS": "Windows"
+    "RD_MENU_WINDOWS": "Windows",
+    "RD_WIN_GROUP_LEADER_BOARD": "Group Leader Board",
+    "RD_WIN_HEAT_LIST": "Heat List",
+    "RD_WIN_HEAT_RESULTS": "Heat Results",
+    "RD_WIN_LEADER_BOARD": "Leader Board",
+    "RD_WIN_NEXT_HEAT": "Next Heat",
+    "RD_WIN_ON_DECK": "On Deck",
+    "RD_WIN_RACE_RESULTS": "Race Results",
+    "RD_WIN_SEASON_LEADER_BOARD": "Season Leader Board",
+    "RD_WIN_SEASON_RACE_LEADER_BOARD": "Season Race Leader Board",
+    "RD_WIN_SEGMENT_TIMES": "Segment Times",
+    "RD_WIN_TOP_5": "Top 5"
 }

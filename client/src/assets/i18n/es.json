@@ -50,5 +50,16 @@
     "RD_MENU_SKIP_RACE": "Saltar Carrera",
     "RD_MENU_START_RESUME": "Iniciar/Reanudar Manga",
     "RD_MENU_TRACK_POWER": "Energía de Pista",
-    "RD_MENU_WINDOWS": "Ventanas"
+    "RD_MENU_WINDOWS": "Ventanas",
+    "RD_WIN_GROUP_LEADER_BOARD": "Tabla de Posiciones del Grupo",
+    "RD_WIN_HEAT_LIST": "Lista de Series",
+    "RD_WIN_HEAT_RESULTS": "Resultados de la Serie",
+    "RD_WIN_LEADER_BOARD": "Tabla de Posiciones",
+    "RD_WIN_NEXT_HEAT": "Siguiente Serie",
+    "RD_WIN_ON_DECK": "En Espera",
+    "RD_WIN_RACE_RESULTS": "Resultados de la Carrera",
+    "RD_WIN_SEASON_LEADER_BOARD": "Tabla de Posiciones de la Temporada",
+    "RD_WIN_SEASON_RACE_LEADER_BOARD": "Tabla de Posiciones de la Carrera de Temporada",
+    "RD_WIN_SEGMENT_TIMES": "Tiempos de Segmento",
+    "RD_WIN_TOP_5": "Top 5"
 }

@@ -20,6 +20,7 @@ public class Race implements ProtocolListener {
     private List<RaceParticipant> drivers;
     private List<Heat> heats;
     private Heat currentHeat;
+    private OverallStandings overallStandings;
 
     public List<RaceParticipant> getDrivers() {
         return drivers;

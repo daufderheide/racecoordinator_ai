@@ -341,12 +341,22 @@ export class RacedayComponent implements OnInit {
         console.log('Toggling Race Director menu. Current state:', this.isMenuOpen);
         this.isMenuOpen = !this.isMenuOpen;
         this.isFileMenuOpen = false; // Close other menus
+        this.isWindowsMenuOpen = false;
     }
 
     toggleFileMenu() {
         console.log('Toggling File menu. Current state:', this.isFileMenuOpen);
         this.isFileMenuOpen = !this.isFileMenuOpen;
         this.isMenuOpen = false; // Close other menus
+        this.isWindowsMenuOpen = false;
+    }
+
+    isWindowsMenuOpen = false;
+    toggleWindowsMenu() {
+        console.log('Toggling Windows menu. Current state:', this.isWindowsMenuOpen);
+        this.isWindowsMenuOpen = !this.isWindowsMenuOpen;
+        this.isFileMenuOpen = false;
+        this.isMenuOpen = false;
     }
 
     onMenuSelect(action: string) {
@@ -430,11 +440,18 @@ export class RacedayComponent implements OnInit {
         // For now, we'll assume it exists or is intended to be added.
         // The original `this.isFileMenuOpen = false;` is removed as per the instruction's snippet.
         this.activeMenu = null;
+        this.isFileMenuOpen = false;
         if (action === 'EXIT') {
             this.showExitConfirmation = true;
         } else if (action === 'SAVE') {
             // Save logic here
         }
+    }
+
+    onWindowMenuSelect(action: string) {
+        console.log('Window menu action:', action);
+        this.isWindowsMenuOpen = false;
+        // Navigation logic would go here
     }
 
     onExitConfirm() {

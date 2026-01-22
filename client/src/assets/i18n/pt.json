@@ -50,5 +50,16 @@
     "RD_MENU_SKIP_RACE": "Pular Corrida",
     "RD_MENU_START_RESUME": "Iniciar/Retomar Bateria",
     "RD_MENU_TRACK_POWER": "Energia da Pista",
-    "RD_MENU_WINDOWS": "Janelas"
+    "RD_MENU_WINDOWS": "Janelas",
+    "RD_WIN_GROUP_LEADER_BOARD": "Classificação do Grupo",
+    "RD_WIN_HEAT_LIST": "Lista de Baterias",
+    "RD_WIN_HEAT_RESULTS": "Resultados da Bateria",
+    "RD_WIN_LEADER_BOARD": "Classificação",
+    "RD_WIN_NEXT_HEAT": "Próxima Bateria",
+    "RD_WIN_ON_DECK": "A Seguir",
+    "RD_WIN_RACE_RESULTS": "Resultados da Corrida",
+    "RD_WIN_SEASON_LEADER_BOARD": "Classificação da Temporada",
+    "RD_WIN_SEASON_RACE_LEADER_BOARD": "Classificação da Corrida da Temporada",
+    "RD_WIN_SEGMENT_TIMES": "Tempos de Segmento",
+    "RD_WIN_TOP_5": "Top 5"
 }

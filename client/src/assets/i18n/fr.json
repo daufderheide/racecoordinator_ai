@@ -50,5 +50,16 @@
     "RD_MENU_SKIP_RACE": "Sauter la Course",
     "RD_MENU_START_RESUME": "Démarrer/Reprendre la Manche",
     "RD_MENU_TRACK_POWER": "Puissance de Piste",
-    "RD_MENU_WINDOWS": "Fenêtres"
+    "RD_MENU_WINDOWS": "Fenêtres",
+    "RD_WIN_GROUP_LEADER_BOARD": "Classement du Groupe",
+    "RD_WIN_HEAT_LIST": "Liste des Manches",
+    "RD_WIN_HEAT_RESULTS": "Résultats de la Manche",
+    "RD_WIN_LEADER_BOARD": "Classement",
+    "RD_WIN_NEXT_HEAT": "Manche Suivante",
+    "RD_WIN_ON_DECK": "À Suivre",
+    "RD_WIN_RACE_RESULTS": "Résultats de la Course",
+    "RD_WIN_SEASON_LEADER_BOARD": "Classement de la Saison",
+    "RD_WIN_SEASON_RACE_LEADER_BOARD": "Classement de la Course de Saison",
+    "RD_WIN_SEGMENT_TIMES": "Temps de Segment",
+    "RD_WIN_TOP_5": "Top 5"
 }

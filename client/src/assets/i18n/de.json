@@ -50,5 +50,16 @@
     "RD_MENU_SKIP_RACE": "Rennen überspringen",
     "RD_MENU_START_RESUME": "Lauf starten/fortsetzen",
     "RD_MENU_TRACK_POWER": "Bahnstrom",
-    "RD_MENU_WINDOWS": "Fenster"
+    "RD_MENU_WINDOWS": "Fenster",
+    "RD_WIN_GROUP_LEADER_BOARD": "Gruppen-Bestenliste",
+    "RD_WIN_HEAT_LIST": "Laufliste",
+    "RD_WIN_HEAT_RESULTS": "Laufergebnisse",
+    "RD_WIN_LEADER_BOARD": "Bestenliste",
+    "RD_WIN_NEXT_HEAT": "Nächster Lauf",
+    "RD_WIN_ON_DECK": "Als nächstes",
+    "RD_WIN_RACE_RESULTS": "Rennergebnisse",
+    "RD_WIN_SEASON_LEADER_BOARD": "Saison-Bestenliste",
+    "RD_WIN_SEASON_RACE_LEADER_BOARD": "Saison-Rennbestenliste",
+    "RD_WIN_SEGMENT_TIMES": "Segmentzeiten",
+    "RD_WIN_TOP_5": "Top 5"
 }
