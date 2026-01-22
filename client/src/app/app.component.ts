@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { ChildrenOutletContexts } from '@angular/router';
+import { ChildrenOutletContexts, Router } from '@angular/router';
 import { slideInAnimation } from './utils/animations';
+import { DataService } from './data.service';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +21,17 @@ import { slideInAnimation } from './utils/animations';
   standalone: false
 })
 export class AppComponent {
-  constructor(private contexts: ChildrenOutletContexts) { }
+  constructor(private contexts: ChildrenOutletContexts, private dataService: DataService, private router: Router) { }
+
+  ngOnInit() {
+    console.log('AppComponent: Initializing application...');
+    this.dataService.connectToRaceDataSocket();
+
+    this.dataService.getRaceUpdate().subscribe(update => {
+      console.log('AppComponent: Received Race Update, navigating to /raceday');
+      this.router.navigate(['/raceday']);
+    });
+  }
 
   getRouteAnimationData() {
     return this.contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];

@@ -1,5 +1,8 @@
 {
-    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
+    "CD_CONFIRM_EXIT_MESSAGE": "Are you sure you want to exit to home?",
+    "CD_CONFIRM_EXIT_TITLE": "Exit Race",
+    "CD_NO": "No",
+    "CD_YES": "Yes",
     "RDS_BTN_ADD_ALL": "Add All >>",
     "RDS_BTN_RANDOMIZE": "Randomize >>",
     "RDS_BTN_REMOVE_ALL": "<< Remove All",

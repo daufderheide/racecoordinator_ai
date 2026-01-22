@@ -156,6 +156,34 @@ public class Race implements ProtocolListener {
         return heats.indexOf(currentHeat) == heats.size() - 1;
     }
 
+    public synchronized com.antigravity.proto.RaceData createSnapshot() {
+        java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+        com.antigravity.proto.RaceModel raceProto = com.antigravity.converters.RaceConverter.toProto(model, track,
+                sentObjectIds);
+
+        java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
+        for (RaceParticipant participant : drivers) {
+            driverModels
+                    .add(com.antigravity.converters.DriverConverter.toProto(participant.getDriver(), sentObjectIds));
+        }
+
+        java.util.List<com.antigravity.proto.Heat> heatProtos = heats.stream()
+                .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
+                .collect(java.util.stream.Collectors.toList());
+
+        com.antigravity.proto.Race raceUpdate = com.antigravity.proto.Race.newBuilder()
+                .setRace(raceProto)
+                .addAllDrivers(driverModels)
+                .addAllHeats(heatProtos)
+                .setCurrentHeat(
+                        com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+                .build();
+
+        return com.antigravity.proto.RaceData.newBuilder()
+                .setRace(raceUpdate)
+                .build();
+    }
+
     public void moveToNextHeat() {
         state.nextHeat(this);
     }

@@ -1,4 +1,9 @@
 <div class="dashboard-wrapper">
+  <app-confirmation-modal [visible]="showExitConfirmation" title="CD_CONFIRM_EXIT_TITLE"
+    message="CD_CONFIRM_EXIT_MESSAGE" confirmText="CD_YES" cancelText="CD_NO" (confirm)="onExitConfirm()"
+    (cancel)="onExitCancel()">
+  </app-confirmation-modal>
+
   <div class="scalable-content" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
     <div class="menu-bar">
       <div class="menu-wrapper">

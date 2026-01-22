@@ -1,16 +1,8 @@
 package com.antigravity.handlers;
 
 import com.antigravity.proto.InitializeRaceRequest;
-
-import com.antigravity.proto.InitializeRaceResponse;
-import com.antigravity.proto.PauseRaceResponse;
-import com.antigravity.proto.NextHeatResponse;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.antigravity.converters.DriverConverter;
-import com.antigravity.converters.RaceConverter;
-import com.antigravity.converters.TrackConverter;
 import io.javalin.http.Context;
 import com.antigravity.race.RaceParticipant;
 
@@ -56,34 +48,9 @@ public class ClientCommandTaskHandler {
             com.antigravity.race.RaceManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());
 
-            com.antigravity.models.Track track = race.getTrack();
-            // com.antigravity.proto.TrackModel trackProto = TrackConverter.toProto(track);
+            // com.antigravity.models.Track track = race.getTrack();
 
-            java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
-            com.antigravity.proto.RaceModel raceProto = RaceConverter.toProto(race.getRaceModel(), track,
-                    sentObjectIds);
-
-            java.util.List<com.antigravity.proto.DriverModel> driverModels = new java.util.ArrayList<>();
-            for (com.antigravity.models.Driver driver : drivers) {
-                driverModels.add(DriverConverter.toProto(driver, sentObjectIds));
-            }
-
-            java.util.List<com.antigravity.proto.Heat> heatProtos = race.getHeats().stream()
-                    .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
-                    .collect(Collectors.toList());
-
-            com.antigravity.proto.Race raceUpdate = com.antigravity.proto.Race.newBuilder()
-                    .setRace(raceProto)
-                    .addAllDrivers(driverModels)
-                    .addAllHeats(heatProtos)
-                    .setCurrentHeat(
-                            com.antigravity.converters.HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
-                    .build();
-
-            com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
-                    .setRace(raceUpdate)
-                    .build();
-
+            com.antigravity.proto.RaceData raceData = race.createSnapshot();
             race.broadcast(raceData);
 
             com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
@@ -113,15 +80,11 @@ public class ClientCommandTaskHandler {
                 race.startRace();
 
                 com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Race started successfully")
-                        .build();
+                        .setSuccess(true).setMessage("Race started successfully").build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
                 com.antigravity.proto.StartRaceResponse response = com.antigravity.proto.StartRaceResponse.newBuilder()
-                        .setSuccess(false)
-                        .setMessage(e.getMessage())
-                        .build();
+                        .setSuccess(false).setMessage(e.getMessage()).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
 
@@ -144,15 +107,11 @@ public class ClientCommandTaskHandler {
                 race.pauseRace();
 
                 com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Race paused successfully")
-                        .build();
+                        .setSuccess(true).setMessage("Race paused successfully").build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
                 com.antigravity.proto.PauseRaceResponse response = com.antigravity.proto.PauseRaceResponse.newBuilder()
-                        .setSuccess(false)
-                        .setMessage(e.getMessage())
-                        .build();
+                        .setSuccess(false).setMessage(e.getMessage()).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
         } catch (Exception e) {
@@ -174,15 +133,11 @@ public class ClientCommandTaskHandler {
                 race.moveToNextHeat();
 
                 com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Moved to next heat successfully")
-                        .build();
+                        .setSuccess(true).setMessage("Moved to next heat successfully").build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (Exception e) {
                 com.antigravity.proto.NextHeatResponse response = com.antigravity.proto.NextHeatResponse.newBuilder()
-                        .setSuccess(false)
-                        .setMessage(e.getMessage())
-                        .build();
+                        .setSuccess(false).setMessage(e.getMessage()).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
         } catch (Exception e) {
@@ -204,17 +159,11 @@ public class ClientCommandTaskHandler {
                 race.restartHeat();
 
                 com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
-                        .newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Heat restarted successfully")
-                        .build();
+                        .newBuilder().setSuccess(true).setMessage("Heat restarted successfully").build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
                 com.antigravity.proto.RestartHeatResponse response = com.antigravity.proto.RestartHeatResponse
-                        .newBuilder()
-                        .setSuccess(false)
-                        .setMessage(e.getMessage())
-                        .build();
+                        .newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
         } catch (Exception e) {
@@ -235,18 +184,12 @@ public class ClientCommandTaskHandler {
             try {
                 race.skipHeat();
 
-                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse
-                        .newBuilder()
-                        .setSuccess(true)
-                        .setMessage("Heat skipped successfully")
-                        .build();
+                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse.newBuilder()
+                        .setSuccess(true).setMessage("Heat skipped successfully").build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
-                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse
-                        .newBuilder()
-                        .setSuccess(false)
-                        .setMessage(e.getMessage())
-                        .build();
+                com.antigravity.proto.SkipHeatResponse response = com.antigravity.proto.SkipHeatResponse.newBuilder()
+                        .setSuccess(false).setMessage(e.getMessage()).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
         } catch (Exception e) {
@@ -267,16 +210,12 @@ public class ClientCommandTaskHandler {
             try {
                 race.deferHeat();
 
-                com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse
-                        .newBuilder()
-                        .setSuccess(true)
-                        .build();
+                com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse.newBuilder()
+                        .setSuccess(true).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             } catch (IllegalStateException e) {
-                com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse
-                        .newBuilder()
-                        .setSuccess(false)
-                        .build();
+                com.antigravity.proto.DeferHeatResponse response = com.antigravity.proto.DeferHeatResponse.newBuilder()
+                        .setSuccess(false).build();
                 ctx.contentType("application/octet-stream").result(response.toByteArray());
             }
         } catch (Exception e) {

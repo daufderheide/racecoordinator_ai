@@ -35,11 +35,21 @@ public class RaceManager {
     public void addSession(WsContext ctx) {
         sessions.add(ctx);
         System.out.println("New WebSocket session added. Total sessions: " + sessions.size());
+
+        if (currentRace != null) {
+            com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();
+            ctx.send(java.nio.ByteBuffer.wrap(snapshot.toByteArray()));
+        }
     }
 
     public void removeSession(WsContext ctx) {
         sessions.remove(ctx);
         System.out.println("WebSocket session removed. Total sessions: " + sessions.size());
+
+        if (sessions.isEmpty() && currentRace != null) {
+            System.out.println("Last client disconnected. Stopping and clearing current race.");
+            setRace(null);
+        }
     }
 
     public void broadcast(GeneratedMessageV3 message) {

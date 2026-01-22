@@ -13,6 +13,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { RaceService } from './services/race.service';
 import { TranslatePipe } from './pipes/translate.pipe';
 import { SvgTextScalerDirective } from './directives/svg-text-scaler.directive';
+import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { SvgTextScalerDirective } from './directives/svg-text-scaler.directive';
     RacedayComponent,
     RacedaySetupComponent,
     TranslatePipe,
-    SvgTextScalerDirective
+    SvgTextScalerDirective,
+    ConfirmationModalComponent
   ],
   imports: [
     BrowserModule,

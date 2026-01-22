@@ -184,9 +184,6 @@ export class RacedaySetupComponent implements OnInit {
       // Send start race message to server
       const driverIds = this.racingDrivers.map(d => d.entity_id);
 
-      // Connect to socket and listen for Race
-      this.dataService.connectToRaceDataSocket();
-
       this.dataService.initializeRace(this.selectedRace.entity_id, driverIds, isDemo).subscribe({
         next: (response) => {
           console.log('RacedaySetupComponent: Race initialized on server:', response.success);

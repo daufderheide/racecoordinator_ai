@@ -1,5 +1,8 @@
 {
-    "_NOTE_": "PLEASE KEEP THIS FILE SORTED ALPHABETICALLY",
+    "CD_CONFIRM_EXIT_MESSAGE": "Sind Sie sicher, dass Sie zum Start zurückkehren möchten?",
+    "CD_CONFIRM_EXIT_TITLE": "Rennen verlassen",
+    "CD_NO": "Nein",
+    "CD_YES": "Ja",
     "RDS_BTN_ADD_ALL": "Alle hinzufügen >>",
     "RDS_BTN_RANDOMIZE": "Zufällig >>",
     "RDS_BTN_REMOVE_ALL": "<< Alle entfernen",

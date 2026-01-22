@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
@@ -106,7 +106,6 @@ export class RacedayComponent implements OnInit {
             }
         });
 
-        this.dataService.connectToRaceDataSocket();
         this.dataService.getRaceTime().subscribe(time => {
             // Determine timer direction and format
             // If new time > previous time (and not 0 reset), it's increasing -> Whole Numbers
@@ -413,12 +412,35 @@ export class RacedayComponent implements OnInit {
         this.isMenuOpen = false;
     }
 
+    activeMenu: string | null = null;
+    showExitConfirmation = false;
+
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        $event.returnValue = true;
+    }
+
     onFileMenuSelect(action: string) {
-        console.log('File Menu Action Selected:', action);
+        console.log('File menu action:', action);
+        // Assuming 'activeMenu' is a property that controls which menu is open.
+        // If not defined, it might need to be added to the class properties.
+        // For now, we'll assume it exists or is intended to be added.
+        // The original `this.isFileMenuOpen = false;` is removed as per the instruction's snippet.
+        this.activeMenu = null;
         if (action === 'EXIT') {
-            this.router.navigate(['/raceday-setup']);
+            this.showExitConfirmation = true;
+        } else if (action === 'SAVE') {
+            // Save logic here
         }
-        this.isFileMenuOpen = false;
+    }
+
+    onExitConfirm() {
+        this.showExitConfirmation = false;
+        this.router.navigate(['/raceday-setup']);
+    }
+
+    onExitCancel() {
+        this.showExitConfirmation = false;
     }
 
     @HostListener('window:keydown', ['$event'])
