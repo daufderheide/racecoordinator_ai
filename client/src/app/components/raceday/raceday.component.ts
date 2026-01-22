@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
@@ -24,7 +24,7 @@ import { ColumnDefinition } from './column_definition';
     styleUrls: ['./raceday.component.css'],
     standalone: false
 })
-export class RacedayComponent implements OnInit {
+export class RacedayComponent implements OnInit, OnDestroy {
     protected heat?: Heat;
     protected track!: Track;
     protected columns: ColumnDefinition[];
@@ -183,6 +183,15 @@ export class RacedayComponent implements OnInit {
                 this.raceService.setParticipants(participants);
             }
         });
+    }
+
+    private leaderBoardWindow: Window | null = null;
+
+    ngOnDestroy() {
+        if (this.leaderBoardWindow) {
+            this.leaderBoardWindow.close();
+            this.leaderBoardWindow = null;
+        }
     }
 
     private sortHeatDrivers() {
@@ -461,7 +470,10 @@ export class RacedayComponent implements OnInit {
         console.log('Window menu action:', action);
         this.isWindowsMenuOpen = false;
         if (action === 'LEADER_BOARD') {
-            this.router.navigate(['/leaderboard']);
+            const url = this.router.serializeUrl(
+                this.router.createUrlTree(['/leaderboard'])
+            );
+            this.leaderBoardWindow = window.open(url, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
         }
     }
 
