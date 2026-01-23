@@ -14,6 +14,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   private SerialConnection serialConnection;
   private CircularBuffer rxBuffer;
+  private boolean versionVerified = false;
 
   public ArduinoProtocol(Config config, List<Lane> lanes) {
     super(lanes.size());
@@ -48,12 +49,18 @@ public class ArduinoProtocol extends DefaultProtocol {
         }
       });
 
+      serialConnection.writeData(RESET_COMMAND);
+
       return true;
     } catch (IOException e) {
       return false;
     }
   }
 
+  // Data sent from PC to Arduino
+  private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B }; // RESET;
+
+  // Data sent from Arduino to PC
   private static final byte OPCODE_HEARTBEAT = 0x54; // 'T'
   private static final byte OPCODE_VERSION = 0x56; // 'V'
   private static final byte OPCODE_INPUT = 0x49; // 'I'
@@ -104,6 +111,11 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   private void handleMessage(byte[] message) {
     byte opcode = message[0];
+
+    if (!versionVerified && opcode != OPCODE_VERSION) {
+      return;
+    }
+
     switch (opcode) {
       case OPCODE_HEARTBEAT:
         long timeInUse = ((long) (message[1] & 0xFF) << 24) |
@@ -126,6 +138,9 @@ public class ArduinoProtocol extends DefaultProtocol {
         int state = message[3] & 0xFF;
         onInput(isDigital, pin, state);
         break;
+      default:
+        System.err.println("ArduinoProtocol: Unknown opcode: " + opcode);
+        break;
     }
   }
 
@@ -134,7 +149,14 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   private void onVersion(int major, int minor, int patch, int build) {
-    System.out.println("ArduinoProtocol: Received Version - " + major + "." + minor + "." + patch + "." + build);
+    if (!versionVerified) {
+      if (major == 1 && minor == 0 && patch == 0) {
+        versionVerified = true;
+        System.out.println("ArduinoProtocol: Version verified - " + major + "." + minor + "." + patch + "." + build);
+      } else {
+        System.err.println("ArduinoProtocol: Invalid firmware version: " + major + "." + minor + "." + patch);
+      }
+    }
   }
 
   private void onInput(boolean isDigital, int pin, int state) {
