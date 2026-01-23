@@ -1,6 +1,6 @@
 package com.antigravity.protocols;
 
-public class DefaultProtocol implements IProtocol {
+public abstract class DefaultProtocol implements IProtocol {
     private int numLanes;
     protected ProtocolListener listener;
 

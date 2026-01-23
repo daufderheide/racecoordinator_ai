@@ -40,6 +40,11 @@ public class Demo extends DefaultProtocol {
     }
 
     @Override
+    public boolean open() {
+        return true;
+    }
+
+    @Override
     public void startTimer() {
         if (scheduler != null && !scheduler.isShutdown()) {
             return;
