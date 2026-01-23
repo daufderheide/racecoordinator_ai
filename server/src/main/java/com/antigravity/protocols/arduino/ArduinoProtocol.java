@@ -35,7 +35,6 @@ public class ArduinoProtocol extends DefaultProtocol {
           return com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
         }
 
-        @Override
         public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
           if (event.getEventType() != com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
             return;
@@ -44,6 +43,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           byte[] data = event.getReceivedData();
           if (data != null && data.length > 0) {
             rxBuffer.write(data);
+            processData();
           }
         }
       });
@@ -52,5 +52,93 @@ public class ArduinoProtocol extends DefaultProtocol {
     } catch (IOException e) {
       return false;
     }
+  }
+
+  private static final byte OPCODE_HEARTBEAT = 0x54; // 'T'
+  private static final byte OPCODE_VERSION = 0x56; // 'V'
+  private static final byte OPCODE_INPUT = 0x49; // 'I'
+  private static final byte TERMINATOR = 0x3B; // ';'
+  private static final byte DIGITAL = 0x44; // 'D'
+  private static final byte ANALOG = 0x41; // 'A'
+
+  private void processData() {
+    while (rxBuffer.size() > 0) {
+      byte opcode = rxBuffer.peek(0);
+      int messageLength = 0;
+
+      switch (opcode) {
+        case OPCODE_HEARTBEAT:
+          messageLength = 7;
+          break;
+        case OPCODE_VERSION:
+          messageLength = 6;
+          break;
+        case OPCODE_INPUT:
+          messageLength = 5;
+          break;
+        default:
+          // Unknown opcode, skip one byte to resync
+          // TODO(aufderheide): Add warning log when this happens.
+          rxBuffer.get();
+          continue;
+      }
+
+      if (rxBuffer.size() < messageLength) {
+        // Not enough data yet, wait for more
+        break;
+      }
+
+      // Check terminator
+      if (rxBuffer.peek(messageLength - 1) != TERMINATOR) {
+        // Invalid message (bad terminator), skip one byte to resync
+        // TODO(aufderheide): Add error log when this happens.
+        rxBuffer.get();
+        continue;
+      }
+
+      // Valid message, read it
+      byte[] message = rxBuffer.read(messageLength);
+      handleMessage(message);
+    }
+  }
+
+  private void handleMessage(byte[] message) {
+    byte opcode = message[0];
+    switch (opcode) {
+      case OPCODE_HEARTBEAT:
+        long timeInUse = ((long) (message[1] & 0xFF) << 24) |
+            ((long) (message[2] & 0xFF) << 16) |
+            ((long) (message[3] & 0xFF) << 8) |
+            ((long) (message[4] & 0xFF));
+        boolean isReset = message[5] != 0;
+        onHeartbeat(timeInUse, isReset);
+        break;
+      case OPCODE_VERSION:
+        int major = message[1] & 0xFF;
+        int minor = message[2] & 0xFF;
+        int patch = message[3] & 0xFF;
+        int build = message[4] & 0xFF;
+        onVersion(major, minor, patch, build);
+        break;
+      case OPCODE_INPUT:
+        boolean isDigital = message[1] == DIGITAL;
+        int pin = message[2] & 0xFF;
+        int state = message[3] & 0xFF;
+        onInput(isDigital, pin, state);
+        break;
+    }
+  }
+
+  private void onHeartbeat(long timeInUse, boolean isReset) {
+    System.out.println("ArduinoProtocol: Received Heartbeat - Time: " + timeInUse + "us, Reset: " + isReset);
+  }
+
+  private void onVersion(int major, int minor, int patch, int build) {
+    System.out.println("ArduinoProtocol: Received Version - " + major + "." + minor + "." + patch + "." + build);
+  }
+
+  private void onInput(boolean isDigital, int pin, int state) {
+    System.out.println("ArduinoProtocol: Received Input - Type: " + (isDigital ? "Digital" : "Analog") +
+        ", Pin: " + pin + ", State: " + state);
   }
 }

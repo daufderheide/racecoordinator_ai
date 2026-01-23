@@ -128,4 +128,18 @@ public class CircularBuffer {
     }
     return result;
   }
+
+  /**
+   * Peeks at a byte at the given offset from the head without removing it.
+   *
+   * @param offset the offset from the head (0 is the next byte to read)
+   * @return the byte at the given offset
+   * @throws IndexOutOfBoundsException if offset is invalid
+   */
+  public synchronized byte peek(int offset) {
+    if (offset < 0 || offset >= count) {
+      throw new IndexOutOfBoundsException("Offset out of bounds: " + offset);
+    }
+    return buffer[(head + offset) % capacity];
+  }
 }
