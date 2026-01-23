@@ -35,10 +35,12 @@
 }
 
 .leader-rank {
-  font-size: 3rem;
-  color: #ffd700;
-  /* Gold */
-  font-weight: bold;
+  font-size: 6rem;
+  /* Large text for leader */
+  font-weight: 800;
+  color: #ff8c00;
+  /* Dark Orange */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .leader-name {
@@ -52,9 +54,12 @@
 }
 
 .leader-stats {
-  font-size: 4rem;
+  font-size: 6rem;
+  /* Large text for leader */
+  font-weight: 800;
   color: #ff8c00;
-  font-weight: bold;
+  /* Dark Orange */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .leader-stats .laps {

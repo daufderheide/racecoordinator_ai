@@ -38,6 +38,9 @@ public class Race implements ProtocolListener {
             boolean isDemoMode) {
         this.model = model;
         this.drivers = drivers;
+        for (int i = 0; i < this.drivers.size(); i++) {
+            this.drivers.get(i).setSeed(i + 1);
+        }
 
         DatabaseService dbService = new DatabaseService();
         this.track = dbService.getTrack(database, model.getTrackEntityId());

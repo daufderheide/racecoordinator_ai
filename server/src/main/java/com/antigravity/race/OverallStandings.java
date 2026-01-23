@@ -90,6 +90,26 @@ public class OverallStandings {
     // 4. Assign ranks
     for (int i = 0; i < drivers.size(); i++) {
       drivers.get(i).setRank(i + 1);
+
+      double rankValue = 0;
+      if (raceScoring != null && raceScoring.getHeatRanking() != null) {
+        switch (raceScoring.getHeatRanking()) {
+          case LAP_COUNT:
+            rankValue = drivers.get(i).getTotalLaps();
+            break;
+          case FASTEST_LAP:
+            rankValue = drivers.get(i).getBestLapTime();
+            break;
+          case TOTAL_TIME:
+            rankValue = drivers.get(i).getTotalTime();
+            break;
+          default:
+            rankValue = 0;
+        }
+      } else {
+        rankValue = drivers.get(i).getTotalLaps();
+      }
+      drivers.get(i).setRankValue(rankValue);
     }
   }
 

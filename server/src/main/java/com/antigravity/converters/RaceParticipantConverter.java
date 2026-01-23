@@ -19,7 +19,9 @@ public class RaceParticipantConverter {
         .setTotalTime(participant.getTotalTime())
         .setBestLapTime(participant.getBestLapTime())
         .setAverageLapTime(participant.getAverageLapTime())
-        .setMedianLapTime(participant.getMedianLapTime());
+        .setMedianLapTime(participant.getMedianLapTime())
+        .setRankValue(participant.getRankValue())
+        .setSeed(participant.getSeed());
 
     return builder.build();
   }

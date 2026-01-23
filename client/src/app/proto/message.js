@@ -6645,6 +6645,8 @@ export const com = $root.com = (() => {
              * @property {number|null} [bestLapTime] RaceParticipant bestLapTime
              * @property {number|null} [averageLapTime] RaceParticipant averageLapTime
              * @property {number|null} [medianLapTime] RaceParticipant medianLapTime
+             * @property {number|null} [rankValue] RaceParticipant rankValue
+             * @property {number|null} [seed] RaceParticipant seed
              */
 
             /**
@@ -6727,6 +6729,22 @@ export const com = $root.com = (() => {
             RaceParticipant.prototype.medianLapTime = 0;
 
             /**
+             * RaceParticipant rankValue.
+             * @member {number} rankValue
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.rankValue = 0;
+
+            /**
+             * RaceParticipant seed.
+             * @member {number} seed
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.seed = 0;
+
+            /**
              * Creates a new RaceParticipant instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceParticipant
@@ -6766,6 +6784,10 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 7, wireType 5 =*/61).float(message.averageLapTime);
                 if (message.medianLapTime != null && Object.hasOwnProperty.call(message, "medianLapTime"))
                     writer.uint32(/* id 8, wireType 5 =*/69).float(message.medianLapTime);
+                if (message.rankValue != null && Object.hasOwnProperty.call(message, "rankValue"))
+                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.rankValue);
+                if (message.seed != null && Object.hasOwnProperty.call(message, "seed"))
+                    writer.uint32(/* id 10, wireType 0 =*/80).int32(message.seed);
                 return writer;
             };
 
@@ -6834,6 +6856,14 @@ export const com = $root.com = (() => {
                             message.medianLapTime = reader.float();
                             break;
                         }
+                    case 9: {
+                            message.rankValue = reader.double();
+                            break;
+                        }
+                    case 10: {
+                            message.seed = reader.int32();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -6895,6 +6925,12 @@ export const com = $root.com = (() => {
                 if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
                     if (typeof message.medianLapTime !== "number")
                         return "medianLapTime: number expected";
+                if (message.rankValue != null && message.hasOwnProperty("rankValue"))
+                    if (typeof message.rankValue !== "number")
+                        return "rankValue: number expected";
+                if (message.seed != null && message.hasOwnProperty("seed"))
+                    if (!$util.isInteger(message.seed))
+                        return "seed: integer expected";
                 return null;
             };
 
@@ -6929,6 +6965,10 @@ export const com = $root.com = (() => {
                     message.averageLapTime = Number(object.averageLapTime);
                 if (object.medianLapTime != null)
                     message.medianLapTime = Number(object.medianLapTime);
+                if (object.rankValue != null)
+                    message.rankValue = Number(object.rankValue);
+                if (object.seed != null)
+                    message.seed = object.seed | 0;
                 return message;
             };
 
@@ -6954,6 +6994,8 @@ export const com = $root.com = (() => {
                     object.bestLapTime = 0;
                     object.averageLapTime = 0;
                     object.medianLapTime = 0;
+                    object.rankValue = 0;
+                    object.seed = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
@@ -6971,6 +7013,10 @@ export const com = $root.com = (() => {
                     object.averageLapTime = options.json && !isFinite(message.averageLapTime) ? String(message.averageLapTime) : message.averageLapTime;
                 if (message.medianLapTime != null && message.hasOwnProperty("medianLapTime"))
                     object.medianLapTime = options.json && !isFinite(message.medianLapTime) ? String(message.medianLapTime) : message.medianLapTime;
+                if (message.rankValue != null && message.hasOwnProperty("rankValue"))
+                    object.rankValue = options.json && !isFinite(message.rankValue) ? String(message.rankValue) : message.rankValue;
+                if (message.seed != null && message.hasOwnProperty("seed"))
+                    object.seed = message.seed;
                 return object;
             };
 

@@ -9,6 +9,8 @@ export class RaceParticipant {
     public totalTime: number,
     public bestLapTime: number,
     public averageLapTime: number,
-    public medianLapTime: number
+    public medianLapTime: number,
+    public rankValue: number,
+    public seed: number
   ) { }
 }

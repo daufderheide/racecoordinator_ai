@@ -25,7 +25,9 @@ export class RaceParticipantConverter {
         proto.totalTime || 0,
         proto.bestLapTime || 0,
         proto.averageLapTime || 0,
-        proto.medianLapTime || 0
+        proto.medianLapTime || 0,
+        proto.rankValue || 0,
+        proto.seed || 0
       );
     });
   }

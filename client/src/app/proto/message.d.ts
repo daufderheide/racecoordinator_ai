@@ -2863,6 +2863,12 @@ export namespace com {
 
             /** RaceParticipant medianLapTime */
             medianLapTime?: (number|null);
+
+            /** RaceParticipant rankValue */
+            rankValue?: (number|null);
+
+            /** RaceParticipant seed */
+            seed?: (number|null);
         }
 
         /** Represents a RaceParticipant. */
@@ -2897,6 +2903,12 @@ export namespace com {
 
             /** RaceParticipant medianLapTime. */
             public medianLapTime: number;
+
+            /** RaceParticipant rankValue. */
+            public rankValue: number;
+
+            /** RaceParticipant seed. */
+            public seed: number;
 
             /**
              * Creates a new RaceParticipant instance using the specified properties.
