@@ -1,6 +1,8 @@
 package com.antigravity.protocols.arduino;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.antigravity.models.Lane;
 import com.antigravity.protocols.DefaultProtocol;
@@ -15,6 +17,10 @@ public class ArduinoProtocol extends DefaultProtocol {
   private SerialConnection serialConnection;
   private CircularBuffer rxBuffer;
   private boolean versionVerified = false;
+  private Map<String, PinConfig> pinLookup;
+
+  private static final int BEHAVIOR_CALL_BUTTON = 1;
+  private static final int BEHAVIOR_LAP_BASE = 1000;
 
   public ArduinoProtocol(Config config, List<Lane> lanes) {
     super(lanes.size());
@@ -23,6 +29,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     serialConnection = new SerialConnection();
     rxBuffer = new CircularBuffer(4096);
+    buildPinLookup();
   }
 
   @Override
@@ -160,7 +167,67 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   private void onInput(boolean isDigital, int pin, int state) {
-    System.out.println("ArduinoProtocol: Received Input - Type: " + (isDigital ? "Digital" : "Analog") +
-        ", Pin: " + pin + ", State: " + state);
+    String key = (isDigital ? "D" : "A") + pin;
+    PinConfig pinConfig = pinLookup.get(key);
+
+    if (pinConfig != null) {
+      System.out.println("ArduinoProtocol: Received Input - Behavior: " + pinConfig.behavior +
+          ", Lane: " + pinConfig.laneIndex + ", Pin: " + pin + ", State: " + state);
+    } else {
+      System.out.println("ArduinoProtocol: Received Input - Type: " + (isDigital ? "Digital" : "Analog") +
+          ", Pin: " + pin + ", State: " + state);
+    }
+  }
+
+  private void buildPinLookup() {
+    pinLookup = new HashMap<>();
+    addPinConfigs(config.digitalIds, true);
+    addPinConfigs(config.analogIds, false);
+  }
+
+  private void addPinConfigs(int[] ids, boolean isDigital) {
+    if (ids == null) {
+      return;
+    }
+
+    for (int i = 0; i < ids.length; i++) {
+      int code = ids[i];
+      if (code == -1) {
+        continue;
+      }
+
+      InputBehavior behavior = null;
+      int laneIndex = -1;
+
+      if (code >= BEHAVIOR_LAP_BASE) {
+        behavior = InputBehavior.LAP_COUNTER;
+        laneIndex = code - BEHAVIOR_LAP_BASE;
+      } else if (code == BEHAVIOR_CALL_BUTTON) {
+        behavior = InputBehavior.CALL_BUTTON;
+      }
+
+      if (behavior != null) {
+        pinLookup.put(isDigital ? "D" : "A" + i, new PinConfig(laneIndex, isDigital, i, behavior));
+      }
+    }
+  }
+
+  private enum InputBehavior {
+    LAP_COUNTER,
+    CALL_BUTTON
+  }
+
+  private static class PinConfig {
+    int laneIndex;
+    boolean isDigital;
+    int pin;
+    InputBehavior behavior;
+
+    public PinConfig(int laneIndex, boolean isDigital, int pin, InputBehavior behavior) {
+      this.laneIndex = laneIndex;
+      this.isDigital = isDigital;
+      this.pin = pin;
+      this.behavior = behavior;
+    }
   }
 }
