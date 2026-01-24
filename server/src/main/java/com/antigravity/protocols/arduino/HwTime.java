@@ -8,19 +8,19 @@ public class HwTime {
     Reset();
   }
 
-  public void Reset() {
+  public synchronized void Reset() {
     seconds = 0;
     us = 0;
   }
 
-  public void Add(long time) {
+  public synchronized void Add(long time) {
     us += time;
     long sec = (us / (1000 * 1000));
     us -= (sec * (1000 * 1000));
     seconds += sec;
   }
 
-  public double Time() {
+  public synchronized double Time() {
     double ret = seconds;
     ret += (us / (1000.0 * 1000.0));
     Reset();
@@ -28,7 +28,7 @@ public class HwTime {
     return ret;
   }
 
-  public String ToString() {
+  public synchronized String ToString() {
     double t = seconds;
     t += (us / (1000.0 * 1000.0));
 
