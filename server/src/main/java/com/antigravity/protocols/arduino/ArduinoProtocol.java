@@ -19,8 +19,14 @@ public class ArduinoProtocol extends DefaultProtocol {
   private boolean versionVerified = false;
   private Map<String, PinConfig> pinLookup;
 
+  // Not lane specific
   private static final int BEHAVIOR_CALL_BUTTON = 1;
+
+  // Lane specific
+  private static final int BEHAVIOR_MAX_RANGE = 999;
   private static final int BEHAVIOR_LAP_BASE = 1000;
+  private static final int BEHAVIOR_SEGMENT_BASE = 2000;
+  private static final int BEHAVIOR_CALL_BUTTON_BASE = 3000;
 
   public ArduinoProtocol(Config config, List<Lane> lanes) {
     super(lanes.size());
@@ -160,9 +166,66 @@ public class ArduinoProtocol extends DefaultProtocol {
       if (major == 1 && minor == 0 && patch == 0) {
         versionVerified = true;
         System.out.println("ArduinoProtocol: Version verified - " + major + "." + minor + "." + patch + "." + build);
+        sendPinModeRead();
       } else {
         System.err.println("ArduinoProtocol: Invalid firmware version: " + major + "." + minor + "." + patch);
       }
+    }
+  }
+
+  private void sendPinModeRead() {
+    int digitalCount = 0;
+    if (config.digitalIds != null) {
+      for (int id : config.digitalIds) {
+        if (id != -1) {
+          digitalCount++;
+        }
+      }
+    }
+
+    int analogCount = 0;
+    if (config.analogIds != null) {
+      for (int id : config.analogIds) {
+        if (id != -1) {
+          analogCount++;
+        }
+      }
+    }
+
+    int totalPins = digitalCount + analogCount;
+    // P + I + Count + (Type + Pin) * totalPins + Terminator
+    byte[] message = new byte[3 + (totalPins * 2) + 1];
+
+    int idx = 0;
+    message[idx++] = 0x50; // 'P'
+    message[idx++] = 0x49; // 'I'
+    message[idx++] = (byte) totalPins;
+
+    if (config.digitalIds != null) {
+      for (int i = 0; i < config.digitalIds.length; i++) {
+        if (config.digitalIds[i] != -1) {
+          message[idx++] = DIGITAL;
+          message[idx++] = (byte) i;
+        }
+      }
+    }
+
+    if (config.analogIds != null) {
+      for (int i = 0; i < config.analogIds.length; i++) {
+        if (config.analogIds[i] != -1) {
+          message[idx++] = ANALOG;
+          message[idx++] = (byte) i;
+        }
+      }
+    }
+
+    message[idx++] = TERMINATOR;
+
+    try {
+      serialConnection.writeData(message);
+    } catch (IOException e) {
+      System.err.println("ArduinoProtocol: Failed to send PIN_MODE_READ");
+      e.printStackTrace();
     }
   }
 
@@ -199,9 +262,15 @@ public class ArduinoProtocol extends DefaultProtocol {
       InputBehavior behavior = null;
       int laneIndex = -1;
 
-      if (code >= BEHAVIOR_LAP_BASE) {
+      if (code >= BEHAVIOR_LAP_BASE && code <= BEHAVIOR_LAP_BASE + BEHAVIOR_MAX_RANGE) {
         behavior = InputBehavior.LAP_COUNTER;
         laneIndex = code - BEHAVIOR_LAP_BASE;
+      } else if (code >= BEHAVIOR_SEGMENT_BASE && code <= BEHAVIOR_SEGMENT_BASE + BEHAVIOR_MAX_RANGE) {
+        behavior = InputBehavior.SEGMENT_COUNTER;
+        laneIndex = code - BEHAVIOR_SEGMENT_BASE;
+      } else if (code >= BEHAVIOR_CALL_BUTTON_BASE && code <= BEHAVIOR_CALL_BUTTON_BASE + BEHAVIOR_MAX_RANGE) {
+        behavior = InputBehavior.CALL_BUTTON;
+        laneIndex = code - BEHAVIOR_CALL_BUTTON_BASE;
       } else if (code == BEHAVIOR_CALL_BUTTON) {
         behavior = InputBehavior.CALL_BUTTON;
       }
@@ -214,6 +283,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   private enum InputBehavior {
     LAP_COUNTER,
+    SEGMENT_COUNTER,
     CALL_BUTTON
   }
 

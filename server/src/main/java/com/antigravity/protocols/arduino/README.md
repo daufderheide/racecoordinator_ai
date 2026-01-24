@@ -46,7 +46,8 @@ The RMS (PC) can send several output messages to the Arduino control it's behavi
 = { 0x50, 0x49 };                                  // P I # [pin1 pin2 ..] ;
     
 ## PIN_MODE_WRITE 
-= { 0x50, 0x4F };                                 // P O # [pin1 pin2 ..] ;
+This message is a P and an O followed by two bytes per input pin.  The first byte is either A or D for analog or digital and the second byte is the pin number.  The message is terminated by a semicolon.
+= { 0x50, 0x4F, ... 0x3B };                                 // P O # [pin1 pin2 ..] ;
     
 ## WRITE_ANALOG_PIN 
 = { 0x4F, 0x41, 0xFF, 0x01, 0x3B };             // O A # 0/1 ;
