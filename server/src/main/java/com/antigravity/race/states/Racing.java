@@ -246,6 +246,6 @@ public class Racing implements IRaceState {
 
     @Override
     public void onCarData(com.antigravity.protocols.CarData carData) {
-        System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getLapTime());
+        System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getTime());
     }
 }
