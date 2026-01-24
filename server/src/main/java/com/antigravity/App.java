@@ -148,6 +148,24 @@ public class App {
 
         new DatabaseTaskHandler(database, app);
         new ClientCommandTaskHandler(database, app);
+
+        // Open Browser after successful start
+        openBrowser("http://localhost:7070");
+    }
+
+    private static void openBrowser(String url) {
+        try {
+            if (java.awt.Desktop.isDesktopSupported()
+                    && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
+                java.awt.Desktop.getDesktop().browse(new java.net.URI(url));
+            } else {
+                // Fallback for systems where Desktop is not supported (print link)
+                System.out.println("Server started. Open " + url + " in your browser.");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to open browser automatically: " + e.getMessage());
+            System.out.println("Please open " + url + " manually.");
+        }
     }
 
     private static void startEmbeddedMongo() {
@@ -165,6 +183,26 @@ public class App {
                 Files.createDirectories(Paths.get(dataDir));
             }
 
+            de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
+            String osName = System.getProperty("os.name");
+            String osArch = System.getProperty("os.arch");
+
+            if (osName != null) {
+                System.out.println("Detected OS: " + osName + " (" + osArch + ")");
+                String lowerOs = osName.toLowerCase();
+                String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
+
+                boolean isLegacyWindows = lowerOs.contains("windows")
+                        && (lowerOs.contains("xp") || lowerOs.contains("2003"));
+                boolean is32Bit = lowerArch.contains("86") && !lowerArch.contains("64");
+
+                if (isLegacyWindows || is32Bit) {
+                    System.out
+                            .println("Legacy/32-bit Windows detected. Downgrading MongoDB to 2.6 for compatibility...");
+                    mongoVersion = Version.Main.V2_6;
+                }
+            }
+
             mongodProcess = Mongod.instance()
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
@@ -174,7 +212,7 @@ public class App {
                             .error(Processors.logTo(logger, Slf4jLevel.ERROR))
                             .commands(Processors.named("[console>]", Processors.logTo(logger, Slf4jLevel.DEBUG)))
                             .build()))
-                    .start(Version.Main.V4_4);
+                    .start(mongoVersion);
 
             System.out.println("Embedded MongoDB started with storage at " + dataDir);
         } catch (IOException e) {
