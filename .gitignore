@@ -35,3 +35,7 @@ server/target
 
 # Install packags
 release/
+
+# Files too large for git (consider splitting the zip files into multiple parts)
+build_cache/java8.zip
+build_cache/java17.zip
