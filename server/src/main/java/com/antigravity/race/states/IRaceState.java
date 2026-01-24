@@ -1,14 +1,12 @@
 package com.antigravity.race.states;
 
+import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 
 public interface IRaceState {
     void enter(Race race);
 
     void exit(Race race);
-
-    // From the protocol listener
-    void onLap(int lane, double lapTime);
 
     void start(Race race);
 
@@ -21,4 +19,9 @@ public interface IRaceState {
     void skipHeat(Race race);
 
     void deferHeat(Race race);
+
+    // From the protocol listener
+    void onLap(int lane, double lapTime);
+
+    void onCarData(CarData carData);
 }

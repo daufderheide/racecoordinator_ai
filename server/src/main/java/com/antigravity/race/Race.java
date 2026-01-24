@@ -1,10 +1,14 @@
 package com.antigravity.race;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.race.states.IRaceState;
@@ -182,6 +186,17 @@ public class Race implements ProtocolListener {
         state.onLap(lane, lapTime);
     }
 
+    @Override
+    public void onSegment(int lane, double segmentTime) {
+        // TODO(aufderheide): Implement this once one of the
+        // protocols supports it.
+    }
+
+    @Override
+    public void onCarData(CarData carData) {
+        state.onCarData(carData);
+    }
+
     public boolean isLastHeat() {
         return heats.indexOf(currentHeat) == heats.size() - 1;
     }
@@ -189,11 +204,11 @@ public class Race implements ProtocolListener {
     // TODO(aufderheide): This synchronize probably isn't enough. We need to lock
     // the race object while we're creating the snapshot.
     public synchronized com.antigravity.proto.RaceData createSnapshot() {
-        java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+        Set<String> sentObjectIds = new HashSet<>();
         com.antigravity.proto.RaceModel raceProto = com.antigravity.converters.RaceConverter.toProto(model, track,
                 sentObjectIds);
 
-        java.util.List<com.antigravity.proto.RaceParticipant> driverModels = new java.util.ArrayList<>();
+        List<com.antigravity.proto.RaceParticipant> driverModels = new ArrayList<>();
         for (RaceParticipant participant : drivers) {
             driverModels
                     .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));

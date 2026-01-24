@@ -51,12 +51,6 @@ public class Starting implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
-        // TODO(aufderheide): Handle false start
-        System.out.println("Starting: Ignored onLap - Race not in progress");
-    }
-
-    @Override
     public void nextHeat(com.antigravity.race.Race race) {
         throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
     }
@@ -87,4 +81,17 @@ public class Starting implements IRaceState {
     public void deferHeat(com.antigravity.race.Race race) {
         throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
     }
+
+    @Override
+    public void onLap(int lane, double lapTime) {
+        // TODO(aufderheide): Handle false start
+        System.out.println("Starting: Ignored onLap - Race not in progress");
+    }
+
+    @Override
+    public void onCarData(com.antigravity.protocols.CarData carData) {
+        // TODO(aufderheide): Handle false start
+        System.out.println("Starting: Ignored onCarData - Race not in progress");
+    }
+
 }

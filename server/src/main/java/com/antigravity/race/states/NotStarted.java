@@ -23,11 +23,6 @@ public class NotStarted implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
-        System.out.println("NotStarted: Ignored onLap - Race not in progress");
-    }
-
-    @Override
     public void nextHeat(com.antigravity.race.Race race) {
         throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
     }
@@ -97,5 +92,15 @@ public class NotStarted implements IRaceState {
                 .build();
 
         race.broadcast(raceDataMsg);
+    }
+
+    @Override
+    public void onLap(int lane, double lapTime) {
+        System.out.println("NotStarted: Ignored onLap - Race not in progress");
+    }
+
+    @Override
+    public void onCarData(com.antigravity.protocols.CarData carData) {
+        System.out.println("NotStarted: Ignored onCarData - Race not in progress");
     }
 }

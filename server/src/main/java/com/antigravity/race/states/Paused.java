@@ -15,11 +15,6 @@ public class Paused implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
-        System.out.println("Paused: Ignored onLap - Race not in progress");
-    }
-
-    @Override
     public void nextHeat(Race race) {
         throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
     }
@@ -82,5 +77,15 @@ public class Paused implements IRaceState {
     @Override
     public void deferHeat(Race race) {
         throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void onLap(int lane, double lapTime) {
+        System.out.println("Paused: Ignored onLap - Race not in progress");
+    }
+
+    @Override
+    public void onCarData(com.antigravity.protocols.CarData carData) {
+        System.out.println("Paused: Ignored onCarData - Race not in progress");
     }
 }

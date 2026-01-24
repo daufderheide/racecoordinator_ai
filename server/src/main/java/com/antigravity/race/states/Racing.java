@@ -110,6 +110,37 @@ public class Racing implements IRaceState {
     }
 
     @Override
+    public void nextHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void start(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot start race: Race is already in Racing state.");
+    }
+
+    @Override
+    public void pause(com.antigravity.race.Race race) {
+        System.out.println("Racing.pause() called. Pausing race.");
+        race.changeState(new com.antigravity.race.states.Paused());
+    }
+
+    @Override
+    public void restartHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void skipHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    public void deferHeat(com.antigravity.race.Race race) {
+        throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+    }
+
+    @Override
     public void onLap(int lane, double lapTime) {
         System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
 
@@ -214,33 +245,7 @@ public class Racing implements IRaceState {
     }
 
     @Override
-    public void nextHeat(com.antigravity.race.Race race) {
-        throw new IllegalStateException("Cannot move to next heat from state: " + this.getClass().getSimpleName());
-    }
-
-    @Override
-    public void start(com.antigravity.race.Race race) {
-        throw new IllegalStateException("Cannot start race: Race is already in Racing state.");
-    }
-
-    @Override
-    public void pause(com.antigravity.race.Race race) {
-        System.out.println("Racing.pause() called. Pausing race.");
-        race.changeState(new com.antigravity.race.states.Paused());
-    }
-
-    @Override
-    public void restartHeat(com.antigravity.race.Race race) {
-        throw new IllegalStateException("Cannot restart heat from state: " + this.getClass().getSimpleName());
-    }
-
-    @Override
-    public void skipHeat(com.antigravity.race.Race race) {
-        throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
-    }
-
-    @Override
-    public void deferHeat(com.antigravity.race.Race race) {
-        throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+    public void onCarData(com.antigravity.protocols.CarData carData) {
+        System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getLapTime());
     }
 }

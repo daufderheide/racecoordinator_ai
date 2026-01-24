@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.antigravity.models.Lane;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.interfaces.SerialConnection;
@@ -325,7 +327,14 @@ public class ArduinoProtocol extends DefaultProtocol {
 
         System.out.println("ArduinoProtocol: Handling Lap - Lane: " + laneIndex + ", Time: " + time);
         if (listener != null) {
+          // TODO(aufderheide):
+          // We need to know how to hanle false starts. Maybe do not
+          // send the lap, but send a 0 time CarData?
           listener.onLap(laneIndex, time);
+
+          if (time > 0) {
+            listener.onCarData(new CarData(laneIndex, time, 1, 1, false, CarLocation.Main, CarLocation.Main, -1));
+          }
         }
       }
     } else {

@@ -12,18 +12,13 @@ public class HeatOver implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime) {
-    System.out.println("Race: Ignored onLap - Heat is over");
-  }
-
-  @Override
   public void nextHeat(com.antigravity.race.Race race) {
     Common.advanceToNextHeat(race);
   }
 
   @Override
   public void skipHeat(com.antigravity.race.Race race) {
-    throw new IllegalStateException("Cannot skip heat from state: " + this.getClass().getSimpleName());
+    throw new IllegalStateException("Cannot skip heat: Race is not in NotStarted or Paused state.");
   }
 
   @Override
@@ -43,6 +38,16 @@ public class HeatOver implements IRaceState {
 
   @Override
   public void deferHeat(com.antigravity.race.Race race) {
-    throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
+    throw new IllegalStateException("Cannot defer heat: Race is not in NotStarted or Paused state.");
+  }
+
+  @Override
+  public void onLap(int lane, double lapTime) {
+    System.out.println("HeatOver: Ignored onLap - Heat is over");
+  }
+
+  @Override
+  public void onCarData(com.antigravity.protocols.CarData carData) {
+    System.out.println("HeatOver: Ignored onCarData - Heat is over");
   }
 }
