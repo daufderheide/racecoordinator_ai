@@ -9,7 +9,7 @@ import com.antigravity.protocols.PartialTime;
 public class Demo extends DefaultProtocol {
     private java.util.concurrent.ScheduledExecutorService scheduler;
     private java.util.concurrent.ScheduledFuture<?> timerHandle;
-    private java.util.Random random = new java.util.Random();
+    private java.util.Random random;
 
     private class LaneState {
         long currentLapElapsedTime = 0;
@@ -36,7 +36,12 @@ public class Demo extends DefaultProtocol {
     private LaneState[] laneStates;
 
     public Demo(int numLanes) {
+        this(numLanes, new java.util.Random());
+    }
+
+    protected Demo(int numLanes, java.util.Random random) {
         super(numLanes);
+        this.random = random;
         laneStates = new LaneState[numLanes];
         for (int i = 0; i < numLanes; i++) {
             laneStates[i] = new LaneState();
@@ -53,10 +58,10 @@ public class Demo extends DefaultProtocol {
         if (scheduler != null && !scheduler.isShutdown()) {
             return;
         }
-        scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+        scheduler = createScheduler();
 
         // Restore start times based on elapsed time
-        long nowMs = System.currentTimeMillis();
+        long nowMs = now();
         for (LaneState state : laneStates) {
             state.currentLapStartTime = nowMs - state.currentLapElapsedTime;
         }
@@ -64,7 +69,7 @@ public class Demo extends DefaultProtocol {
         Runnable lapGenerator = new Runnable() {
             public void run() {
                 try {
-                    long nowMs = System.currentTimeMillis();
+                    long nowMs = now();
                     for (int i = 0; i < laneStates.length; i++) {
                         LaneState state = laneStates[i];
                         long totalElapsed = nowMs - state.currentLapStartTime;
@@ -107,7 +112,7 @@ public class Demo extends DefaultProtocol {
         scheduler = null; // Ensure we can restart it
 
         // Save state
-        long nowMs = System.currentTimeMillis();
+        long nowMs = now();
         List<PartialTime> partialTimes = new ArrayList<>();
         for (int i = 0; i < laneStates.length; i++) {
             LaneState state = laneStates[i];
@@ -117,4 +122,13 @@ public class Demo extends DefaultProtocol {
 
         return partialTimes;
     }
+
+    protected long now() {
+        return System.currentTimeMillis();
+    }
+
+    protected java.util.concurrent.ScheduledExecutorService createScheduler() {
+        return java.util.concurrent.Executors.newScheduledThreadPool(1);
+    }
+
 }

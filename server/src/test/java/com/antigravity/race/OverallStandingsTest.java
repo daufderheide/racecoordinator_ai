@@ -85,6 +85,8 @@ public class OverallStandingsTest {
 
         // Heat 1: 10 laps (Good)
         heats.add(createHeat(1, p1, 10, 100.0f, dummy, 0, 0));
+        // TODO(aufderheide): Verify there is no dropped heat when there is only 1 heat.
+
         // Heat 2: 5 laps (Bad heat - should be dropped)
         heats.add(createHeat(2, p1, 5, 100.0f, dummy, 0, 0));
         // Heat 3: 12 laps (Best heat)
