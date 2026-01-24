@@ -21,9 +21,11 @@ public class ProtocolDelegate {
         }
     }
 
-    public void stopTimer() {
+    public java.util.List<PartialTime> stopTimer() {
+        java.util.List<PartialTime> allPartialTimes = new java.util.ArrayList<>();
         for (IProtocol protocol : protocols) {
-            protocol.stopTimer();
+            allPartialTimes.addAll(protocol.stopTimer());
         }
+        return allPartialTimes;
     }
 }

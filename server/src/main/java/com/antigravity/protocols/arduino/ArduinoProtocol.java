@@ -2,10 +2,12 @@ package com.antigravity.protocols.arduino;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.antigravity.models.Lane;
 import com.antigravity.protocols.DefaultProtocol;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.util.CircularBuffer;
 import java.io.IOException;
@@ -19,6 +21,10 @@ public class ArduinoProtocol extends DefaultProtocol {
   private boolean versionVerified = false;
   private Map<String, PinConfig> pinLookup;
 
+  private HwTime[] hwLapTime;
+  private HwTime[] hwSegmentTime;
+  private byte hwReset;
+
   // Not lane specific
   private static final int BEHAVIOR_CALL_BUTTON = 1;
 
@@ -28,6 +34,18 @@ public class ArduinoProtocol extends DefaultProtocol {
   private static final int BEHAVIOR_SEGMENT_BASE = 2000;
   private static final int BEHAVIOR_CALL_BUTTON_BASE = 3000;
 
+  // Data sent from PC to Arduino
+  private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B };
+  private static final byte[] TIME_RESET_COMMAND = { 0x54, 0x3B };
+
+  // Data sent from Arduino to PC
+  private static final byte OPCODE_HEARTBEAT = 0x54; // 'T'
+  private static final byte OPCODE_VERSION = 0x56; // 'V'
+  private static final byte OPCODE_INPUT = 0x49; // 'I'
+  private static final byte TERMINATOR = 0x3B; // ';'
+  private static final byte DIGITAL = 0x44; // 'D'
+  private static final byte ANALOG = 0x41; // 'A'
+
   public ArduinoProtocol(Config config, List<Lane> lanes) {
     super(lanes.size());
     this.config = config;
@@ -36,6 +54,15 @@ public class ArduinoProtocol extends DefaultProtocol {
     serialConnection = new SerialConnection();
     rxBuffer = new CircularBuffer(4096);
     buildPinLookup();
+
+    // Initialize the hardware timing.
+    hwLapTime = new HwTime[lanes.size()];
+    hwSegmentTime = new HwTime[lanes.size()];
+    for (int i = 0; i < lanes.size(); i++) {
+      hwLapTime[i] = new HwTime();
+      hwSegmentTime[i] = new HwTime();
+    }
+    hwReset = 1;
   }
 
   @Override
@@ -70,16 +97,24 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
   }
 
-  // Data sent from PC to Arduino
-  private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B }; // RESET;
+  @Override
+  public void startTimer() {
+    sendTimeReset();
+    for (int i = 0; i < lanes.size(); i++) {
+      hwLapTime[i].Reset();
+      hwSegmentTime[i].Reset();
+    }
+    hwReset = 1;
+  }
 
-  // Data sent from Arduino to PC
-  private static final byte OPCODE_HEARTBEAT = 0x54; // 'T'
-  private static final byte OPCODE_VERSION = 0x56; // 'V'
-  private static final byte OPCODE_INPUT = 0x49; // 'I'
-  private static final byte TERMINATOR = 0x3B; // ';'
-  private static final byte DIGITAL = 0x44; // 'D'
-  private static final byte ANALOG = 0x41; // 'A'
+  @Override
+  public List<PartialTime> stopTimer() {
+    List<PartialTime> partialTimes = new ArrayList<>();
+    for (int i = 0; i < lanes.size(); i++) {
+      partialTimes.add(new PartialTime(i, hwLapTime[i].Time(), hwSegmentTime[i].Time()));
+    }
+    return partialTimes;
+  }
 
   private void processData() {
     while (rxBuffer.size() > 0) {
@@ -135,7 +170,7 @@ public class ArduinoProtocol extends DefaultProtocol {
             ((long) (message[2] & 0xFF) << 16) |
             ((long) (message[3] & 0xFF) << 8) |
             ((long) (message[4] & 0xFF));
-        boolean isReset = message[5] != 0;
+        byte isReset = message[5];
         onHeartbeat(timeInUse, isReset);
         break;
       case OPCODE_VERSION:
@@ -157,8 +192,18 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
   }
 
-  private void onHeartbeat(long timeInUse, boolean isReset) {
+  private void onHeartbeat(long timeInUse, byte isReset) {
     System.out.println("ArduinoProtocol: Received Heartbeat - Time: " + timeInUse + "us, Reset: " + isReset);
+
+    if (isReset == hwReset) {
+      hwReset = 0;
+      for (int i = 0; i < lanes.size(); i++) {
+        hwLapTime[i].Add(timeInUse);
+        hwSegmentTime[i].Add(timeInUse);
+      }
+    } else {
+      System.err.println("ArduinoProtocol: Received Heartbeat - Reset mismatch: " + isReset + " != " + hwReset);
+    }
   }
 
   private void onVersion(int major, int minor, int patch, int build) {
@@ -229,6 +274,15 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
   }
 
+  private void sendTimeReset() {
+    try {
+      serialConnection.writeData(TIME_RESET_COMMAND);
+    } catch (IOException e) {
+      System.err.println("ArduinoProtocol: Failed to send TIME_RESET");
+      e.printStackTrace();
+    }
+  }
+
   private void onInput(boolean isDigital, int pin, int state) {
     String key = (isDigital ? "D" : "A") + pin;
     PinConfig pinConfig = pinLookup.get(key);
@@ -236,10 +290,55 @@ public class ArduinoProtocol extends DefaultProtocol {
     if (pinConfig != null) {
       System.out.println("ArduinoProtocol: Received Input - Behavior: " + pinConfig.behavior +
           ", Lane: " + pinConfig.laneIndex + ", Pin: " + pin + ", State: " + state);
+      switch (pinConfig.behavior) {
+        case LAP_COUNTER:
+          onLapCounter(pinConfig.laneIndex, state);
+          break;
+        case SEGMENT_COUNTER:
+          onSegmentCounter(pinConfig.laneIndex, state);
+          break;
+        case CALL_BUTTON:
+          onCallButton(pinConfig.laneIndex, state);
+          break;
+      }
     } else {
       System.out.println("ArduinoProtocol: Received Input - Type: " + (isDigital ? "Digital" : "Analog") +
           ", Pin: " + pin + ", State: " + state);
     }
+  }
+
+  private void onLapCounter(int laneIndex, int state) {
+    System.out.println("ArduinoProtocol: Received Lap Counter - Lane: " + laneIndex + ", State: " + state);
+
+    if (laneIndex < hwLapTime.length) {
+      byte wantState = 1;
+      if (config.globalInvertLanes != 0) {
+        wantState = 0;
+      }
+
+      if (state == wantState) {
+        // Lap
+        double time = hwLapTime[laneIndex].Time();
+
+        // Subtract the hw debounce time from our time
+        time -= (config.debounceUs / (1000.0 * 1000.0));
+
+        System.out.println("ArduinoProtocol: Handling Lap - Lane: " + laneIndex + ", Time: " + time);
+        if (listener != null) {
+          listener.onLap(laneIndex, time);
+        }
+      }
+    } else {
+      System.out.println("ArduinoProtocol: Bad lane for lap data: " + (laneIndex + 1));
+    }
+  }
+
+  private void onSegmentCounter(int laneIndex, int state) {
+    System.out.println("ArduinoProtocol: Received Segment Counter - Lane: " + laneIndex + ", State: " + state);
+  }
+
+  private void onCallButton(int laneIndex, int state) {
+    System.out.println("ArduinoProtocol: Received Call Button - Lane: " + laneIndex + ", State: " + state);
   }
 
   private void buildPinLookup() {

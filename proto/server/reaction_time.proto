@@ -7,5 +7,5 @@ option java_outer_classname = "ReactionTimeProto";
 
 message ReactionTime {
   string objectId = 1;
-  float reaction_time = 2;
+  double reaction_time = 2;
 }

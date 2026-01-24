@@ -44,9 +44,9 @@ public class OverallStandings {
       List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
 
       int totalLaps = 0;
-      float totalTime = 0.0f;
-      float bestLap = 0.0f;
-      List<Float> allLaps = new ArrayList<>();
+      double totalTime = 0.0;
+      double bestLap = 0.0;
+      List<Double> allLaps = new ArrayList<>();
 
       for (DriverHeatData dhd : scoringHeats) {
         totalLaps += dhd.getLapCount();

@@ -12,7 +12,7 @@ public class RaceOver implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, float lapTime) {
+  public void onLap(int lane, double lapTime) {
     System.out.println("Race: Ignored onLap - Race is over");
   }
 

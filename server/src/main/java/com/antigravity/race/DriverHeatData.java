@@ -6,9 +6,9 @@ import java.util.Collections;
 public class DriverHeatData extends ServerToClientObject {
     private RaceParticipant driver;
 
-    private ArrayList<Float> laps = new ArrayList<>();
-    private float bestLapTime = 0.0f;
-    private float reactionTime = 0.0f;
+    private ArrayList<Double> laps = new ArrayList<>();
+    private double bestLapTime = 0.0f;
+    private double reactionTime = 0.0f;
 
     public DriverHeatData(RaceParticipant driver) {
         super();
@@ -19,7 +19,7 @@ public class DriverHeatData extends ServerToClientObject {
         return driver;
     }
 
-    public void addLap(float lapTime) {
+    public void addLap(double lapTime) {
         laps.add(lapTime);
         if (bestLapTime == 0.0f || lapTime < bestLapTime) {
             bestLapTime = lapTime;
@@ -30,35 +30,35 @@ public class DriverHeatData extends ServerToClientObject {
         return laps.size();
     }
 
-    public java.util.List<Float> getLaps() {
+    public java.util.List<Double> getLaps() {
         return java.util.Collections.unmodifiableList(laps);
     }
 
-    public float getLastLapTime() {
+    public double getLastLapTime() {
         if (laps.isEmpty()) {
             return 0.0f;
         }
         return laps.get(laps.size() - 1);
     }
 
-    public float getAverageLapTime() {
+    public double getAverageLapTime() {
         // TODO(aufderheide): Extract the calculation into a utility class
         if (laps.isEmpty()) {
             return 0.0f;
         }
-        float sum = 0.0f;
-        for (float time : laps) {
+        double sum = 0.0f;
+        for (double time : laps) {
             sum += time;
         }
         return sum / laps.size();
     }
 
-    public float getMedianLapTime() {
+    public double getMedianLapTime() {
         // TODO(aufderheide): Extract the calculation into a utility class
         if (laps.isEmpty()) {
             return 0.0f;
         }
-        ArrayList<Float> sortedLaps = new ArrayList<>(laps);
+        ArrayList<Double> sortedLaps = new ArrayList<>(laps);
         Collections.sort(sortedLaps);
         int middle = sortedLaps.size() / 2;
         if (sortedLaps.size() % 2 == 1) {
@@ -68,21 +68,21 @@ public class DriverHeatData extends ServerToClientObject {
         }
     }
 
-    public float getBestLapTime() {
+    public double getBestLapTime() {
         return bestLapTime;
     }
 
-    public float getReactionTime() {
+    public double getReactionTime() {
         return reactionTime;
     }
 
-    public void setReactionTime(float reactionTime) {
+    public void setReactionTime(double reactionTime) {
         this.reactionTime = reactionTime;
     }
 
-    public float getTotalTime() {
-        float sum = 0.0f;
-        for (float time : laps) {
+    public double getTotalTime() {
+        double sum = 0.0f;
+        for (double time : laps) {
             sum += time;
         }
         return sum;

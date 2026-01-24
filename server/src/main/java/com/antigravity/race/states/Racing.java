@@ -110,7 +110,7 @@ public class Racing implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, float lapTime) {
+    public void onLap(int lane, double lapTime) {
         System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
 
         if (!this.race.isRacing()) {
@@ -158,7 +158,7 @@ public class Racing implements IRaceState {
         }
     }
 
-    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, float lapTime, int lane) {
+    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, double lapTime, int lane) {
         if (driverData.getReactionTime() == 0.0f) {
             driverData.setReactionTime(lapTime);
 
@@ -178,8 +178,8 @@ public class Racing implements IRaceState {
         return false;
     }
 
-    private void handleLapTime(com.antigravity.race.DriverHeatData driverData, float lapTime) {
-        float effectiveLapTime = lapTime;
+    private void handleLapTime(com.antigravity.race.DriverHeatData driverData, double lapTime) {
+        double effectiveLapTime = lapTime;
         if (driverData.getLapCount() == 0) {
             effectiveLapTime += driverData.getReactionTime();
         }

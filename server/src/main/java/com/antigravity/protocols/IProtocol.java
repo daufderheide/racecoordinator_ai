@@ -7,5 +7,5 @@ public interface IProtocol {
 
     void startTimer();
 
-    void stopTimer();
+    java.util.List<PartialTime> stopTimer();
 }

@@ -1,6 +1,10 @@
 package com.antigravity.protocols.demo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.antigravity.protocols.DefaultProtocol;
+import com.antigravity.protocols.PartialTime;
 
 public class Demo extends DefaultProtocol {
     private java.util.concurrent.ScheduledExecutorService scheduler;
@@ -66,7 +70,7 @@ public class Demo extends DefaultProtocol {
                         long totalElapsed = nowMs - state.currentLapStartTime;
 
                         if (totalElapsed >= state.targetLapDuration) {
-                            float lapTime = totalElapsed / 1000.0f;
+                            double lapTime = totalElapsed / 1000.0;
 
                             if (listener != null) {
                                 listener.onLap(i, lapTime);
@@ -93,7 +97,7 @@ public class Demo extends DefaultProtocol {
     }
 
     @Override
-    public void stopTimer() {
+    public List<PartialTime> stopTimer() {
         if (timerHandle != null) {
             timerHandle.cancel(true);
         }
@@ -104,8 +108,13 @@ public class Demo extends DefaultProtocol {
 
         // Save state
         long nowMs = System.currentTimeMillis();
-        for (LaneState state : laneStates) {
+        List<PartialTime> partialTimes = new ArrayList<>();
+        for (int i = 0; i < laneStates.length; i++) {
+            LaneState state = laneStates[i];
             state.currentLapElapsedTime = nowMs - state.currentLapStartTime;
+            partialTimes.add(new PartialTime(i, state.currentLapElapsedTime / 1000.0, 0.0));
         }
+
+        return partialTimes;
     }
 }

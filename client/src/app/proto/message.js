@@ -4881,7 +4881,7 @@ export const com = $root.com = (() => {
                 if (!writer)
                     writer = $Writer.create();
                 if (message.time != null && Object.hasOwnProperty.call(message, "time"))
-                    writer.uint32(/* id 1, wireType 5 =*/13).float(message.time);
+                    writer.uint32(/* id 1, wireType 1 =*/9).double(message.time);
                 return writer;
             };
 
@@ -4919,7 +4919,7 @@ export const com = $root.com = (() => {
                         break;
                     switch (tag >>> 3) {
                     case 1: {
-                            message.time = reader.float();
+                            message.time = reader.double();
                             break;
                         }
                     default:
@@ -5133,15 +5133,15 @@ export const com = $root.com = (() => {
                 if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
-                    writer.uint32(/* id 2, wireType 5 =*/21).float(message.lapTime);
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.lapTime);
                 if (message.lapNumber != null && Object.hasOwnProperty.call(message, "lapNumber"))
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.lapNumber);
                 if (message.averageLapTime != null && Object.hasOwnProperty.call(message, "averageLapTime"))
-                    writer.uint32(/* id 4, wireType 5 =*/37).float(message.averageLapTime);
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.averageLapTime);
                 if (message.medianLapTime != null && Object.hasOwnProperty.call(message, "medianLapTime"))
-                    writer.uint32(/* id 5, wireType 5 =*/45).float(message.medianLapTime);
+                    writer.uint32(/* id 5, wireType 1 =*/41).double(message.medianLapTime);
                 if (message.bestLapTime != null && Object.hasOwnProperty.call(message, "bestLapTime"))
-                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.bestLapTime);
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.bestLapTime);
                 return writer;
             };
 
@@ -5183,7 +5183,7 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 2: {
-                            message.lapTime = reader.float();
+                            message.lapTime = reader.double();
                             break;
                         }
                     case 3: {
@@ -5191,15 +5191,15 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 4: {
-                            message.averageLapTime = reader.float();
+                            message.averageLapTime = reader.double();
                             break;
                         }
                     case 5: {
-                            message.medianLapTime = reader.float();
+                            message.medianLapTime = reader.double();
                             break;
                         }
                     case 6: {
-                            message.bestLapTime = reader.float();
+                            message.bestLapTime = reader.double();
                             break;
                         }
                     default:
@@ -6777,13 +6777,13 @@ export const com = $root.com = (() => {
                 if (message.totalLaps != null && Object.hasOwnProperty.call(message, "totalLaps"))
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.totalLaps);
                 if (message.totalTime != null && Object.hasOwnProperty.call(message, "totalTime"))
-                    writer.uint32(/* id 5, wireType 5 =*/45).float(message.totalTime);
+                    writer.uint32(/* id 5, wireType 1 =*/41).double(message.totalTime);
                 if (message.bestLapTime != null && Object.hasOwnProperty.call(message, "bestLapTime"))
-                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.bestLapTime);
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.bestLapTime);
                 if (message.averageLapTime != null && Object.hasOwnProperty.call(message, "averageLapTime"))
-                    writer.uint32(/* id 7, wireType 5 =*/61).float(message.averageLapTime);
+                    writer.uint32(/* id 7, wireType 1 =*/57).double(message.averageLapTime);
                 if (message.medianLapTime != null && Object.hasOwnProperty.call(message, "medianLapTime"))
-                    writer.uint32(/* id 8, wireType 5 =*/69).float(message.medianLapTime);
+                    writer.uint32(/* id 8, wireType 1 =*/65).double(message.medianLapTime);
                 if (message.rankValue != null && Object.hasOwnProperty.call(message, "rankValue"))
                     writer.uint32(/* id 9, wireType 1 =*/73).double(message.rankValue);
                 if (message.seed != null && Object.hasOwnProperty.call(message, "seed"))
@@ -6841,19 +6841,19 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 5: {
-                            message.totalTime = reader.float();
+                            message.totalTime = reader.double();
                             break;
                         }
                     case 6: {
-                            message.bestLapTime = reader.float();
+                            message.bestLapTime = reader.double();
                             break;
                         }
                     case 7: {
-                            message.averageLapTime = reader.float();
+                            message.averageLapTime = reader.double();
                             break;
                         }
                     case 8: {
-                            message.medianLapTime = reader.float();
+                            message.medianLapTime = reader.double();
                             break;
                         }
                     case 9: {
@@ -7117,7 +7117,7 @@ export const com = $root.com = (() => {
                 if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.reactionTime != null && Object.hasOwnProperty.call(message, "reactionTime"))
-                    writer.uint32(/* id 2, wireType 5 =*/21).float(message.reactionTime);
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.reactionTime);
                 return writer;
             };
 
@@ -7159,7 +7159,7 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 2: {
-                            message.reactionTime = reader.float();
+                            message.reactionTime = reader.double();
                             break;
                         }
                     default:

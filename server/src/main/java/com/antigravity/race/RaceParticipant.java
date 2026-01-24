@@ -6,10 +6,10 @@ public class RaceParticipant extends ServerToClientObject {
     private final com.antigravity.models.Driver driver;
     private int rank;
     private int totalLaps;
-    private float totalTime;
-    private float bestLapTime;
-    private float averageLapTime;
-    private float medianLapTime;
+    private double totalTime;
+    private double bestLapTime;
+    private double averageLapTime;
+    private double medianLapTime;
     private double rankValue;
     private int seed;
 
@@ -43,35 +43,35 @@ public class RaceParticipant extends ServerToClientObject {
         this.totalLaps = totalLaps;
     }
 
-    public float getTotalTime() {
+    public double getTotalTime() {
         return totalTime;
     }
 
-    public void setTotalTime(float totalTime) {
+    public void setTotalTime(double totalTime) {
         this.totalTime = totalTime;
     }
 
-    public float getBestLapTime() {
+    public double getBestLapTime() {
         return bestLapTime;
     }
 
-    public void setBestLapTime(float bestLapTime) {
+    public void setBestLapTime(double bestLapTime) {
         this.bestLapTime = bestLapTime;
     }
 
-    public float getAverageLapTime() {
+    public double getAverageLapTime() {
         return averageLapTime;
     }
 
-    public void setAverageLapTime(float averageLapTime) {
+    public void setAverageLapTime(double averageLapTime) {
         this.averageLapTime = averageLapTime;
     }
 
-    public float getMedianLapTime() {
+    public double getMedianLapTime() {
         return medianLapTime;
     }
 
-    public void setMedianLapTime(float medianLapTime) {
+    public void setMedianLapTime(double medianLapTime) {
         this.medianLapTime = medianLapTime;
     }
 

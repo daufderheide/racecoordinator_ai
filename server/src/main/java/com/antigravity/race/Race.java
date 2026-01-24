@@ -148,8 +148,8 @@ public class Race implements ProtocolListener {
         protocols.startTimer();
     }
 
-    public void stopProtocols() {
-        protocols.stopTimer();
+    public java.util.List<com.antigravity.protocols.PartialTime> stopProtocols() {
+        return protocols.stopTimer();
     }
 
     public void updateAndBroadcastOverallStandings() {
@@ -178,7 +178,7 @@ public class Race implements ProtocolListener {
     }
 
     @Override
-    public void onLap(int lane, float lapTime) {
+    public void onLap(int lane, double lapTime) {
         state.onLap(lane, lapTime);
     }
 

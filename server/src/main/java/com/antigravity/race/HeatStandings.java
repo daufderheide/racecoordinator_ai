@@ -42,7 +42,7 @@ public class HeatStandings {
     return tieBreaker;
   }
 
-  public StandingsUpdate onLap(int lane, float lapTime) {
+  public StandingsUpdate onLap(int lane, double lapTime) {
     List<String> newStandings = calculateStandings();
     StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
     boolean changed = false;

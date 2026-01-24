@@ -8,7 +8,7 @@ public interface IRaceState {
     void exit(Race race);
 
     // From the protocol listener
-    void onLap(int lane, float lapTime);
+    void onLap(int lane, double lapTime);
 
     void start(Race race);
 
