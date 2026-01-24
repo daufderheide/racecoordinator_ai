@@ -32,3 +32,6 @@ server/mongodb_data
 
 # Maven
 server/target
+
+# Install packags
+release/

@@ -41,7 +41,20 @@ public class App {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-        startEmbeddedMongo();
+        boolean useEmbeddedMongo = true;
+        for (String arg : args) {
+            if ("--no-embedded-mongo".equals(arg)) {
+                useEmbeddedMongo = false;
+                break;
+            }
+        }
+
+        if (useEmbeddedMongo) {
+            startEmbeddedMongo();
+        } else {
+            logger.info(
+                    "Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available...");
+        }
 
         // Add a shutdown hook to stop the embedded MongoDB server
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -89,13 +102,31 @@ public class App {
 
         app = Javalin.create(config -> {
             // Check if running from root or server directory
-            String clientPath = "client/dist/client";
+            String clientPath = "web";
             if (!Files.exists(Paths.get(clientPath))) {
-                clientPath = "../client/dist/client";
+                clientPath = "client/dist/client";
+                if (!Files.exists(Paths.get(clientPath))) {
+                    clientPath = "../client/dist/client";
+                }
             }
             config.addStaticFiles(clientPath, Location.EXTERNAL);
             config.enableCorsForAllOrigins();
         }).start(7070);
+
+        // SPA Fallback: Serve index.html for 404s on HTML requests
+        app.error(404, ctx -> {
+            if (ctx.header("Accept") != null && ctx.header("Accept").contains("text/html")) {
+                ctx.contentType("text/html");
+                // Try to read index.html from static files
+                if (Files.exists(Paths.get("web/index.html"))) {
+                    ctx.result(new String(Files.readAllBytes(Paths.get("web/index.html"))));
+                } else if (Files.exists(Paths.get("client/dist/client/index.html"))) {
+                    ctx.result(new String(Files.readAllBytes(Paths.get("client/dist/client/index.html"))));
+                } else if (Files.exists(Paths.get("../client/dist/client/index.html"))) {
+                    ctx.result(new String(Files.readAllBytes(Paths.get("../client/dist/client/index.html"))));
+                }
+            }
+        });
 
         app.ws("/api/race-data", ws -> {
             ws.onConnect(ctx -> {
@@ -122,13 +153,19 @@ public class App {
     private static void startEmbeddedMongo() {
         try {
             System.out.println("Starting embedded MongoDB 4.x...");
-            String dataDir = "mongodb_data";
+
+            // Use a writable location for database storage
+            String userHome = System.getProperty("user.home");
+            String appDataDir = Paths.get(userHome, ".racecoordinator").toString();
+            String dataDir = Paths.get(appDataDir, "mongodb_data").toString();
+
+            System.out.println("Using MongoDB data directory: " + dataDir);
+
             if (!Files.exists(Paths.get(dataDir))) {
                 Files.createDirectories(Paths.get(dataDir));
             }
 
             mongodProcess = Mongod.instance()
-
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
                             .initializedWith(Net.of("localhost", MONGO_PORT, Network.localhostIsIPv6())))
