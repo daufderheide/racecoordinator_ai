@@ -35,13 +35,13 @@ export class RacedaySetupComponent implements OnInit {
   translationsLoaded: boolean = false;
   isDropdownOpen: boolean = false;
   menuItems = [
-    { label: 'File', action: () => console.log('File menu') },
-    { label: 'Track', action: () => console.log('Track menu') },
-    { label: 'Driver', action: () => console.log('Driver menu') },
-    { label: 'Race', action: () => console.log('Race menu') },
-    { label: 'Season', action: () => console.log('Season menu') },
-    { label: 'Options', action: () => console.log('Options menu') },
-    { label: 'Help', action: () => console.log('Help menu') }
+    { label: 'RDS_MENU_FILE', action: () => console.log('File menu') },
+    { label: 'RDS_MENU_TRACK', action: () => console.log('Track menu') },
+    { label: 'RDS_MENU_DRIVER', action: () => console.log('Driver menu') },
+    { label: 'RDS_MENU_RACE', action: () => console.log('Race menu') },
+    { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
+    { label: 'RDS_MENU_OPTIONS', action: () => console.log('Options menu') },
+    { label: 'RDS_MENU_HELP', action: () => console.log('Help menu') }
   ];
 
   constructor(
@@ -168,8 +168,8 @@ export class RacedaySetupComponent implements OnInit {
   }
 
   drop(event: CdkDragDrop<Driver[]>) {
-    // Only reorder within the selected list
-    if (event.container.id === 'selected-list') {
+    // Only reorder within the selected list and if dropped strictly inside the container
+    if (event.container.id === 'selected-list' && event.isPointerOverContainer) {
       moveItemInArray(this.selectedDrivers, event.previousIndex, event.currentIndex);
     }
   }

@@ -57,12 +57,20 @@ export class TranslationService {
     /**
      * Get translated text by key
      */
-    translate(key: string): string {
+    translate(key: string, params?: { [key: string]: any }): string {
         // TODO(aufderheide): Preload the en translation and use it
         // as a fallback if the selected translation does have
         // the requested key.  If even that doesn't have the key,
         // return the key itself.
-        return this.translations[key] || key;
+        let translation = this.translations[key] || key;
+
+        if (params) {
+            Object.keys(params).forEach(paramKey => {
+                translation = translation.replace(new RegExp(`{{${paramKey}}}`, 'g'), params[paramKey]);
+            });
+        }
+
+        return translation;
     }
 
     /**
