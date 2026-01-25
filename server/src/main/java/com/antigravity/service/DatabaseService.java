@@ -34,14 +34,43 @@ public class DatabaseService {
         resetSequence(database, "drivers");
 
         List<Driver> initialDrivers = new ArrayList<>();
-        initialDrivers.add(new Driver("Abby", "Angel", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Andrea", "The Pants", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Austin", "Fart Goblin", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Christine", "Peo Fuente", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Dave", "Olden McGroin", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Gene", "Swamper Gene", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Meyer", "Bull Dog", getNextSequence(database, "drivers"), null));
-        initialDrivers.add(new Driver("Noah Jack", "Boy Wonder", getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Abby", "Angel", getNextSequence(database,
+        // "drivers"), null));
+        // initialDrivers.add(new Driver("Andrea", "The Pants",
+        // getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Austin", "Fart Goblin",
+        // getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Christine", "Peo Fuente",
+        // getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Dave", "Olden McGroin",
+        // getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Gene", "Swamper Gene",
+        // getNextSequence(database, "drivers"), null));
+        // initialDrivers.add(new Driver("Meyer", "Bull Dog", getNextSequence(database,
+        // "drivers"), null));
+        // initialDrivers.add(new Driver("Noah Jack", "Boy Wonder",
+        // getNextSequence(database, "drivers"), null));
+
+        initialDrivers.add(new Driver("Driver 01", "Driver 01", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 02", "Driver 02", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 03", "Driver 03", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 04", "Driver 04", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 05", "Driver 05", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 06", "Driver 06", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 07", "Driver 07", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 08", "Driver 08", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 09", "Driver 09", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 10", "Driver 10", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 11", "Driver 11", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 12", "Driver 12", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 13", "Driver 13", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 14", "Driver 14", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 15", "Driver 15", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 16", "Driver 16", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 17", "Driver 17", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 18", "Driver 18", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 19", "Driver 19", getNextSequence(database, "drivers"), null));
+        initialDrivers.add(new Driver("Driver 20", "Driver 20", getNextSequence(database, "drivers"), null));
 
         driverCollection.insertMany(initialDrivers);
         System.out.println("Drivers reset.");
@@ -119,6 +148,44 @@ public class DatabaseService {
         race = new Race("Practice", track.getEntityId(), HeatRotationType.RoundRobin,
                 scoring, getNextSequence(database, "races"), null);
 
+        raceCollection.insertOne(race);
+
+        scoring = new com.antigravity.models.RaceScoring(
+                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                15,
+                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
+                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+
+        // Now just a bunch of races to fill the space
+        race = new Race("Race 01", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 02", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 03", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 04", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 05", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 06", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 07", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 08", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 09", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+        raceCollection.insertOne(race);
+        race = new Race("Race 10", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
         raceCollection.insertOne(race);
 
         System.out.println("Races reset.");

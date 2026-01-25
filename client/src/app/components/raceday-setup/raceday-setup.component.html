@@ -27,10 +27,11 @@
                 <!-- Selected Drivers (Draggable) -->
                 <div *ngIf="selectedDrivers.length > 0" class="section-divider">Racing</div>
 
-                <div *ngFor="let driver of selectedDrivers" class="driver-item selected" cdkDrag>
+                <div *ngFor="let driver of selectedDrivers; let i = index" class="driver-item selected" cdkDrag>
                     <div class="checkbox" (click)="toggleDriverSelection(driver, true)">
                         <div class="checkbox-icon">✓</div>
                     </div>
+                    <div class="driver-seed">({{ i + 1 }})</div>
                     <div class="driver-avatar">
                         <!-- Placeholder Avatar -->
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="#ccc">
@@ -67,10 +68,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search drivers..." [(ngModel)]="driverSearchQuery">
             </div>
         </div>
 

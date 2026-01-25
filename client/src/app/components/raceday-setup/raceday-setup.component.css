@@ -197,7 +197,7 @@
 /* --- Driver Panel (Left) - BLUE Framing --- */
 .driver-panel {
   width: 360px;
-  height: 820px;
+  height: 650px;
   flex-shrink: 0;
   border: none;
   box-shadow: none;
@@ -216,8 +216,6 @@
 .search-bar {
   padding: 15px 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 40px;
-  /* This gap pushes it into the bottom frame */
   height: 80px;
   display: flex;
   align-items: center;
@@ -235,8 +233,6 @@
 
 .driver-list-container {
   flex: 1;
-  height: 550px;
-  /* Fixed height for the top box area */
   overflow-y: auto;
   padding: 10px;
 }
@@ -298,6 +294,15 @@
   color: #000;
   font-size: 14px;
   font-weight: bold;
+}
+
+.driver-seed {
+  min-width: 25px;
+  text-align: center;
+  color: #888;
+  margin-right: 8px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .driver-avatar {
@@ -480,7 +485,7 @@
   border: 1px solid #00f0ff;
   border-radius: 6px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.2);
-  max-height: 250px;
+  max-height: 185px;
   overflow-y: auto;
   z-index: 101;
 }
