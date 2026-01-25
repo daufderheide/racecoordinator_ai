@@ -1,120 +1,114 @@
 <div class="setup-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
     *ngIf="translationsLoaded">
-    <div class="setup-header">
-        <span>{{ 'RDS_HEADER_FILE' | translate }}</span>
-        <span>{{ 'RDS_HEADER_CAR_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_DRIVER_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_TRACK_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_RACE_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_EVENT_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_SEASON_SETUP' | translate }}</span>
-        <span>{{ 'RDS_HEADER_OPTIONS' | translate }}</span>
-        <span>{{ 'RDS_HEADER_ABOUT' | translate }}</span>
+
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+        <div class="menu-item" *ngFor="let item of menuItems" (click)="item.action()">{{ item.label }}</div>
     </div>
 
-    <div class="main-content" cdkDropListGroup>
-        <!-- Drivers Available Column -->
-        <div class="column drivers-available">
-            <div class="column-title">{{ 'RDS_DRIVERS_AVAILABLE' | translate }}</div>
-            <div class="scroll-area" id="available-list" cdkDropList [cdkDropListData]="availableDrivers"
-                (cdkDropListDropped)="drop($event)">
-                <div *ngFor="let driver of availableDrivers" class="driver-card" cdkDrag
-                    (click)="toggleDriver(driver, 'available')">
-                    <div class="driver-icon">
-                        <svg width="30" height="30" viewBox="0 0 100 100">
-                            <circle cx="50" cy="40" r="25" fill="#ccc" />
-                            <path d="M20,90 Q50,60 80,90" stroke="#ccc" stroke-width="5" fill="none" />
-                        </svg>
-                    </div>
-                    <div class="driver-info">
-                        <div><span class="label">{{ 'LABEL_NAME' | translate }}</span> <span
-                                class="value">{{driver.name}}</span></div>
-                        <div><span class="label">{{ 'LABEL_NICKNAME' | translate }}</span> <span
-                                class="value">{{driver.nickname}}</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Options Column -->
-        <div class="column options-panel">
-            <div class="column-title">{{ 'RDS_OPTIONS_TITLE' | translate }}</div>
-            <div class="options-controls">
-                <div class="btn-group">
-                    <button class="setup-btn" (click)="addAll()">{{ 'RDS_BTN_ADD_ALL' | translate }}</button>
-                    <button class="setup-btn" (click)="randomize()">{{ 'RDS_BTN_RANDOMIZE' | translate }}</button>
-                    <button class="setup-btn" (click)="removeAll()">
-                        {{ 'RDS_BTN_REMOVE_ALL' | translate }}</button>
-                </div>
-
-                <div class="settings-box">
-                    <div
-                        style="font-weight: bold; margin-top: -25px; background: #000044; display: inline-block; padding: 0 5px;">
-                        {{ 'RDS_RACE_TYPE_LABEL' | translate }}</div>
-                    <label><input type="radio" name="raceType" value="single" [(ngModel)]="raceType"> {{
-                        'RDS_RACE_TYPE_SINGLE' | translate }}</label>
-                    <label><input type="radio" name="raceType" value="event" [(ngModel)]="raceType"> {{
-                        'RDS_RACE_TYPE_EVENT' | translate }}</label>
-                </div>
-
-                <div class="selection-group">
-                    <label>{{ 'RDS_RACE_EVENT_SELECT' | translate }}</label>
-                    <select [(ngModel)]="selectedRace">
-                        <option *ngFor="let race of races" [ngValue]="race">{{race.name}}</option>
-                    </select>
-                </div>
-
-                <div class="selection-group">
-                    <label>{{ 'RDS_SEASON_SELECT' | translate }}</label>
-                    <select [(ngModel)]="seasonSelection">
-                        <option>None</option>
-                        <option>2026 Winter Cup</option>
-                    </select>
-                </div>
-
-                <div style="text-align: center; margin-bottom: 10px;">
-                    <button class="setup-btn" (click)="startRace(true)" [disabled]="racingDrivers.length === 0">
-                        {{ 'RDS_DEMO_MODE' | translate }}
-                    </button>
-                </div>
-
-                <div style="text-align: center;" [title]="getStartRaceTooltip()">
-                    <button class="setup-btn primary" (click)="startRace()" [disabled]="racingDrivers.length === 0">{{
-                        'RDS_BTN_START_RACE' | translate }}</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Drivers Racing Column -->
-        <div class="column drivers-racing">
-            <div class="column-title">{{ 'RDS_DRIVERS_RACING' | translate }}</div>
-            <div class="scroll-area" id="racing-list" cdkDropList [cdkDropListData]="racingDrivers"
-                (cdkDropListDropped)="drop($event)">
-                <div *ngFor="let driver of racingDrivers" class="driver-card" cdkDrag
-                    (click)="toggleDriver(driver, 'racing')">
-                    <div class="driver-icon">
-                        <svg width="30" height="30" viewBox="0 0 100 100">
-                            <circle cx="50" cy="40" r="25" fill="#ccc" />
-                            <path d="M20,90 Q50,60 80,90" stroke="#ccc" stroke-width="5" fill="none" />
-                        </svg>
-                    </div>
-                    <div class="driver-info">
-                        <div><span class="label">{{ 'RDS_LABEL_NAME' | translate }}</span> <span
-                                class="value">{{driver.name}}</span></div>
-                        <div><span class="label">{{ 'RDS_LABEL_NICKNAME' | translate }}</span> <span
-                                class="value">{{driver.nickname}}</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Main Header -->
+    <div class="main-header">
+        <div class="logo-text">Race Coordinator <span class="logo-highlight">AI</span></div>
     </div>
 
-    <div class="footer-image">
-        <svg width="200" height="100" viewBox="0 0 200 100">
-            <rect width="200" height="100" fill="rgba(0,0,0,0.5)" />
-            <text x="10" y="50" fill="white" font-size="20" font-style="italic">{{ 'RDS_FOOTER_TITLE' | translate
-                }}</text>
-            <path d="M10,60 L190,60" stroke="white" stroke-width="2" />
-        </svg>
+    <div class="content-area">
+
+        <!-- Driver Selection Panel -->
+        <div class="panel driver-panel">
+            <div class="panel-header">
+                {{ 'RDS_DRIVERS_AVAILABLE' | translate }}
+                <span style="font-size: 12px; color: #888;">{{ selectedDrivers.length }} Selected</span>
+            </div>
+
+            <!-- Unified List Container -->
+            <div class="driver-list-container" id="selected-list" cdkDropList [cdkDropListData]="selectedDrivers"
+                (cdkDropListDropped)="drop($event)">
+
+                <!-- Selected Drivers (Draggable) -->
+                <div *ngIf="selectedDrivers.length > 0" class="section-divider">Racing</div>
+
+                <div *ngFor="let driver of selectedDrivers" class="driver-item selected" cdkDrag>
+                    <div class="checkbox" (click)="toggleDriverSelection(driver, true)">
+                        <div class="checkbox-icon">✓</div>
+                    </div>
+                    <div class="driver-avatar">
+                        <!-- Placeholder Avatar -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#ccc">
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                    </div>
+                    <div class="driver-details">
+                        <div class="driver-name">{{ driver.name }}</div>
+                        <div class="driver-meta">{{ driver.nickname }}</div>
+                    </div>
+                    <div class="drag-handle" cdkDragHandle>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                        </svg>
+                    </div>
+
+                    <!-- Drag Preview -->
+                    <div *cdkDragPreview class="driver-item selected" style="width: 380px;">
+                        <div class="driver-details">
+                            <div class="driver-name">{{ driver.name }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unselected Drivers (Static) -->
+                <div *ngIf="filteredUnselectedDrivers.length > 0" class="section-divider">Available</div>
+
+                <div *ngFor="let driver of filteredUnselectedDrivers" class="driver-item">
+                    <div class="checkbox" (click)="toggleDriverSelection(driver, false)"></div>
+                    <div class="driver-details">
+                        <div class="driver-name">{{ driver.name }}</div>
+                        <div class="driver-meta">{{ driver.nickname }}</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search drivers..." [(ngModel)]="driverSearchQuery">
+            </div>
+        </div>
+
+        <!-- Race Configuration Panel -->
+        <div class="panel race-panel">
+            <div class="quick-start-grid">
+                <div *ngFor="let race of quickStartRaces; let i = index" class="race-card"
+                    [class.active]="selectedRace?.entity_id === race.entity_id"
+                    [ngClass]="getRaceCardBackgroundClass(i)" (click)="selectRace(race)">
+                    <div class="card-content">
+                        <div class="card-title">{{ race.name }}</div>
+                        <div class="card-desc">Standard Configuration</div>
+                        <div class="card-btn">Select</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="race-selection-title">All Races</div>
+            <div class="all-races-selector">
+                <input type="text" class="search-input race-search" placeholder="Search races..."
+                    [(ngModel)]="raceSearchQuery">
+                <select class="styled-select" [(ngModel)]="selectedRace">
+                    <option *ngFor="let race of filteredRaces" [ngValue]="race">{{ race.name }}</option>
+                </select>
+            </div>
+
+            <div class="action-footer">
+                <button class="btn-demo" (click)="startRace(true)">
+                    <span>Demo Race</span>
+                </button>
+                <button class="btn-start" (click)="startRace(false)" [disabled]="selectedDrivers.length === 0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
+                    </svg>
+                    {{ 'RDS_BTN_START_RACE' | translate }}
+                </button>
+            </div>
+        </div>
+
     </div>
 </div>

@@ -1,10 +1,12 @@
 :host {
   display: block;
   width: 100vw;
+  width: 100vw;
   height: 100vh;
-  background: #000033;
+  background: #0a0a12;
   overflow: hidden;
   position: relative;
+  font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
 }
 
 .setup-container {
@@ -15,243 +17,529 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  background: linear-gradient(135deg, #000033 0%, #000066 100%);
-  color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Use background image as the outer 'shell' */
+  background: url('../../../assets/images/background_frame.png') center / 100% 100% no-repeat;
+  color: #e0e0e0;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.9);
+  border: none;
+  /* Shifting up and refining side padding to align with frames */
+  padding: 10px 120px 40px 120px;
+  box-sizing: border-box;
 }
 
-.setup-header {
-  background: white;
-  color: black;
-  padding: 5px 20px;
+/* --- Menu Bar --- */
+.menu-bar {
+  background: #111;
+  border-bottom: 1px solid #333;
+  padding: 5px 15px;
   display: flex;
   gap: 20px;
-  font-size: 14px;
+  font-size: 13px;
+  color: #aaa;
 }
 
-.setup-header span {
+.menu-item {
   cursor: pointer;
+  transition: color 0.2s;
 }
 
-.main-content {
+.menu-item:hover {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* --- Main Header --- */
+.main-header {
+  padding: 10px 30px;
   display: flex;
-  flex: 1;
-  padding: 20px;
-  gap: 20px;
+  align-items: center;
+  background: transparent;
+  box-shadow: none;
+  height: 90px;
+  margin-left: 20px;
+}
+
+.logo-text {
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  /* Use custom font if available, fallback to sans */
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Cards --- */
+.race-card {
+  background-color: #1a1a1a;
+  background-size: cover !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  height: 180px;
+  position: relative;
   overflow: hidden;
 }
 
-.column {
+.race-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-color: #fff;
+  filter: brightness(1.1);
+}
+
+.race-card.active {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.card-content {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
+  /* Stronger Gradient for text legibility */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+  z-index: 2;
+}
+
+/* New Text-Free Backgrounds */
+/* New Text-Free Backgrounds */
+.card-bg-gp {
+  background: url('../../../assets/images/thumb_grand_prix_v5.png') center / cover no-repeat;
+  border-color: rgba(255, 50, 50, 0.5) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.2) !important;
+}
+
+.card-bg-gp:hover,
+.card-bg-gp.active {
+  border-color: #ff3333 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.6) !important;
+}
+
+.card-bg-tt {
+  background: url('../../../assets/images/thumb_time_trial_v5.png') center / cover no-repeat;
+  border-color: rgba(0, 240, 255, 0.5) !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
+}
+
+.card-bg-tt:hover,
+.card-bg-tt.active {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6) !important;
+}
+
+.logo-highlight {
+  color: #00f0ff;
+  -webkit-text-fill-color: #00f0ff;
+  margin-left: 5px;
+  font-style: italic;
+}
+
+/* --- Content Layout --- */
+.content-area {
+  display: flex;
+  flex: 1;
+  padding: 10px 0;
+  gap: 100px;
+  overflow: hidden;
+}
+
+/* --- Panels --- */
+/* --- Panels --- */
+.panel {
+  background: transparent;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.panel-header {
+  background: transparent;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- Driver Panel (Left) - BLUE Framing --- */
+.driver-panel {
+  width: 360px;
+  height: 820px;
+  flex-shrink: 0;
+  border: none;
+  box-shadow: none;
+  margin-top: -10px;
+  margin-left: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-panel .panel-header {
+  background: transparent;
+  border-bottom: 1px solid #00f0ff;
+  color: #00f0ff;
+}
+
+.search-bar {
+  padding: 15px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 40px;
+  /* This gap pushes it into the bottom frame */
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #444;
+  padding: 8px 12px;
   border-radius: 4px;
+  color: #fff;
+  outline: none;
+}
+
+.driver-list-container {
+  flex: 1;
+  height: 550px;
+  /* Fixed height for the top box area */
+  overflow-y: auto;
   padding: 10px;
 }
 
-.column-title {
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 15px;
-  font-size: 18px;
+.section-divider {
+  font-size: 12px;
+  color: #00f0ff;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  border-bottom: 1px solid #00f0ff;
+  padding-bottom: 2px;
+  opacity: 0.7;
 }
 
-.drivers-available,
-.drivers-racing {
-  flex: 3;
-}
-
-.options-panel {
-  flex: 2;
-  align-items: center;
-  padding-top: 20px;
-}
-
-.scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* Scrollbar styling */
-.scroll-area::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scroll-area::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.scroll-area::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-}
-
-.driver-card {
+.driver-item {
   display: flex;
   align-items: center;
-  background: linear-gradient(to bottom, #1e3a8a, #172554);
-  border: 1px solid #1e40af;
-  border-radius: 4px;
-  padding: 5px;
-  gap: 10px;
-  cursor: pointer;
-  transition: transform 0.1s;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s;
+  user-select: none;
 }
 
-.driver-card:hover {
-  transform: translateX(5px);
-  background: linear-gradient(to bottom, #2563eb, #1e40af);
+.driver-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.driver-icon {
-  width: 40px;
-  height: 40px;
-  background: #333;
-  border-radius: 4px;
+.driver-item.selected {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), rgba(0, 240, 255, 0.02));
+  border: 1px solid #00f0ff;
+  border-left: 4px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #666;
+  border-radius: 3px;
+  margin-right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
-.driver-info {
+.driver-item.selected .checkbox {
+  background: #00f0ff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.checkbox-icon {
+  color: #000;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.driver-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #444;
+  margin-right: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #777;
+}
+
+.driver-details {
   flex: 1;
 }
 
-.driver-info .label {
-  color: #60a5fa;
-  font-size: 12px;
-  font-weight: bold;
-  margin-right: 5px;
+.driver-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 14px;
 }
 
-.driver-info .value {
-  color: #fbbf24;
-  font-weight: bold;
+.driver-meta {
+  font-size: 11px;
+  color: #888;
 }
 
-.options-controls {
-  width: 100%;
+.drag-handle {
+  color: #555;
+  cursor: grab;
+  padding: 5px;
+}
+
+.driver-item.selected .drag-handle {
+  color: #aaa;
+}
+
+
+/* --- Race Config Panel (Right) - RED Framing --- */
+.race-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  border: none;
+  box-shadow: none;
+  height: 720px;
+}
+
+.race-panel .panel-header {
+  background: transparent;
+  border-bottom: 1px solid #ff3333;
+  color: #ff3333;
+}
+
+.race-selection-title {
+  font-size: 18px;
+  color: #fff;
+  font-weight: 300;
+  margin-right: 55px;
+}
+
+.quick-start-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 10px;
+  margin-right: 55px;
+}
+
+.race-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.race-card.active {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+
+.card-content {
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+
+
+
+.card-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.card-desc {
+  font-size: 12px;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+.card-btn {
+  align-self: flex-start;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.all-races-selector {
+  margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-right: 55px;
+}
+
+.race-search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.styled-select {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 16px;
+  outline: none;
+}
+
+.styled-select:focus {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+/* --- Action Footer --- */
+.action-footer {
+  display: flex;
+  gap: 20px;
+  margin-top: auto;
+  padding-bottom: 30px;
+  height: 100px;
+  margin-right: 55px;
+}
+
+.btn-start {
+  flex: 2;
+  height: 60px;
+  background: linear-gradient(90deg, #00c853, #69f0ae);
+  border: none;
+  border-radius: 8px;
+  color: #003300;
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 15px;
 }
 
-.btn-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
+.btn-start:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 200, 83, 0.6);
+  filter: brightness(1.1);
 }
 
-.setup-btn {
-  width: 150px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: linear-gradient(to bottom, #fff, #ddd);
-  color: #333;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.setup-btn:hover:not(:disabled) {
-  background: linear-gradient(to bottom, #eee, #ccc);
-}
-
-.setup-btn:disabled {
-  background: #666;
-  color: #999;
-  border-color: #444;
-  cursor: not-allowed;
+.btn-start:disabled {
+  background: #333;
+  color: #555;
   box-shadow: none;
-  opacity: 0.6;
-  pointer-events: none;
+  cursor: not-allowed;
 }
 
-.setup-btn.primary {
-  margin-top: 20px;
-  width: 180px;
-  height: 50px;
+.btn-demo {
+  flex: 1;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
   font-size: 18px;
-}
-
-.settings-box {
-  border: 1px solid white;
+  font-weight: 600;
   border-radius: 8px;
-  padding: 15px;
-  margin-top: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.settings-box label {
-  display: block;
-  margin-bottom: 5px;
+.btn-demo:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
 }
 
-.selection-group {
-  margin-top: 15px;
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.selection-group label {
-  display: block;
-  margin-bottom: 5px;
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.selection-group select {
-  width: 100%;
-  padding: 5px;
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
 }
 
-.demo-checkbox {
-  margin-top: 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }
 
-.demo-box {
-  width: 20px;
-  height: 20px;
-  background: white;
-  display: inline-block;
-}
-
-.footer-image {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  width: 200px;
-}
-
-/* Drag and Drop Styles */
+/* CDK Drag Placeholders */
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 4px;
-  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
-    0 8px 10px 1px rgba(0, 0, 0, 0.14),
-    0 3px 14px 2px rgba(0, 0, 0, 0.12);
-  background: linear-gradient(to bottom, #2563eb, #1e40af);
-  padding: 5px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  background: #1a1a24;
+  color: white;
+  border: 1px solid #00f0ff;
+  padding: 10px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  color: white;
 }
 
 .cdk-drag-placeholder {
-  opacity: 0;
+  opacity: 0.3;
 }
 
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-.scroll-area.cdk-drop-list-dragging .driver-card:not(.cdk-drag-placeholder) {
+.driver-list-container.cdk-drop-list-dragging .driver-item:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

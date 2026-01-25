@@ -42,10 +42,12 @@ public class App {
 
     public static void main(String[] args) {
         boolean useEmbeddedMongo = true;
+        boolean headless = false;
         for (String arg : args) {
             if ("--no-embedded-mongo".equals(arg)) {
                 useEmbeddedMongo = false;
-                break;
+            } else if ("--headless".equals(arg)) {
+                headless = true;
             }
         }
 
@@ -100,30 +102,34 @@ public class App {
         new com.antigravity.service.DatabaseService().resetToFactory(database);
         System.out.println("Connected to MongoDB successfully.");
 
-        app = Javalin.create(config -> {
-            // Check if running from root or server directory
-            String clientPath = "web";
-            if (!Files.exists(Paths.get(clientPath))) {
-                clientPath = "client/dist/client";
-                if (!Files.exists(Paths.get(clientPath))) {
-                    clientPath = "../client/dist/client";
-                }
+        // Determine client path once
+        String[] possiblePaths = { "web", "client/dist/client", "../client/dist/client" };
+        String resolvedClientPath = null;
+        for (String path : possiblePaths) {
+            if (Files.exists(Paths.get(path))) {
+                resolvedClientPath = path;
+                break;
             }
-            config.addStaticFiles(clientPath, Location.EXTERNAL);
+        }
+
+        final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
+        System.out.println("Serving static files from: " + staticFilePath);
+
+        app = Javalin.create(config -> {
+            config.addStaticFiles(staticFilePath, Location.EXTERNAL);
             config.enableCorsForAllOrigins();
         }).start(7070);
 
         // SPA Fallback: Serve index.html for 404s on HTML requests
         app.error(404, ctx -> {
-            if (ctx.header("Accept") != null && ctx.header("Accept").contains("text/html")) {
-                ctx.contentType("text/html");
-                // Try to read index.html from static files
-                if (Files.exists(Paths.get("web/index.html"))) {
-                    ctx.result(new String(Files.readAllBytes(Paths.get("web/index.html"))));
-                } else if (Files.exists(Paths.get("client/dist/client/index.html"))) {
-                    ctx.result(new String(Files.readAllBytes(Paths.get("client/dist/client/index.html"))));
-                } else if (Files.exists(Paths.get("../client/dist/client/index.html"))) {
-                    ctx.result(new String(Files.readAllBytes(Paths.get("../client/dist/client/index.html"))));
+            String accept = ctx.header("Accept");
+            if (accept != null && accept.contains("text/html")) {
+                java.nio.file.Path indexPath = Paths.get(staticFilePath, "index.html");
+                if (Files.exists(indexPath)) {
+                    ctx.contentType("text/html");
+                    ctx.result(new String(Files.readAllBytes(indexPath)));
+                } else {
+                    System.err.println("SPA Fallback: index.html not found at " + indexPath.toAbsolutePath());
                 }
             }
         });
@@ -150,7 +156,12 @@ public class App {
         new ClientCommandTaskHandler(database, app);
 
         // Open Browser after successful start
-        openBrowser("http://localhost:7070");
+        if (!headless) {
+            openBrowser("http://localhost:7070");
+        } else {
+            System.out.println("Headless mode: Browser will not be opened automatically.");
+            System.out.println("Server is running at http://localhost:7070");
+        }
     }
 
     private static void openBrowser(String url) {

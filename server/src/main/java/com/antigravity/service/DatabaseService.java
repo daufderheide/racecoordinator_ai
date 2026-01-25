@@ -83,16 +83,44 @@ public class DatabaseService {
         // Reset sequence
         resetSequence(database, "races");
 
+        // TODO(aufderheide): Create a proper set of default races.
+
+        // Basic Round Robin race
         com.antigravity.models.RaceScoring scoring = new com.antigravity.models.RaceScoring(
                 com.antigravity.models.RaceScoring.FinishMethod.Timed,
                 45,
                 com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
                 com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
-        Race race = new Race("Round Robin", track.getEntityId(), HeatRotationType.RoundRobin,
+        Race race = new Race("Time Based", track.getEntityId(), HeatRotationType.RoundRobin,
                 scoring, getNextSequence(database, "races"), null);
 
         raceCollection.insertOne(race);
+
+        // Race 2
+        scoring = new com.antigravity.models.RaceScoring(
+                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                15,
+                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
+                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+
+        race = new Race("Lap Based", track.getEntityId(), HeatRotationType.FriendlyRoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+
+        raceCollection.insertOne(race);
+
+        // Race 3
+        scoring = new com.antigravity.models.RaceScoring(
+                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                15,
+                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
+                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+
+        race = new Race("Practice", track.getEntityId(), HeatRotationType.RoundRobin,
+                scoring, getNextSequence(database, "races"), null);
+
+        raceCollection.insertOne(race);
+
         System.out.println("Races reset.");
     }
 
