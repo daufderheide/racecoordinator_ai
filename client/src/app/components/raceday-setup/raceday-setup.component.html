@@ -98,14 +98,14 @@
             </div>
 
             <div class="action-footer">
-                <button class="btn-demo" (click)="startRace(true)">
-                    <span>Demo Race</span>
-                </button>
                 <button class="btn-start" (click)="startRace(false)" [disabled]="selectedDrivers.length === 0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
                     </svg>
                     {{ 'RDS_BTN_START_RACE' | translate }}
+                </button>
+                <button class="btn-demo" (click)="startRace(true)" [disabled]="selectedDrivers.length === 0">
+                    <span>Demo Race</span>
                 </button>
             </div>
         </div>
