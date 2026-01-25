@@ -33,6 +33,7 @@ export class RacedaySetupComponent implements OnInit {
   // UI State
   scale: number = 1;
   translationsLoaded: boolean = false;
+  isDropdownOpen: boolean = false;
   menuItems = [
     { label: 'File', action: () => console.log('File menu') },
     { label: 'Track', action: () => console.log('Track menu') },
@@ -125,6 +126,14 @@ export class RacedaySetupComponent implements OnInit {
     this.updateScale();
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-dropdown-container')) {
+      this.closeDropdown();
+    }
+  }
+
   private updateScale() {
     const targetWidth = 1600;
     const targetHeight = 900;
@@ -167,8 +176,18 @@ export class RacedaySetupComponent implements OnInit {
 
   // --- Race Logic ---
 
+  toggleDropdown(event: Event) {
+    event.stopPropagation();
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  closeDropdown() {
+    this.isDropdownOpen = false;
+  }
+
   selectRace(race: Race) {
     this.selectedRace = race;
+    this.closeDropdown();
   }
 
   startRace(isDemo: boolean = false) {

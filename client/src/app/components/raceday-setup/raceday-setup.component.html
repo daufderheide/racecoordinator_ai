@@ -92,9 +92,18 @@
             <div class="all-races-selector">
                 <input type="text" class="search-input race-search" placeholder="Search races..."
                     [(ngModel)]="raceSearchQuery">
-                <select class="styled-select" [(ngModel)]="selectedRace">
-                    <option *ngFor="let race of filteredRaces" [ngValue]="race">{{ race.name }}</option>
-                </select>
+                <div class="custom-dropdown-container">
+                    <div class="dropdown-trigger" (click)="toggleDropdown($event)">
+                        <span class="selected-value">{{ selectedRace?.name || 'Select a Race' }}</span>
+                        <div class="dropdown-arrow" [class.open]="isDropdownOpen">▼</div>
+                    </div>
+                    <div class="dropdown-menu" *ngIf="isDropdownOpen">
+                        <div class="dropdown-item" *ngFor="let race of filteredRaces" (click)="selectRace(race)"
+                            [class.selected]="selectedRace?.entity_id === race.entity_id">
+                            {{ race.name }}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="action-footer">
