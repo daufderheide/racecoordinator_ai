@@ -1,15 +1,11 @@
 package com.antigravity.race;
 
 import com.antigravity.models.RaceScoring;
-import com.antigravity.models.RaceScoring.HeatRanking;
-import com.antigravity.models.RaceScoring.HeatRankingTiebreaker;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class OverallStandings {
 
@@ -46,7 +42,6 @@ public class OverallStandings {
       int totalLaps = 0;
       double totalTime = 0.0;
       double bestLap = 0.0;
-      List<Double> allLaps = new ArrayList<>();
 
       for (DriverHeatData dhd : scoringHeats) {
         totalLaps += dhd.getLapCount();

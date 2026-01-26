@@ -1,7 +1,5 @@
 package com.antigravity.converters;
 
-import com.antigravity.models.Lane;
-import com.antigravity.proto.LaneModel;
 import java.util.Set;
 
 public class LaneConverter {

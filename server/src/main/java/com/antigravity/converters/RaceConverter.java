@@ -1,9 +1,5 @@
 package com.antigravity.converters;
 
-import com.antigravity.models.Race;
-import com.antigravity.proto.Model;
-import com.antigravity.proto.RaceModel;
-import com.antigravity.proto.TrackModel;
 import java.util.Set;
 
 public class RaceConverter {
