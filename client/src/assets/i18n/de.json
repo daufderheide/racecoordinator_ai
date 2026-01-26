@@ -1,4 +1,6 @@
 {
+    "RDS_MENU_CUSTOM_UI": "Benutzeroberfläche anpassen",
+    "RDS_MENU_REVERT_UI": "Custom UI zurücksetzen",
     "CD_CONFIRM_EXIT_MESSAGE": "Sind Sie sicher, dass Sie zum Start zurückkehren möchten?",
     "CD_CONFIRM_EXIT_TITLE": "Rennen verlassen",
     "CD_NO": "Nein",

@@ -1,4 +1,6 @@
 {
+    "RDS_MENU_CUSTOM_UI": "Interfaz personalizada",
+    "RDS_MENU_REVERT_UI": "Revertir interfaz personalizada",
     "CD_CONFIRM_EXIT_MESSAGE": "¿Está seguro de que desea salir al inicio?",
     "CD_CONFIRM_EXIT_TITLE": "Salir de la carrera",
     "CD_NO": "No",

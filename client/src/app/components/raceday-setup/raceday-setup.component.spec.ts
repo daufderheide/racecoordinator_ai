@@ -1,122 +1,89 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RacedaySetupComponent } from './raceday-setup.component';
-import { DataService } from '../../data.service';
-import { SettingsService } from '../../services/settings.service';
-import { TranslationService } from '../../services/translation.service';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { TranslatePipe } from '../../pipes/translate.pipe';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { CommonModule } from '@angular/common';
-import { DataServiceMock } from '../../testing/data-service.mock';
-import { SettingsServiceMock } from '../../testing/settings-service.mock';
-import { TranslationServiceMock } from '../../testing/translation-service.mock';
-import { of } from 'rxjs';
-import { Settings } from '../../models/settings';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { Compiler, Injector, ChangeDetectorRef } from '@angular/core';
 
 describe('RacedaySetupComponent', () => {
   let component: RacedaySetupComponent;
   let fixture: ComponentFixture<RacedaySetupComponent>;
-  let dataService: DataServiceMock;
-  let settingsService: SettingsServiceMock;
-  let translationService: TranslationServiceMock;
-  let router: jasmine.SpyObj<Router>;
+  let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
+  let mockContainer: jasmine.SpyObj<any>;
 
-  beforeEach(async () => {
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
+  beforeEach(() => {
+    mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'hasCustomFiles', 'getCustomFile']);
+    mockContainer = jasmine.createSpyObj('ViewContainerRef', ['clear', 'createComponent']);
 
-    await TestBed.configureTestingModule({
-      declarations: [RacedaySetupComponent, TranslatePipe],
-      imports: [FormsModule, DragDropModule, CommonModule],
+    TestBed.configureTestingModule({
+      declarations: [RacedaySetupComponent],
       providers: [
-        { provide: DataService, useClass: DataServiceMock },
-        { provide: SettingsService, useClass: SettingsServiceMock },
-        { provide: TranslationService, useClass: TranslationServiceMock },
-        { provide: Router, useValue: routerSpy }
+        { provide: FileSystemService, useValue: mockFileSystemService },
+        { provide: Compiler, useValue: { compileModuleAsync: () => Promise.resolve({ create: () => ({ componentFactoryResolver: { resolveComponentFactory: () => { } } }) }) } },
+        { provide: Injector, useValue: {} },
+        { provide: ChangeDetectorRef, useValue: { detectChanges: () => { } } }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedaySetupComponent);
     component = fixture.componentInstance;
-    dataService = TestBed.inject(DataService) as unknown as DataServiceMock;
-    settingsService = TestBed.inject(SettingsService) as unknown as SettingsServiceMock;
-    translationService = TestBed.inject(TranslationService) as unknown as TranslationServiceMock;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
-    fixture.detectChanges();
+    // Mock the ViewContainerRef
+    component.container = mockContainer;
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load drivers and races on init', () => {
-    expect(dataService.getDrivers).toHaveBeenCalled();
-    expect(dataService.getRaces).toHaveBeenCalled();
-    expect(component.unselectedDrivers.length + component.selectedDrivers.length).toBe(2);
-    expect(component.races.length).toBe(2);
+  it('should load default UI when no custom files are present', async () => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
+    spyOn(component, 'loadDefaultComponent').and.callThrough();
+
+    await component.ngOnInit();
+
+    expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalled();
+    expect(component.loadDefaultComponent).toHaveBeenCalled();
+    expect(mockContainer.clear).toHaveBeenCalled();
+    // Verify default component creation
+    expect(mockContainer.createComponent).toHaveBeenCalled();
   });
 
-  it('should apply saved settings on init', () => {
-    expect(settingsService.getSettings).toHaveBeenCalled();
-    expect(component.selectedDrivers.length).toBe(1);
-    expect(component.selectedDrivers[0].entity_id).toBe('d1');
-    expect(component.selectedRace?.entity_id).toBe('r1');
+  it('should load default UI when custom file loading fails', async () => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(true));
+    mockFileSystemService.getCustomFile.and.throwError('Read error');
+    spyOn(component, 'loadDefaultComponent').and.callThrough();
+    spyOn(component, 'loadCustomComponent').and.callThrough();
+    spyOn(console, 'error'); // Suppress error log
+
+    await component.ngOnInit();
+
+    expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalled();
+    expect(component.loadCustomComponent).toHaveBeenCalled();
+    // Should catch error and fall back
+    expect(component.loadDefaultComponent).toHaveBeenCalled();
+    expect(mockContainer.createComponent).toHaveBeenCalled();
   });
 
-  it('should filter available drivers based on search query', () => {
-    component.driverSearchQuery = 'Bob';
-    expect(component.filteredUnselectedDrivers.length).toBe(1);
-    expect(component.filteredUnselectedDrivers[0].name).toBe('Bob');
+  it('should load custom UI when selected and files exist', async () => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(true));
+    mockFileSystemService.getCustomFile.and.returnValue(Promise.resolve('<div>Custom</div>'));
+    spyOn(component, 'loadDefaultComponent');
+    spyOn(component, 'loadCustomComponent').and.callThrough();
 
-    component.driverSearchQuery = 'NonExistent';
-    expect(component.filteredUnselectedDrivers.length).toBe(0);
-  });
+    // We need to mock the compiler flow a bit more for this to pass without errors if we check internals,
+    // but verifying loadCustomComponent is called and loadDefaultComponent is NOT called is the main check.
 
-  it('should move driver to selected list when toggled from unselected', () => {
-    const driverToSelect = component.filteredUnselectedDrivers.find((d: any) => d.entity_id === 'd2')!;
-    component.toggleDriverSelection(driverToSelect, false);
+    // Deeper mock for createDynamicComponentClass / Compiler to avoid runtime errors in test
+    // We can spy on createDynamicComponentClass to simplify
+    spyOn<any>(component, 'createDynamicComponentClass').and.returnValue({} as any);
+    // Mock compiler to return a factory that works with our spy
+    const mockFactory = { create: jasmine.createSpy().and.returnValue({ componentFactoryResolver: { resolveComponentFactory: jasmine.createSpy() } }) };
+    (component as any).compiler = { compileModuleAsync: jasmine.createSpy().and.returnValue(Promise.resolve(mockFactory)) };
 
-    expect(component.selectedDrivers.length).toBe(2);
-    expect(component.selectedDrivers[1].entity_id).toBe('d2');
-    expect(settingsService.saveSettings).toHaveBeenCalled();
-  });
+    await component.ngOnInit();
 
-  it('should move driver to unselected list when toggled from selected', () => {
-    const driverToUnselect = component.selectedDrivers[0];
-    component.toggleDriverSelection(driverToUnselect, true);
-
-    expect(component.selectedDrivers.length).toBe(0);
-    expect(component.filteredUnselectedDrivers.length).toBe(2);
-    expect(settingsService.saveSettings).toHaveBeenCalled();
-  });
-
-  it('should filter races based on search query', () => {
-    component.raceSearchQuery = 'Time Trial';
-    expect(component.filteredRaces.length).toBe(1);
-    expect(component.filteredRaces[0].name).toBe('Time Trial');
-  });
-
-  it('should update selected race and save settings', () => {
-    const raceToSelect = component.races.find((r: any) => r.entity_id === 'r2')!;
-    component.selectRace(raceToSelect);
-
-    expect(component.selectedRace?.entity_id).toBe('r2');
-    expect(settingsService.saveSettings).toHaveBeenCalled();
-    expect(component.isDropdownOpen).toBeFalse();
-  });
-
-  it('should initialize race and navigate on startRace', () => {
-    component.startRace(false);
-
-    expect(dataService.initializeRace).toHaveBeenCalledWith('r1', ['d1'], false);
-    expect(router.navigate).toHaveBeenCalledWith(['/raceday']);
-  });
-
-  it('should handle demo mode on startRace', () => {
-    component.startRace(true);
-
-    expect(dataService.initializeRace).toHaveBeenCalledWith('r1', ['d1'], true);
-    expect(router.navigate).toHaveBeenCalledWith(['/raceday']);
+    expect(mockFileSystemService.hasCustomFiles).toHaveBeenCalled();
+    expect(component.loadCustomComponent).toHaveBeenCalled();
+    expect(component.loadDefaultComponent).not.toHaveBeenCalled();
+    expect(mockFileSystemService.getCustomFile).toHaveBeenCalledWith('raceday-setup.component.html');
   });
 });

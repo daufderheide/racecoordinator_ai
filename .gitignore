@@ -29,6 +29,8 @@ yarn-error.log*
 
 # Mongodb
 server/mongodb_data
+server_mongo/
+server_temp/
 
 # Maven
 server/target
@@ -55,3 +57,6 @@ client/test-results/
 client/.chrome-home/
 .karma-profile/
 
+# I think this is generated code on the client/server
+client/src/app/types/
+server/build_output/

@@ -1,0 +1,692 @@
+:host {
+  display: block;
+  width: 100vw;
+  width: 100vw;
+  height: 100vh;
+  background: #0a0a12;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+}
+
+.setup-container {
+  display: flex;
+  flex-direction: column;
+  width: 1600px;
+  height: 900px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Use background image as the outer 'shell' */
+  background: url('../../../assets/images/background_frame.png') center / 100% 100% no-repeat;
+  color: #e0e0e0;
+  overflow: hidden;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.9);
+  border: none;
+  /* Shifting up and refining side padding to align with frames */
+  padding: 10px 120px 40px 120px;
+  box-sizing: border-box;
+}
+
+/* --- Menu Bar --- */
+.menu-bar {
+  background: transparent;
+  border-bottom: none;
+  padding: 10px 15px 10px 0px;
+  display: flex;
+  gap: 25px;
+  font-size: 16px;
+  color: #fff;
+  font-weight: 500;
+  margin-top: 25px;
+  margin-bottom: -25px;
+  z-index: 10;
+}
+
+.menu-item {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.menu-bar> :last-child {
+  margin-left: auto;
+  margin-right: -25px;
+}
+
+.menu-item:hover {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.menu-item-wrapper {
+  position: relative;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #1a1a24;
+  border: 1px solid #00f0ff;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.8);
+  min-width: 200px;
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.menu-dropdown-item {
+  padding: 10px 15px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.menu-dropdown-item:nth-child(even) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.menu-dropdown-item:hover {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+}
+
+/* --- Main Header --- */
+.main-header {
+  padding: 10px 30px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  box-shadow: none;
+  height: 90px;
+  margin-left: 20px;
+}
+
+.logo-text {
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  /* Use custom font if available, fallback to sans */
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Cards --- */
+.race-card {
+  background-color: #1a1a1a;
+  background-size: cover !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.race-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-color: #fff;
+  filter: brightness(1.1);
+}
+
+.race-card.active {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.card-content {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Stronger Gradient for text legibility */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+  z-index: 2;
+}
+
+/* New Text-Free Backgrounds */
+/* New Text-Free Backgrounds */
+.card-bg-gp {
+  background: url('../../../assets/images/thumb_grand_prix_v5.png') center / cover no-repeat;
+  border-color: rgba(255, 50, 50, 0.5) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.2) !important;
+}
+
+.card-bg-gp:hover,
+.card-bg-gp.active {
+  border-color: #ff3333 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.6) !important;
+}
+
+.card-bg-tt {
+  background: url('../../../assets/images/thumb_time_trial_v5.png') center / cover no-repeat;
+  border-color: rgba(0, 240, 255, 0.5) !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2) !important;
+}
+
+.card-bg-tt:hover,
+.card-bg-tt.active {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.6) !important;
+}
+
+.logo-highlight {
+  color: #00f0ff;
+  -webkit-text-fill-color: #00f0ff;
+  margin-left: 5px;
+  font-style: italic;
+}
+
+/* --- Content Layout --- */
+.content-area {
+  display: flex;
+  flex: 1;
+  padding: 10px 0;
+  gap: 100px;
+  overflow: hidden;
+}
+
+/* --- Panels --- */
+/* --- Panels --- */
+.panel {
+  background: transparent;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.panel-header {
+  background: transparent;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- Driver Panel (Left) - BLUE Framing --- */
+.driver-panel {
+  width: 360px;
+  height: 650px;
+  flex-shrink: 0;
+  border: none;
+  box-shadow: none;
+  margin-top: -10px;
+  margin-left: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-panel .panel-header {
+  background: transparent;
+  border-bottom: 1px solid #00f0ff;
+  color: #00f0ff;
+}
+
+.search-bar {
+  padding: 15px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #444;
+  padding: 8px 35px 8px 12px;
+  border-radius: 4px;
+  color: #fff;
+  outline: none;
+}
+
+.driver-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 50px;
+  margin-bottom: 10px;
+}
+
+.section-divider {
+  font-size: 12px;
+  color: #00f0ff;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  border-bottom: 1px solid #00f0ff;
+  padding-bottom: 2px;
+  opacity: 0.7;
+}
+
+.driver-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  /* Removed margin-bottom here to let gap handle it in flex containers (drop-zone), 
+     or handle explicitly for available list if needed, but flex gap is cleaner overall. 
+     We can add margin-bottom ONLY for non-drop-zone items if necessary, 
+     but let's try gap first or rely on standard spacing. 
+     Actually, let's keep margin-bottom for items OUTSIDE the drop-zone (Available list). */
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.2s;
+  user-select: none;
+  cursor: pointer;
+}
+
+.drop-zone .driver-item {
+  margin-bottom: 0;
+}
+
+.driver-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.driver-item.selected {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.15), rgba(0, 240, 255, 0.02));
+  border: 1px solid #00f0ff;
+  border-left: 4px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  cursor: grab;
+}
+
+.driver-item.selected:active {
+  cursor: grabbing;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #666;
+  border-radius: 3px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.driver-item.selected .checkbox {
+  background: #00f0ff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.checkbox-icon {
+  color: #000;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.driver-seed {
+  min-width: 25px;
+  text-align: center;
+  color: #888;
+  margin-right: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.driver-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #444;
+  margin-right: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #777;
+}
+
+.driver-details {
+  flex: 1;
+}
+
+.driver-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 14px;
+}
+
+.driver-meta {
+  font-size: 11px;
+  color: #888;
+}
+
+/* --- Race Config Panel (Right) - RED Framing --- */
+.race-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: none;
+  box-shadow: none;
+  height: 705px;
+}
+
+.race-panel .panel-header {
+  background: transparent;
+  border-bottom: 1px solid #ff3333;
+  color: #ff3333;
+}
+
+.race-selection-title {
+  font-size: 18px;
+  color: #fff;
+  font-weight: 300;
+  margin-right: 55px;
+}
+
+.quick-start-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 10px;
+  margin-right: 55px;
+}
+
+.race-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.race-card.active {
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+
+.card-content {
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+.card-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.card-desc {
+  font-size: 12px;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+.card-btn {
+  align-self: flex-start;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.all-races-selector {
+  margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-right: 55px;
+}
+
+.race-search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+  z-index: 100;
+}
+
+.dropdown-trigger {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.dropdown-trigger:hover {
+  border-color: #00f0ff;
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  transition: transform 0.2s;
+  color: #666;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+  color: #00f0ff;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  background: #1a1a24;
+  border: 1px solid #00f0ff;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.2);
+  max-height: 185px;
+  overflow-y: auto;
+  z-index: 101;
+}
+
+.dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:nth-child(even) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+}
+
+.dropdown-item.selected {
+  background: rgba(0, 240, 255, 0.2);
+  color: #fff;
+  font-weight: bold;
+}
+
+/* --- Action Footer --- */
+.action-footer {
+  display: flex;
+  gap: 20px;
+  margin-top: auto;
+  padding-bottom: 30px;
+  height: 100px;
+  margin-right: 55px;
+}
+
+.btn-start {
+  flex: 2;
+  height: 60px;
+  background: linear-gradient(90deg, #00c853, #69f0ae);
+  border: none;
+  border-radius: 8px;
+  color: #003300;
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.btn-start:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(0, 200, 83, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-start:disabled {
+  background: #333;
+  color: #555;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-demo {
+  flex: 1;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-demo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  transform: scale(1.02);
+}
+
+.btn-demo:disabled {
+  background: #333;
+  color: #555;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* CDK Drag Placeholders */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  background: #1a1a24;
+  color: white;
+  border: 1px solid #00f0ff;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.driver-list-container.cdk-drop-list-dragging .driver-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

@@ -81,6 +81,12 @@ npm run test:visual
 ```
 *Snapshots are generated for all supported languages (en, es, fr, de, pt).*
 
+#### Accepting Changes (Updating Snapshots)
+If you have intentionally modified the UI and need to update the expected screenshots, run:
+```bash
+./run_client_screendiff_tests.sh --update-snapshots
+```
+
 ### Server (Java)
 Run the JUnit tests for the backend:
 ```bash

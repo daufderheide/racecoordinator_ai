@@ -24,6 +24,7 @@
     "protobufjs": "^7.2.5",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "typescript": "~5.9.0",
     "zone.js": "~0.16.0"
   },
   "devDependencies": {
@@ -41,8 +42,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "playwright": "^1.58.0",
-    "protobufjs-cli": "^1.1.2",
-    "typescript": "~5.9.0"
+    "protobufjs-cli": "^1.1.2"
   },
   "overrides": {
     "tmp": "^0.2.3"

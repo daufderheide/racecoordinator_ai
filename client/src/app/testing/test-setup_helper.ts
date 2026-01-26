@@ -46,4 +46,92 @@ export class TestSetupHelper {
       window.localStorage.setItem('racecoordinator_settings', JSON.stringify({ ...defaultSettings, ...s }));
     }, settings);
   }
+  static async setupFileSystemMock(page: Page, customFiles: Record<string, string>) {
+    await page.addInitScript((files) => {
+      // Helper to create a file handle
+      const createMockFileHandle = (name: string, content: string) => ({
+        kind: 'file',
+        name: name,
+        getFile: async () => ({
+          text: async () => content
+        })
+      });
+
+      // Mock Directory Handle
+      const mockDirectoryHandle = {
+        kind: 'directory',
+        name: 'mock-custom-dir',
+        queryPermission: async () => 'granted',
+        requestPermission: async () => 'granted',
+        getFileHandle: async (name: string) => {
+          if (files[name]) {
+            return createMockFileHandle(name, files[name]);
+          }
+          throw new Error('File not found: ' + name);
+        }
+      };
+
+      // Mock IndexedDB Structure
+      const mockStore = {
+        get: (key: string) => {
+          const request: any = { result: null, onsuccess: null, onerror: null };
+          setTimeout(() => {
+            if (key === 'raceday-setup-dir') {
+              request.result = mockDirectoryHandle;
+            }
+            if (request.onsuccess) request.onsuccess({ target: request });
+          }, 10);
+          return request;
+        },
+        put: () => ({ onsuccess: null, onerror: null }), // No-op for put
+        delete: () => ({ onsuccess: null, onerror: null }) // No-op for delete
+      };
+
+      const mockTransaction = {
+        objectStore: (name: string) => mockStore,
+      };
+
+      const mockDB = {
+        objectStoreNames: { contains: () => true },
+        createObjectStore: () => mockStore,
+        transaction: (stores: any, mode: any) => mockTransaction
+      };
+
+      const mockOpenRequest: any = {
+        result: mockDB,
+        onsuccess: null,
+        onerror: null,
+        onupgradeneeded: null
+      };
+
+      // Override window.indexedDB
+      try {
+        Object.defineProperty(window, 'indexedDB', {
+          value: {
+            open: (name: string, version: number) => {
+              setTimeout(() => {
+                if (mockOpenRequest.onsuccess) {
+                  mockOpenRequest.onsuccess({ target: mockOpenRequest });
+                }
+              }, 10);
+              return mockOpenRequest;
+            }
+          },
+          writable: true
+        });
+      } catch (e) {
+        // Fallback
+        (window as any).indexedDB = {
+          open: (name: string, version: number) => {
+            setTimeout(() => {
+              if (mockOpenRequest.onsuccess) {
+                mockOpenRequest.onsuccess({ target: mockOpenRequest });
+              }
+            }, 10);
+            return mockOpenRequest;
+          }
+        };
+      }
+    }, customFiles);
+  }
 }

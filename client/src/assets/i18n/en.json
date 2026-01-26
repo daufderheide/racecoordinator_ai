@@ -1,4 +1,6 @@
 {
+    "RDS_MENU_CUSTOM_UI": "Custom UI",
+    "RDS_MENU_REVERT_UI": "Revert Custom UI",
     "CD_CONFIRM_EXIT_MESSAGE": "Are you sure you want to exit to home?",
     "CD_CONFIRM_EXIT_TITLE": "Exit Race",
     "CD_NO": "No",

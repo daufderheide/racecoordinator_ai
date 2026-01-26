@@ -8,6 +8,7 @@ import { AppComponent } from './app.component';
 
 import { RacedayComponent } from './components/raceday/raceday.component';
 import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
+import { DefaultRacedaySetupComponent } from './components/raceday-setup/default-raceday-setup.component';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { RaceService } from './services/race.service';
@@ -22,6 +23,7 @@ import { LeaderBoardComponent } from './components/leader_board/leader_board.com
 
     RacedayComponent,
     RacedaySetupComponent,
+    DefaultRacedaySetupComponent,
     TranslatePipe,
     SvgTextScalerDirective,
     SvgTextScalerDirective,

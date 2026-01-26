@@ -1,14 +1,39 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ViewContainerRef,
+  Compiler,
+  Injector,
+  NgModule,
+  ComponentRef,
+  Type,
+  Inject
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
+import * as ts from 'typescript';
 import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { Race } from 'src/app/models/race';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RaceService } from 'src/app/services/race.service';
-import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
-import { Settings } from 'src/app/models/settings';
+import { ChangeDetectorRef } from '@angular/core';
+
+class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
+  constructor(
+    @Inject(DataService) dataService: DataService,
+    @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
+    @Inject(RaceService) raceService: RaceService,
+    @Inject(Router) router: Router,
+    @Inject(TranslationService) translationService: TranslationService,
+    @Inject(SettingsService) settingsService: SettingsService,
+    @Inject(FileSystemService) fileSystem: FileSystemService
+  ) {
+    super(dataService, cdr, raceService, router, translationService, settingsService, fileSystem);
+  }
+}
 
 @Component({
   selector: 'app-raceday-setup',
@@ -17,273 +42,149 @@ import { Settings } from 'src/app/models/settings';
   standalone: false
 })
 export class RacedaySetupComponent implements OnInit {
-  // Driver State
-  selectedDrivers: Driver[] = [];
-  unselectedDrivers: Driver[] = [];
+  @ViewChild('container', { read: ViewContainerRef, static: true }) container!: ViewContainerRef;
 
-  // Search State
-  driverSearchQuery: string = '';
-  raceSearchQuery: string = '';
-
-  // Race State
-  races: Race[] = [];
-  selectedRace?: Race;
-  quickStartRaces: Race[] = [];
-
-  // UI State
-  scale: number = 1;
-  translationsLoaded: boolean = false;
-  isDropdownOpen: boolean = false;
-  menuItems = [
-    { label: 'RDS_MENU_FILE', action: () => console.log('File menu') },
-    { label: 'RDS_MENU_TRACK', action: () => console.log('Track menu') },
-    { label: 'RDS_MENU_DRIVER', action: () => console.log('Driver menu') },
-    { label: 'RDS_MENU_RACE', action: () => console.log('Race menu') },
-    { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
-    { label: 'RDS_MENU_OPTIONS', action: () => console.log('Options menu') },
-    { label: 'RDS_MENU_HELP', action: () => console.log('Help menu') }
-  ];
+  error: string | null = null;
+  isLoading = true;
 
   constructor(
-    private dataService: DataService,
-    private cdr: ChangeDetectorRef,
-    private raceService: RaceService,
-    private router: Router,
-    private translationService: TranslationService,
-    private settingsService: SettingsService
+    private fileSystem: FileSystemService,
+    private compiler: Compiler,
+    private injector: Injector,
+    private cdr: ChangeDetectorRef
   ) { }
 
-  ngOnInit() {
-    this.updateScale();
+  async ngOnInit() {
+    this.isLoading = true;
+    this.container.clear();
 
-    forkJoin({
-      drivers: this.dataService.getDrivers(),
-      races: this.dataService.getRaces()
-    }).subscribe({
-      next: (result) => {
-        const drivers = result.drivers.map(d => new Driver(d.entity_id, d.name, d.nickname || ''));
-        const races = result.races;
+    try {
+      if (await this.fileSystem.hasCustomFiles()) {
+        await this.loadCustomComponent();
+      } else {
+        this.loadDefaultComponent();
+      }
+    } catch (e) {
+      console.error('Failed to load custom component, falling back to default', e);
+      this.error = 'Failed to load custom view. Loading default...';
+      this.loadDefaultComponent();
 
-        // --- Race Setup ---
-        this.races = races.sort((a, b) => a.name.localeCompare(b.name));
+      // Clear error after a few seconds
+      setTimeout(() => {
+        this.error = null;
+      }, 5000);
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
-        const localSettings = this.settingsService.getSettings();
-        this.updateQuickStartRaces(localSettings.recentRaceIds);
+  loadDefaultComponent() {
+    this.container.createComponent(DefaultRacedaySetupComponent);
+  }
 
-        if (localSettings && localSettings.recentRaceIds?.length > 0) {
-          const defaultRaceId = localSettings.recentRaceIds[0];
-          this.selectedRace = this.races.find(r => r.entity_id === defaultRaceId);
-        }
+  async loadCustomComponent() {
+    try {
+      const html = await this.fileSystem.getCustomFile('raceday-setup.component.html');
+      let css = '';
+      try {
+        css = await this.fileSystem.getCustomFile('raceday-setup.component.css');
+      } catch (e) {
+        // CSS is optional
+        console.log('No custom CSS found or could not be read');
+      }
 
-        if (!this.selectedRace && this.races.length > 0) {
-          this.selectedRace = this.races[0];
-        }
+      let tsCode = '';
+      try {
+        tsCode = await this.fileSystem.getCustomFile('raceday-setup.component.ts');
+      } catch (e) {
+        console.log('No custom TS found');
+      }
 
-        // --- Driver Setup ---
-        // Initialize lists
-        let initialSelectedIds = new Set<string>();
-        if (localSettings && localSettings.selectedDriverIds) {
-          initialSelectedIds = new Set(localSettings.selectedDriverIds);
-        }
+      // Create Custom Component Class
+      let componentType: Type<any>;
 
-        const driverMap = new Map(drivers.map(d => [d.entity_id, d]));
+      if (tsCode) {
+        componentType = this.createDynamicComponentClass(tsCode, html, css);
+      } else {
+        // Create a basic component that extends DefaultRacedaySetupComponent
+        componentType = Component({
+          template: html,
+          styles: [css],
+          standalone: false
+        })(CustomUiBaseComponent);
+      }
 
-        // Populate Selected (in saved order)
-        if (localSettings && localSettings.selectedDriverIds) {
-          for (const id of localSettings.selectedDriverIds) {
-            const d = driverMap.get(id);
-            if (d) {
-              this.selectedDrivers.push(d);
-              driverMap.delete(id);
-            }
-          }
-        }
+      // Create a Module to declare the component
+      const module = NgModule({
+        declarations: [componentType],
+        imports: [CommonModule], // Add other shared modules here if needed (e.g. TranslateModule)
+      })(class DynamicModule { });
 
-        // Populate Unselected (Alphabetical)
-        this.unselectedDrivers = Array.from(driverMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      // Compile and Create
+      const moduleFactory = await this.compiler.compileModuleAsync(module);
+      const moduleRef = moduleFactory.create(this.injector);
+      const componentFactory = moduleRef.componentFactoryResolver.resolveComponentFactory(componentType);
 
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error loading initial data', err)
+      this.container.createComponent(componentFactory);
+
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private createDynamicComponentClass(tsCode: string, html: string, css: string): Type<any> {
+    // Transpile TS to JS
+    const result = ts.transpileModule(tsCode, {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2015 }
     });
 
-    this.translationService.getTranslationsLoaded().subscribe(loaded => {
-      this.translationsLoaded = loaded;
-      this.cdr.detectChanges();
-    });
+    // Execute the JS to get the class
+    // We need to provide dependencies if they import them.
+    // This is the tricky part: Runtime dependency injection for 'import' statements.
+    // A simple 'eval' won't handle imports.
+    //
+    // LIMITATION: User provided TS cannot easily import 'src/app/...' without a custom loader.
+    //
+    // ALTERNATIVE: We can regex-replace imports or provide a specific base class they MUST extend which we expose globally or pass in.
+    //
+    // For this proof of concept/implementation:
+    // We assume the user script defines a class and we wrap it or they extend a global class.
+
+    // Simplification for Step 1: 
+    // We expect the user code to export a class named 'CustomRacedaySetupComponent'.
+    // We will strip imports and provide global variables or Injector.
+
+    // For now, let's treat the user code as the body of a class extending DefaultRacedaySetupComponent, 
+    // or just assume standard Angular component structure is too hard to dynamic load with imports.
+
+    // Let's try to construct a class dynamically that extends DefaultRacedaySetupComponent.
+
+
+    // Actual implementation of creating a class from string is complex due to scope/imports.
+    // Hack: We create a class that extends DefaultRacedaySetupComponent
+    // and we evaluate the user code *inside* the constructor or as methods.
+
+    // Better approach for custom logic: 
+    // Check if we can just define the component metadata here and use the DEFAULT logic class
+    // but with CUSTOM template/styles.
+    // This covers 90% of use cases (reskinning).
+    // If they strictly need custom Logic in TS, that's much harder without a build step.
+
+    // PROPOSAL: If Custom TS is provided, we try to run it. If it fails or is too complex, we warn.
+    // Let's stick to: Custom HTML/CSS + Default Logic (inheritance).
+
+    return Component({
+      template: html,
+      styles: [css],
+      standalone: false
+    })(CustomUiBaseComponent);
   }
 
-  @HostListener('window:resize')
-  onResize() {
-    this.updateScale();
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.custom-dropdown-container')) {
-      this.closeDropdown();
+  async configureCustomView() {
+    const success = await this.fileSystem.selectCustomFolder();
+    if (success) {
+      // Reload to apply changes
+      window.location.reload();
     }
-  }
-
-  private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-
-    this.scale = Math.min(scaleX, scaleY);
-  }
-
-  // --- Driver Logic ---
-
-  toggleDriverSelection(driver: Driver, isSelected: boolean) {
-    if (isSelected) {
-      // Was selected, now unselecting
-      // Remove from selected
-      this.selectedDrivers = this.selectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-      // Add to unselected and sort
-      this.unselectedDrivers.push(driver);
-      this.unselectedDrivers.sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      // Was unselected, now selecting
-      // Remove from unselected
-      this.unselectedDrivers = this.unselectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-      // Add to end of selected
-      this.selectedDrivers.push(driver);
-      // No sort needed for selected (user order)
-    }
-    this.saveSettings();
-    this.cdr.detectChanges();
-  }
-
-  drop(event: CdkDragDrop<Driver[]>) {
-    // Only reorder within the selected list and if dropped strictly inside the container
-    if (event.container.id === 'selected-list' && event.isPointerOverContainer) {
-      moveItemInArray(this.selectedDrivers, event.previousIndex, event.currentIndex);
-      this.saveSettings();
-    }
-  }
-
-  // --- Race Logic ---
-
-  toggleDropdown(event: Event) {
-    event.stopPropagation();
-    this.isDropdownOpen = !this.isDropdownOpen;
-  }
-
-  closeDropdown() {
-    this.isDropdownOpen = false;
-  }
-
-  selectRace(race: Race) {
-    this.selectedRace = race;
-    this.saveSettings();
-    this.closeDropdown();
-  }
-
-  private saveSettings() {
-    const localSettings = this.settingsService.getSettings();
-    let recentRaceIds = localSettings.recentRaceIds || [];
-
-    if (this.selectedRace) {
-      // Prepend the new race ID, remove it if it was already in the list
-      recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
-      // Keep only the last two
-      recentRaceIds = recentRaceIds.slice(0, 2);
-    }
-
-    // Always persist
-    const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
-    this.settingsService.saveSettings(settings);
-    this.updateQuickStartRaces(recentRaceIds);
-  }
-
-  startRace(isDemo: boolean = false) {
-    if (this.selectedRace && this.selectedDrivers.length > 0) {
-      console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedDrivers.length} drivers`);
-
-      // Ensure settings are up to date before redirecting
-      this.saveSettings();
-
-      const settings = this.settingsService.getSettings(); // Get back what we just saved (or what was there)
-
-      this.dataService.initializeRace(this.selectedRace.entity_id, settings.selectedDriverIds, isDemo).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.router.navigate(['/raceday']);
-          }
-        },
-        error: (err) => console.error(err)
-      });
-    }
-  }
-
-  updateQuickStartRaces(recentRaceIds: string[] = []) {
-    this.quickStartRaces = [];
-
-    // 1. Try to populate from recent list
-    if (recentRaceIds && recentRaceIds.length > 0) {
-      for (const id of recentRaceIds) {
-        const race = this.races.find(r => r.entity_id === id);
-        if (race) {
-          this.quickStartRaces.push(race);
-        }
-      }
-    }
-
-    // 2. If we don't have enough, try to find "Grand Prix" or "Time Trial" as defaults if they aren't already in the list
-    if (this.quickStartRaces.length < 2) {
-      const defaults = [
-        this.races.find(r => r.name.toLowerCase().includes('grand prix')),
-        this.races.find(r => r.name.toLowerCase().includes('time trial'))
-      ].filter(r => r !== undefined && !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id)) as Race[];
-
-      for (const d of defaults) {
-        if (this.quickStartRaces.length < 2) {
-          this.quickStartRaces.push(d);
-        }
-      }
-    }
-
-    // 3. Last fallback: just pick first available races
-    if (this.quickStartRaces.length < 2) {
-      const remaining = this.races.filter(r => !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id));
-      for (const r of remaining) {
-        if (this.quickStartRaces.length < 2) {
-          this.quickStartRaces.push(r);
-        }
-      }
-    }
-  }
-
-  getStartRaceTooltip(): string {
-    if (this.selectedDrivers.length > 0) return '';
-    const translated = this.translationService.translate('RDS_START_RACE_TOOLTIP');
-    console.log('DEBUG: getStartRaceTooltip returning:', translated);
-    return translated;
-  }
-
-  getRaceCardBackgroundClass(index: number): string {
-    const backgrounds = ['card-bg-gp', 'card-bg-tt']; // Add more if available
-    return backgrounds[index % backgrounds.length];
-  }
-
-  get filteredUnselectedDrivers(): Driver[] {
-    if (!this.driverSearchQuery) return this.unselectedDrivers;
-    const q = this.driverSearchQuery.toLowerCase();
-    return this.unselectedDrivers.filter(d =>
-      d.name.toLowerCase().includes(q) ||
-      d.nickname.toLowerCase().includes(q)
-    );
-  }
-
-  get filteredRaces(): Race[] {
-    if (!this.raceSearchQuery) return this.races;
-    const q = this.raceSearchQuery.toLowerCase();
-    return this.races.filter(r => r.name.toLowerCase().includes(q));
   }
 }
