@@ -39,3 +39,11 @@ release/
 # Files too large for git (consider splitting the zip files into multiple parts)
 build_cache/java8.zip
 build_cache/java17.zip
+
+# Playwright stuffs
+client/.browser-tmp/
+client/.npm-cache/
+client/.playwright-browsers/
+client/.tmp/
+client/playwright-report/
+client/test-results/
