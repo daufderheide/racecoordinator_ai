@@ -67,22 +67,14 @@ export class RacedaySetupComponent implements OnInit {
         // --- Race Setup ---
         this.races = races.sort((a, b) => a.name.localeCompare(b.name));
 
-        // Setup Quick Start (For now, just pick the first two or specific ones)
-        // Ideally checking for "Grand Prix" or "Time Trial"
-        const gp = this.races.find(r => r.name.toLowerCase().includes('grand prix')) || this.races[0];
-        const tt = this.races.find(r => r.name.toLowerCase().includes('time trial')) || this.races[1];
-
-        if (gp) this.quickStartRaces.push(gp);
-        if (tt && tt !== gp) this.quickStartRaces.push(tt);
-        if (this.quickStartRaces.length < 2 && this.races.length >= 2) {
-          // Fill if duplicates or missing
-          this.quickStartRaces = this.races.slice(0, 2);
-        }
-
         const localSettings = this.settingsService.getSettings();
-        if (localSettings && localSettings.selectedRaceId) {
-          this.selectedRace = this.races.find(r => r.entity_id === localSettings.selectedRaceId);
+        this.updateQuickStartRaces(localSettings.recentRaceIds);
+
+        if (localSettings && localSettings.recentRaceIds?.length > 0) {
+          const defaultRaceId = localSettings.recentRaceIds[0];
+          this.selectedRace = this.races.find(r => r.entity_id === defaultRaceId);
         }
+
         if (!this.selectedRace && this.races.length > 0) {
           this.selectedRace = this.races[0];
         }
@@ -194,8 +186,17 @@ export class RacedaySetupComponent implements OnInit {
     if (this.selectedRace && this.selectedDrivers.length > 0) {
       console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedDrivers.length} drivers`);
 
-      const settings = new Settings(this.selectedRace.entity_id, this.selectedDrivers.map(d => d.entity_id));
+      const localSettings = this.settingsService.getSettings();
+      let recentRaceIds = localSettings.recentRaceIds || [];
+
+      // Prepend the new race ID, remove it if it was already in the list
+      recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
+      // Keep only the last two
+      recentRaceIds = recentRaceIds.slice(0, 2);
+
+      const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
       this.settingsService.saveSettings(settings);
+      this.updateQuickStartRaces(recentRaceIds);
 
       this.dataService.initializeRace(this.selectedRace.entity_id, settings.selectedDriverIds, isDemo).subscribe({
         next: (response) => {
@@ -205,6 +206,44 @@ export class RacedaySetupComponent implements OnInit {
         },
         error: (err) => console.error(err)
       });
+    }
+  }
+
+  updateQuickStartRaces(recentRaceIds: string[] = []) {
+    this.quickStartRaces = [];
+
+    // 1. Try to populate from recent list
+    if (recentRaceIds && recentRaceIds.length > 0) {
+      for (const id of recentRaceIds) {
+        const race = this.races.find(r => r.entity_id === id);
+        if (race) {
+          this.quickStartRaces.push(race);
+        }
+      }
+    }
+
+    // 2. If we don't have enough, try to find "Grand Prix" or "Time Trial" as defaults if they aren't already in the list
+    if (this.quickStartRaces.length < 2) {
+      const defaults = [
+        this.races.find(r => r.name.toLowerCase().includes('grand prix')),
+        this.races.find(r => r.name.toLowerCase().includes('time trial'))
+      ].filter(r => r !== undefined && !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id)) as Race[];
+
+      for (const d of defaults) {
+        if (this.quickStartRaces.length < 2) {
+          this.quickStartRaces.push(d);
+        }
+      }
+    }
+
+    // 3. Last fallback: just pick first available races
+    if (this.quickStartRaces.length < 2) {
+      const remaining = this.races.filter(r => !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id));
+      for (const r of remaining) {
+        if (this.quickStartRaces.length < 2) {
+          this.quickStartRaces.push(r);
+        }
+      }
     }
   }
 

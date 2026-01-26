@@ -15,7 +15,7 @@ export class SettingsService {
             try {
                 const parsed = JSON.parse(storedSettings);
                 // Ensure we return a proper Settings instance or object matching the interface
-                return new Settings(parsed.selectedRaceId, parsed.selectedDriverIds);
+                return new Settings(parsed.recentRaceIds || [], parsed.selectedDriverIds || []);
             } catch (e) {
                 console.error('Error parsing settings from localStorage', e);
                 return new Settings();

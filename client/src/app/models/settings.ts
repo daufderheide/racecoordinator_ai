@@ -1,9 +1,9 @@
 export class Settings {
-    selectedRaceId: string;
+    recentRaceIds: string[];
     selectedDriverIds: string[];
 
-    constructor(selectedRaceId: string = '', selectedDriverIds: string[] = []) {
-        this.selectedRaceId = selectedRaceId;
+    constructor(recentRaceIds: string[] = [], selectedDriverIds: string[] = []) {
+        this.recentRaceIds = recentRaceIds;
         this.selectedDriverIds = selectedDriverIds;
     }
 }
