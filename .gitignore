@@ -47,3 +47,11 @@ client/.playwright-browsers/
 client/.tmp/
 client/playwright-report/
 client/test-results/
+
+# Client unit tests
+.browser-tmp/
+.chrome-home/
+.npm-cache/
+client/.chrome-home/
+.karma-profile/
+

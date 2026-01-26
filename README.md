@@ -54,6 +54,40 @@ If the processes are running in the background, you can stop them by finding the
   lsof -ti :4200 | xargs kill
   ```
 
+## Testing
+
+This project includes unit tests for the backend and frontend, as well as visual regression tests for the client.
+
+### Run All Tests
+You can run all tests across the entire project using the master script:
+```bash
+./run_all_tests.sh
+```
+
+### Client (Angular)
+
+#### Unit Tests
+Run the standard Jasmine/Karma unit tests:
+```bash
+cd client
+npx ng test --watch=false
+```
+
+#### Visual Regression Tests (Screen Diff)
+Run Playwright-based visual tests to detect UI regressions:
+```bash
+cd client
+npm run test:visual
+```
+*Snapshots are generated for all supported languages (en, es, fr, de, pt).*
+
+### Server (Java)
+Run the JUnit tests for the backend:
+```bash
+cd server
+mvn test
+```
+
 ## Debugging
 
 ### Server (Java)

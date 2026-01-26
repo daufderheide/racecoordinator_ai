@@ -156,6 +156,7 @@ export class RacedaySetupComponent implements OnInit {
       this.selectedDrivers.push(driver);
       // No sort needed for selected (user order)
     }
+    this.saveSettings();
     this.cdr.detectChanges();
   }
 
@@ -163,6 +164,7 @@ export class RacedaySetupComponent implements OnInit {
     // Only reorder within the selected list and if dropped strictly inside the container
     if (event.container.id === 'selected-list' && event.isPointerOverContainer) {
       moveItemInArray(this.selectedDrivers, event.previousIndex, event.currentIndex);
+      this.saveSettings();
     }
   }
 
@@ -179,29 +181,40 @@ export class RacedaySetupComponent implements OnInit {
 
   selectRace(race: Race) {
     this.selectedRace = race;
+    this.saveSettings();
     this.closeDropdown();
+  }
+
+  private saveSettings() {
+    const localSettings = this.settingsService.getSettings();
+    let recentRaceIds = localSettings.recentRaceIds || [];
+
+    if (this.selectedRace) {
+      // Prepend the new race ID, remove it if it was already in the list
+      recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
+      // Keep only the last two
+      recentRaceIds = recentRaceIds.slice(0, 2);
+    }
+
+    // Always persist
+    const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
+    this.settingsService.saveSettings(settings);
+    this.updateQuickStartRaces(recentRaceIds);
   }
 
   startRace(isDemo: boolean = false) {
     if (this.selectedRace && this.selectedDrivers.length > 0) {
       console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedDrivers.length} drivers`);
 
-      const localSettings = this.settingsService.getSettings();
-      let recentRaceIds = localSettings.recentRaceIds || [];
+      // Ensure settings are up to date before redirecting
+      this.saveSettings();
 
-      // Prepend the new race ID, remove it if it was already in the list
-      recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
-      // Keep only the last two
-      recentRaceIds = recentRaceIds.slice(0, 2);
-
-      const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
-      this.settingsService.saveSettings(settings);
-      this.updateQuickStartRaces(recentRaceIds);
+      const settings = this.settingsService.getSettings(); // Get back what we just saved (or what was there)
 
       this.dataService.initializeRace(this.selectedRace.entity_id, settings.selectedDriverIds, isDemo).subscribe({
         next: (response) => {
           if (response.success) {
-            this.router.navigateByUrl('/raceday');
+            this.router.navigate(['/raceday']);
           }
         },
         error: (err) => console.error(err)
