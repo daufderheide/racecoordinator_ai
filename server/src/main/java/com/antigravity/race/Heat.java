@@ -5,8 +5,6 @@ import java.util.List;
 public class Heat extends ServerToClientObject {
     private int heatNumber;
     private List<DriverHeatData> drivers;
-    private List<String> standings;
-
     private HeatStandings heatStandings;
 
     public Heat(int heatNumber, List<DriverHeatData> drivers, com.antigravity.models.RaceScoring scoring) {
@@ -14,7 +12,6 @@ public class Heat extends ServerToClientObject {
         this.heatNumber = heatNumber;
         this.drivers = drivers;
         this.heatStandings = new HeatStandings(drivers, scoring.getHeatRanking(), scoring.getHeatRankingTiebreaker());
-        this.standings = this.heatStandings.getStandings();
     }
 
     public int getHeatNumber() {
@@ -31,10 +28,6 @@ public class Heat extends ServerToClientObject {
 
     public HeatStandings getHeatStandings() {
         return heatStandings;
-    }
-
-    public void setStandings(List<String> standings) {
-        this.standings = standings;
     }
 
     public void setHeatNumber(int heatNumber) {
