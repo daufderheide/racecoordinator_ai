@@ -7,10 +7,11 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
 import { RacedayComponent } from './components/raceday/raceday.component';
+import { DefaultRacedayComponent } from './components/raceday/default-raceday.component';
 import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
 import { DefaultRacedaySetupComponent } from './components/raceday-setup/default-raceday-setup.component';
 import { RaceService } from './services/race.service';
-import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
+
 import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { SharedModule } from './shared/shared.module';
 
@@ -19,9 +20,10 @@ import { SharedModule } from './shared/shared.module';
     AppComponent,
 
     RacedayComponent,
+    DefaultRacedayComponent,
     RacedaySetupComponent,
     DefaultRacedaySetupComponent,
-    ConfirmationModalComponent,
+    DefaultRacedaySetupComponent,
     LeaderBoardComponent
   ],
   imports: [

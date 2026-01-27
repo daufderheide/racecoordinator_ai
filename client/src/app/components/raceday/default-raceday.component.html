@@ -1,0 +1,159 @@
+<div class="dashboard-wrapper">
+  <app-confirmation-modal [visible]="showExitConfirmation" title="CD_CONFIRM_EXIT_TITLE"
+    message="CD_CONFIRM_EXIT_MESSAGE" confirmText="CD_YES" cancelText="CD_NO" (confirm)="onExitConfirm()"
+    (cancel)="onExitCancel()">
+  </app-confirmation-modal>
+
+  <div class="scalable-content" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+    <div class="menu-bar">
+      <div class="menu-wrapper">
+        <button class="menu-button-top" (click)="toggleFileMenu()">{{ 'RD_MENU_FILE' | translate }}</button>
+        <div *ngIf="isFileMenuOpen" class="menu-dropdown top-dropdown">
+          <div class="menu-item" (click)="onFileMenuSelect('EXIT')">{{ 'RD_MENU_EXIT' | translate }}
+          </div>
+        </div>
+      </div>
+      <div class="menu-wrapper">
+        <button class="menu-button-top" (click)="toggleMenu()">{{ 'RD_MENU_RACE_DIRECTOR' | translate }}</button>
+        <div *ngIf="isMenuOpen" class="menu-dropdown top-dropdown">
+          <div class="menu-item" (click)="onMenuSelect('START_RESUME')">
+            <span>{{ 'RD_MENU_START_RESUME' | translate }}</span>
+            <span class="menu-shortcut">{{ startResumeShortcut }}</span>
+          </div>
+          <div class="menu-item" (click)="onMenuSelect('PAUSE')">
+            <span>{{ 'RD_MENU_PAUSE' | translate }}</span>
+            <span class="menu-shortcut">{{ pauseShortcut }}</span>
+          </div>
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onMenuSelect('ADD_LAP')">{{ 'RD_MENU_ADD_LAP' | translate }}</div>
+          <div class="menu-item" (click)="onMenuSelect('NEXT_HEAT')">
+            <span>{{ 'RD_MENU_NEXT_HEAT' | translate }}</span>
+            <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
+          </div>
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onMenuSelect('RESTART_HEAT')">
+            <span>{{ 'RD_MENU_RESTART' | translate }}</span>
+            <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
+          </div>
+          <div class="menu-item" (click)="onMenuSelect('DEFER_HEAT')">
+            <span>{{ 'RD_MENU_DEFER' | translate }}</span>
+            <span class="menu-shortcut">{{ deferHeatShortcut }}</span>
+          </div>
+          <div class="menu-item" (click)="onMenuSelect('SKIP_HEAT')">
+            <span>{{ 'RD_MENU_SKIP_HEAT' | translate }}</span>
+            <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
+          </div>
+          <div class="menu-item" (click)="onMenuSelect('SKIP_RACE')">{{ 'RD_MENU_SKIP_RACE' | translate }}</div>
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onMenuSelect('MODIFY')">{{ 'RD_MENU_MODIFY' | translate }}</div>
+          <div class="menu-item" (click)="onMenuSelect('EDIT_LAPS')">{{ 'RD_MENU_EDIT_LAPS' | translate }}</div>
+        </div>
+      </div>
+      <div class="menu-wrapper">
+        <button class="menu-button-top">{{ 'RD_MENU_TRACK_POWER' | translate }}</button>
+      </div>
+      <div class="menu-wrapper">
+        <button class="menu-button-top" (click)="toggleWindowsMenu()">{{ 'RD_MENU_WINDOWS' | translate }}</button>
+        <div *ngIf="isWindowsMenuOpen" class="menu-dropdown top-dropdown">
+          <div class="menu-item" (click)="onWindowMenuSelect('LEADER_BOARD')">{{ 'RD_WIN_LEADER_BOARD' | translate }}
+          </div>
+          <div class="menu-item" (click)="onWindowMenuSelect('TOP_5')">{{ 'RD_WIN_TOP_5' | translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('GROUP_LEADER_BOARD')">{{ 'RD_WIN_GROUP_LEADER_BOARD' |
+            translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('HEAT_RESULTS')">{{ 'RD_WIN_HEAT_RESULTS' | translate }}
+          </div>
+          <div class="menu-item" (click)="onWindowMenuSelect('RACE_RESULTS')">{{ 'RD_WIN_RACE_RESULTS' | translate }}
+          </div>
+          <div class="menu-item" (click)="onWindowMenuSelect('SEGMENT_TIMES')">{{ 'RD_WIN_SEGMENT_TIMES' | translate }}
+          </div>
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onWindowMenuSelect('SEASON_RACE_LEADER_BOARD')">{{
+            'RD_WIN_SEASON_RACE_LEADER_BOARD' | translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('SEASON_LEADER_BOARD')">{{ 'RD_WIN_SEASON_LEADER_BOARD' |
+            translate }}</div>
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onWindowMenuSelect('ON_DECK')">{{ 'RD_WIN_ON_DECK' | translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('HEAT_LIST')">{{ 'RD_WIN_HEAT_LIST' | translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('NEXT_HEAT')">{{ 'RD_WIN_NEXT_HEAT' | translate }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reduced height 900px, fixed width 1600px scaling container context -->
+    <svg width="1600" height="900" viewBox="0 0 1600 900" class="dashboard-svg">
+      <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a2a3a;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0d151e;stop-opacity:1" />
+        </linearGradient>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="5" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="timerGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="1600" height="900" fill="url(#bgGradient)" />
+
+      <g *ngIf="!heat && errorMessage" class="error-message">
+        <text x="800" y="450" font-size="40" font-weight="700" fill="#ef4444" text-anchor="middle"
+          filter="url(#glow)">{{
+          errorMessage }}</text>
+      </g>
+
+      <ng-container *ngIf="heat">
+        <!-- Header Section -->
+        <g class="header">
+          <!-- Logo -->
+          <text x="30" y="70" font-size="50" font-weight="800" fill="#3b82f6" class="logo">RACE <tspan fill="#60a5fa">
+              COORDINATOR</tspan></text>
+          <text x="30" y="110" font-size="22" font-style="italic" fill="#94a3b8">Bright Plume Raceway</text>
+
+          <!-- Timer & Info -->
+          <text x="800" y="60" font-size="36" font-weight="700" fill="#4ade80" text-anchor="middle">ROUND ROBIN</text>
+          <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle"
+            filter="url(#timerGlow)" font-family="monospace">{{ time | number:timeFormat }}</text>
+          <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat {{
+            heat.heatNumber
+            }} of {{ totalHeats }}</text>
+
+          <!-- Flags -->
+          <image x="1370" y="20" width="200" height="180" href="assets/crossed_racing_flags.png" />
+        </g>
+
+        <!-- Table Headers -->
+        <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8">
+          <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)" y="280"
+            [attr.text-anchor]="column.textAnchor">{{ getColumnLabel(column) }}</text>
+        </g>
+
+        <!-- Rows -->
+        <g *ngFor="let hd of sortedHeatDrivers; let i = index; trackBy: trackByDriverId" class="driver-row"
+          [attr.transform]="'translate(0, ' + (310 + i * (590 / track.lanes.length)) + ')'">
+          <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length"
+            [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
+
+          <!-- Dynamic columns -->
+          <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)"
+            [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
+            [attr.fill]="track.lanes[hd.laneIndex].foreground_color" [attr.text-anchor]="column.textAnchor"
+            font-family="monospace" appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex)"
+            [scaleToFit]="column.scaleToFit">{{
+            formatColumnValue(hd, column) }}</text>
+
+          <!-- Vertical Lines between columns -->
+          <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"
+            y1="0" [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="590 / track.lanes.length" stroke="black"
+            stroke-width="2" stroke-opacity="0.15" />
+        </g>
+      </ng-container>
+    </svg>
+  </div>
+</div>
