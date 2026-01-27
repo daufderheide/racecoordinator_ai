@@ -48,8 +48,6 @@ export class RacedaySetupComponent implements OnInit {
   error: string | null = null;
   isLoading = true;
 
-  showPermissionButton = false;
-
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -60,7 +58,6 @@ export class RacedaySetupComponent implements OnInit {
   async ngOnInit() {
     this.isLoading = true;
     this.container.clear();
-    this.showPermissionButton = false;
 
     try {
       if (await this.fileSystem.hasCustomFiles()) {
@@ -72,39 +69,10 @@ export class RacedaySetupComponent implements OnInit {
       }
     } catch (e: any) {
       console.error('Failed to load custom component, falling back to default', e);
-      const msg = e instanceof Error ? e.message : String(e);
-
-      if (msg.includes('Permission denied') || msg.includes('User activation')) {
-        this.error = 'Permission needed to access custom files.';
-        this.showPermissionButton = true;
-      } else {
-        this.error = `Failed to load custom view: ${msg}. Loading default...`;
-        // Clear error after a few seconds only for non-persistent errors
-        setTimeout(() => {
-          this.error = null;
-        }, 8000);
-      }
-
-      // Force detection for error state
-      this.cdr.detectChanges();
+      // Just load default component on error
       this.loadDefaultComponent();
     } finally {
       this.isLoading = false;
-    }
-  }
-
-  async grantPermission() {
-    this.error = null;
-    this.showPermissionButton = false;
-    try {
-      this.container.clear();
-      await this.loadCustomComponent();
-      this.cdr.detectChanges();
-    } catch (e: any) {
-      console.error('Retry failed', e);
-      const msg = e instanceof Error ? e.message : String(e);
-      this.error = `Failed to load after permission grant: ${msg}`;
-      this.loadDefaultComponent();
     }
   }
 

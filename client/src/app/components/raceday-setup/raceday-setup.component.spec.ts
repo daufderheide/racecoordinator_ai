@@ -63,7 +63,6 @@ describe('RacedaySetupComponent', () => {
     // Should catch error and fall back
     expect(component.loadDefaultComponent).toHaveBeenCalled();
     expect(mockContainer.createComponent).toHaveBeenCalled();
-    expect(component.error).toContain('Read error');
   });
 
   it('should load custom UI when selected and files exist', async () => {
@@ -88,40 +87,5 @@ describe('RacedaySetupComponent', () => {
     expect(component.loadCustomComponent).toHaveBeenCalled();
     expect(component.loadDefaultComponent).not.toHaveBeenCalled();
     expect(mockFileSystemService.getCustomFile).toHaveBeenCalledWith('raceday-setup.component.html');
-  });
-
-  it('should show permission button if permission error occurs', async () => {
-    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(true));
-    mockFileSystemService.getCustomFile.and.callFake(() => Promise.reject(new Error('Permission denied')));
-
-    spyOn(component, 'loadDefaultComponent').and.callThrough();
-
-    await component.ngOnInit();
-
-    expect(component.showPermissionButton).toBeTrue();
-    expect(component.error).toContain('Permission needed');
-    expect(component.loadDefaultComponent).toHaveBeenCalled();
-  });
-
-  it('should retry loading custom component when permission is granted', async () => {
-    // Initial state: error shown
-    component.showPermissionButton = true;
-    component.error = 'Permission needed';
-
-    // Setup for success on retry
-    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(true));
-    mockFileSystemService.getCustomFile.and.returnValue(Promise.resolve('<div>Custom</div>'));
-
-    spyOn(component, 'loadCustomComponent').and.callThrough();
-    // Use our incomplete mock for deeper calls since we just want to verify flow
-    spyOn<any>(component, 'createDynamicComponentClass').and.returnValue({} as any);
-    (component as any).compiler = { compileModuleAsync: () => Promise.resolve({ create: () => ({ componentFactoryResolver: { resolveComponentFactory: () => { } } }) }) };
-
-    await component.grantPermission();
-
-    expect(component.showPermissionButton).toBeFalse();
-    expect(component.error).toBeNull();
-    expect(component.loadCustomComponent).toHaveBeenCalled();
-    expect(mockContainer.clear).toHaveBeenCalled();
   });
 });
