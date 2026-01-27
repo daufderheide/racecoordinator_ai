@@ -10,17 +10,18 @@ import {
   Type,
   Inject
 } from '@angular/core';
-import { CommonModule, NgIf, NgFor, NgClass, NgStyle } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
-import * as ts from 'typescript';
+
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { ChangeDetectorRef } from '@angular/core';
+import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   constructor(
@@ -52,7 +53,8 @@ export class RacedaySetupComponent implements OnInit {
     private fileSystem: FileSystemService,
     private compiler: Compiler,
     private injector: Injector,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dynamicComponentService: DynamicComponentService
   ) { }
 
   async ngOnInit() {
@@ -99,22 +101,13 @@ export class RacedaySetupComponent implements OnInit {
       }
 
       // Create Custom Component Class
-      let componentType: Type<any>;
-
-      if (tsCode) {
-        componentType = this.createDynamicComponentClass(tsCode, html, css);
-      } else {
-        // Create a basic component that extends DefaultRacedaySetupComponent
-        // Create a unique class for this instance to avoid decorator collisions
-        const StandaloneCustomStartComponent = class extends CustomUiBaseComponent { };
-
-        componentType = Component({
-          template: html,
-          styles: [css],
-          standalone: true,
-          imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle]
-        })(StandaloneCustomStartComponent);
-      }
+      const baseClass = CustomUiBaseComponent;
+      const componentType = this.dynamicComponentService.createDynamicComponent(
+        baseClass,
+        html,
+        css,
+        tsCode
+      );
       // Create the component directly (no Module required for standalone)
       this.container.createComponent(componentType);
 
@@ -130,57 +123,7 @@ export class RacedaySetupComponent implements OnInit {
     }
   }
 
-  private createDynamicComponentClass(tsCode: string, html: string, css: string): Type<any> {
-    // Transpile TS to JS
-    const result = ts.transpileModule(tsCode, {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2015 }
-    });
 
-    // Execute the JS to get the class
-    // We need to provide dependencies if they import them.
-    // This is the tricky part: Runtime dependency injection for 'import' statements.
-    // A simple 'eval' won't handle imports.
-    //
-    // LIMITATION: User provided TS cannot easily import 'src/app/...' without a custom loader.
-    //
-    // ALTERNATIVE: We can regex-replace imports or provide a specific base class they MUST extend which we expose globally or pass in.
-    //
-    // For this proof of concept/implementation:
-    // We assume the user script defines a class and we wrap it or they extend a global class.
-
-    // Simplification for Step 1: 
-    // We expect the user code to export a class named 'CustomRacedaySetupComponent'.
-    // We will strip imports and provide global variables or Injector.
-
-    // For now, let's treat the user code as the body of a class extending DefaultRacedaySetupComponent, 
-    // or just assume standard Angular component structure is too hard to dynamic load with imports.
-
-    // Let's try to construct a class dynamically that extends DefaultRacedaySetupComponent.
-
-
-    // Actual implementation of creating a class from string is complex due to scope/imports.
-    // Hack: We create a class that extends DefaultRacedaySetupComponent
-    // and we evaluate the user code *inside* the constructor or as methods.
-
-    // Better approach for custom logic: 
-    // Check if we can just define the component metadata here and use the DEFAULT logic class
-    // but with CUSTOM template/styles.
-    // This covers 90% of use cases (reskinning).
-    // If they strictly need custom Logic in TS, that's much harder without a build step.
-
-    // PROPOSAL: If Custom TS is provided, we try to run it. If it fails or is too complex, we warn.
-    // Let's stick to: Custom HTML/CSS + Default Logic (inheritance).
-
-    // Create a unique class to avoid polluting the prototype
-    const StandaloneCustomStartComponent = class extends CustomUiBaseComponent { };
-
-    return Component({
-      template: html,
-      styles: [css],
-      standalone: true,
-      imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle]
-    })(StandaloneCustomStartComponent);
-  }
 
   async configureCustomView() {
     const success = await this.fileSystem.selectCustomFolder();

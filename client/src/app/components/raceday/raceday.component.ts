@@ -12,15 +12,16 @@ import {
   Inject,
   ChangeDetectorRef
 } from '@angular/core';
-import { CommonModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedayComponent } from './default-raceday.component';
-import * as ts from 'typescript';
+
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
+import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {
@@ -51,7 +52,8 @@ export class RacedayComponent implements OnInit {
     private fileSystem: FileSystemService,
     private compiler: Compiler,
     private injector: Injector,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dynamicComponentService: DynamicComponentService
   ) { }
 
   async ngOnInit() {
@@ -115,20 +117,13 @@ export class RacedayComponent implements OnInit {
         console.log('No custom TS found for raceday');
       }
 
-      let componentType: Type<any>;
-
-      if (tsCode) {
-        componentType = this.createDynamicComponentClass(tsCode, html, css);
-      } else {
-        const StandaloneCustomRacedayComponent = class extends CustomRacedayBaseComponent { };
-
-        componentType = Component({
-          template: html,
-          styles: [css],
-          standalone: true,
-          imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe]
-        })(StandaloneCustomRacedayComponent);
-      }
+      const baseClass = CustomRacedayBaseComponent;
+      const componentType = this.dynamicComponentService.createDynamicComponent(
+        baseClass,
+        html,
+        css,
+        tsCode
+      );
 
       this.container.createComponent(componentType);
 
@@ -138,19 +133,5 @@ export class RacedayComponent implements OnInit {
     }
   }
 
-  private createDynamicComponentClass(tsCode: string, html: string, css: string): Type<any> {
-    // Basic implementation assuming no complex imports in user TS for now, similar to setup
-    const result = ts.transpileModule(tsCode, {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2015 }
-    });
 
-    const StandaloneCustomRacedayComponent = class extends CustomRacedayBaseComponent { };
-
-    return Component({
-      template: html,
-      styles: [css],
-      standalone: true,
-      imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe]
-    })(StandaloneCustomRacedayComponent);
-  }
 }
