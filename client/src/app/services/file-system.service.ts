@@ -108,7 +108,7 @@ export class FileSystemService {
     const handle = await this.getCustomDirectoryHandle();
     if (!handle) throw new Error('No custom directory configured');
 
-    const permission = await this.verifyPermission(handle, true);
+    const permission = await this.verifyPermission(handle, false);
     if (!permission) throw new Error('Permission denied');
 
     const fileHandle = await handle.getFileHandle(filename);

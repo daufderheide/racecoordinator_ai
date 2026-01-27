@@ -2,6 +2,10 @@
     <ng-container #container></ng-container>
 
     <div class="custom-controls">
-        <div *ngIf="error" class="error-toast">{{ error }}</div>
+        <div *ngIf="error" class="error-toast">
+            {{ error }}
+            <button *ngIf="showPermissionButton" (click)="grantPermission()" class="permission-btn">Grant
+                Permission</button>
+        </div>
     </div>
 </div>

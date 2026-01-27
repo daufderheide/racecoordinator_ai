@@ -10,7 +10,8 @@ import {
   Type,
   Inject
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf, NgFor, NgClass, NgStyle } from '@angular/common';
+import { SharedModule } from 'src/app/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import * as ts from 'typescript';
@@ -47,6 +48,8 @@ export class RacedaySetupComponent implements OnInit {
   error: string | null = null;
   isLoading = true;
 
+  showPermissionButton = false;
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -57,24 +60,51 @@ export class RacedaySetupComponent implements OnInit {
   async ngOnInit() {
     this.isLoading = true;
     this.container.clear();
+    this.showPermissionButton = false;
 
     try {
       if (await this.fileSystem.hasCustomFiles()) {
         await this.loadCustomComponent();
+        // Force detection after successful load to prevent black screen
+        this.cdr.detectChanges();
       } else {
         this.loadDefaultComponent();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to load custom component, falling back to default', e);
-      this.error = 'Failed to load custom view. Loading default...';
-      this.loadDefaultComponent();
+      const msg = e instanceof Error ? e.message : String(e);
 
-      // Clear error after a few seconds
-      setTimeout(() => {
-        this.error = null;
-      }, 5000);
+      if (msg.includes('Permission denied') || msg.includes('User activation')) {
+        this.error = 'Permission needed to access custom files.';
+        this.showPermissionButton = true;
+      } else {
+        this.error = `Failed to load custom view: ${msg}. Loading default...`;
+        // Clear error after a few seconds only for non-persistent errors
+        setTimeout(() => {
+          this.error = null;
+        }, 8000);
+      }
+
+      // Force detection for error state
+      this.cdr.detectChanges();
+      this.loadDefaultComponent();
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async grantPermission() {
+    this.error = null;
+    this.showPermissionButton = false;
+    try {
+      this.container.clear();
+      await this.loadCustomComponent();
+      this.cdr.detectChanges();
+    } catch (e: any) {
+      console.error('Retry failed', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      this.error = `Failed to load after permission grant: ${msg}`;
+      this.loadDefaultComponent();
     }
   }
 
@@ -107,27 +137,27 @@ export class RacedaySetupComponent implements OnInit {
         componentType = this.createDynamicComponentClass(tsCode, html, css);
       } else {
         // Create a basic component that extends DefaultRacedaySetupComponent
+        // Create a unique class for this instance to avoid decorator collisions
+        const StandaloneCustomStartComponent = class extends CustomUiBaseComponent { };
+
         componentType = Component({
           template: html,
           styles: [css],
-          standalone: false
-        })(CustomUiBaseComponent);
+          standalone: true,
+          imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle]
+        })(StandaloneCustomStartComponent);
       }
+      // Create the component directly (no Module required for standalone)
+      this.container.createComponent(componentType);
 
-      // Create a Module to declare the component
-      const module = NgModule({
-        declarations: [componentType],
-        imports: [CommonModule], // Add other shared modules here if needed (e.g. TranslateModule)
-      })(class DynamicModule { });
-
-      // Compile and Create
-      const moduleFactory = await this.compiler.compileModuleAsync(module);
-      const moduleRef = moduleFactory.create(this.injector);
-      const componentFactory = moduleRef.componentFactoryResolver.resolveComponentFactory(componentType);
-
-      this.container.createComponent(componentFactory);
-
-    } catch (e) {
+    } catch (e: any) {
+      // Propagate specific error message
+      const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+      if (errorMsg.includes('Permission denied')) {
+        throw new Error('Permission denied to access custom files. Please re-select the folder.');
+      } else if (errorMsg.includes('not found')) {
+        throw new Error(`Required file not found in custom folder: ${e.message}`);
+      }
       throw e;
     }
   }
@@ -173,11 +203,15 @@ export class RacedaySetupComponent implements OnInit {
     // PROPOSAL: If Custom TS is provided, we try to run it. If it fails or is too complex, we warn.
     // Let's stick to: Custom HTML/CSS + Default Logic (inheritance).
 
+    // Create a unique class to avoid polluting the prototype
+    const StandaloneCustomStartComponent = class extends CustomUiBaseComponent { };
+
     return Component({
       template: html,
       styles: [css],
-      standalone: false
-    })(CustomUiBaseComponent);
+      standalone: true,
+      imports: [CommonModule, SharedModule, NgIf, NgFor, NgClass, NgStyle]
+    })(StandaloneCustomStartComponent);
   }
 
   async configureCustomView() {
