@@ -1,6 +1,10 @@
 import { Injectable, Type, Component, NgModule } from '@angular/core';
 import { CommonModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe } from '@angular/common';
+import { DragDropModule, CdkDropList, CdkDrag, CdkDragPreview } from '@angular/cdk/drag-drop';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../shared/shared.module';
+
 import * as ts from 'typescript';
 
 @Injectable({
@@ -43,7 +47,14 @@ export class DynamicComponentService {
         NgFor,
         NgClass,
         NgStyle,
-        DecimalPipe
+        DecimalPipe,
+        DragDropModule,
+        CdkDropList,
+        CdkDrag,
+        CdkDragPreview,
+        ScrollingModule,
+        FormsModule,
+        ReactiveFormsModule
         // Add other common modules here as needed for future compatibility
       ]
     })(DynamicComponent);
