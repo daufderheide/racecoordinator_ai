@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
 
-const languages = ['en', 'es', 'fr', 'de', 'pt'];
+const languages = ['en', 'es', 'fr', 'de', 'pt', 'it'];
 
 for (const lang of languages) {
   test.describe(`Raceday Setup Screen Diff - ${lang}`, () => {
