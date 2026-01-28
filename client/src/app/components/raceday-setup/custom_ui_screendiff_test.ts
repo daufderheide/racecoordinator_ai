@@ -30,6 +30,12 @@ test.describe('Custom Raceday Setup UI', () => {
   test('Should load custom Hello World UI', async ({ page }) => {
     await page.goto('/');
 
+    // Wait for the splash screen to disappear
+    const splashScreen = page.locator('.splash-screen');
+    if (await splashScreen.count() > 0) {
+      await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
+    }
+
     // Wait for the custom title to appear
     await expect(page.locator('.custom-title')).toHaveText('Hello Custom World');
 

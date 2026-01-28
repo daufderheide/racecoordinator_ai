@@ -9,12 +9,38 @@ import { map } from 'rxjs/operators';
 })
 export class DataService {
   // Pointing to the Java server API
+  private serverIp = 'localhost';
+  private serverPort = 7070;
 
-  private driversUrl = 'http://localhost:7070/api/drivers';
-  private tracksUrl = 'http://localhost:7070/api/tracks';
-  private racesUrl = 'http://localhost:7070/api/races';
+  private get baseUrl(): string {
+    return `http://${this.serverIp}:${this.serverPort}`;
+  }
+
+  private get driversUrl(): string {
+    return `${this.baseUrl}/api/drivers`;
+  }
+
+  private get tracksUrl(): string {
+    return `${this.baseUrl}/api/tracks`;
+  }
+
+  private get racesUrl(): string {
+    return `${this.baseUrl}/api/races`;
+  }
 
   constructor(private http: HttpClient) { }
+
+  public setServerAddress(ip: string, port: number) {
+    this.serverIp = ip;
+    this.serverPort = port;
+    // Reconnect socket if it was open? Usually we just let the next attempt handle it,
+    // or we can force a reconnect. Since this is mainly for startup configuration,
+    // the next call to connectToRaceDataSocket() will pick it up.
+    if (this.raceDataSocket) {
+      this.raceDataSocket.close();
+      this.raceDataSocket = undefined;
+    }
+  }
 
   getDrivers(): Observable<any[]> {
     return this.http.get<any[]>(this.driversUrl);
@@ -37,7 +63,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/initialize-race', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/initialize-race`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -56,7 +82,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/start-race', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/start-race`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -76,7 +102,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/pause-race', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/pause-race`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -96,7 +122,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/next-heat', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/next-heat`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -116,7 +142,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/restart-heat', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/restart-heat`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -136,7 +162,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/skip-heat', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/skip-heat`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -156,7 +182,7 @@ export class DataService {
       'Accept': 'application/octet-stream'
     });
 
-    return this.http.post('http://localhost:7070/api/defer-heat', new Blob([buffer as any]), {
+    return this.http.post(`${this.baseUrl}/api/defer-heat`, new Blob([buffer as any]), {
       headers,
       responseType: 'arraybuffer'
     }).pipe(
@@ -182,24 +208,45 @@ export class DataService {
       this.raceDataSocket.send(buffer);
       console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
     } else {
-      console.warn('Race Data WebSocket not open. Cannot send subscription request.');
+      console.warn('Race Data WebSocket not open. Triggering connection check and queuing fallback (retry logic handles actual connect).');
+      // If we are completely disconnected, rely on the reconnect loop or trigger one now
+      this.connectToRaceDataSocket();
+
+      // We can't send right now, but once connected, the race component (if active) 
+      // might need to re-request.
+      // Ideally, we'd queue this message, but for now we expect the component 
+      // to rely on the stream.
+      // NOTE: RacedayComponent usually subscribes in ngOnInit.
     }
   }
 
   public connectToRaceDataSocket() {
-    if (this.raceDataSocket) {
-      this.raceDataSocket.close();
+    if (this.raceDataSocket && (this.raceDataSocket.readyState === WebSocket.OPEN || this.raceDataSocket.readyState === WebSocket.CONNECTING)) {
+      return; // Already connecting or connected
     }
-    this.raceDataSocket = new WebSocket('ws://localhost:7070/api/race-data');
+
+    if (this.raceDataSocket) {
+      try {
+        this.raceDataSocket.close();
+      } catch (e) {
+        // Ignore
+      }
+    }
+
+    const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
+    console.log(`Attempting to connect to WebSocket: ${wsUrl}`);
+    this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = 'arraybuffer';
+
     this.raceDataSocket.onopen = () => {
       console.log('Connected to Race Data WebSocket');
+      // If we had pending subscriptions or state, we might need to resend.
+      // For now, rely on components to call updateRaceSubscription if they are active.
     };
+
     this.raceDataSocket.onmessage = (event) => {
-      // console.log('WS: Message received', event.data);
       try {
         const arrayBuffer = event.data as ArrayBuffer;
-        // console.log('WS: ArrayBuffer byteLength', arrayBuffer.byteLength);
         const raceData = com.antigravity.RaceData.decode(new Uint8Array(arrayBuffer));
 
         if (raceData.raceTime) {
@@ -220,8 +267,18 @@ export class DataService {
         console.error('Error parsing race data message', e);
       }
     };
+
     this.raceDataSocket.onclose = () => {
-      console.log('Race Data WebSocket closed');
+      console.log('Race Data WebSocket closed. Reconnecting in 2 seconds...');
+      this.raceDataSocket = undefined;
+      setTimeout(() => {
+        this.connectToRaceDataSocket();
+      }, 2000);
+    };
+
+    this.raceDataSocket.onerror = (err) => {
+      console.warn('Race Data WebSocket error', err);
+      // onerror often followed by onclose, so we rely on onclose for retry
     };
   }
 

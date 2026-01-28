@@ -62,7 +62,11 @@ export class TranslationService {
         // as a fallback if the selected translation does have
         // the requested key.  If even that doesn't have the key,
         // return the key itself.
-        let translation = this.translations[key] || key;
+        const val = this.translations[key];
+        if (val === undefined) {
+            // console.warn(`Translation missing for key: ${key}. keys loaded: ${Object.keys(this.translations).length}`);
+        }
+        let translation = val || key;
 
         if (params) {
             Object.keys(params).forEach(paramKey => {

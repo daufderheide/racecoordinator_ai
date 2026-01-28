@@ -1,4 +1,37 @@
 <div class="shell-container">
+    <!-- Splash Screen Overlay -->
+    <div class="splash-screen" *ngIf="showSplash">
+        <ng-container *ngIf="translationsLoaded">
+            <button class="server-config-btn" (click)="toggleServerConfig()">{{ 'RDS_BTN_SERVER' | translate }}</button>
+        </ng-container>
+
+        <ng-container *ngIf="translationsLoaded">
+            <div class="quote-container" *ngIf="currentQuoteKey" (click)="onQuoteClick()">
+                <p class="quote-text" [class.fade-out]="!quoteVisible">{{ currentQuoteKey | translate }}</p>
+            </div>
+        </ng-container>
+
+        <div class="server-config-modal" *ngIf="showServerConfig">
+            <h3>{{ 'RDS_SERVER_CONFIG_TITLE' | translate }}</h3>
+            <div class="form-group">
+                <label>{{ 'RDS_LABEL_IP' | translate }}</label>
+                <input type="text" [(ngModel)]="tempServerIp">
+            </div>
+            <div class="form-group">
+                <label>{{ 'RDS_LABEL_PORT' | translate }}</label>
+                <input type="number" [(ngModel)]="tempServerPort">
+            </div>
+            <div class="actions">
+                <button (click)="saveServerConfig()">{{ 'RDS_BTN_SAVE_RETRY' | translate }}</button>
+                <button (click)="toggleServerConfig()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
+            </div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill"></div>
+        </div>
+    </div>
+
     <ng-container #container></ng-container>
 
     <div class="custom-controls">

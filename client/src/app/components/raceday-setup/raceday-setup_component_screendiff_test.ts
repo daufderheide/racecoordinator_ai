@@ -22,6 +22,12 @@ for (const lang of languages) {
       // Wait for the container to be visible and translations to be loaded
       await expect(page.locator('.setup-container')).toBeVisible({ timeout: 15000 });
 
+      // Wait for Splash Screen to disappear
+      const splashScreen = page.locator('.splash-screen');
+      if (await splashScreen.count() > 0) {
+        await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
+      }
+
       // Ensure fonts are loaded
       await page.evaluate(() => document.fonts.ready);
 

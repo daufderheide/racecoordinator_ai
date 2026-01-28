@@ -41,7 +41,7 @@ describe('DefaultRacedaySetupComponent', () => {
     ]));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key) => key);
-    mockSettingsService.getSettings.and.returnValue({ recentRaceIds: [], selectedDriverIds: [] });
+    mockSettingsService.getSettings.and.returnValue({ recentRaceIds: [], selectedDriverIds: [], serverIp: 'localhost', serverPort: 7070 });
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],

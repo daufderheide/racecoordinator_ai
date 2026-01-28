@@ -309,6 +309,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.closeOptionsDropdown();
     const success = await this.fileSystem.selectCustomFolder();
     if (success) {
+      sessionStorage.setItem('skipIntro', 'true');
       window.location.reload();
     }
   }
@@ -316,6 +317,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   async revertCustomUI() {
     this.closeOptionsDropdown();
     await this.fileSystem.clearCustomFolder();
+    sessionStorage.setItem('skipIntro', 'true');
     window.location.reload();
   }
 }
