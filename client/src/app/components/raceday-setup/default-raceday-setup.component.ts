@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
@@ -18,6 +18,8 @@ import { FileSystemService } from 'src/app/services/file-system.service';
   standalone: false
 })
 export class DefaultRacedaySetupComponent implements OnInit {
+  @Output() requestServerConfig = new EventEmitter<void>();
+
   // Driver State
   selectedDrivers: Driver[] = [];
   unselectedDrivers: Driver[] = [];
@@ -319,5 +321,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     await this.fileSystem.clearCustomFolder();
     sessionStorage.setItem('skipIntro', 'true');
     window.location.reload();
+  }
+
+  openServerSettings() {
+    this.closeOptionsDropdown();
+    this.requestServerConfig.emit();
   }
 }

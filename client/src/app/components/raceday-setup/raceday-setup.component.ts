@@ -63,6 +63,11 @@ export class RacedaySetupComponent implements OnInit {
   quoteVisible = true;
   private quoteInterval: any;
 
+  // Connection Monitoring
+  isConnectionLost = false;
+  private connectionMonitorInterval: any;
+  private retryStartTime: number = 0;
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -251,10 +256,96 @@ export class RacedaySetupComponent implements OnInit {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
+
+    // Once connected, start monitoring for loss
+    this.startConnectionMonitoring();
+  }
+
+  startConnectionMonitoring() {
+    this.stopConnectionMonitoring();
+    this.connectionMonitorInterval = setInterval(async () => {
+      this.checkConnection();
+    }, 5000); // Check every 5 seconds
+  }
+
+  stopConnectionMonitoring() {
+    if (this.connectionMonitorInterval) {
+      clearInterval(this.connectionMonitorInterval);
+      this.connectionMonitorInterval = null;
+    }
+  }
+
+  async checkConnection() {
+    // Perform a lightweight check (e.g., get drivers or races)
+    // If we were already in a lost state, this function wouldn't be called by the interval
+    // (the interval calls this, but we clear it on loss)
+
+    this.dataService.getDrivers().subscribe({
+      next: () => {
+        // Connection is good
+      },
+      error: (err) => {
+        console.warn('Connection lost, starting retry sequence...');
+        this.handleConnectionLoss();
+      }
+    });
+  }
+
+  handleConnectionLoss() {
+    this.stopConnectionMonitoring();
+    this.isConnectionLost = true;
+    this.retryStartTime = Date.now();
+    this.cdr.detectChanges();
+
+    this.retryConnection();
+  }
+
+  retryConnection() {
+    // Check if 5 seconds elapsed
+    if (Date.now() - this.retryStartTime > 5000) {
+      console.warn('Connection retry timed out. Resetting to splash screen.');
+      this.isConnectionLost = false;
+      this.showSplash = true;
+      this.minTimeElapsed = false;
+      this.connectionVerified = false;
+      this.cdr.detectChanges();
+
+      this.stopQuoteRotation();
+      // Reset splash logic
+      if (this.translationsLoaded) {
+        this.startQuoteRotation();
+      }
+
+      // Restart the main wait loop
+      this.waitForConnection().then(() => {
+        this.showSplash = false;
+        this.stopQuoteRotation();
+        this.cdr.detectChanges();
+      });
+      return;
+    }
+
+    // Try checking
+    this.dataService.getDrivers().subscribe({
+      next: () => {
+        console.log('Connection restored!');
+        this.isConnectionLost = false;
+        this.cdr.detectChanges();
+        this.startConnectionMonitoring();
+      },
+      error: () => {
+        // Retry in 1 second
+        setTimeout(() => this.retryConnection(), 1000);
+      }
+    });
   }
 
   loadDefaultComponent() {
-    this.container.createComponent(DefaultRacedaySetupComponent);
+    const componentRef = this.container.createComponent(DefaultRacedaySetupComponent);
+    componentRef.instance.requestServerConfig.subscribe(() => {
+      this.showServerConfig = true;
+      this.cdr.detectChanges();
+    });
   }
 
   async loadCustomComponent() {
@@ -284,7 +375,25 @@ export class RacedaySetupComponent implements OnInit {
         tsCode
       );
       // Create the component directly (no Module required for standalone)
-      this.container.createComponent(componentType);
+      const componentRef = this.container.createComponent(componentType);
+
+      // Subscribe to server config request
+      if (componentRef.instance instanceof DefaultRacedaySetupComponent) {
+        componentRef.instance.requestServerConfig.subscribe(() => {
+          this.showServerConfig = true;
+          this.cdr.detectChanges();
+        });
+      } else {
+        // Fallback for dynamic types where instanceof might fail or if structure is different
+        // We know it extends CustomUiBaseComponent extends DefaultRacedaySetupComponent
+        const instance = componentRef.instance as any;
+        if (instance.requestServerConfig) {
+          instance.requestServerConfig.subscribe(() => {
+            this.showServerConfig = true;
+            this.cdr.detectChanges();
+          });
+        }
+      }
 
     } catch (e: any) {
       // Propagate specific error message

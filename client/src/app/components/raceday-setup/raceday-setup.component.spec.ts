@@ -24,6 +24,9 @@ describe('RacedaySetupComponent', () => {
   beforeEach(() => {
     mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'hasCustomFiles', 'getCustomFile']);
     mockContainer = jasmine.createSpyObj('ViewContainerRef', ['clear', 'createComponent']);
+    mockContainer.createComponent.and.returnValue({
+      instance: { requestServerConfig: { subscribe: () => { } } }
+    });
     mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockDynamicComponentService = jasmine.createSpyObj('DynamicComponentService', ['createDynamicComponent']);
@@ -218,9 +221,115 @@ describe('RacedaySetupComponent', () => {
     }));
   });
 
+  describe('Connection Monitoring', () => {
+    beforeEach(() => {
+      // Ensure initial state is clean
+      component.isConnectionLost = false;
+      component.stopConnectionMonitoring();
+    });
+
+    it('should start connection monitoring after successful connection', fakeAsync(() => {
+      // Setup successful connection
+      mockDataService.getDrivers.and.returnValue(of([]));
+      spyOn(component, 'startConnectionMonitoring').and.callThrough();
+
+      component.ngOnInit();
+      tick(6000); // Wait for min time + init
+
+      expect(component.connectionVerified).toBeTrue();
+      expect(component.showSplash).toBeFalse();
+      expect(component.startConnectionMonitoring).toHaveBeenCalled();
+
+      // Check if interval is correctly calling checkConnection
+      spyOn(component, 'checkConnection');
+      tick(5000);
+      expect(component.checkConnection).toHaveBeenCalled();
+
+      component.stopConnectionMonitoring();
+    }));
+
+    it('should handle connection loss', fakeAsync(() => {
+      // Manually trigger handleConnectionLoss
+      spyOn(component, 'retryConnection');
+      component.handleConnectionLoss();
+
+      expect(component.isConnectionLost).toBeTrue();
+      expect(component.retryConnection).toHaveBeenCalled();
+    }));
+
+    it('should retry connection and recover if successful', fakeAsync(() => {
+      component.isConnectionLost = true;
+      component['retryStartTime'] = Date.now(); // Access private prop if needed or just let logic handle it
+
+      // Mock success on getDrivers
+      mockDataService.getDrivers.and.returnValue(of([]));
+      spyOn(component, 'startConnectionMonitoring'); // Spy to verify it restarts
+
+      component.retryConnection();
+      tick(); // Process Observable
+
+      expect(component.isConnectionLost).toBeFalse();
+      expect(component.startConnectionMonitoring).toHaveBeenCalled();
+    }));
+
+    it('should fallback to splash screen if retry times out', fakeAsync(() => {
+      component.isConnectionLost = true;
+      // Mock a time in the past for start time to force timeout
+      // We can't easily mock Date.now() without swaying the test runner's clock, 
+      // implies we might update the test to set retryStartTime manually.
+      component['retryStartTime'] = Date.now() - 6000;
+
+      // spyOn to return a pending Promise to simulate the 'waiting' state
+      spyOn(component, 'waitForConnection').and.returnValue(new Promise(() => { }));
+
+      component.retryConnection();
+      // retryConnection calls waitForConnection().then(...), so we need to tick to resolve that microtask
+      tick();
+
+      expect(component.isConnectionLost).toBeFalse();
+      expect(component.showSplash).toBeTrue();
+      expect(component.connectionVerified).toBeFalse();
+      expect(component.waitForConnection).toHaveBeenCalled();
+    }));
+  });
+
+  describe('Dynamic Component Interaction', () => {
+    it('should listen to requestServerConfig from default component', fakeAsync(() => {
+      const mockEventEmitter = {
+        subscribe: jasmine.createSpy('subscribe').and.callFake((callback: any) => {
+          // Immediately trigger callback to simulate event
+          callback();
+          return { unsubscribe: () => { } };
+        })
+      };
+
+      const mockComponentInstance = {
+        requestServerConfig: mockEventEmitter
+      };
+
+      mockContainer.createComponent.and.returnValue({
+        instance: mockComponentInstance
+      });
+
+      // Setup component to reach the loading phase
+      mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
+      mockDataService.getDrivers.and.returnValue(of([]));
+
+      component.ngOnInit();
+      tick(6000);
+
+      expect(component.showServerConfig).toBeTrue();
+    }));
+  });
+
   it('should load default component if no custom files', fakeAsync(() => {
     mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
     mockDataService.getDrivers.and.returnValue(of([]));
+
+    // Ensure createComponent returns a dummy with the internal structure we expect now
+    mockContainer.createComponent.and.returnValue({
+      instance: { requestServerConfig: { subscribe: () => { } } }
+    });
 
     component.ngOnInit();
 

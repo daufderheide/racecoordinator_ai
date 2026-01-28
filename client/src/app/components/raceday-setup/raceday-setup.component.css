@@ -178,6 +178,18 @@
   opacity: 0;
 }
 
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 20009;
+  /* Below modal (20010) but above everything else */
+  backdrop-filter: blur(2px);
+}
+
 .server-config-modal {
   position: absolute;
   top: 50%;
@@ -260,4 +272,52 @@
 .actions button:first-child:hover {
   background: #00c0cc;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+.connection-lost-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  /* Transparent enough to see UI behind */
+  z-index: 20015;
+  /* Above server config modal */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ff3333;
+  font-family: 'Orbitron', sans-serif;
+  /* backdrop-filter: blur(5px); Removed to see UI clearly */
+  pointer-events: all;
+  /* Explicitly ensure interaction is blocked */
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 51, 51, 0.3);
+  border-top: 5px solid #ff3333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.connection-lost-text {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }

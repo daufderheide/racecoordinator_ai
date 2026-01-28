@@ -2,7 +2,8 @@
     <!-- Splash Screen Overlay -->
     <div class="splash-screen" *ngIf="showSplash">
         <ng-container *ngIf="translationsLoaded">
-            <button class="server-config-btn" (click)="toggleServerConfig()">{{ 'RDS_BTN_SERVER' | translate }}</button>
+            <button class="server-config-btn" (click)="toggleServerConfig()">{{ 'RDS_MENU_SERVER' | translate
+                }}</button>
         </ng-container>
 
         <ng-container *ngIf="translationsLoaded">
@@ -11,21 +12,7 @@
             </div>
         </ng-container>
 
-        <div class="server-config-modal" *ngIf="showServerConfig">
-            <h3>{{ 'RDS_SERVER_CONFIG_TITLE' | translate }}</h3>
-            <div class="form-group">
-                <label>{{ 'RDS_LABEL_IP' | translate }}</label>
-                <input type="text" [(ngModel)]="tempServerIp">
-            </div>
-            <div class="form-group">
-                <label>{{ 'RDS_LABEL_PORT' | translate }}</label>
-                <input type="number" [(ngModel)]="tempServerPort">
-            </div>
-            <div class="actions">
-                <button (click)="saveServerConfig()">{{ 'RDS_BTN_SAVE_RETRY' | translate }}</button>
-                <button (click)="toggleServerConfig()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
-            </div>
-        </div>
+
 
         <div class="progress-bar-container">
             <div class="progress-bar-fill"></div>
@@ -38,5 +25,29 @@
         <div *ngIf="error" class="error-toast">
             {{ error }}
         </div>
+    </div>
+
+    <!-- Server Config Modal -->
+    <div class="modal-backdrop" *ngIf="showServerConfig"></div>
+    <div class="server-config-modal" *ngIf="showServerConfig">
+        <h3>{{ 'RDS_SERVER_CONFIG_TITLE' | translate }}</h3>
+        <div class="form-group">
+            <label>{{ 'RDS_LABEL_IP' | translate }}</label>
+            <input type="text" [(ngModel)]="tempServerIp">
+        </div>
+        <div class="form-group">
+            <label>{{ 'RDS_LABEL_PORT' | translate }}</label>
+            <input type="number" [(ngModel)]="tempServerPort">
+        </div>
+        <div class="actions">
+            <button (click)="saveServerConfig()">{{ 'RDS_BTN_SAVE_RETRY' | translate }}</button>
+            <button (click)="toggleServerConfig()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
+        </div>
+    </div>
+
+    <!-- Connection Lost Overlay -->
+    <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+        <div class="spinner"></div>
+        <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
     </div>
 </div>

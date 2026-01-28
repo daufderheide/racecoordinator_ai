@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs';
 import { com } from './proto/message';
 import { map } from 'rxjs/operators';
+import { SettingsService } from './services/settings.service';
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +29,16 @@ export class DataService {
     return `${this.baseUrl}/api/races`;
   }
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private settingsService: SettingsService
+  ) {
+    const settings = this.settingsService.getSettings();
+    if (settings.serverIp && settings.serverPort) {
+      this.serverIp = settings.serverIp;
+      this.serverPort = settings.serverPort;
+    }
+  }
 
   public setServerAddress(ip: string, port: number) {
     this.serverIp = ip;
