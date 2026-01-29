@@ -4,6 +4,8 @@ import { com } from 'src/app/proto/message';
 import { forkJoin } from 'rxjs';
 import { TranslationService } from 'src/app/services/translation.service';
 import { Router } from '@angular/router';
+import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
+import { Subscription } from 'rxjs';
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
@@ -36,84 +38,66 @@ export class AssetManagerComponent implements OnInit {
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
-    private router: Router
+    private router: Router,
+    private connectionMonitor: ConnectionMonitorService
   ) { }
 
   ngOnInit() {
-    this.startConnectionMonitoring();
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
     this.loadAssets();
   }
 
   ngOnDestroy() {
-    this.stopConnectionMonitoring();
+    this.connectionMonitor.stopMonitoring(); // Or let service handle app lifecycle if global, but good to be safe
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
   }
 
   // Connection Monitoring
   isConnectionLost = false;
-  private connectionMonitorInterval: any;
-  private retryStartTime: number = 0;
+  private connectionSubscription: Subscription | null = null;
 
-  startConnectionMonitoring() {
-    this.stopConnectionMonitoring();
-    this.connectionMonitorInterval = setInterval(async () => {
-      this.checkConnection();
-    }, 5000); // Check every 5 seconds
-  }
+  monitorConnection() {
+    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
+      this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
+      this.cdr.detectChanges();
 
-  stopConnectionMonitoring() {
-    if (this.connectionMonitorInterval) {
-      clearInterval(this.connectionMonitorInterval);
-      this.connectionMonitorInterval = null;
-    }
-  }
-
-  checkConnection() {
-    this.dataService.getDrivers().subscribe({
-      next: () => {
-        // Connection is good
-      },
-      error: (err) => {
-        console.warn('Connection lost, starting retry sequence...');
+      if (this.isConnectionLost) {
+        // Start a separate check to see if we timed out too long? 
+        // Or just rely on user action / auto-reconnect from service.
+        // Original code navigated away after 5s. 
         this.handleConnectionLoss();
       }
     });
   }
 
   handleConnectionLoss() {
-    this.stopConnectionMonitoring();
-    this.isConnectionLost = true;
-    this.retryStartTime = Date.now();
-    this.cdr.detectChanges();
+    // We can rely on the service to keep checking. 
+    // If we want the specific "navigate away after 5s" behavior, we implement that listener here.
+    // The service continues to poll.
 
-    this.retryConnection();
-  }
+    // We verify if we are really lost or just glitching by checking service
+    // But for now, let's keep the UI simple or consistent.
 
-  retryConnection() {
-    // Check if 5 seconds elapsed
-    if (Date.now() - this.retryStartTime > 5000) {
-      console.warn('Connection retry timed out. Navigating to splash screen (via raceday-setup).');
-      this.isConnectionLost = false; // Reset state
-      this.cdr.detectChanges();
+    // Original requirement: "respond to lost communication in the same way".
+    // If RacedaySetup shows a overlay, we should probably do similar or just show an overlay here too.
+    // The original code navigated to /raceday-setup. 
 
-      // Navigate to raceday-setup WITHOUT setting skipIntro
-      // This ensures RacedaySetupComponent initializes into Splash Screen mode
-      this.router.navigate(['/raceday-setup']);
-      return;
-    }
-
-    // Try checking
-    this.dataService.getDrivers().subscribe({
-      next: () => {
-        console.log('Connection restored!');
-        this.isConnectionLost = false;
-        this.cdr.detectChanges();
-        this.startConnectionMonitoring();
-      },
-      error: () => {
-        // Retry in 1 second
-        setTimeout(() => this.retryConnection(), 1000);
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
       }
-    });
+
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        console.warn('Connection retry timed out. Navigating to splash screen.');
+        this.router.navigate(['/raceday-setup']);
+      }
+    }, 1000);
   }
 
   onBack() {

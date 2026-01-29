@@ -23,6 +23,8 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { Subscription } from 'rxjs';
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   constructor(
@@ -66,7 +68,7 @@ export class RacedaySetupComponent implements OnInit {
 
   // Connection Monitoring
   isConnectionLost = false;
-  private connectionMonitorInterval: any;
+  private connectionSubscription: Subscription | null = null;
   private retryStartTime: number = 0;
 
   constructor(
@@ -77,7 +79,8 @@ export class RacedaySetupComponent implements OnInit {
     private dynamicComponentService: DynamicComponentService,
     private dataService: DataService,
     private settingsService: SettingsService,
-    private translationService: TranslationService
+    private translationService: TranslationService,
+    private connectionMonitor: ConnectionMonitorService
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -114,26 +117,27 @@ export class RacedaySetupComponent implements OnInit {
       this.showSplash = false;
       this.minTimeElapsed = true;
 
-      // If skipping intro, we also skip the blocking connection wait
-      // but ensure we still try to verify connection in background for status
+      // If skipping intro, we still assume connection attempts happen in background
       this.connectionVerified = true;
-      // We set this true to unblock logic, but DataService will fail if offline.
-      // We accept that the component might load with empty data.
     } else {
       // Start Splash Screen Logic
-      // this.startQuoteRotation(); // MOVED: Called only when translations are loaded
 
       const minTimePromise = new Promise<void>(resolve => setTimeout(() => {
         this.minTimeElapsed = true;
         resolve();
       }, 5000));
 
-      // Wait for connection BEFORE loading the component to ensure data fetch succeeds
-      await this.waitForConnection();
+      // Wait for connection service
+      await this.connectionMonitor.waitForConnection();
+      this.connectionVerified = true;
 
       // Wait for the remainder of the 5s (if any)
       await minTimePromise;
     }
+
+    // Start global monitoring
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
 
     try {
       if (await this.fileSystem.hasCustomFiles()) {
@@ -141,7 +145,6 @@ export class RacedaySetupComponent implements OnInit {
       } else {
         this.loadDefaultComponent();
       }
-      // Force change detection after component load to prevent NG0100 with dynamic components
       this.cdr.detectChanges();
     } catch (e: any) {
       console.error('Failed to load custom component, falling back to default', e);
@@ -157,13 +160,72 @@ export class RacedaySetupComponent implements OnInit {
       this.stopQuoteRotation();
       this.cdr.detectChanges();
     }
-
-    // Start Splash Screen Logic ONLY when translations are ready
-    // This prevents raw keys from showing
   }
 
   ngOnDestroy() {
     this.stopQuoteRotation();
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
+  }
+
+  // Wrappers to match previous API if needed, or we implement logic directly
+  monitorConnection() {
+    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
+      if (state === ConnectionState.DISCONNECTED && !this.isConnectionLost) {
+        this.handleConnectionLoss();
+      } else if (state === ConnectionState.CONNECTED && this.isConnectionLost) {
+        this.handleConnectionRestored();
+      }
+    });
+  }
+
+  handleConnectionLoss() {
+    console.warn('Connection lost, starting retry sequence...');
+    this.isConnectionLost = true;
+    this.retryStartTime = Date.now();
+    this.cdr.detectChanges();
+
+    // Start a check for timeout
+    this.checkRetryTimeout();
+  }
+
+  handleConnectionRestored() {
+    console.log('Connection restored!');
+    this.isConnectionLost = false;
+    this.cdr.detectChanges();
+  }
+
+  checkRetryTimeout() {
+    if (!this.isConnectionLost) return;
+
+    // If we are still lost after 5 seconds, reset UI
+    setTimeout(() => {
+      if (this.isConnectionLost) {
+        console.warn('Connection retry timed out. Resetting to splash screen.');
+        this.resetToSplash();
+      }
+    }, 5000);
+  }
+
+  resetToSplash() {
+    this.isConnectionLost = false; // clear overlay, show splash
+    this.showSplash = true;
+    this.minTimeElapsed = false;
+    this.connectionVerified = false;
+    this.cdr.detectChanges();
+
+    this.stopQuoteRotation();
+    if (this.translationsLoaded) {
+      this.startQuoteRotation();
+    }
+
+    // Restart wait process
+    this.connectionMonitor.waitForConnection().then(() => {
+      this.showSplash = false;
+      this.stopQuoteRotation();
+      this.cdr.detectChanges();
+    });
   }
 
   startQuoteRotation() {
@@ -230,116 +292,22 @@ export class RacedaySetupComponent implements OnInit {
 
     // Reset connection verification to force a new check with new address
     this.connectionVerified = false;
-    this.waitForConnection();
-  }
+    // We update the service monitor to check immediately? 
+    // The service continues polling, but let's manual check.
+    this.connectionMonitor.checkConnection().subscribe();
 
-  async waitForConnection(): Promise<void> {
-    while (!this.connectionVerified) {
-      try {
-        await new Promise((resolve, reject) => {
-          this.dataService.getDrivers().subscribe({
-            next: () => {
-              this.connectionVerified = true;
-              resolve(true);
-            },
-            error: (err) => {
-              resolve(false);
-            }
-          });
-        });
-
-        if (this.connectionVerified) break;
-
-        // Wait 1 second before retrying
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } catch (e) {
-        // Should not happen with above logic, but safety net
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-
-    // Once connected, start monitoring for loss
-    this.startConnectionMonitoring();
-  }
-
-  startConnectionMonitoring() {
-    this.stopConnectionMonitoring();
-    this.connectionMonitorInterval = setInterval(async () => {
-      this.checkConnection();
-    }, 5000); // Check every 5 seconds
-  }
-
-  stopConnectionMonitoring() {
-    if (this.connectionMonitorInterval) {
-      clearInterval(this.connectionMonitorInterval);
-      this.connectionMonitorInterval = null;
-    }
-  }
-
-  async checkConnection() {
-    // Perform a lightweight check (e.g., get drivers or races)
-    // If we were already in a lost state, this function wouldn't be called by the interval
-    // (the interval calls this, but we clear it on loss)
-
-    this.dataService.getDrivers().pipe(timeout(3000)).subscribe({
-      next: () => {
-        // Connection is good
-      },
-      error: (err) => {
-        console.warn('Connection lost, starting retry sequence...', err);
-        this.handleConnectionLoss();
-      }
+    // UI wait
+    this.connectionMonitor.waitForConnection().then(() => {
+      this.connectionVerified = true;
     });
   }
 
-  handleConnectionLoss() {
-    this.stopConnectionMonitoring();
-    this.isConnectionLost = true;
-    this.retryStartTime = Date.now();
-    this.cdr.detectChanges();
-
-    this.retryConnection();
-  }
-
-  retryConnection() {
-    // Check if 5 seconds elapsed
-    if (Date.now() - this.retryStartTime > 5000) {
-      console.warn('Connection retry timed out. Resetting to splash screen.');
-      this.isConnectionLost = false;
-      this.showSplash = true;
-      this.minTimeElapsed = false;
-      this.connectionVerified = false;
-      this.cdr.detectChanges();
-
-      this.stopQuoteRotation();
-      // Reset splash logic
-      if (this.translationsLoaded) {
-        this.startQuoteRotation();
-      }
-
-      // Restart the main wait loop
-      this.waitForConnection().then(() => {
-        this.showSplash = false;
-        this.stopQuoteRotation();
-        this.cdr.detectChanges();
-      });
-      return;
-    }
-
-    // Try checking
-    this.dataService.getDrivers().pipe(timeout(1000)).subscribe({
-      next: () => {
-        console.log('Connection restored!');
-        this.isConnectionLost = false;
-        this.cdr.detectChanges();
-        this.startConnectionMonitoring();
-      },
-      error: () => {
-        // Retry in 1 second
-        setTimeout(() => this.retryConnection(), 1000);
-      }
-    });
-  }
+  // Old methods removed/replaced
+  waitForConnection() { /* removed */ }
+  startConnectionMonitoring() { /* removed */ }
+  stopConnectionMonitoring() { /* removed */ }
+  checkConnection() { /* removed */ }
+  retryConnection() { /* removed */ }
 
   loadDefaultComponent() {
     const componentRef = this.container.createComponent(DefaultRacedaySetupComponent);

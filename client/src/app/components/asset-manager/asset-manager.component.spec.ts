@@ -6,6 +6,8 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { Router } from '@angular/router';
 import { Pipe, PipeTransform } from '@angular/core';
 import { mockDataService, mockTranslationService, mockRouter } from 'src/app/testing/unit-test-mocks';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { BehaviorSubject, of } from 'rxjs';
 
 @Pipe({
   name: 'translate',
@@ -20,6 +22,8 @@ class MockTranslatePipe implements PipeTransform {
 describe('AssetManagerComponent', () => {
   let component: AssetManagerComponent;
   let fixture: ComponentFixture<AssetManagerComponent>;
+  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(async () => {
     // Reset mock calls before each test to ensure isolation
@@ -31,13 +35,19 @@ describe('AssetManagerComponent', () => {
     mockTranslationService.translate.calls.reset();
     mockRouter.navigate.calls.reset();
 
+    connectionStateSubject = new BehaviorSubject<ConnectionState>(ConnectionState.CONNECTED);
+    mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring', 'checkConnection']);
+    Object.defineProperty(mockConnectionMonitor, 'connectionState$', { get: () => connectionStateSubject.asObservable() });
+    mockConnectionMonitor.checkConnection.and.returnValue(of(true));
+
     await TestBed.configureTestingModule({
       declarations: [AssetManagerComponent, MockTranslatePipe],
       imports: [FormsModule],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
-        { provide: Router, useValue: mockRouter }
+        { provide: Router, useValue: mockRouter },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor }
       ]
     })
       .compileComponents();
