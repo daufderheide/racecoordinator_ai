@@ -6,6 +6,624 @@ export namespace com {
     /** Namespace antigravity. */
     namespace antigravity {
 
+        /** Properties of a Model. */
+        interface IModel {
+
+            /** Model entityId */
+            entityId?: (string|null);
+        }
+
+        /** Represents a Model. */
+        class Model implements IModel {
+
+            /**
+             * Constructs a new Model.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IModel);
+
+            /** Model entityId. */
+            public entityId: string;
+
+            /**
+             * Creates a new Model instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Model instance
+             */
+            public static create(properties?: com.antigravity.IModel): com.antigravity.Model;
+
+            /**
+             * Encodes the specified Model message. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @param message Model message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Model message, length delimited. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @param message Model message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Model message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Model;
+
+            /**
+             * Decodes a Model message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Model;
+
+            /**
+             * Verifies a Model message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Model message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Model
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.Model;
+
+            /**
+             * Creates a plain object from a Model message. Also converts values to other types if specified.
+             * @param message Model
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.Model, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Model to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Model
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an Asset. */
+        interface IAsset {
+
+            /** Asset model */
+            model?: (com.antigravity.IModel|null);
+
+            /** Asset name */
+            name?: (string|null);
+
+            /** Asset type */
+            type?: (string|null);
+
+            /** Asset size */
+            size?: (string|null);
+
+            /** Asset url */
+            url?: (string|null);
+        }
+
+        /** Represents an Asset. */
+        class Asset implements IAsset {
+
+            /**
+             * Constructs a new Asset.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IAsset);
+
+            /** Asset model. */
+            public model?: (com.antigravity.IModel|null);
+
+            /** Asset name. */
+            public name: string;
+
+            /** Asset type. */
+            public type: string;
+
+            /** Asset size. */
+            public size: string;
+
+            /** Asset url. */
+            public url: string;
+
+            /**
+             * Creates a new Asset instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Asset instance
+             */
+            public static create(properties?: com.antigravity.IAsset): com.antigravity.Asset;
+
+            /**
+             * Encodes the specified Asset message. Does not implicitly {@link com.antigravity.Asset.verify|verify} messages.
+             * @param message Asset message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IAsset, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Asset message, length delimited. Does not implicitly {@link com.antigravity.Asset.verify|verify} messages.
+             * @param message Asset message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IAsset, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an Asset message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Asset
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Asset;
+
+            /**
+             * Decodes an Asset message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Asset
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Asset;
+
+            /**
+             * Verifies an Asset message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an Asset message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Asset
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.Asset;
+
+            /**
+             * Creates a plain object from an Asset message. Also converts values to other types if specified.
+             * @param message Asset
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.Asset, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Asset to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Asset
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ListAssetsRequest. */
+        interface IListAssetsRequest {
+        }
+
+        /** Represents a ListAssetsRequest. */
+        class ListAssetsRequest implements IListAssetsRequest {
+
+            /**
+             * Constructs a new ListAssetsRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IListAssetsRequest);
+
+            /**
+             * Creates a new ListAssetsRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ListAssetsRequest instance
+             */
+            public static create(properties?: com.antigravity.IListAssetsRequest): com.antigravity.ListAssetsRequest;
+
+            /**
+             * Encodes the specified ListAssetsRequest message. Does not implicitly {@link com.antigravity.ListAssetsRequest.verify|verify} messages.
+             * @param message ListAssetsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IListAssetsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ListAssetsRequest message, length delimited. Does not implicitly {@link com.antigravity.ListAssetsRequest.verify|verify} messages.
+             * @param message ListAssetsRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IListAssetsRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ListAssetsRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ListAssetsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.ListAssetsRequest;
+
+            /**
+             * Decodes a ListAssetsRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ListAssetsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.ListAssetsRequest;
+
+            /**
+             * Verifies a ListAssetsRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ListAssetsRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ListAssetsRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.ListAssetsRequest;
+
+            /**
+             * Creates a plain object from a ListAssetsRequest message. Also converts values to other types if specified.
+             * @param message ListAssetsRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.ListAssetsRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ListAssetsRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ListAssetsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an UploadAssetRequest. */
+        interface IUploadAssetRequest {
+
+            /** UploadAssetRequest name */
+            name?: (string|null);
+
+            /** UploadAssetRequest type */
+            type?: (string|null);
+
+            /** UploadAssetRequest data */
+            data?: (Uint8Array|null);
+        }
+
+        /** Represents an UploadAssetRequest. */
+        class UploadAssetRequest implements IUploadAssetRequest {
+
+            /**
+             * Constructs a new UploadAssetRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IUploadAssetRequest);
+
+            /** UploadAssetRequest name. */
+            public name: string;
+
+            /** UploadAssetRequest type. */
+            public type: string;
+
+            /** UploadAssetRequest data. */
+            public data: Uint8Array;
+
+            /**
+             * Creates a new UploadAssetRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UploadAssetRequest instance
+             */
+            public static create(properties?: com.antigravity.IUploadAssetRequest): com.antigravity.UploadAssetRequest;
+
+            /**
+             * Encodes the specified UploadAssetRequest message. Does not implicitly {@link com.antigravity.UploadAssetRequest.verify|verify} messages.
+             * @param message UploadAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IUploadAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UploadAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.UploadAssetRequest.verify|verify} messages.
+             * @param message UploadAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IUploadAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an UploadAssetRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UploadAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.UploadAssetRequest;
+
+            /**
+             * Decodes an UploadAssetRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UploadAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.UploadAssetRequest;
+
+            /**
+             * Verifies an UploadAssetRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an UploadAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UploadAssetRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.UploadAssetRequest;
+
+            /**
+             * Creates a plain object from an UploadAssetRequest message. Also converts values to other types if specified.
+             * @param message UploadAssetRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.UploadAssetRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UploadAssetRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UploadAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteAssetRequest. */
+        interface IDeleteAssetRequest {
+
+            /** DeleteAssetRequest id */
+            id?: (string|null);
+        }
+
+        /** Represents a DeleteAssetRequest. */
+        class DeleteAssetRequest implements IDeleteAssetRequest {
+
+            /**
+             * Constructs a new DeleteAssetRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDeleteAssetRequest);
+
+            /** DeleteAssetRequest id. */
+            public id: string;
+
+            /**
+             * Creates a new DeleteAssetRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteAssetRequest instance
+             */
+            public static create(properties?: com.antigravity.IDeleteAssetRequest): com.antigravity.DeleteAssetRequest;
+
+            /**
+             * Encodes the specified DeleteAssetRequest message. Does not implicitly {@link com.antigravity.DeleteAssetRequest.verify|verify} messages.
+             * @param message DeleteAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDeleteAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.DeleteAssetRequest.verify|verify} messages.
+             * @param message DeleteAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDeleteAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteAssetRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DeleteAssetRequest;
+
+            /**
+             * Decodes a DeleteAssetRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DeleteAssetRequest;
+
+            /**
+             * Verifies a DeleteAssetRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteAssetRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DeleteAssetRequest;
+
+            /**
+             * Creates a plain object from a DeleteAssetRequest message. Also converts values to other types if specified.
+             * @param message DeleteAssetRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DeleteAssetRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteAssetRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RenameAssetRequest. */
+        interface IRenameAssetRequest {
+
+            /** RenameAssetRequest id */
+            id?: (string|null);
+
+            /** RenameAssetRequest newName */
+            newName?: (string|null);
+        }
+
+        /** Represents a RenameAssetRequest. */
+        class RenameAssetRequest implements IRenameAssetRequest {
+
+            /**
+             * Constructs a new RenameAssetRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRenameAssetRequest);
+
+            /** RenameAssetRequest id. */
+            public id: string;
+
+            /** RenameAssetRequest newName. */
+            public newName: string;
+
+            /**
+             * Creates a new RenameAssetRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RenameAssetRequest instance
+             */
+            public static create(properties?: com.antigravity.IRenameAssetRequest): com.antigravity.RenameAssetRequest;
+
+            /**
+             * Encodes the specified RenameAssetRequest message. Does not implicitly {@link com.antigravity.RenameAssetRequest.verify|verify} messages.
+             * @param message RenameAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRenameAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RenameAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.RenameAssetRequest.verify|verify} messages.
+             * @param message RenameAssetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRenameAssetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RenameAssetRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RenameAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RenameAssetRequest;
+
+            /**
+             * Decodes a RenameAssetRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RenameAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RenameAssetRequest;
+
+            /**
+             * Verifies a RenameAssetRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RenameAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RenameAssetRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RenameAssetRequest;
+
+            /**
+             * Creates a plain object from a RenameAssetRequest message. Also converts values to other types if specified.
+             * @param message RenameAssetRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RenameAssetRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RenameAssetRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RenameAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of an InitializeRaceRequest. */
         interface IInitializeRaceRequest {
 
@@ -683,103 +1301,6 @@ export namespace com {
 
             /**
              * Gets the default type url for LaneModel
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        /** Properties of a Model. */
-        interface IModel {
-
-            /** Model entityId */
-            entityId?: (string|null);
-        }
-
-        /** Represents a Model. */
-        class Model implements IModel {
-
-            /**
-             * Constructs a new Model.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IModel);
-
-            /** Model entityId. */
-            public entityId: string;
-
-            /**
-             * Creates a new Model instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns Model instance
-             */
-            public static create(properties?: com.antigravity.IModel): com.antigravity.Model;
-
-            /**
-             * Encodes the specified Model message. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
-             * @param message Model message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified Model message, length delimited. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
-             * @param message Model message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a Model message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns Model
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Model;
-
-            /**
-             * Decodes a Model message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns Model
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Model;
-
-            /**
-             * Verifies a Model message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a Model message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns Model
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.Model;
-
-            /**
-             * Creates a plain object from a Model message. Also converts values to other types if specified.
-             * @param message Model
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.Model, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this Model to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for Model
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -2144,6 +2665,418 @@ export namespace com {
 
             /**
              * Gets the default type url for RaceSubscriptionRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a ListAssetsResponse. */
+        interface IListAssetsResponse {
+
+            /** ListAssetsResponse assets */
+            assets?: (com.antigravity.IAsset[]|null);
+        }
+
+        /** Represents a ListAssetsResponse. */
+        class ListAssetsResponse implements IListAssetsResponse {
+
+            /**
+             * Constructs a new ListAssetsResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IListAssetsResponse);
+
+            /** ListAssetsResponse assets. */
+            public assets: com.antigravity.IAsset[];
+
+            /**
+             * Creates a new ListAssetsResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ListAssetsResponse instance
+             */
+            public static create(properties?: com.antigravity.IListAssetsResponse): com.antigravity.ListAssetsResponse;
+
+            /**
+             * Encodes the specified ListAssetsResponse message. Does not implicitly {@link com.antigravity.ListAssetsResponse.verify|verify} messages.
+             * @param message ListAssetsResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IListAssetsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ListAssetsResponse message, length delimited. Does not implicitly {@link com.antigravity.ListAssetsResponse.verify|verify} messages.
+             * @param message ListAssetsResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IListAssetsResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a ListAssetsResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ListAssetsResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.ListAssetsResponse;
+
+            /**
+             * Decodes a ListAssetsResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ListAssetsResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.ListAssetsResponse;
+
+            /**
+             * Verifies a ListAssetsResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a ListAssetsResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ListAssetsResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.ListAssetsResponse;
+
+            /**
+             * Creates a plain object from a ListAssetsResponse message. Also converts values to other types if specified.
+             * @param message ListAssetsResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.ListAssetsResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ListAssetsResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ListAssetsResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an UploadAssetResponse. */
+        interface IUploadAssetResponse {
+
+            /** UploadAssetResponse success */
+            success?: (boolean|null);
+
+            /** UploadAssetResponse message */
+            message?: (string|null);
+
+            /** UploadAssetResponse asset */
+            asset?: (com.antigravity.IAsset|null);
+        }
+
+        /** Represents an UploadAssetResponse. */
+        class UploadAssetResponse implements IUploadAssetResponse {
+
+            /**
+             * Constructs a new UploadAssetResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IUploadAssetResponse);
+
+            /** UploadAssetResponse success. */
+            public success: boolean;
+
+            /** UploadAssetResponse message. */
+            public message: string;
+
+            /** UploadAssetResponse asset. */
+            public asset?: (com.antigravity.IAsset|null);
+
+            /**
+             * Creates a new UploadAssetResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UploadAssetResponse instance
+             */
+            public static create(properties?: com.antigravity.IUploadAssetResponse): com.antigravity.UploadAssetResponse;
+
+            /**
+             * Encodes the specified UploadAssetResponse message. Does not implicitly {@link com.antigravity.UploadAssetResponse.verify|verify} messages.
+             * @param message UploadAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IUploadAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UploadAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.UploadAssetResponse.verify|verify} messages.
+             * @param message UploadAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IUploadAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an UploadAssetResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UploadAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.UploadAssetResponse;
+
+            /**
+             * Decodes an UploadAssetResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UploadAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.UploadAssetResponse;
+
+            /**
+             * Verifies an UploadAssetResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an UploadAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UploadAssetResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.UploadAssetResponse;
+
+            /**
+             * Creates a plain object from an UploadAssetResponse message. Also converts values to other types if specified.
+             * @param message UploadAssetResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.UploadAssetResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UploadAssetResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UploadAssetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DeleteAssetResponse. */
+        interface IDeleteAssetResponse {
+
+            /** DeleteAssetResponse success */
+            success?: (boolean|null);
+
+            /** DeleteAssetResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a DeleteAssetResponse. */
+        class DeleteAssetResponse implements IDeleteAssetResponse {
+
+            /**
+             * Constructs a new DeleteAssetResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDeleteAssetResponse);
+
+            /** DeleteAssetResponse success. */
+            public success: boolean;
+
+            /** DeleteAssetResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new DeleteAssetResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DeleteAssetResponse instance
+             */
+            public static create(properties?: com.antigravity.IDeleteAssetResponse): com.antigravity.DeleteAssetResponse;
+
+            /**
+             * Encodes the specified DeleteAssetResponse message. Does not implicitly {@link com.antigravity.DeleteAssetResponse.verify|verify} messages.
+             * @param message DeleteAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDeleteAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DeleteAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.DeleteAssetResponse.verify|verify} messages.
+             * @param message DeleteAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDeleteAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DeleteAssetResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DeleteAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DeleteAssetResponse;
+
+            /**
+             * Decodes a DeleteAssetResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DeleteAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DeleteAssetResponse;
+
+            /**
+             * Verifies a DeleteAssetResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DeleteAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DeleteAssetResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DeleteAssetResponse;
+
+            /**
+             * Creates a plain object from a DeleteAssetResponse message. Also converts values to other types if specified.
+             * @param message DeleteAssetResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DeleteAssetResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DeleteAssetResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DeleteAssetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RenameAssetResponse. */
+        interface IRenameAssetResponse {
+
+            /** RenameAssetResponse success */
+            success?: (boolean|null);
+
+            /** RenameAssetResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a RenameAssetResponse. */
+        class RenameAssetResponse implements IRenameAssetResponse {
+
+            /**
+             * Constructs a new RenameAssetResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRenameAssetResponse);
+
+            /** RenameAssetResponse success. */
+            public success: boolean;
+
+            /** RenameAssetResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new RenameAssetResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RenameAssetResponse instance
+             */
+            public static create(properties?: com.antigravity.IRenameAssetResponse): com.antigravity.RenameAssetResponse;
+
+            /**
+             * Encodes the specified RenameAssetResponse message. Does not implicitly {@link com.antigravity.RenameAssetResponse.verify|verify} messages.
+             * @param message RenameAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRenameAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RenameAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.RenameAssetResponse.verify|verify} messages.
+             * @param message RenameAssetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRenameAssetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RenameAssetResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RenameAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RenameAssetResponse;
+
+            /**
+             * Decodes a RenameAssetResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RenameAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RenameAssetResponse;
+
+            /**
+             * Verifies a RenameAssetResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RenameAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RenameAssetResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RenameAssetResponse;
+
+            /**
+             * Creates a plain object from a RenameAssetResponse message. Also converts values to other types if specified.
+             * @param message RenameAssetResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RenameAssetResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RenameAssetResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RenameAssetResponse
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

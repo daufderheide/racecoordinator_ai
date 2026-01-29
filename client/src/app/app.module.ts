@@ -13,6 +13,7 @@ import { DefaultRacedaySetupComponent } from './components/raceday-setup/default
 import { RaceService } from './services/race.service';
 
 import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
+import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
 import { SharedModule } from './shared/shared.module';
 
 @NgModule({
@@ -24,7 +25,9 @@ import { SharedModule } from './shared/shared.module';
     RacedaySetupComponent,
     DefaultRacedaySetupComponent,
     DefaultRacedaySetupComponent,
-    LeaderBoardComponent
+    DefaultRacedaySetupComponent,
+    LeaderBoardComponent,
+    AssetManagerComponent
   ],
   imports: [
     BrowserModule,

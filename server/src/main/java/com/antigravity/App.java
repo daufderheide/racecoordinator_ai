@@ -100,6 +100,8 @@ public class App {
         // reachable within the timeout
         // Initialize Database (Reset to Factory Settings)
         new com.antigravity.service.DatabaseService().resetToFactory(database);
+        // Reset Assets to Defaults
+        new com.antigravity.service.AssetService(database).resetAssets();
         System.out.println("Connected to MongoDB successfully.");
 
         // Determine client path once
@@ -152,8 +154,9 @@ public class App {
             });
         });
 
-        new DatabaseTaskHandler(database, app);
-        new ClientCommandTaskHandler(database, app);
+        new com.antigravity.handlers.ClientCommandTaskHandler(database, app);
+        new com.antigravity.handlers.DatabaseTaskHandler(database, app);
+        new com.antigravity.handlers.AssetTaskHandler(database, app);
 
         // Open Browser after successful start
         if (!headless) {

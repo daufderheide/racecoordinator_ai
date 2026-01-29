@@ -31,6 +31,7 @@ yarn-error.log*
 server/mongodb_data
 server_mongo/
 server_temp/
+server/data/assets/
 
 # Maven
 server/target

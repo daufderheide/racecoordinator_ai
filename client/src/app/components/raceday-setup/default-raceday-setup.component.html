@@ -4,8 +4,14 @@
   <!-- Menu Bar -->
   <div class="menu-bar">
     <div class="menu-item-wrapper" *ngFor="let item of menuItems"
-      [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'">
+      [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
+      [class.file-menu-container]="item.label === 'RDS_MENU_FILE'">
       <div class="menu-item" (click)="item.action($event)">{{ item.label | translate }}</div>
+
+      <!-- File Dropdown -->
+      <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_FILE' && isFileDropdownOpen">
+        <div class="menu-dropdown-item" (click)="openAssetManager()">{{ 'Asset Manager' }}</div>
+      </div>
 
       <!-- Options Dropdown -->
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_OPTIONS' && isOptionsDropdownOpen">

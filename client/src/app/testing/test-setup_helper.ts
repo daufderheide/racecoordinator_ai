@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { com } from '../proto/message';
 
 export class TestSetupHelper {
   static async setupStandardMocks(page: Page) {
@@ -35,6 +36,38 @@ export class TestSetupHelper {
     });
 
     // Translation mocking removed to allow identifying untranslated elements
+  }
+
+  static async setupAssetMocks(page: Page) {
+    await page.route('**/api/assets/list', async (route) => {
+      const assets = [
+        {
+          model: { entityId: '1' },
+          name: 'Test Image 1',
+          type: 'image',
+          size: '150 KB',
+          url: '',
+          filename: 'img1.png'
+        },
+        {
+          model: { entityId: '2' },
+          name: 'Test Sound 1',
+          type: 'sound',
+          size: '50 KB',
+          url: '',
+          filename: 'snd1.mp3'
+        }
+      ];
+
+      const response = com.antigravity.ListAssetsResponse.create({ assets });
+      const buffer = com.antigravity.ListAssetsResponse.encode(response).finish();
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/octet-stream',
+        body: Buffer.from(buffer),
+      });
+    });
   }
 
   static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[] } = {}) {

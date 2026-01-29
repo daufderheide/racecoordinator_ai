@@ -25,6 +25,1386 @@ export const com = $root.com = (() => {
          */
         const antigravity = {};
 
+        antigravity.Model = (function() {
+
+            /**
+             * Properties of a Model.
+             * @memberof com.antigravity
+             * @interface IModel
+             * @property {string|null} [entityId] Model entityId
+             */
+
+            /**
+             * Constructs a new Model.
+             * @memberof com.antigravity
+             * @classdesc Represents a Model.
+             * @implements IModel
+             * @constructor
+             * @param {com.antigravity.IModel=} [properties] Properties to set
+             */
+            function Model(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Model entityId.
+             * @member {string} entityId
+             * @memberof com.antigravity.Model
+             * @instance
+             */
+            Model.prototype.entityId = "";
+
+            /**
+             * Creates a new Model instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel=} [properties] Properties to set
+             * @returns {com.antigravity.Model} Model instance
+             */
+            Model.create = function create(properties) {
+                return new Model(properties);
+            };
+
+            /**
+             * Encodes the specified Model message. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel} message Model message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Model.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.entityId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Model message, length delimited. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.IModel} message Model message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Model.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a Model message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Model} Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Model.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Model();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.entityId = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a Model message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Model} Model
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Model.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a Model message.
+             * @function verify
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Model.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.entityId != null && message.hasOwnProperty("entityId"))
+                    if (!$util.isString(message.entityId))
+                        return "entityId: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a Model message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Model} Model
+             */
+            Model.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Model)
+                    return object;
+                let message = new $root.com.antigravity.Model();
+                if (object.entityId != null)
+                    message.entityId = String(object.entityId);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a Model message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {com.antigravity.Model} message Model
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Model.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.entityId = "";
+                if (message.entityId != null && message.hasOwnProperty("entityId"))
+                    object.entityId = message.entityId;
+                return object;
+            };
+
+            /**
+             * Converts this Model to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Model
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Model.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Model
+             * @function getTypeUrl
+             * @memberof com.antigravity.Model
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Model.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Model";
+            };
+
+            return Model;
+        })();
+
+        antigravity.Asset = (function() {
+
+            /**
+             * Properties of an Asset.
+             * @memberof com.antigravity
+             * @interface IAsset
+             * @property {com.antigravity.IModel|null} [model] Asset model
+             * @property {string|null} [name] Asset name
+             * @property {string|null} [type] Asset type
+             * @property {string|null} [size] Asset size
+             * @property {string|null} [url] Asset url
+             */
+
+            /**
+             * Constructs a new Asset.
+             * @memberof com.antigravity
+             * @classdesc Represents an Asset.
+             * @implements IAsset
+             * @constructor
+             * @param {com.antigravity.IAsset=} [properties] Properties to set
+             */
+            function Asset(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Asset model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.Asset
+             * @instance
+             */
+            Asset.prototype.model = null;
+
+            /**
+             * Asset name.
+             * @member {string} name
+             * @memberof com.antigravity.Asset
+             * @instance
+             */
+            Asset.prototype.name = "";
+
+            /**
+             * Asset type.
+             * @member {string} type
+             * @memberof com.antigravity.Asset
+             * @instance
+             */
+            Asset.prototype.type = "";
+
+            /**
+             * Asset size.
+             * @member {string} size
+             * @memberof com.antigravity.Asset
+             * @instance
+             */
+            Asset.prototype.size = "";
+
+            /**
+             * Asset url.
+             * @member {string} url
+             * @memberof com.antigravity.Asset
+             * @instance
+             */
+            Asset.prototype.url = "";
+
+            /**
+             * Creates a new Asset instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {com.antigravity.IAsset=} [properties] Properties to set
+             * @returns {com.antigravity.Asset} Asset instance
+             */
+            Asset.create = function create(properties) {
+                return new Asset(properties);
+            };
+
+            /**
+             * Encodes the specified Asset message. Does not implicitly {@link com.antigravity.Asset.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {com.antigravity.IAsset} message Asset message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Asset.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.type);
+                if (message.size != null && Object.hasOwnProperty.call(message, "size"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.size);
+                if (message.url != null && Object.hasOwnProperty.call(message, "url"))
+                    writer.uint32(/* id 5, wireType 2 =*/42).string(message.url);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified Asset message, length delimited. Does not implicitly {@link com.antigravity.Asset.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {com.antigravity.IAsset} message Asset message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            Asset.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an Asset message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.Asset} Asset
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Asset.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Asset();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.type = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            message.size = reader.string();
+                            break;
+                        }
+                    case 5: {
+                            message.url = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an Asset message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.Asset} Asset
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            Asset.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an Asset message.
+             * @function verify
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            Asset.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.type != null && message.hasOwnProperty("type"))
+                    if (!$util.isString(message.type))
+                        return "type: string expected";
+                if (message.size != null && message.hasOwnProperty("size"))
+                    if (!$util.isString(message.size))
+                        return "size: string expected";
+                if (message.url != null && message.hasOwnProperty("url"))
+                    if (!$util.isString(message.url))
+                        return "url: string expected";
+                return null;
+            };
+
+            /**
+             * Creates an Asset message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.Asset} Asset
+             */
+            Asset.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.Asset)
+                    return object;
+                let message = new $root.com.antigravity.Asset();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.Asset.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.type != null)
+                    message.type = String(object.type);
+                if (object.size != null)
+                    message.size = String(object.size);
+                if (object.url != null)
+                    message.url = String(object.url);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an Asset message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {com.antigravity.Asset} message Asset
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            Asset.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.type = "";
+                    object.size = "";
+                    object.url = "";
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.type != null && message.hasOwnProperty("type"))
+                    object.type = message.type;
+                if (message.size != null && message.hasOwnProperty("size"))
+                    object.size = message.size;
+                if (message.url != null && message.hasOwnProperty("url"))
+                    object.url = message.url;
+                return object;
+            };
+
+            /**
+             * Converts this Asset to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.Asset
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            Asset.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for Asset
+             * @function getTypeUrl
+             * @memberof com.antigravity.Asset
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            Asset.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.Asset";
+            };
+
+            return Asset;
+        })();
+
+        antigravity.ListAssetsRequest = (function() {
+
+            /**
+             * Properties of a ListAssetsRequest.
+             * @memberof com.antigravity
+             * @interface IListAssetsRequest
+             */
+
+            /**
+             * Constructs a new ListAssetsRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a ListAssetsRequest.
+             * @implements IListAssetsRequest
+             * @constructor
+             * @param {com.antigravity.IListAssetsRequest=} [properties] Properties to set
+             */
+            function ListAssetsRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * Creates a new ListAssetsRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {com.antigravity.IListAssetsRequest=} [properties] Properties to set
+             * @returns {com.antigravity.ListAssetsRequest} ListAssetsRequest instance
+             */
+            ListAssetsRequest.create = function create(properties) {
+                return new ListAssetsRequest(properties);
+            };
+
+            /**
+             * Encodes the specified ListAssetsRequest message. Does not implicitly {@link com.antigravity.ListAssetsRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {com.antigravity.IListAssetsRequest} message ListAssetsRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ListAssetsRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ListAssetsRequest message, length delimited. Does not implicitly {@link com.antigravity.ListAssetsRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {com.antigravity.IListAssetsRequest} message ListAssetsRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ListAssetsRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a ListAssetsRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.ListAssetsRequest} ListAssetsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ListAssetsRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.ListAssetsRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a ListAssetsRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.ListAssetsRequest} ListAssetsRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ListAssetsRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a ListAssetsRequest message.
+             * @function verify
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ListAssetsRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                return null;
+            };
+
+            /**
+             * Creates a ListAssetsRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.ListAssetsRequest} ListAssetsRequest
+             */
+            ListAssetsRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.ListAssetsRequest)
+                    return object;
+                return new $root.com.antigravity.ListAssetsRequest();
+            };
+
+            /**
+             * Creates a plain object from a ListAssetsRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {com.antigravity.ListAssetsRequest} message ListAssetsRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ListAssetsRequest.toObject = function toObject() {
+                return {};
+            };
+
+            /**
+             * Converts this ListAssetsRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.ListAssetsRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ListAssetsRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for ListAssetsRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.ListAssetsRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            ListAssetsRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.ListAssetsRequest";
+            };
+
+            return ListAssetsRequest;
+        })();
+
+        antigravity.UploadAssetRequest = (function() {
+
+            /**
+             * Properties of an UploadAssetRequest.
+             * @memberof com.antigravity
+             * @interface IUploadAssetRequest
+             * @property {string|null} [name] UploadAssetRequest name
+             * @property {string|null} [type] UploadAssetRequest type
+             * @property {Uint8Array|null} [data] UploadAssetRequest data
+             */
+
+            /**
+             * Constructs a new UploadAssetRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents an UploadAssetRequest.
+             * @implements IUploadAssetRequest
+             * @constructor
+             * @param {com.antigravity.IUploadAssetRequest=} [properties] Properties to set
+             */
+            function UploadAssetRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * UploadAssetRequest name.
+             * @member {string} name
+             * @memberof com.antigravity.UploadAssetRequest
+             * @instance
+             */
+            UploadAssetRequest.prototype.name = "";
+
+            /**
+             * UploadAssetRequest type.
+             * @member {string} type
+             * @memberof com.antigravity.UploadAssetRequest
+             * @instance
+             */
+            UploadAssetRequest.prototype.type = "";
+
+            /**
+             * UploadAssetRequest data.
+             * @member {Uint8Array} data
+             * @memberof com.antigravity.UploadAssetRequest
+             * @instance
+             */
+            UploadAssetRequest.prototype.data = $util.newBuffer([]);
+
+            /**
+             * Creates a new UploadAssetRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {com.antigravity.IUploadAssetRequest=} [properties] Properties to set
+             * @returns {com.antigravity.UploadAssetRequest} UploadAssetRequest instance
+             */
+            UploadAssetRequest.create = function create(properties) {
+                return new UploadAssetRequest(properties);
+            };
+
+            /**
+             * Encodes the specified UploadAssetRequest message. Does not implicitly {@link com.antigravity.UploadAssetRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {com.antigravity.IUploadAssetRequest} message UploadAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UploadAssetRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
+                if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.type);
+                if (message.data != null && Object.hasOwnProperty.call(message, "data"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).bytes(message.data);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified UploadAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.UploadAssetRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {com.antigravity.IUploadAssetRequest} message UploadAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UploadAssetRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an UploadAssetRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.UploadAssetRequest} UploadAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UploadAssetRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.UploadAssetRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.type = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.data = reader.bytes();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an UploadAssetRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.UploadAssetRequest} UploadAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UploadAssetRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an UploadAssetRequest message.
+             * @function verify
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            UploadAssetRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.type != null && message.hasOwnProperty("type"))
+                    if (!$util.isString(message.type))
+                        return "type: string expected";
+                if (message.data != null && message.hasOwnProperty("data"))
+                    if (!(message.data && typeof message.data.length === "number" || $util.isString(message.data)))
+                        return "data: buffer expected";
+                return null;
+            };
+
+            /**
+             * Creates an UploadAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.UploadAssetRequest} UploadAssetRequest
+             */
+            UploadAssetRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.UploadAssetRequest)
+                    return object;
+                let message = new $root.com.antigravity.UploadAssetRequest();
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.type != null)
+                    message.type = String(object.type);
+                if (object.data != null)
+                    if (typeof object.data === "string")
+                        $util.base64.decode(object.data, message.data = $util.newBuffer($util.base64.length(object.data)), 0);
+                    else if (object.data.length >= 0)
+                        message.data = object.data;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an UploadAssetRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {com.antigravity.UploadAssetRequest} message UploadAssetRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            UploadAssetRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.name = "";
+                    object.type = "";
+                    if (options.bytes === String)
+                        object.data = "";
+                    else {
+                        object.data = [];
+                        if (options.bytes !== Array)
+                            object.data = $util.newBuffer(object.data);
+                    }
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.type != null && message.hasOwnProperty("type"))
+                    object.type = message.type;
+                if (message.data != null && message.hasOwnProperty("data"))
+                    object.data = options.bytes === String ? $util.base64.encode(message.data, 0, message.data.length) : options.bytes === Array ? Array.prototype.slice.call(message.data) : message.data;
+                return object;
+            };
+
+            /**
+             * Converts this UploadAssetRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.UploadAssetRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            UploadAssetRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for UploadAssetRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.UploadAssetRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            UploadAssetRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.UploadAssetRequest";
+            };
+
+            return UploadAssetRequest;
+        })();
+
+        antigravity.DeleteAssetRequest = (function() {
+
+            /**
+             * Properties of a DeleteAssetRequest.
+             * @memberof com.antigravity
+             * @interface IDeleteAssetRequest
+             * @property {string|null} [id] DeleteAssetRequest id
+             */
+
+            /**
+             * Constructs a new DeleteAssetRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a DeleteAssetRequest.
+             * @implements IDeleteAssetRequest
+             * @constructor
+             * @param {com.antigravity.IDeleteAssetRequest=} [properties] Properties to set
+             */
+            function DeleteAssetRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DeleteAssetRequest id.
+             * @member {string} id
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @instance
+             */
+            DeleteAssetRequest.prototype.id = "";
+
+            /**
+             * Creates a new DeleteAssetRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {com.antigravity.IDeleteAssetRequest=} [properties] Properties to set
+             * @returns {com.antigravity.DeleteAssetRequest} DeleteAssetRequest instance
+             */
+            DeleteAssetRequest.create = function create(properties) {
+                return new DeleteAssetRequest(properties);
+            };
+
+            /**
+             * Encodes the specified DeleteAssetRequest message. Does not implicitly {@link com.antigravity.DeleteAssetRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {com.antigravity.IDeleteAssetRequest} message DeleteAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeleteAssetRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DeleteAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.DeleteAssetRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {com.antigravity.IDeleteAssetRequest} message DeleteAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeleteAssetRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DeleteAssetRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DeleteAssetRequest} DeleteAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeleteAssetRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DeleteAssetRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.id = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DeleteAssetRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DeleteAssetRequest} DeleteAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeleteAssetRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DeleteAssetRequest message.
+             * @function verify
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DeleteAssetRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.id != null && message.hasOwnProperty("id"))
+                    if (!$util.isString(message.id))
+                        return "id: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a DeleteAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DeleteAssetRequest} DeleteAssetRequest
+             */
+            DeleteAssetRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DeleteAssetRequest)
+                    return object;
+                let message = new $root.com.antigravity.DeleteAssetRequest();
+                if (object.id != null)
+                    message.id = String(object.id);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DeleteAssetRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {com.antigravity.DeleteAssetRequest} message DeleteAssetRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DeleteAssetRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.id = "";
+                if (message.id != null && message.hasOwnProperty("id"))
+                    object.id = message.id;
+                return object;
+            };
+
+            /**
+             * Converts this DeleteAssetRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DeleteAssetRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DeleteAssetRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.DeleteAssetRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DeleteAssetRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DeleteAssetRequest";
+            };
+
+            return DeleteAssetRequest;
+        })();
+
+        antigravity.RenameAssetRequest = (function() {
+
+            /**
+             * Properties of a RenameAssetRequest.
+             * @memberof com.antigravity
+             * @interface IRenameAssetRequest
+             * @property {string|null} [id] RenameAssetRequest id
+             * @property {string|null} [newName] RenameAssetRequest newName
+             */
+
+            /**
+             * Constructs a new RenameAssetRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a RenameAssetRequest.
+             * @implements IRenameAssetRequest
+             * @constructor
+             * @param {com.antigravity.IRenameAssetRequest=} [properties] Properties to set
+             */
+            function RenameAssetRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RenameAssetRequest id.
+             * @member {string} id
+             * @memberof com.antigravity.RenameAssetRequest
+             * @instance
+             */
+            RenameAssetRequest.prototype.id = "";
+
+            /**
+             * RenameAssetRequest newName.
+             * @member {string} newName
+             * @memberof com.antigravity.RenameAssetRequest
+             * @instance
+             */
+            RenameAssetRequest.prototype.newName = "";
+
+            /**
+             * Creates a new RenameAssetRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {com.antigravity.IRenameAssetRequest=} [properties] Properties to set
+             * @returns {com.antigravity.RenameAssetRequest} RenameAssetRequest instance
+             */
+            RenameAssetRequest.create = function create(properties) {
+                return new RenameAssetRequest(properties);
+            };
+
+            /**
+             * Encodes the specified RenameAssetRequest message. Does not implicitly {@link com.antigravity.RenameAssetRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {com.antigravity.IRenameAssetRequest} message RenameAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RenameAssetRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+                if (message.newName != null && Object.hasOwnProperty.call(message, "newName"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.newName);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RenameAssetRequest message, length delimited. Does not implicitly {@link com.antigravity.RenameAssetRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {com.antigravity.IRenameAssetRequest} message RenameAssetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RenameAssetRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RenameAssetRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RenameAssetRequest} RenameAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RenameAssetRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RenameAssetRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.id = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.newName = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RenameAssetRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RenameAssetRequest} RenameAssetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RenameAssetRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RenameAssetRequest message.
+             * @function verify
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RenameAssetRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.id != null && message.hasOwnProperty("id"))
+                    if (!$util.isString(message.id))
+                        return "id: string expected";
+                if (message.newName != null && message.hasOwnProperty("newName"))
+                    if (!$util.isString(message.newName))
+                        return "newName: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a RenameAssetRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RenameAssetRequest} RenameAssetRequest
+             */
+            RenameAssetRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RenameAssetRequest)
+                    return object;
+                let message = new $root.com.antigravity.RenameAssetRequest();
+                if (object.id != null)
+                    message.id = String(object.id);
+                if (object.newName != null)
+                    message.newName = String(object.newName);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RenameAssetRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {com.antigravity.RenameAssetRequest} message RenameAssetRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RenameAssetRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.id = "";
+                    object.newName = "";
+                }
+                if (message.id != null && message.hasOwnProperty("id"))
+                    object.id = message.id;
+                if (message.newName != null && message.hasOwnProperty("newName"))
+                    object.newName = message.newName;
+                return object;
+            };
+
+            /**
+             * Converts this RenameAssetRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RenameAssetRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RenameAssetRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RenameAssetRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.RenameAssetRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RenameAssetRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RenameAssetRequest";
+            };
+
+            return RenameAssetRequest;
+        })();
+
         antigravity.InitializeRaceRequest = (function() {
 
             /**
@@ -1743,211 +3123,6 @@ export const com = $root.com = (() => {
             };
 
             return LaneModel;
-        })();
-
-        antigravity.Model = (function() {
-
-            /**
-             * Properties of a Model.
-             * @memberof com.antigravity
-             * @interface IModel
-             * @property {string|null} [entityId] Model entityId
-             */
-
-            /**
-             * Constructs a new Model.
-             * @memberof com.antigravity
-             * @classdesc Represents a Model.
-             * @implements IModel
-             * @constructor
-             * @param {com.antigravity.IModel=} [properties] Properties to set
-             */
-            function Model(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * Model entityId.
-             * @member {string} entityId
-             * @memberof com.antigravity.Model
-             * @instance
-             */
-            Model.prototype.entityId = "";
-
-            /**
-             * Creates a new Model instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {com.antigravity.IModel=} [properties] Properties to set
-             * @returns {com.antigravity.Model} Model instance
-             */
-            Model.create = function create(properties) {
-                return new Model(properties);
-            };
-
-            /**
-             * Encodes the specified Model message. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {com.antigravity.IModel} message Model message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            Model.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.entityId != null && Object.hasOwnProperty.call(message, "entityId"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.entityId);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified Model message, length delimited. Does not implicitly {@link com.antigravity.Model.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {com.antigravity.IModel} message Model message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            Model.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a Model message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.Model} Model
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            Model.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.Model();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.entityId = reader.string();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a Model message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.Model} Model
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            Model.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a Model message.
-             * @function verify
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            Model.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    if (!$util.isString(message.entityId))
-                        return "entityId: string expected";
-                return null;
-            };
-
-            /**
-             * Creates a Model message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.Model} Model
-             */
-            Model.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.Model)
-                    return object;
-                let message = new $root.com.antigravity.Model();
-                if (object.entityId != null)
-                    message.entityId = String(object.entityId);
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a Model message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {com.antigravity.Model} message Model
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            Model.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults)
-                    object.entityId = "";
-                if (message.entityId != null && message.hasOwnProperty("entityId"))
-                    object.entityId = message.entityId;
-                return object;
-            };
-
-            /**
-             * Converts this Model to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.Model
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            Model.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for Model
-             * @function getTypeUrl
-             * @memberof com.antigravity.Model
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            Model.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.Model";
-            };
-
-            return Model;
         })();
 
         antigravity.DriverModel = (function() {
@@ -4822,6 +5997,947 @@ export const com = $root.com = (() => {
             };
 
             return RaceSubscriptionRequest;
+        })();
+
+        antigravity.ListAssetsResponse = (function() {
+
+            /**
+             * Properties of a ListAssetsResponse.
+             * @memberof com.antigravity
+             * @interface IListAssetsResponse
+             * @property {Array.<com.antigravity.IAsset>|null} [assets] ListAssetsResponse assets
+             */
+
+            /**
+             * Constructs a new ListAssetsResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a ListAssetsResponse.
+             * @implements IListAssetsResponse
+             * @constructor
+             * @param {com.antigravity.IListAssetsResponse=} [properties] Properties to set
+             */
+            function ListAssetsResponse(properties) {
+                this.assets = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * ListAssetsResponse assets.
+             * @member {Array.<com.antigravity.IAsset>} assets
+             * @memberof com.antigravity.ListAssetsResponse
+             * @instance
+             */
+            ListAssetsResponse.prototype.assets = $util.emptyArray;
+
+            /**
+             * Creates a new ListAssetsResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {com.antigravity.IListAssetsResponse=} [properties] Properties to set
+             * @returns {com.antigravity.ListAssetsResponse} ListAssetsResponse instance
+             */
+            ListAssetsResponse.create = function create(properties) {
+                return new ListAssetsResponse(properties);
+            };
+
+            /**
+             * Encodes the specified ListAssetsResponse message. Does not implicitly {@link com.antigravity.ListAssetsResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {com.antigravity.IListAssetsResponse} message ListAssetsResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ListAssetsResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.assets != null && message.assets.length)
+                    for (let i = 0; i < message.assets.length; ++i)
+                        $root.com.antigravity.Asset.encode(message.assets[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ListAssetsResponse message, length delimited. Does not implicitly {@link com.antigravity.ListAssetsResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {com.antigravity.IListAssetsResponse} message ListAssetsResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ListAssetsResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a ListAssetsResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.ListAssetsResponse} ListAssetsResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ListAssetsResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.ListAssetsResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            if (!(message.assets && message.assets.length))
+                                message.assets = [];
+                            message.assets.push($root.com.antigravity.Asset.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a ListAssetsResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.ListAssetsResponse} ListAssetsResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ListAssetsResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a ListAssetsResponse message.
+             * @function verify
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ListAssetsResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.assets != null && message.hasOwnProperty("assets")) {
+                    if (!Array.isArray(message.assets))
+                        return "assets: array expected";
+                    for (let i = 0; i < message.assets.length; ++i) {
+                        let error = $root.com.antigravity.Asset.verify(message.assets[i]);
+                        if (error)
+                            return "assets." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a ListAssetsResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.ListAssetsResponse} ListAssetsResponse
+             */
+            ListAssetsResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.ListAssetsResponse)
+                    return object;
+                let message = new $root.com.antigravity.ListAssetsResponse();
+                if (object.assets) {
+                    if (!Array.isArray(object.assets))
+                        throw TypeError(".com.antigravity.ListAssetsResponse.assets: array expected");
+                    message.assets = [];
+                    for (let i = 0; i < object.assets.length; ++i) {
+                        if (typeof object.assets[i] !== "object")
+                            throw TypeError(".com.antigravity.ListAssetsResponse.assets: object expected");
+                        message.assets[i] = $root.com.antigravity.Asset.fromObject(object.assets[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a ListAssetsResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {com.antigravity.ListAssetsResponse} message ListAssetsResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ListAssetsResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.assets = [];
+                if (message.assets && message.assets.length) {
+                    object.assets = [];
+                    for (let j = 0; j < message.assets.length; ++j)
+                        object.assets[j] = $root.com.antigravity.Asset.toObject(message.assets[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this ListAssetsResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.ListAssetsResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ListAssetsResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for ListAssetsResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.ListAssetsResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            ListAssetsResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.ListAssetsResponse";
+            };
+
+            return ListAssetsResponse;
+        })();
+
+        antigravity.UploadAssetResponse = (function() {
+
+            /**
+             * Properties of an UploadAssetResponse.
+             * @memberof com.antigravity
+             * @interface IUploadAssetResponse
+             * @property {boolean|null} [success] UploadAssetResponse success
+             * @property {string|null} [message] UploadAssetResponse message
+             * @property {com.antigravity.IAsset|null} [asset] UploadAssetResponse asset
+             */
+
+            /**
+             * Constructs a new UploadAssetResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents an UploadAssetResponse.
+             * @implements IUploadAssetResponse
+             * @constructor
+             * @param {com.antigravity.IUploadAssetResponse=} [properties] Properties to set
+             */
+            function UploadAssetResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * UploadAssetResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.UploadAssetResponse
+             * @instance
+             */
+            UploadAssetResponse.prototype.success = false;
+
+            /**
+             * UploadAssetResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.UploadAssetResponse
+             * @instance
+             */
+            UploadAssetResponse.prototype.message = "";
+
+            /**
+             * UploadAssetResponse asset.
+             * @member {com.antigravity.IAsset|null|undefined} asset
+             * @memberof com.antigravity.UploadAssetResponse
+             * @instance
+             */
+            UploadAssetResponse.prototype.asset = null;
+
+            /**
+             * Creates a new UploadAssetResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {com.antigravity.IUploadAssetResponse=} [properties] Properties to set
+             * @returns {com.antigravity.UploadAssetResponse} UploadAssetResponse instance
+             */
+            UploadAssetResponse.create = function create(properties) {
+                return new UploadAssetResponse(properties);
+            };
+
+            /**
+             * Encodes the specified UploadAssetResponse message. Does not implicitly {@link com.antigravity.UploadAssetResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {com.antigravity.IUploadAssetResponse} message UploadAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UploadAssetResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                if (message.asset != null && Object.hasOwnProperty.call(message, "asset"))
+                    $root.com.antigravity.Asset.encode(message.asset, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified UploadAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.UploadAssetResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {com.antigravity.IUploadAssetResponse} message UploadAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UploadAssetResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an UploadAssetResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.UploadAssetResponse} UploadAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UploadAssetResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.UploadAssetResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.asset = $root.com.antigravity.Asset.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an UploadAssetResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.UploadAssetResponse} UploadAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UploadAssetResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an UploadAssetResponse message.
+             * @function verify
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            UploadAssetResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                if (message.asset != null && message.hasOwnProperty("asset")) {
+                    let error = $root.com.antigravity.Asset.verify(message.asset);
+                    if (error)
+                        return "asset." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates an UploadAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.UploadAssetResponse} UploadAssetResponse
+             */
+            UploadAssetResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.UploadAssetResponse)
+                    return object;
+                let message = new $root.com.antigravity.UploadAssetResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                if (object.asset != null) {
+                    if (typeof object.asset !== "object")
+                        throw TypeError(".com.antigravity.UploadAssetResponse.asset: object expected");
+                    message.asset = $root.com.antigravity.Asset.fromObject(object.asset);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an UploadAssetResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {com.antigravity.UploadAssetResponse} message UploadAssetResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            UploadAssetResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                    object.asset = null;
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                if (message.asset != null && message.hasOwnProperty("asset"))
+                    object.asset = $root.com.antigravity.Asset.toObject(message.asset, options);
+                return object;
+            };
+
+            /**
+             * Converts this UploadAssetResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.UploadAssetResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            UploadAssetResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for UploadAssetResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.UploadAssetResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            UploadAssetResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.UploadAssetResponse";
+            };
+
+            return UploadAssetResponse;
+        })();
+
+        antigravity.DeleteAssetResponse = (function() {
+
+            /**
+             * Properties of a DeleteAssetResponse.
+             * @memberof com.antigravity
+             * @interface IDeleteAssetResponse
+             * @property {boolean|null} [success] DeleteAssetResponse success
+             * @property {string|null} [message] DeleteAssetResponse message
+             */
+
+            /**
+             * Constructs a new DeleteAssetResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a DeleteAssetResponse.
+             * @implements IDeleteAssetResponse
+             * @constructor
+             * @param {com.antigravity.IDeleteAssetResponse=} [properties] Properties to set
+             */
+            function DeleteAssetResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DeleteAssetResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @instance
+             */
+            DeleteAssetResponse.prototype.success = false;
+
+            /**
+             * DeleteAssetResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @instance
+             */
+            DeleteAssetResponse.prototype.message = "";
+
+            /**
+             * Creates a new DeleteAssetResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {com.antigravity.IDeleteAssetResponse=} [properties] Properties to set
+             * @returns {com.antigravity.DeleteAssetResponse} DeleteAssetResponse instance
+             */
+            DeleteAssetResponse.create = function create(properties) {
+                return new DeleteAssetResponse(properties);
+            };
+
+            /**
+             * Encodes the specified DeleteAssetResponse message. Does not implicitly {@link com.antigravity.DeleteAssetResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {com.antigravity.IDeleteAssetResponse} message DeleteAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeleteAssetResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DeleteAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.DeleteAssetResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {com.antigravity.IDeleteAssetResponse} message DeleteAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DeleteAssetResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DeleteAssetResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DeleteAssetResponse} DeleteAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeleteAssetResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DeleteAssetResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DeleteAssetResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DeleteAssetResponse} DeleteAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DeleteAssetResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DeleteAssetResponse message.
+             * @function verify
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DeleteAssetResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a DeleteAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DeleteAssetResponse} DeleteAssetResponse
+             */
+            DeleteAssetResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DeleteAssetResponse)
+                    return object;
+                let message = new $root.com.antigravity.DeleteAssetResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DeleteAssetResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {com.antigravity.DeleteAssetResponse} message DeleteAssetResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DeleteAssetResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this DeleteAssetResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DeleteAssetResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DeleteAssetResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.DeleteAssetResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DeleteAssetResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DeleteAssetResponse";
+            };
+
+            return DeleteAssetResponse;
+        })();
+
+        antigravity.RenameAssetResponse = (function() {
+
+            /**
+             * Properties of a RenameAssetResponse.
+             * @memberof com.antigravity
+             * @interface IRenameAssetResponse
+             * @property {boolean|null} [success] RenameAssetResponse success
+             * @property {string|null} [message] RenameAssetResponse message
+             */
+
+            /**
+             * Constructs a new RenameAssetResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a RenameAssetResponse.
+             * @implements IRenameAssetResponse
+             * @constructor
+             * @param {com.antigravity.IRenameAssetResponse=} [properties] Properties to set
+             */
+            function RenameAssetResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RenameAssetResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.RenameAssetResponse
+             * @instance
+             */
+            RenameAssetResponse.prototype.success = false;
+
+            /**
+             * RenameAssetResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.RenameAssetResponse
+             * @instance
+             */
+            RenameAssetResponse.prototype.message = "";
+
+            /**
+             * Creates a new RenameAssetResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {com.antigravity.IRenameAssetResponse=} [properties] Properties to set
+             * @returns {com.antigravity.RenameAssetResponse} RenameAssetResponse instance
+             */
+            RenameAssetResponse.create = function create(properties) {
+                return new RenameAssetResponse(properties);
+            };
+
+            /**
+             * Encodes the specified RenameAssetResponse message. Does not implicitly {@link com.antigravity.RenameAssetResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {com.antigravity.IRenameAssetResponse} message RenameAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RenameAssetResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RenameAssetResponse message, length delimited. Does not implicitly {@link com.antigravity.RenameAssetResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {com.antigravity.IRenameAssetResponse} message RenameAssetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RenameAssetResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RenameAssetResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RenameAssetResponse} RenameAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RenameAssetResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RenameAssetResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RenameAssetResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RenameAssetResponse} RenameAssetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RenameAssetResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RenameAssetResponse message.
+             * @function verify
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RenameAssetResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a RenameAssetResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RenameAssetResponse} RenameAssetResponse
+             */
+            RenameAssetResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RenameAssetResponse)
+                    return object;
+                let message = new $root.com.antigravity.RenameAssetResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RenameAssetResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {com.antigravity.RenameAssetResponse} message RenameAssetResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RenameAssetResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this RenameAssetResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RenameAssetResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RenameAssetResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RenameAssetResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.RenameAssetResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RenameAssetResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RenameAssetResponse";
+            };
+
+            return RenameAssetResponse;
         })();
 
         antigravity.RaceTime = (function() {

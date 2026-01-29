@@ -1,0 +1,145 @@
+<div class="am-container" (dragover)="onContainerDragOver($event)" (drop)="onContainerDrop($event)">
+  <!-- Header -->
+  <div class="am-header">
+    <button class="back-btn" (click)="onBack()">
+      <span class="back-icon">‹</span> {{ 'AM_BTN_BACK' | translate }}
+    </button>
+  </div>
+
+  <div class="content-area">
+    <!-- LEFT PANEL: STATS -->
+    <div class="panel stats-panel">
+      <div class="panel-header">{{ 'AM_DATABASE_STATUS' | translate }}</div>
+
+      <div class="stats-content">
+        <!-- Database Icon -->
+        <div class="db-icon-container">
+          <img src="assets/images/am_icon_database.png" alt="Database" class="db-icon">
+        </div>
+
+        <!-- Usage Text -->
+        <div class="usage-text">{{ 'ASSET_MANAGER_TOTAL_USED' | translate: {value: totalSize} }}</div>
+
+        <!-- Breakdown -->
+        <div class="breakdown-container">
+          <div class="breakdown-item">
+            <div class="breakdown-label">
+              <img src="assets/images/am_icon_image.png" alt="Img" class="mini-icon icon-cyan">
+              <span>{{ 'AM_IMAGES_LABEL' | translate: {count: imageCount} }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="fill image-fill" [style.width.%]="imageUsagePercent"></div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-label">
+              <img src="assets/images/am_icon_audio_wave.png" alt="Snd" class="mini-icon icon-cyan">
+              <span>{{ 'AM_SOUNDS_LABEL' | translate: {count: soundCount} }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="fill sound-fill" [style.width.%]="soundUsagePercent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Count -->
+        <div class="total-count">{{ 'AM_ASSETS_TOTAL_COUNT' | translate: {count: assets.length} }}</div>
+      </div>
+
+      <!-- Upload Zone -->
+      <input type="file" #fileInput (change)="onUpload($event)" style="display:none" multiple>
+      <div class="upload-zone" [class.disabled]="isUploading" [class.drag-over]="isDragOver"
+        (click)="!isUploading && fileInput.click()" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)">
+        <div class="upload-content" *ngIf="!isUploading">
+          <img src="assets/images/am_icon_upload.png" alt="Upload" class="upload-icon">
+          <div class="upload-btn">{{ 'AM_BTN_UPLOAD_NEW' | translate }}</div>
+          <div class="upload-hint">{{ 'AM_UPLOAD_HINT' | translate }}</div>
+        </div>
+        <div class="upload-content loading" *ngIf="isUploading">
+          <!-- Simple spinner equivalent -->
+          <div class="spinner"></div>
+          <div class="upload-btn">{{ 'AM_UPLOADING' | translate }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: ASSET LIBRARY -->
+    <div class="panel library-panel">
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="spinner large-spinner"></div>
+        <div class="loading-text">{{ 'AM_LOADING' | translate }}</div>
+      </div>
+
+      <div class="panel-header library-header">
+        <span>{{ 'AM_TITLE_LIBRARY' | translate }}</span>
+
+        <!-- Filter Controls -->
+        <div class="library-controls">
+          <div class="filter-tabs">
+            <div class="tab" [class.active]="filterType === 'all'" (click)="setFilterType('all')">{{ 'AM_FILTER_ALL' |
+              translate }}</div>
+            <div class="tab" [class.active]="filterType === 'image'" (click)="setFilterType('image')">{{
+              'AM_FILTER_IMAGES' | translate }}</div>
+            <div class="tab" [class.active]="filterType === 'sound'" (click)="setFilterType('sound')">{{
+              'AM_FILTER_SOUNDS' | translate }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar (Below Header) -->
+      <div class="filter-bar-container">
+        <input type="text" class="filter-input" [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
+          [(ngModel)]="filterName">
+      </div>
+
+      <!-- Asset Grid -->
+      <div class="asset-grid">
+        <div class="asset-card" *ngFor="let asset of filteredAssets">
+          <!-- Preview Area -->
+          <div class="asset-preview">
+            <ng-container *ngIf="asset.type === 'image'">
+              <img [src]="asset.url || 'assets/images/am_icon_image_placeholder.png'" class="preview-img" alt="preview">
+            </ng-container>
+            <ng-container *ngIf="asset.type === 'sound'">
+              <img src="assets/images/am_icon_audio_wave.png" class="preview-icon" alt="sound">
+            </ng-container>
+          </div>
+
+          <!-- Name Area -->
+          <div class="asset-info">
+            <!-- Editing Mode -->
+            <div class="edit-mode" *ngIf="asset.editMode">
+              <input type="text" class="name-input" [(ngModel)]="asset.name"
+                (keyup.enter)="saveName(asset.id, asset.name)" autoFocus>
+              <div class="edit-actions">
+                <button class="btn-save" (click)="saveName(asset.id, asset.name)">{{ 'AM_BTN_SAVE' | translate
+                  }}</button>
+                <button class="btn-cancel" (click)="cancelEditing(asset.id)">{{ 'AM_BTN_CANCEL' | translate }}</button>
+              </div>
+            </div>
+
+            <!-- View Mode -->
+            <div class="view-mode" *ngIf="!asset.editMode">
+              <div class="asset-name" [title]="asset.name">{{ asset.name }}</div>
+              <div class="asset-actions">
+                <img src="assets/images/am_icon_edit.png" class="action-icon" (click)="startEditing(asset.id)"
+                  title="Edit">
+                <img src="assets/images/am_icon_trash.png" class="action-icon delete" (click)="onDelete(asset.id)"
+                  title="Delete">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Lost Overlay -->
+  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
+  </div>
+</div>

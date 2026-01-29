@@ -57,7 +57,7 @@ module.exports = function (config) {
           '--password-store=basic',
           '--use-mock-keychain',
           '--remote-debugging-port=9222',
-          '--user-data-dir=' + (process.env.KARMA_PROFILE_DIR || require('path').resolve(__dirname, '.chrome-user-data'))
+          '--user-data-dir=' + require('os').tmpdir() + '/karma-chrome-' + Date.now()
         ]
       }
     },

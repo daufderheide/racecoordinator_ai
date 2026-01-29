@@ -38,8 +38,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   translationsLoaded: boolean = false;
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
+  isFileDropdownOpen: boolean = false;
   menuItems = [
-    { label: 'RDS_MENU_FILE', action: () => console.log('File menu') },
+    { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => console.log('Track menu') },
     { label: 'RDS_MENU_DRIVER', action: () => console.log('Driver menu') },
     { label: 'RDS_MENU_RACE', action: () => console.log('Race menu') },
@@ -131,6 +132,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
     if (!target.closest('.options-menu-container')) {
       this.closeOptionsDropdown();
+    }
+    if (!target.closest('.file-menu-container')) {
+      this.closeFileDropdown();
     }
   }
 
@@ -326,5 +330,21 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openServerSettings() {
     this.closeOptionsDropdown();
     this.requestServerConfig.emit();
+  }
+
+  // --- File Menu Logic ---
+
+  toggleFileDropdown(event: Event) {
+    event.stopPropagation();
+    this.isFileDropdownOpen = !this.isFileDropdownOpen;
+  }
+
+  closeFileDropdown() {
+    this.isFileDropdownOpen = false;
+  }
+
+  openAssetManager() {
+    this.closeFileDropdown();
+    this.router.navigate(['/asset-manager']);
   }
 }

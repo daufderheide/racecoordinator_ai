@@ -1,0 +1,16 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "AssetModelProto";
+
+message Asset {
+  Model model = 1;
+  string name = 2;
+  string type = 3; // "image" or "sound"
+  string size = 4; // Human readable size e.g. "2.4 MB"
+  string url = 5;  // URL for the client to fetch the file
+}

@@ -203,6 +203,87 @@ export class DataService {
     );
   }
 
+  // --- Asset Management ---
+  listAssets(): Observable<com.antigravity.IAsset[]> {
+    return this.http.get(`${this.baseUrl}/api/assets/list`, {
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const listResponse = com.antigravity.ListAssetsResponse.decode(new Uint8Array(response as any));
+        return listResponse.assets;
+      })
+    );
+  }
+
+  uploadAsset(name: string, type: string, data: Uint8Array): Observable<com.antigravity.IAsset> {
+    const request = com.antigravity.UploadAssetRequest.create({ name, type, data });
+    const buffer = com.antigravity.UploadAssetRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/assets/upload`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const uploadResponse = com.antigravity.UploadAssetResponse.decode(new Uint8Array(response as any));
+        if (!uploadResponse.success) {
+          throw new Error(uploadResponse.message);
+        }
+        return uploadResponse.asset!;
+      })
+    );
+  }
+
+  deleteAsset(id: string): Observable<boolean> {
+    const request = com.antigravity.DeleteAssetRequest.create({ id });
+    const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/assets/delete`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const deleteResponse = com.antigravity.DeleteAssetResponse.decode(new Uint8Array(response as any));
+        if (!deleteResponse.success) {
+          throw new Error(deleteResponse.message);
+        }
+        return true;
+      })
+    );
+  }
+
+  renameAsset(id: string, newName: string): Observable<boolean> {
+    const request = com.antigravity.RenameAssetRequest.create({ id, newName });
+    const buffer = com.antigravity.RenameAssetRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/assets/rename`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const renameResponse = com.antigravity.RenameAssetResponse.decode(new Uint8Array(response as any));
+        if (!renameResponse.success) {
+          throw new Error(renameResponse.message);
+        }
+        return true;
+      })
+    );
+  }
+
   private raceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();

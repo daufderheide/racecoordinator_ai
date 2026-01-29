@@ -14,6 +14,7 @@ import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
+import { timeout } from 'rxjs/operators';
 
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -280,12 +281,12 @@ export class RacedaySetupComponent implements OnInit {
     // If we were already in a lost state, this function wouldn't be called by the interval
     // (the interval calls this, but we clear it on loss)
 
-    this.dataService.getDrivers().subscribe({
+    this.dataService.getDrivers().pipe(timeout(3000)).subscribe({
       next: () => {
         // Connection is good
       },
       error: (err) => {
-        console.warn('Connection lost, starting retry sequence...');
+        console.warn('Connection lost, starting retry sequence...', err);
         this.handleConnectionLoss();
       }
     });
@@ -326,7 +327,7 @@ export class RacedaySetupComponent implements OnInit {
     }
 
     // Try checking
-    this.dataService.getDrivers().subscribe({
+    this.dataService.getDrivers().pipe(timeout(1000)).subscribe({
       next: () => {
         console.log('Connection restored!');
         this.isConnectionLost = false;

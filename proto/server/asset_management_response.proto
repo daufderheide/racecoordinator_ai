@@ -1,0 +1,28 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/asset_model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "AssetManagementResponseProto";
+
+message ListAssetsResponse {
+  repeated Asset assets = 1;
+}
+
+message UploadAssetResponse {
+  bool success = 1;
+  string message = 2;
+  Asset asset = 3;
+}
+
+message DeleteAssetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RenameAssetResponse {
+  bool success = 1;
+  string message = 2;
+}
