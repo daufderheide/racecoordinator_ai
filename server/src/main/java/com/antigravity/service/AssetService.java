@@ -40,6 +40,10 @@ public class AssetService {
     }
   }
 
+  public String getAssetDir() {
+    return assetDir;
+  }
+
   public List<Asset> getAllAssets() {
     List<Asset> assets = new ArrayList<>();
     for (Document doc : collection.find()) {

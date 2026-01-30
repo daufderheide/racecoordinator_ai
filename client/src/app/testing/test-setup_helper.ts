@@ -34,8 +34,31 @@ export class TestSetupHelper {
         ]),
       });
     });
+  }
 
-    // Translation mocking removed to allow identifying untranslated elements
+  /**
+  /**
+   * Waits for the translation file to be fetched and the UI to be stable.
+   */
+  static async waitForLocalization(page: Page, lang: string = 'en', action?: Promise<any>) {
+    // Start listening for the response before performing the action
+    const responsePromise = page.waitForResponse(response =>
+      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200
+    );
+
+    // Perform the action (e.g., page.goto) if provided
+    if (action) {
+      await action;
+    }
+
+    // Wait for the translation request to complete
+    await responsePromise;
+
+    // Give Angular a moment to apply translations
+    await page.waitForTimeout(1000);
+
+    // Ensure fonts are ready
+    await page.evaluate(() => document.fonts.ready);
   }
 
   static async setupAssetMocks(page: Page) {

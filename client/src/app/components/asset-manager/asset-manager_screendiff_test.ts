@@ -10,8 +10,8 @@ test.describe('Asset Manager Visuals', () => {
   });
 
   test('should display asset manager with mocked assets', async ({ page }) => {
-    // 1. Navigate to Asset Manager
-    await page.goto('/asset-manager');
+    // Navigating and waiting for localization
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
 
     // Wait for the asset list to appear
     const assetList = page.locator('.asset-grid');
@@ -31,7 +31,7 @@ test.describe('Asset Manager Visuals', () => {
   });
 
   test('should filter assets visuals', async ({ page }) => {
-    await page.goto('/asset-manager');
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
     await expect(page.locator('.asset-grid')).toBeVisible();
 
     // Click Images Filter

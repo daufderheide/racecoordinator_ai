@@ -18,7 +18,6 @@ import de.flapdoodle.embed.mongo.types.DatabaseDir;
 import de.flapdoodle.embed.process.io.ProcessOutput;
 import de.flapdoodle.embed.process.io.Processors;
 import de.flapdoodle.embed.process.io.Slf4jLevel;
-import de.flapdoodle.embed.process.runtime.Network;
 import de.flapdoodle.reverse.TransitionWalker;
 import de.flapdoodle.reverse.transitions.Start;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -187,8 +186,9 @@ public class App {
             System.out.println("Starting embedded MongoDB 4.x...");
 
             // Use a writable location for database storage
-            String userHome = System.getProperty("user.home");
-            String appDataDir = Paths.get(userHome, ".racecoordinator").toString();
+            // Use a writable location for database storage
+            String appDataDir = System.getProperty("app.data.dir",
+                    Paths.get(System.getProperty("user.home"), ".racecoordinator").toString());
             String dataDir = Paths.get(appDataDir, "mongodb_data").toString();
 
             System.out.println("Using MongoDB data directory: " + dataDir);
@@ -212,15 +212,15 @@ public class App {
 
                 if (isLegacyWindows || is32Bit) {
                     System.out
-                            .println("Legacy/32-bit Windows detected. Downgrading MongoDB to 2.6 for compatibility...");
-                    mongoVersion = Version.Main.V2_6;
+                            .println("Legacy/32-bit Windows detected. Downgrading MongoDB to 3.6 for compatibility...");
+                    mongoVersion = Version.Main.V3_6; // V2_6 is deprecated, using V3_6 as fallback
                 }
             }
 
             mongodProcess = Mongod.instance()
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
-                            .initializedWith(Net.of("localhost", MONGO_PORT, Network.localhostIsIPv6())))
+                            .initializedWith(Net.of("localhost", MONGO_PORT, false))) // Use IPv4
                     .withProcessOutput(Start.to(ProcessOutput.class).initializedWith(ProcessOutput.builder()
                             .output(Processors.logTo(logger, Slf4jLevel.INFO))
                             .error(Processors.logTo(logger, Slf4jLevel.ERROR))

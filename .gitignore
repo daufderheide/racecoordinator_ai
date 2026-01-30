@@ -32,7 +32,8 @@ server/mongodb_data
 server_mongo/
 server_temp/
 server/data/assets/
-
+server/data
+/
 # Maven
 server/target
 
@@ -61,3 +62,4 @@ client/.chrome-home/
 # I think this is generated code on the client/server
 client/src/app/types/
 server/build_output/
+server/target_dist/

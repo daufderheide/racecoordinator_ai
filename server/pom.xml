@@ -41,7 +41,7 @@
     <dependency>
       <groupId>de.flapdoodle.embed</groupId>
       <artifactId>de.flapdoodle.embed.mongo</artifactId>
-      <version>3.5.4</version>
+      <version>4.11.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -58,6 +58,7 @@
   </dependencies>
 
   <build>
+    <directory>target_dist</directory>
     <extensions>
       <extension>
         <groupId>kr.motd.maven</groupId>
@@ -92,6 +93,16 @@
         <configuration>
           <protocArtifact>com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <systemPropertyVariables>
+            <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       <plugin>

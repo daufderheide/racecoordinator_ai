@@ -17,9 +17,10 @@ for (const lang of languages) {
         selectedDriverIds: ['d1', 'd2']
       });
 
-      await page.goto('/');
+      // Wait for navigation and localization together
+      await TestSetupHelper.waitForLocalization(page, lang, page.goto('/'));
 
-      // Wait for the container to be visible and translations to be loaded
+      // Wait for the container to be visible
       await expect(page.locator('.setup-container')).toBeVisible({ timeout: 15000 });
 
       // Wait for Splash Screen to disappear

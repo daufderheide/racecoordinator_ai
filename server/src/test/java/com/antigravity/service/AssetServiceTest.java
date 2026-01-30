@@ -4,12 +4,13 @@ import com.antigravity.proto.Asset;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.MongodConfig;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
+import de.flapdoodle.embed.mongo.types.DatabaseDir;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.transitions.Start;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -18,19 +19,18 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 public class AssetServiceTest {
 
-  private MongodExecutable mongodExecutable;
+  private TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
   private MongoClient mongoClient;
   private AssetService assetService;
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
+  public TemporaryFolder tempFolder = new TemporaryFolder(new File("target_dist"));
 
   @Before
   public void setup() throws Exception {
@@ -38,20 +38,21 @@ public class AssetServiceTest {
     String bindIp = "localhost";
     int port = 27018; // Use a different port than default 27017 to avoid conflicts
 
-    MongodConfig mongodConfig = MongodConfig.builder()
-        .version(Version.Main.PRODUCTION)
-        .net(new Net(bindIp, port, Network.localhostIsIPv6()))
-        .build();
+    // Use a writable location for database storage
+    String dataDir = tempFolder.newFolder("mongodb_data").getAbsolutePath();
 
-    MongodStarter starter = MongodStarter.getDefaultInstance();
-    mongodExecutable = starter.prepare(mongodConfig);
-    mongodExecutable.start();
+    mongodProcess = Mongod.instance()
+        .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(new File(dataDir).toPath())))
+        .withNet(Start.to(Net.class)
+            .initializedWith(Net.of(bindIp, port, false))) // Use IPv4 for test reliability
+        .start(Version.Main.V4_4);
 
     mongoClient = MongoClients.create("mongodb://" + bindIp + ":" + port);
     MongoDatabase database = mongoClient.getDatabase("test_db");
 
     // Setup AssetService with temp directory
-    assetService = new AssetService(database, tempFolder.getRoot().getAbsolutePath());
+    String assetsDir = tempFolder.newFolder("assets").getAbsolutePath();
+    assetService = new AssetService(database, assetsDir);
   }
 
   @After
@@ -59,8 +60,8 @@ public class AssetServiceTest {
     if (mongoClient != null) {
       mongoClient.close();
     }
-    if (mongodExecutable != null) {
-      mongodExecutable.stop();
+    if (mongodProcess != null) {
+      mongodProcess.close();
     }
   }
 
@@ -94,8 +95,9 @@ public class AssetServiceTest {
     List<Asset> assets = assetService.getAllAssets();
     assertEquals(0, assets.size());
 
-    // Verify folder is empty (ignoring hidden files if any, but should be empty)
-    String[] files = tempFolder.getRoot().list();
+    // Verify folder is empty
+    File assetsFolder = new File(assetService.getAssetDir());
+    String[] files = assetsFolder.list();
     assertNotNull(files);
     assertEquals(0, files.length);
   }

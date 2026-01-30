@@ -6,4 +6,5 @@ source "$(dirname "$0")/scripts/test_env.sh"
 echo ""
 echo "--- 🔹 Running Server Tests 🔹 ---"
 cd "$SERVER_DIR" || exit
-mvn test -DforkCount=0
+mkdir -p target_dist/tmp
+mvn test -DforkCount=0 -Djava.io.tmpdir="$(pwd)/target_dist/tmp"

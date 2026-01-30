@@ -11,7 +11,7 @@ cd "$(dirname "$0")/server"
 # 3. generate_protos.sh -> runs protoc manually (SUCCESS).
 # 4. mvn compile exec:java
 
-mvn clean
+# mvn clean
 chmod +x generate_protos.sh
 ./generate_protos.sh
-mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless"
+mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -Djava.io.tmpdir="$(pwd)/temp" -Dapp.data.dir="$(pwd)/data"
