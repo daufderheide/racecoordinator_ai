@@ -17,7 +17,7 @@ import { AssetManagerComponent } from './components/asset-manager/asset-manager.
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
 import { ItemSelectorComponent } from './components/shared/item-selector/item-selector.component';
-import { SharedModule } from './shared/shared.module';
+import { SharedModule } from './components/shared/shared.module';
 import { AvatarUrlPipe } from './pipes/avatar-url.pipe';
 
 @NgModule({

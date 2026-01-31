@@ -7,7 +7,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { of, BehaviorSubject, throwError } from 'rxjs';
 import { Driver } from 'src/app/models/driver';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { SharedModule } from 'src/app/components/shared/shared.module';
 import { BackButtonComponent } from 'src/app/components/shared/back-button/back-button.component';
 
 import { AvatarUrlPipe } from 'src/app/pipes/avatar-url.pipe';

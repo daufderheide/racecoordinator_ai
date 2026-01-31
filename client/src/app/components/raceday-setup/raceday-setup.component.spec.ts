@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from
 import { RacedaySetupComponent } from './raceday-setup.component';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { Compiler, Injector, ChangeDetectorRef } from '@angular/core';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { SharedModule } from 'src/app/components/shared/shared.module';
 import { DataService } from 'src/app/data.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';

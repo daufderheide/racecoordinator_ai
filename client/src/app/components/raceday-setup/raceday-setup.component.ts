@@ -11,7 +11,7 @@ import {
   Inject
 } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { SharedModule } from 'src/app/components/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import { timeout } from 'rxjs/operators';

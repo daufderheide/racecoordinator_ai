@@ -3,7 +3,7 @@ import { CommonModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe } from '@angul
 import { DragDropModule, CdkDropList, CdkDrag, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SharedModule } from '../shared/shared.module';
+import { SharedModule } from '../components/shared/shared.module';
 
 import * as ts from 'typescript';
 
