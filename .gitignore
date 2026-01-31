@@ -33,7 +33,9 @@ server_mongo/
 server_temp/
 server/data/assets/
 server/data
-/
+server/app_data/
+server/temp/
+
 # Maven
 server/target
 

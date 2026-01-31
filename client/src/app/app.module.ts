@@ -14,7 +14,11 @@ import { RaceService } from './services/race.service';
 
 import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
+import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
+import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
+import { ItemSelectorComponent } from './components/shared/item-selector/item-selector.component';
 import { SharedModule } from './shared/shared.module';
+import { AvatarUrlPipe } from './pipes/avatar-url.pipe';
 
 @NgModule({
   declarations: [
@@ -27,7 +31,11 @@ import { SharedModule } from './shared/shared.module';
     DefaultRacedaySetupComponent,
     DefaultRacedaySetupComponent,
     LeaderBoardComponent,
-    AssetManagerComponent
+    AssetManagerComponent,
+    DriverEditorComponent,
+    DriverManagerComponent,
+    ItemSelectorComponent,
+    AvatarUrlPipe
   ],
   imports: [
     BrowserModule,

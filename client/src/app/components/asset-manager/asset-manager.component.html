@@ -1,10 +1,9 @@
 <div class="am-container" (dragover)="onContainerDragOver($event)" (drop)="onContainerDrop($event)">
   <!-- Header -->
   <div class="am-header">
-    <button class="back-btn" (click)="onBack()">
-      <span class="back-icon">‹</span> {{ 'AM_BTN_BACK' | translate }}
-    </button>
+    <app-back-button label="AM_BTN_BACK"></app-back-button>
   </div>
+
 
   <div class="content-area">
     <!-- LEFT PANEL: STATS -->

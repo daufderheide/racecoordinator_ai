@@ -1,0 +1,83 @@
+<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="dm-header">
+    <app-back-button label="BACK"></app-back-button>
+  </div>
+
+  <div class="main-content">
+    <!-- LEFT PANEL: DRIVERS TABLE -->
+    <div class="panel list-panel">
+      <div class="panel-header">
+        <div class="panel-title">DRIVERS</div>
+        <div class="search-container">
+          <input type="text" placeholder="SEARCH..." [(ngModel)]="searchQuery" class="search-input">
+        </div>
+      </div>
+      <div class="table-header-fixed">
+        <table class="driver-table header-only">
+          <thead>
+            <tr>
+              <th class="col-avatar">AVATAR</th>
+              <th class="col-name">NAME</th>
+              <th class="col-nickname">NICKNAME</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class="table-body-scroll">
+        <table class="driver-table body-only">
+          <tbody>
+            <tr *ngFor="let driver of filteredDrivers; trackBy: trackByDriver"
+              [class.active]="selectedDriver?.entity_id === driver.entity_id" (click)="selectDriver(driver)">
+              <td class="avatar-cell col-avatar">
+                <div class="avatar-mini">
+                  <img [src]="driver.avatarUrl | avatarUrl" alt="Avatar">
+                </div>
+              </td>
+              <td class="name-cell col-name">{{ driver.name }}</td>
+              <td class="nickname-cell col-nickname">{{ driver.nickname }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: CONFIGURATION -->
+    <div class="panel config-panel">
+      <div class="avatar-preview-container" *ngIf="editingDriver">
+        <div class="avatar-preview-large">
+          <img [src]="editingDriver.avatarUrl | avatarUrl" alt="Avatar Large">
+        </div>
+      </div>
+
+      <div class="config-header">CONFIGURATION</div>
+
+      <div class="config-form" *ngIf="editingDriver">
+        <div class="form-group">
+          <label>NAME</label>
+          <input type="text" [(ngModel)]="editingDriver.name" class="dm-input" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>NICKNAME</label>
+          <input type="text" [(ngModel)]="editingDriver.nickname" class="dm-input" readonly>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-edit" (click)="updateDriver()">EDIT</button>
+          <button class="btn btn-delete" (click)="deleteDriver()">DELETE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Lost Overlay -->
+  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">LOST CONNECTION</div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+</div>

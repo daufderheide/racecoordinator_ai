@@ -1,9 +1,14 @@
 package com.antigravity;
 
-import com.antigravity.handlers.DatabaseTaskHandler;
-import com.antigravity.handlers.ClientCommandTaskHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.plugin.json.JavalinJackson;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.bson.types.ObjectId;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
@@ -40,6 +45,21 @@ public class App {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
+        String projectDir = System.getProperty("user.dir");
+        String appDataDir = System.getProperty("app.data.dir",
+                Paths.get(projectDir, "app_data").toString());
+        String tmpDir = Paths.get(appDataDir, "server_tmp").toString();
+        try {
+            java.nio.file.Path tmpPath = Paths.get(tmpDir);
+            if (!Files.exists(tmpPath)) {
+                Files.createDirectories(tmpPath);
+            }
+            System.setProperty("java.io.tmpdir", tmpDir);
+            System.out.println("Set java.io.tmpdir to: " + tmpDir);
+        } catch (Exception e) {
+            System.err.println("Failed to set java.io.tmpdir: " + e.getMessage());
+        }
+
         boolean useEmbeddedMongo = true;
         boolean headless = false;
         for (String arg : args) {
@@ -119,6 +139,25 @@ public class App {
         app = Javalin.create(config -> {
             config.addStaticFiles(staticFilePath, Location.EXTERNAL);
             config.enableCorsForAllOrigins();
+
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(ObjectId.class, new JsonDeserializer<ObjectId>() {
+                @Override
+                public ObjectId deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+                    String value = p.getValueAsString();
+                    if (value == null || value.isEmpty()) {
+                        return null;
+                    }
+                    try {
+                        return new ObjectId(value);
+                    } catch (IllegalArgumentException e) {
+                        return null;
+                    }
+                }
+            });
+            mapper.registerModule(module);
+            config.jsonMapper(new JavalinJackson(mapper));
         }).start(7070);
 
         // SPA Fallback: Serve index.html for 404s on HTML requests
@@ -188,8 +227,11 @@ public class App {
             // Use a writable location for database storage
             // Use a writable location for database storage
             String appDataDir = System.getProperty("app.data.dir",
-                    Paths.get(System.getProperty("user.home"), ".racecoordinator").toString());
+                    Paths.get(System.getProperty("user.dir"), "app_data").toString());
             String dataDir = Paths.get(appDataDir, "mongodb_data").toString();
+
+            // Set temp directory for flapdoodle extraction
+            System.setProperty("de.flapdoodle.embed.io.tmpdir", appDataDir);
 
             System.out.println("Using MongoDB data directory: " + dataDir);
 

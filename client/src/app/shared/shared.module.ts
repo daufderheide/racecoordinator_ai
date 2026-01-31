@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TranslatePipe } from '../pipes/translate.pipe';
 import { SvgTextScalerDirective } from '../directives/svg-text-scaler.directive';
-import { ConfirmationModalComponent } from '../components/confirmation-modal/confirmation-modal.component';
+import { ConfirmationModalComponent } from '../components/shared/confirmation-modal/confirmation-modal.component';
+import { BackButtonComponent } from '../components/shared/back-button/back-button.component';
 
 @NgModule({
   declarations: [
     TranslatePipe,
     SvgTextScalerDirective,
-    ConfirmationModalComponent
+    ConfirmationModalComponent,
+    BackButtonComponent
   ],
   imports: [
     CommonModule,
@@ -23,7 +25,8 @@ import { ConfirmationModalComponent } from '../components/confirmation-modal/con
     DragDropModule,
     TranslatePipe,
     SvgTextScalerDirective,
-    ConfirmationModalComponent
+    ConfirmationModalComponent,
+    BackButtonComponent
   ]
 })
 export class SharedModule { }

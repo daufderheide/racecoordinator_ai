@@ -5,6 +5,8 @@ import { RacedayComponent } from './components/raceday/raceday.component';
 import { RacedaySetupComponent } from './components/raceday-setup/raceday-setup.component';
 import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
+import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
+import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
@@ -12,6 +14,8 @@ const routes: Routes = [
     { path: 'leaderboard', component: LeaderBoardComponent, data: { animation: 'LeaderBoardPage' } },
     { path: 'raceday-setup', component: RacedaySetupComponent, data: { animation: 'RacedaySetupPage' } },
     { path: 'asset-manager', component: AssetManagerComponent, data: { animation: 'AssetManagerPage' } },
+    { path: 'driver-editor', component: DriverEditorComponent, data: { animation: 'DriverEditorPage' } },
+    { path: 'driver-manager', component: DriverManagerComponent, data: { animation: 'DriverManagerPage' } },
     { path: '**', redirectTo: '' }
 ];
 

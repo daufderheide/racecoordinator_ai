@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { AssetManagerComponent } from './asset-manager.component';
 import { FormsModule } from '@angular/forms';
 import { DataService } from 'src/app/data.service';
@@ -48,7 +49,8 @@ describe('AssetManagerComponent', () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor }
-      ]
+      ],
+      schemas: [CUSTOM_ELEMENTS_SCHEMA]
     })
       .compileComponents();
   });

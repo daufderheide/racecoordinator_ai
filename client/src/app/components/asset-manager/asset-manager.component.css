@@ -43,33 +43,6 @@
   color: var(--neon-pink);
 }
 
-.back-btn {
-  background: transparent;
-  border: 1px solid var(--neon-blue);
-  color: var(--neon-blue);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  border-radius: 4px;
-}
-
-.back-btn:hover {
-  background: rgba(0, 243, 255, 0.1);
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-  transform: translateX(-2px);
-}
-
-.back-icon {
-  font-size: 20px;
-  line-height: 1;
-  padding-bottom: 2px;
-  /* Slight alignment fix for orbitron */
-}
 
 /* Content Area */
 .content-area {

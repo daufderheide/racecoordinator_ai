@@ -14,7 +14,8 @@ public class Model extends com.antigravity.race.ServerToClientObject {
     private final String entityId;
 
     @BsonCreator
-    public Model(@BsonId ObjectId id, @BsonProperty("entity_id") String entityId) {
+    public Model(@BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id,
+            @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId) {
         super(entityId);
         this.id = id;
         this.entityId = entityId;

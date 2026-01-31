@@ -1,0 +1,127 @@
+<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+  (dragover)="onDragOver($event)">
+  <!-- Header -->
+  <div class="dm-header">
+    <app-back-button label="BACK" route="/driver-manager"
+      [queryParams]="{ id: editingDriver?.entity_id }"></app-back-button>
+  </div>
+
+  <div class="content-area editor-centered" *ngIf="!isLoading">
+    <!-- ONLY CONFIGURATION PANELS NOW -->
+    <div class="config-panels" *ngIf="editingDriver">
+      <!-- DRIVER CONFIG -->
+      <div class="panel config-panel">
+        <div class="panel-header">DRIVER CONFIGURATION</div>
+        <div class="config-content driver-config-layout">
+          <div class="inputs-column">
+            <div class="form-group">
+              <label>Name:</label>
+              <input type="text" [(ngModel)]="editingDriver.name" class="dm-input">
+            </div>
+            <div class="form-group">
+              <label>Nickname:</label>
+              <input type="text" [(ngModel)]="editingDriver.nickname" class="dm-input">
+            </div>
+          </div>
+          <div class="avatar-column">
+            <div class="avatar-preview-large" (drop)="onDrop($event, 'avatar')" (dragover)="onDragOver($event)"
+              (click)="openAvatarSelector()">
+              <img [src]="pendingAvatarPreview || (editingDriver.avatarUrl | avatarUrl)" alt="Avatar Large">
+              <div class="drop-hint" *ngIf="!editingDriver.avatarUrl && !pendingAvatarPreview">DRAG IMAGE HERE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIO CONFIG -->
+      <div class="panel audio-panel">
+        <div class="panel-header">AUDIO CONFIGURATION</div>
+
+        <div class="audio-section">
+          <div class="audio-header">
+            <label>Lap Sounds</label>
+            <div class="toggle-group">
+              <span [class.active]="editingDriver.lapSoundType === 'preset'"
+                (click)="editingDriver.lapSoundType = 'preset'">Preset Sound</span>
+              <span [class.active]="editingDriver.lapSoundType === 'tts'"
+                (click)="editingDriver.lapSoundType = 'tts'">Text to Speech</span>
+            </div>
+          </div>
+
+          <div class="audio-controls" *ngIf="editingDriver.lapSoundType === 'preset'">
+            <div class="select-wrapper" (drop)="onDrop($event, 'lap')" (dragover)="onDragOver($event)">
+              <select [(ngModel)]="editingDriver.lapSoundUrl" class="dm-select">
+                <option value="">[None]</option>
+                <option *ngFor="let asset of soundAssets" [value]="asset.url">{{ asset.name }}</option>
+              </select>
+            </div>
+            <button class="btn-play" (click)="playSound(editingDriver.lapSoundUrl)">▶ PLAY</button>
+          </div>
+
+          <div class="audio-controls" *ngIf="editingDriver.lapSoundType === 'tts'">
+            <input type="text" [(ngModel)]="editingDriver.lapSoundText" class="dm-input" placeholder="Enter text...">
+          </div>
+        </div>
+
+        <div class="audio-section">
+          <div class="audio-header">
+            <label>Best Lap Sounds</label>
+            <div class="toggle-group">
+              <span [class.active]="editingDriver.bestLapSoundType === 'preset'"
+                (click)="editingDriver.bestLapSoundType = 'preset'">Preset Sound</span>
+              <span [class.active]="editingDriver.bestLapSoundType === 'tts'"
+                (click)="editingDriver.bestLapSoundType = 'tts'">Text to Speech</span>
+            </div>
+          </div>
+
+          <div class="audio-controls" *ngIf="editingDriver.bestLapSoundType === 'preset'">
+            <div class="select-wrapper" (drop)="onDrop($event, 'bestLap')" (dragover)="onDragOver($event)">
+              <select [(ngModel)]="editingDriver.bestLapSoundUrl" class="dm-select">
+                <option value="">[None]</option>
+                <option *ngFor="let asset of soundAssets" [value]="asset.url">{{ asset.name }}</option>
+              </select>
+            </div>
+            <button class="btn-play" (click)="playSound(editingDriver.bestLapSoundUrl)">▶ PLAY</button>
+          </div>
+
+          <div class="audio-controls" *ngIf="editingDriver.bestLapSoundType === 'tts'">
+            <input type="text" [(ngModel)]="editingDriver.bestLapSoundText" class="dm-input"
+              placeholder="Enter text...">
+          </div>
+        </div>
+
+        <div class="editor-actions">
+          <button class="btn btn-update" (click)="updateDriver()">
+            <span class="icon">🔄</span> {{ editingDriver.entity_id === 'new' ? 'CREATE DRIVER' : 'UPDATE DRIVER' }}
+          </button>
+          <button *ngIf="editingDriver.entity_id !== 'new'" class="btn btn-new" (click)="saveAsNew()">
+            <span class="icon">💾</span> SAVE AS NEW
+          </button>
+        </div>
+
+        <div class="more-options">
+          <div class="more-btn">
+            <span>More...</span>
+            <span class="settings-icon">⚙</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving || isUploading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Connection Lost Overlay -->
+  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
+  </div>
+
+  <!-- Avatar Selector -->
+  <app-item-selector [visible]="showAvatarSelector" title="SELECT AVATAR" [items]="avatarAssets"
+    (select)="onAvatarSelected($event)" (close)="closeAvatarSelector()">
+  </app-item-selector>
+</div>

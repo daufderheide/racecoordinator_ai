@@ -100,11 +100,6 @@ export class AssetManagerComponent implements OnInit {
     }, 1000);
   }
 
-  onBack() {
-    // Set skipIntro to true so we skip splash screen when going back intentionally
-    sessionStorage.setItem('skipIntro', 'true');
-    this.router.navigate(['/raceday-setup']);
-  }
 
   loadAssets() {
     this.isLoading = true;

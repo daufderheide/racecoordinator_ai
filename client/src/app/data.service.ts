@@ -56,6 +56,18 @@ export class DataService {
     return this.http.get<any[]>(this.driversUrl);
   }
 
+  createDriver(driver: any): Observable<any> {
+    return this.http.post<any>(this.driversUrl, driver);
+  }
+
+  updateDriver(id: string, driver: any): Observable<any> {
+    return this.http.put<any>(`${this.driversUrl}/${id}`, driver);
+  }
+
+  deleteDriver(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.driversUrl}/${id}`);
+  }
+
   getRaces(): Observable<any[]> {
     return this.http.get<any[]>(this.racesUrl);
   }
