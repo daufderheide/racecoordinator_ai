@@ -23,6 +23,33 @@ public class AssetService {
   private final String assetDir;
   private final MongoCollection<Document> collection;
 
+  private static class DefaultAsset {
+    final String filename;
+    final String displayName;
+
+    DefaultAsset(String filename, String displayName) {
+      this.filename = filename;
+      this.displayName = displayName;
+    }
+  }
+
+  private static final List<DefaultAsset> DEFAULT_IMAGE_ASSETS = new ArrayList<>();
+  static {
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_1.png", "Helmet 1"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_2.png", "Helmet 2"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_3.png", "Helmet 3"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_4.png", "Helmet 4"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_5.png", "Helmet 5"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_6.png", "Helmet 6"));
+  }
+
+  private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
+  static {
+    DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("beep.wav", "Lap Beep"));
+    DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("chimes.wav", "Lap Chimes"));
+    DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("driveby.wav", "Lap Driveby"));
+  }
+
   public AssetService(MongoDatabase database) {
     this(database, "data/assets");
   }
@@ -114,6 +141,22 @@ public class AssetService {
         .build();
   }
 
+  private byte[] readResource(String path) throws IOException {
+    try (InputStream is = getClass().getResourceAsStream(path)) {
+      if (is == null) {
+        throw new IOException("Resource not found: " + path);
+      }
+      java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+      int nRead;
+      byte[] data = new byte[1024];
+      while ((nRead = is.read(data, 0, data.length)) != -1) {
+        buffer.write(data, 0, nRead);
+      }
+      buffer.flush();
+      return buffer.toByteArray();
+    }
+  }
+
   private static String humanReadableByteCountBin(long bytes) {
     long absB = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
     if (absB < 1024) {
@@ -141,32 +184,24 @@ public class AssetService {
           }
         }
       }
-    }
+    } 
 
     // 2. Clear DB
     collection.drop();
 
     // 3. Restore defaults
-    for (int i = 1; i <= 6; i++) {
-      String filename = "default_avatar_helmet_" + i + ".png";
-      try (InputStream is = getClass().getResourceAsStream("/defaults/" + filename)) {
-        if (is != null) {
-          // Read all bytes
-          java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-          int nRead;
-          byte[] data = new byte[1024];
-          while ((nRead = is.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-          }
-          buffer.flush();
-          saveAsset("Helmet " + i, "image", buffer.toByteArray());
-          System.out.println("Restored default asset: " + filename);
-        } else {
-          System.err.println("Default asset validation failed: Resource not found for " + filename);
-        }
+    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
+      try {
+        saveAsset(asset.displayName, "image", readResource("/defaults/" + asset.filename));
       } catch (IOException e) {
-        System.err.println("Failed to restore default asset " + filename + ": " + e.getMessage());
-        e.printStackTrace();
+        System.err.println("Failed to restore default asset " + asset.filename + ": " + e.getMessage());
+      }
+    }
+    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+      try {
+        saveAsset(asset.displayName, "sound", readResource("/defaults/" + asset.filename));
+      } catch (IOException e) {
+        System.err.println("Failed to restore default asset " + asset.filename + ": " + e.getMessage());
       }
     }
   }

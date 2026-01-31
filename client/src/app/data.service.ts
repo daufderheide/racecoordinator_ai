@@ -17,6 +17,10 @@ export class DataService {
     return `http://${this.serverIp}:${this.serverPort}`;
   }
 
+  public get serverUrl(): string {
+    return this.baseUrl;
+  }
+
   private get driversUrl(): string {
     return `${this.baseUrl}/api/drivers`;
   }

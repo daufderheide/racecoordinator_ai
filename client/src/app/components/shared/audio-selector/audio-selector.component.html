@@ -1,0 +1,25 @@
+<div class="audio-section">
+  <div class="audio-header">
+    <label>{{ label }}</label>
+    <div class="toggle-group">
+      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">Preset Sound</span>
+      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">Text to Speech</span>
+    </div>
+  </div>
+
+  <div class="audio-controls" *ngIf="type === 'preset'">
+    <div class="select-wrapper" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+      <select [ngModel]="url" (ngModelChange)="onUrlChange($event)" class="dm-select">
+        <option value="">[None]</option>
+        <option *ngFor="let asset of assets" [value]="asset.url">{{ asset.name }}</option>
+      </select>
+    </div>
+    <button class="btn-play" (click)="play()">▶ PLAY</button>
+  </div>
+
+  <div class="audio-controls" *ngIf="type === 'tts'">
+    <input type="text" [ngModel]="text" (ngModelChange)="onTextChange($event)" class="dm-input"
+      placeholder="Enter text...">
+    <button class="btn-play" (click)="play()">▶ PLAY</button>
+  </div>
+</div>

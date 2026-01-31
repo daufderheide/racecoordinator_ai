@@ -38,56 +38,15 @@
         <div class="panel-header">AUDIO CONFIGURATION</div>
 
         <div class="audio-section">
-          <div class="audio-header">
-            <label>Lap Sounds</label>
-            <div class="toggle-group">
-              <span [class.active]="editingDriver.lapSoundType === 'preset'"
-                (click)="editingDriver.lapSoundType = 'preset'">Preset Sound</span>
-              <span [class.active]="editingDriver.lapSoundType === 'tts'"
-                (click)="editingDriver.lapSoundType = 'tts'">Text to Speech</span>
-            </div>
-          </div>
-
-          <div class="audio-controls" *ngIf="editingDriver.lapSoundType === 'preset'">
-            <div class="select-wrapper" (drop)="onDrop($event, 'lap')" (dragover)="onDragOver($event)">
-              <select [(ngModel)]="editingDriver.lapSoundUrl" class="dm-select">
-                <option value="">[None]</option>
-                <option *ngFor="let asset of soundAssets" [value]="asset.url">{{ asset.name }}</option>
-              </select>
-            </div>
-            <button class="btn-play" (click)="playSound(editingDriver.lapSoundUrl)">▶ PLAY</button>
-          </div>
-
-          <div class="audio-controls" *ngIf="editingDriver.lapSoundType === 'tts'">
-            <input type="text" [(ngModel)]="editingDriver.lapSoundText" class="dm-input" placeholder="Enter text...">
-          </div>
+          <app-audio-selector label="Lap Sounds" [assets]="soundAssets" [(type)]="editingDriver.lapSoundType"
+            [(url)]="editingDriver.lapSoundUrl" [(text)]="editingDriver.lapSoundText">
+          </app-audio-selector>
         </div>
 
         <div class="audio-section">
-          <div class="audio-header">
-            <label>Best Lap Sounds</label>
-            <div class="toggle-group">
-              <span [class.active]="editingDriver.bestLapSoundType === 'preset'"
-                (click)="editingDriver.bestLapSoundType = 'preset'">Preset Sound</span>
-              <span [class.active]="editingDriver.bestLapSoundType === 'tts'"
-                (click)="editingDriver.bestLapSoundType = 'tts'">Text to Speech</span>
-            </div>
-          </div>
-
-          <div class="audio-controls" *ngIf="editingDriver.bestLapSoundType === 'preset'">
-            <div class="select-wrapper" (drop)="onDrop($event, 'bestLap')" (dragover)="onDragOver($event)">
-              <select [(ngModel)]="editingDriver.bestLapSoundUrl" class="dm-select">
-                <option value="">[None]</option>
-                <option *ngFor="let asset of soundAssets" [value]="asset.url">{{ asset.name }}</option>
-              </select>
-            </div>
-            <button class="btn-play" (click)="playSound(editingDriver.bestLapSoundUrl)">▶ PLAY</button>
-          </div>
-
-          <div class="audio-controls" *ngIf="editingDriver.bestLapSoundType === 'tts'">
-            <input type="text" [(ngModel)]="editingDriver.bestLapSoundText" class="dm-input"
-              placeholder="Enter text...">
-          </div>
+          <app-audio-selector label="Best Lap Sounds" [assets]="soundAssets" [(type)]="editingDriver.bestLapSoundType"
+            [(url)]="editingDriver.bestLapSoundUrl" [(text)]="editingDriver.bestLapSoundText">
+          </app-audio-selector>
         </div>
 
         <div class="editor-actions">

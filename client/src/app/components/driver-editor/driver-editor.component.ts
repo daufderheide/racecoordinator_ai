@@ -288,7 +288,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     event.stopPropagation();
   }
 
-  onDrop(event: DragEvent, type: 'avatar' | 'lap' | 'bestLap') {
+  onDrop(event: DragEvent, type: 'avatar') {
     event.preventDefault();
     event.stopPropagation();
 
@@ -303,53 +303,11 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         };
         reader.readAsDataURL(file);
-      } else {
-        this.uploadAndSetAsset(files[0], type);
       }
     }
   }
 
-  uploadAndSetAsset(file: File, target: 'avatar' | 'lap' | 'bestLap') {
-    this.isUploading = true;
-    this.cdr.detectChanges();
 
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      const bytes = new Uint8Array(e.target.result);
-      const assetType = file.type.startsWith('image/') ? 'image' : 'sound';
-
-      this.dataService.uploadAsset(file.name, assetType, bytes).subscribe({
-        next: (asset) => {
-          if (this.editingDriver) {
-            const url = asset.url;
-            if (target === 'avatar') {
-              (this.editingDriver as any).avatarUrl = url;
-            } else if (target === 'lap') {
-              (this.editingDriver as any).lapSoundUrl = url;
-              (this.editingDriver as any).lapSoundType = 'preset';
-            } else if (target === 'bestLap') {
-              (this.editingDriver as any).bestLapSoundUrl = url;
-              (this.editingDriver as any).bestLapSoundType = 'preset';
-            }
-          }
-          this.isUploading = false;
-          this.loadData(); // Refresh asset lists
-        },
-        error: (err) => {
-          console.error('Upload failed', err);
-          this.isUploading = false;
-          this.cdr.detectChanges();
-        }
-      });
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  playSound(url: string | undefined) {
-    if (!url) return;
-    const audio = new Audio(url);
-    audio.play().catch(err => console.error('Error playing sound', err));
-  }
 
   getAvatarUrl(url?: string): string {
     if (!url) return 'assets/images/default_avatar.svg';

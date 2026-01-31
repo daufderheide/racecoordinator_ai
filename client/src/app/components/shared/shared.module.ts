@@ -6,13 +6,16 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 import { SvgTextScalerDirective } from '../../directives/svg-text-scaler.directive';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { BackButtonComponent } from './back-button/back-button.component';
+import { AudioSelectorComponent } from './audio-selector/audio-selector.component';
 
 @NgModule({
   declarations: [
     TranslatePipe,
     SvgTextScalerDirective,
+    SvgTextScalerDirective,
     ConfirmationModalComponent,
-    BackButtonComponent
+    BackButtonComponent,
+    AudioSelectorComponent
   ],
   imports: [
     CommonModule,
@@ -26,7 +29,8 @@ import { BackButtonComponent } from './back-button/back-button.component';
     TranslatePipe,
     SvgTextScalerDirective,
     ConfirmationModalComponent,
-    BackButtonComponent
+    BackButtonComponent,
+    AudioSelectorComponent
   ]
 })
 export class SharedModule { }
