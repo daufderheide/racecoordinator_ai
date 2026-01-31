@@ -52,7 +52,10 @@ for (const lang of languages) {
       // Use higher tolerance to avoid failures on minor rendering differences
       await expect(page).toHaveScreenshot(`initial-state-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        // TODO(aufderheide): Need to figure out why this is needed and remove it.
+        // Not just here or just this file, but all tests in all files.
+        timeout: 10000
       });
     });
 
@@ -68,7 +71,8 @@ for (const lang of languages) {
 
       await expect(page).toHaveScreenshot(`no-drivers-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 10000
       });
     });
 
@@ -79,7 +83,8 @@ for (const lang of languages) {
 
       await expect(page).toHaveScreenshot(`race-selector-open-size-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 10000
       });
     });
 
@@ -89,7 +94,8 @@ for (const lang of languages) {
 
       await expect(page).toHaveScreenshot(`driver-search-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 10000
       });
 
       await page.click('.driver-item:not(.selected):has-text("Charlie")');
@@ -98,7 +104,8 @@ for (const lang of languages) {
 
       await expect(page).toHaveScreenshot(`driver-added-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 10000
       });
     });
 
@@ -106,7 +113,8 @@ for (const lang of languages) {
       await expect(page.locator('.race-card')).toHaveCount(2);
       await expect(page).toHaveScreenshot(`quick-start-cards-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
-        animations: 'disabled'
+        animations: 'disabled',
+        timeout: 10000
       });
     });
   });

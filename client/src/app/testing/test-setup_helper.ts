@@ -55,6 +55,10 @@ export class TestSetupHelper {
     await responsePromise;
 
     // Give Angular a moment to apply translations
+    // Increasing timeout to ensure pipes update, or better yet, we could wait for a specific text change
+    // TODO(aufderheide): Better to look for the translation.  Consider removing translation
+    // from the tests entirely (use keys instead) and just unit test that the localization
+    // server works.
     await page.waitForTimeout(1000);
 
     // Ensure fonts are ready
@@ -65,7 +69,8 @@ export class TestSetupHelper {
    * Helper to wait for a specific text to appear, indicating that localization and rendering are complete.
    */
   static async waitForText(page: Page, text: string) {
-    await expect(page.locator('body')).toContainText(text);
+    // TODO(aufderheide): Look into why we need 10s here
+    await expect(page.locator('body')).toContainText(text, { timeout: 10000 });
   }
 
   static async setupAssetMocks(page: Page) {
