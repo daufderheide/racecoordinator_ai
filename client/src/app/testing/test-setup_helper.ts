@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { com } from '../proto/message';
 
 export class TestSetupHelper {
@@ -61,6 +61,13 @@ export class TestSetupHelper {
     await page.evaluate(() => document.fonts.ready);
   }
 
+  /**
+   * Helper to wait for a specific text to appear, indicating that localization and rendering are complete.
+   */
+  static async waitForText(page: Page, text: string) {
+    await expect(page.locator('body')).toContainText(text);
+  }
+
   static async setupAssetMocks(page: Page) {
     await page.route('**/api/assets/list', async (route) => {
       const assets = [
@@ -92,6 +99,108 @@ export class TestSetupHelper {
       });
     });
   }
+
+  static async setupRaceMocks(page: Page) {
+    const raceData = com.antigravity.RaceData.create({
+      race: { // IRace
+        race: { // IRaceModel
+          model: { entityId: 'r1' },
+          name: 'Mock GP',
+          track: { // ITrackModel
+            model: { entityId: 't1' },
+            name: 'Test Track',
+            lanes: [
+              { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
+              { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
+            ]
+          }
+        },
+        currentHeat: {
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: 'hd1',
+              driver: {
+                objectId: 'rp1',
+                driver: {
+                  model: { entityId: 'd1' },
+                  name: 'Driver 1'
+                }
+              }
+            },
+            {
+              objectId: 'hd2',
+              driver: {
+                objectId: 'rp2',
+                driver: {
+                  model: { entityId: 'd2' },
+                  name: 'Driver 2'
+                }
+              }
+            }
+          ]
+        },
+        heats: [
+          { heatNumber: 1 },
+          { heatNumber: 2 }
+        ]
+      }
+    });
+
+    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const dataArray = Array.from(buffer);
+
+    await page.addInitScript((data) => {
+      const originalWebSocket = window.WebSocket;
+      window.WebSocket = class MockWebSocket extends EventTarget {
+        constructor(url: string, protocols?: string | string[]) {
+          super();
+          // @ts-ignore
+          this.url = url;
+          // @ts-ignore
+          this.readyState = 0; // CONNECTING
+          setTimeout(() => {
+            // @ts-ignore
+            this.readyState = 1; // OPEN
+            this.dispatchEvent(new Event('open'));
+            // @ts-ignore
+            if (this.onopen) this.onopen(new Event('open'));
+
+            // Send our mock data
+            if (url.includes('race-data')) {
+              const event = new MessageEvent('message', {
+                data: new Uint8Array(data).buffer
+              });
+              this.dispatchEvent(event);
+              // @ts-ignore
+              if (this.onmessage) this.onmessage(event);
+            }
+          }, 100);
+        }
+        send() { }
+        close() { }
+        // @ts-ignore
+        onopen: ((this: WebSocket, ev: Event) => any) | null = null;
+        // @ts-ignore
+        onmessage: ((this: WebSocket, ev: MessageEvent) => any) | null = null;
+        // @ts-ignore
+        onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = null;
+        // @ts-ignore
+        onerror: ((this: WebSocket, ev: Event) => any) | null = null;
+
+        // Add other required properties/methods as no-ops or basic impls
+        binaryType: BinaryType = 'blob';
+        bufferedAmount = 0;
+        extensions = '';
+        protocol = '';
+        CLOSING = 2;
+        CLOSED = 3;
+        CONNECTING = 0;
+        OPEN = 1;
+      } as any;
+    }, dataArray);
+  }
+
 
   static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[] } = {}) {
     await page.addInitScript((s) => {

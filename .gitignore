@@ -1,3 +1,5 @@
+*.DS_Store*
+
 # Angular specific
 /dist/
 /out-tsc/
@@ -60,6 +62,7 @@ client/test-results/
 .npm-cache/
 client/.chrome-home/
 .karma-profile/
+client/browsers/
 
 # I think this is generated code on the client/server
 client/src/app/types/

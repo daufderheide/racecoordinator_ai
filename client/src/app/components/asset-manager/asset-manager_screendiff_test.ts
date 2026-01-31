@@ -12,6 +12,7 @@ test.describe('Asset Manager Visuals', () => {
   test('should display asset manager with mocked assets', async ({ page }) => {
     // Navigating and waiting for localization
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
+    await TestSetupHelper.waitForText(page, 'DATABASE STATUS');
 
     // Wait for the asset list to appear
     const assetList = page.locator('.asset-grid');

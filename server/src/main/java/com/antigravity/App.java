@@ -117,10 +117,10 @@ public class App {
 
         // Force a connection check - this will throw an exception if MongoDB is not
         // reachable within the timeout
+
         // Initialize Database (Reset to Factory Settings)
-        new com.antigravity.service.DatabaseService().resetToFactory(database);
-        // Reset Assets to Defaults
         new com.antigravity.service.AssetService(database).resetAssets();
+        new com.antigravity.service.DatabaseService().resetToFactory(database);
         System.out.println("Connected to MongoDB successfully.");
 
         // Determine client path once
