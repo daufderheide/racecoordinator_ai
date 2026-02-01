@@ -54,8 +54,8 @@ describe('ItemSelectorComponent', () => {
   it('should display items when visible', () => {
     component.visible = true;
     component.items = [
-      { name: 'Item 1', url: 'url1' },
-      { name: 'Item 2', url: 'url2' }
+      { name: 'Item 1', url: 'assets/images/default_avatar.svg' },
+      { name: 'Item 2', url: 'assets/images/default_avatar.svg' }
     ];
     fixture.detectChanges();
 
@@ -67,7 +67,7 @@ describe('ItemSelectorComponent', () => {
   it('should emit select event on item click', () => {
     spyOn(component.select, 'emit');
     component.visible = true;
-    component.items = [{ name: 'Item 1', url: 'url1' }];
+    component.items = [{ name: 'Item 1', url: 'assets/images/default_avatar.svg' }];
     fixture.detectChanges();
 
     const item = fixture.nativeElement.querySelector('.item-card');

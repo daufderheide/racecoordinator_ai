@@ -23,8 +23,8 @@ describe('DriverManagerComponent', () => {
   let mockActivatedRoute: any;
 
   const mockDrivers = [
-    new Driver('d1', 'Alice', 'Rocket', 'url1'),
-    new Driver('d2', 'Bob', 'Drifter', 'url2')
+    new Driver('d1', 'Alice', 'Rocket', 'assets/images/default_avatar.svg'),
+    new Driver('d2', 'Bob', 'Drifter', 'assets/images/default_avatar.svg')
   ];
 
   beforeEach(async () => {

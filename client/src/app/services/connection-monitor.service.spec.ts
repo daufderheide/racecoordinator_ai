@@ -19,6 +19,8 @@ describe('ConnectionMonitorService', () => {
       ]
     });
     service = TestBed.inject(ConnectionMonitorService);
+    spyOn(console, 'warn');
+    spyOn(console, 'error');
   });
 
   it('should be created', () => {
