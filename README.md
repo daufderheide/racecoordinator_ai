@@ -1,18 +1,35 @@
-# racecoordinator_antigravity
+# racecoordinator_ai
 RaceCoordinator 2.0 built with google antigravity
 
 ## How to Run
 
+### First Time Setup
+The `run_server.sh` script handles dependency downloading (including `protoc`) automatically.
+The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing.
+
+- Check permissions: `chmod +x run_server.sh run_client.sh`
+- Run Server: `./run_server.sh`
+- Run Client: `./run_client.sh` (will take a moment to install dependencies first time)
+
+**Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server.sh` again.
+
 ### Quick Start
 You can use the provided scripts in the root directory:
-- `./run_server.sh`: Starts the Java backend.
+- `./run_server.sh`: Starts the Java backend and auto-starts the Angular frontend.
+- `./run_server_headless.sh`: (Recommended) Starts the Java backend without auto-starting the Angular frontend.
 - `./run_client.sh`: Starts the Angular frontend.
 
-Or use the Antigravity slash commands:
-- `/run_server`
-- `/run_client`
+### Troubleshooting
+If the server fails to start with "Address already in use", you likely have a zombie MongoDB process.
+Run the provided script to fix it (updated to handle permissions better):
+```bash
+./kill_zombie_mongo.sh
+```
+Or use the Antigravity command:
+- `/kill_zombie_mongo`
 
-### Manual Startup
+**Note:** If `run_server.sh` fails, try `run_server_headless.sh`. It runs the server without attempting to launch the client or browser, which is useful for debugging.
+
 
 #### 1. Start the Server (Java)
 The server runs on port `7070` and handles API requests.
