@@ -24,6 +24,7 @@ describe('RacedaySetupComponent', () => {
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
+    sessionStorage.clear();
     mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'hasCustomFiles', 'getCustomFile']);
     mockContainer = jasmine.createSpyObj('ViewContainerRef', ['clear', 'createComponent']);
     mockContainer.createComponent.and.returnValue({

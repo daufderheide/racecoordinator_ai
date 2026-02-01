@@ -80,8 +80,8 @@ public class DatabaseService {
                                 avatarUrl = helmetAssets.get((i - 1) % helmetAssets.size()).getUrl();
                         }
 
-                        initialDrivers.add(new Driver(name, name, avatarUrl, lapSoundUrl, bestLapSoundUrl, "sound",
-                                        "sound", null,
+                        initialDrivers.add(new Driver(name, name, avatarUrl, lapSoundUrl, bestLapSoundUrl, "preset",
+                                        "preset", null,
                                         null, getNextSequence(database, "drivers"), null));
                 }
 

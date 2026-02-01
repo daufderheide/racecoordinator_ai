@@ -8,6 +8,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { of, BehaviorSubject, throwError } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Driver } from 'src/app/models/driver';
 
 // Mock Child Components
 @Component({ selector: 'app-back-button', template: '', standalone: false })
@@ -72,7 +73,7 @@ describe('DriverEditorComponent', () => {
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: jasmine.createSpy('get').and.returnValue(null)
+          get: jasmine.createSpy('get').and.returnValue('new')
         }
       }
     };
@@ -112,13 +113,26 @@ describe('DriverEditorComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with new driver when no ID provided', () => {
+  it('should throw error when no ID provided', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+    expect(() => component.loadData()).toThrowError('Driver Editor: No entity ID provided.');
+  });
+
+  it('should throw error inside loadDataInternal when invalid ID provided', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('unknown');
+    const rawDrivers = [{ entity_id: 'd1' }];
+    expect(() => (component as any).loadDataInternal(rawDrivers, [])).toThrowError('Driver Editor: Invalid entity ID "unknown".');
+  });
+
+  it('should initialize with new driver when "new" ID provided', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('new');
+    component.loadData();
     expect(component.editingDriver).toBeDefined();
     expect(component.editingDriver?.entity_id).toBe('new');
     expect(component.selectedDriver).toBeUndefined();
   });
 
-  it('should load driver when ID is provided', () => {
+  it('should load driver when valid ID is provided', () => {
     const mockDriver = { entity_id: 'd1', name: 'Test Driver' };
     mockDataService.getDrivers.and.returnValue(of([mockDriver]));
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('d1');
@@ -131,7 +145,7 @@ describe('DriverEditorComponent', () => {
 
   it('should save new driver', () => {
     const newDriver = { entity_id: 'new_id', name: 'New Driver' };
-    component.editingDriver = { entity_id: 'new', name: 'New Driver' } as any;
+    component.editingDriver = new Driver('new', 'New Driver', '');
     mockDataService.createDriver.and.returnValue(of(newDriver));
 
     component.updateDriver();
@@ -140,8 +154,21 @@ describe('DriverEditorComponent', () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-editor'], { queryParams: { id: 'new_id' } });
   });
 
+  it('should stay on page and keep original ID when save as new fails', () => {
+    component.editingDriver = new Driver('d1', 'Original', 'Orig');
+    mockDataService.createDriver.and.returnValue(throwError(() => ({ status: 409, error: 'Conflict' })));
+    spyOn(window, 'alert');
+
+    component.saveAsNew();
+
+    expect(mockDataService.createDriver).toHaveBeenCalled();
+    expect(component.editingDriver?.entity_id).toBe('d1');
+    expect(component.isSaving).toBeFalse();
+    expect(window.alert).toHaveBeenCalled();
+  });
+
   it('should update existing driver', () => {
-    component.editingDriver = { entity_id: 'd1', name: 'Updated Driver' } as any;
+    component.editingDriver = new Driver('d1', 'Updated Driver', '');
     mockDataService.updateDriver.and.returnValue(of({}));
 
     component.updateDriver();
@@ -149,22 +176,20 @@ describe('DriverEditorComponent', () => {
     expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
   });
 
-  it('should delete driver', () => {
+  it('should delete driver and navigate back', () => {
     spyOn(window, 'confirm').and.returnValue(true);
-    component.editingDriver = { entity_id: 'd1', name: 'Driver to Delete' } as any;
+    component.editingDriver = new Driver('d1', 'Driver to Delete', '');
     mockDataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
 
     expect(mockDataService.deleteDriver).toHaveBeenCalledWith('d1');
-    expect(component.selectedDriver).toBeUndefined();
-    expect(component.editingDriver).toBeDefined();
-    expect(component.editingDriver?.entity_id).toBe('new');
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-manager']);
   });
 
   it('should not delete if confirm is cancelled', () => {
     spyOn(window, 'confirm').and.returnValue(false);
-    component.editingDriver = { entity_id: 'd1' } as any;
+    component.editingDriver = new Driver('d1', '', '');
 
     component.deleteDriver();
 

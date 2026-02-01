@@ -37,14 +37,14 @@ export class TestSetupHelper {
   }
 
   /**
-  /**
    * Waits for the translation file to be fetched and the UI to be stable.
    */
   static async waitForLocalization(page: Page, lang: string = 'en', action?: Promise<any>) {
     // Start listening for the response before performing the action
     const responsePromise = page.waitForResponse(response =>
-      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200
-    );
+      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200,
+      { timeout: 5000 } // Don't wait forever if it's cached or won't come
+    ).catch(() => null);
 
     // Perform the action (e.g., page.goto) if provided
     if (action) {
@@ -54,12 +54,10 @@ export class TestSetupHelper {
     // Wait for the translation request to complete
     await responsePromise;
 
-    // Give Angular a moment to apply translations
-    // Increasing timeout to ensure pipes update, or better yet, we could wait for a specific text change
-    // TODO(aufderheide): Better to look for the translation.  Consider removing translation
-    // from the tests entirely (use keys instead) and just unit test that the localization
-    // server works.
-    await page.waitForTimeout(1000);
+    // Wait until at least one representative key is translated
+    // We look for 'BACK' which is DE_BTN_BACK or DM_BTN_BACK in English
+    // Using a more robust regex to catch common key patterns
+    await expect(page.locator('body')).not.toContainText(/[A-Z]{2,3}_[A-Z_]+/, { timeout: 5000 }).catch(() => null);
 
     // Ensure fonts are ready
     await page.evaluate(() => document.fonts.ready);

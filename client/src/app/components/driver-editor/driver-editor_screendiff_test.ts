@@ -34,21 +34,11 @@ test.describe('Driver Editor Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
     await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
 
-    // Verify inputs are populated
-    const nameInput = page.locator('input[name="name"]'); // Assuming potential name attribute or verify generic input
+    // Verify inputs are populated (first .dm-input is Name)
+    const nameInput = page.locator('.dm-input').first();
     await expect(nameInput).toHaveValue('Test Driver');
 
     // Screenshot the whole page
     await expect(page).toHaveScreenshot('driver-editor-loaded.png');
-  });
-
-  test('should display new driver mode', async ({ page }) => {
-    // Navigate to Driver Editor without ID
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor'));
-    await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
-
-    // Verify empty state or defaults
-    // Screenshot the whole page
-    await expect(page).toHaveScreenshot('driver-editor-new.png');
   });
 });

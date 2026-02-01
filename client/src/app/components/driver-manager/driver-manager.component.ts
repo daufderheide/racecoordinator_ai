@@ -88,8 +88,8 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
           d.avatarUrl,
           d.lapSoundUrl,
           d.bestLapSoundUrl,
-          d.lapSoundType || 'preset',
-          d.bestLapSoundType || 'preset',
+          this.mapSoundType(d.lapSoundType),
+          this.mapSoundType(d.bestLapSoundType),
           d.lapSoundText || '',
           d.bestLapSoundText || ''
         ));
@@ -136,6 +136,12 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
       this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
     });
+  }
+
+
+  private mapSoundType(type: string | undefined): 'preset' | 'tts' {
+    if (type === 'tts') return 'tts';
+    return 'preset';
   }
 
   updateDriver() {

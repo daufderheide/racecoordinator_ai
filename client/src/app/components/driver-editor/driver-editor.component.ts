@@ -76,15 +76,23 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
+    const idParam = this.route.snapshot.queryParamMap.get('id');
+    if (!idParam) {
+      throw new Error('Driver Editor: No entity ID provided.');
+    }
+
     this.isLoading = true;
     forkJoin({
       drivers: this.dataService.getDrivers(),
       assets: this.dataService.listAssets()
     }).subscribe({
       next: (result) => {
-        this.loadDataInternal(result.drivers, result.assets);
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        try {
+          this.loadDataInternal(result.drivers, result.assets);
+        } finally {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }
       },
       error: (err) => {
         console.error('Failed to load data', err);
@@ -99,10 +107,14 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.avatarAssets = allAssets.filter(a => a.type === 'image');
     this.soundAssets = allAssets.filter(a => a.type === 'sound');
 
-    // Check for ID in query params
+    // Check for ID in query params (already checked in loadData, but for type safety)
     const idParam = this.route.snapshot.queryParamMap.get('id');
 
-    if (idParam) {
+    if (idParam === 'new') {
+      this.selectedDriver = undefined;
+      this.editingDriver = new Driver('new', '', '', '', '', '', 'preset', 'preset', '', '');
+      this.clearPendingAvatar();
+    } else if (idParam) {
       const found = rawDrivers.find(d => d.entity_id === idParam);
       if (found) {
         const driver = new Driver(
@@ -112,28 +124,26 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           found.avatarUrl,
           found.lapSoundUrl,
           found.bestLapSoundUrl,
-          found.lapSoundType || 'preset',
-          found.bestLapSoundType || 'preset',
+          this.mapSoundType(found.lapSoundType),
+          this.mapSoundType(found.bestLapSoundType),
           found.lapSoundText || '',
           found.bestLapSoundText || ''
         );
         this.selectDriver(driver);
       } else {
-        // ID provided but not found - clear or redirect?
-        this.selectedDriver = undefined;
-        this.editingDriver = undefined;
+        throw new Error(`Driver Editor: Invalid entity ID "${idParam}".`);
       }
-    } else {
-      // No ID provided - maybe new driver mode?
-      this.selectedDriver = undefined;
-      this.editingDriver = new Driver('new', '', '', '', '', '', 'preset', 'preset', '', '');
-      this.clearPendingAvatar();
     }
   }
 
   private clearPendingAvatar() {
     this.pendingAvatarFile = null;
     this.pendingAvatarPreview = null;
+  }
+
+  private mapSoundType(type: string | undefined): 'preset' | 'tts' {
+    if (type === 'tts') return 'tts';
+    return 'preset';
   }
 
   monitorConnection() {
@@ -202,11 +212,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   saveAsNew() {
     if (!this.editingDriver) return;
-    this.editingDriver.entity_id = 'new';
-    this.updateDriver();
+    this.updateDriver(true);
   }
 
-  updateDriver() {
+  updateDriver(isSaveAsNew: boolean = false) {
     if (!this.editingDriver) return;
     this.isSaving = true;
 
@@ -220,7 +229,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
               this.editingDriver.avatarUrl = asset.url ?? undefined;
               this.pendingAvatarFile = null;
               this.pendingAvatarPreview = null;
-              this.saveDriverData();
+              this.saveDriverData(isSaveAsNew);
             }
           },
           error: (err) => {
@@ -232,20 +241,28 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       };
       reader.readAsArrayBuffer(this.pendingAvatarFile);
     } else {
-      this.saveDriverData();
+      this.saveDriverData(isSaveAsNew);
     }
   }
 
-  private saveDriverData() {
+  private saveDriverData(isSaveAsNew: boolean = false) {
     if (!this.editingDriver) return;
-    const obs = this.editingDriver.entity_id === 'new'
-      ? this.dataService.createDriver(this.editingDriver)
-      : this.dataService.updateDriver(this.editingDriver.entity_id, this.editingDriver);
+
+    // Create a copy to send, setting id to 'new' if it's a "Save as New" operation
+    // or if we are already in "new" mode.
+    const driverToSend = { ...this.editingDriver };
+    if (isSaveAsNew || driverToSend.entity_id === 'new') {
+      driverToSend.entity_id = 'new';
+    }
+
+    const obs = driverToSend.entity_id === 'new'
+      ? this.dataService.createDriver(driverToSend)
+      : this.dataService.updateDriver(driverToSend.entity_id, driverToSend);
 
     obs.subscribe({
       next: (result) => {
         this.isSaving = false;
-        if (this.editingDriver?.entity_id === 'new') {
+        if (isSaveAsNew || this.editingDriver?.entity_id === 'new') {
           this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
         }
         this.loadData();
@@ -269,10 +286,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       this.isSaving = true;
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {
-          this.selectedDriver = undefined;
-          this.editingDriver = undefined;
           this.isSaving = false;
-          this.loadData();
+          this.router.navigate(['/driver-manager']);
         },
         error: (err) => {
           console.error('Failed to delete driver', err);
