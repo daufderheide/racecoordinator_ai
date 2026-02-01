@@ -1,24 +1,25 @@
 <div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <div class="dm-header">
-    <app-back-button label="BACK"></app-back-button>
+    <app-back-button [label]="'DM_BTN_BACK' | translate"></app-back-button>
   </div>
 
   <div class="main-content">
     <!-- LEFT PANEL: DRIVERS TABLE -->
     <div class="panel list-panel">
       <div class="panel-header">
-        <div class="panel-title">DRIVERS</div>
+        <div class="panel-title">{{ 'DM_HEADER_DRIVERS' | translate }}</div>
         <div class="search-container">
-          <input type="text" placeholder="SEARCH..." [(ngModel)]="searchQuery" class="search-input">
+          <input type="text" [placeholder]="'DM_PLACEHOLDER_SEARCH' | translate" [(ngModel)]="searchQuery"
+            class="search-input">
         </div>
       </div>
       <div class="table-header-fixed">
         <table class="driver-table header-only">
           <thead>
             <tr>
-              <th class="col-avatar">AVATAR</th>
-              <th class="col-name">NAME</th>
-              <th class="col-nickname">NICKNAME</th>
+              <th class="col-avatar">{{ 'DM_COL_AVATAR' | translate }}</th>
+              <th class="col-name">{{ 'DM_COL_NAME' | translate }}</th>
+              <th class="col-nickname">{{ 'DM_COL_NICKNAME' | translate }}</th>
             </tr>
           </thead>
         </table>
@@ -49,22 +50,22 @@
         </div>
       </div>
 
-      <div class="config-header">CONFIGURATION</div>
+      <div class="config-header">{{ 'DM_HEADER_CONFIG' | translate }}</div>
 
       <div class="config-form" *ngIf="editingDriver">
         <div class="form-group">
-          <label>NAME</label>
+          <label>{{ 'DM_LABEL_NAME' | translate }}</label>
           <input type="text" [(ngModel)]="editingDriver.name" class="dm-input" readonly>
         </div>
 
         <div class="form-group">
-          <label>NICKNAME</label>
+          <label>{{ 'DM_LABEL_NICKNAME' | translate }}</label>
           <input type="text" [(ngModel)]="editingDriver.nickname" class="dm-input" readonly>
         </div>
 
         <div class="action-buttons">
-          <button class="btn btn-edit" (click)="updateDriver()">EDIT</button>
-          <button class="btn btn-delete" (click)="deleteDriver()">DELETE</button>
+          <button class="btn btn-edit" (click)="updateDriver()">{{ 'DM_BTN_EDIT' | translate }}</button>
+          <button class="btn btn-delete" (click)="deleteDriver()">{{ 'DM_BTN_DELETE' | translate }}</button>
         </div>
       </div>
     </div>
@@ -73,7 +74,7 @@
   <!-- Connection Lost Overlay -->
   <div class="connection-lost-overlay" *ngIf="isConnectionLost">
     <div class="connection-spinner"></div>
-    <div class="connection-lost-text">LOST CONNECTION</div>
+    <div class="connection-lost-text">{{ 'DM_LOST_CONNECTION' | translate }}</div>
   </div>
 
   <!-- Loading Overlay -->

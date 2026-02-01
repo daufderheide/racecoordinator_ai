@@ -37,6 +37,40 @@
   color: #fff;
   font-size: 24px;
   letter-spacing: 2px;
+  margin-left: 20px;
+  /* Add spacing from back button */
+}
+
+.search-container {
+  /* Removed flex: 1 to prevent pushing title */
+  margin: 0 20px;
+  display: flex;
+  justify-content: flex-end;
+  /* Align search to right */
+}
+
+.search-input {
+  width: 100%;
+  max-width: 250px;
+  /* Reduced width */
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #00ffff;
+  border-radius: 20px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .btn-close {

@@ -8,7 +8,8 @@ import {
   NgModule,
   ComponentRef,
   Type,
-  Inject
+  Inject,
+  HostListener
 } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/components/shared/shared.module';
@@ -61,6 +62,8 @@ export class RacedaySetupComponent implements OnInit {
   tempServerIp = 'localhost';
   tempServerPort = 7070;
 
+  scale: number = 1;
+
   quoteKeys: string[] = [];
   currentQuoteKey: string = '';
   quoteVisible = true;
@@ -88,7 +91,26 @@ export class RacedaySetupComponent implements OnInit {
     }
   }
 
+
+  @HostListener('window:resize')
+  onResize() {
+    this.updateScale();
+  }
+
+  private updateScale() {
+    const targetWidth = 1600;
+    const targetHeight = 900;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const scaleX = windowWidth / targetWidth;
+    const scaleY = windowHeight / targetHeight;
+
+    this.scale = Math.min(scaleX, scaleY);
+  }
+
   async ngOnInit() {
+    this.updateScale();
     this.isLoading = true;
     this.container.clear();
 

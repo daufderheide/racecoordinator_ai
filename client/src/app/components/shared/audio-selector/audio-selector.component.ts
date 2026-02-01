@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 
+import { TranslationService } from 'src/app/services/translation.service';
+
 @Component({
   selector: 'app-audio-selector',
   templateUrl: './audio-selector.component.html',
@@ -20,9 +22,22 @@ export class AudioSelectorComponent {
 
   @Input() assets: any[] = [];
 
+  // Back button configuration passed through to Item Selector
+  @Input() backButtonRoute: string | null = null;
+  @Input() backButtonQueryParams: any = {};
+
+  showItemSelector = false;
+
+  get selectedAssetName(): string {
+    if (!this.url) return this.translationService ? this.translationService.translate('AS_SELECT_SOUND') : 'Select Sound...';
+    const asset = this.assets.find(a => a.url === this.url);
+    return asset ? asset.name : (this.translationService ? this.translationService.translate('AS_UNKNOWN_ASSET') : 'Unknown Asset');
+  }
+
   constructor(
     private dataService: DataService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translationService: TranslationService
   ) { }
 
   onTypeChange(newType: 'preset' | 'tts' | undefined) {
@@ -42,6 +57,24 @@ export class AudioSelectorComponent {
     this.textChange.emit(this.text);
   }
 
+  openItemSelector() {
+    this.showItemSelector = true;
+  }
+
+  closeItemSelector() {
+    this.showItemSelector = false;
+  }
+
+  onAssetSelected(asset: any) {
+    if (asset && asset.url) {
+      this.onUrlChange(asset.url);
+      if (this.type !== 'preset') {
+        this.onTypeChange('preset');
+      }
+    }
+    this.closeItemSelector();
+  }
+
   play() {
     if (this.type === 'preset' && this.url) {
       // Ensure absolute URL if it's relative
@@ -58,7 +91,7 @@ export class AudioSelectorComponent {
         const utterance = new SpeechSynthesisUtterance(this.text);
         window.speechSynthesis.speak(utterance);
       } else {
-        console.warn('Text-to-speech not supported in this browser.');
+        console.warn(this.translationService.translate('AS_TTS_NOT_SUPPORTED'));
       }
     }
   }

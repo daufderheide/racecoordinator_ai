@@ -1,19 +1,20 @@
 <div class="shell-container">
-    <!-- Splash Screen Overlay -->
     <div class="splash-screen" *ngIf="showSplash">
-        <ng-container *ngIf="translationsLoaded">
-            <button class="server-config-btn" (click)="toggleServerConfig()">{{ 'RDS_MENU_SERVER' | translate
-                }}</button>
-        </ng-container>
+        <div class="splash-content" [style.transform]="'scale(' + scale + ')'">
+            <ng-container *ngIf="translationsLoaded">
+                <button class="server-config-btn" (click)="toggleServerConfig()">{{ 'RDS_MENU_SERVER' | translate
+                    }}</button>
+            </ng-container>
 
-        <ng-container *ngIf="translationsLoaded">
-            <div class="quote-container" *ngIf="currentQuoteKey" (click)="onQuoteClick()">
-                <p class="quote-text" [class.fade-out]="!quoteVisible">{{ currentQuoteKey | translate }}</p>
+            <ng-container *ngIf="translationsLoaded">
+                <div class="quote-container" *ngIf="currentQuoteKey" (click)="onQuoteClick()">
+                    <p class="quote-text" [class.fade-out]="!quoteVisible">{{ currentQuoteKey | translate }}</p>
+                </div>
+            </ng-container>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill"></div>
             </div>
-        </ng-container>
-
-        <div class="progress-bar-container">
-            <div class="progress-bar-fill"></div>
         </div>
     </div>
 

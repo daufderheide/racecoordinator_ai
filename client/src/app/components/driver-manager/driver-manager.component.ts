@@ -147,7 +147,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
 
   deleteDriver() {
     if (!this.editingDriver) return;
-    if (confirm(this.translationService.translate('Are you sure you want to delete this driver?'))) {
+    if (confirm(this.translationService.translate('DM_CONFIRM_DELETE'))) {
       this.isSaving = true;
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {

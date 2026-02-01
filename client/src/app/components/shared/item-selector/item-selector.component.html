@@ -1,16 +1,26 @@
 <div class="modal-backdrop" *ngIf="visible" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">{{ title }}</div>
-      <button class="btn-close" (click)="onClose()">✕</button>
+      <app-back-button *ngIf="backButtonRoute" [route]="backButtonRoute" [queryParams]="backButtonQueryParams"
+        [label]="backButtonLabel || ('IS_BTN_BACK' | translate)" (back)="onBack()"></app-back-button>
+      <div class="modal-title">{{ title || ('IS_TITLE_SELECT_ITEM' | translate) }}</div>
+      <div class="search-container">
+        <input type="text" [(ngModel)]="searchTerm" [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
+          class="search-input">
+      </div>
     </div>
 
     <div class="modal-body">
       <div class="item-grid">
-        <div class="item-card" *ngFor="let item of items" (click)="onSelect(item)">
+        <div class="item-card" *ngFor="let item of filteredItems" (click)="onSelect(item)">
           <div class="item-preview">
-            <img [src]="item.url | avatarUrl" *ngIf="item.url" alt="preview">
-            <div class="no-preview" *ngIf="!item.url">?</div>
+            <ng-container *ngIf="itemType === 'image'">
+              <img [src]="item.url | avatarUrl" *ngIf="item.url" alt="preview">
+            </ng-container>
+            <ng-container *ngIf="itemType === 'sound'">
+              <img src="assets/images/default_audio_icon.png" class="preview-icon" alt="sound">
+            </ng-container>
+            <div class="no-preview" *ngIf="!item.url && itemType === 'image'">?</div>
           </div>
           <div class="item-name">{{ item.name }}</div>
         </div>

@@ -165,7 +165,6 @@
 }
 
 /* New Text-Free Backgrounds */
-/* New Text-Free Backgrounds */
 .card-bg-gp {
   background: url('../../../assets/images/thumb_grand_prix_v5.png') center / cover no-repeat;
   border-color: rgba(255, 50, 50, 0.5) !important;
@@ -196,6 +195,7 @@
   margin-left: 5px;
   font-style: italic;
 }
+
 
 /* --- Content Layout --- */
 .content-area {
@@ -392,6 +392,12 @@
   align-items: center;
   justify-content: center;
   border: 1px solid #777;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .driver-details {

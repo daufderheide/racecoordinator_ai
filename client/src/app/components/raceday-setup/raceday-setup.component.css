@@ -74,14 +74,27 @@
   width: 100vw;
   height: 100vh;
   z-index: 20000;
-  background: black url('../../../assets/images/splash_screen.png') no-repeat center center;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.splash-content {
+  width: 1600px;
+  height: 900px;
+  background: url('../../../assets/images/splash_screen.png') no-repeat center center;
   background-size: contain;
-  /* Ensure text is not clipped */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-bottom: 5%;
+  padding-bottom: 80px;
+  transform-origin: center center;
+  flex-shrink: 0;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .progress-bar-container {

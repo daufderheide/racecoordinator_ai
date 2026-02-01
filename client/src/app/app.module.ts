@@ -16,9 +16,7 @@ import { LeaderBoardComponent } from './components/leader_board/leader_board.com
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
-import { ItemSelectorComponent } from './components/shared/item-selector/item-selector.component';
 import { SharedModule } from './components/shared/shared.module';
-import { AvatarUrlPipe } from './pipes/avatar-url.pipe';
 
 @NgModule({
   declarations: [
@@ -28,14 +26,10 @@ import { AvatarUrlPipe } from './pipes/avatar-url.pipe';
     DefaultRacedayComponent,
     RacedaySetupComponent,
     DefaultRacedaySetupComponent,
-    DefaultRacedaySetupComponent,
-    DefaultRacedaySetupComponent,
     LeaderBoardComponent,
     AssetManagerComponent,
     DriverEditorComponent,
-    DriverManagerComponent,
-    ItemSelectorComponent,
-    AvatarUrlPipe
+    DriverManagerComponent
   ],
   imports: [
     BrowserModule,

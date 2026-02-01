@@ -24,6 +24,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   selectedDrivers: Driver[] = [];
   unselectedDrivers: Driver[] = [];
 
+  driverImageErrors = new Set<string>();
+
   // Search State
   driverSearchQuery: string = '';
   raceSearchQuery: string = '';
@@ -67,7 +69,18 @@ export class DefaultRacedaySetupComponent implements OnInit {
       races: this.dataService.getRaces()
     }).subscribe({
       next: (result) => {
-        const drivers = result.drivers.map(d => new Driver(d.entity_id, d.name, d.nickname || ''));
+        const drivers = result.drivers.map(d => new Driver(
+          d.entity_id,
+          d.name,
+          d.nickname || '',
+          d.avatarUrl,
+          d.lapSoundUrl,
+          d.bestLapSoundUrl,
+          d.lapSoundType,
+          d.bestLapSoundType,
+          d.lapSoundText,
+          d.bestLapSoundText
+        ));
         const races = result.races;
 
         // --- Race Setup ---
@@ -148,6 +161,18 @@ export class DefaultRacedaySetupComponent implements OnInit {
     const scaleY = windowHeight / targetHeight;
 
     this.scale = Math.min(scaleX, scaleY);
+  }
+
+  getDriverAvatarUrl(driver: Driver): string {
+    if (!driver.avatarUrl) return '';
+    if (driver.avatarUrl.startsWith('/')) {
+      return `${this.dataService.serverUrl}${driver.avatarUrl}`;
+    }
+    return driver.avatarUrl;
+  }
+
+  onDriverImageError(driver: Driver) {
+    this.driverImageErrors.add(driver.entity_id);
   }
 
   // --- Driver Logic ---

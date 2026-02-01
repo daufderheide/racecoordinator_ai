@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { ItemSelectorComponent } from './item-selector.component';
 import { Pipe, PipeTransform } from '@angular/core';
 
@@ -12,13 +13,24 @@ class MockAvatarUrlPipe implements PipeTransform {
   }
 }
 
+@Pipe({
+  name: 'translate',
+  standalone: false
+})
+class MockTranslatePipe implements PipeTransform {
+  transform(value: string): string {
+    return value;
+  }
+}
+
 describe('ItemSelectorComponent', () => {
   let component: ItemSelectorComponent;
   let fixture: ComponentFixture<ItemSelectorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ItemSelectorComponent, MockAvatarUrlPipe]
+      declarations: [ItemSelectorComponent, MockAvatarUrlPipe, MockTranslatePipe],
+      imports: [FormsModule]
     })
       .compileComponents();
   });
@@ -69,8 +81,8 @@ describe('ItemSelectorComponent', () => {
     component.visible = true;
     fixture.detectChanges();
 
-    const closeBtn = fixture.nativeElement.querySelector('.btn-close');
-    closeBtn.click();
+    const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
+    backdrop.click();
 
     expect(component.close.emit).toHaveBeenCalled();
   });

@@ -2,7 +2,7 @@
   (dragover)="onDragOver($event)">
   <!-- Header -->
   <div class="dm-header">
-    <app-back-button label="BACK" route="/driver-manager"
+    <app-back-button [label]="'DE_BTN_BACK' | translate" route="/driver-manager"
       [queryParams]="{ id: editingDriver?.entity_id }"></app-back-button>
   </div>
 
@@ -11,15 +11,15 @@
     <div class="config-panels" *ngIf="editingDriver">
       <!-- DRIVER CONFIG -->
       <div class="panel config-panel">
-        <div class="panel-header">DRIVER CONFIGURATION</div>
+        <div class="panel-header">{{ 'DE_HEADER_DRIVER_CONFIG' | translate }}</div>
         <div class="config-content driver-config-layout">
           <div class="inputs-column">
             <div class="form-group">
-              <label>Name:</label>
+              <label>{{ 'RDS_LABEL_NAME' | translate }}</label>
               <input type="text" [(ngModel)]="editingDriver.name" class="dm-input">
             </div>
             <div class="form-group">
-              <label>Nickname:</label>
+              <label>{{ 'RDS_LABEL_NICKNAME' | translate }}</label>
               <input type="text" [(ngModel)]="editingDriver.nickname" class="dm-input">
             </div>
           </div>
@@ -27,7 +27,8 @@
             <div class="avatar-preview-large" (drop)="onDrop($event, 'avatar')" (dragover)="onDragOver($event)"
               (click)="openAvatarSelector()">
               <img [src]="pendingAvatarPreview || (editingDriver.avatarUrl | avatarUrl)" alt="Avatar Large">
-              <div class="drop-hint" *ngIf="!editingDriver.avatarUrl && !pendingAvatarPreview">DRAG IMAGE HERE</div>
+              <div class="drop-hint" *ngIf="!editingDriver.avatarUrl && !pendingAvatarPreview">{{ 'DE_HINT_DRAG_IMAGE' |
+                translate }}</div>
             </div>
           </div>
         </div>
@@ -35,32 +36,37 @@
 
       <!-- AUDIO CONFIG -->
       <div class="panel audio-panel">
-        <div class="panel-header">AUDIO CONFIGURATION</div>
+        <div class="panel-header">{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</div>
 
         <div class="audio-section">
-          <app-audio-selector label="Lap Sounds" [assets]="soundAssets" [(type)]="editingDriver.lapSoundType"
-            [(url)]="editingDriver.lapSoundUrl" [(text)]="editingDriver.lapSoundText">
+          <app-audio-selector [label]="'DE_LABEL_LAP_SOUNDS' | translate" [assets]="soundAssets"
+            [(type)]="editingDriver.lapSoundType" [(url)]="editingDriver.lapSoundUrl"
+            [(text)]="editingDriver.lapSoundText" [backButtonRoute]="'/driver-editor'"
+            [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="audio-section">
-          <app-audio-selector label="Best Lap Sounds" [assets]="soundAssets" [(type)]="editingDriver.bestLapSoundType"
-            [(url)]="editingDriver.bestLapSoundUrl" [(text)]="editingDriver.bestLapSoundText">
+          <app-audio-selector [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate" [assets]="soundAssets"
+            [(type)]="editingDriver.bestLapSoundType" [(url)]="editingDriver.bestLapSoundUrl"
+            [(text)]="editingDriver.bestLapSoundText" [backButtonRoute]="'/driver-editor'"
+            [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="editor-actions">
           <button class="btn btn-update" (click)="updateDriver()">
-            <span class="icon">🔄</span> {{ editingDriver.entity_id === 'new' ? 'CREATE DRIVER' : 'UPDATE DRIVER' }}
+            <span class="icon">🔄</span> {{ editingDriver.entity_id === 'new' ? ('DE_BTN_CREATE_DRIVER' | translate) :
+            ('DE_BTN_UPDATE_DRIVER' | translate) }}
           </button>
           <button *ngIf="editingDriver.entity_id !== 'new'" class="btn btn-new" (click)="saveAsNew()">
-            <span class="icon">💾</span> SAVE AS NEW
+            <span class="icon">💾</span> {{ 'DE_BTN_SAVE_AS_NEW' | translate }}
           </button>
         </div>
 
         <div class="more-options">
           <div class="more-btn">
-            <span>More...</span>
+            <span>{{ 'DE_BTN_MORE' | translate }}</span>
             <span class="settings-icon">⚙</span>
           </div>
         </div>
@@ -80,7 +86,9 @@
   </div>
 
   <!-- Avatar Selector -->
-  <app-item-selector [visible]="showAvatarSelector" title="SELECT AVATAR" [items]="avatarAssets"
-    (select)="onAvatarSelected($event)" (close)="closeAvatarSelector()">
+  <app-item-selector [visible]="showAvatarSelector" [title]="'DE_TITLE_SELECT_AVATAR' | translate"
+    [items]="avatarAssets" [itemType]="'image'" [backButtonRoute]="'/driver-editor'"
+    [backButtonQueryParams]="{ id: editingDriver ? editingDriver.entity_id : null }" (select)="onAvatarSelected($event)"
+    (close)="closeAvatarSelector()">
   </app-item-selector>
 </div>

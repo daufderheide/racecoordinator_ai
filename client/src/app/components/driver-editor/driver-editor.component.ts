@@ -253,9 +253,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to save driver', err);
         if (err.status === 409) {
-          alert(err.error || 'Driver name or nickname already exists');
+          alert(err.error || this.translationService.translate('DE_ERROR_NAME_EXISTS'));
         } else {
-          alert('Failed to save driver: ' + (err.error || err.message));
+          alert(this.translationService.translate('DE_ERROR_SAVE_FAILED') + (err.error || err.message));
         }
         this.isSaving = false;
         this.cdr.detectChanges();
@@ -265,7 +265,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   deleteDriver() {
     if (!this.editingDriver) return;
-    if (confirm(this.translationService.translate('Are you sure you want to delete this driver?'))) {
+    if (confirm(this.translationService.translate('DE_CONFIRM_DELETE'))) {
       this.isSaving = true;
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {

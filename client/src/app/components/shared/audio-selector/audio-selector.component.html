@@ -2,24 +2,29 @@
   <div class="audio-header">
     <label>{{ label }}</label>
     <div class="toggle-group">
-      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">Preset Sound</span>
-      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">Text to Speech</span>
+      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">{{ 'AS_OPTION_PRESET' | translate
+        }}</span>
+      <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">{{ 'AS_OPTION_TTS' | translate }}</span>
     </div>
   </div>
 
   <div class="audio-controls" *ngIf="type === 'preset'">
-    <div class="select-wrapper" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
-      <select [ngModel]="url" (ngModelChange)="onUrlChange($event)" class="dm-select">
-        <option value="">[None]</option>
-        <option *ngFor="let asset of assets" [value]="asset.url">{{ asset.name }}</option>
-      </select>
+    <div class="select-wrapper" (click)="openItemSelector()" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+      <div class="dm-select trigger-div">
+        {{ selectedAssetName }}
+      </div>
     </div>
-    <button class="btn-play" (click)="play()">▶ PLAY</button>
+    <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
   </div>
 
   <div class="audio-controls" *ngIf="type === 'tts'">
     <input type="text" [ngModel]="text" (ngModelChange)="onTextChange($event)" class="dm-input"
-      placeholder="Enter text...">
-    <button class="btn-play" (click)="play()">▶ PLAY</button>
+      [placeholder]="'AS_PLACEHOLDER_TEXT' | translate">
+    <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
   </div>
+
+  <app-item-selector [visible]="showItemSelector" [title]="'AS_TITLE_SELECT_SOUND' | translate" [items]="assets"
+    [itemType]="'sound'" [backButtonRoute]="backButtonRoute" [backButtonQueryParams]="backButtonQueryParams"
+    (select)="onAssetSelected($event)" (close)="closeItemSelector()">
+  </app-item-selector>
 </div>

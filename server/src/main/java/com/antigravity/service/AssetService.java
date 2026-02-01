@@ -35,12 +35,21 @@ public class AssetService {
 
   private static final List<DefaultAsset> DEFAULT_IMAGE_ASSETS = new ArrayList<>();
   static {
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_1.png", "Helmet 1"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_2.png", "Helmet 2"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_3.png", "Helmet 3"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_4.png", "Helmet 4"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_5.png", "Helmet 5"));
-    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_6.png", "Helmet 6"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_4.png", "Helmet Futuristic 1"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("default_avatar_helmet_5.png", "Helmet Futuristic 2"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("green-white.png", "Helmet Green-White"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("grey-black-gold.png", "Helmet Grey-Black-Gold"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("grey-red-white.png", "Helmet Grey-Red-White"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("orange-blue.png", "Helmet Orange-Blue"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("red-gold-blue.png", "Helmet Red-Gold-Blue"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("red-orange.png", "Helmet Red-Orange"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("red-yellow.png", "Helmet Red-Yellow"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("silver-green.png", "Helmet Silver-Green"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("silver-red.png", "Helmet Silver-Red"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-blue-yellow.png", "Helmet White-Blue-Yellow"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-blue.png", "Helmet White-Blue"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-red-yellow.png", "Helmet White-Red-Yellow"));
+
   }
 
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
@@ -184,7 +193,7 @@ public class AssetService {
           }
         }
       }
-    } 
+    }
 
     // 2. Clear DB
     collection.drop();
