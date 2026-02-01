@@ -49,7 +49,10 @@ public class AssetService {
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-blue-yellow.png", "Helmet White-Blue-Yellow"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-blue.png", "Helmet White-Blue"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("white-red-yellow.png", "Helmet White-Red-Yellow"));
-
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black-grey.png", "Helmet Black-Grey"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black-white.png", "Helmet Black-White"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black-white2.png", "Helmet Black-White2"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black.png", "Helmet Black"));
   }
 
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
