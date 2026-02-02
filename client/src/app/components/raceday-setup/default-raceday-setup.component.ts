@@ -41,6 +41,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
+  isRefreshingList: boolean = false;
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => console.log('Track menu') },
@@ -151,6 +152,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
   }
 
+
+
   private updateScale() {
     const targetWidth = 1600;
     const targetHeight = 900;
@@ -178,23 +181,97 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // --- Driver Logic ---
 
   toggleDriverSelection(driver: Driver, isSelected: boolean) {
-    if (isSelected) {
-      // Was selected, now unselecting
-      // Remove from selected
-      this.selectedDrivers = this.selectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-      // Add to unselected and sort
-      this.unselectedDrivers.push(driver);
-      this.unselectedDrivers.sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      // Was unselected, now selecting
-      // Remove from unselected
-      this.unselectedDrivers = this.unselectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-      // Add to end of selected
-      this.selectedDrivers.push(driver);
-      // No sort needed for selected (user order)
-    }
-    this.saveSettings();
+    this.updateListWithRefresh(() => {
+      if (isSelected) {
+        // Was selected, now unselecting
+        this.selectedDrivers = this.selectedDrivers.filter(d => d.entity_id !== driver.entity_id);
+        this.unselectedDrivers = [...this.unselectedDrivers, driver].sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        // Was unselected, now selecting
+        this.unselectedDrivers = this.unselectedDrivers.filter(d => d.entity_id !== driver.entity_id);
+        this.selectedDrivers = [...this.selectedDrivers, driver];
+      }
+    });
+  }
+
+  addAllDrivers() {
+    this.updateListWithRefresh(() => {
+      this.selectedDrivers = [...this.selectedDrivers, ...this.unselectedDrivers];
+      this.unselectedDrivers = [];
+    });
+  }
+
+  removeAllDrivers() {
+    this.updateListWithRefresh(() => {
+      this.unselectedDrivers = [...this.unselectedDrivers, ...this.selectedDrivers].sort((a, b) => a.name.localeCompare(b.name));
+      this.selectedDrivers = [];
+    });
+  }
+
+  randomizeDrivers() {
+    this.updateListWithRefresh(() => {
+      // Immutable shuffle
+      const shuffled = [...this.selectedDrivers];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      this.selectedDrivers = shuffled;
+    });
+  }
+
+  private updateListWithRefresh(action: () => void) {
+    this.clearSelectionAndBlur();
+
+    // TODO(aufderheide): Look into proper fix for this hack
+    // Trigger a complete DOM reset for the list to wipe any browser selection state
+    this.isRefreshingList = true;
     this.cdr.detectChanges();
+
+    // Perform the data update
+    action();
+
+    this.saveSettings();
+
+    // Restore the list in the next tick
+    setTimeout(() => {
+      this.isRefreshingList = false;
+      this.clearSelectionAsync();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  private clearSelectionAndBlur() {
+    // Blur whatever button might have focus
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // Clear selection immediately
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+  }
+
+  private clearSelectionAsync() {
+    setTimeout(() => {
+      if (window.getSelection) {
+        window.getSelection()?.removeAllRanges();
+      }
+    }, 0);
+  }
+
+  trackByDriver(index: number, driver: Driver): string {
+    return driver.entity_id;
+  }
+
+  preventSelection(event: Event) {
+    event.preventDefault();
+  }
+
+  onDragStarted(event: any) {
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
   }
 
   drop(event: CdkDragDrop<Driver[]>) {

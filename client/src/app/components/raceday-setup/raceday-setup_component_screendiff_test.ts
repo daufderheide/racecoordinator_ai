@@ -60,11 +60,8 @@ for (const lang of languages) {
     });
 
     test('No drivers selected', async ({ page }) => {
-      const aliceItem = page.locator('.driver-item.selected:has-text("Alice")');
-      const bobItem = page.locator('.driver-item.selected:has-text("Bob")');
-
-      if (await aliceItem.isVisible()) await aliceItem.click();
-      if (await bobItem.isVisible()) await bobItem.click();
+      const removeAllBtn = page.locator('[data-testid="btn-remove-all"]');
+      await removeAllBtn.click();
 
       const startButton = page.locator('.btn-start');
       await expect(startButton).toBeDisabled();

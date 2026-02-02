@@ -123,4 +123,51 @@ describe('DefaultRacedaySetupComponent', () => {
 
     expect(mockDataService.initializeRace).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(Array), true);
   });
+
+  it('should add all drivers', () => {
+    expect(component.filteredUnselectedDrivers.length).toBe(2);
+    expect(component.selectedDrivers.length).toBe(0);
+
+    component.addAllDrivers();
+
+    expect(component.filteredUnselectedDrivers.length).toBe(0);
+    expect(component.selectedDrivers.length).toBe(2);
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+  });
+
+  it('should remove all drivers', () => {
+    // Setup initial state: select all
+    component.addAllDrivers();
+    expect(component.selectedDrivers.length).toBe(2);
+
+    component.removeAllDrivers();
+
+    expect(component.selectedDrivers.length).toBe(0);
+    expect(component.filteredUnselectedDrivers.length).toBe(2);
+    // Should be sorted alphabetically
+    expect(component.filteredUnselectedDrivers[0].name).toBe('Driver 1');
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+  });
+
+  it('should randomize drivers', () => {
+    // Setup: add 3 mock drivers to have noticeable shuffle
+    component.selectedDrivers = [
+      { entity_id: 'd1', name: 'D1' } as any,
+      { entity_id: 'd2', name: 'D2' } as any,
+      { entity_id: 'd3', name: 'D3' } as any,
+    ];
+    const initialOrder = component.selectedDrivers.map(d => d.entity_id).join(',');
+
+    // Mock Math.random to ensure a specific shuffle order for deterministic test if needed, 
+    // or just check that it calls saveSettings and keeps length.
+    // Testing true randomness is flaky, so let's verify integration.
+    spyOn(Math, 'random').and.returnValue(0.5); // Simple mock
+
+    component.randomizeDrivers();
+
+    expect(component.selectedDrivers.length).toBe(3);
+    // With fixed random, order might change or not depending on impl, 
+    // but main goal is to ensure it runs without error and saves.
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+  });
 });
