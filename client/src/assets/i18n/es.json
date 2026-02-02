@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Texto a voz no compatible con este navegador.",
     "IS_PLACEHOLDER_SEARCH": "Buscar...",
     "IS_TITLE_SELECT_ITEM": "SELECCIONAR ELEMENTO",
-    "IS_BTN_BACK": "ATRÁS"
+    "IS_BTN_BACK": "ATRÁS",
+    "DE_TOOLTIP_NO_CHANGES": "No se detectaron cambios",
+    "DE_TOOLTIP_NAME_EXISTS": "El nombre o apodo del conductor ya existe",
+    "DE_BTN_UNDO": "Deshacer",
+    "DE_BTN_REDO": "Rehacer",
+    "DE_TOOLTIP_UNDO": "Deshacer último cambio (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Rehacer último cambio (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Cambios sin guardar",
+    "DE_CONFIRM_DISCARD_MESSAGE": "Tiene cambios sin guardar. ¿Está seguro de que desea descartarlos?"
 }

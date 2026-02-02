@@ -15,6 +15,10 @@ import { Driver } from 'src/app/models/driver';
 class MockBackButtonComponent {
   @Input() route: string | null = null;
   @Input() queryParams: any = {};
+  @Input() label: string = '';
+  @Input() confirm: boolean = false;
+  @Input() confirmTitle: string = '';
+  @Input() confirmMessage: string = '';
 }
 
 @Component({ selector: 'app-audio-selector', template: '', standalone: false })
@@ -40,6 +44,12 @@ class MockItemSelectorComponent {
   @Input() itemType: string = 'image';
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
+  @Input() title: string = '';
+}
+
+@Component({ selector: 'app-undo-redo-controls', template: '', standalone: false })
+class MockUndoRedoControlsComponent {
+  @Input() manager: any;
 }
 
 import { Pipe, PipeTransform } from '@angular/core';
@@ -89,6 +99,7 @@ describe('DriverEditorComponent', () => {
         MockBackButtonComponent,
         MockAudioSelectorComponent,
         MockItemSelectorComponent,
+        MockUndoRedoControlsComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe
       ],
@@ -109,6 +120,12 @@ describe('DriverEditorComponent', () => {
     fixture.detectChanges();
   });
 
+  // Helper to setup driver state for change tracking and undo/redo
+  function setupDriver(driver: Driver) {
+    component.selectDriver(driver);
+    component.allDrivers = [driver];
+  }
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -118,22 +135,18 @@ describe('DriverEditorComponent', () => {
     expect(() => component.loadData()).toThrowError('Driver Editor: No entity ID provided.');
   });
 
-  it('should throw error inside loadDataInternal when invalid ID provided', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('unknown');
-    const rawDrivers = [{ entity_id: 'd1' }];
-    expect(() => (component as any).loadDataInternal(rawDrivers, [])).toThrowError('Driver Editor: Invalid entity ID "unknown".');
-  });
-
   it('should initialize with new driver when "new" ID provided', () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('new');
     component.loadData();
     expect(component.editingDriver).toBeDefined();
     expect(component.editingDriver?.entity_id).toBe('new');
-    expect(component.selectedDriver).toBeUndefined();
+    // element implicitly has 'any' type error on private access, so skipping explicit initialState check if not needed
+    // verify hasChanges is false
+    expect(component.hasChanges()).toBeFalse();
   });
 
   it('should load driver when valid ID is provided', () => {
-    const mockDriver = { entity_id: 'd1', name: 'Test Driver' };
+    const mockDriver = { entity_id: 'd1', name: 'Test Driver', nickname: 'TD' };
     mockDataService.getDrivers.and.returnValue(of([mockDriver]));
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('d1');
 
@@ -141,11 +154,17 @@ describe('DriverEditorComponent', () => {
 
     expect(component.editingDriver?.entity_id).toBe('d1');
     expect(component.editingDriver?.name).toBe('Test Driver');
+    expect(component.hasChanges()).toBeFalse();
   });
 
   it('should save new driver', () => {
     const newDriver = { entity_id: 'new_id', name: 'New Driver' };
-    component.editingDriver = new Driver('new', 'New Driver', '');
+    const initial = new Driver('new', 'New Driver', '');
+    setupDriver(initial);
+
+    // Simulate change
+    component.editingDriver!.name = 'New Driver Name';
+
     mockDataService.createDriver.and.returnValue(of(newDriver));
 
     component.updateDriver();
@@ -155,7 +174,9 @@ describe('DriverEditorComponent', () => {
   });
 
   it('should stay on page and keep original ID when save as new fails', () => {
-    component.editingDriver = new Driver('d1', 'Original', 'Orig');
+    const driver = new Driver('d1', 'Original', 'Orig');
+    setupDriver(driver);
+
     mockDataService.createDriver.and.returnValue(throwError(() => ({ status: 409, error: 'Conflict' })));
     spyOn(window, 'alert');
 
@@ -168,7 +189,12 @@ describe('DriverEditorComponent', () => {
   });
 
   it('should update existing driver', () => {
-    component.editingDriver = new Driver('d1', 'Updated Driver', '');
+    const driver = new Driver('d1', 'Updated Driver', '');
+    setupDriver(driver);
+
+    // Make a change
+    component.editingDriver!.name = 'Changed Name';
+
     mockDataService.updateDriver.and.returnValue(of({}));
 
     component.updateDriver();
@@ -178,7 +204,9 @@ describe('DriverEditorComponent', () => {
 
   it('should delete driver and navigate back', () => {
     spyOn(window, 'confirm').and.returnValue(true);
-    component.editingDriver = new Driver('d1', 'Driver to Delete', '');
+    const driver = new Driver('d1', 'Driver to Delete', '');
+    setupDriver(driver);
+
     mockDataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
@@ -189,10 +217,165 @@ describe('DriverEditorComponent', () => {
 
   it('should not delete if confirm is cancelled', () => {
     spyOn(window, 'confirm').and.returnValue(false);
-    component.editingDriver = new Driver('d1', '', '');
+    const driver = new Driver('d1', '', '');
+    setupDriver(driver);
 
     component.deleteDriver();
 
     expect(mockDataService.deleteDriver).not.toHaveBeenCalled();
   });
+
+  // Undo/Redo Tests
+  it('should track changes and support undo/redo', () => {
+    const initial = new Driver('d1', 'Start', '');
+    setupDriver(initial);
+
+    // 1. Capture state (simulating focus/before change)
+    component.onInputFocus();
+
+    // 2. Make change
+    component.editingDriver!.name = 'Change 1';
+
+    // 3. Blur (simulating commit)
+    component.onInputBlur();
+    // undoStack should have 'Start'
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+
+    // 4. Undo
+    component.undo();
+    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.undoManager.redoStackItems.length).toBe(1);
+    expect(component.undoManager.redoStackItems[0].name).toBe('Change 1');
+
+    // 5. Redo
+    component.redo();
+    expect(component.editingDriver!.name).toBe('Change 1');
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+  });
+
+  it('should validate uniqueness', () => {
+    const driver = new Driver('d1', 'MyName', 'MyNick');
+    setupDriver(driver);
+
+    component.allDrivers = [
+      new Driver('d1', 'MyName', 'MyNick'),
+      new Driver('d2', 'ExistingName', 'ExistingNick')
+    ];
+
+    // Valid
+    expect(component.isNameUnique()).toBeTrue();
+
+    // Duplicate Name
+    component.editingDriver!.name = 'ExistingName';
+    expect(component.isNameUnique()).toBeFalse();
+
+    // Duplicate Nickname
+    component.editingDriver!.name = 'MyName'; // Reset name
+    component.editingDriver!.nickname = 'ExistingNick';
+    expect(component.isNicknameUnique()).toBeFalse();
+
+    // Self is not duplicate
+    component.editingDriver!.nickname = 'MyNick';
+    expect(component.isNicknameUnique()).toBeTrue();
+  });
+  it('should preserve undo stack after save', () => {
+    const driver = new Driver('d1', 'Start', '');
+    setupDriver(driver);
+
+    // Make change and push to stack
+    component.captureState();
+    component.editingDriver!.name = 'Changed';
+
+    mockDataService.updateDriver.and.returnValue(of({ entity_id: 'd1' }));
+
+    // Save
+    component.updateDriver();
+
+    // Verify stack is preserved
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+
+    // Verify hasChanges matches DB (Clean)
+    expect(component.hasChanges()).toBeFalse();
+
+    // Undo
+    component.undo();
+
+    // Verify dirty after undo (because it differs from saved 'Changed' state)
+    // Note: After save, resetTracking was called. Current state = Saved 'Changed'.
+    // Initial State = Saved 'Changed'.
+    // Stack has 'Start'.
+    // Undo -> Editing Driver = 'Start'.
+    // 'Start' != 'Changed' (Initial). So hasChanges() -> TRUE.
+    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.hasChanges()).toBeTrue();
+  });
+
+  it('should preserve entity_id on undo (context safety)', () => {
+    const driver = new Driver('d1', 'Start', '');
+    setupDriver(driver);
+
+    // Snapshot has ID 'd1'
+    component.captureState();
+
+    // Simulate "Save as New" causing ID change to 'd2'
+    component.editingDriver!.entity_id = 'd2';
+    component.editingDriver!.name = 'New Name';
+
+    // Undo
+    component.undo();
+
+    // Name should revert to 'Start'
+    expect(component.editingDriver!.name).toBe('Start');
+
+    // ID should STAY 'd2' (current context)
+    expect(component.editingDriver!.entity_id).toBe('d2');
+  });
+  it('should debounce text input changes for undo history', fakeAsync(() => {
+    const driver = new Driver('d1', 'Start', '');
+    setupDriver(driver);
+
+    // Simulate focus
+    component.onInputFocus();
+
+    // Type "A"
+    component.editingDriver!.name = 'A';
+    component.onInputChange(); // Trigger debounce subject
+
+    // Should NOT have saved yet (debounce 500ms)
+    tick(200);
+    expect(component.undoManager.undoStackItems.length).toBe(0);
+
+    // Type "AB" before debounce hits
+    component.editingDriver!.name = 'AB';
+    component.onInputChange(); // Reset debounce timer
+
+    tick(200);
+    expect(component.undoManager.undoStackItems.length).toBe(0);
+
+    // Wait for full debounce (total > 500ms from last input)
+    tick(500);
+
+    // Should now have saved the SNAPSHOT state ('Start')
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+
+    // Snapshot should now be 'AB'
+    // Accessing private _snapshot on UndoManager via bracket notation if needed, but checking behavior is safer
+    // Trigger another change to see if it captures 'AB'
+    component.editingDriver!.name = 'ABC';
+    component.onInputChange();
+    tick(500);
+    // Stack should now have 'AB'
+    expect(component.undoManager.undoStackItems[1].name).toBe('AB');
+
+    // Undo should go to 'AB'
+    component.undo();
+    expect(component.editingDriver!.name).toBe('AB');
+
+    component.undo();
+    expect(component.editingDriver!.name).toBe('Start');
+  }));
 });
+

@@ -21,9 +21,8 @@ public class DatabaseService {
 
                 resetDrivers(database);
                 Track track = resetTracks(database);
+                // Races must come after tracks because races include tracks
                 resetRaces(database, track);
-                // Must be called last to ensure things like races are
-                // properly setup and initialized.
 
                 System.out.println("Database reset complete.");
         }

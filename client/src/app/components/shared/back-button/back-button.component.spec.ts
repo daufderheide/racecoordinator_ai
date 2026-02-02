@@ -56,4 +56,25 @@ describe('BackButtonComponent', () => {
     expect(sessionStorage.getItem('skipIntro')).toBe('true');
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/test-route'], { queryParams: { foo: 'bar' } });
   });
+
+  it('should show modal if confirm is true', () => {
+    component.confirm = true;
+    component.onBack();
+    expect(component.showModal).toBeTrue();
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+  });
+
+  it('should navigate on modal confirm', () => {
+    component.route = '/test-route';
+    component.onModalConfirm();
+    expect(component.showModal).toBeFalse();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/test-route'], { queryParams: {} });
+  });
+
+  it('should hide modal on modal cancel', () => {
+    component.showModal = true;
+    component.onModalCancel();
+    expect(component.showModal).toBeFalse();
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+  });
 });

@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Texto para fala não suportado neste navegador.",
     "IS_PLACEHOLDER_SEARCH": "Pesquisar...",
     "IS_TITLE_SELECT_ITEM": "SELECIONAR ITEM",
-    "IS_BTN_BACK": "VOLTAR"
+    "IS_BTN_BACK": "VOLTAR",
+    "DE_TOOLTIP_NO_CHANGES": "Nenhuma alteração detectada",
+    "DE_TOOLTIP_NAME_EXISTS": "Nome ou apelido do piloto já existe",
+    "DE_BTN_UNDO": "Desfazer",
+    "DE_BTN_REDO": "Refazer",
+    "DE_TOOLTIP_UNDO": "Desfazer última alteração (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Refazer última alteração (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Alterações não salvas",
+    "DE_CONFIRM_DISCARD_MESSAGE": "Você tem alterações não salvas. Tem certeza de que deseja descartá-las?"
 }

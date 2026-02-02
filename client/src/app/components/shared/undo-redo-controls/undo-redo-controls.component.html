@@ -1,0 +1,10 @@
+<div class="undo-redo-controls">
+  <button class="btn-icon" (click)="undo()" [disabled]="!manager || manager.undoStackCount === 0"
+    [title]="'DE_TOOLTIP_UNDO' | translate">
+    <span class="icon">↶</span>
+  </button>
+  <button class="btn-icon" (click)="redo()" [disabled]="!manager || manager.redoStackCount === 0"
+    [title]="'DE_TOOLTIP_REDO' | translate">
+    <span class="icon">↷</span>
+  </button>
+</div>

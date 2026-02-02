@@ -7,6 +7,9 @@ test.describe('Asset Manager Visuals', () => {
     // Use shared helpers for mocking to ensure consistency and reuse logic
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
+
+    // Hide connection overlay to prevent test flakiness
+    await page.addStyleTag({ content: '.connection-lost-overlay { display: none !important; }' });
   });
 
   test('should display asset manager with mocked assets', async ({ page }) => {
@@ -47,5 +50,24 @@ test.describe('Asset Manager Visuals', () => {
     await expect(page.locator('.asset-card')).toContainText('Test Image 1');
 
     await expect(page).toHaveScreenshot('asset-manager-filtered-images.png');
+  });
+
+  test('should navigate back using shared back button', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
+
+    // Ensure loading is finished before trying to interact
+    await expect(page.locator('.loading-overlay')).not.toBeVisible();
+
+    const backButton = page.locator('app-back-button button');
+    await expect(backButton).toBeVisible();
+
+    // Click back
+    await backButton.click();
+
+    // Verify navigation to home/raceday-setup (default behavior)
+    // Note: AssetManager might default to /raceday-setup or we need to check the component code.
+    // In asset-manager.component.html it just says <app-back-button label="AM_BTN_BACK"></app-back-button>
+    // checking back-button.ts defaults: route = '/raceday-setup'
+    await expect(page).toHaveURL(/\/raceday-setup/);
   });
 });

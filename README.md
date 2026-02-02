@@ -86,9 +86,9 @@ You can run all tests across the entire project using the master script:
 #### Unit Tests
 Run the standard Jasmine/Karma unit tests:
 ```bash
-cd client
-npx ng test --watch=false
+./run_client_unit_tests.sh
 ```
+*Note: This script automatically installs and uses a local Playwright text-to-speech compatible Chromium instance, ensuring tests run consistently regardless of your installed system browser.*
 
 #### Visual Regression Tests (Screen Diff)
 Run Playwright-based visual tests to detect UI regressions:

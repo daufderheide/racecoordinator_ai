@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Text-to-speech not supported in this browser.",
     "IS_PLACEHOLDER_SEARCH": "Search...",
     "IS_TITLE_SELECT_ITEM": "SELECT ITEM",
-    "IS_BTN_BACK": "BACK"
+    "IS_BTN_BACK": "BACK",
+    "DE_TOOLTIP_NO_CHANGES": "No changes detected",
+    "DE_TOOLTIP_NAME_EXISTS": "Driver name or nickname already exists",
+    "DE_BTN_UNDO": "Undo",
+    "DE_BTN_REDO": "Redo",
+    "DE_TOOLTIP_UNDO": "Undo last change (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Redo last change (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Unsaved Changes",
+    "DE_CONFIRM_DISCARD_MESSAGE": "You have unsaved changes. Are you sure you want to discard them?"
 }

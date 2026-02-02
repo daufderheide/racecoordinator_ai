@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Text-zu-Sprache wird in diesem Browser nicht unterstützt.",
     "IS_PLACEHOLDER_SEARCH": "Suchen...",
     "IS_TITLE_SELECT_ITEM": "ELEMENT AUSWÄHLEN",
-    "IS_BTN_BACK": "ZURÜCK"
+    "IS_BTN_BACK": "ZURÜCK",
+    "DE_TOOLTIP_NO_CHANGES": "Keine Änderungen erkannt",
+    "DE_TOOLTIP_NAME_EXISTS": "Fahrername oder Spitzname existiert bereits",
+    "DE_BTN_UNDO": "Rückgängig",
+    "DE_BTN_REDO": "Wiederholen",
+    "DE_TOOLTIP_UNDO": "Letzte Änderung rückgängig machen (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Letzte Änderung wiederholen (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Ungespeicherte Änderungen",
+    "DE_CONFIRM_DISCARD_MESSAGE": "Sie haben ungespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?"
 }

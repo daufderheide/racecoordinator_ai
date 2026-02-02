@@ -8,6 +8,7 @@ import { ConfirmationModalComponent } from './confirmation-modal/confirmation-mo
 import { BackButtonComponent } from './back-button/back-button.component';
 import { AudioSelectorComponent } from './audio-selector/audio-selector.component';
 import { ItemSelectorComponent } from './item-selector/item-selector.component';
+import { UndoRedoControlsComponent } from './undo-redo-controls/undo-redo-controls.component';
 import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
 
 @NgModule({
@@ -18,6 +19,7 @@ import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
     BackButtonComponent,
     AudioSelectorComponent,
     ItemSelectorComponent,
+    UndoRedoControlsComponent,
     AvatarUrlPipe
   ],
   imports: [
@@ -35,6 +37,7 @@ import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
     BackButtonComponent,
     AudioSelectorComponent,
     ItemSelectorComponent,
+    UndoRedoControlsComponent,
     AvatarUrlPipe
   ]
 })

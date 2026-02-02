@@ -34,6 +34,76 @@ export class TestSetupHelper {
         ]),
       });
     });
+
+    // Mock Localization
+    await this.setupLocalizationMocks(page);
+  }
+
+  static async setupLocalizationMocks(page: Page) {
+    // Read en.json from disk to serve as mock
+    const fs = require('fs');
+    const path = require('path');
+
+    // Try to locate the assets folder relative to CWD
+    console.log('DEBUG: CWD:', process.cwd());
+    const i18nPath = path.resolve(process.cwd(), 'client/src/assets/i18n'); // Adjusted based on common structure
+    const altPath = path.resolve(process.cwd(), 'src/assets/i18n');
+
+    let finalPath = i18nPath;
+    if (!fs.existsSync(finalPath) && fs.existsSync(altPath)) {
+      finalPath = altPath;
+    }
+    console.log('DEBUG: Using i18nPath:', finalPath);
+
+    // Use Regex to match the path regardless of query params (e.g. ?t=...)
+    await page.route(/\/assets\/i18n\/.*\.json/, async (route) => {
+      const url = route.request().url();
+      console.log('DEBUG: Route hit for:', url);
+      const match = url.match(/\/assets\/i18n\/([a-z]{2,3})\.json/);
+      const lang = match ? match[1] : 'en';
+
+      try {
+        const filePath = path.join(finalPath, `${lang}.json`);
+        if (fs.existsSync(filePath)) {
+          console.log(`DEBUG: Serving ${lang} from ${filePath}`);
+          const content = fs.readFileSync(filePath, 'utf8');
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: content
+          });
+          return;
+        } else {
+          console.error(`DEBUG: File not found: ${filePath}`);
+        }
+      } catch (e) {
+        console.warn(`Failed to mock localization for ${lang}`, e);
+      }
+
+      await route.continue();
+    });
+
+    // Mock background images to avoid dev-server flakiness
+    await page.route('**/assets/images/*.png', async (route) => {
+      const url = route.request().url();
+      const match = url.match(/\/assets\/images\/(.*\.png)/);
+      if (!match) return route.continue();
+
+      const fileName = match[1];
+      const imagesPath = path.resolve(process.cwd(), 'client/src/assets/images');
+      const filePath = path.join(imagesPath, fileName);
+
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath);
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/png',
+          body: content
+        });
+        return;
+      }
+      await route.continue();
+    });
   }
 
   /**
@@ -56,8 +126,10 @@ export class TestSetupHelper {
 
     // Wait until at least one representative key is translated
     // We look for 'BACK' which is DE_BTN_BACK or DM_BTN_BACK in English
-    // Using a more robust regex to catch common key patterns
-    await expect(page.locator('body')).not.toContainText(/[A-Z]{2,3}_[A-Z_]+/, { timeout: 5000 }).catch(() => null);
+    // Using a more robust regex to catch common key patterns.
+    // We REMOVE the catch() so the test fails if keys don't resolve.
+    // TODO(aufderheide): Look into why we need 10s here, 3s was too short
+    await expect(page.locator('body')).not.toContainText(/[A-Z]{2,3}_[A-Z_]+/, { timeout: 10000 });
 
     // Ensure fonts are ready
     await page.evaluate(() => document.fonts.ready);

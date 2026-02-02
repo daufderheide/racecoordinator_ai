@@ -1,11 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription, forkJoin } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 
 @Component({
   selector: 'app-driver-editor',
@@ -13,6 +13,7 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./driver-editor.component.css'],
   standalone: false
 })
+
 export class DriverEditorComponent implements OnInit, OnDestroy {
   selectedDriver?: Driver;
   editingDriver?: Driver;
@@ -23,6 +24,11 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   showAvatarSelector: boolean = false;
 
+  // Undo Manager
+  undoManager!: UndoManager<Driver>;
+
+  // Driver Data
+  allDrivers: Driver[] = [];
 
   // Pending Drag & Drop Avatar
   pendingAvatarFile: File | null = null;
@@ -43,7 +49,27 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService
-  ) { }
+  ) {
+    this.undoManager = new UndoManager<Driver>(
+      {
+        clonner: (d) => this.cloneDriver(d),
+        equalizer: (a, b) => this.areDriversEqual(a, b),
+        applier: (d) => {
+          // Preserve context ID safe-guard
+          const currentId = this.editingDriver?.entity_id;
+          this.editingDriver = d;
+          if (currentId && this.editingDriver) {
+            this.editingDriver.entity_id = currentId;
+          }
+          this.clearPendingAvatar();
+        }
+      },
+      () => this.editingDriver // snapshotGetter
+    );
+  }
+
+  // Remove old properties
+  // undoStack, redoStack, initialState, _snapshot, textChange$ -> Removed
 
   ngOnInit() {
     this.updateScale();
@@ -56,11 +82,30 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    this.undoManager.destroy();
   }
+
+  // ...
 
   @HostListener('window:resize')
   onResize() {
     this.updateScale();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.redo();
+      } else {
+        this.undo();
+      }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
+      event.preventDefault();
+      this.redo();
+    }
   }
 
   private updateScale() {
@@ -102,38 +147,53 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadDataInternal(rawDrivers: any[], assets: any[]) {
-    const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter(a => a.type === 'image');
-    this.soundAssets = allAssets.filter(a => a.type === 'sound');
+  private cloneDriver(driver: Driver): Driver {
+    return new Driver(
+      driver.entity_id,
+      driver.name,
+      driver.nickname,
+      driver.avatarUrl,
+      driver.lapSoundUrl,
+      driver.bestLapSoundUrl,
+      driver.lapSoundType,
+      driver.bestLapSoundType,
+      driver.lapSoundText,
+      driver.bestLapSoundText
+    );
+  }
 
-    // Check for ID in query params (already checked in loadData, but for type safety)
-    const idParam = this.route.snapshot.queryParamMap.get('id');
+  private areDriversEqual(d1: Driver, d2: Driver): boolean {
+    return d1.name === d2.name &&
+      d1.nickname === d2.nickname &&
+      d1.avatarUrl === d2.avatarUrl &&
+      d1.lapSoundUrl === d2.lapSoundUrl &&
+      d1.bestLapSoundUrl === d2.bestLapSoundUrl &&
+      d1.lapSoundType === d2.lapSoundType &&
+      d1.bestLapSoundType === d2.bestLapSoundType &&
+      d1.lapSoundText === d2.lapSoundText &&
+      d1.bestLapSoundText === d2.bestLapSoundText;
+  }
 
-    if (idParam === 'new') {
-      this.selectedDriver = undefined;
-      this.editingDriver = new Driver('new', '', '', '', '', '', 'preset', 'preset', '', '');
-      this.clearPendingAvatar();
-    } else if (idParam) {
-      const found = rawDrivers.find(d => d.entity_id === idParam);
-      if (found) {
-        const driver = new Driver(
-          found.entity_id,
-          found.name,
-          found.nickname || '',
-          found.avatarUrl,
-          found.lapSoundUrl,
-          found.bestLapSoundUrl,
-          this.mapSoundType(found.lapSoundType),
-          this.mapSoundType(found.bestLapSoundType),
-          found.lapSoundText || '',
-          found.bestLapSoundText || ''
-        );
-        this.selectDriver(driver);
-      } else {
-        throw new Error(`Driver Editor: Invalid entity ID "${idParam}".`);
-      }
-    }
+  isNameUnique(excludeSelf: boolean = true): boolean {
+    if (!this.editingDriver) return true;
+    const name = this.editingDriver.name.trim().toLowerCase();
+    if (!name) return false; // Empty name is not unique/valid
+
+    return !this.allDrivers.some(d =>
+      (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
+      d.name.toLowerCase() === name
+    );
+  }
+
+  isNicknameUnique(excludeSelf: boolean = true): boolean {
+    if (!this.editingDriver) return true;
+    const nickname = this.editingDriver.nickname?.trim().toLowerCase();
+    if (!nickname) return true; // Empty nickname is allowed
+
+    return !this.allDrivers.some(d =>
+      (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
+      d.nickname?.toLowerCase() === nickname
+    );
   }
 
   private clearPendingAvatar() {
@@ -166,6 +226,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   onAvatarSelected(asset: any) {
     if (this.editingDriver) {
+      this.captureState();
       this.editingDriver.avatarUrl = asset.url;
       this.clearPendingAvatar();
     }
@@ -187,24 +248,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-
-  selectDriver(driver: Driver) {
-    this.selectedDriver = driver;
-    this.editingDriver = new Driver(
-      driver.entity_id,
-      driver.name,
-      driver.nickname,
-      driver.avatarUrl,
-      driver.lapSoundUrl,
-      driver.bestLapSoundUrl,
-      driver.lapSoundType,
-      driver.bestLapSoundType,
-      driver.lapSoundText,
-      driver.bestLapSoundText
-    );
-    this.clearPendingAvatar();
-  }
-
   onBack() {
     sessionStorage.setItem('skipIntro', 'true');
     this.router.navigate(['/raceday-setup']);
@@ -217,6 +260,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   updateDriver(isSaveAsNew: boolean = false) {
     if (!this.editingDriver) return;
+    if (!isSaveAsNew && !this.hasChanges()) return;
+
     this.isSaving = true;
 
     if (this.pendingAvatarFile) {
@@ -226,6 +271,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         this.dataService.uploadAsset(this.pendingAvatarFile!.name, 'image', bytes).subscribe({
           next: (asset) => {
             if (this.editingDriver) {
+              // We don't capture state for upload completion as it's an internal sync
               this.editingDriver.avatarUrl = asset.url ?? undefined;
               this.pendingAvatarFile = null;
               this.pendingAvatarPreview = null;
@@ -245,13 +291,70 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadDataInternal(rawDrivers: any[], assets: any[]) {
+    this.allDrivers = rawDrivers.map(d => new Driver(
+      d.entity_id, d.name, d.nickname || '',
+      d.avatarUrl, d.lapSoundUrl, d.bestLapSoundUrl,
+      this.mapSoundType(d.lapSoundType),
+      this.mapSoundType(d.bestLapSoundType),
+      d.lapSoundText, d.bestLapSoundText
+    ));
+
+    const allAssets = assets || [];
+    this.avatarAssets = allAssets.filter(a => a.type === 'image');
+    this.soundAssets = allAssets.filter(a => a.type === 'sound');
+
+    const idParam = this.route.snapshot.queryParamMap.get('id');
+
+    if (idParam === 'new') {
+      this.selectedDriver = undefined;
+      this.editingDriver = new Driver('new', '', '', '', '', '', 'preset', 'preset', '', '');
+      this.clearPendingAvatar();
+    } else if (idParam) {
+      const found = this.allDrivers.find(d => d.entity_id === idParam);
+      if (found) {
+        this.selectDriver(found);
+      } else {
+        throw new Error(`Driver Editor: Invalid entity ID "${idParam}".`);
+      }
+    }
+
+    // Initialize tracking
+    if (this.editingDriver) {
+      this.undoManager.initialize(this.editingDriver);
+    }
+  }
+
+  // Proxy methods
+  undo() { this.undoManager.undo(); }
+  redo() { this.undoManager.redo(); }
+  hasChanges() { return this.undoManager.hasChanges(); }
+
+  onInputFocus() { this.undoManager.onInputFocus(); }
+  onInputChange() { this.undoManager.onInputChange(); }
+  onInputBlur() { this.undoManager.onInputBlur(); }
+  captureState() { this.undoManager.captureState(); }
+
+  selectDriver(driver: Driver) {
+    this.selectedDriver = driver;
+    this.editingDriver = this.cloneDriver(driver);
+    this.clearPendingAvatar();
+
+    this.undoManager.initialize(this.editingDriver);
+  }
+
+  // Update saveDriverData
   private saveDriverData(isSaveAsNew: boolean = false) {
     if (!this.editingDriver) return;
 
     // Create a copy to send, setting id to 'new' if it's a "Save as New" operation
     // or if we are already in "new" mode.
+    // TODO(aufderheide): Update shouldn't accept "new".  If it's a new driver, we should
+    // create it.
     const driverToSend = { ...this.editingDriver };
-    if (isSaveAsNew || driverToSend.entity_id === 'new') {
+    const wasNew = isSaveAsNew || driverToSend.entity_id === 'new';
+
+    if (wasNew) {
       driverToSend.entity_id = 'new';
     }
 
@@ -262,10 +365,20 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     obs.subscribe({
       next: (result) => {
         this.isSaving = false;
-        if (isSaveAsNew || this.editingDriver?.entity_id === 'new') {
+
+        // Update snapshot on save, BUT KEEP STACKS
+        if (this.editingDriver) {
+          this.editingDriver.entity_id = result.entity_id;
+          // Reset tracking baseline but KEEP history
+          this.undoManager.resetTracking(this.editingDriver);
+        }
+
+        if (wasNew) {
           this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
         }
-        this.loadData();
+
+        // Refresh valid drivers list without resetting current editor state
+        this.refreshDriverList();
       },
       error: (err) => {
         console.error('Failed to save driver', err);
@@ -279,6 +392,24 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  private refreshDriverList() {
+    this.dataService.getDrivers().subscribe({
+      next: (drivers) => {
+        // Just update the list for uniqueness checks and sidebar
+        this.allDrivers = drivers.map(d => new Driver(
+          d.entity_id, d.name, d.nickname || '',
+          d.avatarUrl, d.lapSoundUrl, d.bestLapSoundUrl,
+          this.mapSoundType(d.lapSoundType),
+          this.mapSoundType(d.bestLapSoundType),
+          d.lapSoundText, d.bestLapSoundText
+        ));
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Failed to refresh driver list', err)
+    });
+  }
+
 
   deleteDriver() {
     if (!this.editingDriver) return;
@@ -311,6 +442,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (files && files.length > 0) {
       if (type === 'avatar') {
         const file = files[0];
+
+        // Drag drop is a discrete change, capture OLD state
+        this.captureState();
+
         this.pendingAvatarFile = file;
         const reader = new FileReader();
         reader.onload = (e: any) => {
@@ -321,8 +456,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       }
     }
   }
-
-
 
   getAvatarUrl(url?: string): string {
     if (!url) return 'assets/images/default_avatar.svg';

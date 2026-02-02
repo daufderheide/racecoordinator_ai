@@ -16,6 +16,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+    }
     .modal-backdrop {
       position: fixed;
       top: 0;

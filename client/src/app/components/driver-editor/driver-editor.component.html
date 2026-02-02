@@ -3,7 +3,11 @@
   <!-- Header -->
   <div class="dm-header">
     <app-back-button [label]="'DE_BTN_BACK' | translate" route="/driver-manager"
-      [queryParams]="{ id: editingDriver?.entity_id }"></app-back-button>
+      [queryParams]="{ id: editingDriver?.entity_id }" [confirm]="hasChanges()"
+      [confirmTitle]="'DE_CONFIRM_DISCARD_TITLE'" [confirmMessage]="'DE_CONFIRM_DISCARD_MESSAGE'"></app-back-button>
+
+    <!-- Undo/Redo Controls -->
+    <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
   </div>
 
   <div class="content-area editor-centered" *ngIf="!isLoading">
@@ -16,11 +20,13 @@
           <div class="inputs-column">
             <div class="form-group">
               <label>{{ 'RDS_LABEL_NAME' | translate }}</label>
-              <input type="text" [(ngModel)]="editingDriver.name" class="dm-input">
+              <input type="text" [(ngModel)]="editingDriver.name" (ngModelChange)="onInputChange()"
+                (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input">
             </div>
             <div class="form-group">
               <label>{{ 'RDS_LABEL_NICKNAME' | translate }}</label>
-              <input type="text" [(ngModel)]="editingDriver.nickname" class="dm-input">
+              <input type="text" [(ngModel)]="editingDriver.nickname" (ngModelChange)="onInputChange()"
+                (focus)="onInputFocus()" (blur)="onInputBlur()" class="dm-input">
             </div>
           </div>
           <div class="avatar-column">
@@ -39,26 +45,40 @@
         <div class="panel-header">{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</div>
 
         <div class="audio-section">
+          <!-- We rely on captureState() inside AudioSelector or we need to wrap bindings. 
+               Since AudioSelector is a child component, we can use (ngModelChange) wrapper or 
+               pass a callback. 
+               Simpler: Let AudioSelector emit changes, which we can intercept?
+               Actually, AudioSelector supports 2-way binding. 
+               We can listen to the event `(typeChange)` etc.
+          -->
           <app-audio-selector [label]="'DE_LABEL_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [(type)]="editingDriver.lapSoundType" [(url)]="editingDriver.lapSoundUrl"
-            [(text)]="editingDriver.lapSoundText" [backButtonRoute]="'/driver-editor'"
-            [backButtonQueryParams]="{ id: editingDriver.entity_id }">
+            [type]="editingDriver.lapSoundType" (typeChange)="captureState(); editingDriver.lapSoundType=$event"
+            [url]="editingDriver.lapSoundUrl" (urlChange)="onInputChange(); editingDriver.lapSoundUrl=$event"
+            [text]="editingDriver.lapSoundText" (textChange)="onInputChange(); editingDriver.lapSoundText=$event"
+            [backButtonRoute]="'/driver-editor'" [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="audio-section">
           <app-audio-selector [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [(type)]="editingDriver.bestLapSoundType" [(url)]="editingDriver.bestLapSoundUrl"
-            [(text)]="editingDriver.bestLapSoundText" [backButtonRoute]="'/driver-editor'"
+            [type]="editingDriver.bestLapSoundType" (typeChange)="captureState(); editingDriver.bestLapSoundType=$event"
+            [url]="editingDriver.bestLapSoundUrl" (urlChange)="onInputChange(); editingDriver.bestLapSoundUrl=$event"
+            [text]="editingDriver.bestLapSoundText"
+            (textChange)="onInputChange(); editingDriver.bestLapSoundText=$event" [backButtonRoute]="'/driver-editor'"
             [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="editor-actions">
-          <button class="btn btn-update" (click)="updateDriver()">
+          <button class="btn btn-update" (click)="updateDriver()" [disabled]="!hasChanges()"
+            [title]="hasChanges() ? '' : ('DE_TOOLTIP_NO_CHANGES' | translate)">
             <span class="icon">🔄</span> {{ 'DE_BTN_UPDATE_DRIVER' | translate }}
           </button>
-          <button *ngIf="editingDriver.entity_id !== 'new'" class="btn btn-new" (click)="saveAsNew()">
+
+          <button *ngIf="editingDriver.entity_id !== 'new'" class="btn btn-new" (click)="saveAsNew()"
+            [disabled]="!isNameUnique(false) || !isNicknameUnique(false)"
+            [title]="(!isNameUnique(false) || !isNicknameUnique(false)) ? ('DE_TOOLTIP_NAME_EXISTS' | translate) : ''">
             <span class="icon">💾</span> {{ 'DE_BTN_SAVE_AS_NEW' | translate }}
           </button>
         </div>

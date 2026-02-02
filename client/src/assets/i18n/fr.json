@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Synthèse vocale non supportée par ce navigateur.",
     "IS_PLACEHOLDER_SEARCH": "Rechercher...",
     "IS_TITLE_SELECT_ITEM": "SÉLECTIONNER ÉLÉMENT",
-    "IS_BTN_BACK": "RETOUR"
+    "IS_BTN_BACK": "RETOUR",
+    "DE_TOOLTIP_NO_CHANGES": "Aucun changement détecté",
+    "DE_TOOLTIP_NAME_EXISTS": "Le nom ou surnom du pilote existe déjà",
+    "DE_BTN_UNDO": "Annuler",
+    "DE_BTN_REDO": "Rétablir",
+    "DE_TOOLTIP_UNDO": "Annuler la dernière modification (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Rétablir la dernière modification (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Modifications non enregistrées",
+    "DE_CONFIRM_DISCARD_MESSAGE": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?"
 }

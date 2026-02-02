@@ -168,5 +168,13 @@
     "AS_TTS_NOT_SUPPORTED": "Text-to-speech non supportato in questo browser.",
     "IS_PLACEHOLDER_SEARCH": "Cerca...",
     "IS_TITLE_SELECT_ITEM": "SELEZIONA ELEMENTO",
-    "IS_BTN_BACK": "INDIETRO"
+    "IS_BTN_BACK": "INDIETRO",
+    "DE_TOOLTIP_NO_CHANGES": "Nessuna modifica rilevata",
+    "DE_TOOLTIP_NAME_EXISTS": "Nome o soprannome del pilota già esistente",
+    "DE_BTN_UNDO": "Annulla",
+    "DE_BTN_REDO": "Ripeti",
+    "DE_TOOLTIP_UNDO": "Annulla l'ultima modifica (Cmd/Ctrl+Z)",
+    "DE_TOOLTIP_REDO": "Ripeti l'ultima modifica (Cmd/Ctrl+Shift+Z)",
+    "DE_CONFIRM_DISCARD_TITLE": "Modifiche non salvate",
+    "DE_CONFIRM_DISCARD_MESSAGE": "Ci sono modifiche non salvate. Sei sicuro di volerle scartare?"
 }
