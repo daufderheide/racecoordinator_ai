@@ -12,6 +12,7 @@ import { HeatConverter } from 'src/app/converters/heat.converter';
 import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
 import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
+import { playSound } from 'src/app/utils/audio';
 
 import { ColumnDefinition } from './column_definition';
 
@@ -142,16 +143,45 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         });
 
         this.dataService.getLaps().subscribe(lap => {
+            console.log('Lap Received:', lap);
             // Locate driver by objectId from the lap message
             if (this.heat && this.heat.heatDrivers && lap && lap.objectId) {
-                const driver = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
-                if (driver) {
-                    driver.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
+                const driverData = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
+                if (driverData) {
+                    driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
                     this.cdr.detectChanges();
+
+                    // Audio Feedback
+                    const driver = driverData.driver;
+                    const isBestLap = lap.lapTime === lap.bestLapTime;
+
+                    console.log('Lap Audio Debug:', {
+                        driverName: driver.name,
+                        isBestLap,
+                        lapTime: lap.lapTime,
+                        bestLapTime: lap.bestLapTime,
+                        audioConfig: {
+                            bestSound: driver.bestLapAudio,
+                            lapSound: driver.lapAudio
+                        }
+                    });
+
+                    if (isBestLap && (driver.bestLapAudio.url || (driver.bestLapAudio.type === 'tts' && driver.bestLapAudio.text))) {
+                        // Play Best Lap Sound
+                        console.log('Triggering Best Lap Sound');
+                        playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl);
+                    } else if (driver.lapAudio.url || (driver.lapAudio.type === 'tts' && driver.lapAudio.text)) {
+                        // Play Regular Lap Sound
+                        console.log('Triggering Regular Lap Sound');
+                        playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl);
+                    } else {
+                        console.log('No audio configured for this driver/scenario');
+                    }
                 } else {
-                    // Throw error if driver not found for given objectId
-                    throw new Error(`Lap objectId ${lap.objectId} not found among heat drivers`);
+                    console.warn(`Lap objectId ${lap.objectId} not found among heat drivers. Heat Drivers:`, this.heat.heatDrivers.map(d => d.objectId));
                 }
+            } else {
+                console.warn('Lap received but heat or drivers not ready', { heat: !!this.heat, lap: !!lap });
             }
         });
 
@@ -541,4 +571,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     protected trackByDriverId(index: number, hd: DriverHeatData): string {
         return hd.objectId;
     }
+
+
 }

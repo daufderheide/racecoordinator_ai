@@ -53,19 +53,20 @@
                We can listen to the event `(typeChange)` etc.
           -->
           <app-audio-selector [label]="'DE_LABEL_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [type]="editingDriver.lapSoundType" (typeChange)="captureState(); editingDriver.lapSoundType=$event"
-            [url]="editingDriver.lapSoundUrl" (urlChange)="onInputChange(); editingDriver.lapSoundUrl=$event"
-            [text]="editingDriver.lapSoundText" (textChange)="onInputChange(); editingDriver.lapSoundText=$event"
+            [type]="editingDriver.lapAudio.type" (typeChange)="captureState(); editingDriver.lapAudio.type=$event"
+            [url]="editingDriver.lapAudio.url" (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event"
+            [text]="editingDriver.lapAudio.text" (textChange)="onInputChange(); editingDriver.lapAudio.text=$event"
             [backButtonRoute]="'/driver-editor'" [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="audio-section">
           <app-audio-selector [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [type]="editingDriver.bestLapSoundType" (typeChange)="captureState(); editingDriver.bestLapSoundType=$event"
-            [url]="editingDriver.bestLapSoundUrl" (urlChange)="onInputChange(); editingDriver.bestLapSoundUrl=$event"
-            [text]="editingDriver.bestLapSoundText"
-            (textChange)="onInputChange(); editingDriver.bestLapSoundText=$event" [backButtonRoute]="'/driver-editor'"
+            [type]="editingDriver.bestLapAudio.type"
+            (typeChange)="captureState(); editingDriver.bestLapAudio.type=$event" [url]="editingDriver.bestLapAudio.url"
+            (urlChange)="onInputChange(); editingDriver.bestLapAudio.url=$event"
+            [text]="editingDriver.bestLapAudio.text"
+            (textChange)="onInputChange(); editingDriver.bestLapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
             [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>

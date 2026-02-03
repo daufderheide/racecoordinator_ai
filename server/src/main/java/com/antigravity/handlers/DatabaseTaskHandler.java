@@ -52,12 +52,9 @@ public class DatabaseTaskHandler {
                         driver.getName(),
                         driver.getNickname(),
                         driver.getAvatarUrl(),
-                        driver.getLapSoundUrl(),
-                        driver.getBestLapSoundUrl(),
-                        driver.getLapSoundType(),
-                        driver.getBestLapSoundType(),
-                        driver.getLapSoundText(),
-                        driver.getBestLapSoundText(),
+                        driver.getLapAudio(),
+                        driver.getBestLapAudio(),
+                        null, null, null, null, null, null,
                         nextId,
                         null);
             }

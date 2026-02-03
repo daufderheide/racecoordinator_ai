@@ -153,12 +153,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       driver.name,
       driver.nickname,
       driver.avatarUrl,
-      driver.lapSoundUrl,
-      driver.bestLapSoundUrl,
-      driver.lapSoundType,
-      driver.bestLapSoundType,
-      driver.lapSoundText,
-      driver.bestLapSoundText
+      { ...driver.lapAudio },
+      { ...driver.bestLapAudio }
     );
   }
 
@@ -166,12 +162,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     return d1.name === d2.name &&
       d1.nickname === d2.nickname &&
       d1.avatarUrl === d2.avatarUrl &&
-      d1.lapSoundUrl === d2.lapSoundUrl &&
-      d1.bestLapSoundUrl === d2.bestLapSoundUrl &&
-      d1.lapSoundType === d2.lapSoundType &&
-      d1.bestLapSoundType === d2.bestLapSoundType &&
-      d1.lapSoundText === d2.lapSoundText &&
-      d1.bestLapSoundText === d2.bestLapSoundText;
+      d1.lapAudio.url === d2.lapAudio.url &&
+      d1.bestLapAudio.url === d2.bestLapAudio.url &&
+      d1.lapAudio.type === d2.lapAudio.type &&
+      d1.bestLapAudio.type === d2.bestLapAudio.type &&
+      d1.lapAudio.text === d2.lapAudio.text &&
+      d1.bestLapAudio.text === d2.bestLapAudio.text;
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
@@ -294,10 +290,17 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
     this.allDrivers = rawDrivers.map(d => new Driver(
       d.entity_id, d.name, d.nickname || '',
-      d.avatarUrl, d.lapSoundUrl, d.bestLapSoundUrl,
-      this.mapSoundType(d.lapSoundType),
-      this.mapSoundType(d.bestLapSoundType),
-      d.lapSoundText, d.bestLapSoundText
+      d.avatarUrl,
+      {
+        type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+        url: d.lapAudio?.url || d.lapSoundUrl,
+        text: d.lapAudio?.text || d.lapSoundText
+      },
+      {
+        type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+        url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+        text: d.bestLapAudio?.text || d.bestLapSoundText
+      }
     ));
 
     const allAssets = assets || [];
@@ -308,7 +311,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
     if (idParam === 'new') {
       this.selectedDriver = undefined;
-      this.editingDriver = new Driver('new', '', '', '', '', '', 'preset', 'preset', '', '');
+      this.editingDriver = new Driver('new', '', '', '', { type: 'preset' }, { type: 'preset' });
       this.clearPendingAvatar();
     } else if (idParam) {
       const found = this.allDrivers.find(d => d.entity_id === idParam);
@@ -399,10 +402,17 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         // Just update the list for uniqueness checks and sidebar
         this.allDrivers = drivers.map(d => new Driver(
           d.entity_id, d.name, d.nickname || '',
-          d.avatarUrl, d.lapSoundUrl, d.bestLapSoundUrl,
-          this.mapSoundType(d.lapSoundType),
-          this.mapSoundType(d.bestLapSoundType),
-          d.lapSoundText, d.bestLapSoundText
+          d.avatarUrl,
+          {
+            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+            url: d.lapAudio?.url || d.lapSoundUrl,
+            text: d.lapAudio?.text || d.lapSoundText
+          },
+          {
+            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+            text: d.bestLapAudio?.text || d.bestLapSoundText
+          }
         ));
         this.cdr.detectChanges();
       },

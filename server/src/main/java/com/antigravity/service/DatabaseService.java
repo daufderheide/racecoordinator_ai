@@ -79,9 +79,12 @@ public class DatabaseService {
                                 avatarUrl = helmetAssets.get((i - 1) % helmetAssets.size()).getUrl();
                         }
 
-                        initialDrivers.add(new Driver(name, name, avatarUrl, lapSoundUrl, bestLapSoundUrl, "preset",
-                                        "preset", null,
-                                        null, getNextSequence(database, "drivers"), null));
+                        Driver.AudioConfig lapAudio = new Driver.AudioConfig("preset", lapSoundUrl, null);
+                        Driver.AudioConfig bestLapAudio = new Driver.AudioConfig("preset", bestLapSoundUrl, null);
+
+                        initialDrivers.add(new Driver(name, name, avatarUrl, lapAudio, bestLapAudio,
+                                        null, null, null, null, null, null,
+                                        getNextSequence(database, "drivers"), null));
                 }
 
                 driverCollection.insertMany(initialDrivers);

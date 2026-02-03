@@ -1318,6 +1318,15 @@ export namespace com {
 
             /** DriverModel nickname */
             nickname?: (string|null);
+
+            /** DriverModel avatarUrl */
+            avatarUrl?: (string|null);
+
+            /** DriverModel lapAudio */
+            lapAudio?: (com.antigravity.IAudioConfig|null);
+
+            /** DriverModel bestLapAudio */
+            bestLapAudio?: (com.antigravity.IAudioConfig|null);
         }
 
         /** Represents a DriverModel. */
@@ -1337,6 +1346,15 @@ export namespace com {
 
             /** DriverModel nickname. */
             public nickname: string;
+
+            /** DriverModel avatarUrl. */
+            public avatarUrl: string;
+
+            /** DriverModel lapAudio. */
+            public lapAudio?: (com.antigravity.IAudioConfig|null);
+
+            /** DriverModel bestLapAudio. */
+            public bestLapAudio?: (com.antigravity.IAudioConfig|null);
 
             /**
              * Creates a new DriverModel instance using the specified properties.
@@ -1410,6 +1428,115 @@ export namespace com {
 
             /**
              * Gets the default type url for DriverModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an AudioConfig. */
+        interface IAudioConfig {
+
+            /** AudioConfig type */
+            type?: (string|null);
+
+            /** AudioConfig url */
+            url?: (string|null);
+
+            /** AudioConfig text */
+            text?: (string|null);
+        }
+
+        /** Represents an AudioConfig. */
+        class AudioConfig implements IAudioConfig {
+
+            /**
+             * Constructs a new AudioConfig.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IAudioConfig);
+
+            /** AudioConfig type. */
+            public type: string;
+
+            /** AudioConfig url. */
+            public url: string;
+
+            /** AudioConfig text. */
+            public text: string;
+
+            /**
+             * Creates a new AudioConfig instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AudioConfig instance
+             */
+            public static create(properties?: com.antigravity.IAudioConfig): com.antigravity.AudioConfig;
+
+            /**
+             * Encodes the specified AudioConfig message. Does not implicitly {@link com.antigravity.AudioConfig.verify|verify} messages.
+             * @param message AudioConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IAudioConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AudioConfig message, length delimited. Does not implicitly {@link com.antigravity.AudioConfig.verify|verify} messages.
+             * @param message AudioConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IAudioConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AudioConfig message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AudioConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.AudioConfig;
+
+            /**
+             * Decodes an AudioConfig message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AudioConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.AudioConfig;
+
+            /**
+             * Verifies an AudioConfig message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AudioConfig message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AudioConfig
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.AudioConfig;
+
+            /**
+             * Creates a plain object from an AudioConfig message. Also converts values to other types if specified.
+             * @param message AudioConfig
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.AudioConfig, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AudioConfig to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AudioConfig
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

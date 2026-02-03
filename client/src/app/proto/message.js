@@ -3134,6 +3134,9 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IModel|null} [model] DriverModel model
              * @property {string|null} [name] DriverModel name
              * @property {string|null} [nickname] DriverModel nickname
+             * @property {string|null} [avatarUrl] DriverModel avatarUrl
+             * @property {com.antigravity.IAudioConfig|null} [lapAudio] DriverModel lapAudio
+             * @property {com.antigravity.IAudioConfig|null} [bestLapAudio] DriverModel bestLapAudio
              */
 
             /**
@@ -3176,6 +3179,30 @@ export const com = $root.com = (() => {
             DriverModel.prototype.nickname = "";
 
             /**
+             * DriverModel avatarUrl.
+             * @member {string} avatarUrl
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.avatarUrl = "";
+
+            /**
+             * DriverModel lapAudio.
+             * @member {com.antigravity.IAudioConfig|null|undefined} lapAudio
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.lapAudio = null;
+
+            /**
+             * DriverModel bestLapAudio.
+             * @member {com.antigravity.IAudioConfig|null|undefined} bestLapAudio
+             * @memberof com.antigravity.DriverModel
+             * @instance
+             */
+            DriverModel.prototype.bestLapAudio = null;
+
+            /**
              * Creates a new DriverModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.DriverModel
@@ -3205,6 +3232,12 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
                 if (message.nickname != null && Object.hasOwnProperty.call(message, "nickname"))
                     writer.uint32(/* id 3, wireType 2 =*/26).string(message.nickname);
+                if (message.avatarUrl != null && Object.hasOwnProperty.call(message, "avatarUrl"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.avatarUrl);
+                if (message.lapAudio != null && Object.hasOwnProperty.call(message, "lapAudio"))
+                    $root.com.antigravity.AudioConfig.encode(message.lapAudio, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                if (message.bestLapAudio != null && Object.hasOwnProperty.call(message, "bestLapAudio"))
+                    $root.com.antigravity.AudioConfig.encode(message.bestLapAudio, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
                 return writer;
             };
 
@@ -3253,6 +3286,18 @@ export const com = $root.com = (() => {
                             message.nickname = reader.string();
                             break;
                         }
+                    case 4: {
+                            message.avatarUrl = reader.string();
+                            break;
+                        }
+                    case 5: {
+                            message.lapAudio = $root.com.antigravity.AudioConfig.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 6: {
+                            message.bestLapAudio = $root.com.antigravity.AudioConfig.decode(reader, reader.uint32());
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -3299,6 +3344,19 @@ export const com = $root.com = (() => {
                 if (message.nickname != null && message.hasOwnProperty("nickname"))
                     if (!$util.isString(message.nickname))
                         return "nickname: string expected";
+                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
+                    if (!$util.isString(message.avatarUrl))
+                        return "avatarUrl: string expected";
+                if (message.lapAudio != null && message.hasOwnProperty("lapAudio")) {
+                    let error = $root.com.antigravity.AudioConfig.verify(message.lapAudio);
+                    if (error)
+                        return "lapAudio." + error;
+                }
+                if (message.bestLapAudio != null && message.hasOwnProperty("bestLapAudio")) {
+                    let error = $root.com.antigravity.AudioConfig.verify(message.bestLapAudio);
+                    if (error)
+                        return "bestLapAudio." + error;
+                }
                 return null;
             };
 
@@ -3323,6 +3381,18 @@ export const com = $root.com = (() => {
                     message.name = String(object.name);
                 if (object.nickname != null)
                     message.nickname = String(object.nickname);
+                if (object.avatarUrl != null)
+                    message.avatarUrl = String(object.avatarUrl);
+                if (object.lapAudio != null) {
+                    if (typeof object.lapAudio !== "object")
+                        throw TypeError(".com.antigravity.DriverModel.lapAudio: object expected");
+                    message.lapAudio = $root.com.antigravity.AudioConfig.fromObject(object.lapAudio);
+                }
+                if (object.bestLapAudio != null) {
+                    if (typeof object.bestLapAudio !== "object")
+                        throw TypeError(".com.antigravity.DriverModel.bestLapAudio: object expected");
+                    message.bestLapAudio = $root.com.antigravity.AudioConfig.fromObject(object.bestLapAudio);
+                }
                 return message;
             };
 
@@ -3343,6 +3413,9 @@ export const com = $root.com = (() => {
                     object.model = null;
                     object.name = "";
                     object.nickname = "";
+                    object.avatarUrl = "";
+                    object.lapAudio = null;
+                    object.bestLapAudio = null;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -3350,6 +3423,12 @@ export const com = $root.com = (() => {
                     object.name = message.name;
                 if (message.nickname != null && message.hasOwnProperty("nickname"))
                     object.nickname = message.nickname;
+                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
+                    object.avatarUrl = message.avatarUrl;
+                if (message.lapAudio != null && message.hasOwnProperty("lapAudio"))
+                    object.lapAudio = $root.com.antigravity.AudioConfig.toObject(message.lapAudio, options);
+                if (message.bestLapAudio != null && message.hasOwnProperty("bestLapAudio"))
+                    object.bestLapAudio = $root.com.antigravity.AudioConfig.toObject(message.bestLapAudio, options);
                 return object;
             };
 
@@ -3380,6 +3459,258 @@ export const com = $root.com = (() => {
             };
 
             return DriverModel;
+        })();
+
+        antigravity.AudioConfig = (function() {
+
+            /**
+             * Properties of an AudioConfig.
+             * @memberof com.antigravity
+             * @interface IAudioConfig
+             * @property {string|null} [type] AudioConfig type
+             * @property {string|null} [url] AudioConfig url
+             * @property {string|null} [text] AudioConfig text
+             */
+
+            /**
+             * Constructs a new AudioConfig.
+             * @memberof com.antigravity
+             * @classdesc Represents an AudioConfig.
+             * @implements IAudioConfig
+             * @constructor
+             * @param {com.antigravity.IAudioConfig=} [properties] Properties to set
+             */
+            function AudioConfig(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * AudioConfig type.
+             * @member {string} type
+             * @memberof com.antigravity.AudioConfig
+             * @instance
+             */
+            AudioConfig.prototype.type = "";
+
+            /**
+             * AudioConfig url.
+             * @member {string} url
+             * @memberof com.antigravity.AudioConfig
+             * @instance
+             */
+            AudioConfig.prototype.url = "";
+
+            /**
+             * AudioConfig text.
+             * @member {string} text
+             * @memberof com.antigravity.AudioConfig
+             * @instance
+             */
+            AudioConfig.prototype.text = "";
+
+            /**
+             * Creates a new AudioConfig instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {com.antigravity.IAudioConfig=} [properties] Properties to set
+             * @returns {com.antigravity.AudioConfig} AudioConfig instance
+             */
+            AudioConfig.create = function create(properties) {
+                return new AudioConfig(properties);
+            };
+
+            /**
+             * Encodes the specified AudioConfig message. Does not implicitly {@link com.antigravity.AudioConfig.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {com.antigravity.IAudioConfig} message AudioConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AudioConfig.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.type);
+                if (message.url != null && Object.hasOwnProperty.call(message, "url"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.url);
+                if (message.text != null && Object.hasOwnProperty.call(message, "text"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.text);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified AudioConfig message, length delimited. Does not implicitly {@link com.antigravity.AudioConfig.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {com.antigravity.IAudioConfig} message AudioConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AudioConfig.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an AudioConfig message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.AudioConfig} AudioConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AudioConfig.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.AudioConfig();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.type = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.url = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.text = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an AudioConfig message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.AudioConfig} AudioConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AudioConfig.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an AudioConfig message.
+             * @function verify
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            AudioConfig.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.type != null && message.hasOwnProperty("type"))
+                    if (!$util.isString(message.type))
+                        return "type: string expected";
+                if (message.url != null && message.hasOwnProperty("url"))
+                    if (!$util.isString(message.url))
+                        return "url: string expected";
+                if (message.text != null && message.hasOwnProperty("text"))
+                    if (!$util.isString(message.text))
+                        return "text: string expected";
+                return null;
+            };
+
+            /**
+             * Creates an AudioConfig message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.AudioConfig} AudioConfig
+             */
+            AudioConfig.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.AudioConfig)
+                    return object;
+                let message = new $root.com.antigravity.AudioConfig();
+                if (object.type != null)
+                    message.type = String(object.type);
+                if (object.url != null)
+                    message.url = String(object.url);
+                if (object.text != null)
+                    message.text = String(object.text);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an AudioConfig message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {com.antigravity.AudioConfig} message AudioConfig
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            AudioConfig.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.type = "";
+                    object.url = "";
+                    object.text = "";
+                }
+                if (message.type != null && message.hasOwnProperty("type"))
+                    object.type = message.type;
+                if (message.url != null && message.hasOwnProperty("url"))
+                    object.url = message.url;
+                if (message.text != null && message.hasOwnProperty("text"))
+                    object.text = message.text;
+                return object;
+            };
+
+            /**
+             * Converts this AudioConfig to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.AudioConfig
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            AudioConfig.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for AudioConfig
+             * @function getTypeUrl
+             * @memberof com.antigravity.AudioConfig
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            AudioConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.AudioConfig";
+            };
+
+            return AudioConfig;
         })();
 
         antigravity.StartRaceRequest = (function() {

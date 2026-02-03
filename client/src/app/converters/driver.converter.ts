@@ -23,7 +23,18 @@ export class DriverConverter {
             return new Driver(
                 objectId || '',
                 proto.name || '',
-                proto.nickname || ''
+                proto.nickname || '',
+                proto.avatarUrl || undefined,
+                {
+                    type: proto.lapAudio?.type === 'tts' ? 'tts' : 'preset',
+                    url: proto.lapAudio?.url || undefined,
+                    text: proto.lapAudio?.text || undefined
+                },
+                {
+                    type: proto.bestLapAudio?.type === 'tts' ? 'tts' : 'preset',
+                    url: proto.bestLapAudio?.url || undefined,
+                    text: proto.bestLapAudio?.text || undefined
+                }
             );
         });
     }

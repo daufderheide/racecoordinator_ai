@@ -86,12 +86,16 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
           d.name,
           d.nickname || '',
           d.avatarUrl,
-          d.lapSoundUrl,
-          d.bestLapSoundUrl,
-          this.mapSoundType(d.lapSoundType),
-          this.mapSoundType(d.bestLapSoundType),
-          d.lapSoundText || '',
-          d.bestLapSoundText || ''
+          {
+            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+            url: d.lapAudio?.url || d.lapSoundUrl,
+            text: d.lapAudio?.text || d.lapSoundText
+          },
+          {
+            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+            text: d.bestLapAudio?.text || d.bestLapSoundText
+          }
         ));
 
         const selectedId = this.route.snapshot.queryParamMap.get('id');
@@ -123,12 +127,8 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
       driver.name,
       driver.nickname,
       driver.avatarUrl,
-      driver.lapSoundUrl,
-      driver.bestLapSoundUrl,
-      driver.lapSoundType,
-      driver.bestLapSoundType,
-      driver.lapSoundText,
-      driver.bestLapSoundText
+      { ...driver.lapAudio },
+      { ...driver.bestLapAudio }
     );
   }
 

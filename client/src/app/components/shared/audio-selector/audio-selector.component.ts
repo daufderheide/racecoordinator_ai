@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
-
 import { TranslationService } from 'src/app/services/translation.service';
+import { playSound } from 'src/app/utils/audio';
 
 @Component({
   selector: 'app-audio-selector',
@@ -76,24 +76,7 @@ export class AudioSelectorComponent {
   }
 
   play() {
-    if (this.type === 'preset' && this.url) {
-      // Ensure absolute URL if it's relative
-      let playableUrl = this.url;
-      if (this.url.startsWith('/')) {
-        playableUrl = `${this.dataService.serverUrl}${this.url}`;
-      }
-      const audio = new Audio(playableUrl);
-      audio.play().catch(err => console.error('Error playing sound', err));
-    } else if (this.type === 'tts' && this.text) {
-      if ('speechSynthesis' in window) {
-        // Cancel any current speech
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(this.text);
-        window.speechSynthesis.speak(utterance);
-      } else {
-        console.warn(this.translationService.translate('AS_TTS_NOT_SUPPORTED'));
-      }
-    }
+    playSound(this.type, this.url, this.text, this.dataService.serverUrl);
   }
 
   // Drag & Drop

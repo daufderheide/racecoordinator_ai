@@ -75,12 +75,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
           d.name,
           d.nickname || '',
           d.avatarUrl,
-          d.lapSoundUrl,
-          d.bestLapSoundUrl,
-          d.lapSoundType,
-          d.bestLapSoundType,
-          d.lapSoundText,
-          d.bestLapSoundText
+          {
+            type: d.lapAudio?.type || (d.lapSoundType === 'tts' ? 'tts' : 'preset'),
+            url: d.lapAudio?.url || d.lapSoundUrl,
+            text: d.lapAudio?.text || d.lapSoundText
+          },
+          {
+            type: d.bestLapAudio?.type || (d.bestLapSoundType === 'tts' ? 'tts' : 'preset'),
+            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+            text: d.bestLapAudio?.text || d.bestLapSoundText
+          }
         ));
         const races = result.races;
 

@@ -20,9 +20,24 @@ public class DriverConverter {
             if (sentObjectIds != null) {
                 sentObjectIds.add(key);
             }
+            com.antigravity.proto.AudioConfig lapAudio = com.antigravity.proto.AudioConfig.newBuilder()
+                    .setType(driver.getLapAudio().getType())
+                    .setUrl(driver.getLapAudio().getUrl() != null ? driver.getLapAudio().getUrl() : "")
+                    .setText(driver.getLapAudio().getText() != null ? driver.getLapAudio().getText() : "")
+                    .build();
+
+            com.antigravity.proto.AudioConfig bestLapAudio = com.antigravity.proto.AudioConfig.newBuilder()
+                    .setType(driver.getBestLapAudio().getType())
+                    .setUrl(driver.getBestLapAudio().getUrl() != null ? driver.getBestLapAudio().getUrl() : "")
+                    .setText(driver.getBestLapAudio().getText() != null ? driver.getBestLapAudio().getText() : "")
+                    .build();
+
             return DriverModel.newBuilder()
                     .setName(driver.getName())
                     .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
+                    .setAvatarUrl(driver.getAvatarUrl() != null ? driver.getAvatarUrl() : "")
+                    .setLapAudio(lapAudio)
+                    .setBestLapAudio(bestLapAudio)
                     .setModel(Model.newBuilder()
                             .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
                             .build())
