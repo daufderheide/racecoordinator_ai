@@ -16,6 +16,8 @@ import { LeaderBoardComponent } from './components/leader_board/leader_board.com
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
+import { TrackManagerComponent } from './components/track-manager/track-manager.component';
+import { TrackEditorComponent } from './components/track-editor/track-editor.component';
 import { SharedModule } from './components/shared/shared.module';
 
 @NgModule({
@@ -29,7 +31,9 @@ import { SharedModule } from './components/shared/shared.module';
     LeaderBoardComponent,
     AssetManagerComponent,
     DriverEditorComponent,
-    DriverManagerComponent
+    DriverManagerComponent,
+    TrackManagerComponent,
+    TrackEditorComponent
   ],
   imports: [
     BrowserModule,

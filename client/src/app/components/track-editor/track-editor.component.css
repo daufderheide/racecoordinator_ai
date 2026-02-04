@@ -1,0 +1,323 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0f172a;
+  /* Slate 900 */
+  color: #e2e8f0;
+  /* Slate 200 */
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+.page-container {
+  width: 1600px;
+  height: 900px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+  /* Start centered, JS handles scale */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  height: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+  /* Sky 400 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #38bdf8;
+  /* Sky 400 */
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  margin: 0;
+}
+
+/* Content */
+.content-split {
+  flex: 1;
+  display: flex;
+  height: calc(100% - 80px);
+  /* Fill remaining */
+}
+
+/* Editor Panel */
+.editor-panel {
+  width: 500px;
+  background: rgba(30, 41, 59, 0.6);
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  backdrop-filter: blur(4px);
+}
+
+.editor-section {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editor-section label {
+  font-size: 1.2rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.editor-section input[type="text"] {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f1f5f9;
+  padding: 12px;
+  font-size: 1.2rem;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.editor-section input[type="text"]:focus {
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.lanes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  padding-bottom: 10px;
+}
+
+.lanes-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #e2e8f0;
+}
+
+.lanes-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.lane-item {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 6px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.lane-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #64748b;
+  width: 40px;
+}
+
+.lane-controls {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.control-group label {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.control-group input[type="color"] {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.control-group input[type="number"] {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f1f5f9;
+  padding: 5px;
+  width: 80px;
+  border-radius: 4px;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Actions Buttons */
+.action-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: #475569;
+  color: white;
+}
+
+.action-btn:hover {
+  background: #64748b;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+}
+
+.action-btn.secondary {
+  background: transparent;
+  border: 1px solid #64748b;
+}
+
+.action-btn.secondary:hover {
+  background: rgba(100, 116, 139, 0.2);
+}
+
+.action-btn.small {
+  padding: 5px 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Preview Panel */
+.preview-panel {
+  flex: 1;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid lines for futuristic effect */
+.preview-panel::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+  transform: rotateX(60deg) translateY(-20%) translateZ(-100px);
+  pointer-events: none;
+}
+
+.preview-placeholder {
+  border: 2px dashed rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  padding: 60px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.placeholder-content h3 {
+  font-size: 2rem;
+  color: #38bdf8;
+  margin-bottom: 20px;
+}
+
+.placeholder-content p {
+  font-size: 1.2rem;
+  color: #94a3b8;
+}
+/* Lane Preview Badge */
+.lane-preview-badge {
+  min-width: 80px;
+  height: 50px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 10px;
+  margin-right: 15px;
+  transition: all 0.2s ease;
+}
+
+.preview-number {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.preview-length {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}

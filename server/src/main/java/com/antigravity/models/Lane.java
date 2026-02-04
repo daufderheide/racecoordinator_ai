@@ -11,11 +11,13 @@ public class Lane extends Model {
     private final int length;
 
     @BsonCreator
-    public Lane(@BsonProperty("background_color") String background_color,
-            @BsonProperty("foreground_color") String foreground_color,
-            @BsonProperty("length") int length,
-            @BsonProperty("entity_id") String entityId,
-            @BsonId ObjectId id) {
+    @com.fasterxml.jackson.annotation.JsonCreator
+    public Lane(
+            @BsonProperty("background_color") @com.fasterxml.jackson.annotation.JsonProperty("background_color") String background_color,
+            @BsonProperty("foreground_color") @com.fasterxml.jackson.annotation.JsonProperty("foreground_color") String foreground_color,
+            @BsonProperty("length") @com.fasterxml.jackson.annotation.JsonProperty("length") int length,
+            @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
+            @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
         super(id, entityId);
         this.background_color = background_color;
         this.foreground_color = foreground_color;

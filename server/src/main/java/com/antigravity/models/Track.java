@@ -12,10 +12,11 @@ public class Track extends Model {
     private final List<Lane> lanes;
 
     @BsonCreator
-    public Track(@BsonProperty("name") String name,
-            @BsonProperty("lanes") List<Lane> lanes,
-            @BsonProperty("entity_id") String entityId,
-            @BsonId ObjectId id) {
+    @com.fasterxml.jackson.annotation.JsonCreator
+    public Track(@BsonProperty("name") @com.fasterxml.jackson.annotation.JsonProperty("name") String name,
+            @BsonProperty("lanes") @com.fasterxml.jackson.annotation.JsonProperty("lanes") List<Lane> lanes,
+            @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
+            @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
         super(id, entityId);
         this.name = name;
         this.lanes = lanes != null ? Collections.unmodifiableList(lanes) : Collections.emptyList();

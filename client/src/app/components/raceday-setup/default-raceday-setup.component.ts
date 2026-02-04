@@ -44,7 +44,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isRefreshingList: boolean = false;
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
-    { label: 'RDS_MENU_TRACK', action: () => console.log('Track menu') },
+    { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
     { label: 'RDS_MENU_DRIVER', action: () => this.openDriverManager() },
     { label: 'RDS_MENU_RACE', action: () => console.log('Race menu') },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
@@ -456,5 +456,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openDriverManager() {
     this.router.navigate(['/driver-manager']);
+  }
+
+  openTrackManager() {
+    this.router.navigate(['/track-manager']);
   }
 }

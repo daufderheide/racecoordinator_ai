@@ -1,0 +1,56 @@
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="header">
+    <div class="header-left">
+      <app-back-button targetUrl="/raceday-setup"></app-back-button>
+      <h1 class="page-title">{{ 'TM_TITLE' | translate }}</h1>
+    </div>
+    <div class="header-right">
+      <!-- Placeholders for status icons if needed -->
+    </div>
+  </div>
+
+  <div class="content-area">
+    <div class="sidebar-list">
+      <div class="list-container">
+        <div *ngFor="let track of tracks; let i = index" class="list-item"
+          [class.selected]="track.entity_id === selectedTrack?.entity_id" (click)="selectTrack(track)"
+          [class.odd]="i % 2 !== 0">
+          <div class="item-name">{{ track.name }}</div>
+        </div>
+      </div>
+      <div class="list-actions">
+        <!-- New Track button removed as per request -->
+      </div>
+    </div>
+
+    <div class="detail-panel" *ngIf="selectedTrack">
+      <div class="detail-header">
+        <h2>{{ selectedTrack.name }}</h2>
+      </div>
+      <div class="detail-content">
+        <div class="lane-viz-container">
+          <label>{{ 'TM_LANE_COUNT' | translate }}: {{ selectedTrack.lanes.length }}</label>
+          <div class="lanes-grid">
+            <div *ngFor="let lane of selectedTrack.lanes" class="lane-badge"
+              [style.background-color]="lane.background_color" [style.color]="lane.foreground_color">
+              {{ lane.length }}
+            </div>
+          </div>
+        </div>
+        <!-- Future details can go here -->
+      </div>
+      <div class="detail-actions">
+        <button class="action-btn warning" (click)="deleteTrack()" [disabled]="isSaving">
+          {{ 'TM_DELETE' | translate }}
+        </button>
+        <button class="action-btn primary" (click)="editTrack()" [disabled]="isSaving">
+          {{ 'TM_EDIT' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-panel empty-state" *ngIf="!selectedTrack && !isLoading">
+      <p>{{ 'TM_NO_TRACK_SELECTED' | translate }}</p>
+    </div>
+  </div>
+</div>

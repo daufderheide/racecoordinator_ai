@@ -80,6 +80,18 @@ export class DataService {
     return this.http.get<any[]>(this.tracksUrl);
   }
 
+  createTrack(track: any): Observable<any> {
+    return this.http.post<any>(this.tracksUrl, track);
+  }
+
+  updateTrack(id: string, track: any): Observable<any> {
+    return this.http.put<any>(`${this.tracksUrl}/${id}`, track);
+  }
+
+  deleteTrack(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.tracksUrl}/${id}`);
+  }
+
   initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<com.antigravity.InitializeRaceResponse> {
     const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
     const buffer = com.antigravity.InitializeRaceRequest.encode(request).finish();

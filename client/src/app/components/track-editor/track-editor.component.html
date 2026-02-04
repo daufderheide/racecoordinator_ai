@@ -1,0 +1,81 @@
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="header">
+    <div class="header-left">
+      <app-back-button route="/track-manager" [confirm]="isDirty" confirmTitle="TE_CONFIRM_DISCARD_TITLE"
+        confirmMessage="TE_CONFIRM_DISCARD_MESSAGE"></app-back-button>
+      <h1 class="page-title">{{ 'TE_TITLE' | translate }}</h1>
+    </div>
+    <div class="header-right">
+      <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
+    </div>
+  </div>
+
+  <div class="content-split">
+    <!-- Editor Panel -->
+    <div class="editor-panel">
+      <div class="editor-section">
+        <label>{{ 'TE_TRACK_NAME' | translate }}</label>
+        <input type="text" [(ngModel)]="trackName" (focus)="onInputFocus()" (blur)="onInputBlur()"
+          (ngModelChange)="onInputChange()" autocomplete="off" data-lpignore="true" data-form-type="other"
+          name="trackNameInput">
+      </div>
+
+      <div class="lanes-header">
+        <h3>{{ 'TE_LANE_EDITOR' | translate }}</h3>
+        <button class="action-btn small" (click)="addLane()">+</button>
+      </div>
+
+      <div class="lanes-list">
+        <div *ngFor="let lane of lanes; let i = index; trackBy: trackByLane" class="lane-item">
+          <div class="lane-preview-badge" [style.background-color]="lane.background_color"
+            [style.color]="lane.foreground_color">
+            <span class="preview-number">#{{ i + 1 }}</span>
+            <span class="preview-length">{{ lane.length }}</span>
+          </div>
+
+          <div class="lane-controls">
+            <div class="control-group">
+              <label>{{ 'TE_BACKGROUND_COLOR' | translate }}</label>
+              <input type="color" [ngModel]="lane.background_color"
+                (ngModelChange)="updateLaneBackgroundColor(i, $event)" (focus)="onInputFocus()" (blur)="onInputBlur()">
+            </div>
+
+            <div class="control-group">
+              <label>{{ 'TE_FOREGROUND_COLOR' | translate }}</label>
+              <input type="color" [ngModel]="lane.foreground_color"
+                (ngModelChange)="updateLaneForegroundColor(i, $event)" (focus)="onInputFocus()" (blur)="onInputBlur()">
+            </div>
+
+            <div class="control-group">
+              <label>{{ 'TE_LENGTH' | translate }}</label>
+              <input type="number" [ngModel]="lane.length" (change)="updateLaneLength(i, $any($event.target).value)"
+                (focus)="onInputFocus()" (blur)="onInputBlur()">
+            </div>
+          </div>
+
+          <button class="action-btn danger small" (click)="removeLane(i)">X</button>
+        </div>
+      </div>
+
+      <div class="editor-actions">
+        <div class="spacer"></div>
+        <button class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || !isNameUnique(false)"
+          [title]="(!isNameUnique(false)) ? ('TE_ERROR_NAME_EXISTS' | translate) : ''">
+          {{ 'TE_SAVE_AS_NEW' | translate }}
+        </button>
+        <button class="action-btn primary" (click)="updateTrack()" [disabled]="isSaving || !hasChanges()">{{ 'TE_UPDATE'
+          | translate }}</button>
+      </div>
+    </div>
+
+    <!-- Track Interface Visualization (Placeholder) -->
+    <div class="preview-panel">
+      <div class="preview-placeholder">
+        <div class="placeholder-content">
+          <h3>{{ 'TE_INTERFACE_PREVIEW' | translate }}</h3>
+          <p>{{ 'TE_INTERFACE_PLACEHOLDER' | translate }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

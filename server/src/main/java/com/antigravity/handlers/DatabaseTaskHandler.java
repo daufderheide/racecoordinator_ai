@@ -26,6 +26,10 @@ public class DatabaseTaskHandler {
         app.delete("/api/drivers/{id}", this::deleteDriver);
         app.get("/api/tracks", this::getTracks);
         app.get("/api/races", this::getRaces);
+
+        app.post("/api/tracks", this::createTrack);
+        app.put("/api/tracks/{id}", this::updateTrack);
+        app.delete("/api/tracks/{id}", this::deleteTrack);
     }
 
     private void createDriver(Context ctx) {
@@ -100,6 +104,87 @@ public class DatabaseTaskHandler {
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).result("Error deleting driver: " + e.getMessage());
+        }
+    }
+
+    private void createTrack(Context ctx) {
+        try {
+            com.antigravity.models.Track track = ctx.bodyAsClass(com.antigravity.models.Track.class);
+
+            // Uniqueness check
+            com.antigravity.models.Track existing = trackCollection.find(Filters.eq("name", track.getName())).first();
+
+            if (existing != null) {
+                ctx.status(409).result("Track name already exists");
+                return;
+            }
+
+            // Generate a new entity_id if not provided or if "new"
+            if (track.getEntityId() == null || track.getEntityId().isEmpty() || "new".equals(track.getEntityId())) {
+                String nextId = getNextSequence("tracks");
+                // Lanes might be empty, ensure they have proper structure if needed?
+                // For now assuming client sends valid lane structure or empty list.
+                // We do need to ensure lanes have IDs if they are new?
+                // Using simple logic: just assign the track ID. Lanes are embedded, so maybe
+                // they don't strictly need unique entity IDs
+                // across the whole system unless we query them individually.
+                // But let's assume valid track object is passed.
+
+                track = new com.antigravity.models.Track(
+                        track.getName(),
+                        track.getLanes(),
+                        nextId,
+                        null);
+            }
+            trackCollection.insertOne(track);
+            ctx.status(201).json(track);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error creating track: " + e.getMessage());
+        }
+    }
+
+    private void updateTrack(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            com.antigravity.models.Track track = ctx.bodyAsClass(com.antigravity.models.Track.class);
+
+            // Uniqueness check (exclude self)
+            com.antigravity.models.Track existing = trackCollection.find(Filters.and(
+                    Filters.ne("entity_id", id),
+                    Filters.eq("name", track.getName())))
+                    .first();
+
+            if (existing != null) {
+                ctx.status(409).result("Track name already exists");
+                return;
+            }
+
+            // Ensure the entity_id matches the path parameter
+            // Jackson might not map entity_id correctly if annotations are missing on Track
+            // constructor
+            track = new com.antigravity.models.Track(
+                    track.getName(),
+                    track.getLanes(),
+                    id,
+                    track.getId());
+
+            trackCollection.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), track);
+            ctx.json(track);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error updating track: " + e.getMessage());
+        }
+    }
+
+    private void deleteTrack(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            trackCollection.deleteOne(com.mongodb.client.model.Filters.eq("entity_id", id));
+            ctx.status(204);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error deleting track: " + e.getMessage());
         }
     }
 
