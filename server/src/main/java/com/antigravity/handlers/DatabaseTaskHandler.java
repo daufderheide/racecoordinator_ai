@@ -133,6 +133,7 @@ public class DatabaseTaskHandler {
                 track = new com.antigravity.models.Track(
                         track.getName(),
                         track.getLanes(),
+                        track.getArduinoConfig(),
                         nextId,
                         null);
             }
@@ -166,8 +167,16 @@ public class DatabaseTaskHandler {
             track = new com.antigravity.models.Track(
                     track.getName(),
                     track.getLanes(),
+                    track.getArduinoConfig(),
                     id,
                     track.getId());
+
+            System.out.println("DEBUG: updateTrack for " + id);
+            if (track.getArduinoConfig() != null) {
+                System.out.println("DEBUG: Saving config with Digitals: " + track.getArduinoConfig().digitalIds);
+            } else {
+                System.out.println("DEBUG: Saving config is NULL");
+            }
 
             trackCollection.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), track);
             ctx.json(track);
@@ -207,6 +216,15 @@ public class DatabaseTaskHandler {
     public void getTracks(Context ctx) {
         List<com.antigravity.models.Track> tracks = new ArrayList<>();
         trackCollection.find().forEach(tracks::add);
+
+        System.out.println("DEBUG: getTracks found " + tracks.size() + " tracks");
+        for (com.antigravity.models.Track t : tracks) {
+            System.out.println("DEBUG: Track " + t.getName() + " config: " + (t.getArduinoConfig() != null));
+            if (t.getArduinoConfig() != null) {
+                System.out.println("DEBUG: Digitals: " + t.getArduinoConfig().digitalIds);
+            }
+        }
+
         ctx.json(tracks);
     }
 

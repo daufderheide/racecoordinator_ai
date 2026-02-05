@@ -21,6 +21,7 @@ public class ClientCommandTaskHandler {
         app.post("/api/restart-heat", this::restartHeat);
         app.post("/api/skip-heat", this::skipHeat);
         app.post("/api/defer-heat", this::deferHeat);
+        app.get("/api/serial-ports", this::getSerialPorts);
     }
 
     private void initializeRace(Context ctx) {
@@ -226,6 +227,18 @@ public class ClientCommandTaskHandler {
             }
         } catch (Exception e) {
             System.err.println("Error processing deferHeat: " + e.getMessage());
+            e.printStackTrace();
+            ctx.status(500).result("Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    private void getSerialPorts(Context ctx) {
+        try {
+            java.util.List<String> ports = com.antigravity.protocols.interfaces.SerialConnection
+                    .getAvailableSerialPorts();
+            ctx.json(ports);
+        } catch (Exception e) {
+            System.err.println("Error getting serial ports: " + e.getMessage());
             e.printStackTrace();
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
         }

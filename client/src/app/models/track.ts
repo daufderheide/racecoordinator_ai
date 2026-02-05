@@ -12,14 +12,40 @@ export class Track implements Model {
     readonly entity_id: string;
     readonly name: string;
     readonly lanes: Lane[];
+    readonly arduino_config?: ArduinoConfig;
 
-    constructor(entity_id: string, name: string, lanes: Lane[]) {
+    constructor(entity_id: string, name: string, lanes: Lane[], arduino_config?: ArduinoConfig) {
         this.entity_id = entity_id;
         this.name = name;
         this.lanes = lanes;
+        this.arduino_config = arduino_config;
     }
 
     get objectId(): string {
         return this.entity_id;
     }
+}
+
+export interface ArduinoConfig {
+    name: string;
+    commPort: string;
+    baudRate: number;
+    debounceUs: number;
+    hardwareType: number;
+
+    globalInvertLanes: number;
+    globalInvertRelays: number;
+    globalInvertLights: number;
+
+    useLapsForPits: number;
+    useLapsForPitEnd: number;
+    usePitsAsLaps: number;
+    useLapsForSegments: number;
+
+    // Arrays of mapped behaviors (codes)
+    digitalIds: number[];
+    analogIds: number[];
+
+    ledStrings: any[] | null;
+    ledLaneColorOverrides: any[] | null;
 }

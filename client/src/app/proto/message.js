@@ -3125,6 +3125,38 @@ export const com = $root.com = (() => {
             return LaneModel;
         })();
 
+        antigravity.proto = (function() {
+
+            /**
+             * Namespace proto.
+             * @memberof com.antigravity
+             * @namespace
+             */
+            const proto = {};
+
+            /**
+             * PinBehavior enum.
+             * @name com.antigravity.proto.PinBehavior
+             * @enum {number}
+             * @property {number} BEHAVIOR_UNKNOWN=0 BEHAVIOR_UNKNOWN value
+             * @property {number} BEHAVIOR_CALL_BUTTON=1 BEHAVIOR_CALL_BUTTON value
+             * @property {number} BEHAVIOR_LAP_BASE=1000 BEHAVIOR_LAP_BASE value
+             * @property {number} BEHAVIOR_SEGMENT_BASE=2000 BEHAVIOR_SEGMENT_BASE value
+             * @property {number} BEHAVIOR_CALL_BUTTON_BASE=3000 BEHAVIOR_CALL_BUTTON_BASE value
+             */
+            proto.PinBehavior = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "BEHAVIOR_UNKNOWN"] = 0;
+                values[valuesById[1] = "BEHAVIOR_CALL_BUTTON"] = 1;
+                values[valuesById[1000] = "BEHAVIOR_LAP_BASE"] = 1000;
+                values[valuesById[2000] = "BEHAVIOR_SEGMENT_BASE"] = 2000;
+                values[valuesById[3000] = "BEHAVIOR_CALL_BUTTON_BASE"] = 3000;
+                return values;
+            })();
+
+            return proto;
+        })();
+
         antigravity.DriverModel = (function() {
 
             /**

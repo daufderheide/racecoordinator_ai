@@ -92,6 +92,10 @@ export class DataService {
     return this.http.delete<any>(`${this.tracksUrl}/${id}`);
   }
 
+  getSerialPorts(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
+  }
+
   initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<com.antigravity.InitializeRaceResponse> {
     const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
     const buffer = com.antigravity.InitializeRaceRequest.encode(request).finish();

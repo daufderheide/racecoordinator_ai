@@ -2,7 +2,7 @@ package com.antigravity.protocols.arduino;
 
 import java.util.List;
 
-public class Config {
+public class ArduinoConfig {
   public String name;
   public String commPort;
   public int baudRate;
@@ -18,12 +18,15 @@ public class Config {
 
   public int hardwareType;
 
-  public int[] digitalIds;
-  public int[] analogIds;
+  public List<Integer> digitalIds;
+  public List<Integer> analogIds;
   public List<LedString> ledStrings;
   public List<String> ledLaneColorOverrides;
 
-  public Config(String name,
+  public ArduinoConfig() {
+  }
+
+  public ArduinoConfig(String name,
       String commPort,
       int baudRate,
       int debounceUs,
@@ -35,8 +38,8 @@ public class Config {
       int useLapsForPitEnd,
       int usePitsAsLaps,
       int useLapsForSegments,
-      int[] digitalIds,
-      int[] analogIds,
+      List<Integer> digitalIds,
+      List<Integer> analogIds,
       List<LedString> ledStrings,
       List<String> ledLaneColorOverrides) {
     this.name = name;

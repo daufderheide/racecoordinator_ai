@@ -14,8 +14,10 @@ import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.util.CircularBuffer;
 import java.io.IOException;
 
+import com.antigravity.proto.PinBehavior;
+
 public class ArduinoProtocol extends DefaultProtocol {
-  private Config config;
+  private ArduinoConfig config;
   private List<Lane> lanes;
 
   private SerialConnection serialConnection;
@@ -27,14 +29,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   private HwTime[] hwSegmentTime;
   private byte hwReset;
 
-  // Not lane specific
-  private static final int BEHAVIOR_CALL_BUTTON = 1;
-
   // Lane specific
   private static final int BEHAVIOR_MAX_RANGE = 999;
-  private static final int BEHAVIOR_LAP_BASE = 1000;
-  private static final int BEHAVIOR_SEGMENT_BASE = 2000;
-  private static final int BEHAVIOR_CALL_BUTTON_BASE = 3000;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B };
@@ -48,7 +44,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private static final byte DIGITAL = 0x44; // 'D'
   private static final byte ANALOG = 0x41; // 'A'
 
-  public ArduinoProtocol(Config config, List<Lane> lanes) {
+  public ArduinoProtocol(ArduinoConfig config, List<Lane> lanes) {
     super(lanes.size());
     this.config = config;
     this.lanes = lanes;
@@ -249,8 +245,8 @@ public class ArduinoProtocol extends DefaultProtocol {
     message[idx++] = (byte) totalPins;
 
     if (config.digitalIds != null) {
-      for (int i = 0; i < config.digitalIds.length; i++) {
-        if (config.digitalIds[i] != -1) {
+      for (int i = 0; i < config.digitalIds.size(); i++) {
+        if (config.digitalIds.get(i) != -1) {
           message[idx++] = DIGITAL;
           message[idx++] = (byte) i;
         }
@@ -258,8 +254,8 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     if (config.analogIds != null) {
-      for (int i = 0; i < config.analogIds.length; i++) {
-        if (config.analogIds[i] != -1) {
+      for (int i = 0; i < config.analogIds.size(); i++) {
+        if (config.analogIds.get(i) != -1) {
           message[idx++] = ANALOG;
           message[idx++] = (byte) i;
         }
@@ -356,13 +352,13 @@ public class ArduinoProtocol extends DefaultProtocol {
     addPinConfigs(config.analogIds, false);
   }
 
-  private void addPinConfigs(int[] ids, boolean isDigital) {
+  private void addPinConfigs(List<Integer> ids, boolean isDigital) {
     if (ids == null) {
       return;
     }
 
-    for (int i = 0; i < ids.length; i++) {
-      int code = ids[i];
+    for (int i = 0; i < ids.size(); i++) {
+      int code = ids.get(i);
       if (code == -1) {
         continue;
       }
@@ -370,21 +366,24 @@ public class ArduinoProtocol extends DefaultProtocol {
       InputBehavior behavior = null;
       int laneIndex = -1;
 
-      if (code >= BEHAVIOR_LAP_BASE && code <= BEHAVIOR_LAP_BASE + BEHAVIOR_MAX_RANGE) {
+      if (code >= PinBehavior.BEHAVIOR_LAP_BASE.getNumber()
+          && code <= PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
         behavior = InputBehavior.LAP_COUNTER;
-        laneIndex = code - BEHAVIOR_LAP_BASE;
-      } else if (code >= BEHAVIOR_SEGMENT_BASE && code <= BEHAVIOR_SEGMENT_BASE + BEHAVIOR_MAX_RANGE) {
+        laneIndex = code - PinBehavior.BEHAVIOR_LAP_BASE.getNumber();
+      } else if (code >= PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber()
+          && code <= PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
         behavior = InputBehavior.SEGMENT_COUNTER;
-        laneIndex = code - BEHAVIOR_SEGMENT_BASE;
-      } else if (code >= BEHAVIOR_CALL_BUTTON_BASE && code <= BEHAVIOR_CALL_BUTTON_BASE + BEHAVIOR_MAX_RANGE) {
+        laneIndex = code - PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber();
+      } else if (code >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber()
+          && code <= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
         behavior = InputBehavior.CALL_BUTTON;
-        laneIndex = code - BEHAVIOR_CALL_BUTTON_BASE;
-      } else if (code == BEHAVIOR_CALL_BUTTON) {
+        laneIndex = code - PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber();
+      } else if (code == PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber()) {
         behavior = InputBehavior.CALL_BUTTON;
       }
 
       if (behavior != null) {
-        pinLookup.put(isDigital ? "D" : "A" + i, new PinConfig(laneIndex, isDigital, i, behavior));
+        pinLookup.put((isDigital ? "D" : "A") + i, new PinConfig(laneIndex, isDigital, i, behavior));
       }
     }
   }

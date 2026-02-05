@@ -1,0 +1,14 @@
+syntax = "proto3";
+package com.antigravity.proto;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ArduinoConfigProto";
+
+enum PinBehavior {
+  BEHAVIOR_UNKNOWN = 0;
+  BEHAVIOR_CALL_BUTTON = 1;
+  BEHAVIOR_LAP_BASE = 1000;
+  BEHAVIOR_SEGMENT_BASE = 2000;
+  BEHAVIOR_CALL_BUTTON_BASE = 3000;
+}

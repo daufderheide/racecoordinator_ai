@@ -1,7 +1,8 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <div class="header">
     <div class="header-left">
-      <app-back-button route="/track-manager" [confirm]="isDirty" confirmTitle="TE_CONFIRM_DISCARD_TITLE"
+      <app-back-button route="/track-manager" [confirm]="isDirty"
+        [queryParams]="{ selectedId: editingTrack?.entity_id }" confirmTitle="TE_CONFIRM_DISCARD_TITLE"
         confirmMessage="TE_CONFIRM_DISCARD_MESSAGE"></app-back-button>
       <h1 class="page-title">{{ 'TE_TITLE' | translate }}</h1>
     </div>
@@ -63,17 +64,102 @@
           [title]="(!isNameUnique(false)) ? ('TE_ERROR_NAME_EXISTS' | translate) : ''">
           {{ 'TE_SAVE_AS_NEW' | translate }}
         </button>
-        <button class="action-btn primary" (click)="updateTrack()" [disabled]="isSaving || !hasChanges()">{{ 'TE_UPDATE'
-          | translate }}</button>
+        <button class="action-btn primary" (click)="updateTrack()"
+          [disabled]="isSaving || !hasChanges() || !isNameUnique(true)"
+          [title]="(hasChanges() && !isNameUnique(true)) ? ('TE_ERROR_NAME_EXISTS' | translate) : ''">
+          {{ 'TE_UPDATE' | translate }}
+        </button>
       </div>
+
+
     </div>
 
     <!-- Track Interface Visualization (Placeholder) -->
     <div class="preview-panel">
-      <div class="preview-placeholder">
-        <div class="placeholder-content">
-          <h3>{{ 'TE_INTERFACE_PREVIEW' | translate }}</h3>
-          <p>{{ 'TE_INTERFACE_PLACEHOLDER' | translate }}</p>
+      <!-- Always show config, assume on -->
+      <div *ngIf="arduinoConfig" class="arduino-config-container">
+
+        <div class="panel-header">
+          <h3>{{ 'TE_ARDUINO_CONFIG_HEADER' | translate }}</h3>
+        </div>
+
+        <!-- Top Section: Controls + Image -->
+        <div class="config-top-section">
+          <div class="board-controls">
+            <div class="control-group">
+              <label>{{ 'TE_BOARD_TYPE' | translate }}</label>
+              <select [(ngModel)]="arduinoConfig.hardwareType" (change)="updateArduinoConfig()">
+                <option [ngValue]="0">{{ 'TE_BOARD_UNO' | translate }}</option>
+                <option [ngValue]="1">{{ 'TE_BOARD_MEGA' | translate }}</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label>{{ 'TE_COM_PORT' | translate }}</label>
+              <div class="com-port-row">
+                <select [(ngModel)]="arduinoConfig.commPort" (change)="updateArduinoConfig()">
+                  <option value="" disabled>{{ 'TE_SELECT_PORT' | translate }}</option>
+                  <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
+                </select>
+                <span class="status-badge" [class.connected]="availablePorts.includes(arduinoConfig.commPort)"
+                  [title]="availablePorts.includes(arduinoConfig.commPort) ? 'Connected' : 'Not Connected'">
+                  <span class="status-dot"></span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="board-preview">
+            <img *ngIf="arduinoConfig.hardwareType == 0" src="assets/arduino_uno_board.png"
+              [alt]="'TE_BOARD_UNO' | translate" class="board-image">
+            <img *ngIf="arduinoConfig.hardwareType == 1" src="assets/arduino_mega_board.png"
+              [alt]="'TE_BOARD_MEGA' | translate" class="board-image">
+          </div>
+        </div>
+
+        <!-- Scrollable Pins Section -->
+        <div class="pins-section scrollable">
+          <div class="pins-config">
+            <h4>{{ 'TE_DIGITAL_PINS' | translate }}</h4>
+            <div class="pin-grid">
+              <div *ngFor="let pin of availablePins" class="pin-item">
+                <label>D{{pin}}</label>
+                <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
+                  <option value="">{{ 'TE_NONE' | translate }}</option>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'call_' + l">{{ 'TE_CALL_BUTTON_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'lap_' + l">{{ 'TE_LAP_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                  <option value="master_call">{{ 'TE_MASTER_CALL' | translate }}</option>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'segment_' + l">{{ 'TE_SEGMENT_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                </select>
+              </div>
+            </div>
+
+            <h4>{{ 'TE_ANALOG_PINS' | translate }}</h4>
+            <div class="pin-grid">
+              <div *ngFor="let pin of availableAnalogPins" class="pin-item">
+                <label>A{{pin}}</label>
+                <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
+                  <option value="">{{ 'TE_NONE' | translate }}</option>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'call_' + l">{{ 'TE_CALL_BUTTON_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'lap_' + l">{{ 'TE_LAP_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                  <option value="master_call">{{ 'TE_MASTER_CALL' | translate }}</option>
+                  <ng-container *ngFor="let lane of lanes; let l = index">
+                    <option [value]="'segment_' + l">{{ 'TE_SEGMENT_LANE' | translate:{lane: l+1} }}</option>
+                  </ng-container>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

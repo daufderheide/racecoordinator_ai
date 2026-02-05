@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { DataService } from '../../data.service';
 import { Track } from '../../models/track';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 
 @Component({
@@ -21,7 +21,8 @@ export class TrackManagerComponent implements OnInit {
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     public translationService: TranslationService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
@@ -50,13 +51,19 @@ export class TrackManagerComponent implements OnInit {
     this.isLoading = true;
     this.dataService.getTracks().subscribe({
       next: (data) => {
-        this.tracks = data.map(t => new Track(t.entity_id, t.name, t.lanes || []));
-        if (this.tracks.length > 0 && !this.selectedTrack) {
-          this.selectedTrack = this.tracks[0];
-        } else if (this.selectedTrack) {
-          // Re-select to update data
-          const found = this.tracks.find(t => t.entity_id === this.selectedTrack!.entity_id);
-          this.selectedTrack = found || this.tracks[0];
+        this.tracks = data.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.arduino_config));
+        if (this.tracks.length > 0) {
+          const queryId = this.route.snapshot.queryParamMap.get('selectedId');
+          if (queryId) {
+            const found = this.tracks.find(t => t.entity_id === queryId);
+            this.selectedTrack = found || this.tracks[0];
+          } else if (this.selectedTrack) {
+            // Maintain existing selection
+            const found = this.tracks.find(t => t.entity_id === this.selectedTrack!.entity_id);
+            this.selectedTrack = found || this.tracks[0];
+          } else {
+            this.selectedTrack = this.tracks[0];
+          }
         }
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -102,5 +109,33 @@ export class TrackManagerComponent implements OnInit {
 
   onBack() {
     this.router.navigate(['/raceday-setup']);
+  }
+
+  getBoardName(track: Track): string {
+    if (!track.arduino_config) return '';
+    return track.arduino_config.hardwareType === 1 ? 'TM_BOARD_MEGA' : 'TM_BOARD_UNO';
+  }
+
+  getConfiguredPinCount(track: Track): number {
+    if (!track.arduino_config) return 0;
+    const digitalCount = track.arduino_config.digitalIds.filter(id => id !== -1).length;
+    const analogCount = track.arduino_config.analogIds.filter(id => id !== -1).length;
+    return digitalCount + analogCount;
+  }
+
+  hasBehavior(track: Track, behaviorType: 'lap' | 'segment' | 'call'): boolean {
+    if (!track.arduino_config) return false;
+    const allPins = [...track.arduino_config.digitalIds, ...track.arduino_config.analogIds];
+
+    switch (behaviorType) {
+      case 'lap':
+        return allPins.some(id => id >= 1000 && id < 2000);
+      case 'segment':
+        return allPins.some(id => id >= 2000 && id < 3000);
+      case 'call':
+        return allPins.some(id => id === 1 || (id >= 3000 && id < 4000));
+      default:
+        return false;
+    }
   }
 }

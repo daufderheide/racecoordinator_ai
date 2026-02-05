@@ -1307,6 +1307,19 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Namespace proto. */
+        namespace proto {
+
+            /** PinBehavior enum. */
+            enum PinBehavior {
+                BEHAVIOR_UNKNOWN = 0,
+                BEHAVIOR_CALL_BUTTON = 1,
+                BEHAVIOR_LAP_BASE = 1000,
+                BEHAVIOR_SEGMENT_BASE = 2000,
+                BEHAVIOR_CALL_BUTTON_BASE = 3000
+            }
+        }
+
         /** Properties of a DriverModel. */
         interface IDriverModel {
 
