@@ -53,7 +53,7 @@
                We can listen to the event `(typeChange)` etc.
           -->
           <app-audio-selector [label]="'DE_LABEL_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [type]="editingDriver.lapAudio.type" (typeChange)="captureState(); editingDriver.lapAudio.type=$event"
+            [type]="editingDriver.lapAudio.type" (typeChange)="editingDriver.lapAudio.type=$event; captureState()"
             [url]="editingDriver.lapAudio.url" (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event"
             [text]="editingDriver.lapAudio.text" (textChange)="onInputChange(); editingDriver.lapAudio.text=$event"
             [backButtonRoute]="'/driver-editor'" [backButtonQueryParams]="{ id: editingDriver.entity_id }">
@@ -63,7 +63,7 @@
         <div class="audio-section">
           <app-audio-selector [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate" [assets]="soundAssets"
             [type]="editingDriver.bestLapAudio.type"
-            (typeChange)="captureState(); editingDriver.bestLapAudio.type=$event" [url]="editingDriver.bestLapAudio.url"
+            (typeChange)="editingDriver.bestLapAudio.type=$event; captureState()" [url]="editingDriver.bestLapAudio.url"
             (urlChange)="onInputChange(); editingDriver.bestLapAudio.url=$event"
             [text]="editingDriver.bestLapAudio.text"
             (textChange)="onInputChange(); editingDriver.bestLapAudio.text=$event" [backButtonRoute]="'/driver-editor'"

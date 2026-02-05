@@ -45,11 +45,11 @@ describe('UndoManager', () => {
   });
 
   it('should track changes via captureState', () => {
-    // Capture 'Start' BEFORE change
-    manager.captureState();
-
     // Make a change
     currentItem.name = 'Change 1';
+
+    // Capture AFTER change
+    manager.captureState();
 
     expect(manager.undoStackCount).toBe(1);
     const history = manager.undoStackItems;
@@ -60,15 +60,13 @@ describe('UndoManager', () => {
   });
 
   it('should undo and redo', () => {
-    // 1. Capture 'Start'
-    manager.captureState();
-    // Change 1
+    // 1. Change to 1 and capture
     currentItem.name = 'Change 1';
-
-    // 2. Capture 'Change 1'
     manager.captureState();
-    // Change 2
+
+    // 2. Change to 2 and capture
     currentItem.name = 'Change 2';
+    manager.captureState();
 
     expect(manager.undoStackCount).toBe(2);
 
@@ -125,22 +123,23 @@ describe('UndoManager', () => {
   }));
 
   it('should clear redo stack on new change', () => {
-    manager.captureState(); // Capture Start
     currentItem.name = 'A';
+    manager.captureState(); // Commit A
 
     manager.undo(); // Back to Start
     expect(manager.redoStackCount).toBe(1);
 
     // New change 'B'
-    manager.captureState(); // Capture Start again (since we undid, current is Start)
     currentItem.name = 'B';
+    manager.captureState(); // Commit B
 
     expect(manager.redoStackCount).toBe(0); // Cleared
   });
 
   it('should reset tracking but keep history', () => {
-    manager.captureState(); // Capture Start
     currentItem.name = 'A';
+    manager.captureState(); // Commit A
+
     // Save happens -> A is new baseline
     manager.resetTracking(currentItem);
 

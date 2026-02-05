@@ -222,9 +222,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   onAvatarSelected(asset: any) {
     if (this.editingDriver) {
-      this.captureState();
       this.editingDriver.avatarUrl = asset.url;
       this.clearPendingAvatar();
+      this.captureState();
     }
     this.closeAvatarSelector();
   }
@@ -453,10 +453,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       if (type === 'avatar') {
         const file = files[0];
 
-        // Drag drop is a discrete change, capture OLD state
-        this.captureState();
-
         this.pendingAvatarFile = file;
+        this.captureState();
         const reader = new FileReader();
         reader.onload = (e: any) => {
           this.pendingAvatarPreview = e.target.result;

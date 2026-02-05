@@ -284,8 +284,8 @@ describe('DriverEditorComponent', () => {
     setupDriver(driver);
 
     // Make change and push to stack
-    component.captureState();
     component.editingDriver!.name = 'Changed';
+    component.captureState(); // Capture AFTER change
 
     mockDataService.updateDriver.and.returnValue(of({ entity_id: 'd1' }));
 
@@ -316,12 +316,12 @@ describe('DriverEditorComponent', () => {
     const driver = new Driver('d1', 'Start', '');
     setupDriver(driver);
 
-    // Snapshot has ID 'd1'
-    component.captureState();
-
     // Simulate "Save as New" causing ID change to 'd2'
     component.editingDriver!.entity_id = 'd2';
     component.editingDriver!.name = 'New Name';
+
+    // Snapshot was 'd1', current is now 'd2'. Capture commits 'd1'.
+    component.captureState();
 
     // Undo
     component.undo();

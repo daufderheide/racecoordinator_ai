@@ -117,13 +117,24 @@ export class UndoManager<T> {
     }
   }
 
-  // Call on discrete changes (drag drop, select)
+  // Call on discrete changes (drag drop, select, or AFTER a manual model change)
+  // This compares current state with last snapshot and pushes snapshot if different.
   public captureState() {
     const currentState = this.snapshotGetter();
-    if (currentState) {
-      this.pushToUndo(this.config.clonner(currentState));
+    if (currentState && this._snapshot) {
+      if (!this.config.equalizer(currentState, this._snapshot)) {
+        this.pushToUndo(this.config.clonner(this._snapshot));
+        this._snapshot = this.config.clonner(currentState);
+      }
+    } else if (currentState && !this._snapshot) {
+      // First time catching a state
       this._snapshot = this.config.clonner(currentState);
     }
+  }
+
+  // Forces a comparison and commit if changed
+  public commitState() {
+    this.captureState();
   }
 
   // Call on text input change (debounced)
@@ -133,20 +144,20 @@ export class UndoManager<T> {
 
   // Call on blur to flush debounce
   public onInputBlur() {
-    this.commitChange();
+    this.commitState();
   }
 
   private commitChange() {
-    const currentState = this.snapshotGetter();
-    if (currentState && this._snapshot) {
-      if (!this.config.equalizer(currentState, this._snapshot)) {
-        this.pushToUndo(this._snapshot);
-        this._snapshot = this.config.clonner(currentState); // Update snapshot
-      }
-    }
+    this.commitState();
   }
 
   private pushToUndo(state: T) {
+    // Avoid identical consecutive entries in the stack
+    const lastIndex = this.undoStack.length - 1;
+    if (lastIndex >= 0 && this.config.equalizer(state, this.undoStack[lastIndex])) {
+      return;
+    }
+
     this.undoStack.push(state);
     this.redoStack = [];
   }

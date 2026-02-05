@@ -39,15 +39,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         clonner: (t) => this.cloneTrack(t),
         equalizer: (a, b) => this.areTracksEqual(a, b),
         applier: (t) => {
-          // Preserve context ID safe-guard
-          const currentId = this.editingTrack?.entity_id;
           this.editingTrack = t;
-          if (currentId && this.editingTrack) {
-            // In case we are editing an existing track, we want to keep the ID unless explicitly discarded?
-            // Actually, applier usually sets the whole state.
-            // But if we switched from new -> saved, the ID changes appropriately outside.
-            // If we undo to a state where ID was different? Not likely in this flow.
-            // Just ensure we update local bound variables
+          if (this.editingTrack) {
             this.trackName = this.editingTrack.name;
             this.lanes = [...this.editingTrack.lanes];
 
@@ -57,6 +50,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             } else {
               this.initDefaultArduinoConfig();
             }
+            this.cdr.detectChanges();
           }
         }
       },
@@ -290,26 +284,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   // Lane Management
   addLane() {
-    this.captureState();
     this.lanes.push(new Lane(this.generateId(), '#ffffff', 'black', 100)); // Default white lane
+    this.captureState();
   }
 
   removeLane(index: number) {
-    this.captureState();
     this.lanes.splice(index, 1);
+    this.captureState();
   }
 
   private colorDebounceTimer: any = null;
 
   updateLaneBackgroundColor(index: number, color: string) {
+    // Update live
+    const l = this.lanes[index];
+    this.lanes[index] = new Lane(l.entity_id, l.foreground_color, color, l.length);
+
     if (!this.colorDebounceTimer) {
       this.captureState();
     }
     clearTimeout(this.colorDebounceTimer);
-
-    // Update live
-    const l = this.lanes[index];
-    this.lanes[index] = new Lane(l.entity_id, l.foreground_color, color, l.length);
 
     this.colorDebounceTimer = setTimeout(() => {
       this.colorDebounceTimer = null;
@@ -317,14 +311,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   updateLaneForegroundColor(index: number, color: string) {
+    // Update live
+    const l = this.lanes[index];
+    this.lanes[index] = new Lane(l.entity_id, color, l.background_color, l.length);
+
     if (!this.colorDebounceTimer) {
       this.captureState();
     }
     clearTimeout(this.colorDebounceTimer);
-
-    // Update live
-    const l = this.lanes[index];
-    this.lanes[index] = new Lane(l.entity_id, color, l.background_color, l.length);
 
     this.colorDebounceTimer = setTimeout(() => {
       this.colorDebounceTimer = null;
@@ -332,10 +326,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   updateLaneLength(index: number, length: any) {
-    this.captureState();
     const val = parseInt(length, 10);
     const l = this.lanes[index];
     this.lanes[index] = new Lane(l.entity_id, l.foreground_color, l.background_color, val);
+    this.captureState();
   }
 
   // --- Arduino Configuration ---
@@ -400,13 +394,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   setPinBehavior(isDigital: boolean, pinIndex: number, behavior: string) {
     if (!this.arduinoConfig) return;
-    this.captureState();
     const val = parseInt(behavior, 10);
     if (isDigital) {
       this.arduinoConfig.digitalIds[pinIndex] = val;
     } else {
       this.arduinoConfig.analogIds[pinIndex] = val;
     }
+    this.captureState();
   }
 
   // Constants matching ArduinoProtocol.java
