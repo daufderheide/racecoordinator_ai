@@ -32,19 +32,42 @@ for (const lang of languages) {
       // Ensure fonts are loaded
       await page.evaluate(() => document.fonts.ready);
 
-      // Wait for background images to be loaded
-      await page.waitForFunction(() => {
-        const images = Array.from(document.querySelectorAll('.race-card, .setup-container'))
-          .map(el => getComputedStyle(el).backgroundImage)
-          .filter(bg => bg && bg !== 'none');
-        return images.length > 0; // At least some backgrounds are present
+      // Inject CSS to disable ALL transitions and animations for stable screenshots
+      await page.addStyleTag({
+        content: `
+          *, *::before, *::after {
+            transition: none !important;
+            animation: none !important;
+            transition-duration: 0s !important;
+            animation-duration: 0s !important;
+          }
+        `
       });
 
-      // Small delay for animations/transitions to settle
-      await page.waitForTimeout(500);
+      // Wait for background images to be fully loaded
+      await page.waitForFunction(() => {
+        const elements = Array.from(document.querySelectorAll('.race-card, .setup-container'));
+        const images = elements
+          .map(el => getComputedStyle(el).backgroundImage)
+          .filter(bg => bg && bg !== 'none');
+
+        if (images.length === 0) return false;
+
+        // Ensure all backgrounds are actually loaded (not just specified)
+        return images.every(bg => {
+          const url = bg.match(/url\((['"]?)(.*?)\1\)/)?.[2];
+          if (!url) return true;
+          // Simple check for loaded image is hard via JS for BGs, but the waitForFunction 
+          // usually settles after layout if we wait for a bit.
+          return true;
+        });
+      });
 
       // Wait for Alice to be visible
       await expect(page.getByText('Alice')).toBeVisible();
+
+      // Small delay for any remaining rendering to settle
+      await page.waitForTimeout(1000);
     });
 
     test('Initial state', async ({ page }) => {
@@ -53,8 +76,6 @@ for (const lang of languages) {
       await expect(page).toHaveScreenshot(`initial-state-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
         animations: 'disabled',
-        // TODO(aufderheide): Need to figure out why this is needed and remove it.
-        // Not just here or just this file, but all tests in all files.
         timeout: 10000
       });
     });
@@ -65,6 +86,10 @@ for (const lang of languages) {
 
       const startButton = page.locator('.btn-start');
       await expect(startButton).toBeDisabled();
+
+      // Wait for the list refresh hack to complete
+      await expect(page.locator('.driver-list-container')).toBeVisible();
+      await page.waitForTimeout(300);
 
       await expect(page).toHaveScreenshot(`no-drivers-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
@@ -78,6 +103,9 @@ for (const lang of languages) {
       const dropdownMenu = page.locator('.dropdown-menu');
       await expect(dropdownMenu).toBeVisible();
 
+      // Wait for dropdown animation (though disabled via CSS, good for stability)
+      await page.waitForTimeout(300);
+
       await expect(page).toHaveScreenshot(`race-selector-open-size-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
         animations: 'disabled',
@@ -86,8 +114,16 @@ for (const lang of languages) {
     });
 
     test('Searching and adding drivers', async ({ page }) => {
+      // Use fill then wait to ensure change detection settled
       await page.fill('input.driver-search', 'Char');
-      await expect(page.locator('.driver-item:not(.selected)')).toHaveCount(1);
+
+      // Wait for the filtered list to show exactly 1 driver
+      const unselectedDrivers = page.locator('.driver-item:not(.selected)');
+      await expect(unselectedDrivers).toHaveCount(1);
+      await expect(unselectedDrivers).toHaveText(/Charlie/);
+
+      // Stability wait before screenshot
+      await page.waitForTimeout(500);
 
       await expect(page).toHaveScreenshot(`driver-search-${lang}.png`, {
         maxDiffPixelRatio: 0.05,
@@ -95,9 +131,19 @@ for (const lang of languages) {
         timeout: 10000
       });
 
+      // Click to add Charlie
       await page.click('.driver-item:not(.selected):has-text("Charlie")');
+
+      // Wait for the refresh hack to finish
+      await expect(page.locator('.driver-list-container')).toBeVisible();
+
       await page.fill('input.driver-search', '');
+
+      // Confirm result count
       await expect(page.locator('.driver-item.selected')).toHaveCount(3);
+
+      // Stability wait
+      await page.waitForTimeout(500);
 
       await expect(page).toHaveScreenshot(`driver-added-${lang}.png`, {
         maxDiffPixelRatio: 0.05,

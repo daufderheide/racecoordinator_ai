@@ -37,6 +37,9 @@ export class TestSetupHelper {
 
     // Mock Localization
     await this.setupLocalizationMocks(page);
+
+    // Mock Tracks API
+    await this.setupTrackMocks(page);
   }
 
   static async setupLocalizationMocks(page: Page) {
@@ -141,6 +144,81 @@ export class TestSetupHelper {
   static async waitForText(page: Page, text: string) {
     // TODO(aufderheide): Look into why we need 10s here
     await expect(page.locator('body')).toContainText(text, { timeout: 10000 });
+  }
+
+  static async setupTrackMocks(page: Page) {
+    await page.route('**/api/tracks', async (route) => {
+      const tracks = [
+        {
+          entity_id: 't1',
+          name: 'Classic Circuit',
+          lanes: [
+            { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
+            { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+          ],
+          arduino_config: {
+            name: 'Arduino 1',
+            commPort: 'COM3',
+            baudRate: 115200,
+            debounceUs: 5000,
+            hardwareType: 1, // Mega
+            digitalIds: [1001, 1002, -1, -1],
+            analogIds: [-1, -1, -1, -1],
+            globalInvertLanes: 0,
+            globalInvertRelays: 0,
+            globalInvertLights: 0,
+            useLapsForPits: 0,
+            useLapsForPitEnd: 0,
+            usePitsAsLaps: 0,
+            useLapsForSegments: 0,
+            ledStrings: null,
+            ledLaneColorOverrides: null
+          }
+        },
+        {
+          entity_id: 't2',
+          name: 'Speedway',
+          lanes: [
+            { entity_id: 'l1', length: 15.0, backgroundColor: '#ffff00', foregroundColor: '#000000' },
+            { entity_id: 'l2', length: 15.0, backgroundColor: '#00ff00', foregroundColor: '#000000' },
+            { entity_id: 'l3', length: 15.0, backgroundColor: '#ff00ff', foregroundColor: '#ffffff' },
+            { entity_id: 'l4', length: 15.0, backgroundColor: '#00ffff', foregroundColor: '#000000' }
+          ],
+          arduino_config: {
+            name: 'Arduino 2',
+            commPort: 'COM4',
+            baudRate: 115200,
+            debounceUs: 5000,
+            hardwareType: 0, // Uno
+            digitalIds: [1001, 1002, 1003, 1004],
+            analogIds: [-1, -1, -1, -1],
+            globalInvertLanes: 0,
+            globalInvertRelays: 0,
+            globalInvertLights: 0,
+            useLapsForPits: 0,
+            useLapsForPitEnd: 0,
+            usePitsAsLaps: 0,
+            useLapsForSegments: 0,
+            ledStrings: null,
+            ledLaneColorOverrides: null
+          }
+        }
+      ];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tracks),
+      });
+    });
+
+    await page.route('**/api/serial-ports', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(['COM1', 'COM2', 'COM3', 'COM4']),
+      });
+    });
   }
 
   static async setupAssetMocks(page: Page) {
