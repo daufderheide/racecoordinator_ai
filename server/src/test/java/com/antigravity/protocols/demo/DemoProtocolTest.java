@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import com.antigravity.proto.InterfaceStatus;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -122,5 +123,12 @@ public class DemoProtocolTest {
     demo.advanceTime(3100); // Total 5100ms since last lap, enough to cover max 5001ms
     scheduler.tick();
     assertEquals("Should receive 2 more laps", 2, listener.laps.size());
+  }
+
+  @Test
+  public void testStatusMessaging() {
+    demo.open();
+    scheduler.tick();
+    assertEquals("Status should be CONNECTED", InterfaceStatus.CONNECTED, listener.lastStatus);
   }
 }

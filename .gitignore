@@ -68,3 +68,4 @@ client/browsers/
 client/src/app/types/
 server/build_output/
 server/target_dist/
+server/target_exec/

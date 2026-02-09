@@ -18,6 +18,8 @@ import { DriverEditorComponent } from './components/driver-editor/driver-editor.
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
 import { TrackManagerComponent } from './components/track-manager/track-manager.component';
 import { TrackEditorComponent } from './components/track-editor/track-editor.component';
+import { ArduinoEditorComponent } from './components/track-editor/arduino-editor/arduino-editor.component';
+import { ArduinoSummaryComponent } from './components/track-manager/arduino-summary/arduino-summary.component';
 import { SharedModule } from './components/shared/shared.module';
 
 @NgModule({
@@ -33,7 +35,9 @@ import { SharedModule } from './components/shared/shared.module';
     DriverEditorComponent,
     DriverManagerComponent,
     TrackManagerComponent,
-    TrackEditorComponent
+    TrackEditorComponent,
+    ArduinoEditorComponent,
+    ArduinoSummaryComponent
   ],
   imports: [
     BrowserModule,

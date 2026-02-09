@@ -28,37 +28,8 @@
         <h2>{{ selectedTrack.name }}</h2>
       </div>
       <div class="detail-content">
-        <div class="arduino-summary" *ngIf="selectedTrack.arduino_config">
-          <h3>{{ 'TM_ARDUINO_SUMMARY' | translate }}</h3>
-          <div class="summary-grid">
-            <div class="summary-item">
-              <span class="label">{{ 'TM_BOARD_TYPE' | translate }}:</span>
-              <span class="value">{{ getBoardName(selectedTrack) | translate }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">{{ 'TM_COM_PORT' | translate }}:</span>
-              <span class="value">{{ selectedTrack.arduino_config.commPort || ('TM_NO_PORT' | translate) }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="label">{{ 'TM_CONFIGURED_PINS' | translate }}:</span>
-              <span class="value">{{ 'TM_PINS_COUNT' | translate:{count: getConfiguredPinCount(selectedTrack)}
-                }}</span>
-            </div>
-          </div>
-          <div class="behavior-checkboxes">
-            <div class="behavior-check">
-              <span class="check-box" [class.checked]="hasBehavior(selectedTrack, 'lap')"></span>
-              <span class="behavior-label">{{ 'TM_BEHAVIOR_LAPS' | translate }}</span>
-            </div>
-            <div class="behavior-check">
-              <span class="check-box" [class.checked]="hasBehavior(selectedTrack, 'segment')"></span>
-              <span class="behavior-label">{{ 'TM_BEHAVIOR_SEGMENTS' | translate }}</span>
-            </div>
-            <div class="behavior-check">
-              <span class="check-box" [class.checked]="hasBehavior(selectedTrack, 'call')"></span>
-              <span class="behavior-label">{{ 'TM_BEHAVIOR_CALL_BUTTONS' | translate }}</span>
-            </div>
-          </div>
+        <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_config" style="padding: 0; border: none;">
+          <app-arduino-summary [track]="selectedTrack"></app-arduino-summary>
         </div>
         <div class="lane-viz-container">
           <label>{{ 'TM_LANE_COUNT' | translate }}: {{ selectedTrack.lanes.length }}</label>

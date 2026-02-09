@@ -18,8 +18,7 @@ test.describe('Track Editor Visuals', () => {
     await expect(laneRows).toHaveCount(2);
 
     // Arduino Config
-    await expect(page.locator('text=Arduino Configuration')).toBeVisible();
-    await expect(page.locator('select').first()).toHaveValue('1: 1'); // Megas is 1
+    await expect(page.locator('select').first()).toHaveValue('1'); // Megas is 1
 
     await expect(page).toHaveScreenshot('track-editor-existing.png');
   });

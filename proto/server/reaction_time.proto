@@ -8,4 +8,5 @@ option java_outer_classname = "ReactionTimeProto";
 message ReactionTime {
   string objectId = 1;
   double reaction_time = 2;
+  int32 interfaceId = 3;
 }

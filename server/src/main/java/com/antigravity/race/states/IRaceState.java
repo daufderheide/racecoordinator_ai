@@ -21,7 +21,7 @@ public interface IRaceState {
     void deferHeat(Race race);
 
     // From the protocol listener
-    void onLap(int lane, double lapTime);
+    void onLap(int lane, double lapTime, int interfaceId);
 
     void onCarData(CarData carData);
 }

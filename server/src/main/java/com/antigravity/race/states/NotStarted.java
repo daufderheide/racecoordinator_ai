@@ -95,7 +95,7 @@ public class NotStarted implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
+    public void onLap(int lane, double lapTime, int interfaceId) {
         System.out.println("NotStarted: Ignored onLap - Race not in progress");
     }
 

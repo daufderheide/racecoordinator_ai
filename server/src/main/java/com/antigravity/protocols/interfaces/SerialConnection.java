@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SerialConnection {
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SerialConnection.class);
   private SerialPort serialPort;
   private OutputStream outputStream;
 
@@ -47,10 +48,10 @@ public class SerialConnection {
 
     if (serialPort.setDTR()) {
       if (!serialPort.setRTS()) {
-        // TODO(aufderheide): Log the failure
+        logger.warn("Failed to set RTS");
       }
     } else {
-      // TODO(aufderheide): Log the failure
+      logger.warn("Failed to set DTR");
     }
 
     if (serialPort.openPort()) {
@@ -74,6 +75,7 @@ public class SerialConnection {
     if (outputStream == null) {
       throw new IOException("Port not open");
     }
+    logger.info("Sent: {}", bytesToHex(data));
     outputStream.write(data);
     outputStream.flush();
   }
@@ -100,5 +102,13 @@ public class SerialConnection {
       names[i] = ports[i].getSystemPortName();
     }
     return names;
+  }
+
+  private static String bytesToHex(byte[] bytes) {
+    StringBuilder sb = new StringBuilder();
+    for (byte b : bytes) {
+      sb.append(String.format("%02X ", b));
+    }
+    return sb.toString().trim();
   }
 }

@@ -66,6 +66,8 @@ public class Paused implements IRaceState {
                     .setRaceTime(com.antigravity.proto.RaceTime.newBuilder().setTime(0.0f).build())
                     .build());
         }
+
+        race.changeState(new com.antigravity.race.states.NotStarted());
     }
 
     @Override
@@ -80,7 +82,7 @@ public class Paused implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
+    public void onLap(int lane, double lapTime, int interfaceId) {
         System.out.println("Paused: Ignored onLap - Race not in progress");
     }
 

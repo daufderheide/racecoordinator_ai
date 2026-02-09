@@ -1307,17 +1307,204 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
-        /** Namespace proto. */
-        namespace proto {
+        /** PinBehavior enum. */
+        enum PinBehavior {
+            BEHAVIOR_UNUSED = 0,
+            BEHAVIOR_RESERVED = 1,
+            BEHAVIOR_CALL_BUTTON = 2,
+            BEHAVIOR_RELAY = 3,
+            BEHAVIOR_LAP_BASE = 1000,
+            BEHAVIOR_SEGMENT_BASE = 2000,
+            BEHAVIOR_CALL_BUTTON_BASE = 3000,
+            BEHAVIOR_RELAY_BASE = 4000
+        }
 
-            /** PinBehavior enum. */
-            enum PinBehavior {
-                BEHAVIOR_UNKNOWN = 0,
-                BEHAVIOR_CALL_BUTTON = 1,
-                BEHAVIOR_LAP_BASE = 1000,
-                BEHAVIOR_SEGMENT_BASE = 2000,
-                BEHAVIOR_CALL_BUTTON_BASE = 3000
-            }
+        /** PinId enum. */
+        enum PinId {
+            PIN_ID_UNKNOWN = 0,
+            PIN_ID_DIGITAL_BASE = 0,
+            PIN_ID_ANALOG_BASE = 1000
+        }
+
+        /** Properties of an ArduinoConfig. */
+        interface IArduinoConfig {
+
+            /** ArduinoConfig name */
+            name?: (string|null);
+
+            /** ArduinoConfig commPort */
+            commPort?: (string|null);
+
+            /** ArduinoConfig baudRate */
+            baudRate?: (number|null);
+
+            /** ArduinoConfig debounceUs */
+            debounceUs?: (number|null);
+
+            /** ArduinoConfig globalInvertLanes */
+            globalInvertLanes?: (number|null);
+
+            /** ArduinoConfig normallyClosedRelays */
+            normallyClosedRelays?: (boolean|null);
+
+            /** ArduinoConfig globalInvertLights */
+            globalInvertLights?: (number|null);
+
+            /** ArduinoConfig useLapsForPits */
+            useLapsForPits?: (number|null);
+
+            /** ArduinoConfig useLapsForPitEnd */
+            useLapsForPitEnd?: (number|null);
+
+            /** ArduinoConfig usePitsAsLaps */
+            usePitsAsLaps?: (number|null);
+
+            /** ArduinoConfig useLapsForSegments */
+            useLapsForSegments?: (number|null);
+
+            /** ArduinoConfig hardwareType */
+            hardwareType?: (number|null);
+
+            /** ArduinoConfig digitalIds */
+            digitalIds?: (number[]|null);
+
+            /** ArduinoConfig analogIds */
+            analogIds?: (number[]|null);
+
+            /** ArduinoConfig ledLaneColorOverrides */
+            ledLaneColorOverrides?: (string[]|null);
+        }
+
+        /** Represents an ArduinoConfig. */
+        class ArduinoConfig implements IArduinoConfig {
+
+            /**
+             * Constructs a new ArduinoConfig.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IArduinoConfig);
+
+            /** ArduinoConfig name. */
+            public name: string;
+
+            /** ArduinoConfig commPort. */
+            public commPort: string;
+
+            /** ArduinoConfig baudRate. */
+            public baudRate: number;
+
+            /** ArduinoConfig debounceUs. */
+            public debounceUs: number;
+
+            /** ArduinoConfig globalInvertLanes. */
+            public globalInvertLanes: number;
+
+            /** ArduinoConfig normallyClosedRelays. */
+            public normallyClosedRelays: boolean;
+
+            /** ArduinoConfig globalInvertLights. */
+            public globalInvertLights: number;
+
+            /** ArduinoConfig useLapsForPits. */
+            public useLapsForPits: number;
+
+            /** ArduinoConfig useLapsForPitEnd. */
+            public useLapsForPitEnd: number;
+
+            /** ArduinoConfig usePitsAsLaps. */
+            public usePitsAsLaps: number;
+
+            /** ArduinoConfig useLapsForSegments. */
+            public useLapsForSegments: number;
+
+            /** ArduinoConfig hardwareType. */
+            public hardwareType: number;
+
+            /** ArduinoConfig digitalIds. */
+            public digitalIds: number[];
+
+            /** ArduinoConfig analogIds. */
+            public analogIds: number[];
+
+            /** ArduinoConfig ledLaneColorOverrides. */
+            public ledLaneColorOverrides: string[];
+
+            /**
+             * Creates a new ArduinoConfig instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ArduinoConfig instance
+             */
+            public static create(properties?: com.antigravity.IArduinoConfig): com.antigravity.ArduinoConfig;
+
+            /**
+             * Encodes the specified ArduinoConfig message. Does not implicitly {@link com.antigravity.ArduinoConfig.verify|verify} messages.
+             * @param message ArduinoConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IArduinoConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ArduinoConfig message, length delimited. Does not implicitly {@link com.antigravity.ArduinoConfig.verify|verify} messages.
+             * @param message ArduinoConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IArduinoConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ArduinoConfig message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ArduinoConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.ArduinoConfig;
+
+            /**
+             * Decodes an ArduinoConfig message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ArduinoConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.ArduinoConfig;
+
+            /**
+             * Verifies an ArduinoConfig message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ArduinoConfig message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ArduinoConfig
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.ArduinoConfig;
+
+            /**
+             * Creates a plain object from an ArduinoConfig message. Also converts values to other types if specified.
+             * @param message ArduinoConfig
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.ArduinoConfig, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ArduinoConfig to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ArduinoConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DriverModel. */
@@ -1550,6 +1737,1058 @@ export namespace com {
 
             /**
              * Gets the default type url for AudioConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an InitializeInterfaceRequest. */
+        interface IInitializeInterfaceRequest {
+
+            /** InitializeInterfaceRequest config */
+            config?: (com.antigravity.IArduinoConfig|null);
+
+            /** InitializeInterfaceRequest laneCount */
+            laneCount?: (number|null);
+        }
+
+        /** Represents an InitializeInterfaceRequest. */
+        class InitializeInterfaceRequest implements IInitializeInterfaceRequest {
+
+            /**
+             * Constructs a new InitializeInterfaceRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IInitializeInterfaceRequest);
+
+            /** InitializeInterfaceRequest config. */
+            public config?: (com.antigravity.IArduinoConfig|null);
+
+            /** InitializeInterfaceRequest laneCount. */
+            public laneCount: number;
+
+            /**
+             * Creates a new InitializeInterfaceRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns InitializeInterfaceRequest instance
+             */
+            public static create(properties?: com.antigravity.IInitializeInterfaceRequest): com.antigravity.InitializeInterfaceRequest;
+
+            /**
+             * Encodes the specified InitializeInterfaceRequest message. Does not implicitly {@link com.antigravity.InitializeInterfaceRequest.verify|verify} messages.
+             * @param message InitializeInterfaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IInitializeInterfaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified InitializeInterfaceRequest message, length delimited. Does not implicitly {@link com.antigravity.InitializeInterfaceRequest.verify|verify} messages.
+             * @param message InitializeInterfaceRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IInitializeInterfaceRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an InitializeInterfaceRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns InitializeInterfaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InitializeInterfaceRequest;
+
+            /**
+             * Decodes an InitializeInterfaceRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns InitializeInterfaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InitializeInterfaceRequest;
+
+            /**
+             * Verifies an InitializeInterfaceRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an InitializeInterfaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns InitializeInterfaceRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.InitializeInterfaceRequest;
+
+            /**
+             * Creates a plain object from an InitializeInterfaceRequest message. Also converts values to other types if specified.
+             * @param message InitializeInterfaceRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.InitializeInterfaceRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this InitializeInterfaceRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for InitializeInterfaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an InitializeInterfaceResponse. */
+        interface IInitializeInterfaceResponse {
+
+            /** InitializeInterfaceResponse success */
+            success?: (boolean|null);
+
+            /** InitializeInterfaceResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents an InitializeInterfaceResponse. */
+        class InitializeInterfaceResponse implements IInitializeInterfaceResponse {
+
+            /**
+             * Constructs a new InitializeInterfaceResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IInitializeInterfaceResponse);
+
+            /** InitializeInterfaceResponse success. */
+            public success: boolean;
+
+            /** InitializeInterfaceResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new InitializeInterfaceResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns InitializeInterfaceResponse instance
+             */
+            public static create(properties?: com.antigravity.IInitializeInterfaceResponse): com.antigravity.InitializeInterfaceResponse;
+
+            /**
+             * Encodes the specified InitializeInterfaceResponse message. Does not implicitly {@link com.antigravity.InitializeInterfaceResponse.verify|verify} messages.
+             * @param message InitializeInterfaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IInitializeInterfaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified InitializeInterfaceResponse message, length delimited. Does not implicitly {@link com.antigravity.InitializeInterfaceResponse.verify|verify} messages.
+             * @param message InitializeInterfaceResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IInitializeInterfaceResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an InitializeInterfaceResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns InitializeInterfaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InitializeInterfaceResponse;
+
+            /**
+             * Decodes an InitializeInterfaceResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns InitializeInterfaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InitializeInterfaceResponse;
+
+            /**
+             * Verifies an InitializeInterfaceResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an InitializeInterfaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns InitializeInterfaceResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.InitializeInterfaceResponse;
+
+            /**
+             * Creates a plain object from an InitializeInterfaceResponse message. Also converts values to other types if specified.
+             * @param message InitializeInterfaceResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.InitializeInterfaceResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this InitializeInterfaceResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for InitializeInterfaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an UpdateInterfaceConfigRequest. */
+        interface IUpdateInterfaceConfigRequest {
+
+            /** UpdateInterfaceConfigRequest config */
+            config?: (com.antigravity.IArduinoConfig|null);
+        }
+
+        /** Represents an UpdateInterfaceConfigRequest. */
+        class UpdateInterfaceConfigRequest implements IUpdateInterfaceConfigRequest {
+
+            /**
+             * Constructs a new UpdateInterfaceConfigRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IUpdateInterfaceConfigRequest);
+
+            /** UpdateInterfaceConfigRequest config. */
+            public config?: (com.antigravity.IArduinoConfig|null);
+
+            /**
+             * Creates a new UpdateInterfaceConfigRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UpdateInterfaceConfigRequest instance
+             */
+            public static create(properties?: com.antigravity.IUpdateInterfaceConfigRequest): com.antigravity.UpdateInterfaceConfigRequest;
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigRequest message. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigRequest.verify|verify} messages.
+             * @param message UpdateInterfaceConfigRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IUpdateInterfaceConfigRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigRequest message, length delimited. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigRequest.verify|verify} messages.
+             * @param message UpdateInterfaceConfigRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IUpdateInterfaceConfigRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an UpdateInterfaceConfigRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UpdateInterfaceConfigRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.UpdateInterfaceConfigRequest;
+
+            /**
+             * Decodes an UpdateInterfaceConfigRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UpdateInterfaceConfigRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.UpdateInterfaceConfigRequest;
+
+            /**
+             * Verifies an UpdateInterfaceConfigRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an UpdateInterfaceConfigRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UpdateInterfaceConfigRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.UpdateInterfaceConfigRequest;
+
+            /**
+             * Creates a plain object from an UpdateInterfaceConfigRequest message. Also converts values to other types if specified.
+             * @param message UpdateInterfaceConfigRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.UpdateInterfaceConfigRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UpdateInterfaceConfigRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UpdateInterfaceConfigRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an UpdateInterfaceConfigResponse. */
+        interface IUpdateInterfaceConfigResponse {
+
+            /** UpdateInterfaceConfigResponse success */
+            success?: (boolean|null);
+
+            /** UpdateInterfaceConfigResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents an UpdateInterfaceConfigResponse. */
+        class UpdateInterfaceConfigResponse implements IUpdateInterfaceConfigResponse {
+
+            /**
+             * Constructs a new UpdateInterfaceConfigResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IUpdateInterfaceConfigResponse);
+
+            /** UpdateInterfaceConfigResponse success. */
+            public success: boolean;
+
+            /** UpdateInterfaceConfigResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new UpdateInterfaceConfigResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns UpdateInterfaceConfigResponse instance
+             */
+            public static create(properties?: com.antigravity.IUpdateInterfaceConfigResponse): com.antigravity.UpdateInterfaceConfigResponse;
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigResponse message. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigResponse.verify|verify} messages.
+             * @param message UpdateInterfaceConfigResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IUpdateInterfaceConfigResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigResponse message, length delimited. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigResponse.verify|verify} messages.
+             * @param message UpdateInterfaceConfigResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IUpdateInterfaceConfigResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an UpdateInterfaceConfigResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns UpdateInterfaceConfigResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.UpdateInterfaceConfigResponse;
+
+            /**
+             * Decodes an UpdateInterfaceConfigResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns UpdateInterfaceConfigResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.UpdateInterfaceConfigResponse;
+
+            /**
+             * Verifies an UpdateInterfaceConfigResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an UpdateInterfaceConfigResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns UpdateInterfaceConfigResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.UpdateInterfaceConfigResponse;
+
+            /**
+             * Creates a plain object from an UpdateInterfaceConfigResponse message. Also converts values to other types if specified.
+             * @param message UpdateInterfaceConfigResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.UpdateInterfaceConfigResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this UpdateInterfaceConfigResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for UpdateInterfaceConfigResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetInterfacePinStateRequest. */
+        interface ISetInterfacePinStateRequest {
+
+            /** SetInterfacePinStateRequest pin */
+            pin?: (number|null);
+
+            /** SetInterfacePinStateRequest isDigital */
+            isDigital?: (boolean|null);
+
+            /** SetInterfacePinStateRequest isHigh */
+            isHigh?: (boolean|null);
+        }
+
+        /** Represents a SetInterfacePinStateRequest. */
+        class SetInterfacePinStateRequest implements ISetInterfacePinStateRequest {
+
+            /**
+             * Constructs a new SetInterfacePinStateRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISetInterfacePinStateRequest);
+
+            /** SetInterfacePinStateRequest pin. */
+            public pin: number;
+
+            /** SetInterfacePinStateRequest isDigital. */
+            public isDigital: boolean;
+
+            /** SetInterfacePinStateRequest isHigh. */
+            public isHigh: boolean;
+
+            /**
+             * Creates a new SetInterfacePinStateRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetInterfacePinStateRequest instance
+             */
+            public static create(properties?: com.antigravity.ISetInterfacePinStateRequest): com.antigravity.SetInterfacePinStateRequest;
+
+            /**
+             * Encodes the specified SetInterfacePinStateRequest message. Does not implicitly {@link com.antigravity.SetInterfacePinStateRequest.verify|verify} messages.
+             * @param message SetInterfacePinStateRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISetInterfacePinStateRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetInterfacePinStateRequest message, length delimited. Does not implicitly {@link com.antigravity.SetInterfacePinStateRequest.verify|verify} messages.
+             * @param message SetInterfacePinStateRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISetInterfacePinStateRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetInterfacePinStateRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetInterfacePinStateRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SetInterfacePinStateRequest;
+
+            /**
+             * Decodes a SetInterfacePinStateRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetInterfacePinStateRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SetInterfacePinStateRequest;
+
+            /**
+             * Verifies a SetInterfacePinStateRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetInterfacePinStateRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetInterfacePinStateRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SetInterfacePinStateRequest;
+
+            /**
+             * Creates a plain object from a SetInterfacePinStateRequest message. Also converts values to other types if specified.
+             * @param message SetInterfacePinStateRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SetInterfacePinStateRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetInterfacePinStateRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetInterfacePinStateRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SetInterfacePinStateResponse. */
+        interface ISetInterfacePinStateResponse {
+
+            /** SetInterfacePinStateResponse success */
+            success?: (boolean|null);
+
+            /** SetInterfacePinStateResponse message */
+            message?: (string|null);
+        }
+
+        /** Represents a SetInterfacePinStateResponse. */
+        class SetInterfacePinStateResponse implements ISetInterfacePinStateResponse {
+
+            /**
+             * Constructs a new SetInterfacePinStateResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISetInterfacePinStateResponse);
+
+            /** SetInterfacePinStateResponse success. */
+            public success: boolean;
+
+            /** SetInterfacePinStateResponse message. */
+            public message: string;
+
+            /**
+             * Creates a new SetInterfacePinStateResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SetInterfacePinStateResponse instance
+             */
+            public static create(properties?: com.antigravity.ISetInterfacePinStateResponse): com.antigravity.SetInterfacePinStateResponse;
+
+            /**
+             * Encodes the specified SetInterfacePinStateResponse message. Does not implicitly {@link com.antigravity.SetInterfacePinStateResponse.verify|verify} messages.
+             * @param message SetInterfacePinStateResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISetInterfacePinStateResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SetInterfacePinStateResponse message, length delimited. Does not implicitly {@link com.antigravity.SetInterfacePinStateResponse.verify|verify} messages.
+             * @param message SetInterfacePinStateResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISetInterfacePinStateResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SetInterfacePinStateResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SetInterfacePinStateResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SetInterfacePinStateResponse;
+
+            /**
+             * Decodes a SetInterfacePinStateResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SetInterfacePinStateResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SetInterfacePinStateResponse;
+
+            /**
+             * Verifies a SetInterfacePinStateResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SetInterfacePinStateResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SetInterfacePinStateResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SetInterfacePinStateResponse;
+
+            /**
+             * Creates a plain object from a SetInterfacePinStateResponse message. Also converts values to other types if specified.
+             * @param message SetInterfacePinStateResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SetInterfacePinStateResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SetInterfacePinStateResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SetInterfacePinStateResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** InterfaceStatus enum. */
+        enum InterfaceStatus {
+            CONNECTED = 0,
+            DISCONNECTED = 1,
+            NO_DATA = 2
+        }
+
+        /** Properties of an InterfaceEvent. */
+        interface IInterfaceEvent {
+
+            /** InterfaceEvent lap */
+            lap?: (com.antigravity.ILapEvent|null);
+
+            /** InterfaceEvent segment */
+            segment?: (com.antigravity.ISegmentEvent|null);
+
+            /** InterfaceEvent status */
+            status?: (com.antigravity.IInterfaceStatusEvent|null);
+        }
+
+        /** Represents an InterfaceEvent. */
+        class InterfaceEvent implements IInterfaceEvent {
+
+            /**
+             * Constructs a new InterfaceEvent.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IInterfaceEvent);
+
+            /** InterfaceEvent lap. */
+            public lap?: (com.antigravity.ILapEvent|null);
+
+            /** InterfaceEvent segment. */
+            public segment?: (com.antigravity.ISegmentEvent|null);
+
+            /** InterfaceEvent status. */
+            public status?: (com.antigravity.IInterfaceStatusEvent|null);
+
+            /** InterfaceEvent event. */
+            public event?: ("lap"|"segment"|"status");
+
+            /**
+             * Creates a new InterfaceEvent instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns InterfaceEvent instance
+             */
+            public static create(properties?: com.antigravity.IInterfaceEvent): com.antigravity.InterfaceEvent;
+
+            /**
+             * Encodes the specified InterfaceEvent message. Does not implicitly {@link com.antigravity.InterfaceEvent.verify|verify} messages.
+             * @param message InterfaceEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IInterfaceEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified InterfaceEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceEvent.verify|verify} messages.
+             * @param message InterfaceEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IInterfaceEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an InterfaceEvent message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns InterfaceEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InterfaceEvent;
+
+            /**
+             * Decodes an InterfaceEvent message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns InterfaceEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InterfaceEvent;
+
+            /**
+             * Verifies an InterfaceEvent message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an InterfaceEvent message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns InterfaceEvent
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.InterfaceEvent;
+
+            /**
+             * Creates a plain object from an InterfaceEvent message. Also converts values to other types if specified.
+             * @param message InterfaceEvent
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.InterfaceEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this InterfaceEvent to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for InterfaceEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an InterfaceStatusEvent. */
+        interface IInterfaceStatusEvent {
+
+            /** InterfaceStatusEvent status */
+            status?: (com.antigravity.InterfaceStatus|null);
+        }
+
+        /** Represents an InterfaceStatusEvent. */
+        class InterfaceStatusEvent implements IInterfaceStatusEvent {
+
+            /**
+             * Constructs a new InterfaceStatusEvent.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IInterfaceStatusEvent);
+
+            /** InterfaceStatusEvent status. */
+            public status: com.antigravity.InterfaceStatus;
+
+            /**
+             * Creates a new InterfaceStatusEvent instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns InterfaceStatusEvent instance
+             */
+            public static create(properties?: com.antigravity.IInterfaceStatusEvent): com.antigravity.InterfaceStatusEvent;
+
+            /**
+             * Encodes the specified InterfaceStatusEvent message. Does not implicitly {@link com.antigravity.InterfaceStatusEvent.verify|verify} messages.
+             * @param message InterfaceStatusEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IInterfaceStatusEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified InterfaceStatusEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceStatusEvent.verify|verify} messages.
+             * @param message InterfaceStatusEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IInterfaceStatusEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an InterfaceStatusEvent message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns InterfaceStatusEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InterfaceStatusEvent;
+
+            /**
+             * Decodes an InterfaceStatusEvent message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns InterfaceStatusEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InterfaceStatusEvent;
+
+            /**
+             * Verifies an InterfaceStatusEvent message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an InterfaceStatusEvent message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns InterfaceStatusEvent
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.InterfaceStatusEvent;
+
+            /**
+             * Creates a plain object from an InterfaceStatusEvent message. Also converts values to other types if specified.
+             * @param message InterfaceStatusEvent
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.InterfaceStatusEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this InterfaceStatusEvent to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for InterfaceStatusEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a LapEvent. */
+        interface ILapEvent {
+
+            /** LapEvent lane */
+            lane?: (number|null);
+
+            /** LapEvent lapTime */
+            lapTime?: (number|null);
+
+            /** LapEvent interfaceId */
+            interfaceId?: (number|null);
+        }
+
+        /** Represents a LapEvent. */
+        class LapEvent implements ILapEvent {
+
+            /**
+             * Constructs a new LapEvent.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ILapEvent);
+
+            /** LapEvent lane. */
+            public lane: number;
+
+            /** LapEvent lapTime. */
+            public lapTime: number;
+
+            /** LapEvent interfaceId. */
+            public interfaceId: number;
+
+            /**
+             * Creates a new LapEvent instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LapEvent instance
+             */
+            public static create(properties?: com.antigravity.ILapEvent): com.antigravity.LapEvent;
+
+            /**
+             * Encodes the specified LapEvent message. Does not implicitly {@link com.antigravity.LapEvent.verify|verify} messages.
+             * @param message LapEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ILapEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LapEvent message, length delimited. Does not implicitly {@link com.antigravity.LapEvent.verify|verify} messages.
+             * @param message LapEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ILapEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LapEvent message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LapEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.LapEvent;
+
+            /**
+             * Decodes a LapEvent message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LapEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.LapEvent;
+
+            /**
+             * Verifies a LapEvent message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LapEvent message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LapEvent
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.LapEvent;
+
+            /**
+             * Creates a plain object from a LapEvent message. Also converts values to other types if specified.
+             * @param message LapEvent
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.LapEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LapEvent to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LapEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SegmentEvent. */
+        interface ISegmentEvent {
+
+            /** SegmentEvent lane */
+            lane?: (number|null);
+
+            /** SegmentEvent segmentTime */
+            segmentTime?: (number|null);
+
+            /** SegmentEvent interfaceId */
+            interfaceId?: (number|null);
+        }
+
+        /** Represents a SegmentEvent. */
+        class SegmentEvent implements ISegmentEvent {
+
+            /**
+             * Constructs a new SegmentEvent.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISegmentEvent);
+
+            /** SegmentEvent lane. */
+            public lane: number;
+
+            /** SegmentEvent segmentTime. */
+            public segmentTime: number;
+
+            /** SegmentEvent interfaceId. */
+            public interfaceId: number;
+
+            /**
+             * Creates a new SegmentEvent instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SegmentEvent instance
+             */
+            public static create(properties?: com.antigravity.ISegmentEvent): com.antigravity.SegmentEvent;
+
+            /**
+             * Encodes the specified SegmentEvent message. Does not implicitly {@link com.antigravity.SegmentEvent.verify|verify} messages.
+             * @param message SegmentEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISegmentEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SegmentEvent message, length delimited. Does not implicitly {@link com.antigravity.SegmentEvent.verify|verify} messages.
+             * @param message SegmentEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISegmentEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SegmentEvent message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SegmentEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SegmentEvent;
+
+            /**
+             * Decodes a SegmentEvent message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SegmentEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SegmentEvent;
+
+            /**
+             * Verifies a SegmentEvent message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SegmentEvent message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SegmentEvent
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SegmentEvent;
+
+            /**
+             * Creates a plain object from a SegmentEvent message. Also converts values to other types if specified.
+             * @param message SegmentEvent
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SegmentEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SegmentEvent to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SegmentEvent
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -2811,6 +4050,17 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** RaceState enum. */
+        enum RaceState {
+            UNKNOWN_STATE = 0,
+            NOT_STARTED = 1,
+            STARTING = 2,
+            RACING = 3,
+            PAUSED = 4,
+            HEAT_OVER = 5,
+            RACE_OVER = 6
+        }
+
         /** Properties of a ListAssetsResponse. */
         interface IListAssetsResponse {
 
@@ -3340,6 +4590,9 @@ export namespace com {
 
             /** Lap bestLapTime */
             bestLapTime?: (number|null);
+
+            /** Lap interfaceId */
+            interfaceId?: (number|null);
         }
 
         /** Represents a Lap. */
@@ -3368,6 +4621,9 @@ export namespace com {
 
             /** Lap bestLapTime. */
             public bestLapTime: number;
+
+            /** Lap interfaceId. */
+            public interfaceId: number;
 
             /**
              * Creates a new Lap instance using the specified properties.
@@ -3467,6 +4723,9 @@ export namespace com {
 
             /** RaceData overallStandingsUpdate */
             overallStandingsUpdate?: (com.antigravity.IOverallStandingsUpdate|null);
+
+            /** RaceData raceState */
+            raceState?: (com.antigravity.RaceState|null);
         }
 
         /** Represents a RaceData. */
@@ -3496,8 +4755,11 @@ export namespace com {
             /** RaceData overallStandingsUpdate. */
             public overallStandingsUpdate?: (com.antigravity.IOverallStandingsUpdate|null);
 
+            /** RaceData raceState. */
+            public raceState?: (com.antigravity.RaceState|null);
+
             /** RaceData data. */
-            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate");
+            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -3591,6 +4853,9 @@ export namespace com {
 
             /** Race currentHeat */
             currentHeat?: (com.antigravity.IHeat|null);
+
+            /** Race state */
+            state?: (com.antigravity.RaceState|null);
         }
 
         /** Represents a Race. */
@@ -3613,6 +4878,9 @@ export namespace com {
 
             /** Race currentHeat. */
             public currentHeat?: (com.antigravity.IHeat|null);
+
+            /** Race state. */
+            public state: com.antigravity.RaceState;
 
             /**
              * Creates a new Race instance using the specified properties.
@@ -4069,6 +5337,9 @@ export namespace com {
 
             /** ReactionTime reactionTime */
             reactionTime?: (number|null);
+
+            /** ReactionTime interfaceId */
+            interfaceId?: (number|null);
         }
 
         /** Represents a ReactionTime. */
@@ -4085,6 +5356,9 @@ export namespace com {
 
             /** ReactionTime reactionTime. */
             public reactionTime: number;
+
+            /** ReactionTime interfaceId. */
+            public interfaceId: number;
 
             /**
              * Creates a new ReactionTime instance using the specified properties.

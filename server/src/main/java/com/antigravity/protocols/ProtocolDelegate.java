@@ -15,6 +15,16 @@ public class ProtocolDelegate {
         }
     }
 
+    public boolean open() {
+        boolean allOpened = true;
+        for (IProtocol protocol : protocols) {
+            if (!protocol.open()) {
+                allOpened = false;
+            }
+        }
+        return allOpened;
+    }
+
     public void startTimer() {
         for (IProtocol protocol : protocols) {
             protocol.startTimer();

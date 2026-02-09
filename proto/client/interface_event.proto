@@ -1,0 +1,36 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "InterfaceEventProto";
+
+enum InterfaceStatus {
+  CONNECTED = 0;
+  DISCONNECTED = 1;
+  NO_DATA = 2;
+}
+
+message InterfaceEvent {
+  oneof event {
+    LapEvent lap = 1;
+    SegmentEvent segment = 2;
+    InterfaceStatusEvent status = 3;
+  }
+}
+
+message InterfaceStatusEvent {
+  InterfaceStatus status = 1;
+}
+
+message LapEvent {
+  int32 lane = 1;
+  double lap_time = 2;
+  int32 interface_id = 3;
+}
+
+message SegmentEvent {
+  int32 lane = 1;
+  double segment_time = 2;
+  int32 interface_id = 3;
+}

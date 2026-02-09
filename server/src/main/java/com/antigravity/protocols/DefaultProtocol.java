@@ -24,4 +24,8 @@ public abstract class DefaultProtocol implements IProtocol {
     public List<PartialTime> stopTimer() {
         return Collections.emptyList();
     }
+
+    @Override
+    public void close() {
+    }
 }

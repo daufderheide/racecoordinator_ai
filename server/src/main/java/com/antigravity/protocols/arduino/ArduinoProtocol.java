@@ -5,7 +5,11 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.antigravity.models.Lane;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.antigravity.proto.PinBehavior;
+import com.antigravity.proto.PinId;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
@@ -13,12 +17,15 @@ import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.util.CircularBuffer;
 import java.io.IOException;
-
-import com.antigravity.proto.PinBehavior;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ArduinoProtocol extends DefaultProtocol {
+  private static final Logger logger = LoggerFactory.getLogger(ArduinoProtocol.class);
+
   private ArduinoConfig config;
-  private List<Lane> lanes;
+  private int numLanes;
 
   private SerialConnection serialConnection;
   private CircularBuffer rxBuffer;
@@ -29,8 +36,11 @@ public class ArduinoProtocol extends DefaultProtocol {
   private HwTime[] hwSegmentTime;
   private byte hwReset;
 
+  private ScheduledExecutorService statusScheduler;
+  private java.util.concurrent.ScheduledFuture<?> statusFuture;
+  protected long lastHeartbeatTimeMs = 0;
+
   // Lane specific
-  private static final int BEHAVIOR_MAX_RANGE = 999;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B };
@@ -44,43 +54,75 @@ public class ArduinoProtocol extends DefaultProtocol {
   private static final byte DIGITAL = 0x44; // 'D'
   private static final byte ANALOG = 0x41; // 'A'
 
-  public ArduinoProtocol(ArduinoConfig config, List<Lane> lanes) {
-    super(lanes.size());
-    this.config = config;
-    this.lanes = lanes;
+  public ArduinoProtocol(ArduinoConfig config, int numLanes) {
+    this(config, numLanes, null, null);
 
-    serialConnection = new SerialConnection();
+    if (numLanes > ArduinoConfig.MAX_LANES) {
+      throw new IllegalArgumentException(
+          "Number of lanes " + numLanes + " exceeds maximum of " + ArduinoConfig.MAX_LANES);
+    }
+  }
+
+  protected ArduinoProtocol(ArduinoConfig config, int numLanes, SerialConnection serialConnection,
+      ScheduledExecutorService statusScheduler) {
+    super(numLanes);
+    this.config = config;
+    this.numLanes = numLanes;
+
+    this.serialConnection = serialConnection != null ? serialConnection : createSerialConnection();
+    this.statusScheduler = statusScheduler;
     rxBuffer = new CircularBuffer(4096);
     buildPinLookup();
 
     // Initialize the hardware timing.
-    hwLapTime = new HwTime[lanes.size()];
-    hwSegmentTime = new HwTime[lanes.size()];
-    for (int i = 0; i < lanes.size(); i++) {
+    hwLapTime = new HwTime[numLanes];
+    hwSegmentTime = new HwTime[numLanes];
+    for (int i = 0; i < numLanes; i++) {
       hwLapTime[i] = new HwTime();
       hwSegmentTime[i] = new HwTime();
     }
     hwReset = 1;
   }
 
+  protected SerialConnection createSerialConnection() {
+    return new SerialConnection();
+  }
+
+  protected ScheduledExecutorService createScheduler() {
+    return Executors.newSingleThreadScheduledExecutor();
+  }
+
+  protected long now() {
+    return System.currentTimeMillis();
+  }
+
   @Override
   public boolean open() {
+    startStatusScheduler();
+
+    if (config.commPort == null || config.commPort.isEmpty()) {
+      logger.info("No COM port specified, status will be DISCONNECTED");
+      return true;
+    }
+
     try {
+      logger.info("Attempting to connect to {} at {} baud", config.commPort, config.baudRate);
       serialConnection.connect(config.commPort, config.baudRate);
 
       serialConnection.addListener(new com.fazecast.jSerialComm.SerialPortDataListener() {
         @Override
         public int getListeningEvents() {
-          return com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+          return com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED;
         }
 
         public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
-          if (event.getEventType() != com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_AVAILABLE) {
+          if (event.getEventType() != com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
             return;
           }
 
           byte[] data = event.getReceivedData();
           if (data != null && data.length > 0) {
+            logger.info("Received: {}", bytesToHex(data));
             rxBuffer.write(data);
             processData();
           }
@@ -88,17 +130,63 @@ public class ArduinoProtocol extends DefaultProtocol {
       });
 
       serialConnection.writeData(RESET_COMMAND);
+      logger.info("Connected to {}. Sent RESET command.", config.commPort);
 
       return true;
     } catch (IOException e) {
-      return false;
+      logger.error("Failed to connect to {}: {}", config.commPort, e.getMessage());
+      return true; // Still return true so the status loop can report DISCONNECTED to the client
     }
+  }
+
+  @Override
+  public void close() {
+    logger.info("Closing ArduinoProtocol");
+    if (statusFuture != null) {
+      statusFuture.cancel(true);
+    }
+    if (statusScheduler != null) {
+      statusScheduler.shutdown();
+    }
+    statusScheduler = null;
+
+    if (serialConnection != null && serialConnection.isOpen()) {
+      serialConnection.disconnect();
+    }
+  }
+
+  private void startStatusScheduler() {
+    if (statusFuture != null && !statusFuture.isCancelled()) {
+      return;
+    }
+    if (statusScheduler == null) {
+      statusScheduler = createScheduler();
+    }
+    statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
+      try {
+        if (listener != null) {
+          com.antigravity.proto.InterfaceStatus status;
+          if (!serialConnection.isOpen()) {
+            status = com.antigravity.proto.InterfaceStatus.DISCONNECTED;
+          } else if (lastHeartbeatTimeMs == 0) {
+            status = com.antigravity.proto.InterfaceStatus.NO_DATA;
+          } else if (now() - lastHeartbeatTimeMs < 2000) {
+            status = com.antigravity.proto.InterfaceStatus.CONNECTED;
+          } else {
+            status = com.antigravity.proto.InterfaceStatus.DISCONNECTED;
+          }
+          listener.onInterfaceStatus(status);
+        }
+      } catch (Exception e) {
+        logger.error("Error in status scheduler", e);
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   @Override
   public void startTimer() {
     sendTimeReset();
-    for (int i = 0; i < lanes.size(); i++) {
+    for (int i = 0; i < numLanes; i++) {
       hwLapTime[i].Reset();
       hwSegmentTime[i].Reset();
     }
@@ -108,10 +196,44 @@ public class ArduinoProtocol extends DefaultProtocol {
   @Override
   public List<PartialTime> stopTimer() {
     List<PartialTime> partialTimes = new ArrayList<>();
-    for (int i = 0; i < lanes.size(); i++) {
+    for (int i = 0; i < numLanes; i++) {
       partialTimes.add(new PartialTime(i, hwLapTime[i].Time(), hwSegmentTime[i].Time()));
     }
     return partialTimes;
+  }
+
+  public void updateConfig(ArduinoConfig config) {
+    this.config = config;
+    buildPinLookup();
+    if (versionVerified) {
+      sendPinModeRead();
+      sendPinModeWrite();
+      sendDebounce();
+    }
+  }
+
+  public void setPinState(boolean isDigital, int pin, boolean isHigh) {
+    if (!serialConnection.isOpen()) {
+      logger.warn("Serial connection not open, cannot set pin state");
+      return;
+    }
+
+    // O D/A pin state ;
+    // 0x4F, 0x44/0x41, pin, 0x01/0x00, 0x3B
+    byte[] message = new byte[5];
+    message[0] = 0x4F; // 'O'
+    message[1] = isDigital ? DIGITAL : ANALOG;
+    message[2] = (byte) pin;
+    message[3] = isHigh ? (byte) 1 : (byte) 0;
+    message[4] = TERMINATOR;
+
+    try {
+      serialConnection.writeData(message);
+      logger.info("Sent Output Command - Type: {}, Pin: {}, State: {}", (isDigital ? "Digital" : "Analog"), pin,
+          (isHigh ? "High" : "Low"));
+    } catch (IOException e) {
+      logger.error("Failed to send output command", e);
+    }
   }
 
   private void processData() {
@@ -131,7 +253,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           break;
         default:
           // Unknown opcode, skip one byte to resync
-          // TODO(aufderheide): Add warning log when this happens.
+          logger.warn("Unknown opcode: {}, skipping one byte to resync", String.format("0x%02X", opcode));
           rxBuffer.get();
           continue;
       }
@@ -144,7 +266,8 @@ public class ArduinoProtocol extends DefaultProtocol {
       // Check terminator
       if (rxBuffer.peek(messageLength - 1) != TERMINATOR) {
         // Invalid message (bad terminator), skip one byte to resync
-        // TODO(aufderheide): Add error log when this happens.
+        logger.error("Invalid message (bad terminator) for opcode {}, skipping one byte",
+            String.format("0x%02X", opcode));
         rxBuffer.get();
         continue;
       }
@@ -185,42 +308,68 @@ public class ArduinoProtocol extends DefaultProtocol {
         onInput(isDigital, pin, state);
         break;
       default:
-        System.err.println("ArduinoProtocol: Unknown opcode: " + opcode);
+        logger.error("Unknown opcode: {}", opcode);
         break;
     }
   }
 
   private void onHeartbeat(long timeInUse, byte isReset) {
-    System.out.println("ArduinoProtocol: Received Heartbeat - Time: " + timeInUse + "us, Reset: " + isReset);
+    lastHeartbeatTimeMs = now();
+    // Heartbeats are frequent, so maybe use debug? But user asked for logs when
+    // data
+    // received.
+    // Keeping as info for now based on request, but might be noisy.
+    // Actually, "recieves data that it understands as a messg" implies meaningful
+    // messages.
+    // Heartbeat is frequent, let's use DEBUG to avoid flooding logs, unless it's a
+    // reset/mismatch.
+    logger.debug("Received Heartbeat - Time: {}us, Reset: {}", timeInUse, isReset);
 
     if (isReset == hwReset) {
       hwReset = 0;
-      for (int i = 0; i < lanes.size(); i++) {
+      for (int i = 0; i < numLanes; i++) {
         hwLapTime[i].Add(timeInUse);
         hwSegmentTime[i].Add(timeInUse);
       }
     } else {
-      System.err.println("ArduinoProtocol: Received Heartbeat - Reset mismatch: " + isReset + " != " + hwReset);
+      logger.warn("Received Heartbeat - Reset mismatch: got {}, expected {}", isReset, hwReset);
     }
   }
 
   private void onVersion(int major, int minor, int patch, int build) {
     if (!versionVerified) {
+      // Note: Not checking build number as it changes frequently and indicates
+      // backwards compatibility with previous versions.
       if (major == 1 && minor == 0 && patch == 0) {
         versionVerified = true;
-        System.out.println("ArduinoProtocol: Version verified - " + major + "." + minor + "." + patch + "." + build);
+        logger.info("Version verified - {}.{}.{}.{}", major, minor, patch, build);
         sendPinModeRead();
+        sendPinModeWrite();
+        sendDebounce();
+        sendTimeReset();
       } else {
-        System.err.println("ArduinoProtocol: Invalid firmware version: " + major + "." + minor + "." + patch);
+        logger.error("Invalid firmware version: {}.{}.{}", major, minor, patch);
       }
     }
   }
 
   private void sendPinModeRead() {
+    sendPinMode((byte) 0x49, true);
+  }
+
+  private void sendPinModeWrite() {
+    sendPinMode((byte) 0x4F, false);
+  }
+
+  private void sendPinMode(byte opcode, boolean isRead) {
     int digitalCount = 0;
     if (config.digitalIds != null) {
       for (int id : config.digitalIds) {
-        if (id != -1) {
+        if (id < 0) {
+          throw new IllegalArgumentException("Invalid pin ID: " + id);
+        }
+
+        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
           digitalCount++;
         }
       }
@@ -229,24 +378,28 @@ public class ArduinoProtocol extends DefaultProtocol {
     int analogCount = 0;
     if (config.analogIds != null) {
       for (int id : config.analogIds) {
-        if (id != -1) {
+        if (id < 0) {
+          throw new IllegalArgumentException("Invalid pin ID: " + id);
+        }
+        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
           analogCount++;
         }
       }
     }
 
     int totalPins = digitalCount + analogCount;
-    // P + I + Count + (Type + Pin) * totalPins + Terminator
+    // P + I/O + Count + (Type + Pin) * totalPins + Terminator
     byte[] message = new byte[3 + (totalPins * 2) + 1];
 
     int idx = 0;
     message[idx++] = 0x50; // 'P'
-    message[idx++] = 0x49; // 'I'
+    message[idx++] = opcode;
     message[idx++] = (byte) totalPins;
 
     if (config.digitalIds != null) {
       for (int i = 0; i < config.digitalIds.size(); i++) {
-        if (config.digitalIds.get(i) != -1) {
+        int id = config.digitalIds.get(i);
+        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
           message[idx++] = DIGITAL;
           message[idx++] = (byte) i;
         }
@@ -255,7 +408,8 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     if (config.analogIds != null) {
       for (int i = 0; i < config.analogIds.size(); i++) {
-        if (config.analogIds.get(i) != -1) {
+        int id = config.analogIds.get(i);
+        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
           message[idx++] = ANALOG;
           message[idx++] = (byte) i;
         }
@@ -266,18 +420,37 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     try {
       serialConnection.writeData(message);
+      logger.info("Sent PIN_MODE {}", (isRead ? "READ" : "WRITE"));
     } catch (IOException e) {
-      System.err.println("ArduinoProtocol: Failed to send PIN_MODE_READ");
-      e.printStackTrace();
+      logger.error("Failed to send PIN_MODE {}", (isRead ? "READ" : "WRITE"), e);
+    }
+  }
+
+  private void sendDebounce() {
+    // private byte[] DEBOUNCE_COMMAND = { 0x64, 0x0, 0x0, 0x0, 0x0, 0x3B }; // d
+    // Hms Hus Lms Lus ;
+    byte[] message = new byte[6];
+    message[0] = 0x64; // 'd'
+    message[1] = (byte) (config.debounceUs / 1000); // Hms
+    message[2] = (byte) ((config.debounceUs % 1000) / 4); // Hus
+    message[3] = message[1]; // Lms
+    message[4] = message[2]; // Lus
+    message[5] = TERMINATOR;
+
+    try {
+      serialConnection.writeData(message);
+      logger.info("Sent DEBOUNCE");
+    } catch (IOException e) {
+      logger.error("Failed to send DEBOUNCE", e);
     }
   }
 
   private void sendTimeReset() {
     try {
       serialConnection.writeData(TIME_RESET_COMMAND);
+      logger.info("Sent TIME_RESET");
     } catch (IOException e) {
-      System.err.println("ArduinoProtocol: Failed to send TIME_RESET");
-      e.printStackTrace();
+      logger.error("Failed to send TIME_RESET", e);
     }
   }
 
@@ -286,27 +459,36 @@ public class ArduinoProtocol extends DefaultProtocol {
     PinConfig pinConfig = pinLookup.get(key);
 
     if (pinConfig != null) {
-      System.out.println("ArduinoProtocol: Received Input - Behavior: " + pinConfig.behavior +
-          ", Lane: " + pinConfig.laneIndex + ", Pin: " + pin + ", State: " + state);
+      logger.info("Received Input - Behavior: {}, Lane: {}, Pin: {}, State: {}", pinConfig.behavior,
+          pinConfig.laneIndex, pin, state);
+
+      int interfaceId = (isDigital ? PinId.PIN_ID_DIGITAL_BASE_VALUE : PinId.PIN_ID_ANALOG_BASE_VALUE) + pin;
+
       switch (pinConfig.behavior) {
         case LAP_COUNTER:
-          onLapCounter(pinConfig.laneIndex, state);
+          onLapCounter(pinConfig.laneIndex, state, interfaceId);
           break;
         case SEGMENT_COUNTER:
-          onSegmentCounter(pinConfig.laneIndex, state);
+          onSegmentCounter(pinConfig.laneIndex, state, interfaceId);
           break;
         case CALL_BUTTON:
           onCallButton(pinConfig.laneIndex, state);
           break;
+        case RESERVED:
+          // Ignore
+          break;
+        default:
+          logger.warn("Received Unknown Input - Behavior: {}, Lane: {}, Pin: {}, State: {}", pinConfig.behavior,
+              pinConfig.laneIndex, pin, state);
+          break;
       }
     } else {
-      System.out.println("ArduinoProtocol: Received Input - Type: " + (isDigital ? "Digital" : "Analog") +
-          ", Pin: " + pin + ", State: " + state);
+      logger.info("Received Input - Type: {}, Pin: {}, State: {}", (isDigital ? "Digital" : "Analog"), pin, state);
     }
   }
 
-  private void onLapCounter(int laneIndex, int state) {
-    System.out.println("ArduinoProtocol: Received Lap Counter - Lane: " + laneIndex + ", State: " + state);
+  private void onLapCounter(int laneIndex, int state, int interfaceId) {
+    logger.debug("Received Lap Counter - Lane: {}, State: {}", laneIndex, state);
 
     if (laneIndex < hwLapTime.length) {
       byte wantState = 1;
@@ -321,12 +503,12 @@ public class ArduinoProtocol extends DefaultProtocol {
         // Subtract the hw debounce time from our time
         time -= (config.debounceUs / (1000.0 * 1000.0));
 
-        System.out.println("ArduinoProtocol: Handling Lap - Lane: " + laneIndex + ", Time: " + time);
+        logger.info("Handling Lap - Lane: {}, Time: {}", laneIndex, time);
         if (listener != null) {
           // TODO(aufderheide):
           // We need to know how to hanle false starts. Maybe do not
           // send the lap, but send a 0 time CarData?
-          listener.onLap(laneIndex, time);
+          listener.onLap(laneIndex, time, interfaceId);
 
           if (time > 0) {
             listener.onCarData(new CarData(laneIndex, time, 1, 1, false, CarLocation.Main, CarLocation.Main, -1));
@@ -334,16 +516,19 @@ public class ArduinoProtocol extends DefaultProtocol {
         }
       }
     } else {
-      System.out.println("ArduinoProtocol: Bad lane for lap data: " + (laneIndex + 1));
+      logger.warn("Bad lane for lap data: {}", (laneIndex + 1));
     }
   }
 
-  private void onSegmentCounter(int laneIndex, int state) {
-    System.out.println("ArduinoProtocol: Received Segment Counter - Lane: " + laneIndex + ", State: " + state);
+  private void onSegmentCounter(int laneIndex, int state, int interfaceId) {
+    logger.info("Received Segment Counter - Lane: {}, State: {}", laneIndex, state);
+    if (listener != null) {
+      listener.onSegment(laneIndex, 0.0, interfaceId);
+    }
   }
 
   private void onCallButton(int laneIndex, int state) {
-    System.out.println("ArduinoProtocol: Received Call Button - Lane: " + laneIndex + ", State: " + state);
+    logger.info("Received Call Button - Lane: {}, State: {}", laneIndex, state);
   }
 
   private void buildPinLookup() {
@@ -367,19 +552,21 @@ public class ArduinoProtocol extends DefaultProtocol {
       int laneIndex = -1;
 
       if (code >= PinBehavior.BEHAVIOR_LAP_BASE.getNumber()
-          && code <= PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
+          && code < PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber()) {
         behavior = InputBehavior.LAP_COUNTER;
         laneIndex = code - PinBehavior.BEHAVIOR_LAP_BASE.getNumber();
       } else if (code >= PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber()
-          && code <= PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
+          && code < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber()) {
         behavior = InputBehavior.SEGMENT_COUNTER;
         laneIndex = code - PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber();
       } else if (code >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber()
-          && code <= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + BEHAVIOR_MAX_RANGE) {
+          && code < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()) {
         behavior = InputBehavior.CALL_BUTTON;
         laneIndex = code - PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber();
       } else if (code == PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber()) {
         behavior = InputBehavior.CALL_BUTTON;
+      } else if (code == PinBehavior.BEHAVIOR_RESERVED.getNumber()) {
+        behavior = InputBehavior.RESERVED;
       }
 
       if (behavior != null) {
@@ -391,7 +578,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   private enum InputBehavior {
     LAP_COUNTER,
     SEGMENT_COUNTER,
-    CALL_BUTTON
+    CALL_BUTTON,
+    RESERVED
   }
 
   private static class PinConfig {
@@ -406,5 +594,13 @@ public class ArduinoProtocol extends DefaultProtocol {
       this.pin = pin;
       this.behavior = behavior;
     }
+  }
+
+  private static String bytesToHex(byte[] bytes) {
+    StringBuilder sb = new StringBuilder();
+    for (byte b : bytes) {
+      sb.append(String.format("%02X ", b));
+    }
+    return sb.toString().trim();
   }
 }

@@ -46,7 +46,7 @@ test.describe('Track Manager Visuals', () => {
     await page.locator('.sidebar-list').locator('text=Speedway').click();
 
     // Wait for summary to be visible
-    await expect(page.locator('.arduino-summary')).toBeVisible();
+    await expect(page.locator('app-arduino-summary .arduino-summary')).toBeVisible();
     await expect(page.locator('text=Arduino Uno')).toBeVisible();
     await expect(page.locator('text=COM4')).toBeVisible();
 

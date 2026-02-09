@@ -42,7 +42,7 @@ public class HeatOver implements IRaceState {
   }
 
   @Override
-  public void onLap(int lane, double lapTime) {
+  public void onLap(int lane, double lapTime, int interfaceId) {
     System.out.println("HeatOver: Ignored onLap - Heat is over");
   }
 

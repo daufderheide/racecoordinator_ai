@@ -5,7 +5,7 @@ import { TranslationService } from '../../services/translation.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
-import { Component, Input } from '@angular/core';
+import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 
 // Mock DataService
 class MockDataService {
@@ -17,6 +17,14 @@ class MockDataService {
   }
   deleteTrack(id: string) {
     return of(true);
+  }
+  connectToInterfaceDataSocket() { }
+  disconnectFromInterfaceDataSocket() { }
+  getInterfaceEvents() {
+    return of({});
+  }
+  getRaceState() {
+    return of(0); // com.antigravity.RaceState.NOT_STARTED
   }
 }
 
@@ -65,6 +73,7 @@ describe('TrackManagerComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [TrackManagerComponent, TranslatePipe, MockBackButtonComponent],
+      schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useClass: MockDataService },
         { provide: TranslationService, useClass: MockTranslationService },

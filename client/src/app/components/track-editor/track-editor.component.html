@@ -77,91 +77,9 @@
     <!-- Track Interface Visualization (Placeholder) -->
     <div class="preview-panel">
       <!-- Always show config, assume on -->
-      <div *ngIf="arduinoConfig" class="arduino-config-container">
-
-        <div class="panel-header">
-          <h3>{{ 'TE_ARDUINO_CONFIG_HEADER' | translate }}</h3>
-        </div>
-
-        <!-- Top Section: Controls + Image -->
-        <div class="config-top-section">
-          <div class="board-controls">
-            <div class="control-group">
-              <label>{{ 'TE_BOARD_TYPE' | translate }}</label>
-              <select [(ngModel)]="arduinoConfig.hardwareType" (change)="updateArduinoConfig()">
-                <option [ngValue]="0">{{ 'TE_BOARD_UNO' | translate }}</option>
-                <option [ngValue]="1">{{ 'TE_BOARD_MEGA' | translate }}</option>
-              </select>
-            </div>
-
-            <div class="control-group">
-              <label>{{ 'TE_COM_PORT' | translate }}</label>
-              <div class="com-port-row">
-                <select [(ngModel)]="arduinoConfig.commPort" (change)="updateArduinoConfig()">
-                  <option value="" disabled>{{ 'TE_SELECT_PORT' | translate }}</option>
-                  <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
-                </select>
-                <span class="status-badge" [class.connected]="availablePorts.includes(arduinoConfig.commPort)"
-                  [title]="availablePorts.includes(arduinoConfig.commPort) ? 'Connected' : 'Not Connected'">
-                  <span class="status-dot"></span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="board-preview">
-            <img *ngIf="arduinoConfig.hardwareType == 0" src="assets/arduino_uno_board.png"
-              [alt]="'TE_BOARD_UNO' | translate" class="board-image">
-            <img *ngIf="arduinoConfig.hardwareType == 1" src="assets/arduino_mega_board.png"
-              [alt]="'TE_BOARD_MEGA' | translate" class="board-image">
-          </div>
-        </div>
-
-        <!-- Scrollable Pins Section -->
-        <div class="pins-section scrollable">
-          <div class="pins-config">
-            <h4>{{ 'TE_DIGITAL_PINS' | translate }}</h4>
-            <div class="pin-grid">
-              <div *ngFor="let pin of availablePins" class="pin-item">
-                <label>D{{pin}}</label>
-                <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
-                  <option value="">{{ 'TE_NONE' | translate }}</option>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'call_' + l">{{ 'TE_CALL_BUTTON_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'lap_' + l">{{ 'TE_LAP_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                  <option value="master_call">{{ 'TE_MASTER_CALL' | translate }}</option>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'segment_' + l">{{ 'TE_SEGMENT_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                </select>
-              </div>
-            </div>
-
-            <h4>{{ 'TE_ANALOG_PINS' | translate }}</h4>
-            <div class="pin-grid">
-              <div *ngFor="let pin of availableAnalogPins" class="pin-item">
-                <label>A{{pin}}</label>
-                <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
-                  <option value="">{{ 'TE_NONE' | translate }}</option>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'call_' + l">{{ 'TE_CALL_BUTTON_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'lap_' + l">{{ 'TE_LAP_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                  <option value="master_call">{{ 'TE_MASTER_CALL' | translate }}</option>
-                  <ng-container *ngFor="let lane of lanes; let l = index">
-                    <option [value]="'segment_' + l">{{ 'TE_SEGMENT_LANE' | translate:{lane: l+1} }}</option>
-                  </ng-container>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-arduino-editor *ngIf="arduinoConfig" [config]="arduinoConfig" [lanes]="lanes"
+        (configChange)="captureState()">
+      </app-arduino-editor>
     </div>
   </div>
 </div>

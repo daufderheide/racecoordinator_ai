@@ -111,31 +111,5 @@ export class TrackManagerComponent implements OnInit {
     this.router.navigate(['/raceday-setup']);
   }
 
-  getBoardName(track: Track): string {
-    if (!track.arduino_config) return '';
-    return track.arduino_config.hardwareType === 1 ? 'TM_BOARD_MEGA' : 'TM_BOARD_UNO';
-  }
 
-  getConfiguredPinCount(track: Track): number {
-    if (!track.arduino_config) return 0;
-    const digitalCount = track.arduino_config.digitalIds.filter(id => id !== -1).length;
-    const analogCount = track.arduino_config.analogIds.filter(id => id !== -1).length;
-    return digitalCount + analogCount;
-  }
-
-  hasBehavior(track: Track, behaviorType: 'lap' | 'segment' | 'call'): boolean {
-    if (!track.arduino_config) return false;
-    const allPins = [...track.arduino_config.digitalIds, ...track.arduino_config.analogIds];
-
-    switch (behaviorType) {
-      case 'lap':
-        return allPins.some(id => id >= 1000 && id < 2000);
-      case 'segment':
-        return allPins.some(id => id >= 2000 && id < 3000);
-      case 'call':
-        return allPins.some(id => id === 1 || (id >= 3000 && id < 4000));
-      default:
-        return false;
-    }
-  }
 }

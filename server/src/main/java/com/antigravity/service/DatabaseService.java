@@ -93,6 +93,10 @@ public class DatabaseService {
 
         private Track resetTracks(MongoDatabase database) {
                 MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
+                if (trackCollection.countDocuments() > 0) {
+                        return trackCollection.find().first();
+                }
+
                 trackCollection.drop(); // Clear all existing data
 
                 // Reset sequence
@@ -113,7 +117,9 @@ public class DatabaseService {
                 Lane l4 = new Lane("#fbbf24", "black", 100, getNextSequence(database, "lanes"), null);
                 lanes.add(l4);
 
-                Track track = new Track("Bright Plume Raceway", lanes, getNextSequence(database, "tracks"), null);
+                com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
+                Track track = new Track("Bright Plume Raceway", lanes, config, getNextSequence(database, "tracks"),
+                                null);
 
                 trackCollection.insertOne(track);
                 System.out.println("Tracks reset.");

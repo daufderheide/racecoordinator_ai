@@ -8,6 +8,7 @@ import "server/race.proto";
 import "server/reaction_time.proto";
 import "server/standings_update.proto";
 import "server/overall_standings_update.proto";
+import "server/race_state.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -21,5 +22,6 @@ message RaceData {
     ReactionTime reaction_time = 4;
     StandingsUpdate standings_update = 5;
     OverallStandingsUpdate overall_standings_update = 6;
+    RaceState race_state = 7;
   }
 }

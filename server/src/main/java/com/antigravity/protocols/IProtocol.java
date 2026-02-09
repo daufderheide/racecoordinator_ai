@@ -8,4 +8,6 @@ public interface IProtocol {
     void startTimer();
 
     java.util.List<PartialTime> stopTimer();
+
+    void close();
 }

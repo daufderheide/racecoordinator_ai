@@ -1,28 +1,34 @@
 package com.antigravity.race;
 
+import com.antigravity.protocols.IProtocol;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RaceManager {
-    private static RaceManager instance;
+public class ClientSubscriptionManager {
+    private static ClientSubscriptionManager instance;
     private Race currentRace;
+    private IProtocol currentProtocol;
     private final Set<WsContext> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final Set<WsContext> raceDataSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<WsContext> interfaceSubscribers = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private RaceManager() {
+    private ClientSubscriptionManager() {
     }
 
-    public static synchronized RaceManager getInstance() {
+    public static synchronized ClientSubscriptionManager getInstance() {
         if (instance == null) {
-            instance = new RaceManager();
+            instance = new ClientSubscriptionManager();
         }
         return instance;
     }
 
     public synchronized void setRace(Race race) {
+        if (race != null && this.currentProtocol != null) {
+            throw new IllegalStateException("Cannot set race while protocol is active");
+        }
         if (this.currentRace != null) {
             this.currentRace.stop();
         }
@@ -47,6 +53,25 @@ public class RaceManager {
         return currentRace;
     }
 
+    public synchronized void setProtocol(IProtocol protocol) {
+        if (protocol != null && this.currentRace != null) {
+            throw new IllegalStateException("Cannot set protocol while race is active");
+        }
+        if (this.currentProtocol != null) {
+            try {
+                this.currentProtocol.close();
+            } catch (Exception e) {
+                System.err.println("Error closing protocol: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        this.currentProtocol = protocol;
+    }
+
+    public synchronized IProtocol getProtocol() {
+        return currentProtocol;
+    }
+
     public void addSession(WsContext ctx) {
         sessions.add(ctx);
         // Default to subscribed for backward compatibility and initial connection
@@ -67,6 +92,36 @@ public class RaceManager {
                 + raceDataSubscribers.size());
 
         checkAndStopRace();
+    }
+
+    public void addInterfaceSession(WsContext ctx) {
+        sessions.add(ctx);
+        interfaceSubscribers.add(ctx);
+        System.out.println("New Interface WebSocket session added. Total sessions: " + sessions.size()
+                + ", Interface Subscribers: "
+                + interfaceSubscribers.size());
+    }
+
+    public void removeInterfaceSession(WsContext ctx) {
+        sessions.remove(ctx);
+        interfaceSubscribers.remove(ctx);
+        System.out.println(
+                "Interface WebSocket session removed. Total sessions: " + sessions.size() + ", Interface Subscribers: "
+                        + interfaceSubscribers.size());
+        checkAndCloseProtocol();
+    }
+
+    private void checkAndCloseProtocol() {
+        if (interfaceSubscribers.isEmpty() && currentProtocol != null && currentRace == null) {
+            System.out.println("Last interested interface client disconnected. Closing current protocol.");
+            try {
+                currentProtocol.close();
+            } catch (Exception e) {
+                System.err.println("Error closing protocol: " + e.getMessage());
+                e.printStackTrace();
+            }
+            currentProtocol = null;
+        }
     }
 
     public void handleRaceSubscription(WsContext ctx, com.antigravity.proto.RaceSubscriptionRequest request) {
@@ -104,6 +159,20 @@ public class RaceManager {
         byte[] bytes = message.toByteArray();
 
         raceDataSubscribers.stream()
+                .filter(ctx -> ctx.session.isOpen())
+                .forEach(ctx -> {
+                    ctx.send(java.nio.ByteBuffer.wrap(bytes));
+                });
+    }
+
+    public void broadcastInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+        if (interfaceSubscribers.isEmpty()) {
+            return;
+        }
+
+        byte[] bytes = event.toByteArray();
+
+        interfaceSubscribers.stream()
                 .filter(ctx -> ctx.session.isOpen())
                 .forEach(ctx -> {
                     ctx.send(java.nio.ByteBuffer.wrap(bytes));

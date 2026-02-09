@@ -13,6 +13,8 @@ import "client/restart_heat.proto";
 import "client/skip_heat.proto";
 import "client/track_model.proto";
 import "client/race_subscription.proto";
+import "client/update_interface_config.proto";
+import "client/set_interface_pin_state.proto";
 
 import "server/race.proto";
 import "server/heat.proto";
@@ -22,3 +24,4 @@ import "server/race_data.proto";
 import "server/race_participant.proto";
 import "server/race_time.proto";
 import "server/standings_update.proto";
+import "server/race_state.proto";

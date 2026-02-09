@@ -141,7 +141,7 @@ public class Racing implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
+    public void onLap(int lane, double lapTime, int interfaceId) {
         System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
 
         if (!this.race.isRacing()) {
@@ -168,11 +168,11 @@ public class Racing implements IRaceState {
             return;
         }
 
-        if (handleReactionTime(driverData, lapTime, lane)) {
+        if (handleReactionTime(driverData, lapTime, lane, interfaceId)) {
             return;
         }
 
-        handleLapTime(driverData, lapTime);
+        handleLapTime(driverData, lapTime, interfaceId);
 
         // Check for finish condition immediately after a lap (mainly for Lap based
         // races)
@@ -189,13 +189,15 @@ public class Racing implements IRaceState {
         }
     }
 
-    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, double lapTime, int lane) {
+    private boolean handleReactionTime(com.antigravity.race.DriverHeatData driverData, double lapTime, int lane,
+            int interfaceId) {
         if (driverData.getReactionTime() == 0.0f) {
             driverData.setReactionTime(lapTime);
 
             com.antigravity.proto.ReactionTime rtMsg = com.antigravity.proto.ReactionTime.newBuilder()
                     .setObjectId(driverData.getObjectId())
                     .setReactionTime(lapTime)
+                    .setInterfaceId(interfaceId)
                     .build();
 
             com.antigravity.proto.RaceData rtDataMsg = com.antigravity.proto.RaceData.newBuilder()
@@ -209,7 +211,7 @@ public class Racing implements IRaceState {
         return false;
     }
 
-    private void handleLapTime(com.antigravity.race.DriverHeatData driverData, double lapTime) {
+    private void handleLapTime(com.antigravity.race.DriverHeatData driverData, double lapTime, int interfaceId) {
         double effectiveLapTime = lapTime;
         if (driverData.getLapCount() == 0) {
             effectiveLapTime += driverData.getReactionTime();
@@ -224,6 +226,7 @@ public class Racing implements IRaceState {
                 .setAverageLapTime(driverData.getAverageLapTime())
                 .setMedianLapTime(driverData.getMedianLapTime())
                 .setBestLapTime(driverData.getBestLapTime())
+                .setInterfaceId(interfaceId)
                 .build();
 
         com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()

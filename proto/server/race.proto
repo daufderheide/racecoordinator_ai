@@ -5,6 +5,7 @@ import "client/race_model.proto";
 import "client/driver_model.proto";
 import "server/heat.proto";
 import "server/race_participant.proto";
+import "server/race_state.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -15,4 +16,5 @@ message Race {
   repeated RaceParticipant drivers = 2;
   repeated Heat heats = 3;
   Heat current_heat = 4;
+  RaceState state = 5;
 }

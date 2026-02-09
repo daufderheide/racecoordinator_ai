@@ -6,7 +6,7 @@ import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { Component, Input } from '@angular/core';
+import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 
 // Mock DataService
 class MockDataService {
@@ -32,6 +32,20 @@ class MockDataService {
   }
   createTrack(track: any) {
     return of({ ...track, entity_id: 't-new-id' });
+  }
+  connectToInterfaceDataSocket() { }
+  disconnectFromInterfaceDataSocket() { }
+  getInterfaceEvents() {
+    return of({});
+  }
+  initializeInterface(config: any) {
+    return of({ success: true });
+  }
+  updateInterfaceConfig(config: any) {
+    return of({ success: true });
+  }
+  getRaceState() {
+    return of(0);
   }
 }
 
@@ -88,6 +102,7 @@ describe('TrackEditorComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [TrackEditorComponent, TranslatePipe, MockBackButtonComponent, MockUndoRedoControlsComponent],
       imports: [FormsModule],
+      schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useClass: MockDataService },
         { provide: TranslationService, useClass: MockTranslationService },
@@ -128,14 +143,6 @@ describe('TrackEditorComponent', () => {
 
     component.updateLaneLength(0, 15);
     expect(component.lanes[0].length).toBe(15);
-  });
-
-  it('should manage arduino config pins', () => {
-    component.setPinAction(true, 2, 'lap_0');
-    expect(component.getPinAction(true, 2)).toBe('lap_0');
-
-    component.setPinAction(true, 3, 'master_call');
-    expect(component.getPinAction(true, 3)).toBe('master_call');
   });
 
   it('should update existing track', () => {

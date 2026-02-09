@@ -1,0 +1,81 @@
+<div *ngIf="config" class="arduino-config-container">
+
+  <div class="panel-header">
+    <h3>{{ 'AE_HEADER' | translate }}</h3>
+  </div>
+
+  <!-- Top Section: Controls + Image -->
+  <div class="config-top-section">
+    <div class="board-controls">
+      <div class="control-group">
+        <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
+        <select [ngModel]="config.hardwareType.toString()"
+          (ngModelChange)="config.hardwareType = +$event; updateArduinoConfig()">
+          <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
+          <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>{{ 'AE_COM_PORT' | translate }}</label>
+        <div class="com-port-row">
+          <select [(ngModel)]="config.commPort" (change)="updateArduinoConfig()">
+            <option value="" disabled>{{ 'AE_SELECT_PORT' | translate }}</option>
+            <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
+          </select>
+          <span class="status-badge" [class.connected]="interfaceStatus === 0"
+            [title]="interfaceStatus === 0 ? 'Connected' : 'Disconnected'">
+            <span class="status-dot"></span>
+          </span>
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" [ngModel]="config.normallyClosedRelays"
+            (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
+          {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
+        </label>
+      </div>
+    </div>
+
+    <div class="board-preview">
+      <img *ngIf="config.hardwareType == 0" src="assets/arduino_uno_board.png" [alt]="'AE_BOARD_UNO' | translate"
+        class="board-image">
+      <img *ngIf="config.hardwareType == 1" src="assets/arduino_mega_board.png" [alt]="'AE_BOARD_MEGA' | translate"
+        class="board-image">
+    </div>
+  </div>
+
+  <!-- Scrollable Pins Section -->
+  <div class="pins-section scrollable">
+    <div class="pins-config">
+      <h4>{{ 'AE_DIGITAL_PINS' | translate }}</h4>
+      <div class="pin-grid">
+        <div *ngFor="let pin of availablePins" class="pin-item">
+          <div class="pin-header">
+            <label>D{{pin}}</label>
+            <span class="status-badge small" [class.connected]="isPinActive(true, pin)"
+              (click)="togglePinState(true, pin)" style="cursor: pointer;"></span>
+          </div>
+          <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
+            <option *ngFor="let action of pinActions" [value]="action.value">{{ action.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <h4>{{ 'AE_ANALOG_PINS' | translate }}</h4>
+      <div class="pin-grid">
+        <div *ngFor="let pin of availableAnalogPins" class="pin-item">
+          <div class="pin-header">
+            <label>A{{pin}}</label>
+            <span class="status-badge small" [class.connected]="isPinActive(false, pin)"
+              (click)="togglePinState(false, pin)" style="cursor: pointer;"></span>
+          </div>
+          <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
+            <option *ngFor="let action of pinActions" [value]="action.value">{{ action.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

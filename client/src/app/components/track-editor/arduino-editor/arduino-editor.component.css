@@ -1,0 +1,202 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Right Panel Arduino Styles */
+
+.arduino-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 30px;
+  box-sizing: border-box;
+  color: #e2e8f0;
+}
+
+.panel-header {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #38bdf8;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+/* Top Section: Controls + Image Side-by-Side */
+.config-top-section {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 30px;
+  align-items: flex-start;
+}
+
+.board-controls {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board-preview {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.board-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 250px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-group label {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.control-group select {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.control-group select:focus {
+  border-color: #38bdf8;
+}
+
+/* COM Port specific layout */
+.com-port-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.com-port-row select {
+  flex: 1;
+}
+
+.status-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #475569;
+  box-shadow: none;
+  transition: background-color 0.3s;
+}
+
+.status-badge.connected {
+  background-color: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+/* Pins Section */
+.pins-section.scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 15px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding-top: 20px;
+}
+
+.pins-section.scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pins-section.scrollable::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.pins-section.scrollable::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.pins-config h4 {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-left: 3px solid #38bdf8;
+  padding-left: 10px;
+}
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.pin-item {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pin-item label {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.pin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-badge.small {
+  width: 8px;
+  height: 8px;
+  background-color: #475569;
+  box-shadow: none;
+}
+
+.status-badge.small.connected {
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+  background-color: #22c55e;
+}
+
+.status-badge.active {
+  background-color: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+}
+
+.pin-item select {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  padding: 4px;
+  border-radius: 2px;
+}

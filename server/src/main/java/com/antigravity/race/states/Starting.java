@@ -83,7 +83,7 @@ public class Starting implements IRaceState {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
+    public void onLap(int lane, double lapTime, int interfaceId) {
         // TODO(aufderheide): Handle false start
         System.out.println("Starting: Ignored onLap - Race not in progress");
     }

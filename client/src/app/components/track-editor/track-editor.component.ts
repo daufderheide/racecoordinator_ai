@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy } from '@angular/core';
 import { DataService } from '../../data.service';
-import { Track, ArduinoConfig } from '../../models/track';
+import { Track, ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../models/track';
 import { Lane } from '../../models/lane';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
+import { Subscription } from 'rxjs';
 import { com } from '../../proto/message';
 
 @Component({
@@ -18,7 +19,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfig?: ArduinoConfig;
-  availablePorts: string[] = [];
 
   scale: number = 1;
   isLoading: boolean = true;
@@ -60,16 +60,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateScale();
-    this.fetchPorts();
 
     // Subscribe to query params to reload data when ID changes (e.g. after Save as New)
     this.route.queryParamMap.subscribe(() => {
       this.loadData();
     });
+
+    this.dataService.connectToInterfaceDataSocket();
   }
 
   ngOnDestroy() {
     this.undoManager.destroy();
+    this.dataService.disconnectFromInterfaceDataSocket();
   }
 
   @HostListener('window:resize')
@@ -140,6 +142,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           // We need to set it on the model BEFORE initializing undoManager so baseline is clean
           if (this.editingTrack.arduino_config) {
             this.arduinoConfig = JSON.parse(JSON.stringify(this.editingTrack.arduino_config));
+            // Ensure arrays exist
+            if (!this.arduinoConfig!.digitalIds) this.arduinoConfig!.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
+            if (!this.arduinoConfig!.analogIds) this.arduinoConfig!.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
           } else {
             this.initDefaultArduinoConfig();
             // Sync it back to the model object so undoManager sees it in initial snapshot
@@ -151,6 +156,21 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
           // Now initialize tracking with a fully populated model
           this.undoManager.initialize(this.editingTrack);
+
+          // Initialize Interface Protocol on server
+          if (this.arduinoConfig) {
+            this.dataService.initializeInterface(this.arduinoConfig, this.lanes.length).subscribe({
+              next: (response) => {
+                if (!response.success) {
+                  alert(`Failed to initialize interface: ${response.message}`);
+                }
+              },
+              error: (err) => {
+                console.error('Error calling initializeInterface', err);
+                alert('An error occurred while connecting to the track interface.');
+              }
+            });
+          }
         }
 
         this.isLoading = false;
@@ -161,15 +181,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.cdr.detectChanges();
       }
-    });
-  }
-
-  fetchPorts() {
-    this.dataService.getSerialPorts().subscribe({
-      next: (ports) => {
-        this.availablePorts = ports;
-      },
-      error: (err) => console.error('Failed to fetch ports', err)
     });
   }
 
@@ -261,9 +272,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = null;
     this.undoManager.undo();
-    // View needs to update from the restored state
-    // The applier updates editingTrack, but we need to sync local bound vars
-    // (This logic is actually in the applier I defined in constructor)
   }
   redo() {
     clearTimeout(this.colorDebounceTimer);
@@ -274,9 +282,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   onInputFocus() { this.undoManager.onInputFocus(); }
   onInputChange() {
-    // Update the underlying model temporarily so captureState works?
-    // Actually captureState calls createSnapshot which reads this.trackName/this.lanes
-    // So we just need to ensure those are up to date (Angular binding does this).
     this.undoManager.onInputChange();
   }
   onInputBlur() { this.undoManager.onInputBlur(); }
@@ -341,104 +346,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       baudRate: 9600,
       debounceUs: 1000,
       globalInvertLanes: 0,
-      globalInvertRelays: 0,
+      normallyClosedRelays: false,
       globalInvertLights: 0,
       useLapsForPits: 0,
       useLapsForPitEnd: 0,
       usePitsAsLaps: 0,
       useLapsForSegments: 0,
       hardwareType: 0, // 0 = Uno, 1 = Mega
-      digitalIds: new Array(60).fill(-1),
-      analogIds: new Array(16).fill(-1),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
+      analogIds: new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       ledStrings: null,
       ledLaneColorOverrides: null
     };
-  }
-
-  // enableArduino removed as it's always on
-
-  get availablePins(): number[] {
-    if (!this.arduinoConfig) return [];
-    // 0 = Uno, 1 = Mega
-    // Uno: D2-D13 (12 pins), A0-A5 (6 pins)
-    // Mega: D2-D53 (52 pins), A0-A15 (16 pins)
-
-    const isMega = this.arduinoConfig.hardwareType === 1;
-    const digitalCount = isMega ? 54 : 14;
-    // Excluding 0 and 1 usually (RX/TX)? Let's assume all for now or 2+
-    const pins = [];
-    for (let i = 2; i < digitalCount; i++) pins.push(i);
-    return pins;
-  }
-
-  get availableAnalogPins(): number[] {
-    if (!this.arduinoConfig) return [];
-    const isMega = this.arduinoConfig.hardwareType === 1;
-    const analogCount = isMega ? 16 : 6;
-    const pins = [];
-    for (let i = 0; i < analogCount; i++) pins.push(i);
-    return pins;
-  }
-
-  updateArduinoConfig() {
-    // Trigger update/capture state if modifying properties directly
-    // Or call this on change
-    this.captureState();
-  }
-
-  // Helpers for pin assignment
-  getPinBehavior(isDigital: boolean, pinIndex: number): number {
-    if (!this.arduinoConfig) return -1;
-    return isDigital ? this.arduinoConfig.digitalIds[pinIndex] : this.arduinoConfig.analogIds[pinIndex];
-  }
-
-  setPinBehavior(isDigital: boolean, pinIndex: number, behavior: string) {
-    if (!this.arduinoConfig) return;
-    const val = parseInt(behavior, 10);
-    if (isDigital) {
-      this.arduinoConfig.digitalIds[pinIndex] = val;
-    } else {
-      this.arduinoConfig.analogIds[pinIndex] = val;
-    }
-    this.captureState();
-  }
-
-  // Constants matching ArduinoProtocol.java
-  // Replaced by com.antigravity.proto.PinBehavior
-
-  getPinAction(isDigital: boolean, pinIndex: number): string {
-    const val = this.getPinBehavior(isDigital, pinIndex);
-    if (val === -1) return '';
-    if (val === com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON) return 'master_call';
-
-    if (val >= com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE && val < com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE)
-      return `lap_${val - com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE}`;
-
-    if (val >= com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE && val < com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE)
-      return `segment_${val - com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE}`;
-
-    if (val >= com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE && val < com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + 1000)
-      return `call_${val - com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE}`;
-
-    return '';
-  }
-
-  setPinAction(isDigital: boolean, pinIndex: number, action: string) {
-    let val = -1;
-    if (action === 'master_call') {
-      val = com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON;
-    } else if (action.startsWith('lap_')) {
-      const laneIndex = parseInt(action.split('_')[1], 10);
-      val = com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE + laneIndex;
-    } else if (action.startsWith('segment_')) {
-      const laneIndex = parseInt(action.split('_')[1], 10);
-      val = com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE + laneIndex;
-    } else if (action.startsWith('call_')) {
-      const laneIndex = parseInt(action.split('_')[1], 10);
-      val = com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + laneIndex;
-    }
-
-    this.setPinBehavior(isDigital, pinIndex, val.toString());
   }
 
   saveAsNew() {
@@ -459,15 +378,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     // Construct payload
     const finalTrack = this.createSnapshot();
 
-    if (isSaveAsNew || finalTrack.entity_id === 'new') {
-      // ID will be generated by server/handler logic but we send 'new' or null ID implicitly
-      // Client model constructor enforces ID, but for sending we can just rely on the object structure
-      // If we really need to change ID to 'new' for the call:
-      // We can't change readonly property easily, but createSnapshot uses editingTrack.entity_id
-    }
-
-    // We need to send a plain object usually, but DataService takes 'any'
-    // If saving as new, we treat it as create
     const wasNew = isSaveAsNew || finalTrack.entity_id === 'new';
 
     const obs = wasNew
@@ -490,7 +400,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
         // Sync local UI state with server result to ensure clean state matches
         this.trackName = this.editingTrack.name;
-        // Ensure lanes are proper objects/arrays as expected
         // Ensure lanes are proper objects/arrays as expected
         this.lanes = this.editingTrack.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length));
 

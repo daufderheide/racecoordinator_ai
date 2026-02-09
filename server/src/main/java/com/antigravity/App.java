@@ -176,19 +176,28 @@ public class App {
 
         app.ws("/api/race-data", ws -> {
             ws.onConnect(ctx -> {
-                com.antigravity.race.RaceManager.getInstance().addSession(ctx);
+                com.antigravity.race.ClientSubscriptionManager.getInstance().addSession(ctx);
             });
             ws.onClose(ctx -> {
-                com.antigravity.race.RaceManager.getInstance().removeSession(ctx);
+                com.antigravity.race.ClientSubscriptionManager.getInstance().removeSession(ctx);
             });
             ws.onBinaryMessage(ctx -> {
                 try {
                     com.antigravity.proto.RaceSubscriptionRequest request = com.antigravity.proto.RaceSubscriptionRequest
                             .parseFrom(ctx.data());
-                    com.antigravity.race.RaceManager.getInstance().handleRaceSubscription(ctx, request);
+                    com.antigravity.race.ClientSubscriptionManager.getInstance().handleRaceSubscription(ctx, request);
                 } catch (Exception e) {
                     // Ignore non-subscription messages or invalid protos
                 }
+            });
+        });
+
+        app.ws("/api/interface-data", ws -> {
+            ws.onConnect(ctx -> {
+                com.antigravity.race.ClientSubscriptionManager.getInstance().addInterfaceSession(ctx);
+            });
+            ws.onClose(ctx -> {
+                com.antigravity.race.ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
             });
         });
 

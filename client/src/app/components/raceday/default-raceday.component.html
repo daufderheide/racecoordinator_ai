@@ -1,4 +1,9 @@
 <div class="dashboard-wrapper">
+
+  <app-acknowledgement-modal [visible]="showAckModal" [title]="ackModalTitle" [message]="ackModalMessage"
+    [buttonText]="ackModalButtonText" (acknowledge)="onAcknowledgeModal()">
+  </app-acknowledgement-modal>
+
   <app-confirmation-modal [visible]="showExitConfirmation" title="CD_CONFIRM_EXIT_TITLE"
     message="CD_CONFIRM_EXIT_MESSAGE" confirmText="CD_YES" cancelText="CD_NO" (confirm)="onExitConfirm()"
     (cancel)="onExitCancel()">
@@ -14,39 +19,44 @@
         </div>
       </div>
       <div class="menu-wrapper">
-        <button class="menu-button-top" (click)="toggleMenu()">{{ 'RD_MENU_RACE_DIRECTOR' | translate }}</button>
+        <button class="menu-button-top" (click)="toggleMenu()">{{ 'RD_MENU_RACE_DIRECTOR' | translate
+          }}</button>
         <div *ngIf="isMenuOpen" class="menu-dropdown top-dropdown">
-          <div class="menu-item" (click)="onMenuSelect('START_RESUME')">
+          <div class="menu-item" [class.disabled]="isStartResumeDisabled" (click)="onMenuSelect('START_RESUME')">
             <span>{{ 'RD_MENU_START_RESUME' | translate }}</span>
             <span class="menu-shortcut">{{ startResumeShortcut }}</span>
           </div>
-          <div class="menu-item" (click)="onMenuSelect('PAUSE')">
+          <div class="menu-item" [class.disabled]="isPauseDisabled" (click)="onMenuSelect('PAUSE')">
             <span>{{ 'RD_MENU_PAUSE' | translate }}</span>
             <span class="menu-shortcut">{{ pauseShortcut }}</span>
           </div>
           <div class="menu-separator"></div>
-          <div class="menu-item" (click)="onMenuSelect('ADD_LAP')">{{ 'RD_MENU_ADD_LAP' | translate }}</div>
-          <div class="menu-item" (click)="onMenuSelect('NEXT_HEAT')">
+          <div class="menu-item" [class.disabled]="isAddLapDisabled" (click)="onMenuSelect('ADD_LAP')">{{
+            'RD_MENU_ADD_LAP' | translate }}</div>
+          <div class="menu-item" [class.disabled]="isNextHeatDisabled" (click)="onMenuSelect('NEXT_HEAT')">
             <span>{{ 'RD_MENU_NEXT_HEAT' | translate }}</span>
             <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
           </div>
           <div class="menu-separator"></div>
-          <div class="menu-item" (click)="onMenuSelect('RESTART_HEAT')">
+          <div class="menu-item" [class.disabled]="isRestartHeatDisabled" (click)="onMenuSelect('RESTART_HEAT')">
             <span>{{ 'RD_MENU_RESTART' | translate }}</span>
             <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
           </div>
-          <div class="menu-item" (click)="onMenuSelect('DEFER_HEAT')">
+          <div class="menu-item" [class.disabled]="isDeferHeatDisabled" (click)="onMenuSelect('DEFER_HEAT')">
             <span>{{ 'RD_MENU_DEFER' | translate }}</span>
             <span class="menu-shortcut">{{ deferHeatShortcut }}</span>
           </div>
-          <div class="menu-item" (click)="onMenuSelect('SKIP_HEAT')">
+          <div class="menu-item" [class.disabled]="isSkipHeatDisabled" (click)="onMenuSelect('SKIP_HEAT')">
             <span>{{ 'RD_MENU_SKIP_HEAT' | translate }}</span>
             <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
           </div>
-          <div class="menu-item" (click)="onMenuSelect('SKIP_RACE')">{{ 'RD_MENU_SKIP_RACE' | translate }}</div>
+          <div class="menu-item" [class.disabled]="isSkipRaceDisabled" (click)="onMenuSelect('SKIP_RACE')">{{
+            'RD_MENU_SKIP_RACE' | translate }}</div>
           <div class="menu-separator"></div>
-          <div class="menu-item" (click)="onMenuSelect('MODIFY')">{{ 'RD_MENU_MODIFY' | translate }}</div>
-          <div class="menu-item" (click)="onMenuSelect('EDIT_LAPS')">{{ 'RD_MENU_EDIT_LAPS' | translate }}</div>
+          <div class="menu-item" [class.disabled]="isModifyDisabled" (click)="onMenuSelect('MODIFY')">{{
+            'RD_MENU_MODIFY' | translate }}</div>
+          <div class="menu-item" [class.disabled]="isEditLapsDisabled" (click)="onMenuSelect('EDIT_LAPS')">{{
+            'RD_MENU_EDIT_LAPS' | translate }}</div>
         </div>
       </div>
       <div class="menu-wrapper">

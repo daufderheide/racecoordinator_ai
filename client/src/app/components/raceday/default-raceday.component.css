@@ -81,6 +81,12 @@
   /* Slightly lighter on hover */
 }
 
+.menu-button-top:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
 .menu-dropdown {
   position: absolute;
   top: 100%;

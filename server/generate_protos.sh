@@ -8,7 +8,9 @@ PROTO_ROOT="$PROJECT_ROOT/proto"
 
 # Protoc executable path (downloaded by maven plugin)
 PROTOC="$SERVER_DIR/target_dist/protoc-plugins/protoc-3.25.1-osx-x86_64.exe"
-JAVA_OUT="$SERVER_DIR/target_dist/generated-sources/protobuf/java"
+# Allow overriding the destination directory via PROTO_DEST_DIR environment variable
+TARGET_DIR="${PROTO_DEST_DIR:-$SERVER_DIR/target_dist}"
+JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
 
 # Ensure target directory exists (mvn clean might have removed it)
 mkdir -p "$JAVA_OUT"

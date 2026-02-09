@@ -1,0 +1,35 @@
+<div class="arduino-summary" *ngIf="track && track.arduino_config">
+  <h3>{{ 'AS_TITLE' | translate }}</h3>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <span class="label">{{ 'AS_BOARD_TYPE' | translate }}:</span>
+      <span class="value">{{ getBoardName() | translate }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">{{ 'AS_COM_PORT' | translate }}:</span>
+      <span class="value">{{ track.arduino_config.commPort || ('AS_NO_PORT' | translate) }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">{{ 'AS_CONFIGURED_PINS' | translate }}:</span>
+      <span class="value">{{ 'AS_PINS_COUNT' | translate:{count: getConfiguredPinCount()} }}</span>
+    </div>
+  </div>
+  <div class="behavior-checkboxes">
+    <div class="behavior-check">
+      <span class="check-box" [class.checked]="hasBehavior('lap')"></span>
+      <span class="behavior-label">{{ 'AS_BEHAVIOR_LAPS' | translate }}</span>
+    </div>
+    <div class="behavior-check">
+      <span class="check-box" [class.checked]="hasBehavior('segment')"></span>
+      <span class="behavior-label">{{ 'AS_BEHAVIOR_SEGMENTS' | translate }}</span>
+    </div>
+    <div class="behavior-check">
+      <span class="check-box" [class.checked]="hasBehavior('call')"></span>
+      <span class="behavior-label">{{ 'AS_BEHAVIOR_CALL_BUTTONS' | translate }}</span>
+    </div>
+    <div class="behavior-check">
+      <span class="check-box" [class.checked]="hasBehavior('relay')"></span>
+      <span class="behavior-label">{{ 'AS_BEHAVIOR_RELAYS' | translate }}</span>
+    </div>
+  </div>
+</div>

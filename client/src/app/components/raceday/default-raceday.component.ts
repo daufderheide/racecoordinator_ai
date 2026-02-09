@@ -13,6 +13,9 @@ import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
 import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 import { playSound } from 'src/app/utils/audio';
+import { com } from 'src/app/proto/message';
+import InterfaceStatus = com.antigravity.InterfaceStatus;
+
 
 import { ColumnDefinition } from './column_definition';
 
@@ -42,6 +45,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     private previousTime: number = 0;
 
+    // Acknowledgement Modal State
+    showAckModal = false;
+    ackModalTitle = '';
+    ackModalMessage = '';
+    ackModalButtonText = 'ACK_MODAL_BTN_OK';
+
+    private wasInterfaceErrorShown = false;
+    private disconnectedTimeout: any;
+    private noStatusWatchdog: any;
+    private lastInterfaceStatus: InterfaceStatus | number = -1;
+    private readonly WATCHDOG_TIMEOUT = 5000;
+
+
     constructor(
         private translationService: TranslationService,
         private dataService: DataService,
@@ -60,6 +76,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
 
     protected driverRankings = new Map<string, number>();
+    protected isInterfaceConnected: boolean = false;
+    protected raceState: com.antigravity.RaceState = com.antigravity.RaceState.UNKNOWN_STATE;
 
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
@@ -213,16 +231,98 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
                 this.raceService.setParticipants(participants);
             }
         });
+
+        this.dataService.getInterfaceEvents().subscribe(event => {
+            if (event.status) {
+                this.resetWatchdog();
+
+                const status = event.status.status;
+                if (status === this.lastInterfaceStatus) {
+                    return;
+                }
+                this.lastInterfaceStatus = status ?? -1;
+
+                this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;
+
+                if (status === InterfaceStatus.NO_DATA) {
+                    this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+                } else if (status === InterfaceStatus.DISCONNECTED) {
+                    this.scheduleDisconnectedError();
+                } else if (status === InterfaceStatus.CONNECTED) {
+                    this.clearDisconnectedError();
+                    if (this.wasInterfaceErrorShown) {
+                        this.showInterfaceError('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
+                    }
+                }
+                this.cdr.detectChanges();
+            }
+        });
+
+        this.dataService.getRaceState().subscribe(state => {
+            this.raceState = state;
+            this.cdr.detectChanges();
+        });
+
+        // Ensure we are connected to the interface socket to receive status updates
+        this.dataService.connectToInterfaceDataSocket();
+
+        // Start watchdog
+        this.resetWatchdog();
     }
 
     private leaderBoardWindow: Window | null = null;
 
     ngOnDestroy() {
+        this.dataService.disconnectFromInterfaceDataSocket();
+
+        if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
+        this.clearDisconnectedError();
+
         if (this.leaderBoardWindow) {
             this.leaderBoardWindow.close();
             this.leaderBoardWindow = null;
         }
     }
+
+    private resetWatchdog() {
+        if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
+        this.noStatusWatchdog = setTimeout(() => {
+            this.lastInterfaceStatus = -1;
+            this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+        }, this.WATCHDOG_TIMEOUT);
+    }
+
+    private showInterfaceError(titleKey: string, messageKey: string) {
+        this.clearDisconnectedError();
+        this.ackModalTitle = titleKey;
+        this.ackModalMessage = messageKey;
+        this.showAckModal = true;
+        this.wasInterfaceErrorShown = true;
+        this.cdr.detectChanges();
+    }
+
+    private scheduleDisconnectedError() {
+        if (this.disconnectedTimeout) return; // Already scheduled
+        this.disconnectedTimeout = setTimeout(() => {
+            this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+        }, 5000);
+    }
+
+    private clearDisconnectedError() {
+        if (this.disconnectedTimeout) {
+            clearTimeout(this.disconnectedTimeout);
+            this.disconnectedTimeout = null;
+        }
+    }
+
+    onAcknowledgeModal() {
+        this.showAckModal = false;
+        if (this.ackModalTitle === 'ACK_MODAL_TITLE_CONNECTED') {
+            this.wasInterfaceErrorShown = false;
+        }
+    }
+
+
 
     private sortHeatDrivers() {
         if (!this.heat) return;
@@ -408,6 +508,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
 
     onMenuSelect(action: string) {
+        // Enforce disabled states
+        if (action === 'START_RESUME' && this.isStartResumeDisabled) return;
+        if (action === 'PAUSE' && this.isPauseDisabled) return;
+        if (action === 'NEXT_HEAT' && this.isNextHeatDisabled) return;
+        if (action === 'RESTART_HEAT' && this.isRestartHeatDisabled) return;
+        if (action === 'SKIP_HEAT' && this.isSkipHeatDisabled) return;
+        if (action === 'DEFER_HEAT' && this.isDeferHeatDisabled) return;
+        if (action === 'SKIP_RACE' && this.isSkipRaceDisabled) return;
+        if (action === 'MODIFY' && this.isModifyDisabled) return;
+        if (action === 'ADD_LAP' && this.isAddLapDisabled) return;
+        if (action === 'EDIT_LAPS' && this.isEditLapsDisabled) return;
+
+        this.isMenuOpen = false;
         console.log('Menu Action Selected:', action);
         if (action === 'START_RESUME') {
             this.dataService.startRace().subscribe(success => {
@@ -566,6 +679,94 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.onMenuSelect('DEFER_HEAT');
         }
+    }
+
+    // Menu State Helpers
+    public get isStartResumeDisabled(): boolean {
+        // Disabled if disconnected OR (Starting, Racing, HeatOver, RaceOver)
+        // Note: User said "Starting: Start/Resume ... disabled", "Racing: Same as Starting", "Heat Over: Everything ... disabled"
+        // Also technically disabled in PAUSED? No, Resume is allowed in Paused.
+        // NOT_STARTED: Enabled.
+        const s = this.raceState;
+        return !this.isInterfaceConnected ||
+            s === com.antigravity.RaceState.STARTING ||
+            s === com.antigravity.RaceState.RACING ||
+            s === com.antigravity.RaceState.HEAT_OVER ||
+            s === com.antigravity.RaceState.RACE_OVER;
+    }
+
+    public get isPauseDisabled(): boolean {
+        // Disabled if disconnected OR (NotStarted, Paused, HeatOver, RaceOver)
+        // Enabled in STARTING? User didn't say disabled. Usually can pause countdown.
+        // Enabled in RACING.
+        const s = this.raceState; // Shortcut
+        const RS = com.antigravity.RaceState;
+        return !this.isInterfaceConnected ||
+            s === RS.NOT_STARTED ||
+            s === RS.PAUSED ||
+            s === RS.HEAT_OVER ||
+            s === RS.RACE_OVER;
+    }
+
+    public get isNextHeatDisabled(): boolean {
+        const s = this.raceState;
+        return s === com.antigravity.RaceState.STARTING ||
+            s === com.antigravity.RaceState.RACING ||
+            s === com.antigravity.RaceState.HEAT_OVER ||
+            s === com.antigravity.RaceState.RACE_OVER;
+    }
+
+    public get isRestartHeatDisabled(): boolean {
+        // Disabled in Starting, Racing.
+        // "Heat Over: Everything... disabled".
+        const s = this.raceState;
+        const RS = com.antigravity.RaceState;
+        return s === RS.STARTING ||
+            s === RS.RACING ||
+            s === RS.HEAT_OVER ||
+            s === RS.RACE_OVER;
+    }
+
+    public get isDeferHeatDisabled(): boolean {
+        // Disabled in Starting, Racing.
+        // "Heat Over: Everything... disabled".
+        const s = this.raceState;
+        const RS = com.antigravity.RaceState;
+        return s !== RS.NOT_STARTED;
+    }
+
+    public get isSkipHeatDisabled(): boolean {
+        const s = this.raceState;
+        const RS = com.antigravity.RaceState;
+        return s === RS.STARTING ||
+            s === RS.RACING ||
+            s === RS.HEAT_OVER ||
+            s === RS.RACE_OVER;
+    }
+
+    public get isSkipRaceDisabled(): boolean {
+        const s = this.raceState;
+        return s === com.antigravity.RaceState.STARTING ||
+            s === com.antigravity.RaceState.RACING ||
+            s === com.antigravity.RaceState.RACE_OVER;
+    }
+
+    public get isAddLapDisabled(): boolean {
+        // User said "except edit laps/add secions". Assuming ADD_LAP is "add secions" or similar allowed action?
+        // Let's assume enabled.
+        return false;
+    }
+
+    public get isModifyDisabled(): boolean {
+        // "Heat Over: Everything... disabled".
+        const s = this.raceState;
+        const RS = com.antigravity.RaceState;
+        return s === RS.RACE_OVER;
+    }
+
+    public get isEditLapsDisabled(): boolean {
+        // Always enabled.
+        return false;
     }
 
     protected trackByDriverId(index: number, hd: DriverHeatData): string {

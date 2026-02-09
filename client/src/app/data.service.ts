@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs';
 import { com } from './proto/message';
 import { map } from 'rxjs/operators';
 import { SettingsService } from './services/settings.service';
+import { ArduinoConfig } from './models/track';
 
 @Injectable({
   providedIn: 'root'
@@ -111,6 +112,104 @@ export class DataService {
     }).pipe(
       map(response => {
         return com.antigravity.InitializeRaceResponse.decode(new Uint8Array(response as any));
+      })
+    );
+  }
+
+  initializeInterface(config: ArduinoConfig, laneCount: number): Observable<com.antigravity.InitializeInterfaceResponse> {
+    const request = com.antigravity.InitializeInterfaceRequest.create({
+      config: com.antigravity.ArduinoConfig.create({
+        name: config.name,
+        commPort: config.commPort,
+        baudRate: config.baudRate,
+        debounceUs: config.debounceUs,
+        hardwareType: config.hardwareType,
+        globalInvertLanes: config.globalInvertLanes,
+        normallyClosedRelays: config.normallyClosedRelays,
+        globalInvertLights: config.globalInvertLights,
+        useLapsForPits: config.useLapsForPits,
+        useLapsForPitEnd: config.useLapsForPitEnd,
+        usePitsAsLaps: config.usePitsAsLaps,
+        useLapsForSegments: config.useLapsForSegments,
+        digitalIds: config.digitalIds,
+        analogIds: config.analogIds,
+        ledLaneColorOverrides: config.ledLaneColorOverrides || []
+      }),
+      laneCount
+    });
+    const buffer = com.antigravity.InitializeInterfaceRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/initialize-interface`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        return com.antigravity.InitializeInterfaceResponse.decode(new Uint8Array(response as any));
+      })
+    );
+  }
+
+  updateInterfaceConfig(config: ArduinoConfig): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
+    const request = com.antigravity.UpdateInterfaceConfigRequest.create({
+      config: com.antigravity.ArduinoConfig.create({
+        name: config.name,
+        commPort: config.commPort,
+        baudRate: config.baudRate,
+        debounceUs: config.debounceUs,
+        hardwareType: config.hardwareType,
+        globalInvertLanes: config.globalInvertLanes,
+        normallyClosedRelays: config.normallyClosedRelays,
+        globalInvertLights: config.globalInvertLights,
+        useLapsForPits: config.useLapsForPits,
+        useLapsForPitEnd: config.useLapsForPitEnd,
+        usePitsAsLaps: config.usePitsAsLaps,
+        useLapsForSegments: config.useLapsForSegments,
+        digitalIds: config.digitalIds,
+        analogIds: config.analogIds,
+        ledLaneColorOverrides: config.ledLaneColorOverrides || []
+      })
+    });
+    const buffer = com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/update-interface-config`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        return com.antigravity.UpdateInterfaceConfigResponse.decode(new Uint8Array(response as any));
+      })
+    );
+  }
+
+  setInterfacePinState(pin: number, isDigital: boolean, isHigh: boolean): Observable<com.antigravity.SetInterfacePinStateResponse> {
+    const request = com.antigravity.SetInterfacePinStateRequest.create({
+      pin,
+      isDigital,
+      isHigh
+    });
+    const buffer = com.antigravity.SetInterfacePinStateRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/set-interface-pin-state`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        return com.antigravity.SetInterfacePinStateResponse.decode(new Uint8Array(response as any));
       })
     );
   }
@@ -317,30 +416,37 @@ export class DataService {
   }
 
   private raceDataSocket?: WebSocket;
+  private interfaceDataSocket?: WebSocket;
   private raceTimeSubject = new BehaviorSubject<number>(0);
   private lapSubject = new Subject<com.antigravity.ILap>();
   private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
   private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
   private overallStandingsSubject = new Subject<com.antigravity.IOverallStandingsUpdate>();
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
+  private interfaceEventSubject = new Subject<com.antigravity.IInterfaceEvent>();
+  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
+
+  private shouldSubscribeToRaceData = false;
 
   public updateRaceSubscription(subscribe: boolean) {
+    this.shouldSubscribeToRaceData = subscribe;
     if (this.raceDataSocket && this.raceDataSocket.readyState === WebSocket.OPEN) {
-      const request = com.antigravity.RaceSubscriptionRequest.create({ subscribe });
-      const buffer = com.antigravity.RaceSubscriptionRequest.encode(request).finish();
-      this.raceDataSocket.send(buffer);
-      console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
+      this.sendRaceSubscriptionRequest(subscribe);
     } else {
-      console.warn('Race Data WebSocket not open. Triggering connection check and queuing fallback (retry logic handles actual connect).');
+      console.warn('Race Data WebSocket not open. Triggering connection check and queuing subscription.');
       // If we are completely disconnected, rely on the reconnect loop or trigger one now
       this.connectToRaceDataSocket();
-
-      // We can't send right now, but once connected, the race component (if active) 
-      // might need to re-request.
-      // Ideally, we'd queue this message, but for now we expect the component 
-      // to rely on the stream.
-      // NOTE: RacedayComponent usually subscribes in ngOnInit.
+      // Subscription will be sent on open
     }
+  }
+
+  private sendRaceSubscriptionRequest(subscribe: boolean) {
+    if (!this.raceDataSocket || this.raceDataSocket.readyState !== WebSocket.OPEN) return;
+
+    const request = com.antigravity.RaceSubscriptionRequest.create({ subscribe });
+    const buffer = com.antigravity.RaceSubscriptionRequest.encode(request).finish();
+    this.raceDataSocket.send(buffer);
+    console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
 
   public connectToRaceDataSocket() {
@@ -364,7 +470,9 @@ export class DataService {
     this.raceDataSocket.onopen = () => {
       console.log('Connected to Race Data WebSocket');
       // If we had pending subscriptions or state, we might need to resend.
-      // For now, rely on components to call updateRaceSubscription if they are active.
+      if (this.shouldSubscribeToRaceData) {
+        this.sendRaceSubscriptionRequest(true);
+      }
     };
 
     this.raceDataSocket.onmessage = (event) => {
@@ -382,9 +490,15 @@ export class DataService {
           this.standingsSubject.next(raceData.standingsUpdate);
         } else if (raceData.overallStandingsUpdate) {
           this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+        } else if (raceData.raceState) {
+          console.log('WS: Received RaceState', raceData.raceState);
+          this.raceStateSubject.next(raceData.raceState);
         } else if (raceData.race) {
           console.log('WS: Received Race', raceData.race);
           this.raceUpdateSubject.next(raceData.race);
+          if (raceData.race.state) {
+            this.raceStateSubject.next(raceData.race.state);
+          }
         }
       } catch (e) {
         console.error('Error parsing race data message', e);
@@ -403,6 +517,49 @@ export class DataService {
       console.warn('Race Data WebSocket error', err);
       // onerror often followed by onclose, so we rely on onclose for retry
     };
+  }
+
+  public connectToInterfaceDataSocket() {
+    if (this.interfaceDataSocket && (this.interfaceDataSocket.readyState === WebSocket.OPEN || this.interfaceDataSocket.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    if (this.interfaceDataSocket) {
+      try {
+        this.interfaceDataSocket.close();
+      } catch (e) { }
+    }
+
+    const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/interface-data`;
+    console.log(`Connecting to Interface WebSocket: ${wsUrl}`);
+    this.interfaceDataSocket = new WebSocket(wsUrl);
+    this.interfaceDataSocket.binaryType = 'arraybuffer';
+
+    this.interfaceDataSocket.onopen = () => {
+      console.log('Connected to Interface WebSocket');
+    };
+
+    this.interfaceDataSocket.onmessage = (event) => {
+      try {
+        const arrayBuffer = event.data as ArrayBuffer;
+        const msg = com.antigravity.InterfaceEvent.decode(new Uint8Array(arrayBuffer));
+        this.interfaceEventSubject.next(msg);
+      } catch (e) {
+        console.error('Error parsing interface data message', e);
+      }
+    };
+
+    this.interfaceDataSocket.onclose = () => {
+      console.log('Interface Data WebSocket closed.');
+      this.interfaceDataSocket = undefined;
+    };
+  }
+
+  public disconnectFromInterfaceDataSocket() {
+    if (this.interfaceDataSocket) {
+      this.interfaceDataSocket.close();
+      this.interfaceDataSocket = undefined;
+    }
   }
 
   public getRaceTime(): Observable<number> {
@@ -427,5 +584,13 @@ export class DataService {
 
   public getRaceUpdate(): Observable<com.antigravity.IRace> {
     return this.raceUpdateSubject.asObservable();
+  }
+
+  public getInterfaceEvents(): Observable<com.antigravity.IInterfaceEvent> {
+    return this.interfaceEventSubject.asObservable();
+  }
+
+  public getRaceState(): Observable<com.antigravity.RaceState> {
+    return this.raceStateSubject.asObservable();
   }
 }

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/arduino_config.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "InitializeInterfaceProto";
+
+message InitializeInterfaceRequest {
+  ArduinoConfig config = 1;
+  int32 lane_count = 2;
+}
+
+message InitializeInterfaceResponse {
+  bool success = 1;
+  string message = 2;
+}

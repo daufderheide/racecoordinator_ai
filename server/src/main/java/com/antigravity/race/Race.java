@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.antigravity.protocols.demo.Demo;
+import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.CarData;
-import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.race.states.IRaceState;
@@ -40,14 +40,20 @@ public class Race implements ProtocolListener {
             com.antigravity.models.Race model,
             List<RaceParticipant> drivers,
             boolean isDemoMode) {
+        this(model, drivers, new DatabaseService().getTrack(database, model.getTrackEntityId()), isDemoMode);
+    }
+
+    public Race(com.antigravity.models.Race model,
+            List<RaceParticipant> drivers,
+            Track track,
+            boolean isDemoMode) {
         this.model = model;
         this.drivers = drivers;
         for (int i = 0; i < this.drivers.size(); i++) {
             this.drivers.get(i).setSeed(i + 1);
         }
 
-        DatabaseService dbService = new DatabaseService();
-        this.track = dbService.getTrack(database, model.getTrackEntityId());
+        this.track = track;
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
 
@@ -68,10 +74,18 @@ public class Race implements ProtocolListener {
             Demo protocol = new Demo(this.track.getLanes().size());
             protocols.add(protocol);
         } else {
-            throw new IllegalArgumentException("isDemoMode must be true");
+            com.antigravity.protocols.arduino.ArduinoConfig config = this.track.getArduinoConfig();
+            if (config != null) {
+                ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
+                protocols.add(protocol);
+            } else {
+                throw new IllegalArgumentException(
+                        "Race created in Real Mode, but no ArduinoConfig found for track: " + this.track.getName());
+            }
         }
         this.protocols = new ProtocolDelegate(protocols);
         this.protocols.setListener(this);
+        this.protocols.open();
     }
 
     public com.antigravity.models.Race getRaceModel() {
@@ -111,7 +125,7 @@ public class Race implements ProtocolListener {
     }
 
     public void broadcast(com.google.protobuf.GeneratedMessageV3 message) {
-        RaceManager.getInstance().broadcast(message);
+        ClientSubscriptionManager.getInstance().broadcast(message);
     }
 
     public synchronized void changeState(IRaceState newState) {
@@ -120,6 +134,21 @@ public class Race implements ProtocolListener {
         }
         state = newState;
         state.enter(this);
+
+        com.antigravity.proto.RaceState protoState = getProtoState(state);
+        try {
+            java.nio.file.Files.write(java.nio.file.Paths.get("/tmp/race_debug.log"),
+                    ("changeState to " + state.getClass().getSimpleName() + " -> Proto: " + protoState + "\n")
+                            .getBytes(),
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+
+        com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
+                .setRaceState(protoState)
+                .build();
+        broadcast(raceData);
     }
 
     public void startRace() {
@@ -182,14 +211,27 @@ public class Race implements ProtocolListener {
     }
 
     @Override
-    public void onLap(int lane, double lapTime) {
-        state.onLap(lane, lapTime);
+    public void onLap(int lane, double lapTime, int interfaceId) {
+        state.onLap(lane, lapTime, interfaceId);
     }
 
     @Override
-    public void onSegment(int lane, double segmentTime) {
+    public void onSegment(int lane, double segmentTime, int interfaceId) {
         // TODO(aufderheide): Implement this once one of the
         // protocols supports it.
+    }
+
+    @Override
+    public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
+        com.antigravity.proto.InterfaceEvent event = com.antigravity.proto.InterfaceEvent.newBuilder()
+                .setStatus(com.antigravity.proto.InterfaceStatusEvent.newBuilder()
+                        .setStatus(status)
+                        .build())
+                .build();
+        // Since this is an InterfaceEvent, we use broadcastInterfaceEvent if available
+        // or just broadcast it if it's a generic message.
+        // InterfaceEvent is generated from proto.
+        ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
     }
 
     @Override
@@ -224,6 +266,7 @@ public class Race implements ProtocolListener {
                 .addAllHeats(heatProtos)
                 .setCurrentHeat(
                         com.antigravity.converters.HeatConverter.toProto(currentHeat, sentObjectIds))
+                .setState(getProtoState(state))
                 .build();
 
         return com.antigravity.proto.RaceData.newBuilder()
@@ -233,5 +276,22 @@ public class Race implements ProtocolListener {
 
     public void moveToNextHeat() {
         state.nextHeat(this);
+    }
+
+    private com.antigravity.proto.RaceState getProtoState(IRaceState state) {
+        if (state instanceof NotStarted) {
+            return com.antigravity.proto.RaceState.NOT_STARTED;
+        } else if (state instanceof com.antigravity.race.states.Starting) {
+            return com.antigravity.proto.RaceState.STARTING;
+        } else if (state instanceof com.antigravity.race.states.Racing) {
+            return com.antigravity.proto.RaceState.RACING;
+        } else if (state instanceof com.antigravity.race.states.Paused) {
+            return com.antigravity.proto.RaceState.PAUSED;
+        } else if (state instanceof com.antigravity.race.states.HeatOver) {
+            return com.antigravity.proto.RaceState.HEAT_OVER;
+        } else if (state instanceof com.antigravity.race.states.RaceOver) {
+            return com.antigravity.proto.RaceState.RACE_OVER;
+        }
+        return com.antigravity.proto.RaceState.UNKNOWN_STATE;
     }
 }

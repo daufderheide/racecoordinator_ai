@@ -1,14 +1,42 @@
 syntax = "proto3";
-package com.antigravity.proto;
+package com.antigravity;
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "ArduinoConfigProto";
 
 enum PinBehavior {
-  BEHAVIOR_UNKNOWN = 0;
-  BEHAVIOR_CALL_BUTTON = 1;
+  BEHAVIOR_UNUSED = 0;
+  BEHAVIOR_RESERVED = 1;
+  BEHAVIOR_CALL_BUTTON = 2;
+  BEHAVIOR_RELAY = 3;
   BEHAVIOR_LAP_BASE = 1000;
   BEHAVIOR_SEGMENT_BASE = 2000;
   BEHAVIOR_CALL_BUTTON_BASE = 3000;
+  BEHAVIOR_RELAY_BASE = 4000;
+}
+
+enum PinId {
+  option allow_alias = true;
+  PIN_ID_UNKNOWN = 0;
+  PIN_ID_DIGITAL_BASE = 0;
+  PIN_ID_ANALOG_BASE = 1000;
+}
+
+message ArduinoConfig {
+  string name = 1;
+  string comm_port = 2;
+  int32 baud_rate = 3;
+  int32 debounce_us = 4;
+  int32 global_invert_lanes = 5;
+  bool normally_closed_relays = 6;
+  int32 global_invert_lights = 7;
+  int32 use_laps_for_pits = 8;
+  int32 use_laps_for_pit_end = 9;
+  int32 use_pits_as_laps = 10;
+  int32 use_laps_for_segments = 11;
+  int32 hardware_type = 12;
+  repeated int32 digital_ids = 13;
+  repeated int32 analog_ids = 14;
+  repeated string led_lane_color_overrides = 15;
 }

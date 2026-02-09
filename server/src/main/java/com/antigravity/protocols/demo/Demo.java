@@ -5,9 +5,12 @@ import java.util.List;
 
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.PartialTime;
+import com.antigravity.proto.DemoPinId;
 
 public class Demo extends DefaultProtocol {
     private java.util.concurrent.ScheduledExecutorService scheduler;
+    private java.util.concurrent.ScheduledExecutorService statusScheduler;
+    private java.util.concurrent.ScheduledFuture<?> statusFuture;
     private java.util.concurrent.ScheduledFuture<?> timerHandle;
     private java.util.Random random;
 
@@ -50,7 +53,33 @@ public class Demo extends DefaultProtocol {
 
     @Override
     public boolean open() {
+        startStatusScheduler();
         return true;
+    }
+
+    @Override
+    public void close() {
+        if (statusFuture != null) {
+            statusFuture.cancel(true);
+        }
+        if (statusScheduler != null) {
+            statusScheduler.shutdown();
+        }
+        statusScheduler = null;
+    }
+
+    private void startStatusScheduler() {
+        if (statusFuture != null && !statusFuture.isCancelled()) {
+            return;
+        }
+        if (statusScheduler == null || statusScheduler.isShutdown()) {
+            statusScheduler = createScheduler();
+        }
+        statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
+            if (listener != null) {
+                listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+            }
+        }, 0, 1, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     @Override
@@ -78,7 +107,8 @@ public class Demo extends DefaultProtocol {
                             double lapTime = totalElapsed / 1000.0;
 
                             if (listener != null) {
-                                listener.onLap(i, lapTime);
+                                int laneInterfaceId = DemoPinId.DEMO_PIN_ID_LANE_BASE_VALUE.getNumber() + i;
+                                listener.onLap(i, lapTime, laneInterfaceId);
                             }
 
                             // Reset for next lap

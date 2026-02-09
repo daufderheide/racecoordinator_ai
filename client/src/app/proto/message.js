@@ -3125,36 +3125,640 @@ export const com = $root.com = (() => {
             return LaneModel;
         })();
 
-        antigravity.proto = (function() {
+        /**
+         * PinBehavior enum.
+         * @name com.antigravity.PinBehavior
+         * @enum {number}
+         * @property {number} BEHAVIOR_UNUSED=0 BEHAVIOR_UNUSED value
+         * @property {number} BEHAVIOR_RESERVED=1 BEHAVIOR_RESERVED value
+         * @property {number} BEHAVIOR_CALL_BUTTON=2 BEHAVIOR_CALL_BUTTON value
+         * @property {number} BEHAVIOR_RELAY=3 BEHAVIOR_RELAY value
+         * @property {number} BEHAVIOR_LAP_BASE=1000 BEHAVIOR_LAP_BASE value
+         * @property {number} BEHAVIOR_SEGMENT_BASE=2000 BEHAVIOR_SEGMENT_BASE value
+         * @property {number} BEHAVIOR_CALL_BUTTON_BASE=3000 BEHAVIOR_CALL_BUTTON_BASE value
+         * @property {number} BEHAVIOR_RELAY_BASE=4000 BEHAVIOR_RELAY_BASE value
+         */
+        antigravity.PinBehavior = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "BEHAVIOR_UNUSED"] = 0;
+            values[valuesById[1] = "BEHAVIOR_RESERVED"] = 1;
+            values[valuesById[2] = "BEHAVIOR_CALL_BUTTON"] = 2;
+            values[valuesById[3] = "BEHAVIOR_RELAY"] = 3;
+            values[valuesById[1000] = "BEHAVIOR_LAP_BASE"] = 1000;
+            values[valuesById[2000] = "BEHAVIOR_SEGMENT_BASE"] = 2000;
+            values[valuesById[3000] = "BEHAVIOR_CALL_BUTTON_BASE"] = 3000;
+            values[valuesById[4000] = "BEHAVIOR_RELAY_BASE"] = 4000;
+            return values;
+        })();
+
+        /**
+         * PinId enum.
+         * @name com.antigravity.PinId
+         * @enum {number}
+         * @property {number} PIN_ID_UNKNOWN=0 PIN_ID_UNKNOWN value
+         * @property {number} PIN_ID_DIGITAL_BASE=0 PIN_ID_DIGITAL_BASE value
+         * @property {number} PIN_ID_ANALOG_BASE=1000 PIN_ID_ANALOG_BASE value
+         */
+        antigravity.PinId = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "PIN_ID_UNKNOWN"] = 0;
+            values["PIN_ID_DIGITAL_BASE"] = 0;
+            values[valuesById[1000] = "PIN_ID_ANALOG_BASE"] = 1000;
+            return values;
+        })();
+
+        antigravity.ArduinoConfig = (function() {
 
             /**
-             * Namespace proto.
+             * Properties of an ArduinoConfig.
              * @memberof com.antigravity
-             * @namespace
+             * @interface IArduinoConfig
+             * @property {string|null} [name] ArduinoConfig name
+             * @property {string|null} [commPort] ArduinoConfig commPort
+             * @property {number|null} [baudRate] ArduinoConfig baudRate
+             * @property {number|null} [debounceUs] ArduinoConfig debounceUs
+             * @property {number|null} [globalInvertLanes] ArduinoConfig globalInvertLanes
+             * @property {boolean|null} [normallyClosedRelays] ArduinoConfig normallyClosedRelays
+             * @property {number|null} [globalInvertLights] ArduinoConfig globalInvertLights
+             * @property {number|null} [useLapsForPits] ArduinoConfig useLapsForPits
+             * @property {number|null} [useLapsForPitEnd] ArduinoConfig useLapsForPitEnd
+             * @property {number|null} [usePitsAsLaps] ArduinoConfig usePitsAsLaps
+             * @property {number|null} [useLapsForSegments] ArduinoConfig useLapsForSegments
+             * @property {number|null} [hardwareType] ArduinoConfig hardwareType
+             * @property {Array.<number>|null} [digitalIds] ArduinoConfig digitalIds
+             * @property {Array.<number>|null} [analogIds] ArduinoConfig analogIds
+             * @property {Array.<string>|null} [ledLaneColorOverrides] ArduinoConfig ledLaneColorOverrides
              */
-            const proto = {};
 
             /**
-             * PinBehavior enum.
-             * @name com.antigravity.proto.PinBehavior
-             * @enum {number}
-             * @property {number} BEHAVIOR_UNKNOWN=0 BEHAVIOR_UNKNOWN value
-             * @property {number} BEHAVIOR_CALL_BUTTON=1 BEHAVIOR_CALL_BUTTON value
-             * @property {number} BEHAVIOR_LAP_BASE=1000 BEHAVIOR_LAP_BASE value
-             * @property {number} BEHAVIOR_SEGMENT_BASE=2000 BEHAVIOR_SEGMENT_BASE value
-             * @property {number} BEHAVIOR_CALL_BUTTON_BASE=3000 BEHAVIOR_CALL_BUTTON_BASE value
+             * Constructs a new ArduinoConfig.
+             * @memberof com.antigravity
+             * @classdesc Represents an ArduinoConfig.
+             * @implements IArduinoConfig
+             * @constructor
+             * @param {com.antigravity.IArduinoConfig=} [properties] Properties to set
              */
-            proto.PinBehavior = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "BEHAVIOR_UNKNOWN"] = 0;
-                values[valuesById[1] = "BEHAVIOR_CALL_BUTTON"] = 1;
-                values[valuesById[1000] = "BEHAVIOR_LAP_BASE"] = 1000;
-                values[valuesById[2000] = "BEHAVIOR_SEGMENT_BASE"] = 2000;
-                values[valuesById[3000] = "BEHAVIOR_CALL_BUTTON_BASE"] = 3000;
-                return values;
-            })();
+            function ArduinoConfig(properties) {
+                this.digitalIds = [];
+                this.analogIds = [];
+                this.ledLaneColorOverrides = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
 
-            return proto;
+            /**
+             * ArduinoConfig name.
+             * @member {string} name
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.name = "";
+
+            /**
+             * ArduinoConfig commPort.
+             * @member {string} commPort
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.commPort = "";
+
+            /**
+             * ArduinoConfig baudRate.
+             * @member {number} baudRate
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.baudRate = 0;
+
+            /**
+             * ArduinoConfig debounceUs.
+             * @member {number} debounceUs
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.debounceUs = 0;
+
+            /**
+             * ArduinoConfig globalInvertLanes.
+             * @member {number} globalInvertLanes
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.globalInvertLanes = 0;
+
+            /**
+             * ArduinoConfig normallyClosedRelays.
+             * @member {boolean} normallyClosedRelays
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.normallyClosedRelays = false;
+
+            /**
+             * ArduinoConfig globalInvertLights.
+             * @member {number} globalInvertLights
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.globalInvertLights = 0;
+
+            /**
+             * ArduinoConfig useLapsForPits.
+             * @member {number} useLapsForPits
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.useLapsForPits = 0;
+
+            /**
+             * ArduinoConfig useLapsForPitEnd.
+             * @member {number} useLapsForPitEnd
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.useLapsForPitEnd = 0;
+
+            /**
+             * ArduinoConfig usePitsAsLaps.
+             * @member {number} usePitsAsLaps
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.usePitsAsLaps = 0;
+
+            /**
+             * ArduinoConfig useLapsForSegments.
+             * @member {number} useLapsForSegments
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.useLapsForSegments = 0;
+
+            /**
+             * ArduinoConfig hardwareType.
+             * @member {number} hardwareType
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.hardwareType = 0;
+
+            /**
+             * ArduinoConfig digitalIds.
+             * @member {Array.<number>} digitalIds
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.digitalIds = $util.emptyArray;
+
+            /**
+             * ArduinoConfig analogIds.
+             * @member {Array.<number>} analogIds
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.analogIds = $util.emptyArray;
+
+            /**
+             * ArduinoConfig ledLaneColorOverrides.
+             * @member {Array.<string>} ledLaneColorOverrides
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.ledLaneColorOverrides = $util.emptyArray;
+
+            /**
+             * Creates a new ArduinoConfig instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {com.antigravity.IArduinoConfig=} [properties] Properties to set
+             * @returns {com.antigravity.ArduinoConfig} ArduinoConfig instance
+             */
+            ArduinoConfig.create = function create(properties) {
+                return new ArduinoConfig(properties);
+            };
+
+            /**
+             * Encodes the specified ArduinoConfig message. Does not implicitly {@link com.antigravity.ArduinoConfig.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {com.antigravity.IArduinoConfig} message ArduinoConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ArduinoConfig.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
+                if (message.commPort != null && Object.hasOwnProperty.call(message, "commPort"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.commPort);
+                if (message.baudRate != null && Object.hasOwnProperty.call(message, "baudRate"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.baudRate);
+                if (message.debounceUs != null && Object.hasOwnProperty.call(message, "debounceUs"))
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.debounceUs);
+                if (message.globalInvertLanes != null && Object.hasOwnProperty.call(message, "globalInvertLanes"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.globalInvertLanes);
+                if (message.normallyClosedRelays != null && Object.hasOwnProperty.call(message, "normallyClosedRelays"))
+                    writer.uint32(/* id 6, wireType 0 =*/48).bool(message.normallyClosedRelays);
+                if (message.globalInvertLights != null && Object.hasOwnProperty.call(message, "globalInvertLights"))
+                    writer.uint32(/* id 7, wireType 0 =*/56).int32(message.globalInvertLights);
+                if (message.useLapsForPits != null && Object.hasOwnProperty.call(message, "useLapsForPits"))
+                    writer.uint32(/* id 8, wireType 0 =*/64).int32(message.useLapsForPits);
+                if (message.useLapsForPitEnd != null && Object.hasOwnProperty.call(message, "useLapsForPitEnd"))
+                    writer.uint32(/* id 9, wireType 0 =*/72).int32(message.useLapsForPitEnd);
+                if (message.usePitsAsLaps != null && Object.hasOwnProperty.call(message, "usePitsAsLaps"))
+                    writer.uint32(/* id 10, wireType 0 =*/80).int32(message.usePitsAsLaps);
+                if (message.useLapsForSegments != null && Object.hasOwnProperty.call(message, "useLapsForSegments"))
+                    writer.uint32(/* id 11, wireType 0 =*/88).int32(message.useLapsForSegments);
+                if (message.hardwareType != null && Object.hasOwnProperty.call(message, "hardwareType"))
+                    writer.uint32(/* id 12, wireType 0 =*/96).int32(message.hardwareType);
+                if (message.digitalIds != null && message.digitalIds.length) {
+                    writer.uint32(/* id 13, wireType 2 =*/106).fork();
+                    for (let i = 0; i < message.digitalIds.length; ++i)
+                        writer.int32(message.digitalIds[i]);
+                    writer.ldelim();
+                }
+                if (message.analogIds != null && message.analogIds.length) {
+                    writer.uint32(/* id 14, wireType 2 =*/114).fork();
+                    for (let i = 0; i < message.analogIds.length; ++i)
+                        writer.int32(message.analogIds[i]);
+                    writer.ldelim();
+                }
+                if (message.ledLaneColorOverrides != null && message.ledLaneColorOverrides.length)
+                    for (let i = 0; i < message.ledLaneColorOverrides.length; ++i)
+                        writer.uint32(/* id 15, wireType 2 =*/122).string(message.ledLaneColorOverrides[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ArduinoConfig message, length delimited. Does not implicitly {@link com.antigravity.ArduinoConfig.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {com.antigravity.IArduinoConfig} message ArduinoConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ArduinoConfig.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an ArduinoConfig message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.ArduinoConfig} ArduinoConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ArduinoConfig.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.ArduinoConfig();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.commPort = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.baudRate = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.debounceUs = reader.int32();
+                            break;
+                        }
+                    case 5: {
+                            message.globalInvertLanes = reader.int32();
+                            break;
+                        }
+                    case 6: {
+                            message.normallyClosedRelays = reader.bool();
+                            break;
+                        }
+                    case 7: {
+                            message.globalInvertLights = reader.int32();
+                            break;
+                        }
+                    case 8: {
+                            message.useLapsForPits = reader.int32();
+                            break;
+                        }
+                    case 9: {
+                            message.useLapsForPitEnd = reader.int32();
+                            break;
+                        }
+                    case 10: {
+                            message.usePitsAsLaps = reader.int32();
+                            break;
+                        }
+                    case 11: {
+                            message.useLapsForSegments = reader.int32();
+                            break;
+                        }
+                    case 12: {
+                            message.hardwareType = reader.int32();
+                            break;
+                        }
+                    case 13: {
+                            if (!(message.digitalIds && message.digitalIds.length))
+                                message.digitalIds = [];
+                            if ((tag & 7) === 2) {
+                                let end2 = reader.uint32() + reader.pos;
+                                while (reader.pos < end2)
+                                    message.digitalIds.push(reader.int32());
+                            } else
+                                message.digitalIds.push(reader.int32());
+                            break;
+                        }
+                    case 14: {
+                            if (!(message.analogIds && message.analogIds.length))
+                                message.analogIds = [];
+                            if ((tag & 7) === 2) {
+                                let end2 = reader.uint32() + reader.pos;
+                                while (reader.pos < end2)
+                                    message.analogIds.push(reader.int32());
+                            } else
+                                message.analogIds.push(reader.int32());
+                            break;
+                        }
+                    case 15: {
+                            if (!(message.ledLaneColorOverrides && message.ledLaneColorOverrides.length))
+                                message.ledLaneColorOverrides = [];
+                            message.ledLaneColorOverrides.push(reader.string());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an ArduinoConfig message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.ArduinoConfig} ArduinoConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ArduinoConfig.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an ArduinoConfig message.
+             * @function verify
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ArduinoConfig.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.commPort != null && message.hasOwnProperty("commPort"))
+                    if (!$util.isString(message.commPort))
+                        return "commPort: string expected";
+                if (message.baudRate != null && message.hasOwnProperty("baudRate"))
+                    if (!$util.isInteger(message.baudRate))
+                        return "baudRate: integer expected";
+                if (message.debounceUs != null && message.hasOwnProperty("debounceUs"))
+                    if (!$util.isInteger(message.debounceUs))
+                        return "debounceUs: integer expected";
+                if (message.globalInvertLanes != null && message.hasOwnProperty("globalInvertLanes"))
+                    if (!$util.isInteger(message.globalInvertLanes))
+                        return "globalInvertLanes: integer expected";
+                if (message.normallyClosedRelays != null && message.hasOwnProperty("normallyClosedRelays"))
+                    if (typeof message.normallyClosedRelays !== "boolean")
+                        return "normallyClosedRelays: boolean expected";
+                if (message.globalInvertLights != null && message.hasOwnProperty("globalInvertLights"))
+                    if (!$util.isInteger(message.globalInvertLights))
+                        return "globalInvertLights: integer expected";
+                if (message.useLapsForPits != null && message.hasOwnProperty("useLapsForPits"))
+                    if (!$util.isInteger(message.useLapsForPits))
+                        return "useLapsForPits: integer expected";
+                if (message.useLapsForPitEnd != null && message.hasOwnProperty("useLapsForPitEnd"))
+                    if (!$util.isInteger(message.useLapsForPitEnd))
+                        return "useLapsForPitEnd: integer expected";
+                if (message.usePitsAsLaps != null && message.hasOwnProperty("usePitsAsLaps"))
+                    if (!$util.isInteger(message.usePitsAsLaps))
+                        return "usePitsAsLaps: integer expected";
+                if (message.useLapsForSegments != null && message.hasOwnProperty("useLapsForSegments"))
+                    if (!$util.isInteger(message.useLapsForSegments))
+                        return "useLapsForSegments: integer expected";
+                if (message.hardwareType != null && message.hasOwnProperty("hardwareType"))
+                    if (!$util.isInteger(message.hardwareType))
+                        return "hardwareType: integer expected";
+                if (message.digitalIds != null && message.hasOwnProperty("digitalIds")) {
+                    if (!Array.isArray(message.digitalIds))
+                        return "digitalIds: array expected";
+                    for (let i = 0; i < message.digitalIds.length; ++i)
+                        if (!$util.isInteger(message.digitalIds[i]))
+                            return "digitalIds: integer[] expected";
+                }
+                if (message.analogIds != null && message.hasOwnProperty("analogIds")) {
+                    if (!Array.isArray(message.analogIds))
+                        return "analogIds: array expected";
+                    for (let i = 0; i < message.analogIds.length; ++i)
+                        if (!$util.isInteger(message.analogIds[i]))
+                            return "analogIds: integer[] expected";
+                }
+                if (message.ledLaneColorOverrides != null && message.hasOwnProperty("ledLaneColorOverrides")) {
+                    if (!Array.isArray(message.ledLaneColorOverrides))
+                        return "ledLaneColorOverrides: array expected";
+                    for (let i = 0; i < message.ledLaneColorOverrides.length; ++i)
+                        if (!$util.isString(message.ledLaneColorOverrides[i]))
+                            return "ledLaneColorOverrides: string[] expected";
+                }
+                return null;
+            };
+
+            /**
+             * Creates an ArduinoConfig message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.ArduinoConfig} ArduinoConfig
+             */
+            ArduinoConfig.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.ArduinoConfig)
+                    return object;
+                let message = new $root.com.antigravity.ArduinoConfig();
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.commPort != null)
+                    message.commPort = String(object.commPort);
+                if (object.baudRate != null)
+                    message.baudRate = object.baudRate | 0;
+                if (object.debounceUs != null)
+                    message.debounceUs = object.debounceUs | 0;
+                if (object.globalInvertLanes != null)
+                    message.globalInvertLanes = object.globalInvertLanes | 0;
+                if (object.normallyClosedRelays != null)
+                    message.normallyClosedRelays = Boolean(object.normallyClosedRelays);
+                if (object.globalInvertLights != null)
+                    message.globalInvertLights = object.globalInvertLights | 0;
+                if (object.useLapsForPits != null)
+                    message.useLapsForPits = object.useLapsForPits | 0;
+                if (object.useLapsForPitEnd != null)
+                    message.useLapsForPitEnd = object.useLapsForPitEnd | 0;
+                if (object.usePitsAsLaps != null)
+                    message.usePitsAsLaps = object.usePitsAsLaps | 0;
+                if (object.useLapsForSegments != null)
+                    message.useLapsForSegments = object.useLapsForSegments | 0;
+                if (object.hardwareType != null)
+                    message.hardwareType = object.hardwareType | 0;
+                if (object.digitalIds) {
+                    if (!Array.isArray(object.digitalIds))
+                        throw TypeError(".com.antigravity.ArduinoConfig.digitalIds: array expected");
+                    message.digitalIds = [];
+                    for (let i = 0; i < object.digitalIds.length; ++i)
+                        message.digitalIds[i] = object.digitalIds[i] | 0;
+                }
+                if (object.analogIds) {
+                    if (!Array.isArray(object.analogIds))
+                        throw TypeError(".com.antigravity.ArduinoConfig.analogIds: array expected");
+                    message.analogIds = [];
+                    for (let i = 0; i < object.analogIds.length; ++i)
+                        message.analogIds[i] = object.analogIds[i] | 0;
+                }
+                if (object.ledLaneColorOverrides) {
+                    if (!Array.isArray(object.ledLaneColorOverrides))
+                        throw TypeError(".com.antigravity.ArduinoConfig.ledLaneColorOverrides: array expected");
+                    message.ledLaneColorOverrides = [];
+                    for (let i = 0; i < object.ledLaneColorOverrides.length; ++i)
+                        message.ledLaneColorOverrides[i] = String(object.ledLaneColorOverrides[i]);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an ArduinoConfig message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {com.antigravity.ArduinoConfig} message ArduinoConfig
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ArduinoConfig.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults) {
+                    object.digitalIds = [];
+                    object.analogIds = [];
+                    object.ledLaneColorOverrides = [];
+                }
+                if (options.defaults) {
+                    object.name = "";
+                    object.commPort = "";
+                    object.baudRate = 0;
+                    object.debounceUs = 0;
+                    object.globalInvertLanes = 0;
+                    object.normallyClosedRelays = false;
+                    object.globalInvertLights = 0;
+                    object.useLapsForPits = 0;
+                    object.useLapsForPitEnd = 0;
+                    object.usePitsAsLaps = 0;
+                    object.useLapsForSegments = 0;
+                    object.hardwareType = 0;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.commPort != null && message.hasOwnProperty("commPort"))
+                    object.commPort = message.commPort;
+                if (message.baudRate != null && message.hasOwnProperty("baudRate"))
+                    object.baudRate = message.baudRate;
+                if (message.debounceUs != null && message.hasOwnProperty("debounceUs"))
+                    object.debounceUs = message.debounceUs;
+                if (message.globalInvertLanes != null && message.hasOwnProperty("globalInvertLanes"))
+                    object.globalInvertLanes = message.globalInvertLanes;
+                if (message.normallyClosedRelays != null && message.hasOwnProperty("normallyClosedRelays"))
+                    object.normallyClosedRelays = message.normallyClosedRelays;
+                if (message.globalInvertLights != null && message.hasOwnProperty("globalInvertLights"))
+                    object.globalInvertLights = message.globalInvertLights;
+                if (message.useLapsForPits != null && message.hasOwnProperty("useLapsForPits"))
+                    object.useLapsForPits = message.useLapsForPits;
+                if (message.useLapsForPitEnd != null && message.hasOwnProperty("useLapsForPitEnd"))
+                    object.useLapsForPitEnd = message.useLapsForPitEnd;
+                if (message.usePitsAsLaps != null && message.hasOwnProperty("usePitsAsLaps"))
+                    object.usePitsAsLaps = message.usePitsAsLaps;
+                if (message.useLapsForSegments != null && message.hasOwnProperty("useLapsForSegments"))
+                    object.useLapsForSegments = message.useLapsForSegments;
+                if (message.hardwareType != null && message.hasOwnProperty("hardwareType"))
+                    object.hardwareType = message.hardwareType;
+                if (message.digitalIds && message.digitalIds.length) {
+                    object.digitalIds = [];
+                    for (let j = 0; j < message.digitalIds.length; ++j)
+                        object.digitalIds[j] = message.digitalIds[j];
+                }
+                if (message.analogIds && message.analogIds.length) {
+                    object.analogIds = [];
+                    for (let j = 0; j < message.analogIds.length; ++j)
+                        object.analogIds[j] = message.analogIds[j];
+                }
+                if (message.ledLaneColorOverrides && message.ledLaneColorOverrides.length) {
+                    object.ledLaneColorOverrides = [];
+                    for (let j = 0; j < message.ledLaneColorOverrides.length; ++j)
+                        object.ledLaneColorOverrides[j] = message.ledLaneColorOverrides[j];
+                }
+                return object;
+            };
+
+            /**
+             * Converts this ArduinoConfig to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ArduinoConfig.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for ArduinoConfig
+             * @function getTypeUrl
+             * @memberof com.antigravity.ArduinoConfig
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            ArduinoConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.ArduinoConfig";
+            };
+
+            return ArduinoConfig;
         })();
 
         antigravity.DriverModel = (function() {
@@ -3743,6 +4347,2437 @@ export const com = $root.com = (() => {
             };
 
             return AudioConfig;
+        })();
+
+        antigravity.InitializeInterfaceRequest = (function() {
+
+            /**
+             * Properties of an InitializeInterfaceRequest.
+             * @memberof com.antigravity
+             * @interface IInitializeInterfaceRequest
+             * @property {com.antigravity.IArduinoConfig|null} [config] InitializeInterfaceRequest config
+             * @property {number|null} [laneCount] InitializeInterfaceRequest laneCount
+             */
+
+            /**
+             * Constructs a new InitializeInterfaceRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents an InitializeInterfaceRequest.
+             * @implements IInitializeInterfaceRequest
+             * @constructor
+             * @param {com.antigravity.IInitializeInterfaceRequest=} [properties] Properties to set
+             */
+            function InitializeInterfaceRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * InitializeInterfaceRequest config.
+             * @member {com.antigravity.IArduinoConfig|null|undefined} config
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @instance
+             */
+            InitializeInterfaceRequest.prototype.config = null;
+
+            /**
+             * InitializeInterfaceRequest laneCount.
+             * @member {number} laneCount
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @instance
+             */
+            InitializeInterfaceRequest.prototype.laneCount = 0;
+
+            /**
+             * Creates a new InitializeInterfaceRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceRequest=} [properties] Properties to set
+             * @returns {com.antigravity.InitializeInterfaceRequest} InitializeInterfaceRequest instance
+             */
+            InitializeInterfaceRequest.create = function create(properties) {
+                return new InitializeInterfaceRequest(properties);
+            };
+
+            /**
+             * Encodes the specified InitializeInterfaceRequest message. Does not implicitly {@link com.antigravity.InitializeInterfaceRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceRequest} message InitializeInterfaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InitializeInterfaceRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.config != null && Object.hasOwnProperty.call(message, "config"))
+                    $root.com.antigravity.ArduinoConfig.encode(message.config, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.laneCount != null && Object.hasOwnProperty.call(message, "laneCount"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.laneCount);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified InitializeInterfaceRequest message, length delimited. Does not implicitly {@link com.antigravity.InitializeInterfaceRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceRequest} message InitializeInterfaceRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InitializeInterfaceRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an InitializeInterfaceRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.InitializeInterfaceRequest} InitializeInterfaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InitializeInterfaceRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.InitializeInterfaceRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.config = $root.com.antigravity.ArduinoConfig.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.laneCount = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an InitializeInterfaceRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.InitializeInterfaceRequest} InitializeInterfaceRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InitializeInterfaceRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an InitializeInterfaceRequest message.
+             * @function verify
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            InitializeInterfaceRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.config != null && message.hasOwnProperty("config")) {
+                    let error = $root.com.antigravity.ArduinoConfig.verify(message.config);
+                    if (error)
+                        return "config." + error;
+                }
+                if (message.laneCount != null && message.hasOwnProperty("laneCount"))
+                    if (!$util.isInteger(message.laneCount))
+                        return "laneCount: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates an InitializeInterfaceRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.InitializeInterfaceRequest} InitializeInterfaceRequest
+             */
+            InitializeInterfaceRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.InitializeInterfaceRequest)
+                    return object;
+                let message = new $root.com.antigravity.InitializeInterfaceRequest();
+                if (object.config != null) {
+                    if (typeof object.config !== "object")
+                        throw TypeError(".com.antigravity.InitializeInterfaceRequest.config: object expected");
+                    message.config = $root.com.antigravity.ArduinoConfig.fromObject(object.config);
+                }
+                if (object.laneCount != null)
+                    message.laneCount = object.laneCount | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an InitializeInterfaceRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {com.antigravity.InitializeInterfaceRequest} message InitializeInterfaceRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            InitializeInterfaceRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.config = null;
+                    object.laneCount = 0;
+                }
+                if (message.config != null && message.hasOwnProperty("config"))
+                    object.config = $root.com.antigravity.ArduinoConfig.toObject(message.config, options);
+                if (message.laneCount != null && message.hasOwnProperty("laneCount"))
+                    object.laneCount = message.laneCount;
+                return object;
+            };
+
+            /**
+             * Converts this InitializeInterfaceRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            InitializeInterfaceRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for InitializeInterfaceRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.InitializeInterfaceRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            InitializeInterfaceRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.InitializeInterfaceRequest";
+            };
+
+            return InitializeInterfaceRequest;
+        })();
+
+        antigravity.InitializeInterfaceResponse = (function() {
+
+            /**
+             * Properties of an InitializeInterfaceResponse.
+             * @memberof com.antigravity
+             * @interface IInitializeInterfaceResponse
+             * @property {boolean|null} [success] InitializeInterfaceResponse success
+             * @property {string|null} [message] InitializeInterfaceResponse message
+             */
+
+            /**
+             * Constructs a new InitializeInterfaceResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents an InitializeInterfaceResponse.
+             * @implements IInitializeInterfaceResponse
+             * @constructor
+             * @param {com.antigravity.IInitializeInterfaceResponse=} [properties] Properties to set
+             */
+            function InitializeInterfaceResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * InitializeInterfaceResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @instance
+             */
+            InitializeInterfaceResponse.prototype.success = false;
+
+            /**
+             * InitializeInterfaceResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @instance
+             */
+            InitializeInterfaceResponse.prototype.message = "";
+
+            /**
+             * Creates a new InitializeInterfaceResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceResponse=} [properties] Properties to set
+             * @returns {com.antigravity.InitializeInterfaceResponse} InitializeInterfaceResponse instance
+             */
+            InitializeInterfaceResponse.create = function create(properties) {
+                return new InitializeInterfaceResponse(properties);
+            };
+
+            /**
+             * Encodes the specified InitializeInterfaceResponse message. Does not implicitly {@link com.antigravity.InitializeInterfaceResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceResponse} message InitializeInterfaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InitializeInterfaceResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified InitializeInterfaceResponse message, length delimited. Does not implicitly {@link com.antigravity.InitializeInterfaceResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {com.antigravity.IInitializeInterfaceResponse} message InitializeInterfaceResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InitializeInterfaceResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an InitializeInterfaceResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.InitializeInterfaceResponse} InitializeInterfaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InitializeInterfaceResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.InitializeInterfaceResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an InitializeInterfaceResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.InitializeInterfaceResponse} InitializeInterfaceResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InitializeInterfaceResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an InitializeInterfaceResponse message.
+             * @function verify
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            InitializeInterfaceResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates an InitializeInterfaceResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.InitializeInterfaceResponse} InitializeInterfaceResponse
+             */
+            InitializeInterfaceResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.InitializeInterfaceResponse)
+                    return object;
+                let message = new $root.com.antigravity.InitializeInterfaceResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an InitializeInterfaceResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {com.antigravity.InitializeInterfaceResponse} message InitializeInterfaceResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            InitializeInterfaceResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this InitializeInterfaceResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            InitializeInterfaceResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for InitializeInterfaceResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.InitializeInterfaceResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            InitializeInterfaceResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.InitializeInterfaceResponse";
+            };
+
+            return InitializeInterfaceResponse;
+        })();
+
+        antigravity.UpdateInterfaceConfigRequest = (function() {
+
+            /**
+             * Properties of an UpdateInterfaceConfigRequest.
+             * @memberof com.antigravity
+             * @interface IUpdateInterfaceConfigRequest
+             * @property {com.antigravity.IArduinoConfig|null} [config] UpdateInterfaceConfigRequest config
+             */
+
+            /**
+             * Constructs a new UpdateInterfaceConfigRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents an UpdateInterfaceConfigRequest.
+             * @implements IUpdateInterfaceConfigRequest
+             * @constructor
+             * @param {com.antigravity.IUpdateInterfaceConfigRequest=} [properties] Properties to set
+             */
+            function UpdateInterfaceConfigRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * UpdateInterfaceConfigRequest config.
+             * @member {com.antigravity.IArduinoConfig|null|undefined} config
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @instance
+             */
+            UpdateInterfaceConfigRequest.prototype.config = null;
+
+            /**
+             * Creates a new UpdateInterfaceConfigRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigRequest=} [properties] Properties to set
+             * @returns {com.antigravity.UpdateInterfaceConfigRequest} UpdateInterfaceConfigRequest instance
+             */
+            UpdateInterfaceConfigRequest.create = function create(properties) {
+                return new UpdateInterfaceConfigRequest(properties);
+            };
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigRequest message. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigRequest} message UpdateInterfaceConfigRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UpdateInterfaceConfigRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.config != null && Object.hasOwnProperty.call(message, "config"))
+                    $root.com.antigravity.ArduinoConfig.encode(message.config, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigRequest message, length delimited. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigRequest} message UpdateInterfaceConfigRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UpdateInterfaceConfigRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an UpdateInterfaceConfigRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.UpdateInterfaceConfigRequest} UpdateInterfaceConfigRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UpdateInterfaceConfigRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.UpdateInterfaceConfigRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.config = $root.com.antigravity.ArduinoConfig.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an UpdateInterfaceConfigRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.UpdateInterfaceConfigRequest} UpdateInterfaceConfigRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UpdateInterfaceConfigRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an UpdateInterfaceConfigRequest message.
+             * @function verify
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            UpdateInterfaceConfigRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.config != null && message.hasOwnProperty("config")) {
+                    let error = $root.com.antigravity.ArduinoConfig.verify(message.config);
+                    if (error)
+                        return "config." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates an UpdateInterfaceConfigRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.UpdateInterfaceConfigRequest} UpdateInterfaceConfigRequest
+             */
+            UpdateInterfaceConfigRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.UpdateInterfaceConfigRequest)
+                    return object;
+                let message = new $root.com.antigravity.UpdateInterfaceConfigRequest();
+                if (object.config != null) {
+                    if (typeof object.config !== "object")
+                        throw TypeError(".com.antigravity.UpdateInterfaceConfigRequest.config: object expected");
+                    message.config = $root.com.antigravity.ArduinoConfig.fromObject(object.config);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an UpdateInterfaceConfigRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {com.antigravity.UpdateInterfaceConfigRequest} message UpdateInterfaceConfigRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            UpdateInterfaceConfigRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.config = null;
+                if (message.config != null && message.hasOwnProperty("config"))
+                    object.config = $root.com.antigravity.ArduinoConfig.toObject(message.config, options);
+                return object;
+            };
+
+            /**
+             * Converts this UpdateInterfaceConfigRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            UpdateInterfaceConfigRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for UpdateInterfaceConfigRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.UpdateInterfaceConfigRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            UpdateInterfaceConfigRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.UpdateInterfaceConfigRequest";
+            };
+
+            return UpdateInterfaceConfigRequest;
+        })();
+
+        antigravity.UpdateInterfaceConfigResponse = (function() {
+
+            /**
+             * Properties of an UpdateInterfaceConfigResponse.
+             * @memberof com.antigravity
+             * @interface IUpdateInterfaceConfigResponse
+             * @property {boolean|null} [success] UpdateInterfaceConfigResponse success
+             * @property {string|null} [message] UpdateInterfaceConfigResponse message
+             */
+
+            /**
+             * Constructs a new UpdateInterfaceConfigResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents an UpdateInterfaceConfigResponse.
+             * @implements IUpdateInterfaceConfigResponse
+             * @constructor
+             * @param {com.antigravity.IUpdateInterfaceConfigResponse=} [properties] Properties to set
+             */
+            function UpdateInterfaceConfigResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * UpdateInterfaceConfigResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @instance
+             */
+            UpdateInterfaceConfigResponse.prototype.success = false;
+
+            /**
+             * UpdateInterfaceConfigResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @instance
+             */
+            UpdateInterfaceConfigResponse.prototype.message = "";
+
+            /**
+             * Creates a new UpdateInterfaceConfigResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigResponse=} [properties] Properties to set
+             * @returns {com.antigravity.UpdateInterfaceConfigResponse} UpdateInterfaceConfigResponse instance
+             */
+            UpdateInterfaceConfigResponse.create = function create(properties) {
+                return new UpdateInterfaceConfigResponse(properties);
+            };
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigResponse message. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigResponse} message UpdateInterfaceConfigResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UpdateInterfaceConfigResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified UpdateInterfaceConfigResponse message, length delimited. Does not implicitly {@link com.antigravity.UpdateInterfaceConfigResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {com.antigravity.IUpdateInterfaceConfigResponse} message UpdateInterfaceConfigResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            UpdateInterfaceConfigResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an UpdateInterfaceConfigResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.UpdateInterfaceConfigResponse} UpdateInterfaceConfigResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UpdateInterfaceConfigResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.UpdateInterfaceConfigResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an UpdateInterfaceConfigResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.UpdateInterfaceConfigResponse} UpdateInterfaceConfigResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            UpdateInterfaceConfigResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an UpdateInterfaceConfigResponse message.
+             * @function verify
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            UpdateInterfaceConfigResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates an UpdateInterfaceConfigResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.UpdateInterfaceConfigResponse} UpdateInterfaceConfigResponse
+             */
+            UpdateInterfaceConfigResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.UpdateInterfaceConfigResponse)
+                    return object;
+                let message = new $root.com.antigravity.UpdateInterfaceConfigResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an UpdateInterfaceConfigResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {com.antigravity.UpdateInterfaceConfigResponse} message UpdateInterfaceConfigResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            UpdateInterfaceConfigResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this UpdateInterfaceConfigResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            UpdateInterfaceConfigResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for UpdateInterfaceConfigResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.UpdateInterfaceConfigResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            UpdateInterfaceConfigResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.UpdateInterfaceConfigResponse";
+            };
+
+            return UpdateInterfaceConfigResponse;
+        })();
+
+        antigravity.SetInterfacePinStateRequest = (function() {
+
+            /**
+             * Properties of a SetInterfacePinStateRequest.
+             * @memberof com.antigravity
+             * @interface ISetInterfacePinStateRequest
+             * @property {number|null} [pin] SetInterfacePinStateRequest pin
+             * @property {boolean|null} [isDigital] SetInterfacePinStateRequest isDigital
+             * @property {boolean|null} [isHigh] SetInterfacePinStateRequest isHigh
+             */
+
+            /**
+             * Constructs a new SetInterfacePinStateRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a SetInterfacePinStateRequest.
+             * @implements ISetInterfacePinStateRequest
+             * @constructor
+             * @param {com.antigravity.ISetInterfacePinStateRequest=} [properties] Properties to set
+             */
+            function SetInterfacePinStateRequest(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SetInterfacePinStateRequest pin.
+             * @member {number} pin
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @instance
+             */
+            SetInterfacePinStateRequest.prototype.pin = 0;
+
+            /**
+             * SetInterfacePinStateRequest isDigital.
+             * @member {boolean} isDigital
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @instance
+             */
+            SetInterfacePinStateRequest.prototype.isDigital = false;
+
+            /**
+             * SetInterfacePinStateRequest isHigh.
+             * @member {boolean} isHigh
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @instance
+             */
+            SetInterfacePinStateRequest.prototype.isHigh = false;
+
+            /**
+             * Creates a new SetInterfacePinStateRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateRequest=} [properties] Properties to set
+             * @returns {com.antigravity.SetInterfacePinStateRequest} SetInterfacePinStateRequest instance
+             */
+            SetInterfacePinStateRequest.create = function create(properties) {
+                return new SetInterfacePinStateRequest(properties);
+            };
+
+            /**
+             * Encodes the specified SetInterfacePinStateRequest message. Does not implicitly {@link com.antigravity.SetInterfacePinStateRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateRequest} message SetInterfacePinStateRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SetInterfacePinStateRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.pin != null && Object.hasOwnProperty.call(message, "pin"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.pin);
+                if (message.isDigital != null && Object.hasOwnProperty.call(message, "isDigital"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).bool(message.isDigital);
+                if (message.isHigh != null && Object.hasOwnProperty.call(message, "isHigh"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).bool(message.isHigh);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SetInterfacePinStateRequest message, length delimited. Does not implicitly {@link com.antigravity.SetInterfacePinStateRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateRequest} message SetInterfacePinStateRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SetInterfacePinStateRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SetInterfacePinStateRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SetInterfacePinStateRequest} SetInterfacePinStateRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SetInterfacePinStateRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SetInterfacePinStateRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.pin = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.isDigital = reader.bool();
+                            break;
+                        }
+                    case 3: {
+                            message.isHigh = reader.bool();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SetInterfacePinStateRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SetInterfacePinStateRequest} SetInterfacePinStateRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SetInterfacePinStateRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SetInterfacePinStateRequest message.
+             * @function verify
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SetInterfacePinStateRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.pin != null && message.hasOwnProperty("pin"))
+                    if (!$util.isInteger(message.pin))
+                        return "pin: integer expected";
+                if (message.isDigital != null && message.hasOwnProperty("isDigital"))
+                    if (typeof message.isDigital !== "boolean")
+                        return "isDigital: boolean expected";
+                if (message.isHigh != null && message.hasOwnProperty("isHigh"))
+                    if (typeof message.isHigh !== "boolean")
+                        return "isHigh: boolean expected";
+                return null;
+            };
+
+            /**
+             * Creates a SetInterfacePinStateRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SetInterfacePinStateRequest} SetInterfacePinStateRequest
+             */
+            SetInterfacePinStateRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SetInterfacePinStateRequest)
+                    return object;
+                let message = new $root.com.antigravity.SetInterfacePinStateRequest();
+                if (object.pin != null)
+                    message.pin = object.pin | 0;
+                if (object.isDigital != null)
+                    message.isDigital = Boolean(object.isDigital);
+                if (object.isHigh != null)
+                    message.isHigh = Boolean(object.isHigh);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SetInterfacePinStateRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {com.antigravity.SetInterfacePinStateRequest} message SetInterfacePinStateRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SetInterfacePinStateRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.pin = 0;
+                    object.isDigital = false;
+                    object.isHigh = false;
+                }
+                if (message.pin != null && message.hasOwnProperty("pin"))
+                    object.pin = message.pin;
+                if (message.isDigital != null && message.hasOwnProperty("isDigital"))
+                    object.isDigital = message.isDigital;
+                if (message.isHigh != null && message.hasOwnProperty("isHigh"))
+                    object.isHigh = message.isHigh;
+                return object;
+            };
+
+            /**
+             * Converts this SetInterfacePinStateRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SetInterfacePinStateRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SetInterfacePinStateRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.SetInterfacePinStateRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SetInterfacePinStateRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SetInterfacePinStateRequest";
+            };
+
+            return SetInterfacePinStateRequest;
+        })();
+
+        antigravity.SetInterfacePinStateResponse = (function() {
+
+            /**
+             * Properties of a SetInterfacePinStateResponse.
+             * @memberof com.antigravity
+             * @interface ISetInterfacePinStateResponse
+             * @property {boolean|null} [success] SetInterfacePinStateResponse success
+             * @property {string|null} [message] SetInterfacePinStateResponse message
+             */
+
+            /**
+             * Constructs a new SetInterfacePinStateResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a SetInterfacePinStateResponse.
+             * @implements ISetInterfacePinStateResponse
+             * @constructor
+             * @param {com.antigravity.ISetInterfacePinStateResponse=} [properties] Properties to set
+             */
+            function SetInterfacePinStateResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SetInterfacePinStateResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @instance
+             */
+            SetInterfacePinStateResponse.prototype.success = false;
+
+            /**
+             * SetInterfacePinStateResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @instance
+             */
+            SetInterfacePinStateResponse.prototype.message = "";
+
+            /**
+             * Creates a new SetInterfacePinStateResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateResponse=} [properties] Properties to set
+             * @returns {com.antigravity.SetInterfacePinStateResponse} SetInterfacePinStateResponse instance
+             */
+            SetInterfacePinStateResponse.create = function create(properties) {
+                return new SetInterfacePinStateResponse(properties);
+            };
+
+            /**
+             * Encodes the specified SetInterfacePinStateResponse message. Does not implicitly {@link com.antigravity.SetInterfacePinStateResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateResponse} message SetInterfacePinStateResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SetInterfacePinStateResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SetInterfacePinStateResponse message, length delimited. Does not implicitly {@link com.antigravity.SetInterfacePinStateResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {com.antigravity.ISetInterfacePinStateResponse} message SetInterfacePinStateResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SetInterfacePinStateResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SetInterfacePinStateResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SetInterfacePinStateResponse} SetInterfacePinStateResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SetInterfacePinStateResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SetInterfacePinStateResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SetInterfacePinStateResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SetInterfacePinStateResponse} SetInterfacePinStateResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SetInterfacePinStateResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SetInterfacePinStateResponse message.
+             * @function verify
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SetInterfacePinStateResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a SetInterfacePinStateResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SetInterfacePinStateResponse} SetInterfacePinStateResponse
+             */
+            SetInterfacePinStateResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SetInterfacePinStateResponse)
+                    return object;
+                let message = new $root.com.antigravity.SetInterfacePinStateResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SetInterfacePinStateResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {com.antigravity.SetInterfacePinStateResponse} message SetInterfacePinStateResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SetInterfacePinStateResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                return object;
+            };
+
+            /**
+             * Converts this SetInterfacePinStateResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SetInterfacePinStateResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SetInterfacePinStateResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.SetInterfacePinStateResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SetInterfacePinStateResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SetInterfacePinStateResponse";
+            };
+
+            return SetInterfacePinStateResponse;
+        })();
+
+        /**
+         * InterfaceStatus enum.
+         * @name com.antigravity.InterfaceStatus
+         * @enum {number}
+         * @property {number} CONNECTED=0 CONNECTED value
+         * @property {number} DISCONNECTED=1 DISCONNECTED value
+         * @property {number} NO_DATA=2 NO_DATA value
+         */
+        antigravity.InterfaceStatus = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "CONNECTED"] = 0;
+            values[valuesById[1] = "DISCONNECTED"] = 1;
+            values[valuesById[2] = "NO_DATA"] = 2;
+            return values;
+        })();
+
+        antigravity.InterfaceEvent = (function() {
+
+            /**
+             * Properties of an InterfaceEvent.
+             * @memberof com.antigravity
+             * @interface IInterfaceEvent
+             * @property {com.antigravity.ILapEvent|null} [lap] InterfaceEvent lap
+             * @property {com.antigravity.ISegmentEvent|null} [segment] InterfaceEvent segment
+             * @property {com.antigravity.IInterfaceStatusEvent|null} [status] InterfaceEvent status
+             */
+
+            /**
+             * Constructs a new InterfaceEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents an InterfaceEvent.
+             * @implements IInterfaceEvent
+             * @constructor
+             * @param {com.antigravity.IInterfaceEvent=} [properties] Properties to set
+             */
+            function InterfaceEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * InterfaceEvent lap.
+             * @member {com.antigravity.ILapEvent|null|undefined} lap
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            InterfaceEvent.prototype.lap = null;
+
+            /**
+             * InterfaceEvent segment.
+             * @member {com.antigravity.ISegmentEvent|null|undefined} segment
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            InterfaceEvent.prototype.segment = null;
+
+            /**
+             * InterfaceEvent status.
+             * @member {com.antigravity.IInterfaceStatusEvent|null|undefined} status
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            InterfaceEvent.prototype.status = null;
+
+            // OneOf field names bound to virtual getters and setters
+            let $oneOfFields;
+
+            /**
+             * InterfaceEvent event.
+             * @member {"lap"|"segment"|"status"|undefined} event
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            Object.defineProperty(InterfaceEvent.prototype, "event", {
+                get: $util.oneOfGetter($oneOfFields = ["lap", "segment", "status"]),
+                set: $util.oneOfSetter($oneOfFields)
+            });
+
+            /**
+             * Creates a new InterfaceEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {com.antigravity.IInterfaceEvent=} [properties] Properties to set
+             * @returns {com.antigravity.InterfaceEvent} InterfaceEvent instance
+             */
+            InterfaceEvent.create = function create(properties) {
+                return new InterfaceEvent(properties);
+            };
+
+            /**
+             * Encodes the specified InterfaceEvent message. Does not implicitly {@link com.antigravity.InterfaceEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {com.antigravity.IInterfaceEvent} message InterfaceEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lap != null && Object.hasOwnProperty.call(message, "lap"))
+                    $root.com.antigravity.LapEvent.encode(message.lap, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.segment != null && Object.hasOwnProperty.call(message, "segment"))
+                    $root.com.antigravity.SegmentEvent.encode(message.segment, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+                if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+                    $root.com.antigravity.InterfaceStatusEvent.encode(message.status, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified InterfaceEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {com.antigravity.IInterfaceEvent} message InterfaceEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an InterfaceEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.InterfaceEvent} InterfaceEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.InterfaceEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lap = $root.com.antigravity.LapEvent.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.segment = $root.com.antigravity.SegmentEvent.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 3: {
+                            message.status = $root.com.antigravity.InterfaceStatusEvent.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an InterfaceEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.InterfaceEvent} InterfaceEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an InterfaceEvent message.
+             * @function verify
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            InterfaceEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                let properties = {};
+                if (message.lap != null && message.hasOwnProperty("lap")) {
+                    properties.event = 1;
+                    {
+                        let error = $root.com.antigravity.LapEvent.verify(message.lap);
+                        if (error)
+                            return "lap." + error;
+                    }
+                }
+                if (message.segment != null && message.hasOwnProperty("segment")) {
+                    if (properties.event === 1)
+                        return "event: multiple values";
+                    properties.event = 1;
+                    {
+                        let error = $root.com.antigravity.SegmentEvent.verify(message.segment);
+                        if (error)
+                            return "segment." + error;
+                    }
+                }
+                if (message.status != null && message.hasOwnProperty("status")) {
+                    if (properties.event === 1)
+                        return "event: multiple values";
+                    properties.event = 1;
+                    {
+                        let error = $root.com.antigravity.InterfaceStatusEvent.verify(message.status);
+                        if (error)
+                            return "status." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates an InterfaceEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.InterfaceEvent} InterfaceEvent
+             */
+            InterfaceEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.InterfaceEvent)
+                    return object;
+                let message = new $root.com.antigravity.InterfaceEvent();
+                if (object.lap != null) {
+                    if (typeof object.lap !== "object")
+                        throw TypeError(".com.antigravity.InterfaceEvent.lap: object expected");
+                    message.lap = $root.com.antigravity.LapEvent.fromObject(object.lap);
+                }
+                if (object.segment != null) {
+                    if (typeof object.segment !== "object")
+                        throw TypeError(".com.antigravity.InterfaceEvent.segment: object expected");
+                    message.segment = $root.com.antigravity.SegmentEvent.fromObject(object.segment);
+                }
+                if (object.status != null) {
+                    if (typeof object.status !== "object")
+                        throw TypeError(".com.antigravity.InterfaceEvent.status: object expected");
+                    message.status = $root.com.antigravity.InterfaceStatusEvent.fromObject(object.status);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an InterfaceEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {com.antigravity.InterfaceEvent} message InterfaceEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            InterfaceEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (message.lap != null && message.hasOwnProperty("lap")) {
+                    object.lap = $root.com.antigravity.LapEvent.toObject(message.lap, options);
+                    if (options.oneofs)
+                        object.event = "lap";
+                }
+                if (message.segment != null && message.hasOwnProperty("segment")) {
+                    object.segment = $root.com.antigravity.SegmentEvent.toObject(message.segment, options);
+                    if (options.oneofs)
+                        object.event = "segment";
+                }
+                if (message.status != null && message.hasOwnProperty("status")) {
+                    object.status = $root.com.antigravity.InterfaceStatusEvent.toObject(message.status, options);
+                    if (options.oneofs)
+                        object.event = "status";
+                }
+                return object;
+            };
+
+            /**
+             * Converts this InterfaceEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            InterfaceEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for InterfaceEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.InterfaceEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            InterfaceEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.InterfaceEvent";
+            };
+
+            return InterfaceEvent;
+        })();
+
+        antigravity.InterfaceStatusEvent = (function() {
+
+            /**
+             * Properties of an InterfaceStatusEvent.
+             * @memberof com.antigravity
+             * @interface IInterfaceStatusEvent
+             * @property {com.antigravity.InterfaceStatus|null} [status] InterfaceStatusEvent status
+             */
+
+            /**
+             * Constructs a new InterfaceStatusEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents an InterfaceStatusEvent.
+             * @implements IInterfaceStatusEvent
+             * @constructor
+             * @param {com.antigravity.IInterfaceStatusEvent=} [properties] Properties to set
+             */
+            function InterfaceStatusEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * InterfaceStatusEvent status.
+             * @member {com.antigravity.InterfaceStatus} status
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @instance
+             */
+            InterfaceStatusEvent.prototype.status = 0;
+
+            /**
+             * Creates a new InterfaceStatusEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {com.antigravity.IInterfaceStatusEvent=} [properties] Properties to set
+             * @returns {com.antigravity.InterfaceStatusEvent} InterfaceStatusEvent instance
+             */
+            InterfaceStatusEvent.create = function create(properties) {
+                return new InterfaceStatusEvent(properties);
+            };
+
+            /**
+             * Encodes the specified InterfaceStatusEvent message. Does not implicitly {@link com.antigravity.InterfaceStatusEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {com.antigravity.IInterfaceStatusEvent} message InterfaceStatusEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceStatusEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.status);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified InterfaceStatusEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceStatusEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {com.antigravity.IInterfaceStatusEvent} message InterfaceStatusEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceStatusEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an InterfaceStatusEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.InterfaceStatusEvent} InterfaceStatusEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceStatusEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.InterfaceStatusEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.status = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an InterfaceStatusEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.InterfaceStatusEvent} InterfaceStatusEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceStatusEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an InterfaceStatusEvent message.
+             * @function verify
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            InterfaceStatusEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.status != null && message.hasOwnProperty("status"))
+                    switch (message.status) {
+                    default:
+                        return "status: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                return null;
+            };
+
+            /**
+             * Creates an InterfaceStatusEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.InterfaceStatusEvent} InterfaceStatusEvent
+             */
+            InterfaceStatusEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.InterfaceStatusEvent)
+                    return object;
+                let message = new $root.com.antigravity.InterfaceStatusEvent();
+                switch (object.status) {
+                default:
+                    if (typeof object.status === "number") {
+                        message.status = object.status;
+                        break;
+                    }
+                    break;
+                case "CONNECTED":
+                case 0:
+                    message.status = 0;
+                    break;
+                case "DISCONNECTED":
+                case 1:
+                    message.status = 1;
+                    break;
+                case "NO_DATA":
+                case 2:
+                    message.status = 2;
+                    break;
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an InterfaceStatusEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {com.antigravity.InterfaceStatusEvent} message InterfaceStatusEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            InterfaceStatusEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.status = options.enums === String ? "CONNECTED" : 0;
+                if (message.status != null && message.hasOwnProperty("status"))
+                    object.status = options.enums === String ? $root.com.antigravity.InterfaceStatus[message.status] === undefined ? message.status : $root.com.antigravity.InterfaceStatus[message.status] : message.status;
+                return object;
+            };
+
+            /**
+             * Converts this InterfaceStatusEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            InterfaceStatusEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for InterfaceStatusEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.InterfaceStatusEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            InterfaceStatusEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.InterfaceStatusEvent";
+            };
+
+            return InterfaceStatusEvent;
+        })();
+
+        antigravity.LapEvent = (function() {
+
+            /**
+             * Properties of a LapEvent.
+             * @memberof com.antigravity
+             * @interface ILapEvent
+             * @property {number|null} [lane] LapEvent lane
+             * @property {number|null} [lapTime] LapEvent lapTime
+             * @property {number|null} [interfaceId] LapEvent interfaceId
+             */
+
+            /**
+             * Constructs a new LapEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents a LapEvent.
+             * @implements ILapEvent
+             * @constructor
+             * @param {com.antigravity.ILapEvent=} [properties] Properties to set
+             */
+            function LapEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * LapEvent lane.
+             * @member {number} lane
+             * @memberof com.antigravity.LapEvent
+             * @instance
+             */
+            LapEvent.prototype.lane = 0;
+
+            /**
+             * LapEvent lapTime.
+             * @member {number} lapTime
+             * @memberof com.antigravity.LapEvent
+             * @instance
+             */
+            LapEvent.prototype.lapTime = 0;
+
+            /**
+             * LapEvent interfaceId.
+             * @member {number} interfaceId
+             * @memberof com.antigravity.LapEvent
+             * @instance
+             */
+            LapEvent.prototype.interfaceId = 0;
+
+            /**
+             * Creates a new LapEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {com.antigravity.ILapEvent=} [properties] Properties to set
+             * @returns {com.antigravity.LapEvent} LapEvent instance
+             */
+            LapEvent.create = function create(properties) {
+                return new LapEvent(properties);
+            };
+
+            /**
+             * Encodes the specified LapEvent message. Does not implicitly {@link com.antigravity.LapEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {com.antigravity.ILapEvent} message LapEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LapEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.lapTime);
+                if (message.interfaceId != null && Object.hasOwnProperty.call(message, "interfaceId"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.interfaceId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified LapEvent message, length delimited. Does not implicitly {@link com.antigravity.LapEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {com.antigravity.ILapEvent} message LapEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LapEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a LapEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.LapEvent} LapEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LapEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LapEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lane = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.lapTime = reader.double();
+                            break;
+                        }
+                    case 3: {
+                            message.interfaceId = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a LapEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.LapEvent} LapEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LapEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a LapEvent message.
+             * @function verify
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            LapEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    if (!$util.isInteger(message.lane))
+                        return "lane: integer expected";
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    if (typeof message.lapTime !== "number")
+                        return "lapTime: number expected";
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    if (!$util.isInteger(message.interfaceId))
+                        return "interfaceId: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a LapEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.LapEvent} LapEvent
+             */
+            LapEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.LapEvent)
+                    return object;
+                let message = new $root.com.antigravity.LapEvent();
+                if (object.lane != null)
+                    message.lane = object.lane | 0;
+                if (object.lapTime != null)
+                    message.lapTime = Number(object.lapTime);
+                if (object.interfaceId != null)
+                    message.interfaceId = object.interfaceId | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a LapEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {com.antigravity.LapEvent} message LapEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            LapEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.lane = 0;
+                    object.lapTime = 0;
+                    object.interfaceId = 0;
+                }
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    object.lane = message.lane;
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    object.lapTime = options.json && !isFinite(message.lapTime) ? String(message.lapTime) : message.lapTime;
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    object.interfaceId = message.interfaceId;
+                return object;
+            };
+
+            /**
+             * Converts this LapEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.LapEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            LapEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for LapEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.LapEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            LapEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.LapEvent";
+            };
+
+            return LapEvent;
+        })();
+
+        antigravity.SegmentEvent = (function() {
+
+            /**
+             * Properties of a SegmentEvent.
+             * @memberof com.antigravity
+             * @interface ISegmentEvent
+             * @property {number|null} [lane] SegmentEvent lane
+             * @property {number|null} [segmentTime] SegmentEvent segmentTime
+             * @property {number|null} [interfaceId] SegmentEvent interfaceId
+             */
+
+            /**
+             * Constructs a new SegmentEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents a SegmentEvent.
+             * @implements ISegmentEvent
+             * @constructor
+             * @param {com.antigravity.ISegmentEvent=} [properties] Properties to set
+             */
+            function SegmentEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SegmentEvent lane.
+             * @member {number} lane
+             * @memberof com.antigravity.SegmentEvent
+             * @instance
+             */
+            SegmentEvent.prototype.lane = 0;
+
+            /**
+             * SegmentEvent segmentTime.
+             * @member {number} segmentTime
+             * @memberof com.antigravity.SegmentEvent
+             * @instance
+             */
+            SegmentEvent.prototype.segmentTime = 0;
+
+            /**
+             * SegmentEvent interfaceId.
+             * @member {number} interfaceId
+             * @memberof com.antigravity.SegmentEvent
+             * @instance
+             */
+            SegmentEvent.prototype.interfaceId = 0;
+
+            /**
+             * Creates a new SegmentEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {com.antigravity.ISegmentEvent=} [properties] Properties to set
+             * @returns {com.antigravity.SegmentEvent} SegmentEvent instance
+             */
+            SegmentEvent.create = function create(properties) {
+                return new SegmentEvent(properties);
+            };
+
+            /**
+             * Encodes the specified SegmentEvent message. Does not implicitly {@link com.antigravity.SegmentEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {com.antigravity.ISegmentEvent} message SegmentEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SegmentEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                if (message.segmentTime != null && Object.hasOwnProperty.call(message, "segmentTime"))
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.segmentTime);
+                if (message.interfaceId != null && Object.hasOwnProperty.call(message, "interfaceId"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.interfaceId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SegmentEvent message, length delimited. Does not implicitly {@link com.antigravity.SegmentEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {com.antigravity.ISegmentEvent} message SegmentEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SegmentEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SegmentEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SegmentEvent} SegmentEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SegmentEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SegmentEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lane = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.segmentTime = reader.double();
+                            break;
+                        }
+                    case 3: {
+                            message.interfaceId = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SegmentEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SegmentEvent} SegmentEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SegmentEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SegmentEvent message.
+             * @function verify
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SegmentEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    if (!$util.isInteger(message.lane))
+                        return "lane: integer expected";
+                if (message.segmentTime != null && message.hasOwnProperty("segmentTime"))
+                    if (typeof message.segmentTime !== "number")
+                        return "segmentTime: number expected";
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    if (!$util.isInteger(message.interfaceId))
+                        return "interfaceId: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a SegmentEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SegmentEvent} SegmentEvent
+             */
+            SegmentEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SegmentEvent)
+                    return object;
+                let message = new $root.com.antigravity.SegmentEvent();
+                if (object.lane != null)
+                    message.lane = object.lane | 0;
+                if (object.segmentTime != null)
+                    message.segmentTime = Number(object.segmentTime);
+                if (object.interfaceId != null)
+                    message.interfaceId = object.interfaceId | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SegmentEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {com.antigravity.SegmentEvent} message SegmentEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SegmentEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.lane = 0;
+                    object.segmentTime = 0;
+                    object.interfaceId = 0;
+                }
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    object.lane = message.lane;
+                if (message.segmentTime != null && message.hasOwnProperty("segmentTime"))
+                    object.segmentTime = options.json && !isFinite(message.segmentTime) ? String(message.segmentTime) : message.segmentTime;
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    object.interfaceId = message.interfaceId;
+                return object;
+            };
+
+            /**
+             * Converts this SegmentEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SegmentEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SegmentEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SegmentEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.SegmentEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SegmentEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SegmentEvent";
+            };
+
+            return SegmentEvent;
         })();
 
         antigravity.StartRaceRequest = (function() {
@@ -6362,6 +9397,30 @@ export const com = $root.com = (() => {
             return RaceSubscriptionRequest;
         })();
 
+        /**
+         * RaceState enum.
+         * @name com.antigravity.RaceState
+         * @enum {number}
+         * @property {number} UNKNOWN_STATE=0 UNKNOWN_STATE value
+         * @property {number} NOT_STARTED=1 NOT_STARTED value
+         * @property {number} STARTING=2 STARTING value
+         * @property {number} RACING=3 RACING value
+         * @property {number} PAUSED=4 PAUSED value
+         * @property {number} HEAT_OVER=5 HEAT_OVER value
+         * @property {number} RACE_OVER=6 RACE_OVER value
+         */
+        antigravity.RaceState = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "UNKNOWN_STATE"] = 0;
+            values[valuesById[1] = "NOT_STARTED"] = 1;
+            values[valuesById[2] = "STARTING"] = 2;
+            values[valuesById[3] = "RACING"] = 3;
+            values[valuesById[4] = "PAUSED"] = 4;
+            values[valuesById[5] = "HEAT_OVER"] = 5;
+            values[valuesById[6] = "RACE_OVER"] = 6;
+            return values;
+        })();
+
         antigravity.ListAssetsResponse = (function() {
 
             /**
@@ -7520,6 +10579,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [averageLapTime] Lap averageLapTime
              * @property {number|null} [medianLapTime] Lap medianLapTime
              * @property {number|null} [bestLapTime] Lap bestLapTime
+             * @property {number|null} [interfaceId] Lap interfaceId
              */
 
             /**
@@ -7586,6 +10646,14 @@ export const com = $root.com = (() => {
             Lap.prototype.bestLapTime = 0;
 
             /**
+             * Lap interfaceId.
+             * @member {number} interfaceId
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.interfaceId = 0;
+
+            /**
              * Creates a new Lap instance using the specified properties.
              * @function create
              * @memberof com.antigravity.Lap
@@ -7621,6 +10689,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 5, wireType 1 =*/41).double(message.medianLapTime);
                 if (message.bestLapTime != null && Object.hasOwnProperty.call(message, "bestLapTime"))
                     writer.uint32(/* id 6, wireType 1 =*/49).double(message.bestLapTime);
+                if (message.interfaceId != null && Object.hasOwnProperty.call(message, "interfaceId"))
+                    writer.uint32(/* id 7, wireType 0 =*/56).int32(message.interfaceId);
                 return writer;
             };
 
@@ -7681,6 +10751,10 @@ export const com = $root.com = (() => {
                             message.bestLapTime = reader.double();
                             break;
                         }
+                    case 7: {
+                            message.interfaceId = reader.int32();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -7734,6 +10808,9 @@ export const com = $root.com = (() => {
                 if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
                     if (typeof message.bestLapTime !== "number")
                         return "bestLapTime: number expected";
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    if (!$util.isInteger(message.interfaceId))
+                        return "interfaceId: integer expected";
                 return null;
             };
 
@@ -7761,6 +10838,8 @@ export const com = $root.com = (() => {
                     message.medianLapTime = Number(object.medianLapTime);
                 if (object.bestLapTime != null)
                     message.bestLapTime = Number(object.bestLapTime);
+                if (object.interfaceId != null)
+                    message.interfaceId = object.interfaceId | 0;
                 return message;
             };
 
@@ -7784,6 +10863,7 @@ export const com = $root.com = (() => {
                     object.averageLapTime = 0;
                     object.medianLapTime = 0;
                     object.bestLapTime = 0;
+                    object.interfaceId = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
@@ -7797,6 +10877,8 @@ export const com = $root.com = (() => {
                     object.medianLapTime = options.json && !isFinite(message.medianLapTime) ? String(message.medianLapTime) : message.medianLapTime;
                 if (message.bestLapTime != null && message.hasOwnProperty("bestLapTime"))
                     object.bestLapTime = options.json && !isFinite(message.bestLapTime) ? String(message.bestLapTime) : message.bestLapTime;
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    object.interfaceId = message.interfaceId;
                 return object;
             };
 
@@ -7841,6 +10923,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IReactionTime|null} [reactionTime] RaceData reactionTime
              * @property {com.antigravity.IStandingsUpdate|null} [standingsUpdate] RaceData standingsUpdate
              * @property {com.antigravity.IOverallStandingsUpdate|null} [overallStandingsUpdate] RaceData overallStandingsUpdate
+             * @property {com.antigravity.RaceState|null} [raceState] RaceData raceState
              */
 
             /**
@@ -7906,17 +10989,25 @@ export const com = $root.com = (() => {
              */
             RaceData.prototype.overallStandingsUpdate = null;
 
+            /**
+             * RaceData raceState.
+             * @member {com.antigravity.RaceState|null|undefined} raceState
+             * @memberof com.antigravity.RaceData
+             * @instance
+             */
+            RaceData.prototype.raceState = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * RaceData data.
-             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|undefined} data
+             * @member {"raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState"|undefined} data
              * @memberof com.antigravity.RaceData
              * @instance
              */
             Object.defineProperty(RaceData.prototype, "data", {
-                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate", "overallStandingsUpdate"]),
+                get: $util.oneOfGetter($oneOfFields = ["raceTime", "lap", "race", "reactionTime", "standingsUpdate", "overallStandingsUpdate", "raceState"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -7956,6 +11047,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.StandingsUpdate.encode(message.standingsUpdate, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
                 if (message.overallStandingsUpdate != null && Object.hasOwnProperty.call(message, "overallStandingsUpdate"))
                     $root.com.antigravity.OverallStandingsUpdate.encode(message.overallStandingsUpdate, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
+                if (message.raceState != null && Object.hasOwnProperty.call(message, "raceState"))
+                    writer.uint32(/* id 7, wireType 0 =*/56).int32(message.raceState);
                 return writer;
             };
 
@@ -8014,6 +11107,10 @@ export const com = $root.com = (() => {
                         }
                     case 6: {
                             message.overallStandingsUpdate = $root.com.antigravity.OverallStandingsUpdate.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 7: {
+                            message.raceState = reader.int32();
                             break;
                         }
                     default:
@@ -8110,6 +11207,23 @@ export const com = $root.com = (() => {
                             return "overallStandingsUpdate." + error;
                     }
                 }
+                if (message.raceState != null && message.hasOwnProperty("raceState")) {
+                    if (properties.data === 1)
+                        return "data: multiple values";
+                    properties.data = 1;
+                    switch (message.raceState) {
+                    default:
+                        return "raceState: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                        break;
+                    }
+                }
                 return null;
             };
 
@@ -8154,6 +11268,42 @@ export const com = $root.com = (() => {
                     if (typeof object.overallStandingsUpdate !== "object")
                         throw TypeError(".com.antigravity.RaceData.overallStandingsUpdate: object expected");
                     message.overallStandingsUpdate = $root.com.antigravity.OverallStandingsUpdate.fromObject(object.overallStandingsUpdate);
+                }
+                switch (object.raceState) {
+                default:
+                    if (typeof object.raceState === "number") {
+                        message.raceState = object.raceState;
+                        break;
+                    }
+                    break;
+                case "UNKNOWN_STATE":
+                case 0:
+                    message.raceState = 0;
+                    break;
+                case "NOT_STARTED":
+                case 1:
+                    message.raceState = 1;
+                    break;
+                case "STARTING":
+                case 2:
+                    message.raceState = 2;
+                    break;
+                case "RACING":
+                case 3:
+                    message.raceState = 3;
+                    break;
+                case "PAUSED":
+                case 4:
+                    message.raceState = 4;
+                    break;
+                case "HEAT_OVER":
+                case 5:
+                    message.raceState = 5;
+                    break;
+                case "RACE_OVER":
+                case 6:
+                    message.raceState = 6;
+                    break;
                 }
                 return message;
             };
@@ -8201,6 +11351,11 @@ export const com = $root.com = (() => {
                     if (options.oneofs)
                         object.data = "overallStandingsUpdate";
                 }
+                if (message.raceState != null && message.hasOwnProperty("raceState")) {
+                    object.raceState = options.enums === String ? $root.com.antigravity.RaceState[message.raceState] === undefined ? message.raceState : $root.com.antigravity.RaceState[message.raceState] : message.raceState;
+                    if (options.oneofs)
+                        object.data = "raceState";
+                }
                 return object;
             };
 
@@ -8243,6 +11398,7 @@ export const com = $root.com = (() => {
              * @property {Array.<com.antigravity.IRaceParticipant>|null} [drivers] Race drivers
              * @property {Array.<com.antigravity.IHeat>|null} [heats] Race heats
              * @property {com.antigravity.IHeat|null} [currentHeat] Race currentHeat
+             * @property {com.antigravity.RaceState|null} [state] Race state
              */
 
             /**
@@ -8295,6 +11451,14 @@ export const com = $root.com = (() => {
             Race.prototype.currentHeat = null;
 
             /**
+             * Race state.
+             * @member {com.antigravity.RaceState} state
+             * @memberof com.antigravity.Race
+             * @instance
+             */
+            Race.prototype.state = 0;
+
+            /**
              * Creates a new Race instance using the specified properties.
              * @function create
              * @memberof com.antigravity.Race
@@ -8328,6 +11492,8 @@ export const com = $root.com = (() => {
                         $root.com.antigravity.Heat.encode(message.heats[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
                 if (message.currentHeat != null && Object.hasOwnProperty.call(message, "currentHeat"))
                     $root.com.antigravity.Heat.encode(message.currentHeat, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.state != null && Object.hasOwnProperty.call(message, "state"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.state);
                 return writer;
             };
 
@@ -8382,6 +11548,10 @@ export const com = $root.com = (() => {
                         }
                     case 4: {
                             message.currentHeat = $root.com.antigravity.Heat.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.state = reader.int32();
                             break;
                         }
                     default:
@@ -8447,6 +11617,19 @@ export const com = $root.com = (() => {
                     if (error)
                         return "currentHeat." + error;
                 }
+                if (message.state != null && message.hasOwnProperty("state"))
+                    switch (message.state) {
+                    default:
+                        return "state: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                        break;
+                    }
                 return null;
             };
 
@@ -8492,6 +11675,42 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.Race.currentHeat: object expected");
                     message.currentHeat = $root.com.antigravity.Heat.fromObject(object.currentHeat);
                 }
+                switch (object.state) {
+                default:
+                    if (typeof object.state === "number") {
+                        message.state = object.state;
+                        break;
+                    }
+                    break;
+                case "UNKNOWN_STATE":
+                case 0:
+                    message.state = 0;
+                    break;
+                case "NOT_STARTED":
+                case 1:
+                    message.state = 1;
+                    break;
+                case "STARTING":
+                case 2:
+                    message.state = 2;
+                    break;
+                case "RACING":
+                case 3:
+                    message.state = 3;
+                    break;
+                case "PAUSED":
+                case 4:
+                    message.state = 4;
+                    break;
+                case "HEAT_OVER":
+                case 5:
+                    message.state = 5;
+                    break;
+                case "RACE_OVER":
+                case 6:
+                    message.state = 6;
+                    break;
+                }
                 return message;
             };
 
@@ -8515,6 +11734,7 @@ export const com = $root.com = (() => {
                 if (options.defaults) {
                     object.race = null;
                     object.currentHeat = null;
+                    object.state = options.enums === String ? "UNKNOWN_STATE" : 0;
                 }
                 if (message.race != null && message.hasOwnProperty("race"))
                     object.race = $root.com.antigravity.RaceModel.toObject(message.race, options);
@@ -8530,6 +11750,8 @@ export const com = $root.com = (() => {
                 }
                 if (message.currentHeat != null && message.hasOwnProperty("currentHeat"))
                     object.currentHeat = $root.com.antigravity.Heat.toObject(message.currentHeat, options);
+                if (message.state != null && message.hasOwnProperty("state"))
+                    object.state = options.enums === String ? $root.com.antigravity.RaceState[message.state] === undefined ? message.state : $root.com.antigravity.RaceState[message.state] : message.state;
                 return object;
             };
 
@@ -9536,6 +12758,7 @@ export const com = $root.com = (() => {
              * @interface IReactionTime
              * @property {string|null} [objectId] ReactionTime objectId
              * @property {number|null} [reactionTime] ReactionTime reactionTime
+             * @property {number|null} [interfaceId] ReactionTime interfaceId
              */
 
             /**
@@ -9570,6 +12793,14 @@ export const com = $root.com = (() => {
             ReactionTime.prototype.reactionTime = 0;
 
             /**
+             * ReactionTime interfaceId.
+             * @member {number} interfaceId
+             * @memberof com.antigravity.ReactionTime
+             * @instance
+             */
+            ReactionTime.prototype.interfaceId = 0;
+
+            /**
              * Creates a new ReactionTime instance using the specified properties.
              * @function create
              * @memberof com.antigravity.ReactionTime
@@ -9597,6 +12828,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.reactionTime != null && Object.hasOwnProperty.call(message, "reactionTime"))
                     writer.uint32(/* id 2, wireType 1 =*/17).double(message.reactionTime);
+                if (message.interfaceId != null && Object.hasOwnProperty.call(message, "interfaceId"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.interfaceId);
                 return writer;
             };
 
@@ -9641,6 +12874,10 @@ export const com = $root.com = (() => {
                             message.reactionTime = reader.double();
                             break;
                         }
+                    case 3: {
+                            message.interfaceId = reader.int32();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -9682,6 +12919,9 @@ export const com = $root.com = (() => {
                 if (message.reactionTime != null && message.hasOwnProperty("reactionTime"))
                     if (typeof message.reactionTime !== "number")
                         return "reactionTime: number expected";
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    if (!$util.isInteger(message.interfaceId))
+                        return "interfaceId: integer expected";
                 return null;
             };
 
@@ -9701,6 +12941,8 @@ export const com = $root.com = (() => {
                     message.objectId = String(object.objectId);
                 if (object.reactionTime != null)
                     message.reactionTime = Number(object.reactionTime);
+                if (object.interfaceId != null)
+                    message.interfaceId = object.interfaceId | 0;
                 return message;
             };
 
@@ -9720,11 +12962,14 @@ export const com = $root.com = (() => {
                 if (options.defaults) {
                     object.objectId = "";
                     object.reactionTime = 0;
+                    object.interfaceId = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
                 if (message.reactionTime != null && message.hasOwnProperty("reactionTime"))
                     object.reactionTime = options.json && !isFinite(message.reactionTime) ? String(message.reactionTime) : message.reactionTime;
+                if (message.interfaceId != null && message.hasOwnProperty("interfaceId"))
+                    object.interfaceId = message.interfaceId;
                 return object;
             };
 

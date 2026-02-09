@@ -1,6 +1,9 @@
 import { Model } from "./model";
 import { Lane } from "./lane";
 
+export const MAX_DIGITAL_PINS = 60;
+export const MAX_ANALOG_PINS = 16;
+
 /**
  * A track defines what the driver are racing on.  It has virtual things like a name
  * and logo which are primarly just used for displaying oon the race day screen.  It
@@ -34,7 +37,7 @@ export interface ArduinoConfig {
     hardwareType: number;
 
     globalInvertLanes: number;
-    globalInvertRelays: number;
+    normallyClosedRelays: boolean;
     globalInvertLights: number;
 
     useLapsForPits: number;

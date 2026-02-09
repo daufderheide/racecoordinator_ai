@@ -165,7 +165,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, -1, -1],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            globalInvertRelays: 0,
+            normallyClosedRelays: false,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -193,7 +193,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, 1003, 1004],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            globalInvertRelays: 0,
+            normallyClosedRelays: false,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -305,6 +305,10 @@ export class TestSetupHelper {
 
     await page.addInitScript((data) => {
       const originalWebSocket = window.WebSocket;
+      // Initialize the array to keep track of all mock sockets
+      // @ts-ignore
+      window.allMockSockets = [];
+
       window.WebSocket = class MockWebSocket extends EventTarget {
         constructor(url: string, protocols?: string | string[]) {
           super();
@@ -312,9 +316,15 @@ export class TestSetupHelper {
           this.url = url;
           // @ts-ignore
           this.readyState = 0; // CONNECTING
+
+          // @ts-ignore
+          window.allMockSockets.push(this);
+
           setTimeout(() => {
             // @ts-ignore
             this.readyState = 1; // OPEN
+            // @ts-ignore
+            window.mockSocket = this;
             this.dispatchEvent(new Event('open'));
             // @ts-ignore
             if (this.onopen) this.onopen(new Event('open'));

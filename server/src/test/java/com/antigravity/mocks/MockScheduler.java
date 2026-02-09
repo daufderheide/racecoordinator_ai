@@ -9,18 +9,19 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class MockScheduler implements ScheduledExecutorService {
-  public Runnable command;
+  public java.util.List<Runnable> commands = new java.util.ArrayList<>();
   public boolean shutdown = false;
 
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period,
       TimeUnit unit) {
-    this.command = command;
+    this.commands.add(command);
     return null; // For this test we don't strictly need the future yet
   }
 
   // Methods we don't need to implement for this test
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+    this.commands.add(command);
     return null;
   }
 
@@ -89,8 +90,10 @@ public class MockScheduler implements ScheduledExecutorService {
   }
 
   public void tick() {
-    if (command != null && !shutdown) {
-      command.run();
+    if (!shutdown) {
+      for (Runnable command : commands) {
+        command.run();
+      }
     }
   }
 }
