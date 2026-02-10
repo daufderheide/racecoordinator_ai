@@ -4,6 +4,7 @@
     "AE_BOARD_TYPE": "Type de carte",
     "AE_BOARD_UNO": "Arduino Uno",
     "AE_COM_PORT": "Port COM",
+    "AE_DEBOUNCE_TIME": "Temps anti-rebond (µs)",
     "AE_DIGITAL_PINS": "Pins numériques",
     "AE_HEADER": "Configuration Arduino",
     "AE_NORMALLY_CLOSED_RELAYS": "Relais normalement fermés",

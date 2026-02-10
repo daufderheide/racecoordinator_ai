@@ -202,13 +202,22 @@ public class ArduinoProtocol extends DefaultProtocol {
     return partialTimes;
   }
 
-  public void updateConfig(ArduinoConfig config) {
-    this.config = config;
+  public void updateConfig(ArduinoConfig newConfig) {
+    boolean debounceChanged = this.config.debounceUs != newConfig.debounceUs;
+    boolean digitalPinsChanged = !this.config.digitalIds.equals(newConfig.digitalIds);
+    boolean analogPinsChanged = !this.config.analogIds.equals(newConfig.analogIds);
+
+    this.config = newConfig;
     buildPinLookup();
+
     if (versionVerified) {
-      sendPinModeRead();
-      sendPinModeWrite();
-      sendDebounce();
+      if (digitalPinsChanged || analogPinsChanged) {
+        sendPinModeRead();
+        sendPinModeWrite();
+      }
+      if (debounceChanged) {
+        sendDebounce();
+      }
     }
   }
 

@@ -30,11 +30,9 @@
         </div>
       </div>
       <div class="control-group">
-        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" [ngModel]="config.normallyClosedRelays"
-            (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
-          {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
-        </label>
+        <label>{{ 'AE_DEBOUNCE_TIME' | translate }}</label>
+        <input type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
+          step="100">
       </div>
     </div>
 
@@ -43,6 +41,16 @@
         class="board-image">
       <img *ngIf="config.hardwareType == 1" src="assets/arduino_mega_board.png" [alt]="'AE_BOARD_MEGA' | translate"
         class="board-image">
+    </div>
+
+    <div class="right-controls">
+      <div class="control-group">
+        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" [ngModel]="config.normallyClosedRelays"
+            (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
+          {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
+        </label>
+      </div>
     </div>
   </div>
 

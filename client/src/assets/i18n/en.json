@@ -13,6 +13,7 @@
     "AE_BOARD_TYPE": "Board Type",
     "AE_BOARD_UNO": "Arduino Uno",
     "AE_COM_PORT": "COM Port",
+    "AE_DEBOUNCE_TIME": "Debounce Time (µs)",
     "AE_DIGITAL_PINS": "Digital Pins",
     "AE_HEADER": "Arduino Configuration",
     "AE_NORMALLY_CLOSED_RELAYS": "Normally Closed Relays",

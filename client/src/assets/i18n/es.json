@@ -4,6 +4,7 @@
     "AE_BOARD_TYPE": "Tipo de placa",
     "AE_BOARD_UNO": "Arduino Uno",
     "AE_COM_PORT": "Puerto COM",
+    "AE_DEBOUNCE_TIME": "Tiempo de rebote (µs)",
     "AE_DIGITAL_PINS": "Pines digitales",
     "AE_HEADER": "Configuración de Arduino",
     "AE_NORMALLY_CLOSED_RELAYS": "Relés normalmente cerrados",

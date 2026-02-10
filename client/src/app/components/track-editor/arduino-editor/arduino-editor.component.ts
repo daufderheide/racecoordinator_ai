@@ -4,7 +4,8 @@ import { Lane } from '../../../models/lane';
 import { DataService } from '../../../data.service';
 import { TranslationService } from '../../../services/translation.service';
 import { com } from '../../../proto/message';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 interface PinAction {
   label: string;
@@ -50,6 +51,17 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           this.interfaceStatus = event.status.status as number;
           this.cdr.detectChanges();
         }
+      }
+    });
+
+    // Handle debounce changes
+    this.debounceUpdateSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(value => {
+      if (this.config) {
+        this.config.debounceUs = value;
+        this.updateArduinoConfig();
       }
     });
 
@@ -143,6 +155,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         error: (err) => console.error('Error updating interface config', err)
       });
     }
+  }
+
+  // Debounce Logic
+  private debounceUpdateSubject = new Subject<number>();
+
+  onDebounceChange(value: number) {
+    this.debounceUpdateSubject.next(value);
   }
 
   // Pin Activity Logic
