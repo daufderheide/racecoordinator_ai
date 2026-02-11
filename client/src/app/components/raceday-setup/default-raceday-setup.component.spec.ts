@@ -12,6 +12,7 @@ import { of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { com } from 'src/app/proto/message';
+import { Settings } from 'src/app/models/settings';
 
 describe('DefaultRacedaySetupComponent', () => {
   let component: DefaultRacedaySetupComponent;
@@ -26,7 +27,7 @@ describe('DefaultRacedaySetupComponent', () => {
   beforeEach(() => {
     mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getRaces', 'initializeRace']);
     mockRaceService = jasmine.createSpyObj('RaceService', ['startRace']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate']);
+    mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate', 'setLanguage', 'getSupportedLanguages', 'getBrowserLanguage']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'clearCustomFolder']);
@@ -41,7 +42,12 @@ describe('DefaultRacedaySetupComponent', () => {
     ]));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key) => key);
-    mockSettingsService.getSettings.and.returnValue({ recentRaceIds: [], selectedDriverIds: [], serverIp: 'localhost', serverPort: 7070 });
+    mockTranslationService.getBrowserLanguage.and.returnValue('en');
+    mockTranslationService.getSupportedLanguages.and.returnValue([
+      { code: 'en', nameKey: 'RDS_LANG_EN' },
+      { code: 'es', nameKey: 'RDS_LANG_ES' }
+    ]);
+    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],
@@ -169,5 +175,40 @@ describe('DefaultRacedaySetupComponent', () => {
     // With fixed random, order might change or not depending on impl, 
     // but main goal is to ensure it runs without error and saves.
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+  });
+
+  it('should toggle options dropdown', () => {
+    component.toggleOptionsDropdown(new MouseEvent('click'));
+    expect(component.isOptionsDropdownOpen).toBeTrue();
+
+    component.toggleOptionsDropdown(new MouseEvent('click'));
+    expect(component.isOptionsDropdownOpen).toBeFalse();
+  });
+
+  it('should toggle localization dropdown', () => {
+    component.toggleLocalizationDropdown(new MouseEvent('click'));
+    expect(component.isLocalizationDropdownOpen).toBeTrue();
+
+    component.toggleLocalizationDropdown(new MouseEvent('click'));
+    expect(component.isLocalizationDropdownOpen).toBeFalse();
+  });
+
+  it('should select language and save setting', () => {
+    component.selectLanguage('es');
+    expect(mockTranslationService.setLanguage).toHaveBeenCalledWith('es');
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    expect(component.currentLanguage).toBe('es');
+    expect(component.isOptionsDropdownOpen).toBeFalse();
+  });
+
+  it('should get language display name', () => {
+    mockTranslationService.translate.and.callFake((key) => {
+      if (key === 'RDS_LANG_DEFAULT') return 'Default';
+      if (key === 'RDS_LANG_EN') return 'English (en)';
+      return key;
+    });
+
+    expect(component.getLanguageDisplayName('')).toBe('Default (EN)');
+    expect(component.getLanguageDisplayName('en')).toBe('English (en)');
   });
 });

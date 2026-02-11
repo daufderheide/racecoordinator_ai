@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { SettingsService } from './settings.service';
 
 @Injectable({
     providedIn: 'root'
@@ -11,16 +12,17 @@ export class TranslationService {
     private translations: { [key: string]: any } = {};
     private supportedLanguages = ['en', 'es', 'fr', 'de', 'pt', 'it'];
 
-    constructor(private http: HttpClient) {
-        // Automatically detect and load browser language
-        const browserLang = this.getBrowserLanguage();
-        this.loadTranslations(browserLang);
+    constructor(private http: HttpClient, private settingsService: SettingsService) {
+        // Load from settings if available, otherwise detect browser language
+        const settings = this.settingsService.getSettings();
+        const language = settings.language || this.getBrowserLanguage();
+        this.loadTranslations(language);
     }
 
     /**
      * Get the browser's language preference
      */
-    private getBrowserLanguage(): string {
+    public getBrowserLanguage(): string {
         // Get browser language (e.g., 'en-US', 'es-ES', 'fr-FR')
         const browserLang = navigator.language || (navigator as any).userLanguage;
 
@@ -37,14 +39,14 @@ export class TranslationService {
     loadTranslations(language: string): void {
         console.log(`TranslationService: Loading translations for ${language}...`);
         this.translationsLoaded.next(false);
-        this.http.get(`/assets/i18n/${language}.json?t=${Date.now()}`).subscribe({
-            next: (data) => {
+        this.http.get(`assets/i18n/${language}.json?t=${Date.now()}`).subscribe({
+            next: (data: any) => {
                 console.log(`TranslationService: Loaded translations for ${language}:`, data);
                 this.translations = data as { [key: string]: any };
                 this.currentLanguage.next(language);
                 this.translationsLoaded.next(true);
             },
-            error: (error) => {
+            error: (error: any) => {
                 console.error(`Failed to load translations for language: ${language}`, error);
                 // Fallback to English if loading fails
                 if (language !== 'en') {
@@ -103,5 +105,15 @@ export class TranslationService {
      */
     getCurrentLanguageValue(): string {
         return this.currentLanguage.value;
+    }
+
+    /**
+     * Get list of supported languages for UI
+     */
+    getSupportedLanguages(): { code: string, nameKey: string }[] {
+        return this.supportedLanguages.map(code => ({
+            code,
+            nameKey: `RDS_LANG_${code.toUpperCase()}`
+        }));
     }
 }

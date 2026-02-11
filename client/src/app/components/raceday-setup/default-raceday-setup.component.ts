@@ -42,6 +42,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
   isRefreshingList: boolean = false;
+  isLocalizationDropdownOpen: boolean = false;
+
+  supportedLanguages: { code: string, nameKey: string }[] = [];
+  currentLanguage: string = '';
+  browserLanguage: string = '';
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
@@ -135,6 +140,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.translationsLoaded = loaded;
       this.cdr.detectChanges();
     });
+
+    this.supportedLanguages = this.translationService.getSupportedLanguages().sort((a, b) => {
+      const nameA = this.translationService.translate(a.nameKey);
+      const nameB = this.translationService.translate(b.nameKey);
+      return nameA.localeCompare(nameB);
+    });
+    this.currentLanguage = this.settingsService.getSettings().language;
+    this.browserLanguage = this.translationService.getBrowserLanguage().toUpperCase();
   }
 
   @HostListener('window:resize')
@@ -411,10 +424,36 @@ export class DefaultRacedaySetupComponent implements OnInit {
   toggleOptionsDropdown(event: Event) {
     event.stopPropagation();
     this.isOptionsDropdownOpen = !this.isOptionsDropdownOpen;
+    if (!this.isOptionsDropdownOpen) {
+      this.isLocalizationDropdownOpen = false;
+    }
+  }
+
+  toggleLocalizationDropdown(event: Event) {
+    event.stopPropagation();
+    this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
   }
 
   closeOptionsDropdown() {
     this.isOptionsDropdownOpen = false;
+    this.isLocalizationDropdownOpen = false;
+  }
+
+  selectLanguage(code: string) {
+    this.translationService.setLanguage(code);
+    const settings = this.settingsService.getSettings();
+    settings.language = code;
+    this.settingsService.saveSettings(settings);
+    this.currentLanguage = code;
+    this.closeOptionsDropdown();
+  }
+
+  getLanguageDisplayName(code: string): string {
+    if (code === '') {
+      return `${this.translationService.translate('RDS_LANG_DEFAULT')} (${this.browserLanguage})`;
+    }
+    const lang = this.supportedLanguages.find(l => l.code === code);
+    return lang ? this.translationService.translate(lang.nameKey) : code;
   }
 
   async configureCustomUI() {

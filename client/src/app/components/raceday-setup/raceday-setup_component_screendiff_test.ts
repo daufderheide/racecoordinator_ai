@@ -151,5 +151,27 @@ for (const lang of languages) {
         timeout: 10000
       });
     });
+
+    test('Localization menu', async ({ page }) => {
+      const optionsText = (lang === 'de' ? 'Optionen' : (lang === 'es' ? 'Opciones' : (lang === 'it' ? 'Opzioni' : (lang === 'pt' ? 'Opções' : 'Options'))));
+      const localizationText = (lang === 'de' ? 'Lokalisierung' : (lang === 'es' ? 'Localización' : (lang === 'fr' ? 'Localisation' : (lang === 'it' ? 'Localizzazione' : (lang === 'pt' ? 'Localização' : 'Localization')))));
+
+      // Open Options menu
+      await page.click(`.menu-item:has-text("${optionsText}")`);
+      await expect(page.locator('.menu-dropdown')).toBeVisible();
+
+      // Open Localization sub-menu
+      await page.click(`.menu-dropdown-item:has-text("${localizationText}")`);
+      await expect(page.locator('.menu-dropdown.submenu')).toBeVisible();
+
+      // Stability wait
+      await page.waitForTimeout(500);
+
+      await expect(page).toHaveScreenshot(`localization-menu-${lang}.png`, {
+        maxDiffPixelRatio: 0.05,
+        animations: 'disabled',
+        timeout: 10000
+      });
+    });
   });
 }

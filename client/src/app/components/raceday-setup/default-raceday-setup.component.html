@@ -19,6 +19,19 @@
         <div class="menu-dropdown-item" (click)="configureCustomUI()">{{ 'RDS_MENU_CUSTOM_UI' | translate }}</div>
         <div class="menu-dropdown-item" (click)="revertCustomUI()">{{ 'RDS_MENU_REVERT_UI' | translate }}</div>
         <div class="menu-dropdown-item" (click)="openServerSettings()">{{ 'RDS_MENU_SERVER' | translate }}</div>
+        <div class="menu-dropdown-item has-submenu" (click)="toggleLocalizationDropdown($event)">
+          {{ 'RDS_MENU_LOCALIZATION' | translate }}
+          <span class="submenu-arrow">▶</span>
+          <div class="menu-dropdown submenu" *ngIf="isLocalizationDropdownOpen">
+            <div class="menu-dropdown-item" (click)="selectLanguage('')" [class.selected]="!currentLanguage">
+              {{ getLanguageDisplayName('') }}
+            </div>
+            <div class="menu-dropdown-item" *ngFor="let lang of supportedLanguages" (click)="selectLanguage(lang.code)"
+              [class.selected]="currentLanguage === lang.code">
+              {{ getLanguageDisplayName(lang.code) }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -10,6 +10,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs'; // For mocking Observabl
 
 import { TranslationService } from 'src/app/services/translation.service'; // Import TranslationService
 import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import { Settings } from 'src/app/models/settings';
 
 describe('RacedaySetupComponent', () => {
   let component: RacedaySetupComponent;
@@ -44,9 +45,11 @@ describe('RacedaySetupComponent', () => {
 
     // Default mocks
     mockDataService.getDrivers.and.returnValue(of([]));
-    mockSettingsService.getSettings.and.returnValue({ recentRaceIds: [], selectedDriverIds: [], serverIp: 'localhost', serverPort: 7070 });
+    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);
+    mockTranslationService.getBrowserLanguage = jasmine.createSpy().and.returnValue('en');
+    mockTranslationService.getSupportedLanguages = jasmine.createSpy().and.returnValue([]);
 
     TestBed.configureTestingModule({
       declarations: [RacedaySetupComponent],

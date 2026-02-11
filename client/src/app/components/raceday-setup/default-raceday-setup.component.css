@@ -101,6 +101,35 @@
   color: #00f0ff;
 }
 
+.menu-dropdown-item.has-submenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.submenu-arrow {
+  font-size: 10px;
+  margin-left: 10px;
+}
+
+.menu-dropdown.submenu {
+  top: 0;
+  left: 100%;
+  margin-top: 0;
+  margin-left: 2px;
+}
+
+.menu-dropdown-item.selected {
+  color: #00f0ff;
+  font-weight: bold;
+}
+
+.menu-dropdown-item.selected::before {
+  content: '✓';
+  margin-right: 8px;
+}
+
 /* --- Main Header --- */
 .main-header {
   padding: 10px 30px;
