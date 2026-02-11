@@ -17,4 +17,6 @@ export class DataServiceMock {
   initializeRace = jasmine.createSpy('initializeRace').and.returnValue(of(
     com.antigravity.InitializeRaceResponse.create({ success: true })
   ));
+
+  getCurrentDatabase = jasmine.createSpy('getCurrentDatabase').and.returnValue(of({ name: 'test_db' }));
 }

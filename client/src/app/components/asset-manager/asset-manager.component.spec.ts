@@ -33,6 +33,7 @@ describe('AssetManagerComponent', () => {
     mockDataService.renameAsset.calls.reset();
     mockDataService.getDrivers.calls.reset();
     mockDataService.uploadAsset.calls.reset();
+    mockDataService.getCurrentDatabase.calls.reset();
     mockTranslationService.translate.calls.reset();
     mockRouter.navigate.calls.reset();
 

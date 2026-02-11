@@ -461,4 +461,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openTrackManager() {
     this.router.navigate(['/track-manager']);
   }
+
+  openDatabaseManager() {
+    this.closeFileDropdown();
+    this.router.navigate(['/database-manager']);
+  }
 }

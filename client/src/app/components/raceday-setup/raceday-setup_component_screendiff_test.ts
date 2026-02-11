@@ -32,17 +32,8 @@ for (const lang of languages) {
       // Ensure fonts are loaded
       await page.evaluate(() => document.fonts.ready);
 
-      // Inject CSS to disable ALL transitions and animations for stable screenshots
-      await page.addStyleTag({
-        content: `
-          *, *::before, *::after {
-            transition: none !important;
-            animation: none !important;
-            transition-duration: 0s !important;
-            animation-duration: 0s !important;
-          }
-        `
-      });
+      // Disable animations and transitions
+      await TestSetupHelper.disableAnimations(page);
 
       // Wait for background images to be fully loaded
       await page.waitForFunction(() => {

@@ -462,4 +462,18 @@ export class TestSetupHelper {
       }
     }, customFiles);
   }
+
+  static async disableAnimations(page: Page) {
+    await page.addStyleTag({
+      content: `
+        *, *::before, *::after {
+          transition: none !important;
+          animation: none !important;
+          transition-duration: 0s !important;
+          animation-duration: 0s !important;
+          caret-color: transparent !important;
+        }
+      `
+    });
+  }
 }

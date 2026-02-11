@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.ArduinoConfigConverter;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
@@ -7,7 +8,6 @@ import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.service.DatabaseService;
-import com.mongodb.client.MongoDatabase;
 import io.javalin.http.Context;
 import com.antigravity.protocols.IProtocol;
 
@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 
 public class ClientCommandTaskHandler {
 
-    private final MongoDatabase database;
+    private final DatabaseContext databaseContext;
 
-    public ClientCommandTaskHandler(MongoDatabase database, io.javalin.Javalin app) {
-        this.database = database;
+    public ClientCommandTaskHandler(DatabaseContext databaseContext, io.javalin.Javalin app) {
+        this.databaseContext = databaseContext;
         app.post("/api/initialize-race", this::initializeRace);
         app.post("/api/start-race", this::startRace);
         app.post("/api/pause-race", this::pauseRace);
@@ -42,7 +42,8 @@ public class ClientCommandTaskHandler {
                     + request.getDriverIdsList());
 
             DatabaseService dbService = new DatabaseService();
-            com.antigravity.models.Race raceModel = dbService.getRace(database, request.getRaceId());
+            com.antigravity.models.Race raceModel = dbService.getRace(databaseContext.getDatabase(),
+                    request.getRaceId());
 
             if (raceModel == null) {
                 ctx.status(404).result("Race not found");
@@ -56,11 +57,11 @@ public class ClientCommandTaskHandler {
             }
 
             // Create the runtime race instance
-            java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(database,
+            java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
                     request.getDriverIdsList());
 
             com.antigravity.race.Race race = new com.antigravity.race.Race(
-                    database, raceModel,
+                    databaseContext.getDatabase(), raceModel,
                     drivers.stream().map(RaceParticipant::new).collect(Collectors.toList()),
                     request.getIsDemoMode());
             ClientSubscriptionManager.getInstance().setRace(race);

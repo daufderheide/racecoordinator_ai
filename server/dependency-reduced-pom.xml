@@ -14,7 +14,7 @@
         <version>1.7.1</version>
       </extension>
     </extensions>
-    <directory>target_dist</directory>
+    <directory>${build.dist.dir}</directory>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -117,6 +117,7 @@
   </dependencies>
   <properties>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <build.dist.dir>target_dist</build.dist.dir>
     <maven.compiler.source>1.8</maven.compiler.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>

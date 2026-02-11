@@ -8,7 +8,10 @@
   <div class="content-area">
     <!-- LEFT PANEL: STATS -->
     <div class="panel stats-panel">
-      <div class="panel-header">{{ 'AM_DATABASE_STATUS' | translate }}</div>
+      <div class="panel-header">
+        {{ 'AM_DATABASE_STATUS' | translate }}
+        <div class="active-db-name" *ngIf="activeDatabaseName">{{ activeDatabaseName }}</div>
+      </div>
 
       <div class="stats-content">
         <!-- Database Icon -->

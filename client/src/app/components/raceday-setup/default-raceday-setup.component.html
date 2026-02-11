@@ -11,6 +11,7 @@
       <!-- File Dropdown -->
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_FILE' && isFileDropdownOpen">
         <div class="menu-dropdown-item" (click)="openAssetManager()">{{ 'Asset Manager' }}</div>
+        <div class="menu-dropdown-item" (click)="openDatabaseManager()">{{ 'Database Manager' }}</div>
       </div>
 
       <!-- Options Dropdown -->

@@ -334,6 +334,47 @@ export class DataService {
     );
   }
 
+  // --- Database Management ---
+
+  getDatabases(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/databases`);
+  }
+
+  getCurrentDatabase(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/databases/current?t=${new Date().getTime()}`);
+  }
+
+  createDatabase(name: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/create`, { name });
+  }
+
+  switchDatabase(name: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/switch`, { name });
+  }
+
+  copyDatabase(name: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/copy`, { name });
+  }
+
+  resetDatabase(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/reset`, {});
+  }
+
+  deleteDatabase(name: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/databases/delete`, { name });
+  }
+
+  exportDatabase(name: string) {
+    window.location.href = `${this.baseUrl}/api/databases/${name}/export`;
+  }
+
+  importDatabase(name: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('file', file);
+    return this.http.post<any>(`${this.baseUrl}/api/databases/import`, formData);
+  }
+
   // --- Asset Management ---
   listAssets(): Observable<com.antigravity.IAsset[]> {
     return this.http.get(`${this.baseUrl}/api/assets/list`, {

@@ -65,7 +65,7 @@
 
         <div class="action-buttons">
           <button class="btn btn-edit" (click)="updateDriver()">{{ 'DM_BTN_EDIT' | translate }}</button>
-          <button class="btn btn-delete" (click)="deleteDriver()">{{ 'DM_BTN_DELETE' | translate }}</button>
+          <button class="btn btn-delete" (click)="deleteDriver()">{{ 'DM_BTN_DELETE_DRIVER' | translate }}</button>
         </div>
       </div>
     </div>
@@ -81,4 +81,8 @@
   <div class="loader-overlay" *ngIf="isLoading || isSaving">
     <div class="spinner"></div>
   </div>
+
+  <app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'DM_BTN_DELETE_DRIVER'"
+    [message]="'DM_CONFIRM_DELETE'" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+  </app-confirmation-modal>
 </div>

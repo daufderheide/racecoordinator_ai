@@ -63,7 +63,7 @@ public class AssetService {
   }
 
   public AssetService(MongoDatabase database) {
-    this(database, "data/assets");
+    this(database, "data/" + database.getName() + "/assets");
   }
 
   public AssetService(MongoDatabase database, String assetDir) {

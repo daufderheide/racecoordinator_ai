@@ -42,10 +42,28 @@ export class AssetManagerComponent implements OnInit {
     private connectionMonitor: ConnectionMonitorService
   ) { }
 
+  activeDatabaseName: string = '';
+
   ngOnInit() {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
+    this.loadActiveDatabase();
     this.loadAssets();
+  }
+
+  loadActiveDatabase() {
+    this.dataService.getCurrentDatabase().subscribe({
+      next: (stats) => {
+        console.log('AssetManager: Loaded active database stats:', stats);
+        if (stats && stats.name) {
+          this.activeDatabaseName = stats.name;
+          this.cdr.detectChanges();
+        } else {
+          console.warn('AssetManager: Stats or name missing in response');
+        }
+      },
+      error: (err) => console.error('Failed to load active database', err)
+    });
   }
 
   ngOnDestroy() {

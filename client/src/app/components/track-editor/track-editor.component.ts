@@ -346,7 +346,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       baudRate: 9600,
       debounceUs: 1000,
       globalInvertLanes: 0,
-      normallyClosedRelays: false,
+      normallyClosedRelays: true,
       globalInvertLights: 0,
       useLapsForPits: 0,
       useLapsForPitEnd: 0,

@@ -6,7 +6,8 @@ export const mockDataService = {
   deleteAsset: jasmine.createSpy('deleteAsset').and.returnValue(of(true)),
   renameAsset: jasmine.createSpy('renameAsset').and.returnValue(of(true)),
   getDrivers: jasmine.createSpy('getDrivers').and.returnValue(of([])),
-  uploadAsset: jasmine.createSpy('uploadAsset').and.returnValue(of(true))
+  uploadAsset: jasmine.createSpy('uploadAsset').and.returnValue(of(true)),
+  getCurrentDatabase: jasmine.createSpy('getCurrentDatabase').and.returnValue(of({ name: 'test_db' }))
 };
 
 export const mockTranslationService = {

@@ -21,6 +21,7 @@ import { TrackEditorComponent } from './components/track-editor/track-editor.com
 import { ArduinoEditorComponent } from './components/track-editor/arduino-editor/arduino-editor.component';
 import { ArduinoSummaryComponent } from './components/track-manager/arduino-summary/arduino-summary.component';
 import { SharedModule } from './components/shared/shared.module';
+import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,9 @@ import { SharedModule } from './components/shared/shared.module';
     TrackManagerComponent,
     TrackEditorComponent,
     ArduinoEditorComponent,
-    ArduinoSummaryComponent
+    ArduinoEditorComponent,
+    ArduinoSummaryComponent,
+    DatabaseManagerComponent
   ],
   imports: [
     BrowserModule,

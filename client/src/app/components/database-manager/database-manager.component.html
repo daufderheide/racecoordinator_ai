@@ -1,0 +1,117 @@
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="header">
+    <div class="header-left">
+      <app-back-button targetUrl="/raceday-setup"></app-back-button>
+      <h1 class="page-title">{{ 'DBM_TITLE' | translate }}</h1>
+    </div>
+  </div>
+
+  <div class="content-area">
+    <div class="sidebar-list">
+      <div class="list-container">
+        <div *ngFor="let db of databases; let i = index" class="list-item"
+          [class.selected]="selectedDatabase && db.name === selectedDatabase.name" [class.odd]="i % 2 !== 0"
+          (click)="selectDatabase(db)">
+          <div class="item-name">{{db.name}}</div>
+          <div class="active-bagde" *ngIf="db.name === currentDatabaseName">{{ 'DBM_BADGE_ACTIVE' | translate }}</div>
+        </div>
+      </div>
+      <div class="list-actions">
+        <button class="action-btn primary full-width" (click)="createDatabase()">{{ 'DBM_BTN_CREATE' | translate
+          }}</button>
+        <button class="action-btn secondary full-width" (click)="importDatabase()">{{
+          'DBM_BTN_IMPORT' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="detail-panel" *ngIf="selectedDatabase">
+      <div class="detail-header">
+        <h2>{{selectedDatabase.name}}</h2>
+      </div>
+
+      <div class="detail-content">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="label">{{ 'DBM_STAT_DRIVERS' | translate }}</span>
+            <span class="value">{{selectedDatabase.driverCount}}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">{{ 'DBM_STAT_TRACKS' | translate }}</span>
+            <span class="value">{{selectedDatabase.trackCount}}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">{{ 'DBM_STAT_RACES' | translate }}</span>
+            <span class="value">{{selectedDatabase.raceCount}}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">{{ 'DBM_STAT_ASSETS' | translate }}</span>
+            <span class="value">{{selectedDatabase.assetCount}}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">{{ 'DBM_STAT_SIZE' | translate }}</span>
+            <span class="value">{{(selectedDatabase.sizeBytes / 1024 / 1024) | number:'1.2-2'}} MB</span>
+          </div>
+        </div>
+
+        <p class="hint" *ngIf="selectedDatabase.name !== currentDatabaseName">
+          {{ 'DBM_HINT_SWITCH' | translate }}
+        </p>
+      </div>
+
+      <div class="detail-actions">
+        <button class="action-btn success" (click)="useDatabase()"
+          [disabled]="selectedDatabase.name === currentDatabaseName">
+          {{ 'DBM_BTN_USE' | translate }}
+        </button>
+        <button class="btn-action" (click)="exportDatabase()">
+          <i class="fas fa-download"></i> {{ 'DBM_BTN_EXPORT' | translate }}
+        </button>
+        <button class="btn-action" (click)="copyDatabase()" [disabled]="!selectedDatabase"><i class="fas fa-copy"></i>
+          {{ 'DBM_BTN_COPY' | translate }}</button>
+        <button class="btn-action btn-danger" (click)="deleteDatabase()"
+          [disabled]="!selectedDatabase || selectedDatabase.name === currentDatabaseName"><i class="fas fa-trash"></i>
+          {{ 'DBM_BTN_DELETE' | translate }}</button>
+        <button class="btn-action btn-danger" (click)="resetDatabase()"
+          [disabled]="selectedDatabase.name !== currentDatabaseName"><i class="fas fa-exclamation-triangle"></i> {{
+          'DBM_BTN_RESET' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="detail-panel empty-state" *ngIf="!selectedDatabase">
+      <p>{{ 'DBM_HINT_SELECT' | translate }}</p>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <div class="progress-bar-container">
+      <div class="progress-bar-value"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="databaseImportInput" (change)="onFileSelected($event)" accept=".zip" style="display: none;">
+
+<!-- Modals -->
+<app-confirmation-modal [visible]="showConfirmModal" [title]="confirmModalTitle" [message]="confirmModalMessage"
+  [messageParams]="confirmModalParams" [cancelText]="'CD_NO'" [confirmText]="'CD_YES'" (confirm)="onConfirm()"
+  (cancel)="onCancelConfirm()">
+</app-confirmation-modal>
+
+<app-acknowledgement-modal [visible]="showAckModal" [title]="ackModalTitle" [message]="ackModalMessage"
+  [messageParams]="ackModalParams" (acknowledge)="onAck()">
+</app-acknowledgement-modal>
+
+<!-- Custom Input Modal -->
+<div class="modal-backdrop" *ngIf="showInputModal">
+  <div class="modal-content">
+    <h2 class="modal-title">{{ inputModalTitle | translate }}</h2>
+    <p class="modal-message">{{ inputModalMessage | translate:inputModalParams }}</p>
+    <div class="input-container">
+      <input type="text" [(ngModel)]="inputValue" (keyup.enter)="onInputConfirm()" autoFocus>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="onCancelInput()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
+      <button class="btn-confirm" (click)="onInputConfirm()">{{ 'ACK_MODAL_BTN_OK' | translate }}</button>
+    </div>
+  </div>
+</div>

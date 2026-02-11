@@ -7,7 +7,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     <div class="modal-backdrop" *ngIf="visible">
       <div class="modal-content">
         <h2 class="modal-title">{{ title | translate }}</h2>
-        <p class="modal-message">{{ message | translate }}</p>
+        <p class="modal-message">{{ message | translate:messageParams }}</p>
         <div class="modal-actions">
           <button class="btn-cancel" (click)="onCancel()">{{ cancelText | translate }}</button>
           <button class="btn-confirm" (click)="onConfirm()">{{ confirmText | translate }}</button>
@@ -82,6 +82,7 @@ export class ConfirmationModalComponent {
   @Input() visible = false;
   @Input() title = '';
   @Input() message = '';
+  @Input() messageParams: any = {};
   @Input() cancelText = 'NO';
   @Input() confirmText = 'YES';
 

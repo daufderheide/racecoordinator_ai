@@ -150,25 +150,30 @@ describe('DriverManagerComponent', () => {
   });
 
   describe('Deletion', () => {
-    it('should delete driver if confirmed', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+    it('should show confirmation modal on deleteDriver', () => {
+      component.selectDriver(mockDrivers[0]);
+      component.deleteDriver();
+      expect(component.showDeleteConfirmation).toBeTrue();
+    });
+
+    it('should delete driver if confirmed in modal', () => {
       mockDataService.deleteDriver.and.returnValue(of({}));
 
       component.selectDriver(mockDrivers[0]);
       component.deleteDriver();
+      component.onConfirmDelete();
 
-      expect(window.confirm).toHaveBeenCalled();
+      expect(component.showDeleteConfirmation).toBeFalse();
       expect(mockDataService.deleteDriver).toHaveBeenCalledWith('d1');
       expect(mockDataService.getDrivers).toHaveBeenCalledTimes(2); // Once on init, once after delete re-load
     });
 
-    it('should not delete driver if not confirmed', () => {
-      spyOn(window, 'confirm').and.returnValue(false);
-
+    it('should not delete driver if cancelled in modal', () => {
       component.selectDriver(mockDrivers[0]);
       component.deleteDriver();
+      component.onCancelDelete();
 
-      expect(window.confirm).toHaveBeenCalled();
+      expect(component.showDeleteConfirmation).toBeFalse();
       expect(mockDataService.deleteDriver).not.toHaveBeenCalled();
     });
   });

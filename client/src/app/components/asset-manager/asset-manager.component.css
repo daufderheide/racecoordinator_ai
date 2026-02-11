@@ -82,6 +82,15 @@
   align-items: center;
 }
 
+.active-db-name {
+  font-size: 12px;
+  color: #fff;
+  opacity: 0.7;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
 .stats-content {
   flex: 1;
   display: flex;

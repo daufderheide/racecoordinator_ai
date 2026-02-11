@@ -52,43 +52,40 @@ public class DatabaseService {
 
                 String lapSoundUrl = beepSound != null ? beepSound.getUrl() : null;
                 String bestLapSoundUrl = drivebySound != null ? drivebySound.getUrl() : null;
+                Driver.AudioConfig lapAudio = new Driver.AudioConfig("preset", lapSoundUrl, null);
+                Driver.AudioConfig bestLapAudio = new Driver.AudioConfig("preset", bestLapSoundUrl, null);
 
                 List<Driver> initialDrivers = new ArrayList<>();
-                // TODO(aufderheide): Add these back in with default avatars and sounds setup.
-                // initialDrivers.add(new Driver("Abby", "Angel", getNextSequence(database,
-                // "drivers"), null));
-                // initialDrivers.add(new Driver("Andrea", "The Pants",
-                // getNextSequence(database, "drivers"), null));
-                // initialDrivers.add(new Driver("Austin", "Fart Goblin",
-                // getNextSequence(database, "drivers"), null));
-                // initialDrivers.add(new Driver("Christine", "Peo Fuente",
-                // getNextSequence(database, "drivers"), null));
-                // initialDrivers.add(new Driver("Dave", "Olden McGroin",
-                // getNextSequence(database, "drivers"), null));
-                // initialDrivers.add(new Driver("Gene", "Swamper Gene",
-                // getNextSequence(database, "drivers"), null));
-                // initialDrivers.add(new Driver("Meyer", "Bull Dog", getNextSequence(database,
-                // "drivers"), null));
-                // initialDrivers.add(new Driver("Noah Jack", "Boy Wonder",
-                // getNextSequence(database, "drivers"), null));
-
-                for (int i = 1; i <= 20; i++) {
-                        String name = String.format("Driver %02d", i);
-                        String avatarUrl = null;
-                        if (!helmetAssets.isEmpty()) {
-                                avatarUrl = helmetAssets.get((i - 1) % helmetAssets.size()).getUrl();
-                        }
-
-                        Driver.AudioConfig lapAudio = new Driver.AudioConfig("preset", lapSoundUrl, null);
-                        Driver.AudioConfig bestLapAudio = new Driver.AudioConfig("preset", bestLapSoundUrl, null);
-
-                        initialDrivers.add(new Driver(name, name, avatarUrl, lapAudio, bestLapAudio,
-                                        null, null, null, null, null, null,
-                                        getNextSequence(database, "drivers"), null));
-                }
+                initialDrivers.add(createDriver("Abby", "Abs", helmetAssets, 1, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Andrea", "The Pants", helmetAssets, 2, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Austin", "Fart Goblin", helmetAssets, 3, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Christine", "Peo Fuente", helmetAssets, 4, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Dave", "Olden McGroin", helmetAssets, 5, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Gene", "Swamper Gene", helmetAssets, 6, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Meyer", "Bull Dog", helmetAssets, 7, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
+                initialDrivers.add(createDriver("Noah Jack", "Boy Wonder", helmetAssets, 8, lapAudio, bestLapAudio,
+                                getNextSequence(database, "drivers")));
 
                 driverCollection.insertMany(initialDrivers);
                 System.out.println("Drivers reset.");
+        }
+
+        private Driver createDriver(String name, String nickname, List<Asset> helmetAssets, int index,
+                        Driver.AudioConfig lapAudio, Driver.AudioConfig bestLapAudio, String sequenceId) {
+                String avatarUrl = null;
+                if (!helmetAssets.isEmpty()) {
+                        avatarUrl = helmetAssets.get((index - 1) % helmetAssets.size()).getUrl();
+                }
+                return new Driver(name, nickname, avatarUrl, lapAudio, bestLapAudio,
+                                null, null, null, null, null, null,
+                                sequenceId, null);
         }
 
         private Track resetTracks(MongoDatabase database) {

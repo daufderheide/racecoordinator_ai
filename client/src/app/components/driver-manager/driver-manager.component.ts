@@ -151,23 +151,33 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     });
   }
 
+  showDeleteConfirmation = false;
+
   deleteDriver() {
     if (!this.editingDriver) return;
-    if (confirm(this.translationService.translate('DM_CONFIRM_DELETE'))) {
-      this.isSaving = true;
-      this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
-        next: () => {
-          this.selectedDriver = undefined;
-          this.editingDriver = undefined;
-          this.isSaving = false;
-          this.loadData();
-        },
-        error: (err) => {
-          console.error('Failed to delete driver', err);
-          this.isSaving = false;
-        }
-      });
-    }
+    this.showDeleteConfirmation = true;
+  }
+
+  onConfirmDelete() {
+    if (!this.editingDriver) return;
+    this.showDeleteConfirmation = false;
+    this.isSaving = true;
+    this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
+      next: () => {
+        this.selectedDriver = undefined;
+        this.editingDriver = undefined;
+        this.isSaving = false;
+        this.loadData();
+      },
+      error: (err) => {
+        console.error('Failed to delete driver', err);
+        this.isSaving = false;
+      }
+    });
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirmation = false;
   }
 
   trackByDriver(index: number, driver: Driver): string {

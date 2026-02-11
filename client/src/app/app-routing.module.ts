@@ -9,6 +9,7 @@ import { DriverEditorComponent } from './components/driver-editor/driver-editor.
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
 import { TrackManagerComponent } from './components/track-manager/track-manager.component';
 import { TrackEditorComponent } from './components/track-editor/track-editor.component';
+import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
@@ -20,6 +21,7 @@ const routes: Routes = [
     { path: 'driver-manager', component: DriverManagerComponent, data: { animation: 'DriverManagerPage' } },
     { path: 'track-manager', component: TrackManagerComponent, data: { animation: 'TrackManagerPage' } },
     { path: 'track-editor', component: TrackEditorComponent, data: { animation: 'TrackEditorPage' } },
+    { path: 'database-manager', component: DatabaseManagerComponent, data: { animation: 'DatabaseManagerPage' } },
     { path: '**', redirectTo: '' }
 ];
 
