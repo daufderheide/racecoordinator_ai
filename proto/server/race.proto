@@ -2,7 +2,6 @@ syntax = "proto3";
 package com.antigravity;
 
 import "client/race_model.proto";
-import "client/driver_model.proto";
 import "server/heat.proto";
 import "server/race_participant.proto";
 import "server/race_state.proto";

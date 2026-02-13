@@ -20,20 +20,39 @@ public class RaceConverter {
                                         .setName(race.getName())
                                         .setTrack(TrackConverter.toProto(track, sentObjectIds));
 
-                        if (race.getRaceScoring() != null) {
-                                com.antigravity.models.RaceScoring scoring = race.getRaceScoring();
-                                builder.setRaceScoring(com.antigravity.proto.RaceScoring.newBuilder()
+                        if (race.getHeatScoring() != null) {
+                                com.antigravity.models.HeatScoring scoring = race.getHeatScoring();
+                                builder.setHeatScoring(com.antigravity.proto.HeatScoring.newBuilder()
                                                 .setFinishMethod(
-                                                                com.antigravity.proto.RaceScoring.FinishMethod
+                                                                com.antigravity.proto.HeatScoring.FinishMethod
                                                                                 .valueOf(scoring.getFinishMethod()
                                                                                                 .name()))
                                                 .setFinishValue(scoring.getFinishValue())
-                                                .setHeatRanking(com.antigravity.proto.RaceScoring.HeatRanking
-                                                                .valueOf(scoring.getHeatRanking().name()))
+                                                .setHeatRanking(com.antigravity.proto.HeatScoring.HeatRanking
+                                                                .valueOf("HR_" + scoring.getHeatRanking().name()))
                                                 .setHeatRankingTiebreaker(
-                                                                com.antigravity.proto.RaceScoring.TieBreaker
-                                                                                .valueOf(scoring.getHeatRankingTiebreaker()
+                                                                com.antigravity.proto.HeatScoring.HeatRankingTiebreaker
+                                                                                .valueOf("HRT_" + scoring
+                                                                                                .getHeatRankingTiebreaker()
                                                                                                 .name()))
+                                                .setAllowFinish(com.antigravity.proto.HeatScoring.AllowFinish
+                                                                .valueOf("AF_" + (scoring.getAllowFinish() != null
+                                                                                ? scoring.getAllowFinish().name()
+                                                                                                .replaceAll("([a-z])([A-Z])",
+                                                                                                                "$1_$2")
+                                                                                                .toUpperCase()
+                                                                                : "NONE")))
+                                                .build());
+                        }
+
+                        if (race.getOverallScoring() != null) {
+                                com.antigravity.models.OverallScoring scoring = race.getOverallScoring();
+                                builder.setOverallScoring(com.antigravity.proto.OverallScoring.newBuilder()
+                                                .setDroppedHeats(scoring.getDroppedHeats())
+                                                .setRankingMethod(com.antigravity.proto.OverallScoring.OverallRanking
+                                                                .valueOf("OR_" + scoring.getRankingMethod().name()))
+                                                .setTiebreaker(com.antigravity.proto.OverallScoring.OverallRankingTiebreaker
+                                                                .valueOf("ORT_" + scoring.getTiebreaker().name()))
                                                 .build());
                         }
 

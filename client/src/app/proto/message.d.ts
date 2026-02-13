@@ -830,122 +830,122 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
-        /** Properties of a RaceScoring. */
-        interface IRaceScoring {
+        /** Properties of a HeatScoring. */
+        interface IHeatScoring {
 
-            /** RaceScoring finishMethod */
-            finishMethod?: (com.antigravity.RaceScoring.FinishMethod|null);
+            /** HeatScoring finishMethod */
+            finishMethod?: (com.antigravity.HeatScoring.FinishMethod|null);
 
-            /** RaceScoring finishValue */
+            /** HeatScoring finishValue */
             finishValue?: (number|Long|null);
 
-            /** RaceScoring heatRanking */
-            heatRanking?: (com.antigravity.RaceScoring.HeatRanking|null);
+            /** HeatScoring heatRanking */
+            heatRanking?: (com.antigravity.HeatScoring.HeatRanking|null);
 
-            /** RaceScoring heatRankingTiebreaker */
-            heatRankingTiebreaker?: (com.antigravity.RaceScoring.TieBreaker|null);
+            /** HeatScoring heatRankingTiebreaker */
+            heatRankingTiebreaker?: (com.antigravity.HeatScoring.HeatRankingTiebreaker|null);
         }
 
-        /** Represents a RaceScoring. */
-        class RaceScoring implements IRaceScoring {
+        /** Represents a HeatScoring. */
+        class HeatScoring implements IHeatScoring {
 
             /**
-             * Constructs a new RaceScoring.
+             * Constructs a new HeatScoring.
              * @param [properties] Properties to set
              */
-            constructor(properties?: com.antigravity.IRaceScoring);
+            constructor(properties?: com.antigravity.IHeatScoring);
 
-            /** RaceScoring finishMethod. */
-            public finishMethod: com.antigravity.RaceScoring.FinishMethod;
+            /** HeatScoring finishMethod. */
+            public finishMethod: com.antigravity.HeatScoring.FinishMethod;
 
-            /** RaceScoring finishValue. */
+            /** HeatScoring finishValue. */
             public finishValue: (number|Long);
 
-            /** RaceScoring heatRanking. */
-            public heatRanking: com.antigravity.RaceScoring.HeatRanking;
+            /** HeatScoring heatRanking. */
+            public heatRanking: com.antigravity.HeatScoring.HeatRanking;
 
-            /** RaceScoring heatRankingTiebreaker. */
-            public heatRankingTiebreaker: com.antigravity.RaceScoring.TieBreaker;
+            /** HeatScoring heatRankingTiebreaker. */
+            public heatRankingTiebreaker: com.antigravity.HeatScoring.HeatRankingTiebreaker;
 
             /**
-             * Creates a new RaceScoring instance using the specified properties.
+             * Creates a new HeatScoring instance using the specified properties.
              * @param [properties] Properties to set
-             * @returns RaceScoring instance
+             * @returns HeatScoring instance
              */
-            public static create(properties?: com.antigravity.IRaceScoring): com.antigravity.RaceScoring;
+            public static create(properties?: com.antigravity.IHeatScoring): com.antigravity.HeatScoring;
 
             /**
-             * Encodes the specified RaceScoring message. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
-             * @param message RaceScoring message or plain object to encode
+             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @param message HeatScoring message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encode(message: com.antigravity.IRaceScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encode(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Encodes the specified RaceScoring message, length delimited. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
-             * @param message RaceScoring message or plain object to encode
+             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @param message HeatScoring message or plain object to encode
              * @param [writer] Writer to encode to
              * @returns Writer
              */
-            public static encodeDelimited(message: com.antigravity.IRaceScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+            public static encodeDelimited(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
 
             /**
-             * Decodes a RaceScoring message from the specified reader or buffer.
+             * Decodes a HeatScoring message from the specified reader or buffer.
              * @param reader Reader or buffer to decode from
              * @param [length] Message length if known beforehand
-             * @returns RaceScoring
+             * @returns HeatScoring
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RaceScoring;
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HeatScoring;
 
             /**
-             * Decodes a RaceScoring message from the specified reader or buffer, length delimited.
+             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
              * @param reader Reader or buffer to decode from
-             * @returns RaceScoring
+             * @returns HeatScoring
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RaceScoring;
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HeatScoring;
 
             /**
-             * Verifies a RaceScoring message.
+             * Verifies a HeatScoring message.
              * @param message Plain object to verify
              * @returns `null` if valid, otherwise the reason why it is not
              */
             public static verify(message: { [k: string]: any }): (string|null);
 
             /**
-             * Creates a RaceScoring message from a plain object. Also converts values to their respective internal types.
+             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
              * @param object Plain object
-             * @returns RaceScoring
+             * @returns HeatScoring
              */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceScoring;
+            public static fromObject(object: { [k: string]: any }): com.antigravity.HeatScoring;
 
             /**
-             * Creates a plain object from a RaceScoring message. Also converts values to other types if specified.
-             * @param message RaceScoring
+             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
+             * @param message HeatScoring
              * @param [options] Conversion options
              * @returns Plain object
              */
-            public static toObject(message: com.antigravity.RaceScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
+            public static toObject(message: com.antigravity.HeatScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
 
             /**
-             * Converts this RaceScoring to JSON.
+             * Converts this HeatScoring to JSON.
              * @returns JSON object
              */
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the default type url for RaceScoring
+             * Gets the default type url for HeatScoring
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
-        namespace RaceScoring {
+        namespace HeatScoring {
 
             /** FinishMethod enum. */
             enum FinishMethod {
@@ -960,11 +960,138 @@ export namespace com {
                 TOTAL_TIME = 2
             }
 
-            /** TieBreaker enum. */
-            enum TieBreaker {
+            /** HeatRankingTiebreaker enum. */
+            enum HeatRankingTiebreaker {
                 FASTEST_LAP_TIME = 0,
                 MEDIAN_LAP_TIME = 1,
                 AVERAGE_LAP_TIME = 2
+            }
+        }
+
+        /** Properties of an OverallScoring. */
+        interface IOverallScoring {
+
+            /** OverallScoring droppedHeats */
+            droppedHeats?: (number|null);
+
+            /** OverallScoring rankingMethod */
+            rankingMethod?: (com.antigravity.OverallScoring.OverallRanking|null);
+
+            /** OverallScoring tiebreaker */
+            tiebreaker?: (com.antigravity.OverallScoring.OverallRankingTiebreaker|null);
+        }
+
+        /** Represents an OverallScoring. */
+        class OverallScoring implements IOverallScoring {
+
+            /**
+             * Constructs a new OverallScoring.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IOverallScoring);
+
+            /** OverallScoring droppedHeats. */
+            public droppedHeats: number;
+
+            /** OverallScoring rankingMethod. */
+            public rankingMethod: com.antigravity.OverallScoring.OverallRanking;
+
+            /** OverallScoring tiebreaker. */
+            public tiebreaker: com.antigravity.OverallScoring.OverallRankingTiebreaker;
+
+            /**
+             * Creates a new OverallScoring instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OverallScoring instance
+             */
+            public static create(properties?: com.antigravity.IOverallScoring): com.antigravity.OverallScoring;
+
+            /**
+             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @param message OverallScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @param message OverallScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallScoring;
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallScoring;
+
+            /**
+             * Verifies an OverallScoring message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OverallScoring
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallScoring;
+
+            /**
+             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
+             * @param message OverallScoring
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.OverallScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OverallScoring to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OverallScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace OverallScoring {
+
+            /** OverallRanking enum. */
+            enum OverallRanking {
+                RANKING_LAP_COUNT = 0,
+                RANKING_FASTEST_LAP = 1,
+                RANKING_TOTAL_TIME = 2
+            }
+
+            /** OverallRankingTiebreaker enum. */
+            enum OverallRankingTiebreaker {
+                TIEBREAKER_FASTEST_LAP_TIME = 0,
+                TIEBREAKER_MEDIAN_LAP_TIME = 1,
+                TIEBREAKER_AVERAGE_LAP_TIME = 2,
+                TIEBREAKER_TOTAL_TIME = 3
             }
         }
 
@@ -980,8 +1107,11 @@ export namespace com {
             /** RaceModel track */
             track?: (com.antigravity.ITrackModel|null);
 
-            /** RaceModel raceScoring */
-            raceScoring?: (com.antigravity.IRaceScoring|null);
+            /** RaceModel heatScoring */
+            heatScoring?: (com.antigravity.IHeatScoring|null);
+
+            /** RaceModel overallScoring */
+            overallScoring?: (com.antigravity.IOverallScoring|null);
         }
 
         /** Represents a RaceModel. */
@@ -1002,8 +1132,11 @@ export namespace com {
             /** RaceModel track. */
             public track?: (com.antigravity.ITrackModel|null);
 
-            /** RaceModel raceScoring. */
-            public raceScoring?: (com.antigravity.IRaceScoring|null);
+            /** RaceModel heatScoring. */
+            public heatScoring?: (com.antigravity.IHeatScoring|null);
+
+            /** RaceModel overallScoring. */
+            public overallScoring?: (com.antigravity.IOverallScoring|null);
 
             /**
              * Creates a new RaceModel instance using the specified properties.

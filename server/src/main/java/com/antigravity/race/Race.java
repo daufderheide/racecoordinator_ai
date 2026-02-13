@@ -57,7 +57,7 @@ public class Race implements ProtocolListener {
         this.heats = HeatBuilder.buildHeats(this, this.drivers);
         this.currentHeat = this.heats.get(0);
 
-        this.overallStandings = new OverallStandings(model.getRaceScoring());
+        this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
         // Default dropped heats to 0 or get from somewhere else if needed.
         // Assuming 0 for now as per plan, user mentioned it's a config option on the
         // class.
@@ -110,6 +110,10 @@ public class Race implements ProtocolListener {
 
     public void setCurrentHeat(Heat currentHeat) {
         this.currentHeat = currentHeat;
+    }
+
+    public IRaceState getState() {
+        return state;
     }
 
     public float getRaceTime() {

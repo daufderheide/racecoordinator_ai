@@ -49,18 +49,25 @@ public class RaceStateTest {
         "track1",
         new ObjectId());
 
-    com.antigravity.models.RaceScoring mockScoring = mock(com.antigravity.models.RaceScoring.class);
-    when(mockScoring.getHeatRanking()).thenReturn(com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT);
-    when(mockScoring.getHeatRankingTiebreaker())
-        .thenReturn(com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    when(mockScoring.getFinishMethod()).thenReturn(com.antigravity.models.RaceScoring.FinishMethod.Timed);
-    when(mockScoring.getFinishValue()).thenReturn(100L); // 100 seconds
+    com.antigravity.models.HeatScoring mockHeatScoring = mock(com.antigravity.models.HeatScoring.class);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockHeatScoring.getHeatRankingTiebreaker())
+        .thenReturn(com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    when(mockHeatScoring.getFinishMethod()).thenReturn(com.antigravity.models.HeatScoring.FinishMethod.Timed);
+    when(mockHeatScoring.getFinishValue()).thenReturn(100L); // 100 seconds
+
+    com.antigravity.models.OverallScoring mockOverallScoring = mock(com.antigravity.models.OverallScoring.class);
+    when(mockOverallScoring.getRankingMethod())
+        .thenReturn(com.antigravity.models.OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockOverallScoring.getTiebreaker())
+        .thenReturn(com.antigravity.models.OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
     com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race(
         "Test Race",
         "track1",
         HeatRotationType.RoundRobin,
-        mockScoring,
+        mockHeatScoring,
+        mockOverallScoring,
         "race1",
         new ObjectId());
 

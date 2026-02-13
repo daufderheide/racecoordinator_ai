@@ -7,11 +7,14 @@ public class Heat extends ServerToClientObject {
     private List<DriverHeatData> drivers;
     private HeatStandings heatStandings;
 
-    public Heat(int heatNumber, List<DriverHeatData> drivers, com.antigravity.models.RaceScoring scoring) {
+    public Heat(int heatNumber, List<DriverHeatData> drivers, com.antigravity.models.HeatScoring scoring) {
         super();
         this.heatNumber = heatNumber;
         this.drivers = drivers;
-        this.heatStandings = new HeatStandings(drivers, scoring.getHeatRanking(), scoring.getHeatRankingTiebreaker());
+        com.antigravity.models.HeatScoring safeScoring = scoring != null ? scoring
+                : new com.antigravity.models.HeatScoring();
+        this.heatStandings = new HeatStandings(drivers, safeScoring.getHeatRanking(),
+                safeScoring.getHeatRankingTiebreaker());
     }
 
     public int getHeatNumber() {

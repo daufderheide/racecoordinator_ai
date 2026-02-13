@@ -1,8 +1,7 @@
 syntax = "proto3";
 package com.antigravity;
 
-import "client/race_model.proto";
-import "client/driver_model.proto";
+// No imports needed
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;

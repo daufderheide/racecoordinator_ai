@@ -1,0 +1,163 @@
+<app-acknowledgement-modal [visible]="showAckModal" [title]="ackModalTitle" [message]="ackModalMessage"
+  (acknowledge)="closeAckModal()">
+</app-acknowledgement-modal>
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="header">
+    <div class="header-left">
+      <app-back-button [label]="'RE_BTN_BACK' | translate" route="/race-manager" [confirm]="hasChanges()"
+        [queryParams]="{driverCount: driverCount}" confirmTitle="RE_CONFIRM_DISCARD_TITLE"
+        confirmMessage="RE_CONFIRM_DISCARD_MESSAGE"></app-back-button>
+      <h1 class="page-title">{{ 'RE_TITLE' | translate }}</h1>
+    </div>
+    <div class="header-right">
+      <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
+    </div>
+  </div>
+
+  <div class="content-split" *ngIf="!isLoading">
+    <!-- Editor Panel (Left) -->
+    <div class="editor-panel editor-form">
+      <div class="editor-row">
+        <div class="editor-section">
+          <label>{{ 'RM_LABEL_NAME' | translate }}</label>
+          <input type="text" [(ngModel)]="editingRace.name" (ngModelChange)="captureState()" autocomplete="off"
+            data-lpignore="true" data-form-type="other">
+        </div>
+
+        <div class="editor-section">
+          <label>{{ 'RM_LABEL_TRACK' | translate }}</label>
+          <select [(ngModel)]="editingRace.track_entity_id" (ngModelChange)="captureState()">
+            <option value="">-- Select Track --</option>
+            <option *ngFor="let track of tracks" [value]="track.entity_id">{{ track.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="editor-row">
+        <div class="editor-section">
+          <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
+          <select [(ngModel)]="editingRace.heat_rotation_type" (ngModelChange)="onRotationTypeChange()">
+            <option value="RoundRobin">Round Robin</option>
+            <option value="FriendlyRoundRobin">Friendly Round Robin</option>
+            <option value="EuropeanRoundRobin">European Round Robin</option>
+          </select>
+        </div>
+
+        <div class="editor-section">
+          <label>{{ 'RE_LABEL_DRIVER_COUNT' | translate }}</label>
+          <input type="number" [(ngModel)]="driverCount" (ngModelChange)="loadHeats()" min="1" max="100"
+            autocomplete="off" data-lpignore="true" data-form-type="other">
+        </div>
+      </div>
+
+      <div class="heat-list-section">
+        <h3>{{ 'RE_HEAT_LIST_HEADER' | translate }}</h3>
+        <app-heat-list [heats]="generatedHeats"></app-heat-list>
+      </div>
+
+      <div class="editor-actions">
+        <div class="spacer"></div>
+        <button class="action-btn" (click)="saveAsNew()" *ngIf="editingRace?.entity_id !== 'new'"
+          [disabled]="!canSaveAsNew()" [title]="isNameDuplicate() ? ('RE_TOOLTIP_NAME_EXISTS' | translate) : ''">
+          {{ 'RE_BTN_SAVE_AS_NEW' | translate }}
+        </button>
+        <button class="action-btn primary btn-update" (click)="updateRace()" [disabled]="!canUpdate()"
+          [title]="getUpdateTooltip() | translate">
+          {{ editingRace?.entity_id === 'new' ? 'CREATE RACE' : ('RE_BTN_UPDATE_RACE' | translate) }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Config Panel (Right) -->
+    <div class="config-panel">
+      <div class="scoring-layout">
+        <!-- Heat Scoring Section -->
+        <div class="scoring-column">
+          <h2 class="config-header">{{ 'RE_HEAT_SCORING_HEADER' | translate }}</h2>
+
+          <div class="config-section">
+            <label>{{ 'RE_HEAT_RANKING' | translate }}</label>
+            <select [(ngModel)]="editingRace.heat_scoring.heat_ranking" (ngModelChange)="captureState()">
+              <option value="LAP_COUNT">Lap Count</option>
+              <option value="FASTEST_LAP">Fastest Lap</option>
+              <option value="TOTAL_TIME">Total Time</option>
+            </select>
+          </div>
+
+          <div class="config-section">
+            <label>{{ 'RE_HEAT_TIEBREAKER' | translate }}</label>
+            <select [(ngModel)]="editingRace.heat_scoring.heat_ranking_tiebreaker" (ngModelChange)="captureState()">
+              <option value="FASTEST_LAP_TIME">Fastest Lap Time</option>
+              <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
+              <option value="AVERAGE_LAP_TIME">Average Lap Time</option>
+            </select>
+          </div>
+
+          <div class="config-section">
+            <label>{{ 'RE_FINISH_METHOD' | translate }}</label>
+            <select [(ngModel)]="editingRace.heat_scoring.finish_method" (ngModelChange)="captureState()">
+              <option value="Lap">Lap</option>
+              <option value="Timed">Timed</option>
+            </select>
+          </div>
+          <div class="config-section">
+            <label>{{ 'RE_ALLOW_FINISH' | translate }}</label>
+            <select [(ngModel)]="editingRace.heat_scoring.allow_finish" (ngModelChange)="captureState()">
+              <option value="None">{{ 'RE_AF_NONE' | translate }}</option>
+              <option value="Allow">{{ 'RE_AF_ALLOW' | translate }}</option>
+              <option value="SingleLap">{{ 'RE_AF_SINGLE_LAP' | translate }}</option>
+            </select>
+          </div>
+
+          <div class="config-section" *ngIf="editingRace.heat_scoring.finish_method === 'Lap'">
+            <label>{{ 'RE_LAP_COUNT' | translate }}</label>
+            <input type="number" [(ngModel)]="editingRace.heat_scoring.finish_value" (ngModelChange)="captureState()"
+              min="1" max="999">
+          </div>
+
+          <div class="config-section" *ngIf="editingRace.heat_scoring.finish_method === 'Timed'">
+            <label>{{ 'RE_TIME_SECONDS' | translate }}</label>
+            <input type="number" [(ngModel)]="editingRace.heat_scoring.finish_value" (ngModelChange)="captureState()"
+              min="1" max="3600">
+          </div>
+        </div>
+
+        <!-- Overall Scoring Section -->
+        <div class="scoring-column">
+          <h2 class="config-header">{{ 'RE_OVERALL_SCORING_HEADER' | translate }}</h2>
+
+          <div class="config-section">
+            <label>{{ 'RE_DROPPED_HEATS' | translate }}</label>
+            <input type="number" [(ngModel)]="editingRace.overall_scoring.dropped_heats"
+              (ngModelChange)="captureState()" min="0" max="10">
+          </div>
+
+          <div class="config-section">
+            <label>{{ 'RE_OVERALL_RANKING' | translate }}</label>
+            <select [(ngModel)]="editingRace.overall_scoring.ranking_method" (ngModelChange)="captureState()">
+              <option value="LAP_COUNT">Lap Count</option>
+              <option value="FASTEST_LAP">Fastest Lap</option>
+              <option value="TOTAL_TIME">Total Time</option>
+              <option value="AVERAGE_LAP">Average Lap</option>
+            </select>
+          </div>
+
+          <div class="config-section">
+            <label>{{ 'RE_OVERALL_TIEBREAKER' | translate }}</label>
+            <select [(ngModel)]="editingRace.overall_scoring.tiebreaker" (ngModelChange)="captureState()">
+              <option value="FASTEST_LAP_TIME">Fastest Lap Time</option>
+              <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
+              <option value="AVERAGE_LAP_TIME">Average Lap Time</option>
+              <option value="TOTAL_TIME">Total Time</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+</div>

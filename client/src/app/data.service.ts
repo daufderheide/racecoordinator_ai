@@ -77,6 +77,32 @@ export class DataService {
     return this.http.get<any[]>(this.racesUrl);
   }
 
+  createRace(race: any): Observable<any> {
+    return this.http.post<any>(this.racesUrl, race);
+  }
+
+  updateRace(id: string, race: any): Observable<any> {
+    return this.http.put<any>(`${this.racesUrl}/${id}`, race);
+  }
+
+  deleteRace(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.racesUrl}/${id}`);
+  }
+
+  generateHeats(raceId: string, driverCount: number): Observable<any> {
+    return this.http.post<any>(`http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`, {
+      driverCount
+    });
+  }
+
+  previewHeats(trackId: string, rotationType: string, driverCount: number): Observable<any> {
+    return this.http.post<any>(`http://${this.serverIp}:${this.serverPort}/api/heats/preview`, {
+      trackId,
+      rotationType,
+      driverCount
+    });
+  }
+
   getTracks(): Observable<any[]> {
     return this.http.get<any[]>(this.tracksUrl);
   }

@@ -22,6 +22,8 @@ import { ArduinoEditorComponent } from './components/track-editor/arduino-editor
 import { ArduinoSummaryComponent } from './components/track-manager/arduino-summary/arduino-summary.component';
 import { SharedModule } from './components/shared/shared.module';
 import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
+import { RaceManagerComponent } from './components/race-manager/race-manager.component';
+import { RaceEditorComponent } from './components/race-editor/race-editor.component';
 
 @NgModule({
   declarations: [
@@ -38,9 +40,10 @@ import { DatabaseManagerComponent } from './components/database-manager/database
     TrackManagerComponent,
     TrackEditorComponent,
     ArduinoEditorComponent,
-    ArduinoEditorComponent,
     ArduinoSummaryComponent,
-    DatabaseManagerComponent
+    DatabaseManagerComponent,
+    RaceManagerComponent,
+    RaceEditorComponent
   ],
   imports: [
     BrowserModule,

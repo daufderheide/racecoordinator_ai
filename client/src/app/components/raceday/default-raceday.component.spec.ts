@@ -257,4 +257,36 @@ describe('DefaultRacedayComponent', () => {
 
     flush();
   }));
+
+  describe('isNextHeatDisabled', () => {
+    it('should be disabled when state is STARTING', () => {
+      fixture.detectChanges();
+      component['raceState'] = com.antigravity.RaceState.STARTING;
+      expect(component.isNextHeatDisabled).toBeTrue();
+    });
+
+    it('should be disabled when state is RACING', () => {
+      fixture.detectChanges();
+      component['raceState'] = com.antigravity.RaceState.RACING;
+      expect(component.isNextHeatDisabled).toBeTrue();
+    });
+
+    it('should be enabled when state is HEAT_OVER', () => {
+      fixture.detectChanges();
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+      expect(component.isNextHeatDisabled).toBeFalse();
+    });
+
+    it('should be disabled when state is RACE_OVER', () => {
+      fixture.detectChanges();
+      component['raceState'] = com.antigravity.RaceState.RACE_OVER;
+      expect(component.isNextHeatDisabled).toBeTrue();
+    });
+
+    it('should be enabled when state is NOT_STARTED', () => {
+      fixture.detectChanges();
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+      expect(component.isNextHeatDisabled).toBeFalse();
+    });
+  });
 });

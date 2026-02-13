@@ -1,5 +1,6 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
@@ -17,30 +18,50 @@ public class Race extends Model {
     @JsonProperty("heat_rotation_type")
     private final HeatRotationType heatRotationType;
 
-    @BsonProperty("race_scoring")
-    @JsonProperty("race_scoring")
-    private final RaceScoring raceScoring;
+    @BsonProperty("heat_scoring")
+    @JsonProperty("heat_scoring")
+    private final HeatScoring heatScoring;
+
+    @BsonProperty("overall_scoring")
+    @JsonProperty("overall_scoring")
+    private final OverallScoring overallScoring;
 
     @BsonCreator
     public Race(@BsonProperty("name") String name,
             @BsonProperty("track_entity_id") String trackEntityId,
             @BsonProperty("heat_rotation_type") HeatRotationType heatRotationType,
-            @BsonProperty("race_scoring") RaceScoring raceScoring,
+            @BsonProperty("heat_scoring") HeatScoring heatScoring,
+            @BsonProperty("race_scoring") HeatScoring oldHeatScoring,
+            @BsonProperty("overall_scoring") OverallScoring overallScoring,
             @BsonProperty("entity_id") String entityId,
             @BsonId ObjectId id) {
         super(id, entityId);
         this.name = name;
         this.trackEntityId = trackEntityId;
         this.heatRotationType = heatRotationType;
-        this.raceScoring = raceScoring;
+        this.heatScoring = heatScoring != null ? heatScoring
+                : (oldHeatScoring != null ? oldHeatScoring : new HeatScoring());
+        this.overallScoring = overallScoring != null ? overallScoring : new OverallScoring();
+    }
+
+    @JsonCreator
+    public Race(@JsonProperty("name") String name,
+            @JsonProperty("track_entity_id") String trackEntityId,
+            @JsonProperty("heat_rotation_type") HeatRotationType heatRotationType,
+            @JsonProperty("heat_scoring") HeatScoring heatScoring,
+            @JsonProperty("overall_scoring") OverallScoring overallScoring,
+            @JsonProperty(value = "entity_id", required = false) String entityId,
+            @JsonProperty(value = "_id", required = false) ObjectId id) {
+        this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, entityId, id);
     }
 
     public Race(String name, String trackEntityId) {
-        this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null);
+        this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null, null);
     }
 
-    public Race(String name, String trackEntityId, HeatRotationType heatRotationType, RaceScoring raceScoring) {
-        this(name, trackEntityId, heatRotationType, raceScoring, null, null);
+    public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
+            OverallScoring overallScoring) {
+        this(name, trackEntityId, heatRotationType, heatScoring, overallScoring, null, null);
     }
 
     public String getName() {
@@ -55,7 +76,11 @@ public class Race extends Model {
         return heatRotationType;
     }
 
-    public RaceScoring getRaceScoring() {
-        return raceScoring;
+    public HeatScoring getHeatScoring() {
+        return heatScoring;
+    }
+
+    public OverallScoring getOverallScoring() {
+        return overallScoring;
     }
 }

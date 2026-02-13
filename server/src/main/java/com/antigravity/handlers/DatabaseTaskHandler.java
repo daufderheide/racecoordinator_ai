@@ -2,8 +2,11 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
+import com.antigravity.models.Race;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import io.javalin.http.Context;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,12 @@ public class DatabaseTaskHandler {
         app.put("/api/tracks/{id}", this::updateTrack);
         app.delete("/api/tracks/{id}", this::deleteTrack);
 
+        app.post("/api/races", this::handleCreateRace);
+        app.put("/api/races/{id}", this::handleUpdateRace);
+        app.delete("/api/races/{id}", this::handleDeleteRace);
+        app.post("/api/races/{id}/generate-heats", this::generateHeats);
+        app.post("/api/heats/preview", this::previewHeats);
+
         // Database Management Endpoints
         app.get("/api/databases", this::listDatabases);
         app.post("/api/databases/switch", this::switchDatabase);
@@ -46,8 +55,8 @@ public class DatabaseTaskHandler {
         return databaseContext.getDatabase().getCollection("tracks", com.antigravity.models.Track.class);
     }
 
-    private MongoCollection<com.antigravity.models.Race> getRaceCollection() {
-        return databaseContext.getDatabase().getCollection("races", com.antigravity.models.Race.class);
+    private MongoCollection<Race> getRaceCollection() {
+        return databaseContext.getDatabase().getCollection("races", Race.class);
     }
 
     // --- Database Management Handlers ---
@@ -375,6 +384,115 @@ public class DatabaseTaskHandler {
         }
     }
 
+    public void handleCreateRace(Context ctx) {
+        try {
+            com.antigravity.models.Race race = ctx.bodyAsClass(com.antigravity.models.Race.class);
+            try {
+                com.antigravity.models.Race created = createRace(race);
+                ctx.status(201).json(created);
+            } catch (IllegalArgumentException e) {
+                ctx.status(409).result(e.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error creating race: " + e.getMessage());
+        }
+    }
+
+    public com.antigravity.models.Race createRace(com.antigravity.models.Race race) {
+        MongoCollection<com.antigravity.models.Race> col = getRaceCollection();
+
+        // Uniqueness check
+        com.antigravity.models.Race existing = col.find(Filters.eq("name", race.getName())).first();
+        if (existing != null) {
+            throw new IllegalArgumentException("Race name already exists");
+        }
+
+        if (race.getEntityId() == null || race.getEntityId().isEmpty() || "new".equals(race.getEntityId())) {
+            String nextId = getNextSequence("races");
+            race = new com.antigravity.models.Race(
+                    race.getName(),
+                    race.getTrackEntityId(),
+                    race.getHeatRotationType(),
+                    race.getHeatScoring(),
+                    race.getOverallScoring(),
+                    nextId,
+                    null);
+        }
+        col.insertOne(race);
+        return race;
+    }
+
+    public void handleUpdateRace(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            com.antigravity.models.Race race = ctx.bodyAsClass(com.antigravity.models.Race.class);
+            try {
+                com.antigravity.models.Race updated = updateRace(id, race);
+                ctx.json(updated);
+            } catch (IllegalArgumentException e) {
+                if ("Race not found".equals(e.getMessage())) {
+                    ctx.status(404).result(e.getMessage());
+                } else {
+                    ctx.status(409).result(e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error updating race: " + e.getMessage());
+        }
+    }
+
+    public com.antigravity.models.Race updateRace(String id, com.antigravity.models.Race race) {
+        MongoCollection<com.antigravity.models.Race> col = getRaceCollection();
+
+        com.antigravity.models.Race existing = col.find(Filters.and(
+                Filters.ne("entity_id", id),
+                Filters.eq("name", race.getName())))
+                .first();
+
+        if (existing != null) {
+            throw new IllegalArgumentException("Race name already exists");
+        }
+
+        race = new com.antigravity.models.Race(
+                race.getName(),
+                race.getTrackEntityId(),
+                race.getHeatRotationType(),
+                race.getHeatScoring(),
+                race.getOverallScoring(),
+                id,
+                race.getId());
+
+        UpdateResult result = col.replaceOne(Filters.eq("entity_id", id), race);
+        if (result.getMatchedCount() == 0) {
+            throw new IllegalArgumentException("Race not found");
+        }
+        return race;
+    }
+
+    public void handleDeleteRace(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            try {
+                deleteRace(id);
+                ctx.status(204);
+            } catch (IllegalArgumentException e) {
+                ctx.status(404).result(e.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error deleting race: " + e.getMessage());
+        }
+    }
+
+    public void deleteRace(String id) {
+        DeleteResult result = getRaceCollection().deleteOne(Filters.eq("entity_id", id));
+        if (result.getDeletedCount() == 0) {
+            throw new IllegalArgumentException("Race not found");
+        }
+    }
+
     private String getNextSequence(String collectionName) {
         MongoCollection<org.bson.Document> counters = databaseContext.getDatabase().getCollection("counters");
         org.bson.Document counter = counters.findOneAndUpdate(
@@ -409,8 +527,205 @@ public class DatabaseTaskHandler {
             raceMap.put("name", race.getName());
             raceMap.put("entity_id", race.getEntityId());
             raceMap.put("track", track);
+            raceMap.put("track_entity_id", race.getTrackEntityId());
+            raceMap.put("heat_rotation_type", race.getHeatRotationType());
+            raceMap.put("heat_scoring", race.getHeatScoring());
+            raceMap.put("overall_scoring", race.getOverallScoring());
             response.add(raceMap);
         }
         ctx.json(response);
+    }
+
+    public void generateHeats(Context ctx) {
+        String raceId = ctx.pathParam("id");
+        java.util.Map body = ctx.bodyAsClass(java.util.Map.class);
+        Number driverCountNum = (Number) body.get("driverCount");
+        int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
+
+        if (driverCount <= 0) {
+            ctx.status(400).result("driverCount must be greater than 0");
+            return;
+        }
+
+        // Find the race
+        com.antigravity.models.Race race = getRaceCollection()
+                .find(com.mongodb.client.model.Filters.eq("entity_id", raceId)).first();
+        if (race == null) {
+            ctx.status(404).result("Race not found");
+            return;
+        }
+
+        // Find the track to get lane count
+        com.antigravity.models.Track track = getTrackCollection()
+                .find(com.mongodb.client.model.Filters.eq("entity_id", race.getTrackEntityId())).first();
+        if (track == null) {
+            ctx.status(404).result("Track not found for race");
+            return;
+        }
+
+        // Create mock RaceParticipant list
+        List<com.antigravity.race.RaceParticipant> mockDrivers = new ArrayList<>();
+        for (int i = 0; i < driverCount; i++) {
+            com.antigravity.models.Driver mockDriver = new com.antigravity.models.Driver(
+                    "Driver " + (i + 1),
+                    "Driver " + (i + 1));
+            mockDrivers.add(new com.antigravity.race.RaceParticipant(mockDriver));
+        }
+
+        // Create a temporary Race object for heat building
+        com.antigravity.race.Race tempRace = new com.antigravity.race.Race(
+                race,
+                mockDrivers,
+                track,
+                true); // Use demo mode to avoid protocol initialization
+
+        // Get the generated heats
+        List<com.antigravity.race.Heat> heats = tempRace.getHeats();
+
+        // Convert heats to JSON response
+        List<java.util.Map<String, Object>> heatList = new ArrayList<>();
+        for (com.antigravity.race.Heat heat : heats) {
+            java.util.Map<String, Object> heatMap = new java.util.HashMap<>();
+            heatMap.put("heatNumber", heat.getHeatNumber());
+
+            List<java.util.Map<String, Object>> lanes = new ArrayList<>();
+            List<com.antigravity.race.DriverHeatData> drivers = heat.getDrivers();
+            for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
+                com.antigravity.race.DriverHeatData driverData = drivers.get(laneIdx);
+                java.util.Map<String, Object> laneMap = new java.util.HashMap<>();
+                laneMap.put("laneNumber", laneIdx + 1);
+                laneMap.put("driverNumber", driverData.getDriver().getSeed());
+
+                // Add lane colors from track
+                if (laneIdx < track.getLanes().size()) {
+                    com.antigravity.models.Lane lane = track.getLanes().get(laneIdx);
+                    laneMap.put("backgroundColor", lane.getBackground_color());
+                    laneMap.put("foregroundColor", lane.getForeground_color());
+                }
+
+                lanes.add(laneMap);
+            }
+            heatMap.put("lanes", lanes);
+            heatList.add(heatMap);
+        }
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("heats", heatList);
+        ctx.json(response);
+
+        // Clean up the temporary race object
+        tempRace.stop();
+    }
+
+    public void previewHeats(Context ctx) {
+        java.util.Map body = ctx.bodyAsClass(java.util.Map.class);
+        Number driverCountNum = (Number) body.get("driverCount");
+        int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
+        String trackId = (String) body.get("trackId");
+        String rotationType = (String) body.get("rotationType");
+
+        if (driverCount <= 0) {
+            ctx.status(400).result("driverCount must be greater than 0");
+            return;
+        }
+
+        if (trackId == null || trackId.isEmpty()) {
+            ctx.status(400).result("trackId is required");
+            return;
+        }
+
+        if (rotationType == null || rotationType.isEmpty()) {
+            ctx.status(400).result("rotationType is required");
+            return;
+        }
+
+        // Find the track to get lane count
+        com.antigravity.models.Track track = getTrackCollection()
+                .find(com.mongodb.client.model.Filters.eq("entity_id", trackId)).first();
+        if (track == null) {
+            ctx.status(404).result("Track not found");
+            return;
+        }
+
+        // Convert rotation type string to enum
+        com.antigravity.models.HeatRotationType rotationTypeEnum;
+        try {
+            rotationTypeEnum = com.antigravity.models.HeatRotationType.valueOf(rotationType);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).result("Invalid rotation type: " + rotationType);
+            return;
+        }
+
+        // Create a default HeatScoring and OverallScoring for heat generation preview
+        com.antigravity.models.HeatScoring defaultHeatScoring = new com.antigravity.models.HeatScoring(
+                com.antigravity.models.HeatScoring.FinishMethod.Lap,
+                10, // default 10 laps
+                com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+                com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+        com.antigravity.models.OverallScoring defaultOverallScoring = new com.antigravity.models.OverallScoring();
+
+        // Create a temporary race configuration
+        com.antigravity.models.Race tempRaceConfig = new com.antigravity.models.Race(
+                "Preview",
+                trackId,
+                rotationTypeEnum,
+                defaultHeatScoring,
+                defaultOverallScoring,
+                null, // entity_id - not needed for preview
+                null // mongo id - not needed for preview
+        );
+
+        // Create mock RaceParticipant list
+        List<com.antigravity.race.RaceParticipant> mockDrivers = new ArrayList<>();
+        for (int i = 0; i < driverCount; i++) {
+            com.antigravity.models.Driver mockDriver = new com.antigravity.models.Driver(
+                    "Driver " + (i + 1),
+                    "Driver " + (i + 1));
+            mockDrivers.add(new com.antigravity.race.RaceParticipant(mockDriver));
+        }
+
+        // Create a temporary Race object for heat building
+        com.antigravity.race.Race tempRace = new com.antigravity.race.Race(
+                tempRaceConfig,
+                mockDrivers,
+                track,
+                true); // Use demo mode to avoid protocol initialization
+
+        // Get the generated heats
+        List<com.antigravity.race.Heat> heats = tempRace.getHeats();
+
+        // Convert heats to JSON response
+        List<java.util.Map<String, Object>> heatList = new ArrayList<>();
+        for (com.antigravity.race.Heat heat : heats) {
+            java.util.Map<String, Object> heatMap = new java.util.HashMap<>();
+            heatMap.put("heatNumber", heat.getHeatNumber());
+
+            List<java.util.Map<String, Object>> lanes = new ArrayList<>();
+            List<com.antigravity.race.DriverHeatData> drivers = heat.getDrivers();
+            for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
+                com.antigravity.race.DriverHeatData driverData = drivers.get(laneIdx);
+                java.util.Map<String, Object> laneMap = new java.util.HashMap<>();
+                laneMap.put("laneNumber", laneIdx + 1);
+                laneMap.put("driverNumber", driverData.getDriver().getSeed());
+
+                // Add lane colors from track
+                if (laneIdx < track.getLanes().size()) {
+                    com.antigravity.models.Lane lane = track.getLanes().get(laneIdx);
+                    laneMap.put("backgroundColor", lane.getBackground_color());
+                    laneMap.put("foregroundColor", lane.getForeground_color());
+                }
+
+                lanes.add(laneMap);
+            }
+            heatMap.put("lanes", lanes);
+            heatList.add(heatMap);
+        }
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("heats", heatList);
+        ctx.json(response);
+
+        // Clean up the temporary race object
+        tempRace.stop();
     }
 }

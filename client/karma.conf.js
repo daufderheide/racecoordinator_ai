@@ -39,25 +39,13 @@ module.exports = function (config) {
     browsers: ['ChromeHeadlessWithCustomConfig'],
     customLaunchers: {
       ChromeHeadlessWithCustomConfig: {
-        base: 'ChromeHeadless',
+        base: 'Chrome',
         flags: [
+          '--headless',
           '--no-sandbox',
-          '--disable-setuid-sandbox',
           '--disable-gpu',
           '--disable-dev-shm-usage',
-          '--disable-extensions',
-          '--disable-software-rasterizer',
-          '--mute-audio',
-          '--no-zygote',
-          '--single-process',
-          '--disable-crash-reporter',
-          '--disable-breakpad',
-          '--disable-dev-shm-usage',
-          '--disable-setuid-sandbox',
-          '--password-store=basic',
-          '--use-mock-keychain',
-          '--remote-debugging-port=9222',
-          '--user-data-dir=' + require('path').resolve(__dirname, '.tmp/karma-chrome-' + Date.now())
+          '--user-data-dir=' + require('path').resolve(__dirname, '.tmp/k-' + Date.now())
         ]
       }
     },

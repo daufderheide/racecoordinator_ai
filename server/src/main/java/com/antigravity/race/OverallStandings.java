@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
-import com.antigravity.models.RaceScoring;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -9,19 +10,16 @@ import java.util.Map;
 
 public class OverallStandings {
 
-  private int droppedHeats = 0;
-  private final RaceScoring raceScoring;
+  private final HeatScoring heatScoring;
+  private final OverallScoring overallScoring;
 
-  public OverallStandings(RaceScoring raceScoring) {
-    this.raceScoring = raceScoring;
+  public OverallStandings(HeatScoring heatScoring, OverallScoring overallScoring) {
+    this.heatScoring = heatScoring;
+    this.overallScoring = overallScoring;
   }
 
   public int getDroppedHeats() {
-    return droppedHeats;
-  }
-
-  public void setDroppedHeats(int droppedHeats) {
-    this.droppedHeats = droppedHeats;
+    return overallScoring != null ? overallScoring.getDroppedHeats() : 0;
   }
 
   public void recalculate(List<RaceParticipant> drivers, List<Heat> heats) {
@@ -43,6 +41,7 @@ public class OverallStandings {
       double totalTime = 0.0;
       double bestLap = 0.0;
 
+      List<Double> allScoringLaps = new ArrayList<>();
       for (DriverHeatData dhd : scoringHeats) {
         totalLaps += dhd.getLapCount();
         totalTime += dhd.getTotalTime();
@@ -50,33 +49,32 @@ public class OverallStandings {
         if (dhd.getBestLapTime() > 0 && (bestLap == 0 || dhd.getBestLapTime() < bestLap)) {
           bestLap = dhd.getBestLapTime();
         }
-
-        // For average/median calculation, we might need all individual laps
-        // But DriverHeatData stores them, so we can access if needed.
-        // Assuming we want average of all laps across all scoring heats.
-        // Accessing private/protected fields might be tricky unless DriverHeatData
-        // exposes them.
-        // DriverHeatData has `laps` but no getter for the list.
-        // It has getAverageLapTime() and getMedianLapTime() for the heat.
-        // We need to request a getter for `laps` in DriverHeatData if we want true
-        // global avg/median.
-        // OR we just use the heat averages? No, mathematically that's wrong for
-        // different lap counts.
+        allScoringLaps.addAll(dhd.getLaps());
       }
-
-      // NOTE: DriverHeatData needs to expose laps for accurate calculation of overall
-      // average/median.
-      // For now, I will assume I can get them or add a method to DriverHeatData.
-      // Let's modify DriverHeatData to expose getLaps() or similar.
 
       // Updating driver stats
       driver.setTotalLaps(totalLaps);
       driver.setTotalTime(totalTime);
       driver.setBestLapTime(bestLap);
 
-      // Placeholder for Avg/Median until I can access raw laps
-      // driver.setAverageLapTime(...);
-      // driver.setMedianLapTime(...);
+      if (!allScoringLaps.isEmpty()) {
+        double sum = 0;
+        for (double lap : allScoringLaps) {
+          sum += lap;
+        }
+        driver.setAverageLapTime(sum / allScoringLaps.size());
+
+        java.util.Collections.sort(allScoringLaps);
+        int middle = allScoringLaps.size() / 2;
+        if (allScoringLaps.size() % 2 == 1) {
+          driver.setMedianLapTime(allScoringLaps.get(middle));
+        } else {
+          driver.setMedianLapTime((allScoringLaps.get(middle - 1) + allScoringLaps.get(middle)) / 2.0);
+        }
+      } else {
+        driver.setAverageLapTime(0.0);
+        driver.setMedianLapTime(0.0);
+      }
     }
 
     // 3. Rank drivers
@@ -87,8 +85,8 @@ public class OverallStandings {
       drivers.get(i).setRank(i + 1);
 
       double rankValue = 0;
-      if (raceScoring != null && raceScoring.getHeatRanking() != null) {
-        switch (raceScoring.getHeatRanking()) {
+      if (overallScoring != null && overallScoring.getRankingMethod() != null) {
+        switch (overallScoring.getRankingMethod()) {
           case LAP_COUNT:
             rankValue = drivers.get(i).getTotalLaps();
             break;
@@ -97,6 +95,9 @@ public class OverallStandings {
             break;
           case TOTAL_TIME:
             rankValue = drivers.get(i).getTotalTime();
+            break;
+          case AVERAGE_LAP:
+            rankValue = drivers.get(i).getAverageLapTime();
             break;
           default:
             rankValue = 0;
@@ -109,7 +110,8 @@ public class OverallStandings {
   }
 
   private List<DriverHeatData> getScoringHeats(List<DriverHeatData> allHeats) {
-    if (droppedHeats <= 0 || allHeats.size() <= droppedHeats) {
+    int dropped = getDroppedHeats();
+    if (dropped <= 0 || allHeats.size() <= dropped) {
       return allHeats;
     }
 
@@ -123,30 +125,46 @@ public class OverallStandings {
     allHeats.sort(comparator); // This logic depends on what getHeatComparator implementation.
 
     // Return top (Size - dropped)
-    return allHeats.subList(0, allHeats.size() - droppedHeats);
+    return allHeats.subList(0, allHeats.size() - dropped);
   }
 
   private Comparator<DriverHeatData> getHeatComparator() {
     // We need 'Best' first.
     Comparator<DriverHeatData> comparator;
-    if (raceScoring != null && raceScoring.getHeatRanking() != null) {
-      switch (raceScoring.getHeatRanking()) {
+    if (heatScoring != null && heatScoring.getHeatRanking() != null) {
+      switch (heatScoring.getHeatRanking()) {
         case LAP_COUNT:
           // More laps = better
           comparator = Comparator.comparingInt(DriverHeatData::getLapCount).reversed();
-          // Tiebreak with time? Usually yes, less time is better for same laps.
-          comparator = comparator.thenComparingDouble(DriverHeatData::getTotalTime);
           break;
         case FASTEST_LAP:
           // Lower time = better
           comparator = Comparator.comparingDouble(d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
           break;
         case TOTAL_TIME:
-          // Lower time = better (Assuming fixed laps? Or just time?)
+          // Lower time = better
           comparator = Comparator.comparingDouble(DriverHeatData::getTotalTime);
           break;
         default:
           comparator = (a, b) -> 0;
+      }
+
+      // Add tiebreaker
+      if (heatScoring.getHeatRankingTiebreaker() != null) {
+        switch (heatScoring.getHeatRankingTiebreaker()) {
+          case FASTEST_LAP_TIME:
+            comparator = comparator
+                .thenComparingDouble(d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
+            break;
+          case MEDIAN_LAP_TIME:
+            comparator = comparator
+                .thenComparingDouble(d -> d.getMedianLapTime() == 0 ? Double.MAX_VALUE : d.getMedianLapTime());
+            break;
+          case AVERAGE_LAP_TIME:
+            comparator = comparator
+                .thenComparingDouble(d -> d.getAverageLapTime() == 0 ? Double.MAX_VALUE : d.getAverageLapTime());
+            break;
+        }
       }
     } else {
       // Default to Lap Count
@@ -171,22 +189,20 @@ public class OverallStandings {
     // "Accumulating the score" -> If HeatRanking is LapCount, we sum Laps.
 
     Comparator<RaceParticipant> comparator;
-    if (raceScoring != null && raceScoring.getHeatRanking() != null) {
-      switch (raceScoring.getHeatRanking()) {
+    if (overallScoring != null && overallScoring.getRankingMethod() != null) {
+      switch (overallScoring.getRankingMethod()) {
         case LAP_COUNT:
           comparator = Comparator.comparingInt(RaceParticipant::getTotalLaps).reversed();
-          // Tiebreaker?
           break;
         case FASTEST_LAP:
-          // Sum of fastest laps? No, probably overall Fastest Lap?
-          // "accumulating the score" implies summing.
-          // But for Fastest Lap, you usually take the MIN of all heats.
-          // My aggregation logic above took the MIN (Best) of all heats for
-          // `bestLapTime`.
           comparator = Comparator.comparingDouble(p -> p.getBestLapTime() == 0 ? Double.MAX_VALUE : p.getBestLapTime());
           break;
         case TOTAL_TIME:
           comparator = Comparator.comparingDouble(RaceParticipant::getTotalTime);
+          break;
+        case AVERAGE_LAP:
+          comparator = Comparator
+              .comparingDouble(p -> p.getAverageLapTime() == 0 ? Double.MAX_VALUE : p.getAverageLapTime());
           break;
         default:
           comparator = (a, b) -> 0;
@@ -202,16 +218,18 @@ public class OverallStandings {
   }
 
   private Comparator<RaceParticipant> getTieBreakerComparator() {
-    if (raceScoring == null || raceScoring.getHeatRankingTiebreaker() == null) {
+    if (overallScoring == null || overallScoring.getTiebreaker() == null) {
       return (a, b) -> 0;
     }
-    switch (raceScoring.getHeatRankingTiebreaker()) {
+    switch (overallScoring.getTiebreaker()) {
       case FASTEST_LAP_TIME:
         return Comparator.comparingDouble(p -> p.getBestLapTime() == 0 ? Double.MAX_VALUE : p.getBestLapTime());
       case MEDIAN_LAP_TIME:
         return Comparator.comparingDouble(p -> p.getMedianLapTime() == 0 ? Double.MAX_VALUE : p.getMedianLapTime());
       case AVERAGE_LAP_TIME:
         return Comparator.comparingDouble(p -> p.getAverageLapTime() == 0 ? Double.MAX_VALUE : p.getAverageLapTime());
+      case TOTAL_TIME:
+        return Comparator.comparingDouble(p -> p.getTotalTime());
       default:
         return (a, b) -> 0;
     }

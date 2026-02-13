@@ -5,8 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.antigravity.models.RaceScoring.HeatRanking;
-import com.antigravity.models.RaceScoring.HeatRankingTiebreaker;
+import com.antigravity.models.HeatScoring.HeatRanking;
+import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.proto.HeatPositionUpdate;
 import com.antigravity.proto.StandingsUpdate;
 
@@ -61,6 +61,7 @@ public class HeatStandings {
     }
 
     if (changed) {
+      System.out.println("HeatStandings: Standings changed. New order: " + newStandings);
       currentStandings = newStandings;
       return updateBuilder.build();
     }
@@ -68,10 +69,21 @@ public class HeatStandings {
   }
 
   private List<String> calculateStandings() {
-    return driverHeatData.stream()
+    List<String> standings = driverHeatData.stream()
         .sorted(getComparator())
         .map(DriverHeatData::getObjectId)
         .collect(Collectors.toList());
+
+    System.out.println("HeatStandings: Calculated standings: " + standings.stream()
+        .map(id -> {
+          DriverHeatData d = driverHeatData.stream().filter(dhd -> dhd.getObjectId().equals(id)).findFirst()
+              .orElse(null);
+          return (d != null ? d.getDriver().getDriver().getName() : "unknown") + "(" + (d != null ? d.getLapCount() : 0)
+              + " laps)";
+        })
+        .collect(Collectors.joining(", ")));
+
+    return standings;
   }
 
   private Comparator<DriverHeatData> getComparator() {

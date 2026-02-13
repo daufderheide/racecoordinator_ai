@@ -93,4 +93,8 @@ export class DriverHeatData {
     get lapCount(): number {
         return this.laps.length;
     }
+
+    get totalTime(): number {
+        return this.laps.reduce((acc, curr) => acc + curr, 0);
+    }
 }

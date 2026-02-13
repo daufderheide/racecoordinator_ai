@@ -9,7 +9,7 @@
         <span class="leader-rank">({{ leader.seed }})</span> {{ leader.driver.name }}
       </div>
       <div class="leader-stats">
-        <span class="time">{{ leader.rankValue | number:'1.0-0' }}</span>
+        <span class="time">{{ leader.rankValue | number: (isTimeBased$ | async) ? '1.3-3' : '1.0-0' }}</span>
       </div>
     </div>
 
@@ -18,7 +18,7 @@
         <div class="rank">({{ p.seed }})</div>
         <div class="name">{{ p.driver.name }}</div>
         <div class="stats">
-          <span class="laps">{{ p.rankValue | number:'1.0-0' }}</span>
+          <span class="laps">{{ p.rankValue | number: (isTimeBased$ | async) ? '1.3-3' : '1.0-0' }}</span>
         </div>
       </div>
     </div>

@@ -712,7 +712,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         const s = this.raceState;
         return s === com.antigravity.RaceState.STARTING ||
             s === com.antigravity.RaceState.RACING ||
-            s === com.antigravity.RaceState.HEAT_OVER ||
             s === com.antigravity.RaceState.RACE_OVER;
     }
 
@@ -723,6 +722,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         const RS = com.antigravity.RaceState;
         return s === RS.STARTING ||
             s === RS.RACING ||
+            s === RS.NOT_STARTED ||
             s === RS.HEAT_OVER ||
             s === RS.RACE_OVER;
     }

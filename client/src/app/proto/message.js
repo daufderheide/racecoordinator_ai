@@ -1879,27 +1879,27 @@ export const com = $root.com = (() => {
             return InitializeRaceResponse;
         })();
 
-        antigravity.RaceScoring = (function() {
+        antigravity.HeatScoring = (function() {
 
             /**
-             * Properties of a RaceScoring.
+             * Properties of a HeatScoring.
              * @memberof com.antigravity
-             * @interface IRaceScoring
-             * @property {com.antigravity.RaceScoring.FinishMethod|null} [finishMethod] RaceScoring finishMethod
-             * @property {number|Long|null} [finishValue] RaceScoring finishValue
-             * @property {com.antigravity.RaceScoring.HeatRanking|null} [heatRanking] RaceScoring heatRanking
-             * @property {com.antigravity.RaceScoring.TieBreaker|null} [heatRankingTiebreaker] RaceScoring heatRankingTiebreaker
+             * @interface IHeatScoring
+             * @property {com.antigravity.HeatScoring.FinishMethod|null} [finishMethod] HeatScoring finishMethod
+             * @property {number|Long|null} [finishValue] HeatScoring finishValue
+             * @property {com.antigravity.HeatScoring.HeatRanking|null} [heatRanking] HeatScoring heatRanking
+             * @property {com.antigravity.HeatScoring.HeatRankingTiebreaker|null} [heatRankingTiebreaker] HeatScoring heatRankingTiebreaker
              */
 
             /**
-             * Constructs a new RaceScoring.
+             * Constructs a new HeatScoring.
              * @memberof com.antigravity
-             * @classdesc Represents a RaceScoring.
-             * @implements IRaceScoring
+             * @classdesc Represents a HeatScoring.
+             * @implements IHeatScoring
              * @constructor
-             * @param {com.antigravity.IRaceScoring=} [properties] Properties to set
+             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
              */
-            function RaceScoring(properties) {
+            function HeatScoring(properties) {
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -1907,59 +1907,59 @@ export const com = $root.com = (() => {
             }
 
             /**
-             * RaceScoring finishMethod.
-             * @member {com.antigravity.RaceScoring.FinishMethod} finishMethod
-             * @memberof com.antigravity.RaceScoring
+             * HeatScoring finishMethod.
+             * @member {com.antigravity.HeatScoring.FinishMethod} finishMethod
+             * @memberof com.antigravity.HeatScoring
              * @instance
              */
-            RaceScoring.prototype.finishMethod = 0;
+            HeatScoring.prototype.finishMethod = 0;
 
             /**
-             * RaceScoring finishValue.
+             * HeatScoring finishValue.
              * @member {number|Long} finishValue
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @instance
              */
-            RaceScoring.prototype.finishValue = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            HeatScoring.prototype.finishValue = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
-             * RaceScoring heatRanking.
-             * @member {com.antigravity.RaceScoring.HeatRanking} heatRanking
-             * @memberof com.antigravity.RaceScoring
+             * HeatScoring heatRanking.
+             * @member {com.antigravity.HeatScoring.HeatRanking} heatRanking
+             * @memberof com.antigravity.HeatScoring
              * @instance
              */
-            RaceScoring.prototype.heatRanking = 0;
+            HeatScoring.prototype.heatRanking = 0;
 
             /**
-             * RaceScoring heatRankingTiebreaker.
-             * @member {com.antigravity.RaceScoring.TieBreaker} heatRankingTiebreaker
-             * @memberof com.antigravity.RaceScoring
+             * HeatScoring heatRankingTiebreaker.
+             * @member {com.antigravity.HeatScoring.HeatRankingTiebreaker} heatRankingTiebreaker
+             * @memberof com.antigravity.HeatScoring
              * @instance
              */
-            RaceScoring.prototype.heatRankingTiebreaker = 0;
+            HeatScoring.prototype.heatRankingTiebreaker = 0;
 
             /**
-             * Creates a new RaceScoring instance using the specified properties.
+             * Creates a new HeatScoring instance using the specified properties.
              * @function create
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
-             * @param {com.antigravity.IRaceScoring=} [properties] Properties to set
-             * @returns {com.antigravity.RaceScoring} RaceScoring instance
+             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
+             * @returns {com.antigravity.HeatScoring} HeatScoring instance
              */
-            RaceScoring.create = function create(properties) {
-                return new RaceScoring(properties);
+            HeatScoring.create = function create(properties) {
+                return new HeatScoring(properties);
             };
 
             /**
-             * Encodes the specified RaceScoring message. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
+             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
              * @function encode
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
-             * @param {com.antigravity.IRaceScoring} message RaceScoring message or plain object to encode
+             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            RaceScoring.encode = function encode(message, writer) {
+            HeatScoring.encode = function encode(message, writer) {
                 if (!writer)
                     writer = $Writer.create();
                 if (message.finishMethod != null && Object.hasOwnProperty.call(message, "finishMethod"))
@@ -1974,33 +1974,33 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Encodes the specified RaceScoring message, length delimited. Does not implicitly {@link com.antigravity.RaceScoring.verify|verify} messages.
+             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
              * @function encodeDelimited
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
-             * @param {com.antigravity.IRaceScoring} message RaceScoring message or plain object to encode
+             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
              * @param {$protobuf.Writer} [writer] Writer to encode to
              * @returns {$protobuf.Writer} Writer
              */
-            RaceScoring.encodeDelimited = function encodeDelimited(message, writer) {
+            HeatScoring.encodeDelimited = function encodeDelimited(message, writer) {
                 return this.encode(message, writer).ldelim();
             };
 
             /**
-             * Decodes a RaceScoring message from the specified reader or buffer.
+             * Decodes a HeatScoring message from the specified reader or buffer.
              * @function decode
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
              * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.RaceScoring} RaceScoring
+             * @returns {com.antigravity.HeatScoring} HeatScoring
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            RaceScoring.decode = function decode(reader, length, error) {
+            HeatScoring.decode = function decode(reader, length, error) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceScoring();
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.HeatScoring();
                 while (reader.pos < end) {
                     let tag = reader.uint32();
                     if (tag === error)
@@ -2031,30 +2031,30 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Decodes a RaceScoring message from the specified reader or buffer, length delimited.
+             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
              * @function decodeDelimited
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
              * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.RaceScoring} RaceScoring
+             * @returns {com.antigravity.HeatScoring} HeatScoring
              * @throws {Error} If the payload is not a reader or valid buffer
              * @throws {$protobuf.util.ProtocolError} If required fields are missing
              */
-            RaceScoring.decodeDelimited = function decodeDelimited(reader) {
+            HeatScoring.decodeDelimited = function decodeDelimited(reader) {
                 if (!(reader instanceof $Reader))
                     reader = new $Reader(reader);
                 return this.decode(reader, reader.uint32());
             };
 
             /**
-             * Verifies a RaceScoring message.
+             * Verifies a HeatScoring message.
              * @function verify
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
              * @param {Object.<string,*>} message Plain object to verify
              * @returns {string|null} `null` if valid, otherwise the reason why it is not
              */
-            RaceScoring.verify = function verify(message) {
+            HeatScoring.verify = function verify(message) {
                 if (typeof message !== "object" || message === null)
                     return "object expected";
                 if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
@@ -2090,17 +2090,17 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Creates a RaceScoring message from a plain object. Also converts values to their respective internal types.
+             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
              * @function fromObject
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
              * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.RaceScoring} RaceScoring
+             * @returns {com.antigravity.HeatScoring} HeatScoring
              */
-            RaceScoring.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.RaceScoring)
+            HeatScoring.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.HeatScoring)
                     return object;
-                let message = new $root.com.antigravity.RaceScoring();
+                let message = new $root.com.antigravity.HeatScoring();
                 switch (object.finishMethod) {
                 default:
                     if (typeof object.finishMethod === "number") {
@@ -2170,15 +2170,15 @@ export const com = $root.com = (() => {
             };
 
             /**
-             * Creates a plain object from a RaceScoring message. Also converts values to other types if specified.
+             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
              * @function toObject
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
-             * @param {com.antigravity.RaceScoring} message RaceScoring
+             * @param {com.antigravity.HeatScoring} message HeatScoring
              * @param {$protobuf.IConversionOptions} [options] Conversion options
              * @returns {Object.<string,*>} Plain object
              */
-            RaceScoring.toObject = function toObject(message, options) {
+            HeatScoring.toObject = function toObject(message, options) {
                 if (!options)
                     options = {};
                 let object = {};
@@ -2193,53 +2193,53 @@ export const com = $root.com = (() => {
                     object.heatRankingTiebreaker = options.enums === String ? "FASTEST_LAP_TIME" : 0;
                 }
                 if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
-                    object.finishMethod = options.enums === String ? $root.com.antigravity.RaceScoring.FinishMethod[message.finishMethod] === undefined ? message.finishMethod : $root.com.antigravity.RaceScoring.FinishMethod[message.finishMethod] : message.finishMethod;
+                    object.finishMethod = options.enums === String ? $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] === undefined ? message.finishMethod : $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] : message.finishMethod;
                 if (message.finishValue != null && message.hasOwnProperty("finishValue"))
                     if (typeof message.finishValue === "number")
                         object.finishValue = options.longs === String ? String(message.finishValue) : message.finishValue;
                     else
                         object.finishValue = options.longs === String ? $util.Long.prototype.toString.call(message.finishValue) : options.longs === Number ? new $util.LongBits(message.finishValue.low >>> 0, message.finishValue.high >>> 0).toNumber() : message.finishValue;
                 if (message.heatRanking != null && message.hasOwnProperty("heatRanking"))
-                    object.heatRanking = options.enums === String ? $root.com.antigravity.RaceScoring.HeatRanking[message.heatRanking] === undefined ? message.heatRanking : $root.com.antigravity.RaceScoring.HeatRanking[message.heatRanking] : message.heatRanking;
+                    object.heatRanking = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] === undefined ? message.heatRanking : $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] : message.heatRanking;
                 if (message.heatRankingTiebreaker != null && message.hasOwnProperty("heatRankingTiebreaker"))
-                    object.heatRankingTiebreaker = options.enums === String ? $root.com.antigravity.RaceScoring.TieBreaker[message.heatRankingTiebreaker] === undefined ? message.heatRankingTiebreaker : $root.com.antigravity.RaceScoring.TieBreaker[message.heatRankingTiebreaker] : message.heatRankingTiebreaker;
+                    object.heatRankingTiebreaker = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] === undefined ? message.heatRankingTiebreaker : $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] : message.heatRankingTiebreaker;
                 return object;
             };
 
             /**
-             * Converts this RaceScoring to JSON.
+             * Converts this HeatScoring to JSON.
              * @function toJSON
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @instance
              * @returns {Object.<string,*>} JSON object
              */
-            RaceScoring.prototype.toJSON = function toJSON() {
+            HeatScoring.prototype.toJSON = function toJSON() {
                 return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
             };
 
             /**
-             * Gets the default type url for RaceScoring
+             * Gets the default type url for HeatScoring
              * @function getTypeUrl
-             * @memberof com.antigravity.RaceScoring
+             * @memberof com.antigravity.HeatScoring
              * @static
              * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns {string} The default type url
              */
-            RaceScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            HeatScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
                 if (typeUrlPrefix === undefined) {
                     typeUrlPrefix = "type.googleapis.com";
                 }
-                return typeUrlPrefix + "/com.antigravity.RaceScoring";
+                return typeUrlPrefix + "/com.antigravity.HeatScoring";
             };
 
             /**
              * FinishMethod enum.
-             * @name com.antigravity.RaceScoring.FinishMethod
+             * @name com.antigravity.HeatScoring.FinishMethod
              * @enum {number}
              * @property {number} Lap=0 Lap value
              * @property {number} Timed=1 Timed value
              */
-            RaceScoring.FinishMethod = (function() {
+            HeatScoring.FinishMethod = (function() {
                 const valuesById = {}, values = Object.create(valuesById);
                 values[valuesById[0] = "Lap"] = 0;
                 values[valuesById[1] = "Timed"] = 1;
@@ -2248,13 +2248,13 @@ export const com = $root.com = (() => {
 
             /**
              * HeatRanking enum.
-             * @name com.antigravity.RaceScoring.HeatRanking
+             * @name com.antigravity.HeatScoring.HeatRanking
              * @enum {number}
              * @property {number} LAP_COUNT=0 LAP_COUNT value
              * @property {number} FASTEST_LAP=1 FASTEST_LAP value
              * @property {number} TOTAL_TIME=2 TOTAL_TIME value
              */
-            RaceScoring.HeatRanking = (function() {
+            HeatScoring.HeatRanking = (function() {
                 const valuesById = {}, values = Object.create(valuesById);
                 values[valuesById[0] = "LAP_COUNT"] = 0;
                 values[valuesById[1] = "FASTEST_LAP"] = 1;
@@ -2263,14 +2263,14 @@ export const com = $root.com = (() => {
             })();
 
             /**
-             * TieBreaker enum.
-             * @name com.antigravity.RaceScoring.TieBreaker
+             * HeatRankingTiebreaker enum.
+             * @name com.antigravity.HeatScoring.HeatRankingTiebreaker
              * @enum {number}
              * @property {number} FASTEST_LAP_TIME=0 FASTEST_LAP_TIME value
              * @property {number} MEDIAN_LAP_TIME=1 MEDIAN_LAP_TIME value
              * @property {number} AVERAGE_LAP_TIME=2 AVERAGE_LAP_TIME value
              */
-            RaceScoring.TieBreaker = (function() {
+            HeatScoring.HeatRankingTiebreaker = (function() {
                 const valuesById = {}, values = Object.create(valuesById);
                 values[valuesById[0] = "FASTEST_LAP_TIME"] = 0;
                 values[valuesById[1] = "MEDIAN_LAP_TIME"] = 1;
@@ -2278,7 +2278,346 @@ export const com = $root.com = (() => {
                 return values;
             })();
 
-            return RaceScoring;
+            return HeatScoring;
+        })();
+
+        antigravity.OverallScoring = (function() {
+
+            /**
+             * Properties of an OverallScoring.
+             * @memberof com.antigravity
+             * @interface IOverallScoring
+             * @property {number|null} [droppedHeats] OverallScoring droppedHeats
+             * @property {com.antigravity.OverallScoring.OverallRanking|null} [rankingMethod] OverallScoring rankingMethod
+             * @property {com.antigravity.OverallScoring.OverallRankingTiebreaker|null} [tiebreaker] OverallScoring tiebreaker
+             */
+
+            /**
+             * Constructs a new OverallScoring.
+             * @memberof com.antigravity
+             * @classdesc Represents an OverallScoring.
+             * @implements IOverallScoring
+             * @constructor
+             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
+             */
+            function OverallScoring(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * OverallScoring droppedHeats.
+             * @member {number} droppedHeats
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.droppedHeats = 0;
+
+            /**
+             * OverallScoring rankingMethod.
+             * @member {com.antigravity.OverallScoring.OverallRanking} rankingMethod
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.rankingMethod = 0;
+
+            /**
+             * OverallScoring tiebreaker.
+             * @member {com.antigravity.OverallScoring.OverallRankingTiebreaker} tiebreaker
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.tiebreaker = 0;
+
+            /**
+             * Creates a new OverallScoring instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
+             * @returns {com.antigravity.OverallScoring} OverallScoring instance
+             */
+            OverallScoring.create = function create(properties) {
+                return new OverallScoring(properties);
+            };
+
+            /**
+             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallScoring.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.droppedHeats != null && Object.hasOwnProperty.call(message, "droppedHeats"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.droppedHeats);
+                if (message.rankingMethod != null && Object.hasOwnProperty.call(message, "rankingMethod"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.rankingMethod);
+                if (message.tiebreaker != null && Object.hasOwnProperty.call(message, "tiebreaker"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.tiebreaker);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallScoring.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallScoring.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.OverallScoring();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.droppedHeats = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.rankingMethod = reader.int32();
+                            break;
+                        }
+                    case 3: {
+                            message.tiebreaker = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallScoring.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an OverallScoring message.
+             * @function verify
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            OverallScoring.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
+                    if (!$util.isInteger(message.droppedHeats))
+                        return "droppedHeats: integer expected";
+                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
+                    switch (message.rankingMethod) {
+                    default:
+                        return "rankingMethod: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
+                    switch (message.tiebreaker) {
+                    default:
+                        return "tiebreaker: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        break;
+                    }
+                return null;
+            };
+
+            /**
+             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             */
+            OverallScoring.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.OverallScoring)
+                    return object;
+                let message = new $root.com.antigravity.OverallScoring();
+                if (object.droppedHeats != null)
+                    message.droppedHeats = object.droppedHeats | 0;
+                switch (object.rankingMethod) {
+                default:
+                    if (typeof object.rankingMethod === "number") {
+                        message.rankingMethod = object.rankingMethod;
+                        break;
+                    }
+                    break;
+                case "RANKING_LAP_COUNT":
+                case 0:
+                    message.rankingMethod = 0;
+                    break;
+                case "RANKING_FASTEST_LAP":
+                case 1:
+                    message.rankingMethod = 1;
+                    break;
+                case "RANKING_TOTAL_TIME":
+                case 2:
+                    message.rankingMethod = 2;
+                    break;
+                }
+                switch (object.tiebreaker) {
+                default:
+                    if (typeof object.tiebreaker === "number") {
+                        message.tiebreaker = object.tiebreaker;
+                        break;
+                    }
+                    break;
+                case "TIEBREAKER_FASTEST_LAP_TIME":
+                case 0:
+                    message.tiebreaker = 0;
+                    break;
+                case "TIEBREAKER_MEDIAN_LAP_TIME":
+                case 1:
+                    message.tiebreaker = 1;
+                    break;
+                case "TIEBREAKER_AVERAGE_LAP_TIME":
+                case 2:
+                    message.tiebreaker = 2;
+                    break;
+                case "TIEBREAKER_TOTAL_TIME":
+                case 3:
+                    message.tiebreaker = 3;
+                    break;
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.OverallScoring} message OverallScoring
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            OverallScoring.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.droppedHeats = 0;
+                    object.rankingMethod = options.enums === String ? "RANKING_LAP_COUNT" : 0;
+                    object.tiebreaker = options.enums === String ? "TIEBREAKER_FASTEST_LAP_TIME" : 0;
+                }
+                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
+                    object.droppedHeats = message.droppedHeats;
+                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
+                    object.rankingMethod = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] === undefined ? message.rankingMethod : $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] : message.rankingMethod;
+                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
+                    object.tiebreaker = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] === undefined ? message.tiebreaker : $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] : message.tiebreaker;
+                return object;
+            };
+
+            /**
+             * Converts this OverallScoring to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            OverallScoring.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for OverallScoring
+             * @function getTypeUrl
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            OverallScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.OverallScoring";
+            };
+
+            /**
+             * OverallRanking enum.
+             * @name com.antigravity.OverallScoring.OverallRanking
+             * @enum {number}
+             * @property {number} RANKING_LAP_COUNT=0 RANKING_LAP_COUNT value
+             * @property {number} RANKING_FASTEST_LAP=1 RANKING_FASTEST_LAP value
+             * @property {number} RANKING_TOTAL_TIME=2 RANKING_TOTAL_TIME value
+             */
+            OverallScoring.OverallRanking = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "RANKING_LAP_COUNT"] = 0;
+                values[valuesById[1] = "RANKING_FASTEST_LAP"] = 1;
+                values[valuesById[2] = "RANKING_TOTAL_TIME"] = 2;
+                return values;
+            })();
+
+            /**
+             * OverallRankingTiebreaker enum.
+             * @name com.antigravity.OverallScoring.OverallRankingTiebreaker
+             * @enum {number}
+             * @property {number} TIEBREAKER_FASTEST_LAP_TIME=0 TIEBREAKER_FASTEST_LAP_TIME value
+             * @property {number} TIEBREAKER_MEDIAN_LAP_TIME=1 TIEBREAKER_MEDIAN_LAP_TIME value
+             * @property {number} TIEBREAKER_AVERAGE_LAP_TIME=2 TIEBREAKER_AVERAGE_LAP_TIME value
+             * @property {number} TIEBREAKER_TOTAL_TIME=3 TIEBREAKER_TOTAL_TIME value
+             */
+            OverallScoring.OverallRankingTiebreaker = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "TIEBREAKER_FASTEST_LAP_TIME"] = 0;
+                values[valuesById[1] = "TIEBREAKER_MEDIAN_LAP_TIME"] = 1;
+                values[valuesById[2] = "TIEBREAKER_AVERAGE_LAP_TIME"] = 2;
+                values[valuesById[3] = "TIEBREAKER_TOTAL_TIME"] = 3;
+                return values;
+            })();
+
+            return OverallScoring;
         })();
 
         antigravity.RaceModel = (function() {
@@ -2290,7 +2629,8 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IModel|null} [model] RaceModel model
              * @property {string|null} [name] RaceModel name
              * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
-             * @property {com.antigravity.IRaceScoring|null} [raceScoring] RaceModel raceScoring
+             * @property {com.antigravity.IHeatScoring|null} [heatScoring] RaceModel heatScoring
+             * @property {com.antigravity.IOverallScoring|null} [overallScoring] RaceModel overallScoring
              */
 
             /**
@@ -2333,12 +2673,20 @@ export const com = $root.com = (() => {
             RaceModel.prototype.track = null;
 
             /**
-             * RaceModel raceScoring.
-             * @member {com.antigravity.IRaceScoring|null|undefined} raceScoring
+             * RaceModel heatScoring.
+             * @member {com.antigravity.IHeatScoring|null|undefined} heatScoring
              * @memberof com.antigravity.RaceModel
              * @instance
              */
-            RaceModel.prototype.raceScoring = null;
+            RaceModel.prototype.heatScoring = null;
+
+            /**
+             * RaceModel overallScoring.
+             * @member {com.antigravity.IOverallScoring|null|undefined} overallScoring
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.overallScoring = null;
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -2370,8 +2718,10 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
                 if (message.track != null && Object.hasOwnProperty.call(message, "track"))
                     $root.com.antigravity.TrackModel.encode(message.track, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                if (message.raceScoring != null && Object.hasOwnProperty.call(message, "raceScoring"))
-                    $root.com.antigravity.RaceScoring.encode(message.raceScoring, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.heatScoring != null && Object.hasOwnProperty.call(message, "heatScoring"))
+                    $root.com.antigravity.HeatScoring.encode(message.heatScoring, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.overallScoring != null && Object.hasOwnProperty.call(message, "overallScoring"))
+                    $root.com.antigravity.OverallScoring.encode(message.overallScoring, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
                 return writer;
             };
 
@@ -2421,7 +2771,11 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 4: {
-                            message.raceScoring = $root.com.antigravity.RaceScoring.decode(reader, reader.uint32());
+                            message.heatScoring = $root.com.antigravity.HeatScoring.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.overallScoring = $root.com.antigravity.OverallScoring.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -2472,10 +2826,15 @@ export const com = $root.com = (() => {
                     if (error)
                         return "track." + error;
                 }
-                if (message.raceScoring != null && message.hasOwnProperty("raceScoring")) {
-                    let error = $root.com.antigravity.RaceScoring.verify(message.raceScoring);
+                if (message.heatScoring != null && message.hasOwnProperty("heatScoring")) {
+                    let error = $root.com.antigravity.HeatScoring.verify(message.heatScoring);
                     if (error)
-                        return "raceScoring." + error;
+                        return "heatScoring." + error;
+                }
+                if (message.overallScoring != null && message.hasOwnProperty("overallScoring")) {
+                    let error = $root.com.antigravity.OverallScoring.verify(message.overallScoring);
+                    if (error)
+                        return "overallScoring." + error;
                 }
                 return null;
             };
@@ -2504,10 +2863,15 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceModel.track: object expected");
                     message.track = $root.com.antigravity.TrackModel.fromObject(object.track);
                 }
-                if (object.raceScoring != null) {
-                    if (typeof object.raceScoring !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.raceScoring: object expected");
-                    message.raceScoring = $root.com.antigravity.RaceScoring.fromObject(object.raceScoring);
+                if (object.heatScoring != null) {
+                    if (typeof object.heatScoring !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.heatScoring: object expected");
+                    message.heatScoring = $root.com.antigravity.HeatScoring.fromObject(object.heatScoring);
+                }
+                if (object.overallScoring != null) {
+                    if (typeof object.overallScoring !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.overallScoring: object expected");
+                    message.overallScoring = $root.com.antigravity.OverallScoring.fromObject(object.overallScoring);
                 }
                 return message;
             };
@@ -2529,7 +2893,8 @@ export const com = $root.com = (() => {
                     object.model = null;
                     object.name = "";
                     object.track = null;
-                    object.raceScoring = null;
+                    object.heatScoring = null;
+                    object.overallScoring = null;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -2537,8 +2902,10 @@ export const com = $root.com = (() => {
                     object.name = message.name;
                 if (message.track != null && message.hasOwnProperty("track"))
                     object.track = $root.com.antigravity.TrackModel.toObject(message.track, options);
-                if (message.raceScoring != null && message.hasOwnProperty("raceScoring"))
-                    object.raceScoring = $root.com.antigravity.RaceScoring.toObject(message.raceScoring, options);
+                if (message.heatScoring != null && message.hasOwnProperty("heatScoring"))
+                    object.heatScoring = $root.com.antigravity.HeatScoring.toObject(message.heatScoring, options);
+                if (message.overallScoring != null && message.hasOwnProperty("overallScoring"))
+                    object.overallScoring = $root.com.antigravity.OverallScoring.toObject(message.overallScoring, options);
                 return object;
             };
 

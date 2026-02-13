@@ -17,20 +17,38 @@ export class TestSetupHelper {
       });
     });
 
-    // Mock Races API
     await page.route('**/api/races', async (route) => {
+      const standardRace = (id: string, name: string) => ({
+        entity_id: id,
+        name: name,
+        track_entity_id: 't1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: {
+          finish_method: 'Lap',
+          finish_value: 10,
+          heat_ranking: 'LAP_COUNT',
+          heat_ranking_tiebreaker: 'FASTEST_LAP_TIME',
+          allow_finish: 'None'
+        },
+        overall_scoring: {
+          dropped_heats: 0,
+          ranking_method: 'LAP_COUNT',
+          tiebreaker: 'FASTEST_LAP_TIME'
+        }
+      });
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { entity_id: 'r1', name: 'Grand Prix' },
-          { entity_id: 'r2', name: 'Time Trial' },
-          { entity_id: 'r3', name: 'Endurance' },
-          { entity_id: 'r4', name: 'Sprint' },
-          { entity_id: 'r5', name: 'Elimination' },
-          { entity_id: 'r6', name: 'Team Race' },
-          { entity_id: 'r7', name: 'Junior GP' },
-          { entity_id: 'r8', name: 'Veteran GP' },
+          standardRace('r1', 'Grand Prix'),
+          standardRace('r2', 'Time Trial'),
+          standardRace('r3', 'Endurance'),
+          standardRace('r4', 'Sprint'),
+          standardRace('r5', 'Elimination'),
+          standardRace('r6', 'Team Race'),
+          standardRace('r7', 'Junior GP'),
+          standardRace('r8', 'Veteran GP'),
         ]),
       });
     });

@@ -5,6 +5,8 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
+import com.antigravity.models.HeatScoring;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.proto.Asset;
 
 import com.mongodb.client.MongoCollection;
@@ -133,77 +135,78 @@ public class DatabaseService {
                 // TODO(aufderheide): Create a proper set of default races.
 
                 // Basic Round Robin race
-                com.antigravity.models.RaceScoring scoring = new com.antigravity.models.RaceScoring(
-                                com.antigravity.models.RaceScoring.FinishMethod.Timed,
+                HeatScoring heatScoring = new HeatScoring(
+                                HeatScoring.FinishMethod.Timed,
                                 45,
-                                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
-                                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+                                HeatScoring.HeatRanking.LAP_COUNT,
+                                HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+                OverallScoring overallScoring = new OverallScoring();
 
                 Race race = new Race("Time Based", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
 
                 raceCollection.insertOne(race);
 
                 // Race 2
-                scoring = new com.antigravity.models.RaceScoring(
-                                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                heatScoring = new com.antigravity.models.HeatScoring(
+                                com.antigravity.models.HeatScoring.FinishMethod.Lap,
                                 15,
-                                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
-                                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+                                com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+                                com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
                 race = new Race("Lap Based", track.getEntityId(), HeatRotationType.FriendlyRoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
 
                 raceCollection.insertOne(race);
 
                 // Race 3
-                scoring = new com.antigravity.models.RaceScoring(
-                                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                heatScoring = new com.antigravity.models.HeatScoring(
+                                com.antigravity.models.HeatScoring.FinishMethod.Lap,
                                 15,
-                                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
-                                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+                                com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+                                com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
                 race = new Race("Practice", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
 
                 raceCollection.insertOne(race);
 
-                scoring = new com.antigravity.models.RaceScoring(
-                                com.antigravity.models.RaceScoring.FinishMethod.Lap,
+                heatScoring = new com.antigravity.models.HeatScoring(
+                                com.antigravity.models.HeatScoring.FinishMethod.Lap,
                                 15,
-                                com.antigravity.models.RaceScoring.HeatRanking.LAP_COUNT,
-                                com.antigravity.models.RaceScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+                                com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+                                com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
                 // Now just a bunch of races to fill the space
                 race = new Race("Race 01", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 02", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 03", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 04", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 05", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 06", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 07", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 08", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 09", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
                 race = new Race("Race 10", track.getEntityId(), HeatRotationType.RoundRobin,
-                                scoring, getNextSequence(database, "races"), null);
+                                heatScoring, overallScoring, getNextSequence(database, "races"), null);
                 raceCollection.insertOne(race);
 
                 System.out.println("Races reset.");

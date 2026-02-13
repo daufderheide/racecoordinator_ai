@@ -51,7 +51,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
     { label: 'RDS_MENU_DRIVER', action: () => this.openDriverManager() },
-    { label: 'RDS_MENU_RACE', action: () => console.log('Race menu') },
+    { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
     { label: 'RDS_MENU_HELP', action: () => console.log('Help menu') }
@@ -499,6 +499,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openTrackManager() {
     this.router.navigate(['/track-manager']);
+  }
+
+  openRaceManager() {
+    const queryParams: any = this.selectedRace ? { id: this.selectedRace.entity_id } : {};
+    // Pass the number of selected drivers to the race manager for heat generation
+    queryParams.driverCount = this.selectedDrivers.length;
+    this.router.navigate(['/race-manager'], { queryParams });
   }
 
   openDatabaseManager() {

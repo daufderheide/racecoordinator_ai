@@ -33,9 +33,11 @@ describe('SettingsService', () => {
   });
 
   it('should handle corrupt JSON in localStorage', () => {
+    spyOn(console, 'error');
     localStorage.setItem('racecoordinator_settings', 'invalid-json');
     const settings = service.getSettings();
     expect(settings).toBeDefined();
     expect(settings.language).toBe('');
+    expect(console.error).toHaveBeenCalled();
   });
 });
