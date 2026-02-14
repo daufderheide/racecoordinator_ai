@@ -22,13 +22,18 @@ cd ..
 # 3. Download JREs for Offline Installer
 echo "Downloading JREs for Offline Installer..."
 mkdir -p build_cache
-if [ ! -f build_cache/java8.zip ]; then
+if [ ! -s build_cache/java8.zip ]; then
     echo "Downloading Java 8 (x86/32-bit for XP Compatibility)..."
-    curl -L "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java8.zip
+    curl -L "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java8.zip || echo "Warning: Java 8 download failed"
+else
+    echo "Java 8 already exists in build_cache, skipping download."
 fi
-if [ ! -f build_cache/java17.zip ]; then
+
+if [ ! -s build_cache/java17.zip ]; then
     echo "Downloading Java 17 (x64)..."
-    curl -L "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java17.zip
+    curl -L "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java17.zip || echo "Warning: Java 17 download failed"
+else
+    echo "Java 17 already exists in build_cache, skipping download."
 fi
 
 # 4. Create Release Directory Structure
@@ -39,13 +44,22 @@ mkdir -p release/RaceCoordinator_Offline/web
 
 # Copy Artifacts to both
 for dir in release/RaceCoordinator release/RaceCoordinator_Offline; do
-    cp server/target/server-1.0-SNAPSHOT.jar "$dir/RaceCoordinator.jar"
+    cp server/target_dist/server-1.0-SNAPSHOT.jar "$dir/RaceCoordinator.jar"
     cp -r client/dist/client/* "$dir/web/"
 done
 
 # Copy Offline Bundles
-cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
-cp build_cache/java17.zip release/RaceCoordinator_Offline/bundled_jre17.zip
+if [ -r build_cache/java8.zip ]; then
+    cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
+else
+    echo "Warning: build_cache/java8.zip not readable, skipping offline bundle"
+fi
+
+if [ -r build_cache/java17.zip ]; then
+    cp build_cache/java17.zip release/RaceCoordinator_Offline/bundled_jre17.zip
+else
+    echo "Warning: build_cache/java17.zip not readable, skipping offline bundle"
+fi
 
 # 5. Create Launch Scripts
 

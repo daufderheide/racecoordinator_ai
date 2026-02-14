@@ -145,3 +145,31 @@ The Angular client is configured to generate source maps in development mode, al
 2. **Using VS Code:**
    - Install the **Debugger for Chrome** (or Edge) extension.
    - You can launch or attach to the browser directly from VS Code for an integrated debugging experience.
+
+## Packaging & Distribution
+
+You can create installable packages for macOS and Windows using the provided script.
+
+### Create All Installers
+Run the build script from the root directory:
+```bash
+./create_installers.sh
+```
+
+This script will:
+- Build the production Angular client.
+- Package the Java server into a fat JAR.
+- Download necessary JREs for offline Windows installers.
+- Generate platform-specific launch scripts.
+- Create compressed distribution packages in the `release/` directory.
+
+### Generated Artifacts
+After running the script, check the `release/` folder for:
+- **`RaceCoordinator_Universal.zip`**: A standard distribution for Mac, Linux, and Windows. Requires Java to be already installed on the system.
+- **`RaceCoordinator_Windows_Offline.zip`**: A Windows-specific distribution that includes bundled JREs (Java 8 for XP/7/8, Java 17 for 10/11). Works without an internet connection.
+- **`RaceCoordinator_Mac.dmg`**: (macOS only) A Disk Image for easy installation on Mac. Only generated if the script is run on a Mac.
+
+### System Requirements for Installers
+- **macOS**: 10.15 (Catalina) or newer recommended.
+- **Windows**: Windows XP SP3 or newer. 32-bit and 64-bit supported.
+- **Linux / Raspberry Pi**: Any modern distribution with Java 8 or newer.
