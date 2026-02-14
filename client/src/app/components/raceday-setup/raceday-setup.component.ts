@@ -61,6 +61,7 @@ export class RacedaySetupComponent implements OnInit {
   showServerConfig = false;
   tempServerIp = 'localhost';
   tempServerPort = 7070;
+  serverVersion: string = '';
 
   scale: number = 1;
 
@@ -113,6 +114,15 @@ export class RacedaySetupComponent implements OnInit {
     this.updateScale();
     this.isLoading = true;
     this.container.clear();
+
+    this.dataService.getServerVersion().subscribe({
+      next: (version) => {
+        this.serverVersion = version;
+      },
+      error: (err) => {
+        console.warn('Failed to fetch server version', err);
+      }
+    });
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing

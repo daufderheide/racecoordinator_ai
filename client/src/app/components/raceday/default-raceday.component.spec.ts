@@ -79,7 +79,8 @@ describe('DefaultRacedayComponent', () => {
     };
 
     const mockTranslationService = {
-      get: (key: string) => of(key)
+      get: (key: string) => of(key),
+      translate: (key: string) => key
     };
 
     const mockRaceService = {

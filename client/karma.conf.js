@@ -45,7 +45,10 @@ module.exports = function (config) {
           '--no-sandbox',
           '--disable-gpu',
           '--disable-dev-shm-usage',
-          '--user-data-dir=' + require('path').resolve(__dirname, '.tmp/k-' + Date.now())
+          '--user-data-dir=/tmp/karma-chrome-' + Date.now(),
+          '--disable-crash-reporter',
+          '--disable-breakpad',
+          '--crash-dumps-dir=/tmp/karma-crash-' + Date.now()
         ]
       }
     },

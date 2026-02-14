@@ -149,8 +149,8 @@ export class TestSetupHelper {
     // We look for 'BACK' which is DE_BTN_BACK or DM_BTN_BACK in English
     // Using a more robust regex to catch common key patterns.
     // We REMOVE the catch() so the test fails if keys don't resolve.
-    // TODO(aufderheide): Look into why we need 10s here, 3s was too short
-    await expect(page.locator('body')).not.toContainText(/[A-Z]{2,3}_[A-Z_]+/, { timeout: 10000 });
+    // We also exclude RaceCoordinator_AI_DB which matches the pattern but is valid text.
+    await expect(page.locator('body')).not.toContainText(/\b(?!RaceCoordinator_AI_DB)[A-Z]{2,3}_[A-Z_]+\b/, { timeout: 10000 });
 
     // Ensure fonts are ready
     await page.evaluate(() => document.fonts.ready);

@@ -31,7 +31,7 @@ describe('RacedaySetupComponent', () => {
     mockContainer.createComponent.and.returnValue({
       instance: { requestServerConfig: { subscribe: () => { } } }
     });
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress', 'getServerVersion']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockDynamicComponentService = jasmine.createSpyObj('DynamicComponentService', ['createDynamicComponent']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate']);
@@ -45,6 +45,7 @@ describe('RacedaySetupComponent', () => {
 
     // Default mocks
     mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getServerVersion.and.returnValue(of('0.0.0'));
     mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);

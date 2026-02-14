@@ -48,8 +48,10 @@ public class App {
     private static MongoClient mongoClient;
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
+    public static final String SERVER_VERSION = "v0.0.6 (Interrupt Fix)";
+
     public static void main(String[] args) {
-        System.out.println("Race Coordinator AI Server v1.0.6 (Interrupt Fix)");
+        System.out.println("Race Coordinator AI Server " + SERVER_VERSION);
         System.out.println("Build Time: " + new java.util.Date());
         String projectDir = System.getProperty("user.dir");
         String appDataDir = System.getProperty("app.data.dir",
@@ -283,6 +285,8 @@ public class App {
         new com.antigravity.handlers.ClientCommandTaskHandler(databaseContext, app);
         new com.antigravity.handlers.DatabaseTaskHandler(databaseContext, app);
         new com.antigravity.handlers.AssetTaskHandler(databaseContext, app);
+
+        app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
 
         // Open Browser after successful start
         if (!headless) {

@@ -61,6 +61,10 @@ export class DataService {
     return this.http.get<any[]>(this.driversUrl);
   }
 
+  getServerVersion(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/api/version`, { responseType: 'text' });
+  }
+
   createDriver(driver: any): Observable<any> {
     return this.http.post<any>(this.driversUrl, driver);
   }
