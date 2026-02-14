@@ -16,7 +16,7 @@ cd server
 mvn clean
 chmod +x generate_protos.sh
 ./generate_protos.sh
-mvn package -DskipTests
+mvn package -Dmaven.test.skip=true
 cd ..
 
 # 3. Download JREs for Offline Installer

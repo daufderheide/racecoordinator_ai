@@ -18,6 +18,8 @@ import com.mongodb.client.MongoDatabase;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.ImmutableMongod;
+import de.flapdoodle.embed.mongo.commands.MongodArguments;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.mongo.types.DatabaseDir;
 import de.flapdoodle.embed.process.io.ProcessOutput;
@@ -47,7 +49,7 @@ public class App {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-        System.out.println("Race Coordinator AI Server v1.0.2 (Architecture Fix)");
+        System.out.println("Race Coordinator AI Server v1.0.6 (Interrupt Fix)");
         System.out.println("Build Time: " + new java.util.Date());
         String projectDir = System.getProperty("user.dir");
         String appDataDir = System.getProperty("app.data.dir",
@@ -329,6 +331,7 @@ public class App {
             String osName = System.getProperty("os.name");
             String osArch = System.getProperty("os.arch");
 
+            ImmutableMongod mongod = Mongod.instance();
             if (osName != null) {
                 System.out.println("Detected OS: " + osName + " (" + osArch + ")");
                 String lowerOs = osName.toLowerCase();
@@ -343,12 +346,14 @@ public class App {
                 if (isLegacyWindows || (lowerOs.contains("windows") && is32Bit)) {
                     System.out
                             .println("Legacy/32-bit Windows detected (" + osArch
-                                    + "). Force-downgrading MongoDB to 3.2 for compatibility...");
+                                    + "). Force-downgrading MongoDB to 3.2 and using mmapv1 storage engine...");
                     mongoVersion = Version.Main.V3_2;
+                    mongod = mongod.withMongodArguments(Start.to(MongodArguments.class)
+                            .initializedWith(MongodArguments.defaults().withStorageEngine("mmapv1")));
                 }
             }
 
-            mongodProcess = Mongod.instance()
+            mongodProcess = mongod
                     .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
                     .withNet(Start.to(Net.class)
                             .initializedWith(Net.of("localhost", MONGO_PORT, false))) // Use IPv4
