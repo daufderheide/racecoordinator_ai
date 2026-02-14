@@ -38,7 +38,7 @@ fi
 
 # 4. Create Release Directory Structure
 echo "Creating Release Structure..."
-rm -rf release
+rm -rf release 2>/dev/null || true
 mkdir -p release/RaceCoordinator/web
 mkdir -p release/RaceCoordinator_Offline/web
 
@@ -284,7 +284,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "Creating Mac DMG..."
     mkdir -p release/dmg_content
     cp -r release/RaceCoordinator/* release/dmg_content/
-    hdiutil create -volname "RaceCoordinator" -srcfolder release/dmg_content -ov -format UDZO release/RaceCoordinator_Mac.dmg
+    hdiutil create -volname "RaceCoordinator" -srcfolder release/dmg_content -ov -format UDZO release/RaceCoordinator_Mac.dmg || echo "Warning: Mac DMG creation failed, but continuing..."
     rm -rf release/dmg_content
 fi
 

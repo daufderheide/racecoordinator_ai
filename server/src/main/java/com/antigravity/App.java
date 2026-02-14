@@ -47,6 +47,8 @@ public class App {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
+        System.out.println("Race Coordinator AI Server v1.0.2 (Architecture Fix)");
+        System.out.println("Build Time: " + new java.util.Date());
         String projectDir = System.getProperty("user.dir");
         String appDataDir = System.getProperty("app.data.dir",
                 Paths.get(projectDir, "app_data").toString());
@@ -333,13 +335,16 @@ public class App {
                 String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
 
                 boolean isLegacyWindows = lowerOs.contains("windows")
-                        && (lowerOs.contains("xp") || lowerOs.contains("2003"));
-                boolean is32Bit = lowerArch.contains("86") && !lowerArch.contains("64");
+                        && (lowerOs.contains("xp") || lowerOs.contains("2003") || lowerOs.contains("vista"));
+                boolean is64Bit = lowerArch.contains("64") || lowerArch.contains("amd64")
+                        || lowerArch.contains("aarch64");
+                boolean is32Bit = !is64Bit;
 
-                if (isLegacyWindows || is32Bit) {
+                if (isLegacyWindows || (lowerOs.contains("windows") && is32Bit)) {
                     System.out
-                            .println("Legacy/32-bit Windows detected. Downgrading MongoDB to 3.6 for compatibility...");
-                    mongoVersion = Version.Main.V3_6; // V2_6 is deprecated, using V3_6 as fallback
+                            .println("Legacy/32-bit Windows detected (" + osArch
+                                    + "). Force-downgrading MongoDB to 3.2 for compatibility...");
+                    mongoVersion = Version.Main.V3_2;
                 }
             }
 
