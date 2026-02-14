@@ -1,0 +1,29 @@
+<div class="help-overlay-container" *ngIf="isVisible">
+
+  <!-- The "Hole" Highlight -->
+  <div class="highlight-mask" *ngIf="highlightStyle" [ngStyle]="highlightStyle"></div>
+
+  <!-- Full Backdrop if no target (or if target, strict modal) -->
+  <div class="backdrop" *ngIf="!highlightStyle" (click)="end()"></div>
+
+  <!-- The Popover -->
+  <div class="help-popover" *ngIf="isVisible" #popoverRef [ngStyle]="popoverStyle" [ngClass]="popoverClass">
+    <div class="popover-header">
+      <h3>{{ currentStep?.title }}</h3>
+      <button class="close-btn" (click)="end()">×</button>
+    </div>
+    <div class="popover-content">
+      <p [innerHTML]="currentStep?.content"></p>
+    </div>
+    <div class="popover-footer">
+      <div class="step-counter" *ngIf="helpService.steps">
+        {{ helpService.currentStepIndex + 1 }} / {{ helpService.steps.length }}
+      </div>
+      <div class="actions">
+        <button class="btn-prev" (click)="previous()" [disabled]="!hasPrevious">Back</button>
+        <button class="btn-next" (click)="next()" *ngIf="hasNext">Next</button>
+        <button class="btn-finish" (click)="end()" *ngIf="!hasNext">Finish</button>
+      </div>
+    </div>
+  </div>
+</div>

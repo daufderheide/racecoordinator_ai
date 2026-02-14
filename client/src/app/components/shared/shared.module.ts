@@ -12,11 +12,11 @@ import { ItemSelectorComponent } from './item-selector/item-selector.component';
 import { UndoRedoControlsComponent } from './undo-redo-controls/undo-redo-controls.component';
 import { HeatListComponent } from './heat-list/heat-list.component';
 import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
+import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
 
 @NgModule({
   declarations: [
     TranslatePipe,
-    SvgTextScalerDirective,
     SvgTextScalerDirective,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
@@ -25,7 +25,8 @@ import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
     ItemSelectorComponent,
     UndoRedoControlsComponent,
     HeatListComponent,
-    AvatarUrlPipe
+    AvatarUrlPipe,
+    HelpOverlayComponent
   ],
   imports: [
     CommonModule,
@@ -38,7 +39,6 @@ import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
     DragDropModule,
     TranslatePipe,
     SvgTextScalerDirective,
-    SvgTextScalerDirective,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     BackButtonComponent,
@@ -46,7 +46,8 @@ import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
     ItemSelectorComponent,
     UndoRedoControlsComponent,
     HeatListComponent,
-    AvatarUrlPipe
+    AvatarUrlPipe,
+    HelpOverlayComponent
   ]
 })
 export class SharedModule { }

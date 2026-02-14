@@ -20,7 +20,8 @@ export class SettingsService {
                     parsed.selectedDriverIds || [],
                     parsed.serverIp || 'localhost',
                     parsed.serverPort || 7070,
-                    parsed.language || ''
+                    parsed.language || '',
+                    parsed.racedaySetupWalkthroughSeen || false
                 );
             } catch (e) {
                 console.error('Error parsing settings from localStorage', e);

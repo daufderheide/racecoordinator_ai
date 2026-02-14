@@ -158,6 +158,28 @@
   align-items: center;
 }
 
+.help-icon {
+  margin-left: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+.help-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #e0e0e0;
+  filter: drop-shadow(0 0 5px rgba(0, 240, 255, 0.5));
+  transition: all 0.2s ease;
+}
+
+.help-icon:hover svg {
+  fill: #00f0ff;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8));
+  transform: scale(1.1) rotate(10deg);
+}
+
 /* --- Cards --- */
 .race-card {
   background-color: #1a1a1a;

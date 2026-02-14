@@ -14,9 +14,9 @@ import {
 import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/components/shared/shared.module';
 import { FileSystemService } from 'src/app/services/file-system.service';
+import { HelpService } from 'src/app/services/help.service';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import { timeout } from 'rxjs/operators';
-
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
@@ -35,9 +35,10 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
     @Inject(Router) router: Router,
     @Inject(TranslationService) translationService: TranslationService,
     @Inject(SettingsService) settingsService: SettingsService,
-    @Inject(FileSystemService) fileSystem: FileSystemService
+    @Inject(FileSystemService) fileSystem: FileSystemService,
+    @Inject(HelpService) helpService: HelpService
   ) {
-    super(dataService, cdr, raceService, router, translationService, settingsService, fileSystem);
+    super(dataService, cdr, raceService, router, translationService, settingsService, fileSystem, helpService);
   }
 }
 

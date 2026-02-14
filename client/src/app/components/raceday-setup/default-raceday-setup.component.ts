@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
@@ -10,6 +10,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
+import { HelpService } from 'src/app/services/help.service';
 
 @Component({
   selector: 'app-default-raceday-setup',
@@ -17,8 +18,19 @@ import { FileSystemService } from 'src/app/services/file-system.service';
   styleUrl: './default-raceday-setup.component.css',
   standalone: false
 })
-export class DefaultRacedaySetupComponent implements OnInit {
+export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   @Output() requestServerConfig = new EventEmitter<void>();
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      const settings = this.settingsService.getSettings();
+      if (!settings.racedaySetupWalkthroughSeen) {
+        this.startHelp();
+        settings.racedaySetupWalkthroughSeen = true;
+        this.settingsService.saveSettings(settings);
+      }
+    }, 500);
+  }
 
   // Driver State
   selectedDrivers: Driver[] = [];
@@ -54,7 +66,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
-    { label: 'RDS_MENU_HELP', action: () => console.log('Help menu') }
+    { label: 'RDS_MENU_HELP', action: () => this.startHelp() }
   ];
 
   constructor(
@@ -64,7 +76,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private router: Router,
     private translationService: TranslationService,
     private settingsService: SettingsService,
-    private fileSystem: FileSystemService
+    private fileSystem: FileSystemService,
+    private helpService: HelpService
   ) { }
 
   ngOnInit() {
@@ -511,5 +524,62 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openDatabaseManager() {
     this.closeFileDropdown();
     this.router.navigate(['/database-manager']);
+  }
+
+  startHelp() {
+    this.helpService.startGuide([
+      {
+        title: 'Welcome to Race Day Setup',
+        content: 'This is where you configure and start your races. You can select drivers, choose a race format, and customize settings.'
+      },
+      {
+        selector: '.help-icon',
+        title: 'Walkthrough',
+        content: 'You can click here on any page to start the walkthrough over again.',
+        position: 'bottom'
+      },
+      {
+        selector: '.panel.driver-panel',
+        title: 'Driver Selection',
+        content: 'Here you can select who will be racing. <br><br><b>Available Drivers</b>: All drivers in your database.<br><b>Selected Drivers</b>: Drivers participating in this race. Drag and drop to reorder or set starting positions.',
+        position: 'right'
+      },
+      {
+        selector: '.driver-action-bar',
+        title: 'Driver Actions',
+        content: 'Use these buttons to add all drivers to the race, remove all drivers from the race, or ranomize the driver order (seeding).',
+        position: 'bottom'
+      },
+      {
+        selector: '.custom-dropdown-container',
+        title: 'Race Selection',
+        content: 'Select the race format you want to run.',
+        position: 'top'
+      },
+      {
+        targetId: 'race-card-0',
+        title: 'Recently Run Race',
+        content: 'Click to select the most recently run race.',
+        position: 'bottom'
+      },
+      {
+        targetId: 'race-card-1',
+        title: 'Recently Run Race',
+        content: 'Click to select a recently run race.',
+        position: 'bottom'
+      },
+      {
+        selector: '.btn-start',
+        title: 'Start Racing',
+        content: 'When you are ready, begins the official race with the selected configuration.  Your track interface must be configured and turned on.',
+        position: 'top'
+      },
+      {
+        selector: '.btn-demo',
+        title: 'Start Demo Race',
+        content: 'When you are ready, use this button to test your configuration with out a track interface.',
+        position: 'top'
+      }
+    ]);
   }
 }
