@@ -149,7 +149,7 @@ export class AssetManagerComponent implements OnInit {
   }
 
   // Helper to construct full URL if needed, or use what server sent
-  getAssetUrl(asset: com.antigravity.IAsset): string {
+  getAssetUrl(asset: com.antigravity.IAssetMessage): string {
     // If server provides a relative path, prepend base url
     if (asset.url && asset.url.startsWith('/')) {
       return `http://localhost:7070${asset.url}`;

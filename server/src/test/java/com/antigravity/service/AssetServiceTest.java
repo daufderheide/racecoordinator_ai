@@ -1,6 +1,6 @@
 package com.antigravity.service;
 
-import com.antigravity.proto.Asset;
+import com.antigravity.proto.AssetMessage;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -71,7 +71,7 @@ public class AssetServiceTest {
     String type = "image";
     byte[] data = "fake_image_data".getBytes();
 
-    Asset asset = assetService.saveAsset(name, type, data);
+    AssetMessage asset = assetService.saveAsset(name, type, data);
 
     assertNotNull(asset);
     assertEquals(name, asset.getName());
@@ -79,20 +79,20 @@ public class AssetServiceTest {
     assertNotNull(asset.getModel().getEntityId());
 
     // Verify list
-    List<Asset> assets = assetService.getAllAssets();
+    List<AssetMessage> assets = assetService.getAllAssets();
     assertEquals(1, assets.size());
     assertEquals(asset.getModel().getEntityId(), assets.get(0).getModel().getEntityId());
   }
 
   @Test
   public void testDeleteAsset() throws IOException {
-    Asset asset = assetService.saveAsset("Delete Me", "sound", new byte[] { 1, 2, 3 });
+    AssetMessage asset = assetService.saveAsset("Delete Me", "sound", new byte[] { 1, 2, 3 });
     String id = asset.getModel().getEntityId();
 
     boolean deleted = assetService.deleteAsset(id);
     assertTrue("Asset should be deleted", deleted);
 
-    List<Asset> assets = assetService.getAllAssets();
+    List<AssetMessage> assets = assetService.getAllAssets();
     assertEquals(0, assets.size());
 
     // Verify folder is empty
@@ -104,13 +104,13 @@ public class AssetServiceTest {
 
   @Test
   public void testRenameAsset() throws IOException {
-    Asset asset = assetService.saveAsset("Old Name", "image", new byte[] { 1 });
+    AssetMessage asset = assetService.saveAsset("Old Name", "image", new byte[] { 1 });
     String id = asset.getModel().getEntityId();
 
     boolean renamed = assetService.renameAsset(id, "New Name");
     assertTrue("Rename should succeed", renamed);
 
-    List<Asset> assets = assetService.getAllAssets();
+    List<AssetMessage> assets = assetService.getAllAssets();
     assertEquals(1, assets.size());
     assertEquals("New Name", assets.get(0).getName());
   }

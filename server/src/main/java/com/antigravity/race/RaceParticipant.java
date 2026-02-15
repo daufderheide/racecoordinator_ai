@@ -3,7 +3,10 @@ package com.antigravity.race;
 import com.antigravity.models.Driver;
 
 public class RaceParticipant extends ServerToClientObject {
-    private final com.antigravity.models.Driver driver;
+    private com.antigravity.models.Driver driver;
+    private final com.antigravity.models.Team team;
+    private java.util.List<com.antigravity.models.Driver> teamDrivers;
+
     private int rank;
     private int totalLaps;
     private double totalTime;
@@ -16,15 +19,49 @@ public class RaceParticipant extends ServerToClientObject {
     public RaceParticipant(com.antigravity.models.Driver driver) {
         super();
         this.driver = driver;
+        this.team = null;
+    }
+
+    public RaceParticipant(com.antigravity.models.Team team) {
+        super();
+        this.team = team;
+        // Create synthetic driver for the team
+        this.driver = new com.antigravity.models.Driver(
+                team.getName(),
+                null, // Nickname
+                team.getAvatarUrl(),
+                null, null,
+                null, null, null, null, null, null,
+                team.getEntityId(),
+                null);
     }
 
     public RaceParticipant(com.antigravity.models.Driver driver, String objectId) {
         super(objectId);
         this.driver = driver;
+        this.team = null;
     }
 
-    public Driver getDriver() {
+    public RaceParticipant(com.antigravity.models.Team team, String objectId) {
+        super(objectId);
+        this.driver = null;
+        this.team = team;
+    }
+
+    public com.antigravity.models.Driver getDriver() {
         return driver;
+    }
+
+    public com.antigravity.models.Team getTeam() {
+        return team;
+    }
+
+    public void setTeamDrivers(java.util.List<com.antigravity.models.Driver> teamDrivers) {
+        this.teamDrivers = teamDrivers;
+    }
+
+    public java.util.List<com.antigravity.models.Driver> getTeamDrivers() {
+        return teamDrivers;
     }
 
     public int getRank() {

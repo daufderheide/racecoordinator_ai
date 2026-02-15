@@ -24,6 +24,8 @@ import { SharedModule } from './components/shared/shared.module';
 import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
 import { RaceManagerComponent } from './components/race-manager/race-manager.component';
 import { RaceEditorComponent } from './components/race-editor/race-editor.component';
+import { TeamManagerComponent } from './components/team-manager/team-manager.component';
+import { TeamEditorComponent } from './components/team-editor/team-editor.component';
 
 @NgModule({
   declarations: [
@@ -37,6 +39,8 @@ import { RaceEditorComponent } from './components/race-editor/race-editor.compon
     AssetManagerComponent,
     DriverEditorComponent,
     DriverManagerComponent,
+    TeamManagerComponent,
+    TeamEditorComponent,
     TrackManagerComponent,
     TrackEditorComponent,
     ArduinoEditorComponent,

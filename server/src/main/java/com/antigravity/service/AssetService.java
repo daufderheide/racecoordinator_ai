@@ -1,6 +1,6 @@
 package com.antigravity.service;
 
-import com.antigravity.proto.Asset;
+import com.antigravity.proto.AssetMessage;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -82,15 +82,15 @@ public class AssetService {
     return assetDir;
   }
 
-  public List<Asset> getAllAssets() {
-    List<Asset> assets = new ArrayList<>();
+  public List<AssetMessage> getAllAssets() {
+    List<AssetMessage> assets = new ArrayList<>();
     for (Document doc : collection.find()) {
       assets.add(documentToAsset(doc));
     }
     return assets;
   }
 
-  public Asset saveAsset(String name, String type, byte[] data) throws IOException {
+  public AssetMessage saveAsset(String name, String type, byte[] data) throws IOException {
     String id = UUID.randomUUID().toString();
     // Simple sanitization
     String safeName = name.replaceAll("[^a-zA-Z0-9.-]", "_");
@@ -143,8 +143,8 @@ public class AssetService {
     return modifiedCount > 0;
   }
 
-  private Asset documentToAsset(Document doc) {
-    return Asset.newBuilder()
+  private AssetMessage documentToAsset(Document doc) {
+    return AssetMessage.newBuilder()
         .setModel(com.antigravity.proto.Model.newBuilder().setEntityId(doc.getString("_id")).build())
         .setName(doc.getString("name"))
         .setType(doc.getString("type"))

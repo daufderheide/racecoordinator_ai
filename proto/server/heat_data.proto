@@ -10,4 +10,6 @@ option java_outer_classname = "DriverHeatDataProto";
 message DriverHeatData {
   RaceParticipant driver = 1;
   string object_id = 2;
+  string driver_id = 3;
 }
+

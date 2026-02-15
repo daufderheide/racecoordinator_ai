@@ -5,6 +5,7 @@ import java.util.Collections;
 
 public class DriverHeatData extends ServerToClientObject {
     private RaceParticipant driver;
+    private com.antigravity.models.Driver actualDriver;
 
     private ArrayList<Double> laps = new ArrayList<>();
     private double bestLapTime = 0.0f;
@@ -13,10 +14,19 @@ public class DriverHeatData extends ServerToClientObject {
     public DriverHeatData(RaceParticipant driver) {
         super();
         this.driver = driver;
+        this.actualDriver = driver.getDriver(); // Default to participant driver (null if team)
     }
 
     public RaceParticipant getDriver() {
         return driver;
+    }
+
+    public com.antigravity.models.Driver getActualDriver() {
+        return actualDriver;
+    }
+
+    public void setActualDriver(com.antigravity.models.Driver actualDriver) {
+        this.actualDriver = actualDriver;
     }
 
     public void addLap(double lapTime) {

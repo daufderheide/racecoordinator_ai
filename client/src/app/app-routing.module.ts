@@ -12,6 +12,8 @@ import { TrackEditorComponent } from './components/track-editor/track-editor.com
 import { DatabaseManagerComponent } from './components/database-manager/database-manager.component';
 import { RaceManagerComponent } from './components/race-manager/race-manager.component';
 import { RaceEditorComponent } from './components/race-editor/race-editor.component';
+import { TeamManagerComponent } from './components/team-manager/team-manager.component';
+import { TeamEditorComponent } from './components/team-editor/team-editor.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
@@ -21,6 +23,8 @@ const routes: Routes = [
     { path: 'asset-manager', component: AssetManagerComponent, data: { animation: 'AssetManagerPage' } },
     { path: 'driver-editor', component: DriverEditorComponent, data: { animation: 'DriverEditorPage' } },
     { path: 'driver-manager', component: DriverManagerComponent, data: { animation: 'DriverManagerPage' } },
+    { path: 'team-manager', component: TeamManagerComponent, data: { animation: 'TeamManagerPage' } },
+    { path: 'team-editor', component: TeamEditorComponent, data: { animation: 'TeamEditorPage' } },
     { path: 'track-manager', component: TrackManagerComponent, data: { animation: 'TrackManagerPage' } },
     { path: 'track-editor', component: TrackEditorComponent, data: { animation: 'TrackEditorPage' } },
     { path: 'database-manager', component: DatabaseManagerComponent, data: { animation: 'DatabaseManagerPage' } },

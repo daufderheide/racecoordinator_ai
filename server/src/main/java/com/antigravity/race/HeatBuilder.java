@@ -96,7 +96,16 @@ public class HeatBuilder {
                                     idx = drivers.size() - (d - numLanes) - 1;
                                 }
                             }
-                            heatDrivers.set(lane, new DriverHeatData(drivers.get(idx)));
+                            RaceParticipant participant = drivers.get(idx);
+                            DriverHeatData data = new DriverHeatData(participant);
+                            if (participant.getTeam() != null && participant.getTeamDrivers() != null
+                                    && !participant.getTeamDrivers().isEmpty()) {
+                                // Rotate drivers based on heat number
+                                int driverIdx = h % participant.getTeamDrivers().size();
+                                data.setActualDriver(participant.getTeamDrivers().get(driverIdx));
+                            }
+                            heatDrivers.set(lane, data);
+
                         }
                     }
                 }

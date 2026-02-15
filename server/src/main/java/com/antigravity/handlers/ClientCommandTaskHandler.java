@@ -14,7 +14,7 @@ import com.antigravity.protocols.IProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.RaceParticipant;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class ClientCommandTaskHandler {
 
@@ -57,12 +57,39 @@ public class ClientCommandTaskHandler {
             }
 
             // Create the runtime race instance
+            List<String> participantIds = request.getDriverIdsList();
             java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
-                    request.getDriverIdsList());
+                    participantIds);
+            java.util.List<com.antigravity.models.Team> teams = dbService.getTeams(databaseContext.getDatabase(),
+                    participantIds);
+
+            // Map IDs back to objects maintaining order
+            List<RaceParticipant> participants = new java.util.ArrayList<>();
+            for (String pid : participantIds) {
+                // Try finding in drivers
+                com.antigravity.models.Driver driver = drivers.stream().filter(d -> d.getEntityId().equals(pid))
+                        .findFirst().orElse(null);
+                if (driver != null) {
+                    participants.add(new RaceParticipant(driver));
+                    continue;
+                }
+
+                // Try finding in teams
+                com.antigravity.models.Team team = teams.stream().filter(t -> t.getEntityId().equals(pid)).findFirst()
+                        .orElse(null);
+                if (team != null) {
+                    RaceParticipant rp = new RaceParticipant(team);
+                    // Populate team drivers
+                    List<com.antigravity.models.Driver> teamDrivers = dbService
+                            .getDrivers(databaseContext.getDatabase(), team.getDriverIds());
+                    rp.setTeamDrivers(teamDrivers);
+                    participants.add(rp);
+                }
+            }
 
             com.antigravity.race.Race race = new com.antigravity.race.Race(
                     databaseContext.getDatabase(), raceModel,
-                    drivers.stream().map(RaceParticipant::new).collect(Collectors.toList()),
+                    participants,
                     request.getIsDemoMode());
             ClientSubscriptionManager.getInstance().setRace(race);
             System.out.println("Initialized race: " + race.getRaceModel().getName());

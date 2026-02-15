@@ -40,7 +40,9 @@ public class HeatConverter {
             return DriverHeatData.newBuilder()
                     .setObjectId(data.getObjectId())
                     .setDriver(toProto(data.getDriver(), sentObjectIds))
+                    .setDriverId(data.getActualDriver() != null ? data.getActualDriver().getEntityId() : "")
                     .build();
+
         }
     }
 

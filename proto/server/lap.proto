@@ -13,4 +13,5 @@ message Lap {
   double median_lap_time = 5;
   double best_lap_time = 6;
   int32 interfaceId = 7;
+  string driver_id = 8;
 }

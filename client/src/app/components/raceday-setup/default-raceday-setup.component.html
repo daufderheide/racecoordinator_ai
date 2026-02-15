@@ -5,8 +5,15 @@
   <div class="menu-bar">
     <div class="menu-item-wrapper" *ngFor="let item of menuItems"
       [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
-      [class.file-menu-container]="item.label === 'RDS_MENU_FILE'">
+      [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
+      [class.driver-menu-container]="item.label === 'RDS_MENU_DRIVER'">
       <div class="menu-item" (click)="item.action($event)">{{ item.label | translate }}</div>
+
+      <!-- Driver Dropdown -->
+      <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_DRIVER' && isDriverDropdownOpen">
+        <div class="menu-dropdown-item" (click)="openDriverManager()">{{ 'RDS_MENU_DRIVER_MANAGER' | translate }}</div>
+        <div class="menu-dropdown-item" (click)="openTeamManager()">{{ 'RDS_MENU_TEAM_MANAGER' | translate }}</div>
+      </div>
 
       <!-- File Dropdown -->
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_FILE' && isFileDropdownOpen">

@@ -16,7 +16,7 @@ public class DatabaseContext {
   private volatile MongoDatabase currentDatabase;
   private volatile String currentDatabaseName;
   private final com.antigravity.service.ServerConfigService configService;
-  private String dataRoot = "data/";
+  private String dataRoot = System.getProperty("user.dir") + "/data/";
 
   public void setDataRoot(String dataRoot) {
     this.dataRoot = dataRoot.endsWith("/") ? dataRoot : dataRoot + "/";

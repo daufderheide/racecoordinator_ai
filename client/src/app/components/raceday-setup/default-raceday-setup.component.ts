@@ -53,6 +53,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
+  isDriverDropdownOpen: boolean = false;
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
 
@@ -62,7 +63,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
-    { label: 'RDS_MENU_DRIVER', action: () => this.openDriverManager() },
+    { label: 'RDS_MENU_DRIVER', action: (event: MouseEvent) => this.toggleDriverDropdown(event) },
     { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
@@ -179,6 +180,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }
     if (!target.closest('.file-menu-container')) {
       this.closeFileDropdown();
+    }
+    if (!target.closest('.driver-menu-container')) {
+      this.closeDriverDropdown();
     }
   }
 
@@ -513,8 +517,23 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/asset-manager']);
   }
 
+  toggleDriverDropdown(event: Event) {
+    event.stopPropagation();
+    this.isDriverDropdownOpen = !this.isDriverDropdownOpen;
+  }
+
+  closeDriverDropdown() {
+    this.isDriverDropdownOpen = false;
+  }
+
   openDriverManager() {
+    this.closeDriverDropdown();
     this.router.navigate(['/driver-manager']);
+  }
+
+  openTeamManager() {
+    this.closeDriverDropdown();
+    this.router.navigate(['/team-manager']);
   }
 
   openTrackManager() {

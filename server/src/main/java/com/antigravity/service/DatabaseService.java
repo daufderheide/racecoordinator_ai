@@ -7,7 +7,7 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
-import com.antigravity.proto.Asset;
+import com.antigravity.proto.AssetMessage;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -22,6 +22,7 @@ public class DatabaseService {
                 System.out.println("Resetting database to factory settings...");
 
                 resetDrivers(database);
+                resetTeams(database);
                 Track track = resetTracks(database);
                 // Races must come after tracks because races include tracks
                 resetRaces(database, track);
@@ -38,17 +39,17 @@ public class DatabaseService {
 
                 // Fetch assets
                 AssetService assetService = new AssetService(database);
-                List<Asset> allAssets = assetService.getAllAssets();
+                List<AssetMessage> allAssets = assetService.getAllAssets();
 
-                List<Asset> helmetAssets = allAssets.stream()
+                List<AssetMessage> helmetAssets = allAssets.stream()
                                 .filter(a -> a.getName().toLowerCase().contains("helmet"))
                                 .collect(Collectors.toList());
 
-                Asset beepSound = allAssets.stream()
+                AssetMessage beepSound = allAssets.stream()
                                 .filter(a -> a.getName().equals("Lap Beep"))
                                 .findFirst().orElse(null);
 
-                Asset drivebySound = allAssets.stream()
+                AssetMessage drivebySound = allAssets.stream()
                                 .filter(a -> a.getName().equals("Lap Driveby"))
                                 .findFirst().orElse(null);
 
@@ -79,7 +80,7 @@ public class DatabaseService {
                 System.out.println("Drivers reset.");
         }
 
-        private Driver createDriver(String name, String nickname, List<Asset> helmetAssets, int index,
+        private Driver createDriver(String name, String nickname, List<AssetMessage> helmetAssets, int index,
                         Driver.AudioConfig lapAudio, Driver.AudioConfig bestLapAudio, String sequenceId) {
                 String avatarUrl = null;
                 if (!helmetAssets.isEmpty()) {
@@ -212,6 +213,61 @@ public class DatabaseService {
                 System.out.println("Races reset.");
         }
 
+        private void resetTeams(MongoDatabase database) {
+                MongoCollection<com.antigravity.models.Team> teamCollection = database.getCollection("teams",
+                                com.antigravity.models.Team.class);
+                teamCollection.drop();
+                resetSequence(database, "teams");
+
+                MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
+
+                List<String> boysNames = java.util.Arrays.asList("Austin", "Dave", "Gene");
+                List<String> girlsNames = java.util.Arrays.asList("Abby", "Andrea", "Christine");
+
+                List<String> boysIds = new ArrayList<>();
+                for (String name : boysNames) {
+                        Driver d = driverCollection.find(com.mongodb.client.model.Filters.eq("name", name)).first();
+                        if (d != null) {
+                                boysIds.add(d.getEntityId());
+                        }
+                }
+
+                List<String> girlsIds = new ArrayList<>();
+                for (String name : girlsNames) {
+                        Driver d = driverCollection.find(com.mongodb.client.model.Filters.eq("name", name)).first();
+                        if (d != null) {
+                                girlsIds.add(d.getEntityId());
+                        }
+                }
+
+                // Fetch assets
+                AssetService assetService = new AssetService(database);
+                List<AssetMessage> allAssets = assetService.getAllAssets();
+                List<AssetMessage> helmetAssets = allAssets.stream()
+                                .filter(a -> a.getName().toLowerCase().contains("helmet"))
+                                .collect(Collectors.toList());
+
+                String boysAvatar = "";
+                String girlsAvatar = "";
+                if (!helmetAssets.isEmpty()) {
+                        boysAvatar = helmetAssets.get(0).getUrl();
+                        if (helmetAssets.size() > 1) {
+                                girlsAvatar = helmetAssets.get(helmetAssets.size() - 1).getUrl();
+                        } else {
+                                girlsAvatar = boysAvatar;
+                        }
+                }
+
+                List<com.antigravity.models.Team> teams = new ArrayList<>();
+                teams.add(new com.antigravity.models.Team("The Boys", boysAvatar, boysIds,
+                                getNextSequence(database, "teams"), null));
+                teams.add(new com.antigravity.models.Team("The Girls", girlsAvatar, girlsIds,
+                                getNextSequence(database, "teams"), null));
+
+                teamCollection.insertMany(teams);
+                System.out.println("Teams reset.");
+        }
+
         private String getNextSequence(MongoDatabase database, String collectionName) {
                 MongoCollection<Document> counters = database.getCollection("counters");
                 Document counter = counters.findOneAndUpdate(
@@ -250,5 +306,14 @@ public class DatabaseService {
                 driverCollection.find(com.mongodb.client.model.Filters.in("entity_id", entityIds))
                                 .into(drivers);
                 return drivers;
+        }
+
+        public List<com.antigravity.models.Team> getTeams(MongoDatabase database, List<String> entityIds) {
+                MongoCollection<com.antigravity.models.Team> teamCollection = database.getCollection("teams",
+                                com.antigravity.models.Team.class);
+                List<com.antigravity.models.Team> teams = new ArrayList<>();
+                teamCollection.find(com.mongodb.client.model.Filters.in("entity_id", entityIds))
+                                .into(teams);
+                return teams;
         }
 }

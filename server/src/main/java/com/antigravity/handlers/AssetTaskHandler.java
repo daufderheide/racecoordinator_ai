@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.*;
+import com.antigravity.proto.AssetMessage;
 import com.antigravity.service.AssetService;
 import io.javalin.http.Context;
 
@@ -64,7 +65,7 @@ public class AssetTaskHandler {
   private void listAssets(Context ctx) {
     try {
       AssetService service = new AssetService(databaseContext.getDatabase()); // Instantiate AssetService per request
-      List<Asset> assets = service.getAllAssets(); // Changed type to IAsset and used local service
+      List<AssetMessage> assets = service.getAllAssets();
       ListAssetsResponse response = ListAssetsResponse.newBuilder()
           .addAllAssets(assets)
           .build();
@@ -79,14 +80,14 @@ public class AssetTaskHandler {
     try {
       UploadAssetRequest request = UploadAssetRequest.parseFrom(ctx.bodyAsBytes());
       AssetService service = new AssetService(databaseContext.getDatabase()); // Instantiate AssetService per request
-      Asset asset = service.saveAsset(request.getName(), request.getType(), request.getData().toByteArray()); // Changed
-                                                                                                              // type
-                                                                                                              // to
-                                                                                                              // IAsset
-                                                                                                              // and
-                                                                                                              // used
-                                                                                                              // local
-                                                                                                              // service
+      AssetMessage asset = service.saveAsset(request.getName(), request.getType(), request.getData().toByteArray());
+      // type
+      // to
+      // IAsset
+      // and
+      // used
+      // local
+      // service
 
       UploadAssetResponse response = UploadAssetResponse.newBuilder()
           .setSuccess(true)
