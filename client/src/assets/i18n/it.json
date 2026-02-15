@@ -347,5 +347,21 @@
     "RE_ALLOW_FINISH": "Consenti arrivo",
     "RE_AF_NONE": "Non consentire l'arrivo",
     "RE_AF_ALLOW": "Consenti arrivo",
-    "RE_AF_SINGLE_LAP": "Consenti arrivo (un giro)"
-}
+    "RE_AF_SINGLE_LAP": "Consenti arrivo (un giro)",
+    "RDS_HELP_WELCOME_TITLE": "Benvenuto nella Configurazione del Giorno di Gara",
+    "RDS_HELP_WELCOME_CONTENT": "Qui configuri e inizi le tue gare. Puoi selezionare i piloti, scegliere un formato di gara e personalizzare le impostazioni.",
+    "RDS_HELP_WALKTHROUGH_TITLE": "Guida Introduttiva",
+    "RDS_HELP_WALKTHROUGH_CONTENT": "Puoi cliccare qui su qualsiasi pagina per ricominciare la guida.",
+    "RDS_HELP_DRIVER_SELECTION_TITLE": "Selezione Piloti",
+    "RDS_HELP_DRIVER_SELECTION_CONTENT": "Qui puoi selezionare chi gareggerà. <br><br><b>Piloti Disponibili</b>: Tutti i piloti nel tuo database.<br><b>Piloti Selezionati</b>: Piloti che partecipano a questa gara. Trascina e rilascia per riordinare o impostare le posizioni di partenza.",
+    "RDS_HELP_DRIVER_ACTIONS_TITLE": "Azioni Pilota",
+    "RDS_HELP_DRIVER_ACTIONS_CONTENT": "Usa questi pulsanti per aggiungere tutti i piloti alla gara, rimuovere tutti i piloti o casualizzare l'ordine dei piloti (testa di serie).",
+    "RDS_HELP_RACE_SELECTION_TITLE": "Selezione Gara",
+    "RDS_HELP_RACE_SELECTION_CONTENT": "Seleziona il formato di gara che vuoi eseguire.",
+    "RDS_HELP_RECENT_RACE_TITLE": "Gara Recente",
+    "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT": "Clicca per selezionare la gara più recente.",
+    "RDS_HELP_RECENT_RACE_CONTENT": "Clicca per selezionare una gara recente.",
+    "RDS_HELP_START_RACE_TITLE": "Inizia Gara",
+    "RDS_HELP_START_RACE_CONTENT": "Quando sei pronto, inizia la gara ufficiale con la configurazione selezionata. La tua interfaccia di pista deve essere configurata e accesa.",
+    "RDS_HELP_START_DEMO_TITLE": "Inizia Gara Demo",
+    "RDS_HELP_START_DEMO_CONTENT": "Quando sei pronto, usa questo pulsante per testare la tua configurazione senza un'interfaccia di pista."}

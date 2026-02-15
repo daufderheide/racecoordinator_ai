@@ -7,7 +7,9 @@ import { SettingsService } from 'src/app/services/settings.service';
 import { Router } from '@angular/router';
 import { TranslatePipe } from 'src/app/pipes/translate.pipe';
 import { FileSystemService } from 'src/app/services/file-system.service';
-import { of } from 'rxjs';
+import { HelpService } from 'src/app/services/help.service';
+import { HelpOverlayComponent } from '../shared/help-overlay/help-overlay.component';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -23,6 +25,7 @@ describe('DefaultRacedaySetupComponent', () => {
   let mockSettingsService: jasmine.SpyObj<SettingsService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
+  let mockHelpService: any;
 
   beforeEach(() => {
     mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getRaces', 'initializeRace']);
@@ -31,6 +34,13 @@ describe('DefaultRacedaySetupComponent', () => {
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'clearCustomFolder']);
+
+    // Mock HelpService using spyObj and observables
+    mockHelpService = jasmine.createSpyObj('HelpService', ['startGuide', 'nextStep', 'previousStep', 'endGuide']);
+    mockHelpService.isVisible$ = new BehaviorSubject(false);
+    mockHelpService.currentStep$ = new BehaviorSubject(null);
+    mockHelpService.hasNext$ = new BehaviorSubject(false);
+    mockHelpService.hasPrevious$ = new BehaviorSubject(false);
 
     mockDataService.getDrivers.and.returnValue(of([
       { entity_id: 'd1', name: 'Driver 1', nickname: 'D1' },
@@ -51,14 +61,15 @@ describe('DefaultRacedaySetupComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],
-      declarations: [DefaultRacedaySetupComponent, TranslatePipe],
+      declarations: [DefaultRacedaySetupComponent, TranslatePipe, HelpOverlayComponent],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: Router, useValue: mockRouter },
-        { provide: FileSystemService, useValue: mockFileSystemService }
+        { provide: FileSystemService, useValue: mockFileSystemService },
+        { provide: HelpService, useValue: mockHelpService }
       ]
     }).compileComponents();
 
@@ -210,5 +221,13 @@ describe('DefaultRacedaySetupComponent', () => {
 
     expect(component.getLanguageDisplayName('')).toBe('Default (EN)');
     expect(component.getLanguageDisplayName('en')).toBe('English (en)');
+  });
+
+  it('should start help guide with translated strings', () => {
+    component.startHelp();
+    expect(mockTranslationService.translate).toHaveBeenCalledWith('RDS_HELP_WELCOME_TITLE');
+    expect(mockHelpService.startGuide).toHaveBeenCalled();
+    const guideSteps = mockHelpService.startGuide.calls.mostRecent().args[0];
+    expect(guideSteps[0].title).toBe('RDS_HELP_WELCOME_TITLE');
   });
 });

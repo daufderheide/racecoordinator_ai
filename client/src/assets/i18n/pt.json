@@ -347,5 +347,21 @@
     "RE_ALLOW_FINISH": "Permitir terminar",
     "RE_AF_NONE": "N\u00e3o permitir terminar",
     "RE_AF_ALLOW": "Permitir terminar",
-    "RE_AF_SINGLE_LAP": "Permitir terminar (uma volta)"
-}
+    "RE_AF_SINGLE_LAP": "Permitir terminar (uma volta)",
+    "RDS_HELP_WELCOME_TITLE": "Bem-vindo à Configuração do Dia de Corrida",
+    "RDS_HELP_WELCOME_CONTENT": "Aqui é onde você configura e inicia suas corridas. Você pode selecionar pilotos, escolher um formato de corrida e personalizar as configurações.",
+    "RDS_HELP_WALKTHROUGH_TITLE": "Passo a Passo",
+    "RDS_HELP_WALKTHROUGH_CONTENT": "Você pode clicar aqui em qualquer página para reiniciar o passo a passo.",
+    "RDS_HELP_DRIVER_SELECTION_TITLE": "Seleção de Pilotos",
+    "RDS_HELP_DRIVER_SELECTION_CONTENT": "Aqui você pode selecionar quem irá correr. <br><br><b>Pilotos Disponíveis</b>: Todos os pilotos em seu banco de dados.<br><b>Pilotos Selecionados</b>: Pilotos participando desta corrida. Arraste e solte para reordenar ou definir posições de largada.",
+    "RDS_HELP_DRIVER_ACTIONS_TITLE": "Ações de Piloto",
+    "RDS_HELP_DRIVER_ACTIONS_CONTENT": "Use esses botões para adicionar todos os pilotos à corrida, remover todos os pilotos ou aleatorizar a ordem dos pilotos (classificação).",
+    "RDS_HELP_RACE_SELECTION_TITLE": "Seleção de Corrida",
+    "RDS_HELP_RACE_SELECTION_CONTENT": "Selecione o formato de corrida que deseja realizar.",
+    "RDS_HELP_RECENT_RACE_TITLE": "Corrida Recente",
+    "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT": "Clique para selecionar a corrida mais recente.",
+    "RDS_HELP_RECENT_RACE_CONTENT": "Clique para selecionar uma corrida recente.",
+    "RDS_HELP_START_RACE_TITLE": "Iniciar Corrida",
+    "RDS_HELP_START_RACE_CONTENT": "Quando estiver pronto, inicie a corrida oficial com a configuração selecionada. Sua interface de pista deve estar configurada e ligada.",
+    "RDS_HELP_START_DEMO_TITLE": "Iniciar Corrida de Demonstração",
+    "RDS_HELP_START_DEMO_CONTENT": "Quando estiver pronto, use este botão para testar sua configuração sem uma interface de pista."}

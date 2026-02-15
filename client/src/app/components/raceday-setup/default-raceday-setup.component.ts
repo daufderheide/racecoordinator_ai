@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
@@ -10,6 +10,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { SettingsService } from 'src/app/services/settings.service';
 import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
+import { HelpService } from 'src/app/services/help.service';
 
 @Component({
   selector: 'app-default-raceday-setup',
@@ -17,8 +18,19 @@ import { FileSystemService } from 'src/app/services/file-system.service';
   styleUrl: './default-raceday-setup.component.css',
   standalone: false
 })
-export class DefaultRacedaySetupComponent implements OnInit {
+export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   @Output() requestServerConfig = new EventEmitter<void>();
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      const settings = this.settingsService.getSettings();
+      if (!settings.racedaySetupWalkthroughSeen) {
+        this.startHelp();
+        settings.racedaySetupWalkthroughSeen = true;
+        this.settingsService.saveSettings(settings);
+      }
+    }, 500);
+  }
 
   // Driver State
   selectedDrivers: Driver[] = [];
@@ -54,7 +66,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
-    { label: 'RDS_MENU_HELP', action: () => console.log('Help menu') }
+    { label: 'RDS_MENU_HELP', action: () => this.startHelp() }
   ];
 
   constructor(
@@ -64,7 +76,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private router: Router,
     private translationService: TranslationService,
     private settingsService: SettingsService,
-    private fileSystem: FileSystemService
+    private fileSystem: FileSystemService,
+    private helpService: HelpService
   ) { }
 
   ngOnInit() {
@@ -328,7 +341,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
 
     // Always persist
-    const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
+    const settings = new Settings(
+      recentRaceIds,
+      this.selectedDrivers.map(d => d.entity_id),
+      localSettings.serverIp,
+      localSettings.serverPort,
+      localSettings.language,
+      localSettings.racedaySetupWalkthroughSeen
+    );
     this.settingsService.saveSettings(settings);
     this.updateQuickStartRaces(recentRaceIds);
   }
@@ -511,5 +531,62 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openDatabaseManager() {
     this.closeFileDropdown();
     this.router.navigate(['/database-manager']);
+  }
+
+  startHelp() {
+    this.helpService.startGuide([
+      {
+        title: this.translationService.translate('RDS_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('RDS_HELP_WELCOME_CONTENT')
+      },
+      {
+        selector: '.help-icon',
+        title: this.translationService.translate('RDS_HELP_WALKTHROUGH_TITLE'),
+        content: this.translationService.translate('RDS_HELP_WALKTHROUGH_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '.panel.driver-panel',
+        title: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_TITLE'),
+        content: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: '.driver-action-bar',
+        title: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_TITLE'),
+        content: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '.custom-dropdown-container',
+        title: this.translationService.translate('RDS_HELP_RACE_SELECTION_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RACE_SELECTION_CONTENT'),
+        position: 'top'
+      },
+      {
+        targetId: 'race-card-0',
+        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        targetId: 'race-card-1',
+        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RECENT_RACE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '.btn-start',
+        title: this.translationService.translate('RDS_HELP_START_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_START_RACE_CONTENT'),
+        position: 'top'
+      },
+      {
+        selector: '.btn-demo',
+        title: this.translationService.translate('RDS_HELP_START_DEMO_TITLE'),
+        content: this.translationService.translate('RDS_HELP_START_DEMO_CONTENT'),
+        position: 'top'
+      }
+    ]);
   }
 }

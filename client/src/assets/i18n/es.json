@@ -347,5 +347,21 @@
     "RE_ALLOW_FINISH": "Permitir terminar",
     "RE_AF_NONE": "No permitir terminar",
     "RE_AF_ALLOW": "Permitir terminar",
-    "RE_AF_SINGLE_LAP": "Permitir terminar (una vuelta)"
-}
+    "RE_AF_SINGLE_LAP": "Permitir terminar (una vuelta)",
+    "RDS_HELP_WELCOME_TITLE": "Bienvenido a la Configuración del Día de Carrera",
+    "RDS_HELP_WELCOME_CONTENT": "Aquí es donde configuras y comienzas tus carreras. Puedes seleccionar conductores, elegir un formato de carrera y personalizar la configuración.",
+    "RDS_HELP_WALKTHROUGH_TITLE": "Tutorial",
+    "RDS_HELP_WALKTHROUGH_CONTENT": "Puede hacer clic aquí en cualquier página para comenzar el tutorial de nuevo.",
+    "RDS_HELP_DRIVER_SELECTION_TITLE": "Selección de Conductores",
+    "RDS_HELP_DRIVER_SELECTION_CONTENT": "Aquí puedes seleccionar quién correrá. <br><br><b>Conductores Disponibles</b>: Todos los conductores en tu base de datos.<br><b>Conductores Seleccionados</b>: Conductores participando en esta carrera. Arrastra y suelta para reordenar o establecer posiciones de salida.",
+    "RDS_HELP_DRIVER_ACTIONS_TITLE": "Acciones de Conductor",
+    "RDS_HELP_DRIVER_ACTIONS_CONTENT": "Usa estos botones para añadir todos los conductores a la carrera, eliminar todos los conductores, o aleatorizar el orden de los conductores (sembrado).",
+    "RDS_HELP_RACE_SELECTION_TITLE": "Selección de Carrera",
+    "RDS_HELP_RACE_SELECTION_CONTENT": "Selecciona el formato de carrera que deseas ejecutar.",
+    "RDS_HELP_RECENT_RACE_TITLE": "Carrera Reciente",
+    "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT": "Haga clic para seleccionar la carrera más reciente.",
+    "RDS_HELP_RECENT_RACE_CONTENT": "Haga clic para seleccionar una carrera reciente.",
+    "RDS_HELP_START_RACE_TITLE": "Comenzar Carrera",
+    "RDS_HELP_START_RACE_CONTENT": "Cuando estés listo, comienza la carrera oficial con la configuración seleccionada. Tu interfaz de pista debe estar configurada y encendida.",
+    "RDS_HELP_START_DEMO_TITLE": "Comenzar Carrera de Demostración",
+    "RDS_HELP_START_DEMO_CONTENT": "Cuando estés listo, usa este botón para probar tu configuración sin una interfaz de pista."}
