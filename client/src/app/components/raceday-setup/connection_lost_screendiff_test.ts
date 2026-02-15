@@ -1,5 +1,6 @@
 
 import { test, expect } from '@playwright/test';
+import { TestSetupHelper } from '../../testing/test-setup_helper';
 
 test.describe('Connection Loss Visuals', () => {
   test('should display transparent overlay when connection is lost', async ({ page }) => {
@@ -25,7 +26,12 @@ test.describe('Connection Loss Visuals', () => {
       }
     });
 
-    // 3. Load the app
+    // 3. Setup LocalStorage to disable walkthrough
+    await TestSetupHelper.setupLocalStorage(page, {
+      racedaySetupWalkthroughSeen: true
+    });
+
+    // 4. Load the app
     await page.goto('/');
 
     // 4. Advance past splash screen (5s min time)

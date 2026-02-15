@@ -3,16 +3,14 @@ module.exports = function (config) {
   const fs = require('fs');
   const path = require('path');
 
-  // Use a local temp directory to ensure we have write permissions
-  const tmpDir = path.join(__dirname, '.tmp');
-  if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir, { recursive: true });
-  }
+  // Use system temp directory to avoid permission issues and spaces in paths
+  const os = require('os');
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'karma-chrome-'));
 
   // Define dedicated directories
   const chromeHome = path.join(tmpDir, 'chrome-home');
-  const chromeUserData = path.join(tmpDir, 'chrome-user-data-' + Date.now());
-  const chromeCrashDumps = path.join(tmpDir, 'chrome-crash-' + Date.now());
+  const chromeUserData = path.join(tmpDir, 'chrome-user-data');
+  const chromeCrashDumps = path.join(tmpDir, 'chrome-crash');
 
   // Create them proactively
   if (!fs.existsSync(chromeHome)) fs.mkdirSync(chromeHome, { recursive: true });
@@ -74,7 +72,11 @@ module.exports = function (config) {
           '--user-data-dir=' + chromeUserData,
           '--disable-crash-reporter',
           '--disable-breakpad',
-          '--crash-dumps-dir=' + chromeCrashDumps
+          '--crash-dumps-dir=' + chromeCrashDumps,
+          '--no-default-browser-check',
+          '--no-first-run',
+          '--disable-signin',
+          '--disable-sync'
         ]
       }
     },

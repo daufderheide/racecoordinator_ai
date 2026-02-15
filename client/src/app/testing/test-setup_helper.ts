@@ -3,6 +3,7 @@ import { com } from '../proto/message';
 
 export class TestSetupHelper {
   static async setupStandardMocks(page: Page) {
+    
     // Mock Drivers API
     await page.route('**/api/drivers', async (route) => {
       await route.fulfill({
@@ -383,12 +384,15 @@ export class TestSetupHelper {
   }
 
 
-  static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[] } = {}) {
+  static async setupLocalStorage(page: Page, settings: { recentRaceIds?: string[], selectedDriverIds?: string[], racedaySetupWalkthroughSeen?: boolean, language?: string } = {}) {
     await page.addInitScript((s) => {
       const defaultSettings = {
         recentRaceIds: ['r1', 'r2'],
-        selectedDriverIds: ['d1', 'd2']
+        selectedDriverIds: ['d1', 'd2'],
+        racedaySetupWalkthroughSeen: false,
+        language: ''
       };
+      // @ts-ignore
       window.localStorage.setItem('racecoordinator_settings', JSON.stringify({ ...defaultSettings, ...s }));
     }, settings);
   }

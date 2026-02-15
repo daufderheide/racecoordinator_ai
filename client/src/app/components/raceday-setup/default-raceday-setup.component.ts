@@ -341,7 +341,14 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }
 
     // Always persist
-    const settings = new Settings(recentRaceIds, this.selectedDrivers.map(d => d.entity_id));
+    const settings = new Settings(
+      recentRaceIds,
+      this.selectedDrivers.map(d => d.entity_id),
+      localSettings.serverIp,
+      localSettings.serverPort,
+      localSettings.language,
+      localSettings.racedaySetupWalkthroughSeen
+    );
     this.settingsService.saveSettings(settings);
     this.updateQuickStartRaces(recentRaceIds);
   }
@@ -529,55 +536,55 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   startHelp() {
     this.helpService.startGuide([
       {
-        title: 'Welcome to Race Day Setup',
-        content: 'This is where you configure and start your races. You can select drivers, choose a race format, and customize settings.'
+        title: this.translationService.translate('RDS_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('RDS_HELP_WELCOME_CONTENT')
       },
       {
         selector: '.help-icon',
-        title: 'Walkthrough',
-        content: 'You can click here on any page to start the walkthrough over again.',
+        title: this.translationService.translate('RDS_HELP_WALKTHROUGH_TITLE'),
+        content: this.translationService.translate('RDS_HELP_WALKTHROUGH_CONTENT'),
         position: 'bottom'
       },
       {
         selector: '.panel.driver-panel',
-        title: 'Driver Selection',
-        content: 'Here you can select who will be racing. <br><br><b>Available Drivers</b>: All drivers in your database.<br><b>Selected Drivers</b>: Drivers participating in this race. Drag and drop to reorder or set starting positions.',
+        title: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_TITLE'),
+        content: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_CONTENT'),
         position: 'right'
       },
       {
         selector: '.driver-action-bar',
-        title: 'Driver Actions',
-        content: 'Use these buttons to add all drivers to the race, remove all drivers from the race, or ranomize the driver order (seeding).',
+        title: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_TITLE'),
+        content: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_CONTENT'),
         position: 'bottom'
       },
       {
         selector: '.custom-dropdown-container',
-        title: 'Race Selection',
-        content: 'Select the race format you want to run.',
+        title: this.translationService.translate('RDS_HELP_RACE_SELECTION_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RACE_SELECTION_CONTENT'),
         position: 'top'
       },
       {
         targetId: 'race-card-0',
-        title: 'Recently Run Race',
-        content: 'Click to select the most recently run race.',
+        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT'),
         position: 'bottom'
       },
       {
         targetId: 'race-card-1',
-        title: 'Recently Run Race',
-        content: 'Click to select a recently run race.',
+        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_RECENT_RACE_CONTENT'),
         position: 'bottom'
       },
       {
         selector: '.btn-start',
-        title: 'Start Racing',
-        content: 'When you are ready, begins the official race with the selected configuration.  Your track interface must be configured and turned on.',
+        title: this.translationService.translate('RDS_HELP_START_RACE_TITLE'),
+        content: this.translationService.translate('RDS_HELP_START_RACE_CONTENT'),
         position: 'top'
       },
       {
         selector: '.btn-demo',
-        title: 'Start Demo Race',
-        content: 'When you are ready, use this button to test your configuration with out a track interface.',
+        title: this.translationService.translate('RDS_HELP_START_DEMO_TITLE'),
+        content: this.translationService.translate('RDS_HELP_START_DEMO_CONTENT'),
         position: 'top'
       }
     ]);

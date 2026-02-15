@@ -14,7 +14,9 @@ for (const lang of languages) {
       // Setup LocalStorage via Helper
       await TestSetupHelper.setupLocalStorage(page, {
         recentRaceIds: ['r1', 'r2'],
-        selectedDriverIds: ['d1', 'd2']
+        selectedDriverIds: ['d1', 'd2'],
+        racedaySetupWalkthroughSeen: true,
+        language: lang
       });
 
       // Wait for navigation and localization together

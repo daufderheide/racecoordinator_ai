@@ -345,5 +345,22 @@
     "RE_ALLOW_FINISH": "Allow Finish",
     "RE_AF_NONE": "Do not allow finish",
     "RE_AF_ALLOW": "Allow Finish",
-    "RE_AF_SINGLE_LAP": "Allow Finish (single lap)"
+    "RE_AF_SINGLE_LAP": "Allow Finish (single lap)",
+    "RDS_HELP_WELCOME_TITLE": "Welcome to Race Day Setup",
+    "RDS_HELP_WELCOME_CONTENT": "This is where you configure and start your races. You can select drivers, choose a race format, and customize settings.",
+    "RDS_HELP_WALKTHROUGH_TITLE": "Walkthrough",
+    "RDS_HELP_WALKTHROUGH_CONTENT": "You can click here on any page to start the walkthrough over again.",
+    "RDS_HELP_DRIVER_SELECTION_TITLE": "Driver Selection",
+    "RDS_HELP_DRIVER_SELECTION_CONTENT": "Here you can select who will be racing. <br><br><b>Available Drivers</b>: All drivers in your database.<br><b>Selected Drivers</b>: Drivers participating in this race. Drag and drop to reorder or set starting positions.",
+    "RDS_HELP_DRIVER_ACTIONS_TITLE": "Driver Actions",
+    "RDS_HELP_DRIVER_ACTIONS_CONTENT": "Use these buttons to add all drivers to the race, remove all drivers from the race, or ranomize the driver order (seeding).",
+    "RDS_HELP_RACE_SELECTION_TITLE": "Race Selection",
+    "RDS_HELP_RACE_SELECTION_CONTENT": "Select the race format you want to run.",
+    "RDS_HELP_RECENT_RACE_TITLE": "Recently Run Race",
+    "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT": "Click to select the most recently run race.",
+    "RDS_HELP_RECENT_RACE_CONTENT": "Click to select a recently run race.",
+    "RDS_HELP_START_RACE_TITLE": "Start Racing",
+    "RDS_HELP_START_RACE_CONTENT": "When you are ready, begins the official race with the selected configuration.  Your track interface must be configured and turned on.",
+    "RDS_HELP_START_DEMO_TITLE": "Start Demo Race",
+    "RDS_HELP_START_DEMO_CONTENT": "When you are ready, use this button to test your configuration with out a track interface."
 }

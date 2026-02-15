@@ -347,5 +347,21 @@
     "RE_ALLOW_FINISH": "Zielerlaubnis",
     "RE_AF_NONE": "Sofort beenden",
     "RE_AF_ALLOW": "Zu Ende fahren lassen",
-    "RE_AF_SINGLE_LAP": "Eine weitere Runde"
-}
+    "RE_AF_SINGLE_LAP": "Eine weitere Runde",
+    "RDS_HELP_WELCOME_TITLE": "Willkommen beim Renntag-Setup",
+    "RDS_HELP_WELCOME_CONTENT": "Hier konfigurieren und starten Sie Ihre Rennen. Sie können Fahrer auswählen, ein Rennformat wählen und Einstellungen anpassen.",
+    "RDS_HELP_WALKTHROUGH_TITLE": "Rundgang",
+    "RDS_HELP_WALKTHROUGH_CONTENT": "Sie können auf jeder Seite hier klicken, um den Rundgang erneut zu starten.",
+    "RDS_HELP_DRIVER_SELECTION_TITLE": "Fahrerauswahl",
+    "RDS_HELP_DRIVER_SELECTION_CONTENT": "Hier wählen Sie aus, wer fährt. <br><br><b>Verfügbare Fahrer</b>: Alle Fahrer in Ihrer Datenbank.<br><b>Ausgewählte Fahrer</b>: Fahrer, die an diesem Rennen teilnehmen. Ziehen und ablegen, um die Reihenfolge oder Startpositionen zu ändern.",
+    "RDS_HELP_DRIVER_ACTIONS_TITLE": "Fahrer-Aktionen",
+    "RDS_HELP_DRIVER_ACTIONS_CONTENT": "Verwenden Sie diese Schaltflächen, um alle Fahrer zum Rennen hinzuzufügen, alle zu entfernen oder die Reihenfolge zufällig zu mischen (Setzliste).",
+    "RDS_HELP_RACE_SELECTION_TITLE": "Rennauswahl",
+    "RDS_HELP_RACE_SELECTION_CONTENT": "Wählen Sie das Rennformat, das Sie fahren möchten.",
+    "RDS_HELP_RECENT_RACE_TITLE": "Kürzlich gefahrenes Rennen",
+    "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT": "Klicken Sie hier, um das zuletzt gefahrene Rennen auszuwählen.",
+    "RDS_HELP_RECENT_RACE_CONTENT": "Klicken Sie hier, um ein kürzlich gefahrenes Rennen auszuwählen.",
+    "RDS_HELP_START_RACE_TITLE": "Rennen starten",
+    "RDS_HELP_START_RACE_CONTENT": "Wenn Sie bereit sind, beginnt das offizielle Rennen mit der gewählten Konfiguration. Ihre Streckenschnittstelle muss konfiguriert und eingeschaltet sein.",
+    "RDS_HELP_START_DEMO_TITLE": "Demo-Rennen starten",
+    "RDS_HELP_START_DEMO_CONTENT": "Wenn Sie bereit sind, verwenden Sie diese Taste, um Ihre Konfiguration ohne Streckenschnittstelle zu testen."}
