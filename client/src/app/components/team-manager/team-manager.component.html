@@ -1,0 +1,100 @@
+<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="dm-header">
+    <app-back-button [label]="'TMM_BTN_BACK' | translate" route="/raceday-setup"></app-back-button>
+    <button class="btn btn-add" (click)="createNewTeam()">{{ 'TMM_BTN_NEW_TEAM' | translate }}</button>
+  </div>
+
+  <div class="main-content">
+    <!-- LEFT PANEL: TEAMS TABLE -->
+    <div class="panel list-panel">
+      <div class="panel-header">
+        <div class="panel-title">{{ 'TMM_HEADER_TEAMS' | translate }}</div>
+        <div class="search-container">
+          <input type="text" [placeholder]="'TMM_PLACEHOLDER_SEARCH' | translate" [(ngModel)]="searchQuery"
+            class="search-input">
+        </div>
+      </div>
+      <div class="table-header-fixed">
+        <table class="driver-table header-only">
+          <thead>
+            <tr>
+              <th class="col-avatar">{{ 'TMM_COL_AVATAR' | translate }}</th>
+              <th class="col-name">{{ 'TMM_COL_NAME' | translate }}</th>
+              <th class="col-nickname">{{ 'TMM_COL_MEMBERS' | translate }}</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div class="table-body-scroll">
+        <table class="driver-table body-only">
+          <tbody>
+            <tr *ngFor="let team of filteredTeams; trackBy: trackByTeam"
+              [class.active]="selectedTeam?.entity_id === team.entity_id" (click)="selectTeam(team)">
+              <td class="avatar-cell col-avatar">
+                <div class="avatar-mini">
+                  <img [src]="team.avatarUrl | avatarUrl" alt="Avatar">
+                </div>
+              </td>
+              <td class="name-cell col-name">{{ team.name }}</td>
+              <td class="nickname-cell col-nickname">{{ team.driverIds.length }} drivers</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: CONFIGURATION -->
+    <div class="panel config-panel">
+      <div class="avatar-preview-container" *ngIf="editingTeam">
+        <div class="avatar-preview-large">
+          <img [src]="editingTeam.avatarUrl | avatarUrl" alt="Avatar Large">
+        </div>
+      </div>
+
+      <div class="config-header">{{ 'TMM_HEADER_CONFIG' | translate }}</div>
+
+      <div class="config-form" *ngIf="editingTeam">
+        <div class="form-group">
+          <label>{{ 'TMM_LABEL_NAME' | translate }}</label>
+          <input type="text" [(ngModel)]="editingTeam.name" class="dm-input" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>{{ 'TMM_LABEL_MEMBERS' | translate }}</label>
+          <div class="member-count-display">{{ editingTeam.driverIds.length }} Drivers</div>
+
+          <!-- Driver List Moved Here -->
+          <div class="team-drivers-list" style="margin-top: 10px;">
+            <div class="driver-badge" *ngFor="let driver of getDriversForTeam(editingTeam)">
+              <div class="driver-avatar-micro">
+                <img [src]="driver.avatarUrl | avatarUrl" alt="A">
+              </div>
+              <span class="driver-name-micro">{{ driver.name }}</span>
+              <span class="driver-nickname-micro" *ngIf="driver.nickname">({{ driver.nickname }})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-edit" (click)="updateTeam()">{{ 'TMM_BTN_EDIT' | translate }}</button>
+          <button class="btn btn-delete" (click)="deleteTeam()">{{ 'TMM_BTN_DELETE_TEAM' | translate }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Lost Overlay -->
+  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">{{ 'TMM_LOST_CONNECTION' | translate }}</div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+
+  <app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'TMM_BTN_DELETE_TEAM'"
+    [message]="'TMM_CONFIRM_DELETE'" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+  </app-confirmation-modal>
+</div>

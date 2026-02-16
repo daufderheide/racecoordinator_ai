@@ -2,6 +2,7 @@ syntax = "proto3";
 package com.antigravity;
 
 import "server/race_participant.proto";
+import "client/driver_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -10,4 +11,7 @@ option java_outer_classname = "DriverHeatDataProto";
 message DriverHeatData {
   RaceParticipant driver = 1;
   string object_id = 2;
+  string driver_id = 3;
+  DriverModel actual_driver = 4;
 }
+

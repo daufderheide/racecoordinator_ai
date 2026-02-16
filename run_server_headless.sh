@@ -19,4 +19,4 @@ export PROTO_DEST_DIR="$(pwd)/target_exec"
 mkdir -p "$PROTO_DEST_DIR"
 
 ./generate_protos.sh
-mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -Djava.io.tmpdir="$(pwd)/temp" -Dapp.data.dir="$(pwd)/data"
+mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -Djava.io.tmpdir="$(pwd)/temp" -Dapp.data.dir="$(pwd)/../data"

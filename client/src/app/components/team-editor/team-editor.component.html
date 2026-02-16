@@ -1,0 +1,85 @@
+<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <div class="dm-header">
+    <app-back-button [label]="'TEM_BTN_BACK' | translate" route="/team-manager"></app-back-button>
+  </div>
+
+  <div class="main-content" *ngIf="editingTeam">
+    <!-- LEFT PANEL: TEAM CONFIGURATION -->
+    <div class="panel config-panel">
+      <div class="panel-header">{{ 'TEM_HEADER_CONFIG' | translate }}</div>
+
+      <div class="config-form">
+        <!-- AVATAR SECTION -->
+        <div class="avatar-column">
+          <div class="avatar-preview-large" (click)="openAvatarSelector()" (dragover)="onDragOver($event)"
+            (drop)="onDrop($event, 'avatar')">
+
+            <img *ngIf="pendingAvatarPreview" [src]="pendingAvatarPreview">
+            <img *ngIf="!pendingAvatarPreview" [src]="editingTeam.avatarUrl | avatarUrl">
+
+            <div class="drop-hint" *ngIf="!editingTeam.avatarUrl && !pendingAvatarPreview">
+              {{ 'TEM_LABEL_DROP_AVATAR' | translate }}
+            </div>
+          </div>
+        </div>
+
+        <!-- NAME INPUT -->
+        <div class="form-group">
+          <label>{{ 'TEM_LABEL_NAME' | translate }}</label>
+          <input type="text" [(ngModel)]="editingTeam.name" class="dm-input" (focus)="onInputFocus()"
+            (change)="onInputChange()" (blur)="onInputBlur()">
+        </div>
+
+        <!-- SAVE BUTTONS -->
+        <div class="action-buttons">
+          <button class="btn btn-save" [disabled]="!hasChanges() || !editingTeam.name || isSaving"
+            (click)="updateTeam(false)">
+            {{ isSaving ? ('TEM_BTN_SAVING' | translate) : ('TEM_BTN_SAVE' | translate) }}
+          </button>
+          <button class="btn btn-save-new" [disabled]="!isNameUnique() || !editingTeam.name || isSaving"
+            (click)="saveAsNew()">
+            {{ 'TEM_BTN_SAVE_AS_NEW' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: DRIVER SELECTION -->
+    <div class="panel driver-selection-panel" *ngIf="editingTeam">
+      <div class="panel-header">{{ 'TEM_HEADER_MEMBERS' | translate }}</div>
+      <div class="driver-list-container">
+        <div class="driver-item" *ngFor="let driver of allDrivers" [class.selected]="isDriverInTeam(driver)"
+          (click)="toggleDriver(driver)">
+
+          <div class="checkbox">
+            <div class="checkbox-icon" *ngIf="isDriverInTeam(driver)">✓</div>
+          </div>
+
+          <div class="driver-avatar-mini">
+            <img [src]="driver.avatarUrl | avatarUrl" alt="Avatar">
+          </div>
+
+          <div class="driver-name">{{ driver.name }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVATAR SELECTOR MODAL -->
+  <app-item-selector [visible]="showAvatarSelector" [title]="'TEM_TITLE_SELECT_AVATAR' | translate"
+    [items]="avatarAssets" [itemType]="'image'" [backButtonRoute]="'/team-editor'"
+    [backButtonQueryParams]="{ id: editingTeam ? editingTeam.entity_id : null }" (select)="onAvatarSelected($event)"
+    (close)="closeAvatarSelector()">
+  </app-item-selector>
+
+  <!-- Connection Lost Overlay -->
+  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">{{ 'TMM_LOST_CONNECTION' | translate }}</div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+</div>

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Race;
+import com.antigravity.models.Team;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -25,6 +26,7 @@ public class DatabaseTaskHandlerTest {
   private DatabaseContext databaseContext;
   private MongoDatabase mongoDatabase;
   private MongoCollection<Race> raceCollection;
+  private MongoCollection<Team> teamCollection;
   private MongoCollection<Document> countersCollection;
   private Javalin app;
   private DatabaseTaskHandler handler;
@@ -34,11 +36,13 @@ public class DatabaseTaskHandlerTest {
     databaseContext = mock(DatabaseContext.class);
     mongoDatabase = mock(MongoDatabase.class);
     raceCollection = mock(MongoCollection.class);
+    teamCollection = mock(MongoCollection.class);
     countersCollection = mock(MongoCollection.class);
     app = mock(Javalin.class);
 
     when(databaseContext.getDatabase()).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
+    when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
     when(mongoDatabase.getCollection(eq("counters"))).thenReturn(countersCollection);
 
     handler = new DatabaseTaskHandler(databaseContext, app);
@@ -144,5 +148,75 @@ public class DatabaseTaskHandlerTest {
     assertThrows(IllegalArgumentException.class, () -> {
       handler.deleteRace(raceId);
     });
+  }
+
+  @Test
+  public void testCreateTeam_Success() {
+    Team teamRequest = new Team("New Team", "url", null, "new", null);
+
+    // Mock uniqueness check - no existing team
+    FindIterable<Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    // Mock sequence generation
+    Document counterDoc = new Document("seq", 200);
+    when(countersCollection.findOneAndUpdate(any(Bson.class), any(Bson.class), any())).thenReturn(counterDoc);
+
+    Team created = handler.createTeam(teamRequest);
+
+    assertNotNull(created);
+    assertEquals("200", created.getEntityId());
+    verify(teamCollection).insertOne(any(Team.class));
+  }
+
+  @Test
+  public void testCreateTeam_Duplicate() {
+    Team teamRequest = new Team("Duplicate Team", "url", null, "new", null);
+
+    // Mock uniqueness check - team exists
+    FindIterable<Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(new Team("Duplicate Team", "url", null, "existing-1", null));
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      handler.createTeam(teamRequest);
+    });
+
+    verify(teamCollection, never()).insertOne(any(Team.class));
+  }
+
+  @Test
+  public void testUpdateTeam_Success() {
+    String teamId = "team-123";
+    Team teamUpdate = new Team("Updated Team", "url", null, teamId, null);
+
+    // Mock uniqueness check - no OTHER team with same name/nick
+    FindIterable<Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    UpdateResult updateResult = mock(UpdateResult.class);
+    when(updateResult.getMatchedCount()).thenReturn(1L);
+    when(teamCollection.replaceOne(any(Bson.class), any(Team.class))).thenReturn(updateResult);
+
+    Team updated = handler.updateTeam(teamId, teamUpdate);
+
+    assertNotNull(updated);
+    assertEquals("Updated Team", updated.getName());
+    verify(teamCollection).replaceOne(any(Bson.class), any(Team.class));
+  }
+
+  @Test
+  public void testDeleteTeam_Success() {
+    String teamId = "team-to-delete";
+
+    DeleteResult deleteResult = mock(DeleteResult.class);
+    when(deleteResult.getDeletedCount()).thenReturn(1L);
+    when(teamCollection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+
+    handler.deleteTeam(teamId);
+
+    verify(teamCollection).deleteOne(any(Bson.class));
   }
 }

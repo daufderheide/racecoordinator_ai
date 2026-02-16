@@ -24,6 +24,10 @@ public class DatabaseTaskHandler {
         app.delete("/api/drivers/{id}", this::deleteDriver);
         app.get("/api/tracks", this::getTracks);
         app.get("/api/races", this::getRaces);
+        app.get("/api/teams", this::getTeams);
+        app.post("/api/teams", this::createTeam);
+        app.put("/api/teams/{id}", this::updateTeam);
+        app.delete("/api/teams/{id}", this::deleteTeam);
 
         app.post("/api/tracks", this::createTrack);
         app.put("/api/tracks/{id}", this::updateTrack);
@@ -49,6 +53,10 @@ public class DatabaseTaskHandler {
 
     private MongoCollection<Driver> getDriverCollection() {
         return databaseContext.getDatabase().getCollection("drivers", Driver.class);
+    }
+
+    private MongoCollection<com.antigravity.models.Team> getTeamCollection() {
+        return databaseContext.getDatabase().getCollection("teams", com.antigravity.models.Team.class);
     }
 
     private MongoCollection<com.antigravity.models.Track> getTrackCollection() {
@@ -304,6 +312,108 @@ public class DatabaseTaskHandler {
             e.printStackTrace();
             ctx.status(500).result("Error deleting driver: " + e.getMessage());
         }
+    }
+
+    private void getTeams(Context ctx) {
+        List<com.antigravity.models.Team> teams = new ArrayList<>();
+        getTeamCollection().find().forEach(teams::add);
+        ctx.json(teams);
+    }
+
+    private void createTeam(Context ctx) {
+        try {
+            com.antigravity.models.Team team = ctx.bodyAsClass(com.antigravity.models.Team.class);
+            team = createTeam(team);
+            ctx.status(201).json(team);
+        } catch (IllegalArgumentException e) {
+            ctx.status(409).result(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error creating team: " + e.getMessage());
+        }
+    }
+
+    public com.antigravity.models.Team createTeam(com.antigravity.models.Team team) {
+        MongoCollection<com.antigravity.models.Team> col = getTeamCollection();
+
+        // Uniqueness check
+        com.antigravity.models.Team existing = col.find(
+                Filters.eq("name", team.getName())).first();
+
+        if (existing != null) {
+            throw new IllegalArgumentException("Team name already exists");
+        }
+
+        if (team.getEntityId() == null || team.getEntityId().isEmpty() || "new".equals(team.getEntityId())) {
+            String nextId = getNextSequence("teams");
+            team = new com.antigravity.models.Team(
+                    team.getName(),
+                    team.getAvatarUrl(),
+                    team.getDriverIds(),
+                    nextId,
+                    null);
+        }
+        col.insertOne(team);
+        return team;
+    }
+
+    private void updateTeam(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            com.antigravity.models.Team team = ctx.bodyAsClass(com.antigravity.models.Team.class);
+            updateTeam(id, team);
+            ctx.json(team); // Note: updateTeam returns new object but we can return input if valid or
+                            // return result
+        } catch (IllegalArgumentException e) {
+            ctx.status(409).result(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error updating team: " + e.getMessage());
+        }
+    }
+
+    public com.antigravity.models.Team updateTeam(String id, com.antigravity.models.Team team) {
+        MongoCollection<com.antigravity.models.Team> col = getTeamCollection();
+
+        com.antigravity.models.Team existing = col.find(Filters.and(
+                Filters.ne("entity_id", id),
+                Filters.eq("name", team.getName())))
+                .first();
+
+        if (existing != null) {
+            throw new IllegalArgumentException("Team name or nickname already exists");
+        }
+
+        // Preservation of IDs is handled by maintaining original entity_id
+        // However, we construct a new object to ensure it has the correct ID
+        team = new com.antigravity.models.Team(
+                team.getName(),
+                team.getAvatarUrl(),
+                team.getDriverIds(),
+                id,
+                team.getId());
+
+        UpdateResult result = col.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), team);
+        if (result.getMatchedCount() == 0) {
+            // throw new IllegalArgumentException("Team not found"); // Optional depending
+            // on requirement
+        }
+        return team;
+    }
+
+    private void deleteTeam(Context ctx) {
+        try {
+            String id = ctx.pathParam("id");
+            deleteTeam(id);
+            ctx.status(204);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).result("Error deleting team: " + e.getMessage());
+        }
+    }
+
+    public void deleteTeam(String id) {
+        getTeamCollection().deleteOne(com.mongodb.client.model.Filters.eq("entity_id", id));
     }
 
     private void createTrack(Context ctx) {

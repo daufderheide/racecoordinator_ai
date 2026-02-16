@@ -73,6 +73,7 @@ describe('DefaultRacedayComponent', () => {
       getOverallStandingsUpdate: () => of({}),
       getInterfaceEvents: () => interfaceEventsSubject.asObservable(),
       getRaceState: () => of(com.antigravity.RaceState.NOT_STARTED),
+      getDrivers: () => of([]),
       connectToInterfaceDataSocket: jasmine.createSpy('connectToInterfaceDataSocket'),
       disconnectFromInterfaceDataSocket: jasmine.createSpy('disconnectFromInterfaceDataSocket'),
       serverUrl: 'http://localhost'

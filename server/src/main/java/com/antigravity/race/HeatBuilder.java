@@ -96,7 +96,27 @@ public class HeatBuilder {
                                     idx = drivers.size() - (d - numLanes) - 1;
                                 }
                             }
-                            heatDrivers.set(lane, new DriverHeatData(drivers.get(idx)));
+                            RaceParticipant participant = drivers.get(idx);
+                            DriverHeatData data = new DriverHeatData(participant);
+                            if (participant.isTeamParticipant() && participant.getTeam() != null
+                                    && participant.getTeamDrivers() != null
+                                    && !participant.getTeamDrivers().isEmpty()) {
+                                // Rotate drivers based on heat number
+                                int driverIdx = h % participant.getTeamDrivers().size();
+                                com.antigravity.models.Driver assignedDriver = participant.getTeamDrivers()
+                                        .get(driverIdx);
+                                logToFile("HeatBuilder: Heat " + h + ", Team "
+                                        + participant.getTeam().getName() + " -> Assigning driver: "
+                                        + assignedDriver.getName() + " (Index: " + driverIdx + ")");
+                                data.setActualDriver(assignedDriver);
+                            } else {
+                                if (participant.getTeam() != null) {
+                                    logToFile("HeatBuilder: Heat " + h + ", Team "
+                                            + participant.getTeam().getName() + " -> No team drivers found!");
+                                }
+                            }
+                            heatDrivers.set(lane, data);
+
                         }
                     }
                 }
@@ -104,5 +124,16 @@ public class HeatBuilder {
             heatList.add(new Heat(h + 1, heatDrivers, scoring));
         }
         return heatList;
+    }
+
+    private static void logToFile(String message) {
+        try {
+            String tmpDir = System.getProperty("java.io.tmpdir");
+            java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
+            java.nio.file.Files.write(logPath, (message + "\n").getBytes(),
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (Exception e) {
+            // Ignore
+        }
     }
 }

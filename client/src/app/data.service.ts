@@ -366,6 +366,22 @@ export class DataService {
 
   // --- Database Management ---
 
+  getTeams(): Observable<com.antigravity.ITeamModel[]> {
+    return this.http.get<com.antigravity.ITeamModel[]>(`${this.baseUrl}/api/teams`);
+  }
+
+  createTeam(team: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/teams`, team);
+  }
+
+  updateTeam(id: string, team: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/teams/${id}`, team);
+  }
+
+  deleteTeam(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/api/teams/${id}`);
+  }
+
   getDatabases(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/api/databases`);
   }
@@ -406,7 +422,7 @@ export class DataService {
   }
 
   // --- Asset Management ---
-  listAssets(): Observable<com.antigravity.IAsset[]> {
+  listAssets(): Observable<com.antigravity.IAssetMessage[]> {
     return this.http.get(`${this.baseUrl}/api/assets/list`, {
       responseType: 'arraybuffer'
     }).pipe(
@@ -417,7 +433,7 @@ export class DataService {
     );
   }
 
-  uploadAsset(name: string, type: string, data: Uint8Array): Observable<com.antigravity.IAsset> {
+  uploadAsset(name: string, type: string, data: Uint8Array): Observable<com.antigravity.IAssetMessage> {
     const request = com.antigravity.UploadAssetRequest.create({ name, type, data });
     const buffer = com.antigravity.UploadAssetRequest.encode(request).finish();
 

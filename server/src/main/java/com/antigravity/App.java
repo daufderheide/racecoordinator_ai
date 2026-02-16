@@ -56,6 +56,8 @@ public class App {
         String projectDir = System.getProperty("user.dir");
         String appDataDir = System.getProperty("app.data.dir",
                 Paths.get(projectDir, "app_data").toString());
+        appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
+        System.out.println("Using app data directory: " + appDataDir);
         String tmpDir = Paths.get(appDataDir, "server_tmp").toString();
         try {
             java.nio.file.Path tmpPath = Paths.get(tmpDir);
@@ -195,11 +197,13 @@ public class App {
         }
 
         com.antigravity.context.DatabaseContext databaseContext = new com.antigravity.context.DatabaseContext(
-                mongoClient, initialDbName, configService);
+                mongoClient, initialDbName, configService, appDataDir);
 
         if (needsFactoryReset) {
-            new com.antigravity.service.AssetService(databaseContext.getDatabase()).resetAssets();
-            new com.antigravity.service.DatabaseService().resetToFactory(databaseContext.getDatabase());
+            MongoDatabase db = databaseContext.getDatabase();
+            String dataRoot = databaseContext.getDataRoot();
+            new com.antigravity.service.AssetService(db, dataRoot + initialDbName + "/assets").resetAssets();
+            new com.antigravity.service.DatabaseService().resetToFactory(databaseContext, db);
         }
 
         System.out.println("Connected to MongoDB successfully.");

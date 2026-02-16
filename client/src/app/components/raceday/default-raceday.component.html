@@ -150,13 +150,26 @@
           <rect x="20" y="0" width="1560" [attr.height]="590 / track.lanes.length"
             [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
 
-          <!-- Dynamic columns -->
-          <text *ngFor="let column of columns; let colIndex = index" [attr.x]="getColumnTextX(colIndex)"
-            [attr.y]="(590 / track.lanes.length) * 0.67" [attr.font-size]="colIndex === 0 ? 85 : 60" font-weight="800"
+          <!-- Row Name Column -->
+          <text [attr.x]="getColumnTextX(0)"
+            [attr.y]="hd.participant.team ? (590 / track.lanes.length) * 0.55 : (590 / track.lanes.length) * 0.67"
+            [attr.font-size]="hd.participant.team ? 65 : 85" font-weight="800"
+            [attr.fill]="track.lanes[hd.laneIndex].foreground_color" [attr.text-anchor]="columns[0].textAnchor"
+            font-family="monospace" appSvgTextScaler [maxWidth]="getColumnMaxWidth(0)"
+            [scaleToFit]="columns[0].scaleToFit">{{ formatColumnValue(hd, columns[0]) }}</text>
+
+          <!-- Team Name (Conditional) -->
+          <text *ngIf="hd.participant.team" [attr.x]="getColumnTextX(0)" [attr.y]="(590 / track.lanes.length) * 0.85"
+            font-size="35" font-weight="600" fill-opacity="0.8" [attr.fill]="track.lanes[hd.laneIndex].foreground_color"
+            [attr.text-anchor]="columns[0].textAnchor" font-family="monospace" appSvgTextScaler
+            [maxWidth]="getColumnMaxWidth(0)" [scaleToFit]="true">{{ hd.participant.team.name }}</text>
+
+          <!-- Other Columns -->
+          <text *ngFor="let column of columns.slice(1); let colIndex = index" [attr.x]="getColumnTextX(colIndex + 1)"
+            [attr.y]="(590 / track.lanes.length) * 0.67" font-size="60" font-weight="800"
             [attr.fill]="track.lanes[hd.laneIndex].foreground_color" [attr.text-anchor]="column.textAnchor"
-            font-family="monospace" appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex)"
-            [scaleToFit]="column.scaleToFit">{{
-            formatColumnValue(hd, column) }}</text>
+            font-family="monospace" appSvgTextScaler [maxWidth]="getColumnMaxWidth(colIndex + 1)"
+            [scaleToFit]="column.scaleToFit">{{ formatColumnValue(hd, column) }}</text>
 
           <!-- Vertical Lines between columns -->
           <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"

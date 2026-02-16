@@ -57,4 +57,11 @@ export class ConverterCache<T> {
     }
     return item;
   }
+
+  /**
+   * Returns all keys in the cache for debugging.
+   */
+  getKeys(): string[] {
+    return Array.from(this.cache.keys());
+  }
 }

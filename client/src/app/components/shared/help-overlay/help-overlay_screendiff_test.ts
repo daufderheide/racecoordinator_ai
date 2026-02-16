@@ -9,6 +9,9 @@ test.describe('Help Overlay Visuals', () => {
 
     // Ensure we don't auto-trigger help from "first run" logic by presetting settings
     await TestSetupHelper.setupLocalStorage(page, { racedaySetupWalkthroughSeen: true });
+
+    // Skip splash screen
+    await TestSetupHelper.setupSessionStorage(page, { skipIntro: 'true' });
   });
 
   test('should display help guide and navigate correctly', async ({ page }) => {

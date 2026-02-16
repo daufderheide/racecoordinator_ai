@@ -8,13 +8,13 @@ option java_multiple_files = true;
 option java_outer_classname = "AssetManagementResponseProto";
 
 message ListAssetsResponse {
-  repeated Asset assets = 1;
+  repeated AssetMessage assets = 1;
 }
 
 message UploadAssetResponse {
   bool success = 1;
   string message = 2;
-  Asset asset = 3;
+  AssetMessage asset = 3;
 }
 
 message DeleteAssetResponse {

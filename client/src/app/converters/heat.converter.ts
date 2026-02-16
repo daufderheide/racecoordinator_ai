@@ -4,17 +4,17 @@ import { DriverHeatData } from "../race/driver_heat_data";
 import { RaceParticipant } from "../race/race_participant";
 import { Driver } from "../models/driver";
 import { DriverConverter } from "./driver.converter";
+import { TeamConverter } from "./team.converter";
+import { RaceParticipantConverter } from "./race_participant.converter";
 import { ConverterCache } from "./converter_cache";
 
 export class HeatConverter {
     private static participantCache = new Map<string, RaceParticipant>();
     private static heatCache = new ConverterCache<Heat>();
-    private static heatDriverCache = new Map<string, DriverHeatData>();
 
     static clearCache() {
         this.participantCache.clear();
         this.heatCache.clear();
-        this.heatDriverCache.clear();
     }
 
     static fromProto(proto: com.antigravity.IHeat, heatNumber: number = -1): Heat {
@@ -31,33 +31,27 @@ export class HeatConverter {
                 if (proto.heatDrivers) {
                     heatDrivers = proto.heatDrivers.map((dProto, index) => {
                         if (dProto.driver) {
-                            const partProto = dProto.driver;
-                            let participant: RaceParticipant | undefined;
-
-                            if (partProto.objectId && HeatConverter.participantCache.has(partProto.objectId)) {
-                                participant = HeatConverter.participantCache.get(partProto.objectId);
-                            } else if (partProto.driver) {
-                                const driver = DriverConverter.fromProto(partProto.driver);
-                                if (driver) {
-                                    participant = new RaceParticipant(driver, partProto.objectId || '');
-                                    if (partProto.objectId) {
-                                        HeatConverter.participantCache.set(partProto.objectId, participant);
-                                    }
-                                }
-                            }
+                            const participant = RaceParticipantConverter.fromProto(dProto.driver);
 
                             if (!participant) {
                                 console.warn(`HeatConverter: Failed to resolve participant for heat driver ${dProto.objectId}`);
                                 return null;
                             }
 
+                            let actualDriver: Driver | undefined;
+                            if (dProto.actualDriver) {
+                                actualDriver = DriverConverter.fromProto(dProto.actualDriver);
+                                console.log(`HeatConverter (Client): DriverHeatData ${dProto.objectId} has actualDriver:`, actualDriver.name);
+                            } else {
+                                // console.log(`HeatConverter (Client): DriverHeatData ${dProto.objectId} missing actualDriver`);
+                            }
+
                             const heatDriverId = dProto.objectId;
-                            return new DriverHeatData(heatDriverId || '', participant, index);
+                            return new DriverHeatData(heatDriverId || '', participant, index, actualDriver);
                         }
                         return null;
                     });
                 }
-
                 const validHeatDrivers = heatDrivers.filter((d): d is DriverHeatData => d !== null);
                 console.log(`HeatConverter: Processed ${validHeatDrivers.length} valid drivers for heat ${heatNumber}`);
 

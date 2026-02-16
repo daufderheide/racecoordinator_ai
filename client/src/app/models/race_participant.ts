@@ -1,4 +1,5 @@
 import { Driver } from './driver';
+import { Team } from './team';
 
 export class RaceParticipant {
   constructor(
@@ -11,6 +12,7 @@ export class RaceParticipant {
     public averageLapTime: number,
     public medianLapTime: number,
     public rankValue: number,
-    public seed: number
+    public seed: number,
+    public team?: Team
   ) { }
 }

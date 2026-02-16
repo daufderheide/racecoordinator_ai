@@ -37,6 +37,7 @@ server/data/assets/
 server/data
 server/app_data/
 server/temp/
+data/
 
 # Maven
 server/target

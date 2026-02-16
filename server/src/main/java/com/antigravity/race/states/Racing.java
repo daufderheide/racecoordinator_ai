@@ -278,6 +278,7 @@ public class Racing implements IRaceState {
                 .setMedianLapTime(driverData.getMedianLapTime())
                 .setBestLapTime(driverData.getBestLapTime())
                 .setInterfaceId(interfaceId)
+                .setDriverId(driverData.getActualDriver() != null ? driverData.getActualDriver().getEntityId() : "")
                 .build();
 
         com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()

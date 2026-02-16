@@ -3,7 +3,11 @@ package com.antigravity.race;
 import com.antigravity.models.Driver;
 
 public class RaceParticipant extends ServerToClientObject {
-    private final com.antigravity.models.Driver driver;
+    private com.antigravity.models.Driver driver;
+    private com.antigravity.models.Team team;
+    private java.util.List<com.antigravity.models.Driver> teamDrivers;
+    private boolean isTeamParticipant;
+
     private int rank;
     private int totalLaps;
     private double totalTime;
@@ -16,15 +20,79 @@ public class RaceParticipant extends ServerToClientObject {
     public RaceParticipant(com.antigravity.models.Driver driver) {
         super();
         this.driver = driver;
+        this.team = null;
+        this.isTeamParticipant = false;
+    }
+
+    public RaceParticipant(com.antigravity.models.Driver driver, com.antigravity.models.Team team) {
+        super();
+        this.driver = driver;
+        this.team = team;
+        this.isTeamParticipant = false;
+    }
+
+    public RaceParticipant(com.antigravity.models.Team team) {
+        super();
+        this.team = team;
+        this.isTeamParticipant = true;
+        // Create synthetic driver for the team
+        // Prefix ID with t_ to avoid clashing with real driver IDs in the client cache
+        this.driver = new com.antigravity.models.Driver(
+                team.getName(),
+                null, // Nickname
+                team.getAvatarUrl(),
+                null, null,
+                null, null, null, null, null, null,
+                "t_" + team.getEntityId(),
+                null);
     }
 
     public RaceParticipant(com.antigravity.models.Driver driver, String objectId) {
         super(objectId);
         this.driver = driver;
+        this.team = null;
     }
 
-    public Driver getDriver() {
+    public RaceParticipant(com.antigravity.models.Team team, String objectId) {
+        super(objectId);
+        this.driver = null;
+        this.team = team;
+    }
+
+    public RaceParticipant() {
+        super();
+    }
+
+    public com.antigravity.models.Driver getDriver() {
         return driver;
+    }
+
+    public void setDriver(com.antigravity.models.Driver driver) {
+        this.driver = driver;
+    }
+
+    public com.antigravity.models.Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(com.antigravity.models.Team team) {
+        this.team = team;
+    }
+
+    public void setTeamDrivers(java.util.List<com.antigravity.models.Driver> teamDrivers) {
+        this.teamDrivers = teamDrivers;
+    }
+
+    public java.util.List<com.antigravity.models.Driver> getTeamDrivers() {
+        return teamDrivers;
+    }
+
+    public boolean isTeamParticipant() {
+        return isTeamParticipant;
+    }
+
+    public void setTeamParticipant(boolean teamParticipant) {
+        isTeamParticipant = teamParticipant;
     }
 
     public int getRank() {

@@ -19,6 +19,16 @@ export class DriverConverter {
         // Is Reference if name is falsey (undefined, null, empty string)
         const isReference = !proto.name;
 
+        if (isReference) {
+            console.log(`DriverConverter: Resolving reference for Driver ID: ${objectId}`);
+            const cached = this.cache.get(objectId || '');
+            if (!cached) {
+                console.warn(`DriverConverter: FAILED to find Driver ID ${objectId} in cache!`);
+            } else {
+                console.log(`DriverConverter: Resolved ${objectId} to ${cached.name}`);
+            }
+        }
+
         return this.cache.process(objectId, isReference, () => {
             return new Driver(
                 objectId || '',
@@ -37,5 +47,36 @@ export class DriverConverter {
                 }
             );
         });
+    }
+
+    static fromJSON(json: any): Driver {
+        const d = new Driver(
+            json.entity_id || json.id || '', // Handle typical JSON id fields
+            json.name || '',
+            json.nickname || '',
+            json.avatarUrl,
+            json.lapAudio,
+            json.bestLapAudio
+        );
+        return d;
+    }
+
+    static register(driver: Driver): void {
+        if (!driver || !driver.entity_id) return;
+
+        const existing = this.cache.get(driver.entity_id);
+        if (existing) {
+            // Update in place to preserve references
+            existing.name = driver.name;
+            existing.nickname = driver.nickname;
+            existing.avatarUrl = driver.avatarUrl;
+            existing.lapAudio = driver.lapAudio;
+            existing.bestLapAudio = driver.bestLapAudio;
+        } else {
+            // Manually populate cache using process to ensure valid state
+            // access private cache if possible, or use a workaround.
+            // Since `process` is the main entry, we can use it with isRef=false
+            this.cache.process(driver.entity_id, false, () => driver);
+        }
     }
 }

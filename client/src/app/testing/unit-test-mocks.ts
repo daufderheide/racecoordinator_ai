@@ -6,6 +6,10 @@ export const mockDataService = {
   deleteAsset: jasmine.createSpy('deleteAsset').and.returnValue(of(true)),
   renameAsset: jasmine.createSpy('renameAsset').and.returnValue(of(true)),
   getDrivers: jasmine.createSpy('getDrivers').and.returnValue(of([])),
+  getTeams: jasmine.createSpy('getTeams').and.returnValue(of([])),
+  createTeam: jasmine.createSpy('createTeam').and.returnValue(of({ entity_id: 'new_t' })),
+  updateTeam: jasmine.createSpy('updateTeam').and.returnValue(of({ entity_id: 't1' })),
+  deleteTeam: jasmine.createSpy('deleteTeam').and.returnValue(of(true)),
   uploadAsset: jasmine.createSpy('uploadAsset').and.returnValue(of(true)),
   getCurrentDatabase: jasmine.createSpy('getCurrentDatabase').and.returnValue(of({ name: 'test_db' }))
 };

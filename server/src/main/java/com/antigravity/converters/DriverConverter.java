@@ -7,7 +7,7 @@ import com.antigravity.proto.Model;
 public class DriverConverter {
     public static DriverModel toProto(Driver driver, java.util.Set<String> sentObjectIds) {
         if (driver == null) {
-            return DriverModel.newBuilder().build();
+            return null;
         }
         String key = "Driver_" + driver.getObjectId();
         if (sentObjectIds != null && sentObjectIds.contains(key)) {

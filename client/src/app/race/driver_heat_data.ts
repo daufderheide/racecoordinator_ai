@@ -10,6 +10,7 @@ export class DriverHeatData {
     readonly laneIndex: number;
     readonly objectId: string;
     readonly participant: RaceParticipant;
+    readonly actualDriver?: Driver;
 
     private laps!: number[];
 
@@ -20,15 +21,16 @@ export class DriverHeatData {
     private _medianLapTime!: number;
     private _reactionTime: number = 0;
 
-    constructor(objectId: string, participant: RaceParticipant, laneIndex: number) {
+    constructor(objectId: string, participant: RaceParticipant, laneIndex: number, actualDriver?: Driver) {
         this.objectId = objectId;
         this.participant = participant;
         this.laneIndex = laneIndex;
+        this.actualDriver = actualDriver;
         this.reset();
     }
 
     get driver(): Driver {
-        return this.participant.driver;
+        return this.actualDriver ?? this.participant.driver;
     }
 
     reset(): void {

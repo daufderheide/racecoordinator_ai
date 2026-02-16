@@ -7,7 +7,7 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "AssetModelProto";
 
-message Asset {
+message AssetMessage {
   Model model = 1;
   string name = 2;
   string type = 3; // "image" or "sound"

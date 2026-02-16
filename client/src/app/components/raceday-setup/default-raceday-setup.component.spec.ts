@@ -28,7 +28,7 @@ describe('DefaultRacedaySetupComponent', () => {
   let mockHelpService: any;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getRaces', 'initializeRace']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace']);
     mockRaceService = jasmine.createSpyObj('RaceService', ['startRace']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate', 'setLanguage', 'getSupportedLanguages', 'getBrowserLanguage']);
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
@@ -45,6 +45,9 @@ describe('DefaultRacedaySetupComponent', () => {
     mockDataService.getDrivers.and.returnValue(of([
       { entity_id: 'd1', name: 'Driver 1', nickname: 'D1' },
       { entity_id: 'd2', name: 'Driver 2', nickname: 'D2' }
+    ]));
+    mockDataService.getTeams.and.returnValue(of([
+      { entity_id: 't1', name: 'Team 1', driverIds: ['d1'] }
     ]));
     mockDataService.getRaces.and.returnValue(of([
       { entity_id: 'r1', name: 'Grand Prix' },
@@ -83,24 +86,40 @@ describe('DefaultRacedaySetupComponent', () => {
   });
 
   it('should toggle driver selection', () => {
-    const driverToSelect = component.filteredUnselectedDrivers.find((d: any) => d.entity_id === 'd2')!;
-    component.toggleDriverSelection(driverToSelect, false);
+    const driverToSelect = component.filteredUnselectedParticipants.find((d: any) => d.entity_id === 'd2')!;
+    component.toggleParticipantSelection(driverToSelect, false);
 
-    expect(component.selectedDrivers.length).toBe(1);
-    expect(component.selectedDrivers[0].entity_id).toBe('d2');
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].entity_id).toBe('d2');
 
-    const driverToUnselect = component.selectedDrivers[0];
-    component.toggleDriverSelection(driverToUnselect, true);
+    const driverToUnselect = component.selectedParticipants[0];
+    component.toggleParticipantSelection(driverToUnselect, true);
 
-    expect(component.selectedDrivers.length).toBe(0);
-    expect(component.filteredUnselectedDrivers.length).toBe(2);
+    expect(component.selectedParticipants.length).toBe(0);
+    expect(component.filteredUnselectedParticipants.length).toBe(3);
+  });
+
+  it('should toggle team selection', () => {
+    mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getTeams.and.returnValue(of([
+      { entity_id: 't1', name: 'Team 1', driverIds: ['d1'] } as any
+    ]));
+    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    const teamToSelect = component.filteredUnselectedParticipants.find((d: any) => d.entity_id === 't1')!;
+    component.toggleParticipantSelection(teamToSelect, false);
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].entity_id).toBe('t1');
+
+    component.toggleParticipantSelection(component.selectedParticipants[0], true);
+    expect(component.selectedParticipants.length).toBe(0);
   });
 
   it('should search drivers', () => {
-    expect(component.filteredUnselectedDrivers.length).toBe(2);
+    expect(component.filteredUnselectedParticipants.length).toBe(3);
     component.driverSearchQuery = 'Driver 1';
-    expect(component.filteredUnselectedDrivers.length).toBe(1);
-    expect(component.filteredUnselectedDrivers[0].name).toBe('Driver 1');
+    expect(component.filteredUnselectedParticipants.length).toBe(1);
+    expect(component.filteredUnselectedParticipants[0].name).toBe('Driver 1');
   });
 
   it('should search races', () => {
@@ -120,7 +139,7 @@ describe('DefaultRacedaySetupComponent', () => {
 
   it('should start race', () => {
     component.selectedRace = component.races[0];
-    component.selectedDrivers = [component.unselectedDrivers[0]];
+    component.selectedParticipants = [component.unselectedParticipants[0]];
     const response = com.antigravity.InitializeRaceResponse.fromObject({ success: true });
     mockDataService.initializeRace.and.returnValue(of(response));
 
@@ -132,7 +151,7 @@ describe('DefaultRacedaySetupComponent', () => {
 
   it('should start demo race', () => {
     component.selectedRace = component.races[0];
-    component.selectedDrivers = [component.unselectedDrivers[0]];
+    component.selectedParticipants = [component.unselectedParticipants[0]];
     const response = com.antigravity.InitializeRaceResponse.fromObject({ success: true });
     mockDataService.initializeRace.and.returnValue(of(response));
 
@@ -142,47 +161,47 @@ describe('DefaultRacedaySetupComponent', () => {
   });
 
   it('should add all drivers', () => {
-    expect(component.filteredUnselectedDrivers.length).toBe(2);
-    expect(component.selectedDrivers.length).toBe(0);
+    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    expect(component.selectedParticipants.length).toBe(0);
 
-    component.addAllDrivers();
+    component.addAllParticipants();
 
-    expect(component.filteredUnselectedDrivers.length).toBe(0);
-    expect(component.selectedDrivers.length).toBe(2);
+    expect(component.filteredUnselectedParticipants.length).toBe(0);
+    expect(component.selectedParticipants.length).toBe(3);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   });
 
   it('should remove all drivers', () => {
     // Setup initial state: select all
-    component.addAllDrivers();
-    expect(component.selectedDrivers.length).toBe(2);
+    component.addAllParticipants();
+    expect(component.selectedParticipants.length).toBe(3);
 
-    component.removeAllDrivers();
+    component.removeAllParticipants();
 
-    expect(component.selectedDrivers.length).toBe(0);
-    expect(component.filteredUnselectedDrivers.length).toBe(2);
+    expect(component.selectedParticipants.length).toBe(0);
+    expect(component.filteredUnselectedParticipants.length).toBe(3);
     // Should be sorted alphabetically
-    expect(component.filteredUnselectedDrivers[0].name).toBe('Driver 1');
+    expect(component.filteredUnselectedParticipants[0].name).toBe('Driver 1');
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   });
 
   it('should randomize drivers', () => {
     // Setup: add 3 mock drivers to have noticeable shuffle
-    component.selectedDrivers = [
+    component.selectedParticipants = [
       { entity_id: 'd1', name: 'D1' } as any,
       { entity_id: 'd2', name: 'D2' } as any,
       { entity_id: 'd3', name: 'D3' } as any,
     ];
-    const initialOrder = component.selectedDrivers.map(d => d.entity_id).join(',');
+    const initialOrder = component.selectedParticipants.map(p => p.entity_id).join(',');
 
     // Mock Math.random to ensure a specific shuffle order for deterministic test if needed, 
     // or just check that it calls saveSettings and keeps length.
     // Testing true randomness is flaky, so let's verify integration.
     spyOn(Math, 'random').and.returnValue(0.5); // Simple mock
 
-    component.randomizeDrivers();
+    component.randomizeParticipants();
 
-    expect(component.selectedDrivers.length).toBe(3);
+    expect(component.selectedParticipants.length).toBe(3);
     // With fixed random, order might change or not depending on impl, 
     // but main goal is to ensure it runs without error and saves.
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();

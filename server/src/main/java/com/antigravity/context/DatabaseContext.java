@@ -16,17 +16,18 @@ public class DatabaseContext {
   private volatile MongoDatabase currentDatabase;
   private volatile String currentDatabaseName;
   private final com.antigravity.service.ServerConfigService configService;
-  private String dataRoot = "data/";
-
-  public void setDataRoot(String dataRoot) {
-    this.dataRoot = dataRoot.endsWith("/") ? dataRoot : dataRoot + "/";
-  }
+  private final String dataRoot;
 
   public DatabaseContext(MongoClient mongoClient, String initialDatabaseName,
-      com.antigravity.service.ServerConfigService configService) {
+      com.antigravity.service.ServerConfigService configService, String dataRoot) {
     this.mongoClient = mongoClient;
     this.configService = configService;
+    this.dataRoot = dataRoot.endsWith(java.io.File.separator) ? dataRoot : dataRoot + java.io.File.separator;
     this.switchDatabase(initialDatabaseName);
+  }
+
+  public String getDataRoot() {
+    return dataRoot;
   }
 
   public synchronized MongoDatabase getDatabase() {
@@ -59,9 +60,11 @@ public class DatabaseContext {
     } catch (Exception e) {
       // Might already exist, ignore
     }
-    // Ensure assets directory exists for the new database
-    new java.io.File(dataRoot + databaseName + "/assets").mkdirs();
-    System.out.println("Created database: " + databaseName);
+    java.io.File assetDir = new java.io.File(dataRoot + databaseName + "/assets");
+    if (!assetDir.exists() && !assetDir.mkdirs()) {
+      throw new RuntimeException("Failed to create assets directory: " + assetDir.getAbsolutePath());
+    }
+    System.out.println("Created database: " + databaseName + " at " + assetDir.getAbsolutePath());
   }
 
   public List<String> listDatabases() {
@@ -164,12 +167,13 @@ public class DatabaseContext {
   public void resetDatabaseToFactory(String dbName) {
     MongoDatabase db = mongoClient.getDatabase(dbName);
     new com.antigravity.service.AssetService(db, dataRoot + dbName + "/assets").resetAssets();
-    new com.antigravity.service.DatabaseService().resetToFactory(db);
+    new com.antigravity.service.DatabaseService().resetToFactory(this, db);
   }
 
   public DatabaseStats getDatabaseStats(String dbName) {
     MongoDatabase db = mongoClient.getDatabase(dbName);
     long driverCount = db.getCollection("drivers").countDocuments();
+    long teamCount = db.getCollection("teams").countDocuments();
     long trackCount = db.getCollection("tracks").countDocuments();
     long raceCount = db.getCollection("races").countDocuments();
     long assetCount = db.getCollection("assets").countDocuments();
@@ -194,7 +198,7 @@ public class DatabaseContext {
     }
     sizeBytes += assetSizeBytes;
 
-    return new DatabaseStats(dbName, driverCount, trackCount, raceCount, assetCount, sizeBytes);
+    return new DatabaseStats(dbName, driverCount, teamCount, trackCount, raceCount, assetCount, sizeBytes);
   }
 
   public void exportDatabase(String dbName, OutputStream out) throws IOException {
@@ -300,15 +304,17 @@ public class DatabaseContext {
   public static class DatabaseStats {
     public String name;
     public long driverCount;
+    public long teamCount;
     public long trackCount;
     public long raceCount;
     public long assetCount;
     public double sizeBytes;
 
-    public DatabaseStats(String name, long driverCount, long trackCount, long raceCount, long assetCount,
-        double sizeBytes) {
+    public DatabaseStats(String name, long driverCount, long teamCount, long trackCount, long raceCount,
+        long assetCount, double sizeBytes) {
       this.name = name;
       this.driverCount = driverCount;
+      this.teamCount = teamCount;
       this.trackCount = trackCount;
       this.raceCount = raceCount;
       this.assetCount = assetCount;

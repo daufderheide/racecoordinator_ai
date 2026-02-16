@@ -79,6 +79,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     protected isInterfaceConnected: boolean = false;
     protected raceState: com.antigravity.RaceState = com.antigravity.RaceState.UNKNOWN_STATE;
 
+    private driversLoaded = false;
+    private pendingUpdate: com.antigravity.IRace | null = null;
+
     ngOnInit() {
         console.log('RacedayComponent: Initializing...');
 
@@ -89,6 +92,33 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         TrackConverter.clearCache();
         LaneConverter.clearCache();
 
+        // Hydrate Driver Converter with all known drivers from DB to handle ID-only references in Proto
+        this.dataService.getDrivers().subscribe({
+            next: (drivers) => {
+                console.log(`RacedayComponent: Hydrating ${drivers.length} drivers into cache.`);
+                drivers.forEach(d => {
+                    const driver = DriverConverter.fromJSON(d);
+                    DriverConverter.register(driver);
+                });
+                console.log('RacedayComponent: Hydration COMPLETE. Current Cache Keys:', (DriverConverter as any).cache.getKeys());
+                this.driversLoaded = true;
+                if (this.pendingUpdate) {
+                    console.log('RacedayComponent: Processing pending race update after hydration.');
+                    this.processRaceUpdate(this.pendingUpdate);
+                    this.pendingUpdate = null;
+                }
+            },
+            error: (err) => {
+                console.error('RacedayComponent: Failed to load drivers for hydration', err);
+                // Proceed anyway to avoid blocking execution, though names might be missing
+                this.driversLoaded = true;
+                if (this.pendingUpdate) {
+                    this.processRaceUpdate(this.pendingUpdate);
+                    this.pendingUpdate = null;
+                }
+            }
+        });
+
         this.detectShortcutKey();
         this.updateScale();
 
@@ -97,35 +127,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
         // Listen for Race Update to initialize race data
         this.dataService.getRaceUpdate().subscribe(update => {
-            console.log('RacedayComponent: Received Race:', update);
-            let raceDataChanged = false;
-
-            if (update.race) {
-                const race = RaceConverter.fromProto(update.race);
-                this.raceService.setRace(race);
-                raceDataChanged = true;
-            }
-
-            if (update.drivers && update.drivers.length > 0) {
-                const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
-                this.raceService.setParticipants(participants);
-                raceDataChanged = true;
-            }
-
-            if (update.heats && update.heats.length > 0) {
-                const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
-                this.raceService.setHeats(heats);
-                raceDataChanged = true;
-            }
-
-            if (update.currentHeat) {
-                const currentHeat = HeatConverter.fromProto(update.currentHeat);
-                this.raceService.setCurrentHeat(currentHeat);
-                raceDataChanged = true;
-            }
-
-            if (raceDataChanged) {
-                this.loadRaceData();
+            if (this.driversLoaded) {
+                this.processRaceUpdate(update);
+            } else {
+                console.log('RacedayComponent: Deferring race update until drivers are hydrated.');
+                this.pendingUpdate = update;
             }
         });
 
@@ -155,8 +161,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
                 this.timeFormat = '1.0-0';
             }
 
-            this.previousTime = this.time; // Store LAST displayed time, which is now current
             this.time = time;
+            this.previousTime = time;
             this.cdr.detectChanges();
         });
 
@@ -268,6 +274,42 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
         // Start watchdog
         this.resetWatchdog();
+    }
+
+    private processRaceUpdate(update: com.antigravity.IRace) {
+        console.log('RacedayComponent: Processing Race Update:', update);
+        let raceDataChanged = false;
+
+        if (update.race) {
+            const race = RaceConverter.fromProto(update.race);
+            this.raceService.setRace(race);
+            raceDataChanged = true;
+        }
+
+        if (update.drivers && update.drivers.length > 0) {
+            const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
+            this.raceService.setParticipants(participants);
+            raceDataChanged = true;
+        }
+
+        if (update.heats && update.heats.length > 0) {
+            const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
+            this.raceService.setHeats(heats);
+            raceDataChanged = true;
+        }
+
+        if (update.currentHeat) {
+            const currentHeat = HeatConverter.fromProto(update.currentHeat);
+            this.raceService.setCurrentHeat(currentHeat);
+            raceDataChanged = true;
+        }
+
+        if (raceDataChanged) {
+            this.loadRaceData();
+            // Force change detection and update scale just in case
+            this.cdr.detectChanges();
+            this.updateScale();
+        }
     }
 
     private leaderBoardWindow: Window | null = null;
@@ -383,7 +425,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
                 this.heat.heatDrivers.forEach((hd, idx) => {
                     console.log(`Driver ${idx}:`, hd);
                     if (hd) {
-                        console.log(`Driver ${idx} details:`, hd.participant?.driver?.name);
+                        console.log(`Driver ${idx} details:`, hd.driver.name);
                     }
                 });
 
@@ -451,6 +493,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     // Helper method to format column value for display
     formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition): string {
         const value = this.getPropertyValue(heatDriver, column.propertyName);
+
+        // Special handling for Name column
+        if (column.propertyName === 'driver.name') {
+            if (heatDriver.actualDriver && heatDriver.actualDriver.name) {
+                return heatDriver.actualDriver.name;
+            }
+            return heatDriver.driver.name;
+        }
 
         // Format numeric lap times
         if (column.propertyName.includes('LapTime')) {

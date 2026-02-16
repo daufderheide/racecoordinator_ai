@@ -119,6 +119,7 @@ export class RacedaySetupComponent implements OnInit {
     this.dataService.getServerVersion().subscribe({
       next: (version) => {
         this.serverVersion = version;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.warn('Failed to fetch server version', err);

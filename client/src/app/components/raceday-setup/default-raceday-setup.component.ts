@@ -11,6 +11,9 @@ import { SettingsService } from 'src/app/services/settings.service';
 import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
+import { Team } from 'src/app/models/team';
+
+type Participant = Driver | Team;
 
 @Component({
   selector: 'app-default-raceday-setup',
@@ -32,11 +35,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }, 500);
   }
 
-  // Driver State
-  selectedDrivers: Driver[] = [];
-  unselectedDrivers: Driver[] = [];
+  // Driver/Team State
+  selectedParticipants: Participant[] = [];
+  unselectedParticipants: Participant[] = [];
 
-  driverImageErrors = new Set<string>();
+  imageErrors = new Set<string>();
 
   // Search State
   driverSearchQuery: string = '';
@@ -53,6 +56,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
+  isDriverDropdownOpen: boolean = false;
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
 
@@ -62,7 +66,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
-    { label: 'RDS_MENU_DRIVER', action: () => this.openDriverManager() },
+    { label: 'RDS_MENU_DRIVER', action: (event: MouseEvent) => this.toggleDriverDropdown(event) },
     { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
     { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
@@ -85,6 +89,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
     forkJoin({
       drivers: this.dataService.getDrivers(),
+      teams: this.dataService.getTeams(),
       races: this.dataService.getRaces()
     }).subscribe({
       next: (result) => {
@@ -104,6 +109,12 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
             text: d.bestLapAudio?.text || d.bestLapSoundText
           }
         ));
+        const teams = result.teams.map((t: any) => new Team(
+          t.entity_id || t.entityId || '',
+          t.name || '',
+          t.avatarUrl || undefined,
+          t.driverIds || []
+        ));
         const races = result.races;
 
         // --- Race Setup ---
@@ -121,28 +132,33 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
           this.selectedRace = this.races[0];
         }
 
-        // --- Driver Setup ---
-        // Initialize lists
-        let initialSelectedIds = new Set<string>();
-        if (localSettings && localSettings.selectedDriverIds) {
-          initialSelectedIds = new Set(localSettings.selectedDriverIds);
-        }
-
-        const driverMap = new Map(drivers.map(d => [d.entity_id, d]));
+        // --- Participant Setup ---
+        const allParticipants: Participant[] = [...drivers, ...teams];
+        // Use prefixed IDs to avoid collision between drivers and teams sharing the same numeric sequence
+        const participantMap = new Map(allParticipants.map(p => [this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`, p]));
 
         // Populate Selected (in saved order)
         if (localSettings && localSettings.selectedDriverIds) {
-          for (const id of localSettings.selectedDriverIds) {
-            const d = driverMap.get(id);
-            if (d) {
-              this.selectedDrivers.push(d);
-              driverMap.delete(id);
+          for (const rawId of localSettings.selectedDriverIds) {
+            // Support both prefixed and non-prefixed IDs for backward compatibility
+            let prefixedId = rawId;
+            if (!rawId.startsWith('d_') && !rawId.startsWith('t_')) {
+              // Old style ID, try driver first then team
+              if (participantMap.has(`d_${rawId}`)) {
+                prefixedId = `d_${rawId}`;
+              } else if (participantMap.has(`t_${rawId}`)) {
+                prefixedId = `t_${rawId}`;
+              }
+            }
+
+            const p = participantMap.get(prefixedId);
+            if (p) {
+              this.selectedParticipants.push(p);
+              participantMap.delete(prefixedId);
             }
           }
-        }
-
-        // Populate Unselected (Alphabetical)
-        this.unselectedDrivers = Array.from(driverMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        } // 抽离. driver name and team name. Unselected (Alphabetical)
+        this.unselectedParticipants = Array.from(participantMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
         this.cdr.detectChanges();
       },
@@ -180,6 +196,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     if (!target.closest('.file-menu-container')) {
       this.closeFileDropdown();
     }
+    if (!target.closest('.driver-menu-container')) {
+      this.closeDriverDropdown();
+    }
   }
 
 
@@ -196,59 +215,83 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.scale = Math.min(scaleX, scaleY);
   }
 
-  getDriverAvatarUrl(driver: Driver): string {
-    if (!driver.avatarUrl) return '';
-    if (driver.avatarUrl.startsWith('/')) {
-      return `${this.dataService.serverUrl}${driver.avatarUrl}`;
+  getParticipantAvatarUrl(participant: Participant): string {
+    if (!participant.avatarUrl) return '';
+    if (participant.avatarUrl.startsWith('/')) {
+      return `${this.dataService.serverUrl}${participant.avatarUrl}`;
     }
-    return driver.avatarUrl;
+    return participant.avatarUrl;
   }
 
-  onDriverImageError(driver: Driver) {
-    this.driverImageErrors.add(driver.entity_id);
+  onParticipantImageError(participant: Participant) {
+    this.imageErrors.add((this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id); // 抽离. driver name and team name.
   }
 
-  // --- Driver Logic ---
+  // --- Participant Logic ---
 
-  toggleDriverSelection(driver: Driver, isSelected: boolean) {
+  toggleParticipantSelection(participant: Participant, isSelected: boolean) {
     this.updateListWithRefresh(() => {
       if (isSelected) {
         // Was selected, now unselecting
-        this.selectedDrivers = this.selectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-        this.unselectedDrivers = [...this.unselectedDrivers, driver].sort((a, b) => a.name.localeCompare(b.name));
+        this.selectedParticipants = this.selectedParticipants.filter(p =>
+          !(p.entity_id === participant.entity_id && this.isDriver(p) === this.isDriver(participant))
+        );
+        this.unselectedParticipants = [...this.unselectedParticipants, participant].sort((a, b) => a.name.localeCompare(b.name));
       } else {
         // Was unselected, now selecting
-        this.unselectedDrivers = this.unselectedDrivers.filter(d => d.entity_id !== driver.entity_id);
-        this.selectedDrivers = [...this.selectedDrivers, driver];
+        this.unselectedParticipants = this.unselectedParticipants.filter(p =>
+          !(p.entity_id === participant.entity_id && this.isDriver(p) === this.isDriver(participant))
+        );
+        this.selectedParticipants = [...this.selectedParticipants, participant];
       }
     });
-  }
+  } // 抽离. driver name and team name.
 
-  addAllDrivers() {
+  addAllParticipants() {
     this.updateListWithRefresh(() => {
-      this.selectedDrivers = [...this.selectedDrivers, ...this.unselectedDrivers];
-      this.unselectedDrivers = [];
+      this.selectedParticipants = [...this.selectedParticipants, ...this.unselectedParticipants];
+      this.unselectedParticipants = [];
     });
   }
 
-  removeAllDrivers() {
+  removeAllParticipants() {
     this.updateListWithRefresh(() => {
-      this.unselectedDrivers = [...this.unselectedDrivers, ...this.selectedDrivers].sort((a, b) => a.name.localeCompare(b.name));
-      this.selectedDrivers = [];
+      this.unselectedParticipants = [...this.unselectedParticipants, ...this.selectedParticipants].sort((a, b) => a.name.localeCompare(b.name));
+      this.selectedParticipants = [];
     });
   }
 
-  randomizeDrivers() {
+  randomizeParticipants() {
     this.updateListWithRefresh(() => {
       // Immutable shuffle
-      const shuffled = [...this.selectedDrivers];
+      const shuffled = [...this.selectedParticipants];
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      this.selectedDrivers = shuffled;
+      this.selectedParticipants = shuffled;
     });
   }
+
+  isDriver(participant: Participant | undefined): participant is Driver {
+    return participant instanceof Driver;
+  }
+
+  isTeam(participant: Participant | undefined): participant is Team {
+    return participant instanceof Team;
+  }
+
+  getDriver(participant: Participant | undefined): Driver | undefined {
+    return participant instanceof Driver ? participant : undefined;
+  }
+
+  getTeam(participant: Participant | undefined): Team | undefined {
+    return participant instanceof Team ? participant : undefined;
+  }
+
+  getParticipantUniqueId(participant: Participant): string {
+    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id;
+  } // 抽离. driver name and team name.
 
   private updateListWithRefresh(action: () => void) {
     this.clearSelectionAndBlur();
@@ -290,8 +333,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }, 0);
   }
 
-  trackByDriver(index: number, driver: Driver): string {
-    return driver.entity_id;
+  trackByParticipant = (index: number, participant: Participant): string => {
+    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id; // 抽离. driver name and team name.
   }
 
   preventSelection(event: Event) {
@@ -304,10 +347,10 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }
   }
 
-  drop(event: CdkDragDrop<Driver[]>) {
+  drop(event: CdkDragDrop<Participant[]>) {
     // Only reorder within the selected list and if dropped strictly inside the container
     if (event.container.id === 'selected-list' && event.isPointerOverContainer) {
-      moveItemInArray(this.selectedDrivers, event.previousIndex, event.currentIndex);
+      moveItemInArray(this.selectedParticipants, event.previousIndex, event.currentIndex);
       this.saveSettings();
     }
   }
@@ -343,19 +386,19 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     // Always persist
     const settings = new Settings(
       recentRaceIds,
-      this.selectedDrivers.map(d => d.entity_id),
+      this.selectedParticipants.map(p => this.getParticipantUniqueId(p)),
       localSettings.serverIp,
       localSettings.serverPort,
       localSettings.language,
       localSettings.racedaySetupWalkthroughSeen
     );
-    this.settingsService.saveSettings(settings);
+    this.settingsService.saveSettings(settings); // 抽离. driver name and team name.
     this.updateQuickStartRaces(recentRaceIds);
   }
 
   startRace(isDemo: boolean = false) {
-    if (this.selectedRace && this.selectedDrivers.length > 0) {
-      console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedDrivers.length} drivers`);
+    if (this.selectedRace && this.selectedParticipants.length > 0) {
+      console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`);
 
       // Ensure settings are up to date before redirecting
       this.saveSettings();
@@ -412,7 +455,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getStartRaceTooltip(): string {
-    if (this.selectedDrivers.length > 0) return '';
+    if (this.selectedParticipants.length > 0) return '';
     const translated = this.translationService.translate('RDS_START_RACE_TOOLTIP');
     console.log('DEBUG: getStartRaceTooltip returning:', translated);
     return translated;
@@ -423,19 +466,18 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     return backgrounds[index % backgrounds.length];
   }
 
-  get filteredUnselectedDrivers(): Driver[] {
-    if (!this.driverSearchQuery) return this.unselectedDrivers;
+  get filteredUnselectedParticipants(): Participant[] {
+    if (!this.driverSearchQuery) return this.unselectedParticipants;
     const q = this.driverSearchQuery.toLowerCase();
-    return this.unselectedDrivers.filter(d =>
-      d.name.toLowerCase().includes(q) ||
-      d.nickname.toLowerCase().includes(q)
+    return this.unselectedParticipants.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      ((p as any).nickname && (p as any).nickname.toLowerCase().includes(q))
     );
   }
 
   get filteredRaces(): Race[] {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
-    return this.races.filter(r => r.name.toLowerCase().includes(q));
     return this.races.filter(r => r.name.toLowerCase().includes(q));
   }
 
@@ -513,8 +555,23 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/asset-manager']);
   }
 
+  toggleDriverDropdown(event: Event) {
+    event.stopPropagation();
+    this.isDriverDropdownOpen = !this.isDriverDropdownOpen;
+  }
+
+  closeDriverDropdown() {
+    this.isDriverDropdownOpen = false;
+  }
+
   openDriverManager() {
+    this.closeDriverDropdown();
     this.router.navigate(['/driver-manager']);
+  }
+
+  openTeamManager() {
+    this.closeDriverDropdown();
+    this.router.navigate(['/team-manager']);
   }
 
   openTrackManager() {
@@ -523,8 +580,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   openRaceManager() {
     const queryParams: any = this.selectedRace ? { id: this.selectedRace.entity_id } : {};
-    // Pass the number of selected drivers to the race manager for heat generation
-    queryParams.driverCount = this.selectedDrivers.length;
+    // Pass the number of selected participants to the race manager for heat generation
+    queryParams.driverCount = this.selectedParticipants.length;
     this.router.navigate(['/race-manager'], { queryParams });
   }
 

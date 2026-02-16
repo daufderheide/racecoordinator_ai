@@ -5,15 +5,15 @@ test.describe('Database Manager Visuals', () => {
 
   // Mock Data
   let mockDatabases = [
-    { name: 'db1', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 },
-    { name: 'db2', driverCount: 5, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
+    { name: 'db1', driverCount: 10, teamCount: 5, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 },
+    { name: 'db2', driverCount: 5, teamCount: 2, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
   ];
 
   test.beforeEach(async ({ page }) => {
     // Reset mock data for each test
     mockDatabases = [
-      { name: 'db1', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 },
-      { name: 'db2', driverCount: 5, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
+      { name: 'db1', driverCount: 10, teamCount: 5, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 },
+      { name: 'db2', driverCount: 5, teamCount: 2, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
     ];
 
     await TestSetupHelper.setupStandardMocks(page);
@@ -30,7 +30,7 @@ test.describe('Database Manager Visuals', () => {
 
     await page.route('**/api/databases/create', async route => {
       const data = route.request().postDataJSON();
-      const newDb = { name: data.name, driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 };
+      const newDb = { name: data.name, driverCount: 0, teamCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 };
       mockDatabases.push(newDb);
       await route.fulfill({ json: newDb });
     });
@@ -42,13 +42,13 @@ test.describe('Database Manager Visuals', () => {
 
     await page.route('**/api/databases/copy', async route => {
       const data = route.request().postDataJSON();
-      const newDb = { name: data.name, driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 };
+      const newDb = { name: data.name, driverCount: 10, teamCount: 5, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 };
       mockDatabases.push(newDb);
       await route.fulfill({ json: newDb });
     });
 
     await page.route('**/api/databases/reset', async route => {
-      await route.fulfill({ json: { name: 'db1', driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 } });
+      await route.fulfill({ json: { name: 'db1', driverCount: 0, teamCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 } });
     });
 
     await page.route('**/api/databases/delete', async route => {

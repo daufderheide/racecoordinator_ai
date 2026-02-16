@@ -3,7 +3,6 @@ package com.antigravity.context;
 import com.antigravity.service.ServerConfigService;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.transitions.Mongod;
@@ -75,8 +74,8 @@ public class DatabaseContextTest {
 
     mongoClient = MongoClients.create(settings);
 
-    databaseContext = new DatabaseContext(mongoClient, "TEST_DB", configService);
-    databaseContext.setDataRoot(tempFolder.getRoot().getAbsolutePath() + "/data/");
+    databaseContext = new DatabaseContext(mongoClient, "TEST_DB", configService,
+        tempFolder.getRoot().getAbsolutePath() + "/data/");
   }
 
   @After

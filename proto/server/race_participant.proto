@@ -2,6 +2,7 @@ syntax = "proto3";
 package com.antigravity;
 
 import "client/driver_model.proto";
+import "client/team_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -18,4 +19,5 @@ message RaceParticipant {
   double median_lap_time = 8;
   double rank_value = 9;
   int32 seed = 10;
+  TeamModel team = 11;
 }

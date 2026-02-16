@@ -3,7 +3,7 @@ package com.antigravity.race;
 import java.util.UUID;
 
 public abstract class ServerToClientObject {
-    private final String objectId;
+    private String objectId;
 
     public ServerToClientObject() {
         this.objectId = UUID.randomUUID().toString();
@@ -19,5 +19,9 @@ public abstract class ServerToClientObject {
 
     public String getObjectId() {
         return objectId;
+    }
+
+    public void setObjectId(String objectId) {
+        this.objectId = objectId;
     }
 }
