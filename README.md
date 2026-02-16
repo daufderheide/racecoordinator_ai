@@ -4,20 +4,14 @@ RaceCoordinator 2.0 built with google antigravity
 ## How to Run
 
 ### First Time Setup
-The `run_server.sh` script handles dependency downloading (including `protoc`) automatically.
+The `run_server_headless.sh` script handles dependency downloading (including `protoc`) automatically.
 The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing.
 
-- Check permissions: `chmod +x run_server.sh run_client.sh`
-- Run Server: `./run_server.sh`
+- Check permissions: `chmod +x run_server_headless.sh run_client.sh`
+- Run Server: `./run_server_headless.sh`
 - Run Client: `./run_client.sh` (will take a moment to install dependencies first time)
 
-**Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server.sh` again.
-
-### Quick Start
-You can use the provided scripts in the root directory:
-- `./run_server.sh`: Starts the Java backend and auto-starts the Angular frontend.
-- `./run_server_headless.sh`: (Recommended) Starts the Java backend without auto-starting the Angular frontend.
-- `./run_client.sh`: Starts the Angular frontend.
+**Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server_headless.sh` again.
 
 ### Troubleshooting
 If the server fails to start with "Address already in use", you likely have a zombie MongoDB process.
@@ -28,8 +22,12 @@ Run the provided script to fix it (updated to handle permissions better):
 Or use the Antigravity command:
 - `/kill_zombie_mongo`
 
-**Note:** If `run_server.sh` fails, try `run_server_headless.sh`. It runs the server without attempting to launch the client or browser, which is useful for debugging.
-
+If the client or server faile to starup, ensure a previous run is not still running.  Simply kill the client and server and try again.
+```bash
+./kill_client_server.sh
+```
+Or use the Antigravity command:
+- `/kill_client_server`
 
 #### 1. Start the Server (Java)
 The server runs on port `7070` and handles API requests.
@@ -71,6 +69,13 @@ If the processes are running in the background, you can stop them by finding the
   lsof -ti :4200 | xargs kill
   ```
 
+- **Client and Server:**
+  ```bash
+  ./kill_client_server.sh
+  ```
+  Or use the Antigravity command:
+  - `/kill_client_server`
+
 ## Testing
 
 This project includes unit tests for the backend and frontend, as well as visual regression tests for the client.
@@ -93,11 +98,8 @@ Run the standard Jasmine/Karma unit tests:
 #### Visual Regression Tests (Screen Diff)
 Run Playwright-based visual tests to detect UI regressions:
 ```bash
-cd client
-npm run test:visual
+./run_client_screendiff_tests.sh
 ```
-*Snapshots are generated for all supported languages (en, es, fr, de, pt).*
-
 #### Accepting Changes (Updating Snapshots)
 If you have intentionally modified the UI and need to update the expected screenshots, run:
 ```bash
@@ -107,8 +109,7 @@ If you have intentionally modified the UI and need to update the expected screen
 ### Server (Java)
 Run the JUnit tests for the backend:
 ```bash
-cd server
-mvn test
+./run_server_tests.sh
 ```
 
 ## Debugging
@@ -119,7 +120,7 @@ To debug the server, you need to enable the Java Debug Wire Protocol (JDWP) when
 
 1. **Start the server in debug mode:**
    ```bash
-   MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" ./run_server.sh
+   MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" ./run_server_headless.sh
    ```
    *Note: `suspend=n` means the server will start immediately. Change to `suspend=y` if you want it to wait for a debugger to attach before starting.*
 
