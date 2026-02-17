@@ -11383,6 +11383,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
              * @property {com.antigravity.IHeatScoring|null} [heatScoring] RaceModel heatScoring
              * @property {com.antigravity.IOverallScoring|null} [overallScoring] RaceModel overallScoring
+             * @property {number|null} [minLapTime] RaceModel minLapTime
              */
 
             /**
@@ -11441,6 +11442,14 @@ export const com = $root.com = (() => {
             RaceModel.prototype.overallScoring = null;
 
             /**
+             * RaceModel minLapTime.
+             * @member {number} minLapTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.minLapTime = 0;
+
+            /**
              * Creates a new RaceModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceModel
@@ -11474,6 +11483,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.HeatScoring.encode(message.heatScoring, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 if (message.overallScoring != null && Object.hasOwnProperty.call(message, "overallScoring"))
                     $root.com.antigravity.OverallScoring.encode(message.overallScoring, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                if (message.minLapTime != null && Object.hasOwnProperty.call(message, "minLapTime"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.minLapTime);
                 return writer;
             };
 
@@ -11528,6 +11539,10 @@ export const com = $root.com = (() => {
                         }
                     case 5: {
                             message.overallScoring = $root.com.antigravity.OverallScoring.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 6: {
+                            message.minLapTime = reader.double();
                             break;
                         }
                     default:
@@ -11588,6 +11603,9 @@ export const com = $root.com = (() => {
                     if (error)
                         return "overallScoring." + error;
                 }
+                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
+                    if (typeof message.minLapTime !== "number")
+                        return "minLapTime: number expected";
                 return null;
             };
 
@@ -11625,6 +11643,8 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceModel.overallScoring: object expected");
                     message.overallScoring = $root.com.antigravity.OverallScoring.fromObject(object.overallScoring);
                 }
+                if (object.minLapTime != null)
+                    message.minLapTime = Number(object.minLapTime);
                 return message;
             };
 
@@ -11647,6 +11667,7 @@ export const com = $root.com = (() => {
                     object.track = null;
                     object.heatScoring = null;
                     object.overallScoring = null;
+                    object.minLapTime = 0;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -11658,6 +11679,8 @@ export const com = $root.com = (() => {
                     object.heatScoring = $root.com.antigravity.HeatScoring.toObject(message.heatScoring, options);
                 if (message.overallScoring != null && message.hasOwnProperty("overallScoring"))
                     object.overallScoring = $root.com.antigravity.OverallScoring.toObject(message.overallScoring, options);
+                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
+                    object.minLapTime = options.json && !isFinite(message.minLapTime) ? String(message.minLapTime) : message.minLapTime;
                 return object;
             };
 

@@ -65,4 +65,5 @@ message RaceModel {
   TrackModel track = 3;
   HeatScoring heat_scoring = 4;
   OverallScoring overall_scoring = 5;
+  double min_lap_time = 6;
 }

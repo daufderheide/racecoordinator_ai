@@ -4785,6 +4785,9 @@ export namespace com {
 
             /** RaceModel overallScoring */
             overallScoring?: (com.antigravity.IOverallScoring|null);
+
+            /** RaceModel minLapTime */
+            minLapTime?: (number|null);
         }
 
         /** Represents a RaceModel. */
@@ -4810,6 +4813,9 @@ export namespace com {
 
             /** RaceModel overallScoring. */
             public overallScoring?: (com.antigravity.IOverallScoring|null);
+
+            /** RaceModel minLapTime. */
+            public minLapTime: number;
 
             /**
              * Creates a new RaceModel instance using the specified properties.

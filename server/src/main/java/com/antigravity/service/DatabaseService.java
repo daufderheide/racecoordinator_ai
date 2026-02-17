@@ -146,7 +146,7 @@ public class DatabaseService {
     OverallScoring overallScoring = new OverallScoring();
 
     Race race = new Race("Time Based", track.getEntityId(), HeatRotationType.RoundRobin,
-        heatScoring, overallScoring, getNextSequence(database, "races"), null);
+        heatScoring, overallScoring, 3.0, getNextSequence(database, "races"), null);
 
     raceCollection.insertOne(race);
 
@@ -158,7 +158,7 @@ public class DatabaseService {
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
     race = new Race("Lap Based", track.getEntityId(), HeatRotationType.FriendlyRoundRobin,
-        heatScoring, overallScoring, getNextSequence(database, "races"), null);
+        heatScoring, overallScoring, 3.0, getNextSequence(database, "races"), null);
 
     raceCollection.insertOne(race);
 

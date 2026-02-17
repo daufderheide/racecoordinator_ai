@@ -5,7 +5,7 @@
   <div class="header">
     <div class="header-left">
       <app-back-button [label]="'RE_BTN_BACK' | translate" route="/race-manager" [confirm]="hasChanges()"
-        [queryParams]="{driverCount: driverCount}" confirmTitle="RE_CONFIRM_DISCARD_TITLE"
+        [queryParams]="{id: editingRace?.entity_id, driverCount: driverCount}" confirmTitle="RE_CONFIRM_DISCARD_TITLE"
         confirmMessage="RE_CONFIRM_DISCARD_MESSAGE"></app-back-button>
       <h1 class="page-title">{{ 'RE_TITLE' | translate }}</h1>
     </div>
@@ -33,36 +33,31 @@
         </div>
       </div>
 
-      <div class="editor-row">
-        <div class="editor-section">
-          <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
-          <select [(ngModel)]="editingRace.heat_rotation_type" (ngModelChange)="onRotationTypeChange()">
-            <option value="RoundRobin">Round Robin</option>
-            <option value="FriendlyRoundRobin">Friendly Round Robin</option>
-            <option value="EuropeanRoundRobin">European Round Robin</option>
-          </select>
-        </div>
-
-        <div class="editor-section">
-          <label>{{ 'RE_LABEL_DRIVER_COUNT' | translate }}</label>
-          <input type="number" [(ngModel)]="driverCount" (ngModelChange)="loadHeats()" min="1" max="100"
-            autocomplete="off" data-lpignore="true" data-form-type="other">
-        </div>
-      </div>
 
       <div class="heat-list-section">
-        <h3>{{ 'RE_HEAT_LIST_HEADER' | translate }}</h3>
+        <div class="heat-list-header">
+          <h3>{{ 'RE_HEAT_LIST_HEADER' | translate }}</h3>
+          <div class="driver-count-inline">
+            <label>
+              {{ 'RE_LABEL_DRIVER_COUNT' | translate }}
+              <span class="tooltip-icon" [attr.data-tooltip]="'RE_DRIVER_COUNT_HINT' | translate">ⓘ</span>
+            </label>
+            <input type="number" [(ngModel)]="driverCount" (ngModelChange)="loadHeats()" min="1" max="100"
+              autocomplete="off" data-lpignore="true" data-form-type="other">
+          </div>
+        </div>
         <app-heat-list [heats]="generatedHeats"></app-heat-list>
       </div>
 
       <div class="editor-actions">
         <div class="spacer"></div>
         <button class="action-btn" (click)="saveAsNew()" *ngIf="editingRace?.entity_id !== 'new'"
-          [disabled]="!canSaveAsNew()" [title]="isNameDuplicate() ? ('RE_TOOLTIP_NAME_EXISTS' | translate) : ''">
+          [disabled]="!canSaveAsNew()"
+          [attr.data-tooltip]="isNameDuplicate() ? ('RE_TOOLTIP_NAME_EXISTS' | translate) : ''">
           {{ 'RE_BTN_SAVE_AS_NEW' | translate }}
         </button>
         <button class="action-btn primary btn-update" (click)="updateRace()" [disabled]="!canUpdate()"
-          [title]="getUpdateTooltip() | translate">
+          [attr.data-tooltip]="getUpdateTooltip() | translate">
           {{ editingRace?.entity_id === 'new' ? 'CREATE RACE' : ('RE_BTN_UPDATE_RACE' | translate) }}
         </button>
       </div>
@@ -70,6 +65,30 @@
 
     <!-- Config Panel (Right) -->
     <div class="config-panel">
+      <!-- General Section (Vertical Stack Top) -->
+      <div class="config-section-group">
+        <h2 class="config-header">{{ 'RE_GENERAL_HEADER' | translate }}</h2>
+        <div class="config-row">
+          <div class="config-section">
+            <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
+            <select [(ngModel)]="editingRace.heat_rotation_type" (ngModelChange)="onRotationTypeChange()">
+              <option value="RoundRobin">Round Robin</option>
+              <option value="FriendlyRoundRobin">Friendly Round Robin</option>
+              <option value="EuropeanRoundRobin">European Round Robin</option>
+            </select>
+          </div>
+
+          <div class="config-section">
+            <label>
+              {{ 'RE_MIN_LAP_TIME' | translate }}
+              <span class="tooltip-icon" [attr.data-tooltip]="'RE_MIN_LAP_TIME_HINT' | translate">ⓘ</span>
+            </label>
+            <input type="number" [(ngModel)]="editingRace.min_lap_time" (ngModelChange)="captureState()" min="0"
+              step="0.1" placeholder="0.0">
+          </div>
+        </div>
+      </div>
+
       <div class="scoring-layout">
         <!-- Heat Scoring Section -->
         <div class="scoring-column">

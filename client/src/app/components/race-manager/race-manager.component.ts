@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
@@ -22,6 +22,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   searchQuery: string = '';
   driverCount: number = 10;
   generatedHeats: any[] = [];
+  @ViewChildren('raceRow') raceRows!: QueryList<ElementRef>;
 
   get filteredRaces(): any[] {
     let filtered = this.races;
@@ -125,6 +126,14 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     if (this.driverCount > 0 && race.entity_id) {
       this.loadHeats(race.entity_id);
     }
+
+    // Scroll into view
+    setTimeout(() => {
+      const row = this.raceRows.find(r => r.nativeElement.getAttribute('data-id') === race.entity_id);
+      if (row) {
+        row.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
   }
 
   loadHeats(raceId: string) {

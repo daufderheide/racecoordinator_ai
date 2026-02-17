@@ -201,7 +201,20 @@ public class Racing implements IRaceState {
             return;
         }
 
-        handleLapTime(driverData, lapTime, lane, interfaceId);
+        double minLapTime = this.race.getRaceModel().getMinLapTime();
+        if (minLapTime > 0) {
+            driverData.addPendingLapTime(lapTime);
+            if (driverData.getPendingLapTime() < minLapTime) {
+                System.out.println("Race: Lane " + lane + " lap time " + lapTime
+                        + " is below min " + minLapTime + ". Accumulated: " + driverData.getPendingLapTime());
+                return;
+            }
+            double finalLapTime = driverData.getPendingLapTime();
+            driverData.setPendingLapTime(0.0);
+            handleLapTime(driverData, finalLapTime, lane, interfaceId);
+        } else {
+            handleLapTime(driverData, lapTime, lane, interfaceId);
+        }
 
         // Check for finish condition immediately after a lap
         com.antigravity.models.HeatScoring scoring = race.getRaceModel().getHeatScoring();

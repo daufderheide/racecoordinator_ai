@@ -179,8 +179,54 @@ public class RacingTest {
     assertTrue(race.getState() instanceof HeatOver);
   }
 
+  @Test
+  public void testMinLapTime_AccumulatesLaps() {
+    double minLapTime = 10.0;
+    heatScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
+        3L,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        HeatScoring.AllowFinish.None);
+
+    race = new Race(new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
+        race.getRaceModel().getOverallScoring(), minLapTime, "race1", new ObjectId()),
+        participants, track, true);
+
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    // Initial state: 0 laps
+    assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+
+    // Reaction time
+    racing.onLap(0, 1.0, 1);
+
+    // Lap 1: 4.0s (accumulated: 4.0s) - below min 10.0s
+    racing.onLap(0, 4.0, 1);
+    assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+
+    // Lap 2: 7.0s (accumulated: 11.0s) - above min 10.0s
+    racing.onLap(0, 7.0, 1);
+    assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+    // The lap time should be 12.0s (1.0s reaction + 4.0s + 7.0s accumulated)
+    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(0), 0.001);
+
+    // Lap 3: 12.0s (accumulated: 12.0s) - above min 10.0s
+    racing.onLap(0, 12.0, 1);
+    assertEquals(2, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(1), 0.001);
+  }
+
   private void assertEquals(long expected, long actual) {
     if (expected != actual) {
+      throw new AssertionError("Expected " + expected + " but got " + actual);
+    }
+  }
+
+  private void assertEquals(double expected, double actual, double delta) {
+    if (Math.abs(expected - actual) > delta) {
       throw new AssertionError("Expected " + expected + " but got " + actual);
     }
   }

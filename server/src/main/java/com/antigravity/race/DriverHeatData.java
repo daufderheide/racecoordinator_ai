@@ -13,6 +13,7 @@ public class DriverHeatData extends ServerToClientObject {
     private ArrayList<Double> laps = new ArrayList<>();
     private double bestLapTime = 0.0f;
     private double reactionTime = 0.0f;
+    private double pendingLapTime = 0.0f;
 
     private static void logToFile(String message) {
         try {
@@ -138,5 +139,18 @@ public class DriverHeatData extends ServerToClientObject {
         laps.clear();
         bestLapTime = 0.0f;
         reactionTime = 0.0f;
+        pendingLapTime = 0.0f;
+    }
+
+    public double getPendingLapTime() {
+        return pendingLapTime;
+    }
+
+    public void setPendingLapTime(double pendingLapTime) {
+        this.pendingLapTime = pendingLapTime;
+    }
+
+    public void addPendingLapTime(double lapTime) {
+        this.pendingLapTime += lapTime;
     }
 }

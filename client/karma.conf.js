@@ -3,9 +3,9 @@ module.exports = function (config) {
   const fs = require('fs');
   const path = require('path');
 
-  // Use system temp directory to avoid permission issues and spaces in paths
-  const os = require('os');
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'karma-chrome-'));
+  // Use a local directory to avoid permission issues with system temp
+  const tmpDir = path.join(__dirname, 'tmp-karma');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
   // Define dedicated directories
   const chromeHome = path.join(tmpDir, 'chrome-home');

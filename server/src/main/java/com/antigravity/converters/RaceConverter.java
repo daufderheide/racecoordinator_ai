@@ -56,6 +56,8 @@ public class RaceConverter {
                                                 .build());
                         }
 
+                        builder.setMinLapTime(race.getMinLapTime());
+
                         return builder.build();
                 }
         }

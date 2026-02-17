@@ -27,7 +27,7 @@
       <div class="table-body-scroll">
         <table class="race-table body-only">
           <tbody>
-            <tr *ngFor="let race of filteredRaces; trackBy: trackByRace"
+            <tr *ngFor="let race of filteredRaces; trackBy: trackByRace" #raceRow [attr.data-id]="race.entity_id"
               [class.active]="selectedRace?.entity_id === race.entity_id" (click)="selectRace(race)">
               <td class="name-cell col-name">{{ race.name }}</td>
               <td class="track-cell col-track">{{ race.track?.name || 'N/A' }}</td>

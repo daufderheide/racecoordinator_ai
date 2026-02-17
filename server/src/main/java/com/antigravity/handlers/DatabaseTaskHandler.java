@@ -526,6 +526,7 @@ public class DatabaseTaskHandler {
                     race.getHeatRotationType(),
                     race.getHeatScoring(),
                     race.getOverallScoring(),
+                    race.getMinLapTime(),
                     nextId,
                     null);
         }
@@ -571,6 +572,7 @@ public class DatabaseTaskHandler {
                 race.getHeatRotationType(),
                 race.getHeatScoring(),
                 race.getOverallScoring(),
+                race.getMinLapTime(),
                 id,
                 race.getId());
 
@@ -641,6 +643,7 @@ public class DatabaseTaskHandler {
             raceMap.put("heat_rotation_type", race.getHeatRotationType());
             raceMap.put("heat_scoring", race.getHeatScoring());
             raceMap.put("overall_scoring", race.getOverallScoring());
+            raceMap.put("min_lap_time", race.getMinLapTime());
             response.add(raceMap);
         }
         ctx.json(response);

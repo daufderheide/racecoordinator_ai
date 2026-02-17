@@ -61,15 +61,60 @@ test.describe('Race Manager Visuals', () => {
     // Click delete race
     await page.click('.btn-delete', { force: true });
 
-    // Verify confirmation modal is visible
-    await page.waitForTimeout(2000);
-    const backdrop = page.locator('.rm-container > app-confirmation-modal .modal-backdrop');
-    await expect(backdrop).toBeVisible({ timeout: 10000 });
+    // Wait for the modal to be visible
+    await expect(page.locator('.rm-container > app-confirmation-modal .modal-content')).toBeVisible();
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
-    // Screenshot the modal
-    await expect(backdrop).toHaveScreenshot('race-manager-delete-confirmation.png');
+    // Screenshot the entire page
+    await expect(page).toHaveScreenshot('race-manager-delete-confirmation.png');
+  });
+
+  test('should select and scroll to race from query param', async ({ page }) => {
+    // Generate many races to ensure scrollability
+    const manyRaces = Array.from({ length: 30 }, (_, i) => ({
+      entity_id: `r${i + 1}`,
+      name: `Race ${i + 1}`,
+      track: { name: 'Track' },
+      track_entity_id: 't1',
+      heat_rotation_type: 'RoundRobin',
+      heat_scoring: {
+        finish_method: 'Lap',
+        finish_value: 10,
+        heat_ranking: 'LAP_COUNT',
+        heat_ranking_tiebreaker: 'FASTEST_LAP_TIME',
+        allow_finish: 'None'
+      },
+      overall_scoring: {
+        dropped_heats: 0,
+        ranking_method: 'LAP_COUNT',
+        tiebreaker: 'FASTEST_LAP_TIME'
+      }
+    }));
+
+    await page.route('**/api/races', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(manyRaces),
+      });
+    });
+
+    // Navigate to Race Manager with id=r25
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-manager?id=r25&driverCount=4'));
+
+    // Verify Race 25 is active
+    const activeRow = page.locator('tr.active[data-id="r25"]');
+    await expect(activeRow).toBeVisible();
+
+    // Verify it's scrolled into view (it should be in the viewport)
+    await expect(activeRow).toBeInViewport();
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot
+    await expect(page).toHaveScreenshot('race-manager-scrolled-selection.png');
   });
 });

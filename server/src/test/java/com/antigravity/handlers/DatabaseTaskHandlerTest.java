@@ -43,6 +43,8 @@ public class DatabaseTaskHandlerTest {
     when(databaseContext.getDatabase()).thenReturn(mongoDatabase);
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
+    when(mongoDatabase.getCollection(eq("tracks"), eq(com.antigravity.models.Track.class)))
+        .thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("counters"))).thenReturn(countersCollection);
 
     handler = new DatabaseTaskHandler(databaseContext, app);
@@ -50,7 +52,7 @@ public class DatabaseTaskHandlerTest {
 
   @Test
   public void testCreateRace_Success() {
-    Race raceRequest = new Race("New Race", "track-1", null, null, null, "new", null);
+    Race raceRequest = new Race("New Race", "track-1", null, null, null, 2.5, "new", null);
 
     // Mock uniqueness check - no existing race
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -65,6 +67,7 @@ public class DatabaseTaskHandlerTest {
 
     assertNotNull(created);
     assertEquals("100", created.getEntityId());
+    assertEquals(2.5, created.getMinLapTime(), 0.001);
     verify(raceCollection).insertOne(any(Race.class));
   }
 
@@ -87,7 +90,7 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testUpdateRace_Success() {
     String raceId = "race-123";
-    Race raceUpdate = new Race("Updated Name", "track-1", null, null, null, raceId, null);
+    Race raceUpdate = new Race("Updated Name", "track-1", null, null, null, 3.5, raceId, null);
 
     // Mock uniqueness check - no OTHER race with same name
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -102,6 +105,7 @@ public class DatabaseTaskHandlerTest {
 
     assertNotNull(updated);
     assertEquals("Updated Name", updated.getName());
+    assertEquals(3.5, updated.getMinLapTime(), 0.001);
     verify(raceCollection).replaceOne(any(Bson.class), any(Race.class));
   }
 

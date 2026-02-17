@@ -163,7 +163,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         dropped_heats: 0,
         ranking_method: 'LAP_COUNT',
         tiebreaker: 'FASTEST_LAP_TIME'
-      }
+      },
+      min_lap_time: 0
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -256,7 +257,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         dropped_heats: this.editingRace.overall_scoring.dropped_heats,
         ranking_method: this.editingRace.overall_scoring.ranking_method,
         tiebreaker: this.editingRace.overall_scoring.tiebreaker
-      }
+      },
+      min_lap_time: this.editingRace.min_lap_time
     };
 
     if (this.editingRace.entity_id === 'new') {
@@ -317,7 +319,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         dropped_heats: this.editingRace.overall_scoring.dropped_heats,
         ranking_method: this.editingRace.overall_scoring.ranking_method,
         tiebreaker: this.editingRace.overall_scoring.tiebreaker
-      }
+      },
+      min_lap_time: this.editingRace.min_lap_time
     };
 
     this.dataService.createRace(payload).subscribe({
