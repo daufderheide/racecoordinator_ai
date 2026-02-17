@@ -216,6 +216,7 @@
     "RDS_LANG_PT": "Portuguese (pt)",
     "RDS_LOST_CONNECTION": "Verbindung zum Server unterbrochen",
     "RDS_MENU_CUSTOM_UI": "Benutzerdefinierte UI",
+    "RDS_MENU_CONFIG": "Konfigurieren",
     "RDS_MENU_DRIVER": "Fahrer",
     "RDS_MENU_DRIVER_MANAGER": "Fahrer-Manager",
     "RDS_MENU_FILE": "Datei",

@@ -209,6 +209,7 @@
     "RDS_LABEL_PORT": "Port:",
     "RDS_LOST_CONNECTION": "Lost connection with server",
     "RDS_MENU_CUSTOM_UI": "Custom UI",
+    "RDS_MENU_CONFIG": "Config",
     "RDS_MENU_DRIVER": "Driver",
     "RDS_MENU_DRIVER_MANAGER": "Driver Manager",
     "RDS_MENU_TEAM_MANAGER": "Team Manager",

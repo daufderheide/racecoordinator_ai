@@ -6,13 +6,18 @@
     <div class="menu-item-wrapper" *ngFor="let item of menuItems"
       [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
       [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
-      [class.driver-menu-container]="item.label === 'RDS_MENU_DRIVER'">
+      [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'">
       <div class="menu-item" (click)="item.action($event)">{{ item.label | translate }}</div>
 
-      <!-- Driver Dropdown -->
-      <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_DRIVER' && isDriverDropdownOpen">
+      <!-- Config Dropdown -->
+      <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_CONFIG' && isConfigDropdownOpen">
         <div class="menu-dropdown-item" (click)="openDriverManager()">{{ 'RDS_MENU_DRIVER_MANAGER' | translate }}</div>
         <div class="menu-dropdown-item" (click)="openTeamManager()">{{ 'RDS_MENU_TEAM_MANAGER' | translate }}</div>
+        <div class="menu-dropdown-divider"></div>
+        <div class="menu-dropdown-item" (click)="openTrackManager()">{{ 'RDS_MENU_TRACK' | translate }}</div>
+        <div class="menu-dropdown-divider"></div>
+        <div class="menu-dropdown-item" (click)="openRaceManager()">{{ 'RDS_MENU_RACE' | translate }}</div>
+        <div class="menu-dropdown-item" (click)="closeConfigDropdown()">{{ 'RDS_MENU_SEASON' | translate }}</div>
       </div>
 
       <!-- File Dropdown -->

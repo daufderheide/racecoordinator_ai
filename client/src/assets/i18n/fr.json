@@ -216,6 +216,7 @@
     "RDS_LANG_PT": "Portuguese (pt)",
     "RDS_LOST_CONNECTION": "Connexion au serveur perdue",
     "RDS_MENU_CUSTOM_UI": "IU Personnalis\u00e9e",
+    "RDS_MENU_CONFIG": "Configuration",
     "RDS_MENU_DRIVER": "Pilote",
     "RDS_MENU_DRIVER_MANAGER": "Gestionnaire de Pilotes",
     "RDS_MENU_FILE": "Fichier",

@@ -56,19 +56,16 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
-  isDriverDropdownOpen: boolean = false;
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
+  isConfigDropdownOpen: boolean = false;
 
   supportedLanguages: { code: string, nameKey: string }[] = [];
   currentLanguage: string = '';
   browserLanguage: string = '';
   menuItems = [
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
-    { label: 'RDS_MENU_TRACK', action: () => this.openTrackManager() },
-    { label: 'RDS_MENU_DRIVER', action: (event: MouseEvent) => this.toggleDriverDropdown(event) },
-    { label: 'RDS_MENU_RACE', action: () => this.openRaceManager() },
-    { label: 'RDS_MENU_SEASON', action: () => console.log('Season menu') },
+    { label: 'RDS_MENU_CONFIG', action: (event: MouseEvent) => this.toggleConfigDropdown(event) },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
     { label: 'RDS_MENU_HELP', action: () => this.startHelp() }
   ];
@@ -196,8 +193,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     if (!target.closest('.file-menu-container')) {
       this.closeFileDropdown();
     }
-    if (!target.closest('.driver-menu-container')) {
-      this.closeDriverDropdown();
+    if (!target.closest('.config-menu-container')) {
+      this.closeConfigDropdown();
     }
   }
 
@@ -359,7 +356,14 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   toggleDropdown(event: Event) {
     event.stopPropagation();
-    this.isDropdownOpen = !this.isDropdownOpen;
+    const newState = !this.isDropdownOpen;
+    if (newState) {
+      this.isFileDropdownOpen = false;
+      this.isConfigDropdownOpen = false;
+      this.isOptionsDropdownOpen = false;
+      this.isLocalizationDropdownOpen = false;
+    }
+    this.isDropdownOpen = newState;
   }
 
   closeDropdown() {
@@ -485,7 +489,13 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   toggleOptionsDropdown(event: Event) {
     event.stopPropagation();
-    this.isOptionsDropdownOpen = !this.isOptionsDropdownOpen;
+    const newState = !this.isOptionsDropdownOpen;
+    if (newState) {
+      this.isFileDropdownOpen = false;
+      this.isConfigDropdownOpen = false;
+      this.isDropdownOpen = false;
+    }
+    this.isOptionsDropdownOpen = newState;
     if (!this.isOptionsDropdownOpen) {
       this.isLocalizationDropdownOpen = false;
     }
@@ -543,7 +553,14 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   toggleFileDropdown(event: Event) {
     event.stopPropagation();
-    this.isFileDropdownOpen = !this.isFileDropdownOpen;
+    const newState = !this.isFileDropdownOpen;
+    if (newState) {
+      this.isConfigDropdownOpen = false;
+      this.isOptionsDropdownOpen = false;
+      this.isDropdownOpen = false;
+      this.isLocalizationDropdownOpen = false;
+    }
+    this.isFileDropdownOpen = newState;
   }
 
   closeFileDropdown() {
@@ -555,26 +572,18 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/asset-manager']);
   }
 
-  toggleDriverDropdown(event: Event) {
-    event.stopPropagation();
-    this.isDriverDropdownOpen = !this.isDriverDropdownOpen;
-  }
-
-  closeDriverDropdown() {
-    this.isDriverDropdownOpen = false;
-  }
-
   openDriverManager() {
-    this.closeDriverDropdown();
+    this.closeConfigDropdown();
     this.router.navigate(['/driver-manager']);
   }
 
   openTeamManager() {
-    this.closeDriverDropdown();
+    this.closeConfigDropdown();
     this.router.navigate(['/team-manager']);
   }
 
   openTrackManager() {
+    this.closeConfigDropdown();
     this.router.navigate(['/track-manager']);
   }
 
@@ -582,7 +591,24 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     const queryParams: any = this.selectedRace ? { id: this.selectedRace.entity_id } : {};
     // Pass the number of selected participants to the race manager for heat generation
     queryParams.driverCount = this.selectedParticipants.length;
+    this.closeConfigDropdown();
     this.router.navigate(['/race-manager'], { queryParams });
+  }
+
+  toggleConfigDropdown(event: Event) {
+    event.stopPropagation();
+    const newState = !this.isConfigDropdownOpen;
+    if (newState) {
+      this.isFileDropdownOpen = false;
+      this.isOptionsDropdownOpen = false;
+      this.isDropdownOpen = false;
+      this.isLocalizationDropdownOpen = false;
+    }
+    this.isConfigDropdownOpen = newState;
+  }
+
+  closeConfigDropdown() {
+    this.isConfigDropdownOpen = false;
   }
 
   openDatabaseManager() {
