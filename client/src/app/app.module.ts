@@ -26,6 +26,7 @@ import { RaceManagerComponent } from './components/race-manager/race-manager.com
 import { RaceEditorComponent } from './components/race-editor/race-editor.component';
 import { TeamManagerComponent } from './components/team-manager/team-manager.component';
 import { TeamEditorComponent } from './components/team-editor/team-editor.component';
+import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import { TeamEditorComponent } from './components/team-editor/team-editor.compon
     ArduinoSummaryComponent,
     DatabaseManagerComponent,
     RaceManagerComponent,
-    RaceEditorComponent
+    RaceEditorComponent,
+    UIEditorComponent
   ],
   imports: [
     BrowserModule,

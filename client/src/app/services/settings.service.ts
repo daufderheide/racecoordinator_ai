@@ -21,7 +21,13 @@ export class SettingsService {
                     parsed.serverIp || 'localhost',
                     parsed.serverPort || 7070,
                     parsed.language || '',
-                    parsed.racedaySetupWalkthroughSeen || false
+                    parsed.racedaySetupWalkthroughSeen || false,
+                    parsed.flagGreen,
+                    parsed.flagYellow,
+                    parsed.flagRed,
+                    parsed.flagWhite,
+                    parsed.flagBlack,
+                    parsed.flagCheckered
                 );
             } catch (e) {
                 console.error('Error parsing settings from localStorage', e);

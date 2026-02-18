@@ -14,6 +14,7 @@ import { RaceManagerComponent } from './components/race-manager/race-manager.com
 import { RaceEditorComponent } from './components/race-editor/race-editor.component';
 import { TeamManagerComponent } from './components/team-manager/team-manager.component';
 import { TeamEditorComponent } from './components/team-editor/team-editor.component';
+import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
@@ -30,6 +31,7 @@ const routes: Routes = [
     { path: 'database-manager', component: DatabaseManagerComponent, data: { animation: 'DatabaseManagerPage' } },
     { path: 'race-manager', component: RaceManagerComponent, data: { animation: 'RaceManagerPage' } },
     { path: 'race-editor', component: RaceEditorComponent, data: { animation: 'RaceEditorPage' } },
+    { path: 'ui-editor', component: UIEditorComponent, data: { animation: 'UIEditorPage' } },
     { path: '**', redirectTo: '' }
 ];
 

@@ -13,6 +13,7 @@ import { UndoRedoControlsComponent } from './undo-redo-controls/undo-redo-contro
 import { HeatListComponent } from './heat-list/heat-list.component';
 import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
 import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
+import { ImageSelectorComponent } from './image-selector/image-selector.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
     UndoRedoControlsComponent,
     HeatListComponent,
     AvatarUrlPipe,
-    HelpOverlayComponent
+    HelpOverlayComponent,
+    ImageSelectorComponent
   ],
   imports: [
     CommonModule,
@@ -47,7 +49,8 @@ import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
     UndoRedoControlsComponent,
     HeatListComponent,
     AvatarUrlPipe,
-    HelpOverlayComponent
+    HelpOverlayComponent,
+    ImageSelectorComponent
   ]
 })
 export class SharedModule { }

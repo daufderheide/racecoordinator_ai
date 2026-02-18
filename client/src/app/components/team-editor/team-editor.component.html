@@ -11,16 +11,9 @@
       <div class="config-form">
         <!-- AVATAR SECTION -->
         <div class="avatar-column">
-          <div class="avatar-preview-large" (click)="openAvatarSelector()" (dragover)="onDragOver($event)"
-            (drop)="onDrop($event, 'avatar')">
-
-            <img *ngIf="pendingAvatarPreview" [src]="pendingAvatarPreview">
-            <img *ngIf="!pendingAvatarPreview" [src]="editingTeam.avatarUrl | avatarUrl">
-
-            <div class="drop-hint" *ngIf="!editingTeam.avatarUrl && !pendingAvatarPreview">
-              {{ 'TEM_LABEL_DROP_AVATAR' | translate }}
-            </div>
-          </div>
+          <app-image-selector [(imageUrl)]="editingTeam.avatarUrl" (imageUrlChange)="captureState()"
+            [assets]="avatarAssets">
+          </app-image-selector>
         </div>
 
         <!-- NAME INPUT -->
@@ -65,12 +58,7 @@
     </div>
   </div>
 
-  <!-- AVATAR SELECTOR MODAL -->
-  <app-item-selector [visible]="showAvatarSelector" [title]="'TEM_TITLE_SELECT_AVATAR' | translate"
-    [items]="avatarAssets" [itemType]="'image'" [backButtonRoute]="'/team-editor'"
-    [backButtonQueryParams]="{ id: editingTeam ? editingTeam.entity_id : null }" (select)="onAvatarSelected($event)"
-    (close)="closeAvatarSelector()">
-  </app-item-selector>
+
 
   <!-- Connection Lost Overlay -->
   <div class="connection-lost-overlay" *ngIf="isConnectionLost">

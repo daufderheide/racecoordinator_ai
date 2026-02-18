@@ -53,6 +53,12 @@ public class AssetService {
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black-white.png", "Helmet Black-White"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black-white2.png", "Helmet Black-White2"));
     DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("black.png", "Helmet Black"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_green.png", "Green Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_red.png", "Red Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_yellow.png", "Yellow Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_black.png", "Black Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_white.png", "White Flag"));
+    DEFAULT_IMAGE_ASSETS.add(new DefaultAsset("flag_checkered.png", "Checkered Flag"));
   }
 
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();

@@ -528,13 +528,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     return lang ? this.translationService.translate(lang.nameKey) : code;
   }
 
-  async configureCustomUI() {
+  configureCustomUI() {
     this.closeOptionsDropdown();
-    const success = await this.fileSystem.selectCustomFolder();
-    if (success) {
-      sessionStorage.setItem('skipIntro', 'true');
-      window.location.reload();
-    }
+    this.router.navigate(['/ui-editor']);
   }
 
   async revertCustomUI() {

@@ -1,0 +1,75 @@
+<div class="ue-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <!-- Header -->
+  <div class="ue-header">
+    <app-back-button [label]="'UE_BTN_BACK' | translate" route="/raceday-setup" [confirm]="hasChanges()"
+      [confirmTitle]="'UE_CONFIRM_DISCARD_TITLE' | translate"
+      [confirmMessage]="'UE_CONFIRM_DISCARD_MESSAGE' | translate"></app-back-button>
+
+    <div class="title">{{ 'UE_TITLE' | translate }}</div>
+
+    <!-- Undo/Redo Controls -->
+    <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
+  </div>
+
+  <div class="content-area" *ngIf="!isLoading">
+    <div class="config-grid">
+      <!-- Custom UI Settings -->
+      <div class="panel config-panel">
+        <div class="panel-header">{{ 'UE_HEADER_CUSTOM_UI' | translate }}</div>
+        <div class="panel-content">
+          <div class="directory-selector">
+            <label>{{ 'UE_DIRECTORY_LABEL' | translate }}</label>
+            <div class="directory-info">
+              <span class="directory-path" *ngIf="customDirectoryName">{{ customDirectoryName }}</span>
+              <span class="directory-path placeholder" *ngIf="!customDirectoryName">No directory selected</span>
+            </div>
+            <div class="directory-actions">
+              <button class="btn btn-secondary" (click)="selectDirectory()">
+                {{ 'UE_BTN_SELECT_DIRECTORY' | translate }}
+              </button>
+              <button class="btn btn-danger" (click)="resetDefault()" [disabled]="!customDirectoryName">
+                {{ 'UE_BTN_RESET_DEFAULT' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flag Image Settings -->
+      <div class="panel flags-panel">
+        <div class="panel-header">{{ 'UE_HEADER_FLAGS' | translate }}</div>
+        <div class="panel-content flags-grid">
+          <app-image-selector [label]="'UE_LABEL_GREEN_FLAG' | translate" [(imageUrl)]="editingSettings.flagGreen"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_YELLOW_FLAG' | translate" [(imageUrl)]="editingSettings.flagYellow"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_RED_FLAG' | translate" [(imageUrl)]="editingSettings.flagRed"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_WHITE_FLAG' | translate" [(imageUrl)]="editingSettings.flagWhite"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_BLACK_FLAG' | translate" [(imageUrl)]="editingSettings.flagBlack"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
+            [(imageUrl)]="editingSettings.flagCheckered" (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn btn-save" (click)="save()" [disabled]="!hasChanges()">
+        {{ 'UE_BTN_SAVE' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+</div>
