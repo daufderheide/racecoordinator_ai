@@ -561,21 +561,27 @@ public class ArduinoProtocol extends DefaultProtocol {
       int laneIndex = -1;
 
       if (code >= PinBehavior.BEHAVIOR_LAP_BASE.getNumber()
-          && code < PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber()) {
+          && code < PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.LAP_COUNTER;
         laneIndex = code - PinBehavior.BEHAVIOR_LAP_BASE.getNumber();
       } else if (code >= PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber()
-          && code < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber()) {
+          && code < PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.SEGMENT_COUNTER;
         laneIndex = code - PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber();
       } else if (code >= PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber()
-          && code < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()) {
+          && code < PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.CALL_BUTTON;
         laneIndex = code - PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber();
       } else if (code == PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber()) {
         behavior = InputBehavior.CALL_BUTTON;
       } else if (code == PinBehavior.BEHAVIOR_RESERVED.getNumber()) {
         behavior = InputBehavior.RESERVED;
+      } else if (code == PinBehavior.BEHAVIOR_RELAY.getNumber()) {
+        behavior = InputBehavior.MAIN_RELAY;
+      } else if (code >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() &&
+          code < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + numLanes) {
+        behavior = InputBehavior.LANE_RELAY;
+        laneIndex = code - PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
       }
 
       if (behavior != null) {
@@ -588,6 +594,8 @@ public class ArduinoProtocol extends DefaultProtocol {
     LAP_COUNTER,
     SEGMENT_COUNTER,
     CALL_BUTTON,
+    MAIN_RELAY,
+    LANE_RELAY,
     RESERVED
   }
 
@@ -611,5 +619,61 @@ public class ArduinoProtocol extends DefaultProtocol {
       sb.append(String.format("%02X ", b));
     }
     return sb.toString().trim();
+  }
+
+  @Override
+  public boolean hasPerLaneRelays() {
+    if (this.config.digitalIds.stream().anyMatch(id -> id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
+        && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + numLanes)) {
+      return true;
+    }
+
+    if (this.config.analogIds.stream().anyMatch(id -> id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
+        && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + numLanes)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @Override
+  public boolean hasMainRelay() {
+    if (this.config.digitalIds.stream().anyMatch(
+        id -> id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
+      return true;
+    }
+
+    if (this.config.analogIds.stream().anyMatch(
+        id -> id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @Override
+  public void setMainPower(boolean on) {
+    if (pinLookup == null) {
+      return;
+    }
+
+    for (PinConfig pinConfig : pinLookup.values()) {
+      if (pinConfig.behavior == InputBehavior.MAIN_RELAY) {
+        setPinState(pinConfig.isDigital, pinConfig.pin, on);
+      }
+    }
+  }
+
+  @Override
+  public void setLanePower(boolean on, int lane) {
+    if (pinLookup == null) {
+      return;
+    }
+
+    for (PinConfig pinConfig : pinLookup.values()) {
+      if (pinConfig.behavior == InputBehavior.LANE_RELAY && pinConfig.laneIndex == lane) {
+        setPinState(pinConfig.isDigital, pinConfig.pin, on);
+      }
+    }
   }
 }

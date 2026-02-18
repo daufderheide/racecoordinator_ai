@@ -3,6 +3,8 @@ package com.antigravity.protocols.arduino;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -187,8 +189,8 @@ public class ArduinoProtocolTest {
   @Test
   public void testUpdateConfig() {
     // Initial: D2 is Lane 0 Lap
-    config.digitalIds = new java.util.ArrayList<>(
-        java.util.Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
     config.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
@@ -212,8 +214,8 @@ public class ArduinoProtocolTest {
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
     newConfig.baudRate = 9600;
-    newConfig.digitalIds = new java.util.ArrayList<>(
-        java.util.Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    newConfig.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
     newConfig.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + 0);
 
     protocol.updateConfig(newConfig);
@@ -247,5 +249,97 @@ public class ArduinoProtocolTest {
 
     byte[] expected = { 0x4F, 0x41, 0x03, 0x00, 0x3B };
     org.junit.Assert.assertArrayEquals(expected, serialConnection.lastWrittenData);
+  }
+
+  @Test
+  public void testHasPerLaneRelays_False() {
+    // Initial config has no relays
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    assertEquals(false, protocol.hasPerLaneRelays());
+  }
+
+  @Test
+  public void testHasPerLaneRelays_True_Digital() {
+    // Set digital pin 2 to be a relay for lane 0
+    // Relay base is behavior... let's check PinBehavior.
+    // In ArduinoProtocol.java:
+    // BEHAVIOR_RELAY_BASE
+    // The range is [RELAY_BASE, RELAY_BASE + numLanes)
+
+    int relayBase = com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, relayBase + 0); // Relay for Lane 0
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    assertEquals(true, protocol.hasPerLaneRelays());
+  }
+
+  @Test
+  public void testHasPerLaneRelays_True_Analog() {
+    // Set analog pin 0 to be a relay for lane 1
+    int relayBase = com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
+    config.analogIds = new ArrayList<>(
+        Collections.nCopies(6, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.analogIds.set(0, relayBase + 1); // Relay for Lane 1
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    assertEquals(true, protocol.hasPerLaneRelays());
+  }
+
+  @Test
+  public void testSetMainPower() {
+    // Configure Pin 4 as Main Relay (Behavior 3)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY.getNumber());
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Turn ON
+    protocol.setMainPower(true);
+    // 0x4F, 0x44 (Digital), 0x04 (Pin 4), 0x01 (High), 0x3B
+    byte[] expectedOn = { 0x4F, 0x44, 0x04, 0x01, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedOn, serialConnection.lastWrittenData);
+
+    // Turn OFF
+    protocol.setMainPower(false);
+    // 0x4F, 0x44 (Digital), 0x04 (Pin 4), 0x00 (Low), 0x3B
+    byte[] expectedOff = { 0x4F, 0x44, 0x04, 0x00, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedOff, serialConnection.lastWrittenData);
+  }
+
+  @Test
+  public void testSetLanePower() {
+    // Configure Pin 5 as Relay for Lane 0 (Base + 0)
+    // Configure Pin 6 as Relay for Lane 1 (Base + 1)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    int relayBase = com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
+    config.digitalIds.set(5, relayBase + 0);
+    config.digitalIds.set(6, relayBase + 1);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Turn Lane 0 ON
+    protocol.setLanePower(true, 0);
+    // 0x4F, 0x44, 0x05, 0x01, 0x3B
+    byte[] expectedLane0On = { 0x4F, 0x44, 0x05, 0x01, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedLane0On, serialConnection.lastWrittenData);
+
+    // Turn Lane 1 OFF
+    protocol.setLanePower(false, 1);
+    // 0x4F, 0x44, 0x06, 0x00, 0x3B
+    byte[] expectedLane1Off = { 0x4F, 0x44, 0x06, 0x00, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedLane1Off, serialConnection.lastWrittenData);
+
+    // Try Invalid Lane (2) - Should not send anything specific (mock keeps last
+    // written)
+    // To verify, we can clear lastWrittenData or check if it changed
+    serialConnection.lastWrittenData = null;
+    protocol.setLanePower(true, 2);
+    org.junit.Assert.assertNull(serialConnection.lastWrittenData);
   }
 }

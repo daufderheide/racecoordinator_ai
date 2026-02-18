@@ -219,6 +219,51 @@ public class RacingTest {
     assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(1), 0.001);
   }
 
+  @Test
+  public void testPerLanePowerOffOnFinish() {
+    Racing racing = new Racing();
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring allowFinishScoring = new HeatScoring(
+        HeatScoring.FinishMethod.Lap,
+        3L,
+        HeatScoring.HeatRanking.LAP_COUNT,
+        HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        HeatScoring.AllowFinish.Allow);
+
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatScoring()).thenReturn(allowFinishScoring);
+    when(mockRace.isRacing()).thenReturn(true);
+
+    // Mock Heat and Drivers
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    HeatStandings mockStandings = mock(HeatStandings.class);
+    when(mockHeat.getHeatStandings()).thenReturn(mockStandings);
+
+    List<DriverHeatData> drivers = new ArrayList<>();
+    DriverHeatData driver1 = new DriverHeatData(participants.get(0));
+    DriverHeatData driver2 = new DriverHeatData(participants.get(1));
+    drivers.add(driver1);
+    drivers.add(driver2);
+    when(mockHeat.getDrivers()).thenReturn(drivers);
+
+    racing.enter(mockRace);
+
+    // Driver 1 completes 3 laps (limit is 3)
+    racing.onLap(0, 1.0, 1); // Reaction
+    racing.onLap(0, 5.0, 1); // Lap 1
+    racing.onLap(0, 5.0, 1); // Lap 2
+
+    // This lap should trigger finish and setLanePower(false, 0) because driver 2 is
+    // still racing
+    racing.onLap(0, 5.0, 1); // Lap 3 (Finish)
+
+    org.mockito.Mockito.verify(mockRace).setLanePower(false, 0);
+    // Heat should NOT have ended yet
+    org.mockito.Mockito.verify(mockRace, org.mockito.Mockito.never()).changeState(org.mockito.ArgumentMatchers.any());
+  }
+
   private void assertEquals(long expected, long actual) {
     if (expected != actual) {
       throw new AssertionError("Expected " + expected + " but got " + actual);

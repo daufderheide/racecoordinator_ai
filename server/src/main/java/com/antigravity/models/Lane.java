@@ -6,37 +6,37 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
 public class Lane extends Model {
-    private final String background_color;
-    private final String foreground_color;
-    private final int length;
+  private final String background_color;
+  private final String foreground_color;
+  private final int length;
 
-    @BsonCreator
-    @com.fasterxml.jackson.annotation.JsonCreator
-    public Lane(
-            @BsonProperty("background_color") @com.fasterxml.jackson.annotation.JsonProperty("background_color") String background_color,
-            @BsonProperty("foreground_color") @com.fasterxml.jackson.annotation.JsonProperty("foreground_color") String foreground_color,
-            @BsonProperty("length") @com.fasterxml.jackson.annotation.JsonProperty("length") int length,
-            @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
-            @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
-        super(id, entityId);
-        this.background_color = background_color;
-        this.foreground_color = foreground_color;
-        this.length = length;
-    }
+  @BsonCreator
+  @com.fasterxml.jackson.annotation.JsonCreator
+  public Lane(
+      @BsonProperty("background_color") @com.fasterxml.jackson.annotation.JsonProperty("background_color") String background_color,
+      @BsonProperty("foreground_color") @com.fasterxml.jackson.annotation.JsonProperty("foreground_color") String foreground_color,
+      @BsonProperty("length") @com.fasterxml.jackson.annotation.JsonProperty("length") int length,
+      @BsonProperty("entity_id") @com.fasterxml.jackson.annotation.JsonProperty("entity_id") String entityId,
+      @BsonId @com.fasterxml.jackson.annotation.JsonProperty("_id") ObjectId id) {
+    super(id, entityId);
+    this.background_color = background_color;
+    this.foreground_color = foreground_color;
+    this.length = length;
+  }
 
-    public Lane(String background_color, String foreground_color, int length) {
-        this(background_color, foreground_color, length, null, null);
-    }
+  public Lane(String background_color, String foreground_color, int length) {
+    this(background_color, foreground_color, length, null, null);
+  }
 
-    public String getBackground_color() {
-        return background_color;
-    }
+  public String getBackground_color() {
+    return background_color;
+  }
 
-    public String getForeground_color() {
-        return foreground_color;
-    }
+  public String getForeground_color() {
+    return foreground_color;
+  }
 
-    public int getLength() {
-        return length;
-    }
+  public int getLength() {
+    return length;
+  }
 }

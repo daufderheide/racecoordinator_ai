@@ -4,6 +4,7 @@ public class HeatOver implements IRaceState {
   @Override
   public void enter(com.antigravity.race.Race race) {
     System.out.println("HeatOver state entered.");
+    race.setMainPower(false);
   }
 
   @Override

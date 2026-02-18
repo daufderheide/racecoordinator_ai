@@ -4,6 +4,7 @@ public class RaceOver implements IRaceState {
   @Override
   public void enter(com.antigravity.race.Race race) {
     System.out.println("RaceOver state entered.");
+    race.setMainPower(false);
   }
 
   @Override

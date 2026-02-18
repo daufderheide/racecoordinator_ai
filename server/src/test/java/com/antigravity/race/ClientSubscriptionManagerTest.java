@@ -87,4 +87,16 @@ public class ClientSubscriptionManagerTest {
     verify(mockProtocol).close();
     assertNull("Protocol should be null after last subscriber disconnects", manager.getProtocol());
   }
+
+  @Test
+  public void testPowerOnWhenRaceCleared() {
+    Race mockRace = mock(Race.class);
+    manager.setRace(mockRace); // Set initial race
+
+    manager.setRace(null); // Clear race
+
+    verify(mockRace).setMainPower(true);
+    verify(mockRace).setLanePower(true, -1);
+    verify(mockRace).stop();
+  }
 }
