@@ -3,7 +3,7 @@
   <div class="ue-header">
     <app-back-button [label]="'UE_BTN_BACK' | translate" route="/raceday-setup" [confirm]="hasChanges()"
       [confirmTitle]="'UE_CONFIRM_DISCARD_TITLE' | translate"
-      [confirmMessage]="'UE_CONFIRM_DISCARD_MESSAGE' | translate"></app-back-button>
+      [confirmMessage]="'UE_CONFIRM_DISCARD_MESSAGE' | translate" (back)="onBack()"></app-back-button>
 
     <div class="title">{{ 'UE_TITLE' | translate }}</div>
 

@@ -6,6 +6,7 @@ import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 import { forkJoin } from 'rxjs';
+import { DirtyComponent } from 'src/app/interfaces/dirty-component';
 
 @Component({
   selector: 'app-ui-editor',
@@ -13,7 +14,7 @@ import { forkJoin } from 'rxjs';
   styleUrl: './ui-editor.component.css',
   standalone: false
 })
-export class UIEditorComponent implements OnInit, OnDestroy {
+export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   settings!: Settings;
   editingSettings!: Settings;
   isLoading = true;
@@ -21,6 +22,7 @@ export class UIEditorComponent implements OnInit, OnDestroy {
   scale = 1;
   assets: any[] = [];
   customDirectoryName: string | null = null;
+  isNavigationApproved = false;
 
   undoManager!: UndoManager<Settings>;
 
@@ -55,6 +57,22 @@ export class UIEditorComponent implements OnInit, OnDestroy {
   @HostListener('window:resize')
   onResize() {
     this.updateScale();
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.redo();
+      } else {
+        this.undo();
+      }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
+      event.preventDefault();
+      this.redo();
+    }
   }
 
   private updateScale() {
@@ -144,6 +162,7 @@ export class UIEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
+    this.isNavigationApproved = true;
     this.router.navigate(['/raceday-setup']);
   }
 
