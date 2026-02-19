@@ -414,5 +414,6 @@
     "UE_CONFIRM_DISCARD_MESSAGE": "Hai delle modifiche non salvate. Sei sicuro di volerle scartare ?",
     "UE_HINT_DRAG_IMAGE": "TRASCINA L'IMMAGINE QUI",
     "UE_TITLE_SELECT_IMAGE": "SELEZIONA IMMAGINE",
-    "UE_BTN_REMOVE_IMAGE": "RIMUOVI IMMAGINE"
+    "UE_BTN_REMOVE_IMAGE": "RIMUOVI IMMAGINE",
+    "UE_LABEL_SORT_STANDINGS": "Ordina giorno di gara per classifica"
 }

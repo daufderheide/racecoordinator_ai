@@ -397,5 +397,6 @@
     "UE_CONFIRM_DISCARD_MESSAGE": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?",
     "UE_HINT_DRAG_IMAGE": "GLISSER L'IMAGE ICI",
     "UE_TITLE_SELECT_IMAGE": "SÉLECTIONNER L'IMAGE",
-    "UE_BTN_REMOVE_IMAGE": "SUPPRIMER L'IMAGE"
+    "UE_BTN_REMOVE_IMAGE": "SUPPRIMER L'IMAGE",
+    "UE_LABEL_SORT_STANDINGS": "Trier la page de course par classement"
 }

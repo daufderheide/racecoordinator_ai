@@ -27,7 +27,8 @@ export class SettingsService {
                     parsed.flagRed,
                     parsed.flagWhite,
                     parsed.flagBlack,
-                    parsed.flagCheckered
+                    parsed.flagCheckered,
+                    parsed.sortByStandings !== undefined ? parsed.sortByStandings : true
                 );
             } catch (e) {
                 console.error('Error parsing settings from localStorage', e);

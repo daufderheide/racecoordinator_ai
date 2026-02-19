@@ -414,5 +414,6 @@
     "UE_CONFIRM_DISCARD_MESSAGE": "You have unsaved changes. Are you sure you want to discard them?",
     "UE_HINT_DRAG_IMAGE": "DRAG IMAGE HERE",
     "UE_TITLE_SELECT_IMAGE": "SELECT IMAGE",
-    "UE_BTN_REMOVE_IMAGE": "REMOVE IMAGE"
+    "UE_BTN_REMOVE_IMAGE": "REMOVE IMAGE",
+    "UE_LABEL_SORT_STANDINGS": "Sort Raceday by Standings"
 }

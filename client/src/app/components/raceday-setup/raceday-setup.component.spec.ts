@@ -46,7 +46,7 @@ describe('RacedaySetupComponent', () => {
     // Default mocks
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of('0.0.0'));
-    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
+    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, '', false, undefined, undefined, undefined, undefined, undefined, undefined, true));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);
     mockTranslationService.getBrowserLanguage = jasmine.createSpy().and.returnValue('en');

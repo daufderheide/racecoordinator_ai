@@ -60,7 +60,7 @@ describe('DefaultRacedaySetupComponent', () => {
       { code: 'en', nameKey: 'RDS_LANG_EN' },
       { code: 'es', nameKey: 'RDS_LANG_ES' }
     ]);
-    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
+    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, '', false, undefined, undefined, undefined, undefined, undefined, undefined, true));
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],

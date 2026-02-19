@@ -13,6 +13,7 @@ export class Settings {
     flagWhite?: string;
     flagBlack?: string;
     flagCheckered?: string;
+    sortByStandings: boolean;
 
     constructor(
         recentRaceIds: string[] = [],
@@ -26,7 +27,8 @@ export class Settings {
         flagRed?: string,
         flagWhite?: string,
         flagBlack?: string,
-        flagCheckered?: string
+        flagCheckered?: string,
+        sortByStandings: boolean = true
     ) {
         this.recentRaceIds = recentRaceIds;
         this.selectedDriverIds = selectedDriverIds;
@@ -40,5 +42,6 @@ export class Settings {
         this.flagWhite = flagWhite;
         this.flagBlack = flagBlack;
         this.flagCheckered = flagCheckered;
+        this.sortByStandings = sortByStandings;
     }
 }

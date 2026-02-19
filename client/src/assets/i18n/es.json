@@ -414,5 +414,6 @@
     "UE_CONFIRM_DISCARD_MESSAGE": "Tienes cambios sin guardar. ¿Estás seguro de que quieres descartarlos?",
     "UE_HINT_DRAG_IMAGE": "ARRASTRA LA IMAGEN AQUÍ",
     "UE_TITLE_SELECT_IMAGE": "SELECCIONAR IMAGEN",
-    "UE_BTN_REMOVE_IMAGE": "ELIMINAR IMAGEN"
+    "UE_BTN_REMOVE_IMAGE": "ELIMINAR IMAGEN",
+    "UE_LABEL_SORT_STANDINGS": "Ordenar día de carrera por posiciones"
 }

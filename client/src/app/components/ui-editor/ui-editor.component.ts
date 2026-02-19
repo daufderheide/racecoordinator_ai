@@ -103,7 +103,8 @@ export class UIEditorComponent implements OnInit, OnDestroy {
       s.flagRed,
       s.flagWhite,
       s.flagBlack,
-      s.flagCheckered
+      s.flagCheckered,
+      s.sortByStandings
     );
   }
 
@@ -113,7 +114,8 @@ export class UIEditorComponent implements OnInit, OnDestroy {
       a.flagRed === b.flagRed &&
       a.flagWhite === b.flagWhite &&
       a.flagBlack === b.flagBlack &&
-      a.flagCheckered === b.flagCheckered;
+      a.flagCheckered === b.flagCheckered &&
+      a.sortByStandings === b.sortByStandings;
   }
 
   async selectDirectory() {

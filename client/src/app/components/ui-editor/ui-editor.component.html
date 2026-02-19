@@ -32,6 +32,14 @@
               </button>
             </div>
           </div>
+
+          <div class="sorting-selector">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
+              <span class="checkmark"></span>
+              {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
+            </label>
+          </div>
         </div>
       </div>
 

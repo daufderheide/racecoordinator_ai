@@ -400,7 +400,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       localSettings.flagRed,
       localSettings.flagWhite,
       localSettings.flagBlack,
-      localSettings.flagCheckered
+      localSettings.flagCheckered,
+      localSettings.sortByStandings
     );
     this.settingsService.saveSettings(settings); // 抽离. driver name and team name.
     this.updateQuickStartRaces(recentRaceIds);
