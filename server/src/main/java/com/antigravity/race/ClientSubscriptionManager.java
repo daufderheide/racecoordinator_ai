@@ -78,10 +78,9 @@ public class ClientSubscriptionManager {
 
   public void addSession(WsContext ctx) {
     sessions.add(ctx);
-    // Default to subscribed for backward compatibility and initial connection
-    raceDataSubscribers.add(ctx);
-    System.out.println("New WebSocket session added. Total sessions: " + sessions.size() + ", Subscribers: "
-        + raceDataSubscribers.size());
+    // Remove auto-subscription: clients must call subscribe() explicitly
+    // raceDataSubscribers.add(ctx);
+    System.out.println("New WebSocket session added. Total sessions: " + sessions.size());
 
     if (currentRace != null) {
       com.antigravity.proto.RaceData snapshot = currentRace.createSnapshot();

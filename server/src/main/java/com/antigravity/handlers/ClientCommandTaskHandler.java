@@ -96,8 +96,9 @@ public class ClientCommandTaskHandler {
     }
 
     if (ClientSubscriptionManager.getInstance().hasSubscribers()
-        && ClientSubscriptionManager.getInstance().getRace() != null) {
-      return TaskResult.error(409, "Cannot start new race while client is watching existing race");
+        && ClientSubscriptionManager.getInstance().getRace() != null
+        && ClientSubscriptionManager.getInstance().getRace().isActive()) {
+      return TaskResult.error(409, "Cannot start new race while client is watching an active race");
     }
 
     // Create the runtime race instance

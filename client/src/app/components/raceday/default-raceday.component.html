@@ -107,6 +107,12 @@
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+        <filter id="maskBlur">
+          <feGaussianBlur stdDeviation="15" />
+        </filter>
+        <mask id="softFlagMask">
+          <rect x="1385" y="35" width="170" height="150" fill="white" filter="url(#maskBlur)" />
+        </mask>
       </defs>
 
       <!-- Background -->
@@ -135,7 +141,7 @@
             }} of {{ totalHeats }}</text>
 
           <!-- Flags -->
-          <image x="1370" y="20" width="200" height="180" href="assets/crossed_racing_flags.png" />
+          <image x="1370" y="20" width="200" height="180" [attr.href]="getCurrentFlagUrl()" mask="url(#softFlagMask)" />
         </g>
 
         <!-- Table Headers -->

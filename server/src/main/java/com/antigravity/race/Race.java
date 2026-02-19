@@ -35,6 +35,7 @@ public class Race implements ProtocolListener {
   // Dynamic race data
   private IRaceState state;
   private float accumulatedRaceTime = 0.0f;
+  private boolean hasRacedInCurrentHeat = false;
 
   public Race(MongoDatabase database,
       com.antigravity.models.Race model,
@@ -126,6 +127,14 @@ public class Race implements ProtocolListener {
 
   public void resetRaceTime() {
     accumulatedRaceTime = 0.0f;
+  }
+
+  public boolean hasRacedInCurrentHeat() {
+    return hasRacedInCurrentHeat;
+  }
+
+  public void setHasRacedInCurrentHeat(boolean hasRaced) {
+    this.hasRacedInCurrentHeat = hasRaced;
   }
 
   public void broadcast(com.google.protobuf.GeneratedMessageV3 message) {
@@ -233,6 +242,10 @@ public class Race implements ProtocolListener {
 
   public boolean isRacing() {
     return state instanceof com.antigravity.race.states.Racing;
+  }
+
+  public boolean isActive() {
+    return !(state instanceof com.antigravity.race.states.RaceOver);
   }
 
   @Override

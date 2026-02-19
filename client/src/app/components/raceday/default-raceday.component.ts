@@ -14,6 +14,8 @@ import { LaneConverter } from 'src/app/converters/lane.converter';
 import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
 import { playSound } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
+import { SettingsService } from 'src/app/services/settings.service';
+import { FinishMethod } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
 
@@ -62,6 +64,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         private translationService: TranslationService,
         private dataService: DataService,
         private raceService: RaceService,
+        private settingsService: SettingsService,
         private router: Router,
         private cdr: ChangeDetectorRef
     ) {
@@ -78,6 +81,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     protected driverRankings = new Map<string, number>();
     protected isInterfaceConnected: boolean = false;
     protected raceState: com.antigravity.RaceState = com.antigravity.RaceState.UNKNOWN_STATE;
+    protected assets: any[] = [];
+    protected hasRacedInCurrentHeat: boolean = false;
 
     private driversLoaded = false;
     private pendingUpdate: com.antigravity.IRace | null = null;
@@ -91,6 +96,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         HeatConverter.clearCache();
         TrackConverter.clearCache();
         LaneConverter.clearCache();
+
+        this.dataService.listAssets().subscribe(assets => {
+            this.assets = assets?.filter((a: any) => a.type === 'image') || [];
+            this.cdr.detectChanges();
+        });
 
         // Hydrate Driver Converter with all known drivers from DB to handle ID-only references in Proto
         this.dataService.getDrivers().subscribe({
@@ -266,6 +276,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
         this.dataService.getRaceState().subscribe(state => {
             this.raceState = state;
+            if (state === com.antigravity.RaceState.RACING) {
+                this.hasRacedInCurrentHeat = true;
+            }
             this.cdr.detectChanges();
         });
 
@@ -315,6 +328,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     private leaderBoardWindow: Window | null = null;
 
     ngOnDestroy() {
+        this.dataService.updateRaceSubscription(false);
         this.dataService.disconnectFromInterfaceDataSocket();
 
         if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
@@ -415,8 +429,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         if (heats && heats.length > 0) {
             console.log('RacedayComponent: Using heats from server:', heats);
             this.totalHeats = heats.length;
+            const prevHeatNumber = this.heat?.heatNumber;
             this.heat = this.raceService.getCurrentHeat();
             console.log('RacedayComponent: Current Heat:', this.heat);
+
+            if (this.heat && this.heat.heatNumber !== prevHeatNumber) {
+                console.log(`RacedayComponent: Heat changed from ${prevHeatNumber} to ${this.heat.heatNumber}. Resetting hasRacedInCurrentHeat.`);
+                this.hasRacedInCurrentHeat = false;
+            }
 
             // Initialize rankings
             this.driverRankings.clear();
@@ -762,7 +782,108 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         const s = this.raceState;
         return s === com.antigravity.RaceState.STARTING ||
             s === com.antigravity.RaceState.RACING ||
-            s === com.antigravity.RaceState.RACE_OVER;
+            s === com.antigravity.RaceState.PAUSED;
+    }
+
+    getCurrentFlagUrl(): string {
+        const RS = com.antigravity.RaceState;
+        const settings = this.settingsService.getSettings();
+        const race = this.raceService.getRace();
+        const scoring = race?.heat_scoring;
+
+        let flagType: 'red' | 'green' | 'yellow' | 'white' | 'checkered' = 'red';
+
+        switch (this.raceState) {
+            case RS.NOT_STARTED:
+            case RS.HEAT_OVER:
+                flagType = 'red';
+                break;
+            case RS.STARTING:
+                // Use yellow if heat is in progress (resuming), red if it hasn't started yet
+                flagType = this.hasRacedInCurrentHeat ? 'yellow' : 'red';
+                break;
+            case RS.RACING:
+                flagType = 'green';
+                // Check for White Flag (1 lap to go)
+                if (scoring?.finishMethod === FinishMethod.Lap && this.heat?.heatDrivers) {
+                    const lapsToFinish = scoring.finishValue;
+                    const anyDriverOneLapToGo = this.heat.heatDrivers.some(d => d.lapCount === lapsToFinish - 1);
+                    if (anyDriverOneLapToGo) {
+                        flagType = 'white';
+                    }
+                }
+                break;
+            case RS.PAUSED:
+                flagType = 'yellow';
+                break;
+            case RS.RACE_OVER:
+                flagType = 'checkered';
+                break;
+            default:
+                flagType = 'red';
+        }
+
+        // Check local settings first
+        let url: string | undefined;
+        if (flagType === 'red') url = settings.flagRed;
+        if (flagType === 'green') url = settings.flagGreen;
+        if (flagType === 'yellow') url = settings.flagYellow;
+        if (flagType === 'white') url = settings.flagWhite;
+        if (flagType === 'checkered') url = settings.flagCheckered;
+
+        if (url) {
+            // Check if it's a dead asset reference (e.g. after a DB reset)
+            const isAssetUrl = url.startsWith('/assets/');
+            // Only consider it a dead reference if we've successfully loaded at least one asset
+            const assetExists = (isAssetUrl && this.assets.length > 0) ? this.assets.some(a => a.url === url) : true;
+
+            if (assetExists) {
+                const finalUrl = this.getFullUrl(url);
+                console.log(`Flag resolution for ${flagType}: Using custom URL: ${finalUrl}`);
+                return finalUrl;
+            } else {
+                console.log(`Flag resolution for ${flagType}: Custom URL ${url} is a dead asset reference, falling back to defaults.`);
+            }
+        }
+
+        // Fallback to default assets
+        const displayNames: { [key: string]: string } = {
+            'red': 'Red Flag',
+            'green': 'Green Flag',
+            'yellow': 'Yellow Flag',
+            'white': 'White Flag',
+            'black': 'Black Flag',
+            'checkered': 'Checkered Flag'
+        };
+
+        const displayName = displayNames[flagType];
+        const slug = displayName.replace(/\s+/g, '_');
+        // Strict match by name first, then by slugified name
+        const defaultAsset = this.assets.find(a => a.name === displayName) ||
+            this.assets.find(a => a.name === slug) ||
+            this.assets.find(a => a.url?.includes(slug));
+
+        if (defaultAsset) {
+            const finalUrl = this.getFullUrl(defaultAsset.url);
+            console.log(`Flag resolution for ${flagType}: Using default asset: ${defaultAsset.name} -> ${finalUrl}`);
+            return finalUrl;
+        }
+
+        // Ultimate fallback
+        console.warn(`Flag resolution for ${flagType}: No asset found, using ultimate fallback.`);
+        return 'assets/crossed_racing_flags.png';
+    }
+
+    getFullUrl(url: string | undefined): string {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('assets/')) return url;
+
+        const serverUrl = this.dataService.serverUrl;
+        if (!serverUrl || serverUrl.includes('undefined')) return url;
+
+        // Ensure single slash between serverUrl and url
+        const normalizedUrl = url.startsWith('/') ? url : '/' + url;
+        return serverUrl + normalizedUrl;
     }
 
     public get isRestartHeatDisabled(): boolean {

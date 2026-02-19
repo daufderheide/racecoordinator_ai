@@ -64,8 +64,12 @@ public class Starting implements IRaceState {
   @Override
   public void pause(com.antigravity.race.Race race) {
     System.out.println("Starting.pause() called. Cancelling start.");
-    race.resetRaceTime();
-    race.changeState(new NotStarted());
+    if (race.hasRacedInCurrentHeat()) {
+      race.changeState(new Paused());
+    } else {
+      race.resetRaceTime();
+      race.changeState(new NotStarted());
+    }
   }
 
   @Override

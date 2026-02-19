@@ -22,6 +22,7 @@ import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
+import { SettingsService } from 'src/app/services/settings.service';
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {
@@ -29,10 +30,11 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(TranslationService) translationService: TranslationService,
     @Inject(DataService) dataService: DataService,
     @Inject(RaceService) raceService: RaceService,
+    @Inject(SettingsService) settingsService: SettingsService,
     @Inject(Router) router: Router,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef
   ) {
-    super(translationService, dataService, raceService, router, cdr);
+    super(translationService, dataService, raceService, settingsService, router, cdr);
   }
 }
 

@@ -18,12 +18,12 @@ public class Racing implements IRaceState {
 
     com.antigravity.models.HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring != null && scoring.getFinishMethod() == com.antigravity.models.HeatScoring.FinishMethod.Timed) {
-      // If starting fresh (time is 0), set it to finish value.
-      // If resuming (time > 0), assume it's already set.
       if (race.getRaceTime() == 0) {
         race.addRaceTime((float) scoring.getFinishValue());
       }
     }
+
+    race.setHasRacedInCurrentHeat(true);
 
     race.startProtocols();
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
