@@ -539,12 +539,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/ui-editor']);
   }
 
-  async revertCustomUI() {
-    this.closeOptionsDropdown();
-    await this.fileSystem.clearCustomFolder();
-    sessionStorage.setItem('skipIntro', 'true');
-    window.location.reload();
-  }
 
   openServerSettings() {
     this.closeOptionsDropdown();

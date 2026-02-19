@@ -72,6 +72,38 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.remove-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 59, 48, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.image-preview:hover .remove-button {
+    opacity: 1;
+}
+
+.remove-button:hover {
+    background: #ff3b30;
+    transform: scale(1.1);
 }

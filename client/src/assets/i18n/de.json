@@ -224,7 +224,6 @@
     "RDS_MENU_LOCALIZATION": "Lokalisierung",
     "RDS_MENU_OPTIONS": "Optionen",
     "RDS_MENU_RACE": "Rennen",
-    "RDS_MENU_REVERT_UI": "UI zurücksetzen",
     "RDS_MENU_SEASON": "Saison",
     "RDS_MENU_SERVER": "Server",
     "RDS_MENU_TRACK": "Strecke",
@@ -414,5 +413,6 @@
     "UE_CONFIRM_DISCARD_TITLE": "Nicht gespeicherte Änderungen",
     "UE_CONFIRM_DISCARD_MESSAGE": "Sie haben nicht gespeicherte Änderungen. Sind Sie sicher, dass Sie diese verwerfen möchten?",
     "UE_HINT_DRAG_IMAGE": "BILD HIERHER ZIEHEN",
-    "UE_TITLE_SELECT_IMAGE": "BILD AUSWÄHLEN"
+    "UE_TITLE_SELECT_IMAGE": "BILD AUSWÄHLEN",
+    "UE_BTN_REMOVE_IMAGE": "BILD ENTFERNEN"
 }

@@ -101,4 +101,11 @@ export class ImageSelectorComponent {
     this.imageUrlChange.emit(this.imageUrl);
     this.closeSelector();
   }
+
+  removeImage(event: MouseEvent) {
+    event.stopPropagation();
+    this.imageUrl = undefined;
+    this.imageUrlChange.emit(this.imageUrl);
+    this.cdr.detectChanges();
+  }
 }

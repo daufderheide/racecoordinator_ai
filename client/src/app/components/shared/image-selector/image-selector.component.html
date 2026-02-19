@@ -3,6 +3,10 @@
   <div class="image-preview" [class.dragging]="isDragging" (drop)="onDrop($event)" (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)" (click)="openSelector()">
     <img *ngIf="imageUrl || pendingPreview" [src]="pendingPreview || (imageUrl | avatarUrl)" alt="Image Preview">
+    <div class="remove-button" *ngIf="imageUrl && !pendingPreview && !isUploading" (click)="removeImage($event)"
+      [title]="'UE_BTN_REMOVE_IMAGE' | translate">
+      <i class="fas fa-times"></i>
+    </div>
     <div class="drop-hint" *ngIf="!imageUrl && !pendingPreview">
       {{ 'UE_HINT_DRAG_IMAGE' | translate }}
     </div>

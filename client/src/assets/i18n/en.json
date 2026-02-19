@@ -218,7 +218,6 @@
     "RDS_MENU_LOCALIZATION": "Localization",
     "RDS_MENU_OPTIONS": "Options",
     "RDS_MENU_RACE": "Race",
-    "RDS_MENU_REVERT_UI": "Revert Custom UI",
     "RDS_MENU_SEASON": "Season",
     "RDS_MENU_SERVER": "Server",
     "RDS_MENU_TRACK": "Track",
@@ -414,5 +413,6 @@
     "UE_CONFIRM_DISCARD_TITLE": "Unsaved Changes",
     "UE_CONFIRM_DISCARD_MESSAGE": "You have unsaved changes. Are you sure you want to discard them?",
     "UE_HINT_DRAG_IMAGE": "DRAG IMAGE HERE",
-    "UE_TITLE_SELECT_IMAGE": "SELECT IMAGE"
+    "UE_TITLE_SELECT_IMAGE": "SELECT IMAGE",
+    "UE_BTN_REMOVE_IMAGE": "REMOVE IMAGE"
 }

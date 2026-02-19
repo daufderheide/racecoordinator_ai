@@ -29,7 +29,6 @@
       <!-- Options Dropdown -->
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_OPTIONS' && isOptionsDropdownOpen">
         <div class="menu-dropdown-item" (click)="configureCustomUI()">{{ 'RDS_MENU_CUSTOM_UI' | translate }}</div>
-        <div class="menu-dropdown-item" (click)="revertCustomUI()">{{ 'RDS_MENU_REVERT_UI' | translate }}</div>
         <div class="menu-dropdown-item" (click)="openServerSettings()">{{ 'RDS_MENU_SERVER' | translate }}</div>
         <div class="menu-dropdown-item has-submenu" (click)="toggleLocalizationDropdown($event)">
           {{ 'RDS_MENU_LOCALIZATION' | translate }}

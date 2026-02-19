@@ -224,7 +224,6 @@
     "RDS_MENU_LOCALIZATION": "Localización",
     "RDS_MENU_OPTIONS": "Opciones",
     "RDS_MENU_RACE": "Carrera",
-    "RDS_MENU_REVERT_UI": "Revertir IU",
     "RDS_MENU_SEASON": "Temporada",
     "RDS_MENU_SERVER": "Servidor",
     "RDS_MENU_TRACK": "Pista",
@@ -414,5 +413,6 @@
     "UE_CONFIRM_DISCARD_TITLE": "Cambios sin guardar",
     "UE_CONFIRM_DISCARD_MESSAGE": "Tienes cambios sin guardar. ¿Estás seguro de que quieres descartarlos?",
     "UE_HINT_DRAG_IMAGE": "ARRASTRA LA IMAGEN AQUÍ",
-    "UE_TITLE_SELECT_IMAGE": "SELECCIONAR IMAGEN"
+    "UE_TITLE_SELECT_IMAGE": "SELECCIONAR IMAGEN",
+    "UE_BTN_REMOVE_IMAGE": "ELIMINAR IMAGEN"
 }
