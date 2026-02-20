@@ -273,6 +273,16 @@ public class Racing implements IRaceState {
 
       this.race.broadcast(rtDataMsg);
       System.out.println("Race: Broadcasted reaction time for lane " + lane + ": " + lapTime);
+
+      com.antigravity.proto.StandingsUpdate standingsUpdate = this.race.getCurrentHeat().getHeatStandings()
+          .updateStandings();
+      if (standingsUpdate != null) {
+        com.antigravity.proto.RaceData standingsDataMsg = com.antigravity.proto.RaceData.newBuilder()
+            .setStandingsUpdate(standingsUpdate)
+            .build();
+        this.race.broadcast(standingsDataMsg);
+      }
+
       return true;
     }
     return false;

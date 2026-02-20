@@ -179,4 +179,33 @@ public class HeatStandingsTest {
     assertEquals(2.5, d2.getGapLeader(), 0.001); // 2.5s behind
     assertEquals(2.5, d2.getGapPosition(), 0.001);
   }
+
+  @Test
+  public void testReactionTimeTiebreaker() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p3");
+    RaceParticipant p3 = createDriver("p2");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.setReactionTime(0.5); // Fastest reaction
+
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.setReactionTime(1.0); // Slower reaction
+
+    DriverHeatData d3 = new DriverHeatData(p3);
+    d3.setReactionTime(0.0); // No reaction yet (worst)
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d3);
+    data.add(d2);
+    data.add(d1);
+
+    HeatStandings standings = new HeatStandings(data, new HeatScoring(FinishMethod.Lap, 0, HeatRanking.LAP_COUNT,
+        HeatRankingTiebreaker.FASTEST_LAP_TIME));
+    List<String> results = standings.getStandings();
+
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+    assertEquals(d3.getObjectId(), results.get(2));
+  }
 }

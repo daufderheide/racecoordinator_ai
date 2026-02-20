@@ -45,7 +45,7 @@ public class HeatStandings {
     return tieBreaker;
   }
 
-  public StandingsUpdate onLap(int lane, double lapTime) {
+  public StandingsUpdate updateStandings() {
     List<String> newStandings = calculateStandings();
     StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
 
@@ -67,6 +67,10 @@ public class HeatStandings {
 
     currentStandings = newStandings;
     return updateBuilder.build();
+  }
+
+  public StandingsUpdate onLap(int lane, double lapTime) {
+    return updateStandings();
   }
 
   private List<String> calculateStandings() {
@@ -158,7 +162,9 @@ public class HeatStandings {
         comparator = (d1, d2) -> 0;
     }
 
-    return comparator.thenComparing(getTieBreakerComparator());
+    return comparator
+        .thenComparing(d -> d.getReactionTime() == 0 ? Double.MAX_VALUE : d.getReactionTime())
+        .thenComparing(getTieBreakerComparator());
   }
 
   private Comparator<DriverHeatData> getTieBreakerComparator() {
