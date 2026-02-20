@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
+import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
 
 @Component({
   selector: 'app-back-button',
@@ -19,7 +20,10 @@ export class BackButtonComponent {
 
   showModal = false;
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private connectionMonitor: ConnectionMonitorService
+  ) { }
 
   onBack() {
     if (this.confirm) {
@@ -39,7 +43,17 @@ export class BackButtonComponent {
   }
 
   private proceed() {
+    const isConnected = this.connectionMonitor.currentState === ConnectionState.CONNECTED;
+
+    if (!isConnected) {
+      // Always go back to splash screen if disconnected
+      sessionStorage.removeItem('skipIntro');
+      this.router.navigate(['/raceday-setup']);
+      return;
+    }
+
     if (this.back.observed) {
+      sessionStorage.setItem('skipIntro', 'true');
       this.back.emit();
     } else {
       sessionStorage.setItem('skipIntro', 'true');

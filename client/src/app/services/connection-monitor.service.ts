@@ -16,6 +16,11 @@ export class ConnectionMonitorService implements OnDestroy {
   private connectionStateSubject = new BehaviorSubject<ConnectionState>(ConnectionState.CONNECTED);
   public connectionState$ = this.connectionStateSubject.asObservable();
 
+  public get currentState(): ConnectionState {
+    return this.connectionStateSubject.value;
+  }
+
+
   private monitoringSubscription: Subscription | null = null;
   private readonly CHECK_INTERVAL_MS = 5000;
   private readonly TIMEOUT_MS = 3000;

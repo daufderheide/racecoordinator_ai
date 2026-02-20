@@ -34,7 +34,6 @@ export class ItemSelectorComponent {
 
   onBack() {
     if (this.backButtonRoute) {
-      sessionStorage.setItem('skipIntro', 'true');
       this.router.navigate([this.backButtonRoute], { queryParams: this.backButtonQueryParams });
     }
     this.close.emit();
