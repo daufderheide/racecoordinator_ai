@@ -14,6 +14,7 @@ import { HeatListComponent } from './heat-list/heat-list.component';
 import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
 import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
 import { ImageSelectorComponent } from './image-selector/image-selector.component';
+import { ReorderDialogComponent } from '../ui-editor/reorder-dialog/reorder-dialog.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { ImageSelectorComponent } from './image-selector/image-selector.componen
     HeatListComponent,
     AvatarUrlPipe,
     HelpOverlayComponent,
-    ImageSelectorComponent
+    ImageSelectorComponent,
+    ReorderDialogComponent
   ],
   imports: [
     CommonModule,
@@ -50,7 +52,10 @@ import { ImageSelectorComponent } from './image-selector/image-selector.componen
     HeatListComponent,
     AvatarUrlPipe,
     HelpOverlayComponent,
-    ImageSelectorComponent
+    ImageSelectorComponent,
+    ReorderDialogComponent
   ]
 })
 export class SharedModule { }
+
+

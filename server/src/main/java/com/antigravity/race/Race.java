@@ -149,21 +149,6 @@ public class Race implements ProtocolListener {
     state.enter(this);
 
     com.antigravity.proto.RaceState protoState = getProtoState(state);
-    try {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
-      java.nio.file.Files.write(logPath,
-          ("changeState to " + state.getClass().getSimpleName() + " -> Proto: " + protoState + "\n")
-              .getBytes(),
-          java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
-    } catch (java.nio.channels.ClosedByInterruptException e) {
-      System.err.println("Debug log write interrupted (harmless): " + e.getMessage());
-      // Clear the interrupted status so we don't affect subsequent operations
-      Thread.interrupted();
-    } catch (java.io.IOException e) {
-      System.err.println("Failed to write debug log: " + e.getMessage());
-      e.printStackTrace();
-    }
 
     com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
         .setRaceState(protoState)

@@ -1,4 +1,5 @@
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
@@ -15,6 +16,7 @@ import { RaceParticipantConverter } from 'src/app/converters/race_participant.co
 import { playSound } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
+import { AnchorPoint } from './column_definition';
 import { Settings } from 'src/app/models/settings';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
@@ -32,6 +34,8 @@ import { ColumnDefinition } from './column_definition';
   standalone: false
 })
 export class DefaultRacedayComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track!: Track;
   protected columns: ColumnDefinition[];
@@ -83,7 +87,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   private pendingUpdate: com.antigravity.IRace | null = null;
 
   ngOnInit() {
-    console.log('RacedayComponent: Initializing...');
     this.loadColumns();
 
     // Clear caches to ensure fresh data for new race
@@ -93,13 +96,15 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     TrackConverter.clearCache();
     LaneConverter.clearCache();
 
-    this.dataService.listAssets().subscribe(assets => {
+    this.subscriptions.push(this.dataService.listAssets().subscribe(assets => {
       this.assets = assets?.filter((a: any) => a.type === 'image') || [];
-      this.cdr.detectChanges();
-    });
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
 
     // Hydrate Driver Converter with all known drivers from DB to handle ID-only references in Proto
-    this.dataService.getDrivers().subscribe({
+    this.subscriptions.push(this.dataService.getDrivers().subscribe({
       next: (drivers) => {
         console.log(`RacedayComponent: Hydrating ${drivers.length} drivers into cache.`);
         drivers.forEach(d => {
@@ -123,7 +128,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
           this.pendingUpdate = null;
         }
       }
-    });
+    }));
 
     this.detectShortcutKey();
     this.updateScale();
@@ -132,16 +137,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.dataService.updateRaceSubscription(true);
 
     // Listen for Race Update to initialize race data
-    this.dataService.getRaceUpdate().subscribe(update => {
+    this.subscriptions.push(this.dataService.getRaceUpdate().subscribe(update => {
       if (this.driversLoaded) {
         this.processRaceUpdate(update);
       } else {
         console.log('RacedayComponent: Deferring race update until drivers are hydrated.');
         this.pendingUpdate = update;
       }
-    });
+    }));
 
-    this.dataService.getRaceTime().subscribe(time => {
+    this.subscriptions.push(this.dataService.getRaceTime().subscribe(time => {
       // Determine timer direction and format
       // If new time > previous time (and not 0 reset), it's increasing -> Whole Numbers
       // If new time < previous time, it's decreasing -> Check for < 10s
@@ -169,17 +174,21 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
       this.time = time;
       this.previousTime = time;
-      this.cdr.detectChanges();
-    });
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
 
-    this.dataService.getLaps().subscribe(lap => {
+    this.subscriptions.push(this.dataService.getLaps().subscribe(lap => {
       console.log('Lap Received:', lap);
       // Locate driver by objectId from the lap message
       if (this.heat && this.heat.heatDrivers && lap && lap.objectId) {
         const driverData = this.heat.heatDrivers.find(d => d.objectId === lap.objectId);
         if (driverData) {
           driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
 
           // Audio Feedback
           const driver = driverData.driver;
@@ -213,20 +222,21 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       } else {
         console.warn('Lap received but heat or drivers not ready', { heat: !!this.heat, lap: !!lap });
       }
-    });
+    }));
 
-    this.dataService.getReactionTimes().subscribe(rt => {
+    this.subscriptions.push(this.dataService.getReactionTimes().subscribe(rt => {
       if (this.heat && this.heat.heatDrivers && rt && rt.objectId) {
         const driver = this.heat.heatDrivers.find(d => d.objectId === rt.objectId);
         if (driver) {
           driver.reactionTime = rt.reactionTime!;
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         }
       }
-    });
+    }));
 
-    this.dataService.getStandingsUpdate().subscribe(update => {
-      console.log('RacedayComponent: Received Standings Update:', update);
+    this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
       if (this.heat && update.updates) {
         update.updates.forEach(u => {
           if (u.objectId) {
@@ -243,17 +253,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
         this.sortHeatDrivers();
       }
-    });
+    }));
 
-    this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      console.log('RacedayComponent: Received Overall Standings Update:', update);
+    this.subscriptions.push(this.dataService.getOverallStandingsUpdate().subscribe(update => {
       if (update.participants) {
         const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
         this.raceService.setParticipants(participants);
       }
-    });
+    }));
 
-    this.dataService.getInterfaceEvents().subscribe(event => {
+    this.subscriptions.push(this.dataService.getInterfaceEvents().subscribe(event => {
       if (event.status) {
         this.resetWatchdog();
 
@@ -275,17 +284,21 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
             this.showInterfaceError('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
           }
         }
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
-    });
+    }));
 
-    this.dataService.getRaceState().subscribe(state => {
+    this.subscriptions.push(this.dataService.getRaceState().subscribe(state => {
       this.raceState = state;
       if (state === com.antigravity.RaceState.RACING) {
         this.hasRacedInCurrentHeat = true;
       }
-      this.cdr.detectChanges();
-    });
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
 
     // Ensure we are connected to the interface socket to receive status updates
     this.dataService.connectToInterfaceDataSocket();
@@ -333,8 +346,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   private leaderBoardWindow: Window | null = null;
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.dataService.updateRaceSubscription(false);
     this.dataService.disconnectFromInterfaceDataSocket();
+
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
 
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.clearDisconnectedError();
@@ -496,14 +513,73 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   // Helper method to get column text X position
-  getColumnTextX(columnIndex: number): number {
+  getColumnTextX(columnIndex: number, anchor?: any): number {
+
     const column = this.columns ? this.columns[columnIndex] : undefined;
     if (!column) return 0;
-    if (column.textAnchor === 'start') {
-      return this.getColumnX(columnIndex) + column.padding;
+
+    const xBase = this.getColumnX(columnIndex);
+    const width = column.width;
+    const padding = column.padding || 10;
+    const targetAnchor = anchor || column.anchor;
+
+    switch (targetAnchor) {
+      case AnchorPoint.TopLeft:
+      case AnchorPoint.CenterLeft:
+      case AnchorPoint.BottomLeft:
+        return xBase + padding;
+      case AnchorPoint.TopRight:
+      case AnchorPoint.CenterRight:
+      case AnchorPoint.BottomRight:
+        return xBase + width - padding;
+      case AnchorPoint.TopCenter:
+      case AnchorPoint.CenterCenter:
+      case AnchorPoint.BottomCenter:
+      default:
+        return xBase + (width / 2);
     }
-    return this.getColumnCenterX(columnIndex);
   }
+
+  // Helper method to get column text Y position
+  getColumnTextY(columnIndex: number, hasTeam: boolean = false, anchor?: any): number {
+    const rowHeight = 560 / (this.track?.lanes?.length || 8);
+    const targetAnchor = anchor || AnchorPoint.CenterCenter;
+
+    switch (targetAnchor) {
+      case AnchorPoint.TopLeft:
+      case AnchorPoint.TopCenter:
+      case AnchorPoint.TopRight:
+        return rowHeight * 0.22; // Adjusted from 0.18 for better spacing
+      case AnchorPoint.BottomLeft:
+      case AnchorPoint.BottomCenter:
+      case AnchorPoint.BottomRight:
+        return rowHeight * 0.78; // Adjusted from 0.82 for better spacing
+      default:
+        return rowHeight * 0.52; // Slightly adjusted from 0.55
+    }
+  }
+
+  // Helper method to get SVG text-anchor
+  getColumnTextAnchor(columnIndex: number, anchor?: any): string {
+
+    const column = this.columns ? this.columns[columnIndex] : undefined;
+    if (!column) return 'middle';
+
+    const targetAnchor = anchor || column.anchor;
+    switch (targetAnchor) {
+      case AnchorPoint.TopLeft:
+      case AnchorPoint.CenterLeft:
+      case AnchorPoint.BottomLeft:
+        return 'start';
+      case AnchorPoint.TopRight:
+      case AnchorPoint.CenterRight:
+      case AnchorPoint.BottomRight:
+        return 'end';
+      default:
+        return 'middle';
+    }
+  }
+
 
   // Helper method to get max width for column text
   getColumnMaxWidth(columnIndex: number): number {
@@ -511,6 +587,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (!column) return 0;
     return column.width - (column.padding * 2);
   }
+
+  // Helper method to get font size based on anchor
+  getAnchorFontSize(anchor: string): number {
+    switch (anchor) {
+      case AnchorPoint.CenterCenter:
+        return 45;
+      default:
+        return 20;
+    }
+  }
+
+
 
   // Helper method to get value from HeatDriver using property path
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
@@ -525,10 +613,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   // Helper method to format column value for display
-  formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition): string {
-    const value = this.getPropertyValue(heatDriver, column.propertyName);
-    return column.formatter(value, heatDriver);
+  formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition, propertyName?: string): string {
+    const prop = propertyName || column.propertyName;
+    const value = this.getPropertyValue(heatDriver, prop);
+    return this.formatValue(prop, value, heatDriver);
   }
+
 
   // Menu logic
   isMenuOpen = false;
@@ -779,9 +869,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   public get isNextHeatDisabled(): boolean {
     const s = this.raceState;
-    return s === com.antigravity.RaceState.STARTING ||
-      s === com.antigravity.RaceState.RACING ||
-      s === com.antigravity.RaceState.PAUSED;
+    const RS = com.antigravity.RaceState;
+    return s === RS.STARTING ||
+      s === RS.RACING ||
+      s === RS.PAUSED ||
+      s === RS.RACE_OVER;
   }
 
   getCurrentFlagUrl(): string {
@@ -946,35 +1038,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       selectedColumns = Settings.DEFAULT_COLUMNS;
     }
 
-    // Ensure Name or Nickname is always first for the template to render correctly
     const nameKeys = ['driver.name', 'driver.nickname'];
-    const columnOrder = [
-      'driver.name',
-      'driver.nickname',
-      'lapCount',
-      'reactionTime',
-      'lastLapTime',
-      'medianLapTime',
-      'averageLapTime',
-      'bestLapTime',
-      'gapLeader',
-      'gapPosition'
-    ];
-
-    selectedColumns = [...selectedColumns].sort((a, b) => {
-      let aIndex = columnOrder.indexOf(a);
-      let bIndex = columnOrder.indexOf(b);
-
-      if (aIndex === -1) aIndex = 999;
-      if (bIndex === -1) bIndex = 999;
-
-      return aIndex - bIndex;
-    });
 
     // Specific widths as per requirements
     // Time fields: 275
     // Lap count: 180
-    // Name/Nickname: Remaining width (1560 - sum(other_widths))
+    // Name/Nickname: Remaining width (1600 - sum(other_widths))
 
     const fixedWidths: { [key: string]: number } = {
       'lapCount': 180,
@@ -984,55 +1053,97 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'averageLapTime': 275,
       'bestLapTime': 275,
       'gapLeader': 275,
-      'gapPosition': 275
+      'gapPosition': 275,
+      'driver.name': 400,
+      'driver.nickname': 400,
+      'participant.team.name': 275
     };
 
-    let totalFixedWidth = 0;
-    selectedColumns.forEach(key => {
-      if (fixedWidths[key] && !nameKeys.includes(key)) {
-        totalFixedWidth += fixedWidths[key];
+    let totalFixedWithoutResizingColumn = 0;
+    let resizingColumnKey: string | null = null;
+
+    // Find the first column containing name/nickname in its layout to use as resizing column
+    for (const key of selectedColumns) {
+      const layout = (settings.columnLayouts || {})[key] || { [AnchorPoint.CenterCenter]: key };
+      const containsName = Object.values(layout).some(v => nameKeys.includes((v as string).split('_')[0]));
+
+      if (containsName) {
+        resizingColumnKey = key;
+        break;
       }
+    }
+
+    // Fallback: if no column contains name, resize the first one that has multiple anchors, or the first name key itself
+    if (!resizingColumnKey && selectedColumns.length > 0) {
+      resizingColumnKey = selectedColumns[0];
+    }
+
+
+    // Sum up widths of all OTHER columns
+    selectedColumns.forEach(key => {
+      if (key === resizingColumnKey) return;
+      const layout = (settings.columnLayouts || {})[key] || { [AnchorPoint.CenterCenter]: key };
+      const primaryProp = layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
+      const baseKey = primaryProp.split('_')[0];
+      totalFixedWithoutResizingColumn += fixedWidths[baseKey] || 275;
     });
 
-    const remainingWidth = 1600 - totalFixedWidth;
+    const remainingWidth = Math.max(300, 1600 - totalFixedWithoutResizingColumn);
 
     this.columns = selectedColumns.map(key => {
-      const labelKey = this.getLabelKeyForColumn(key);
-      const width = fixedWidths[key] || 275;
+      const layout = (settings.columnLayouts || {})[key] || { [AnchorPoint.CenterCenter]: key };
+      const primaryProp = layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
+      const baseKey = primaryProp.split('_')[0];
 
-      if (key === 'driver.name') {
-        return new ColumnDefinition(labelKey, key, remainingWidth, true, 'start', 30, (v, hd) => {
-          return hd.actualDriver?.name || hd.driver.name;
-        });
-      }
-      if (key === 'driver.nickname') {
-        return new ColumnDefinition(labelKey, key, remainingWidth, true, 'start', 30, (v, hd) => {
-          return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
-        });
-      }
+      const labelKey = this.getLabelKeyForColumn(key, layout);
+      const isResizing = (key === resizingColumnKey);
+      const width = isResizing ? remainingWidth : (fixedWidths[baseKey] || 275);
+      const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
 
-      // Formatters for numeric fields
-      let formatter: (v: any, hd: DriverHeatData) => string = (v) => v?.toString() ?? '';
-      if (key.includes('LapTime') || key === 'reactionTime') {
-        formatter = (v: any) => v > 0 ? v.toFixed(3) : '--.---';
-      } else if (key === 'gapLeader' || key === 'gapPosition') {
-        formatter = (v: any) => {
-          if (v === 0) return '--.---';
-          const sign = v > 0 ? '+' : '';
-          return sign + v.toFixed(3);
-        };
-      } else if (key === 'lapCount') {
-        formatter = (v: any, hd: any) => {
-          if (v === 0 && hd.reactionTime === 0) return '--';
-          return v.toString();
-        };
+      const renderer = (v: any, hd: DriverHeatData) => {
+        return this.formatValue(baseKey, v, hd);
+      };
+
+      if (isResizing) {
+        return new ColumnDefinition(labelKey, key, width, true, 'start', 30, anchor, renderer, layout);
       }
 
-      return new ColumnDefinition(labelKey, key, width, false, 'middle', 0, formatter);
+      return new ColumnDefinition(labelKey, key, width, false, 'middle', 0, anchor, renderer, layout);
     });
   }
 
-  private getLabelKeyForColumn(key: string): string {
+
+
+  // Format any value based on property name
+  formatValue(propertyName: string, value: any, hd: DriverHeatData): string {
+    if (propertyName.includes('LapTime') || propertyName === 'reactionTime') {
+      return value > 0 ? value.toFixed(3) : '--.---';
+    } else if (propertyName === 'gapLeader' || propertyName === 'gapPosition') {
+      if (value === 0) return '--.---';
+      const sign = value > 0 ? '+' : '';
+      return sign + value.toFixed(3);
+    } else if (propertyName === 'lapCount') {
+      if (value === 0 && hd.reactionTime === 0) return '--';
+      return value.toString();
+    } else if (propertyName === 'driver.name') {
+      return hd.actualDriver?.name || hd.driver.name;
+    } else if (propertyName === 'driver.nickname') {
+      return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
+    } else if (propertyName === 'participant.team.name') {
+      return hd.participant?.team?.name || '';
+    }
+    return value?.toString() ?? '';
+  }
+
+
+
+
+  private getLabelKeyForColumn(key: string, layout?: { [A in AnchorPoint]?: string }): string {
+    const propertyKey = layout?.[AnchorPoint.CenterCenter] ||
+      (layout ? Object.values(layout)[0] : null) ||
+      key;
+
+    const baseKey = propertyKey.split('_')[0];
     const labels: { [key: string]: string } = {
       'lapCount': 'RD_COL_LAP',
       'lastLapTime': 'RD_COL_LAP_TIME',
@@ -1041,10 +1152,15 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'bestLapTime': 'RD_COL_BEST_LAP',
       'gapLeader': 'RD_COL_GAP_LEADER',
       'gapPosition': 'RD_COL_GAP_POSITION',
-      'reactionTime': 'RD_COL_REACTION_TIME'
+      'reactionTime': 'RD_COL_REACTION_TIME',
+      'participant.team.name': 'RD_COL_TEAM',
+      'driver.name': 'RD_COL_NAME',
+      'driver.nickname': 'RD_COL_NICKNAME'
     };
-    return labels[key] || 'UNKNOWN';
+    return labels[baseKey] || 'UNKNOWN';
   }
+
+
 
   protected trackByDriverId(index: number, hd: DriverHeatData): string {
     return hd.objectId;

@@ -50,7 +50,15 @@
                 {{ col.label | translate }}
               </label>
             </div>
+            <div class="column-actions">
+              <button class="btn btn-secondary btn-sm" (click)="openReorderDialog()"
+                [disabled]="editingSettings.racedayColumns.length === 0">
+                <span class="material-icons">reorder</span>
+                {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -91,4 +99,9 @@
   <div class="loader-overlay" *ngIf="isLoading || isSaving">
     <div class="spinner"></div>
   </div>
+
+  <!-- Reorder Modal -->
+  <app-reorder-dialog [visible]="showReorderModal" [data]="reorderModalData" (save)="onReorderSave($event)"
+    (cancel)="onReorderCancel()">
+  </app-reorder-dialog>
 </div>

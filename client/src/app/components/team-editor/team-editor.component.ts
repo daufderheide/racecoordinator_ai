@@ -15,6 +15,8 @@ import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
   standalone: false
 })
 export class TeamEditorComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private dataSubscription: Subscription | null = null;
   selectedTeam?: Team;
   editingTeam?: Team;
   isLoading: boolean = true;
@@ -68,8 +70,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
+    }
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
     }
     this.undoManager.destroy();
   }
@@ -118,7 +124,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    forkJoin({
+    this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
       assets: this.dataService.listAssets()
@@ -137,13 +143,17 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
           this.loadDataInternal(result.assets);
         } finally {
           this.isLoading = false;
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         }
       },
       error: (err) => {
         console.error('Failed to load data', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }
@@ -203,7 +213,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   private loadDataInternal(assets: any[]) {
     const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter(a => a.type === 'image');
+    this.avatarAssets = allAssets.filter(a => a && a.type === 'image');
 
     const idParam = this.route.snapshot.queryParamMap.get('id');
 

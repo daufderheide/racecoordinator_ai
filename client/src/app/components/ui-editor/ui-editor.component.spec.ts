@@ -1,12 +1,13 @@
 
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { UIEditorComponent } from './ui-editor.component';
 import { SettingsService } from 'src/app/services/settings.service';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { of, throwError, delay } from 'rxjs';
 import { Settings } from 'src/app/models/settings';
 
 @Component({ selector: 'app-image-selector', template: '', standalone: false })
@@ -26,6 +27,14 @@ class MockBackButtonComponent {
   @Input() confirm: boolean = false;
   @Input() confirmTitle: string = '';
   @Input() confirmMessage: string = '';
+}
+
+@Component({ selector: 'app-reorder-dialog', template: '', standalone: false })
+class MockReorderDialogComponent {
+  @Input() visible: boolean = false;
+  @Input() data: any;
+  @Output() save = new EventEmitter<any>();
+  @Output() cancel = new EventEmitter<void>();
 }
 
 @Component({ selector: 'app-undo-redo-controls', template: '', standalone: false })
@@ -66,7 +75,16 @@ describe('UIEditorComponent', () => {
       flagBlack: 'b',
       flagCheckered: 'c'
     });
-    mockSettingsService.getSettings.and.returnValue(settings);
+    mockSettingsService.getSettings.and.returnValue(Object.assign(new Settings(), {
+      sortByStandings: true,
+      flagGreen: 'g',
+      flagYellow: 'y',
+      flagRed: 'r',
+      flagWhite: 'w',
+      flagBlack: 'b',
+      flagCheckered: 'c'
+    }));
+    mockSettingsService.saveSettings.and.returnValue(of(settings).pipe(delay(100)));
     mockDataService.listAssets.and.returnValue(of([{ type: 'image', url: 'img1.png' }]));
     mockFileSystem.getCustomDirectoryHandle.and.returnValue(of({ name: 'CustomUI' }));
 
@@ -76,8 +94,10 @@ describe('UIEditorComponent', () => {
         MockImageSelectorComponent,
         MockBackButtonComponent,
         MockUndoRedoControlsComponent,
+        MockReorderDialogComponent,
         MockTranslatePipe
       ],
+      imports: [FormsModule],
       providers: [
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: FileSystemService, useValue: mockFileSystem },
@@ -86,6 +106,7 @@ describe('UIEditorComponent', () => {
         ChangeDetectorRef
       ]
     }).compileComponents();
+    console.log('UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', !!mockSettingsService.saveSettings);
   });
 
   beforeEach(() => {
@@ -100,16 +121,20 @@ describe('UIEditorComponent', () => {
     expect(component.customDirectoryName).toBe('CustomUI');
     expect(component.assets.length).toBe(1);
   });
-
-  it('should handle directory selection', async () => {
+  it('should handle directory selection', fakeAsync(() => {
     mockFileSystem.selectCustomFolder.and.returnValue(Promise.resolve(true));
-    mockFileSystem.getCustomDirectoryHandle.and.returnValue(of({ name: 'NewDir' }));
+    mockFileSystem.getCustomDirectoryHandle.and.returnValue(Promise.resolve({ name: 'NewDir' }));
 
-    await component.selectDirectory();
+    component.selectDirectory();
+    tick(); // Resolve selectCustomFolder promise
+    tick(); // Resolve getCustomDirectoryHandle promise
+    flush();
+    fixture.detectChanges();
 
     expect(mockFileSystem.selectCustomFolder).toHaveBeenCalled();
     expect(component.customDirectoryName).toBe('NewDir');
-  });
+  }));
+
 
   it('should handle reset default', async () => {
     mockFileSystem.clearCustomFolder.and.returnValue(Promise.resolve());

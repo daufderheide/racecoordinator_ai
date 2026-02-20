@@ -5,7 +5,7 @@ import { Lane } from '../../models/lane';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
 import { com } from '../../proto/message';
 
 @Component({
@@ -15,6 +15,8 @@ import { com } from '../../proto/message';
   standalone: false
 })
 export class TrackEditorComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private subscriptions: Subscription[] = [];
   trackName: string = '';
   lanes: Lane[] = [];
   editingTrack?: Track;
@@ -62,16 +64,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.updateScale();
 
     // Subscribe to query params to reload data when ID changes (e.g. after Save as New)
-    this.route.queryParamMap.subscribe(() => {
+    this.subscriptions.push(this.route.queryParamMap.subscribe(() => {
       this.loadData();
-    });
+    }));
 
     this.dataService.connectToInterfaceDataSocket();
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     this.undoManager.destroy();
     this.dataService.disconnectFromInterfaceDataSocket();
+    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions = [];
   }
 
   @HostListener('window:resize')
@@ -115,7 +120,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    this.dataService.getTracks().subscribe({
+    this.subscriptions.push(this.dataService.getTracks().subscribe({
       next: (tracks) => {
         this.allTracks = tracks;
 
@@ -159,29 +164,35 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
           // Initialize Interface Protocol on server
           if (this.arduinoConfig) {
-            this.dataService.initializeInterface(this.arduinoConfig, this.lanes.length).subscribe({
+            this.subscriptions.push(this.dataService.initializeInterface(this.arduinoConfig, this.lanes.length).subscribe({
               next: (response) => {
-                if (!response.success) {
+                if (!response.success && !this.isDestroyed) {
                   alert(`Failed to initialize interface: ${response.message}`);
                 }
               },
               error: (err) => {
                 console.error('Error calling initializeInterface', err);
-                alert('An error occurred while connecting to the track interface.');
+                if (!this.isDestroyed) {
+                  alert('An error occurred while connecting to the track interface.');
+                }
               }
-            });
+            }));
           }
         }
 
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       },
       error: (err) => {
         console.error('Failed to load tracks', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
-    });
+    }));
   }
 
   // Helper for generating local IDs for new lanes if needed
@@ -384,7 +395,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       ? this.dataService.createTrack({ ...finalTrack, entity_id: 'new' })
       : this.dataService.updateTrack(finalTrack.entity_id, finalTrack);
 
-    obs.subscribe({
+    this.subscriptions.push(obs.subscribe({
       next: (result) => {
         this.isSaving = false;
         // Update local state with result (especially ID)
@@ -412,7 +423,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         this.undoManager.resetTracking(this.editingTrack);
 
         // Force sync with UI and children (especially back-button confirm input)
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
 
         if (wasNew) {
           this.router.navigate(['/track-editor'], { queryParams: { id: result.entity_id } });
@@ -420,14 +433,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to save track', err);
-        if (err.status === 409) {
-          alert(this.translationService.translate('TE_ERROR_NAME_EXISTS'));
-        } else {
-          alert(this.translationService.translate('TE_ERROR_SAVE_FAILED'));
+        if (!this.isDestroyed) {
+          if (err.status === 409) {
+            alert(this.translationService.translate('TE_ERROR_NAME_EXISTS'));
+          } else {
+            alert(this.translationService.translate('TE_ERROR_SAVE_FAILED'));
+          }
         }
         this.isSaving = false;
       }
-    });
+    }));
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {

@@ -407,5 +407,12 @@
     "UE_LABEL_COLUMNS": "COLONNES SÉLECTIONNÉES",
     "UI_EDITOR_COL_GAP_LEADER": "Écart au leader",
     "UI_EDITOR_COL_GAP_POSITION": "Écart à la position",
-    "UI_EDITOR_COL_REACTION_TIME": "Temps de réaction"
+    "UI_EDITOR_COL_REACTION_TIME": "Temps de réaction",
+    "UE_REORDER_DIALOG_TITLE": "Réorganiser les colonnes",
+    "UE_LABEL_AVAILABLE_VALUES": "Valeurs disponibles",
+    "UE_LABEL_COLUMN_SLOTS": "Emplacements de colonnes",
+    "UE_REORDER_DIALOG_PREVIEW": "Aperçu de la piste",
+    "UE_REORDER_HINT": "Faites glisser les valeurs vers les ancres de colonne pour personnaliser la mise en page. CenterCenter est la valeur principale.",
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Déposer ici pour ajouter une colonne",
+    "RD_COL_TEAM": "ÉQUIPE"
 }

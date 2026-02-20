@@ -424,5 +424,12 @@
     "UE_LABEL_COLUMNS": "COLONNE SELEZIONATE",
     "UI_EDITOR_COL_GAP_LEADER": "Distacco dal leader",
     "UI_EDITOR_COL_GAP_POSITION": "Distacco dalla posizione",
-    "UI_EDITOR_COL_REACTION_TIME": "Tempo di reazione"
+    "UI_EDITOR_COL_REACTION_TIME": "Tempo di reazione",
+    "UE_REORDER_DIALOG_TITLE": "Riordina colonne",
+    "UE_LABEL_AVAILABLE_VALUES": "Valori disponibili",
+    "UE_LABEL_COLUMN_SLOTS": "Slot delle colonne",
+    "UE_REORDER_DIALOG_PREVIEW": "Anteprima corsia",
+    "UE_REORDER_HINT": "Trascina i valori sugli ancoraggi delle colonne per personalizzare il layout. CenterCenter è il valore principale.",
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Rilascia qui per aggiungere una colonna",
+    "RD_COL_TEAM": "SQUADRA"
 }

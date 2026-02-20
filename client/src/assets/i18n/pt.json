@@ -424,5 +424,12 @@
     "UE_LABEL_COLUMNS": "COLUNAS SELECIONADAS",
     "UI_EDITOR_COL_GAP_LEADER": "Diferença para o líder",
     "UI_EDITOR_COL_GAP_POSITION": "Diferença para a posição",
-    "UI_EDITOR_COL_REACTION_TIME": "Tempo de reação"
+    "UI_EDITOR_COL_REACTION_TIME": "Tempo de reação",
+    "UE_REORDER_DIALOG_TITLE": "Reordenar colunas",
+    "UE_LABEL_AVAILABLE_VALUES": "Valores disponíveis",
+    "UE_LABEL_COLUMN_SLOTS": "Slots de coluna",
+    "UE_REORDER_DIALOG_PREVIEW": "Visualização da pista",
+    "UE_REORDER_HINT": "Arraste os valores para as âncoras da coluna para personalizar o layout. CenterCenter é o valor principal.",
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Solte aqui para adicionar coluna",
+    "RD_COL_TEAM": "EQUIPE"
 }

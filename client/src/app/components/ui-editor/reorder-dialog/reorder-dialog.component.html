@@ -1,0 +1,97 @@
+<div class="modal-backdrop" *ngIf="visible">
+  <div class="modal-content ue-container reorder-modal large-modal">
+    <div class="modal-header">
+      <h2 class="title">{{ 'UE_REORDER_DIALOG_TITLE' | translate }}</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="enhanced-dialog-layout">
+        <!-- Panel 1: Available Values -->
+        <div class="values-sidebar">
+          <label class="section-label">{{ 'UE_LABEL_AVAILABLE_VALUES' | translate }}</label>
+          <div cdkDropList [cdkDropListData]="availableValues" class="value-pool"
+            [cdkDropListConnectedTo]="slotDropLists">
+            <div class="value-chip" *ngFor="let val of availableValues" cdkDrag [cdkDragData]="val.key">
+              {{ val.label | translate }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Column Slots -->
+        <div class="slots-container">
+          <label class="section-label">{{ 'UE_LABEL_COLUMN_SLOTS' | translate }}</label>
+          <div cdkDropList class="slot-list" (cdkDropListDropped)="dropColumn($event)">
+            <div class="slot-item" *ngFor="let slot of columnSlots" cdkDrag>
+              <div class="slot-header">
+                <div class="drag-handle" cdkDragHandle>
+                  <span class="material-icons">drag_indicator</span>
+                </div>
+                <div class="slot-title">{{ slot.label | translate }}</div>
+                <button class="remove-btn" (click)="removeColumn(slot.key)">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+
+
+              <!-- 3x3 Anchor Grid -->
+              <div class="anchor-grid-editor">
+                <div class="grid-row" *ngFor="let row of [0, 1, 2]">
+                  <div class="grid-cell" *ngFor="let col of [0, 1, 2]"
+                    [id]="'slot-' + slot.key + '-' + anchorOptions[row * 3 + col]"
+                    [attr.data-anchor]="anchorOptions[row * 3 + col]" cdkDropList
+                    (cdkDropListDropped)="onValueDrop(slot.key, anchorOptions[row * 3 + col], $event.item.data)">
+
+
+                    <div class="cell-content" *ngIf="columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]">
+                      <span class="cell-label">{{ getLabel(columnLayouts[slot.key][anchorOptions[row * 3 + col]]!) |
+                        translate }}</span>
+                      <button class="clear-btn" (click)="clearAnchor(slot.key, anchorOptions[row * 3 + col])">
+                        <span class="material-icons">close</span>
+                      </button>
+                    </div>
+                    <div class="cell-placeholder" *ngIf="!columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]">
+                      {{ anchorOptions[row * 3 + col] }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blank Slot for adding new columns -->
+          <div id="slot-add-new" class="slot-add-blank" cdkDropList (cdkDropListDropped)="onAddColumnDrop($event)">
+            <div class="add-placeholder">
+              <span class="material-icons">add_circle_outline</span>
+              <span>{{ 'UE_HINT_DROP_TO_ADD_COLUMN' | translate }}</span>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Panel 3: Lane Preview -->
+        <div class="preview-panel">
+          <label class="section-label">{{ 'UE_REORDER_DIALOG_PREVIEW' | translate }}</label>
+          <div class="lane-preview-container">
+            <div class="lane-visual">
+              <div class="lane-column" *ngFor="let slot of columnSlots">
+                <div class="anchor-preview-grid">
+                  <div class="preview-point" *ngFor="let opt of anchorOptions">
+                    <span class="preview-text" *ngIf="columnLayouts[slot.key]?.[opt]">
+                      {{ getLabel(columnLayouts[slot.key][opt]!) | translate }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="hint">{{ 'UE_REORDER_HINT' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onCancel()">{{ 'BTN_CANCEL' | translate }}</button>
+      <button class="btn btn-save" (click)="onSave()">{{ 'BTN_SAVE' | translate }}</button>
+    </div>
+  </div>
+</div>

@@ -15,6 +15,8 @@ import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 })
 
 export class DriverEditorComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private dataSubscription: Subscription | null = null;
   selectedDriver?: Driver;
   editingDriver?: Driver;
   isLoading: boolean = true;
@@ -69,8 +71,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
+    }
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
     }
     this.undoManager.destroy();
   }
@@ -115,7 +121,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    forkJoin({
+    this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       assets: this.dataService.listAssets()
     }).subscribe({
@@ -124,13 +130,17 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.loadDataInternal(result.drivers, result.assets);
         } finally {
           this.isLoading = false;
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         }
       },
       error: (err) => {
         console.error('Failed to load data', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }
@@ -141,8 +151,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       driver.name,
       driver.nickname,
       driver.avatarUrl,
-      { ...driver.lapAudio },
-      { ...driver.bestLapAudio }
+      driver.lapAudio ? { ...driver.lapAudio } : undefined,
+      driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined
     );
   }
 
@@ -150,12 +160,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     return d1.name === d2.name &&
       d1.nickname === d2.nickname &&
       d1.avatarUrl === d2.avatarUrl &&
-      d1.lapAudio.url === d2.lapAudio.url &&
-      d1.bestLapAudio.url === d2.bestLapAudio.url &&
-      d1.lapAudio.type === d2.lapAudio.type &&
-      d1.bestLapAudio.type === d2.bestLapAudio.type &&
-      d1.lapAudio.text === d2.lapAudio.text &&
-      d1.bestLapAudio.text === d2.bestLapAudio.text;
+      (d1.lapAudio?.url || '') === (d2.lapAudio?.url || '') &&
+      (d1.bestLapAudio?.url || '') === (d2.bestLapAudio?.url || '') &&
+      (d1.lapAudio?.type || 'preset') === (d2.lapAudio?.type || 'preset') &&
+      (d1.bestLapAudio?.type || 'preset') === (d2.bestLapAudio?.type || 'preset') &&
+      (d1.lapAudio?.text || '') === (d2.lapAudio?.text || '') &&
+      (d1.bestLapAudio?.text || '') === (d2.bestLapAudio?.text || '');
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {

@@ -424,5 +424,12 @@
     "UE_LABEL_COLUMNS": "AUSGEWÄHLTE SPALTEN",
     "UI_EDITOR_COL_GAP_LEADER": "Abstand zum Ersten",
     "UI_EDITOR_COL_GAP_POSITION": "Abstand zur Position",
-    "UI_EDITOR_COL_REACTION_TIME": "Reaktionszeit"
+    "UI_EDITOR_COL_REACTION_TIME": "Reaktionszeit",
+    "UE_REORDER_DIALOG_TITLE": "Spalten neu anordnen",
+    "UE_LABEL_AVAILABLE_VALUES": "Verfügbare Werte",
+    "UE_LABEL_COLUMN_SLOTS": "Spaltenplätze",
+    "UE_REORDER_DIALOG_PREVIEW": "Spur-Vorschau",
+    "UE_REORDER_HINT": "Ziehen Sie Werte auf die Spaltenanker, um das Layout anzupassen. CenterCenter ist der Primärwert.",
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Hier ablegen, um Spalte hinzuzufügen",
+    "RD_COL_TEAM": "TEAM"
 }

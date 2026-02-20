@@ -42,16 +42,13 @@ public class DatabaseContextTest {
   private ServerConfigService configService;
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder(new File("target_dist"));
+  public TemporaryFolder tempFolder = new TemporaryFolder(new File("/tmp/racecoordinator"));
 
   @Before
   public void setup() throws Exception {
     // Setup Embedded Mongo
     String bindIp = "localhost";
     int port = 27019; // Use unique port
-
-    // Ensure target_dist exists
-    new File("target_dist").mkdirs();
 
     File mongoDataDir = tempFolder.newFolder("mongodb_data_context");
 

@@ -24,6 +24,8 @@ import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
+import { SettingsService } from 'src/app/services/settings.service';
+import { Settings } from 'src/app/models/settings';
 import { ChangeDetectorRef } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { com } from 'src/app/proto/message';
@@ -63,21 +65,24 @@ describe('DefaultRacedayComponent', () => {
   beforeEach(async () => {
     interfaceEventsSubject = new Subject<com.antigravity.IInterfaceEvent>();
 
-    mockDataService = {
-      updateRaceSubscription: jasmine.createSpy('updateRaceSubscription'),
-      getRaceUpdate: () => of({}),
-      getRaceTime: () => of(0),
-      getLaps: () => of(null),
-      getReactionTimes: () => of(null),
-      getStandingsUpdate: () => of({}),
-      getOverallStandingsUpdate: () => of({}),
-      getInterfaceEvents: () => interfaceEventsSubject.asObservable(),
-      getRaceState: () => of(com.antigravity.RaceState.NOT_STARTED),
-      getDrivers: () => of([]),
-      connectToInterfaceDataSocket: jasmine.createSpy('connectToInterfaceDataSocket'),
-      disconnectFromInterfaceDataSocket: jasmine.createSpy('disconnectFromInterfaceDataSocket'),
-      serverUrl: 'http://localhost'
-    };
+    mockDataService = jasmine.createSpyObj('DataService', [
+      'updateRaceSubscription', 'getRaceUpdate', 'getRaceTime', 'getLaps',
+      'getReactionTimes', 'getStandingsUpdate', 'getOverallStandingsUpdate',
+      'getInterfaceEvents', 'getRaceState', 'getDrivers',
+      'connectToInterfaceDataSocket', 'disconnectFromInterfaceDataSocket',
+      'listAssets'
+    ]);
+    mockDataService.getRaceUpdate.and.returnValue(of({}));
+    mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.getRaceTime.and.returnValue(of(0));
+    mockDataService.getLaps.and.returnValue(of(null));
+    mockDataService.getReactionTimes.and.returnValue(of(null));
+    mockDataService.getStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getInterfaceEvents.and.returnValue(interfaceEventsSubject.asObservable());
+    mockDataService.getRaceState.and.returnValue(of(com.antigravity.RaceState.NOT_STARTED));
+    mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.serverUrl = 'http://localhost';
 
     const mockTranslationService = {
       get: (key: string) => of(key),
@@ -101,6 +106,7 @@ describe('DefaultRacedayComponent', () => {
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: RaceService, useValue: mockRaceService },
+        { provide: SettingsService, useValue: { getSettings: () => Object.assign(new Settings(), { sortByStandings: true }) } },
         { provide: Router, useValue: mockRouter },
         ChangeDetectorRef
       ]

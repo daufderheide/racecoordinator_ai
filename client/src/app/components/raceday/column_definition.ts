@@ -1,3 +1,15 @@
+export enum AnchorPoint {
+  TopLeft = 'top-left',
+  TopCenter = 'top-center',
+  TopRight = 'top-right',
+  CenterLeft = 'center-left',
+  CenterCenter = 'center-center', // default
+  CenterRight = 'center-right',
+  BottomLeft = 'bottom-left',
+  BottomCenter = 'bottom-center',
+  BottomRight = 'bottom-right'
+}
+
 /**
  * A column definition for the heat driver table that can be used to customize
  * the display of the race day screens.
@@ -10,6 +22,8 @@ export class ColumnDefinition {
   readonly textAnchor: 'start' | 'middle' | 'end';
   readonly padding: number;
   readonly formatter: (value: any, hd: any) => string;
+  readonly anchor: AnchorPoint;
+  readonly layout: { [A in AnchorPoint]?: string };
 
   constructor(
     labelKey: string,
@@ -18,7 +32,9 @@ export class ColumnDefinition {
     scaleToFit: boolean = false,
     textAnchor: 'start' | 'middle' | 'end' = 'middle',
     padding: number = 0,
-    formatter: (value: any, hd: any) => string = (v) => v?.toString() ?? ''
+    anchor: AnchorPoint = AnchorPoint.CenterCenter,
+    formatter: (value: any, hd: any) => string = (v) => v?.toString() ?? '',
+    layout: { [A in AnchorPoint]?: string } = {}
   ) {
     this.labelKey = labelKey;
     this.propertyName = propertyName;
@@ -26,6 +42,9 @@ export class ColumnDefinition {
     this.scaleToFit = scaleToFit;
     this.textAnchor = textAnchor;
     this.padding = padding;
+    this.anchor = anchor;
     this.formatter = formatter;
+    this.layout = layout;
   }
+
 }

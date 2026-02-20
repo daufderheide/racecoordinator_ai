@@ -39,18 +39,9 @@ public class ClientSubscriptionManager {
     this.currentRace = race;
 
     if (this.currentRace != null) {
-      System.out.println("New race set. Resubscribing all " + sessions.size() + " connected sessions.");
-      raceDataSubscribers.addAll(sessions);
-
-      // Note: ClientCommandTaskHandler usually calls broadcast(snapshot) immediately
-      // after this.
-      // But to be safe and ensure correct state synchronization even if called from
-      // elsewhere:
-      // logic here is superfluous if broadcast is called, but harmless.
-      // Actually, ClientCommandTaskHandler calls createSnapshot() -> broadcast().
-      // If we add everyone to subscribers here, the subsequent broadcast will reach
-      // them.
+      System.out.println("New race set. Clients must explicitly subscribe to race data.");
     }
+
   }
 
   public synchronized Race getRace() {

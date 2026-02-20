@@ -8,12 +8,15 @@ CLIENT_DIR="$PROJECT_ROOT/client"
 SERVER_DIR="$PROJECT_ROOT/server"
 
 # Environment Setup for restricted environments
-export TMPDIR="$PROJECT_ROOT/.browser-tmp"
-export HOME="$PROJECT_ROOT/.chrome-home"
-export XDG_CONFIG_HOME="$PROJECT_ROOT/.config"
-export XDG_CACHE_HOME="$PROJECT_ROOT/.cache"
-export PLAYWRIGHT_TRANSFORM_CACHE_PATH="$PROJECT_ROOT/.playwright-cache"
-export CHROME_BIN="$CLIENT_DIR/.playwright-browsers/chromium-1208/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+BASE_TMP="/tmp/racecoordinator-client"
+mkdir -p "$BASE_TMP"
+
+export TMPDIR="$BASE_TMP/browser-tmp"
+export HOME="$BASE_TMP/chrome-home"
+export XDG_CONFIG_HOME="$BASE_TMP/config"
+export XDG_CACHE_HOME="$BASE_TMP/cache"
+export PLAYWRIGHT_TRANSFORM_CACHE_PATH="$BASE_TMP/playwright-cache"
+# export CHROME_BIN is handled by run_client_unit_tests.sh
 
 mkdir -p "$TMPDIR" "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PLAYWRIGHT_TRANSFORM_CACHE_PATH"
 
@@ -21,7 +24,7 @@ mkdir -p "$TMPDIR" "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PLAYWRIGHT_TRA
 mkdir -p "$HOME/Library/Application Support/Google/Chrome for Testing"
 
 # Karma Profile Directory
-export KARMA_PROFILE_DIR="$PROJECT_ROOT/.karma-profile"
+export KARMA_PROFILE_DIR="$BASE_TMP/karma-profile"
 rm -rf "$KARMA_PROFILE_DIR"
 mkdir -p "$KARMA_PROFILE_DIR"
 

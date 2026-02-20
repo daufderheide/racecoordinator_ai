@@ -5,8 +5,11 @@ import { FileSystemService } from 'src/app/services/file-system.service';
 import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { DirtyComponent } from 'src/app/interfaces/dirty-component';
+import { AnchorPoint } from '../raceday/column_definition';
+import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from './reorder-dialog/reorder-dialog.component';
+
 
 @Component({
   selector: 'app-ui-editor',
@@ -15,6 +18,8 @@ import { DirtyComponent } from 'src/app/interfaces/dirty-component';
   standalone: false
 })
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
+  private isDestroyed = false;
+  private dataSubscription: Subscription | null = null;
   settings!: Settings;
   editingSettings!: Settings;
   isLoading = true;
@@ -24,18 +29,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   customDirectoryName: string | null = null;
   isNavigationApproved = false;
 
+  showReorderModal = false;
+  reorderModalData: ReorderDialogData | null = null;
+
   availableColumns = [
     { key: 'driver.name', label: 'RD_COL_NAME' },
     { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
     { key: 'lapCount', label: 'RD_COL_LAP' },
-    { key: 'reactionTime', label: 'UI_EDITOR_COL_REACTION_TIME' },
+    { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
     { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
     { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
     { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
     { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
-    { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
-    { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
+    { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
+    { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
+    { key: 'participant.team.name', label: 'RD_COL_TEAM' },
   ];
+
 
   undoManager!: UndoManager<Settings>;
 
@@ -64,6 +74,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+    }
     this.undoManager.destroy();
   }
 
@@ -76,6 +90,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   handleKeyboardEvent(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
       event.preventDefault();
+      if (this.showReorderModal) return; // Prevent undo during modal
       if (event.shiftKey) {
         this.redo();
       } else {
@@ -84,6 +99,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
       event.preventDefault();
+      if (this.showReorderModal) return;
       this.redo();
     }
   }
@@ -100,7 +116,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   loadData() {
     this.isLoading = true;
-    forkJoin({
+    this.dataSubscription = forkJoin({
       assets: this.dataService.listAssets(),
       dirHandle: this.fileSystem.getCustomDirectoryHandle()
     }).subscribe({
@@ -111,54 +127,107 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.editingSettings = this.cloneSettings(this.settings);
         this.undoManager.initialize(this.editingSettings);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       },
       error: (err) => {
         console.error('Failed to load UI editor data', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }
 
+  openReorderDialog() {
+    // Current selected slots in order
+    const selectedSlots = this.editingSettings.racedayColumns.map(key => {
+      const col = this.availableColumns.find(c => c.key === key);
+      return { key, label: col ? col.label : key };
+    });
+
+    this.reorderModalData = {
+      availableValues: this.availableColumns,
+      columnSlots: selectedSlots,
+      columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {}))
+    };
+    this.showReorderModal = true;
+  }
+
+  onReorderSave(result: ReorderDialogResult) {
+    this.editingSettings.racedayColumns = result.columns;
+    this.editingSettings.columnLayouts = result.columnLayouts;
+    this.showReorderModal = false;
+    this.reorderModalData = null;
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+
+  onReorderCancel() {
+    this.showReorderModal = false;
+    this.reorderModalData = null;
+  }
+
+
   private cloneSettings(s: Settings): Settings {
     const clone = Object.assign(new Settings(), s);
-    clone.recentRaceIds = [...s.recentRaceIds];
-    clone.selectedDriverIds = [...s.selectedDriverIds];
-    clone.racedayColumns = [...s.racedayColumns];
+    clone.recentRaceIds = [...(s.recentRaceIds || [])];
+    clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
+    clone.racedayColumns = [...(s.racedayColumns || [])];
+    clone.columnAnchors = { ...(s.columnAnchors || {}) };
+    clone.columnLayouts = JSON.parse(JSON.stringify(s.columnLayouts || {}));
     return clone;
   }
+
 
   onColumnToggle(columnKey: string) {
     const columns = this.editingSettings.racedayColumns;
     const index = columns.indexOf(columnKey);
 
     if (index > -1) {
-      // Don't allow deselecting if it's the only one left and it's name/nickname?
-      // Actually, user said either name OR nickname is required.
-      // And selecting one deselects the other.
       columns.splice(index, 1);
+      delete this.editingSettings.columnAnchors[columnKey];
+      delete this.editingSettings.columnLayouts[columnKey];
     } else {
       columns.push(columnKey);
+      this.editingSettings.columnAnchors[columnKey] = AnchorPoint.CenterCenter;
+
+      // Initialize layout with default value at CenterCenter
+      if (!this.editingSettings.columnLayouts[columnKey]) {
+        this.editingSettings.columnLayouts[columnKey] = {
+          [AnchorPoint.CenterCenter]: columnKey
+        };
+      }
 
       // Mutually exclusive Name/Nickname
       if (columnKey === 'driver.name') {
         const nicknameIndex = columns.indexOf('driver.nickname');
-        if (nicknameIndex > -1) columns.splice(nicknameIndex, 1);
+        if (nicknameIndex > -1) {
+          columns.splice(nicknameIndex, 1);
+          delete this.editingSettings.columnAnchors['driver.nickname'];
+        }
       } else if (columnKey === 'driver.nickname') {
         const nameIndex = columns.indexOf('driver.name');
-        if (nameIndex > -1) columns.splice(nameIndex, 1);
+        if (nameIndex > -1) {
+          columns.splice(nameIndex, 1);
+          delete this.editingSettings.columnAnchors['driver.name'];
+        }
       }
     }
 
     // Ensure at least one of Name or Nickname is selected
     if (!columns.includes('driver.name') && !columns.includes('driver.nickname')) {
-      // If we just removed one, and neither is present, add the other back?
-      // Or just prevent removal.
       if (columnKey === 'driver.name') {
         columns.push('driver.nickname');
+        this.editingSettings.columnAnchors['driver.nickname'] = AnchorPoint.CenterCenter;
       } else if (columnKey === 'driver.nickname') {
         columns.push('driver.name');
+        this.editingSettings.columnAnchors['driver.name'] = AnchorPoint.CenterCenter;
       }
     }
 
@@ -177,7 +246,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagBlack === b.flagBlack &&
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
-      JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns);
+      JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
+      JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors);
   }
 
   async selectDirectory() {
@@ -201,7 +271,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     setTimeout(() => {
       this.isSaving = false;
       this.undoManager.resetTracking(this.editingSettings);
-      this.cdr.detectChanges();
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
     }, 500);
   }
 
@@ -218,3 +290,4 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   redo() { this.undoManager.redo(); }
   captureState() { this.undoManager.captureState(); }
 }
+

@@ -424,5 +424,12 @@
     "UE_LABEL_COLUMNS": "SELECTED COLUMNS",
     "UI_EDITOR_COL_GAP_LEADER": "Gap to Leader",
     "UI_EDITOR_COL_GAP_POSITION": "Gap to Position",
-    "UI_EDITOR_COL_REACTION_TIME": "Reaction Time"
+    "UI_EDITOR_COL_REACTION_TIME": "Reaction Time",
+    "UE_REORDER_DIALOG_TITLE": "Reorder Columns",
+    "UE_LABEL_AVAILABLE_VALUES": "Available Values",
+    "UE_LABEL_COLUMN_SLOTS": "Column Slots",
+    "UE_REORDER_DIALOG_PREVIEW": "Lane Preview",
+    "UE_REORDER_HINT": "Drag values to column anchors to customize the layout. CenterCenter is the primary value.",
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Drop Here to Add Column",
+    "RD_COL_TEAM": "TEAM"
 }
