@@ -480,8 +480,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Helper method to get column X position
   getColumnX(columnIndex: number): number {
-    if (!this.columns || this.columns.length === 0) return 20;
-    let x = 20; // Start position
+    if (!this.columns || this.columns.length === 0) return 0;
+    let x = 0; // Start position
     const limit = Math.min(columnIndex, this.columns.length);
     for (let i = 0; i < limit; i++) {
       x += this.columns[i].width;
@@ -544,7 +544,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   private updateScale() {
     const targetWidth = 1600;
-    const targetHeight = 930; // 900 (SVG) + 30 (Menu)
+    const targetHeight = 900; // 900 (Total SVG height including menu)
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
@@ -994,7 +994,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       }
     });
 
-    const remainingWidth = 1560 - totalFixedWidth;
+    const remainingWidth = 1600 - totalFixedWidth;
 
     this.columns = selectedColumns.map(key => {
       const labelKey = this.getLabelKeyForColumn(key);
