@@ -28,10 +28,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: 'driver.name', label: 'RD_COL_NAME' },
     { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
     { key: 'lapCount', label: 'RD_COL_LAP' },
+    { key: 'reactionTime', label: 'UI_EDITOR_COL_REACTION_TIME' },
     { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
     { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
     { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
-    { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' }
+    { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
+    { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
+    { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
   ];
 
   undoManager!: UndoManager<Settings>;

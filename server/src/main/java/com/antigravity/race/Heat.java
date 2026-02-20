@@ -13,8 +13,7 @@ public class Heat extends ServerToClientObject {
     this.drivers = drivers;
     com.antigravity.models.HeatScoring safeScoring = scoring != null ? scoring
         : new com.antigravity.models.HeatScoring();
-    this.heatStandings = new HeatStandings(drivers, safeScoring.getHeatRanking(),
-        safeScoring.getHeatRankingTiebreaker());
+    this.heatStandings = new HeatStandings(drivers, safeScoring);
   }
 
   public int getHeatNumber() {

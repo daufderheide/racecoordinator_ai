@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.proto.HeatPositionUpdate;
@@ -12,15 +13,17 @@ import com.antigravity.proto.StandingsUpdate;
 
 public class HeatStandings {
 
-  private final List<DriverHeatData> driverHeatData;
+  private final HeatScoring scoring;
   private final HeatRanking sortType;
   private final HeatRankingTiebreaker tieBreaker;
+  private final List<DriverHeatData> driverHeatData;
   private List<String> currentStandings;
 
-  public HeatStandings(List<DriverHeatData> driverHeatData, HeatRanking sortType, HeatRankingTiebreaker tieBreaker) {
+  public HeatStandings(List<DriverHeatData> driverHeatData, HeatScoring scoring) {
     this.driverHeatData = new ArrayList<>(driverHeatData);
-    this.sortType = sortType;
-    this.tieBreaker = tieBreaker;
+    this.scoring = scoring != null ? scoring : new HeatScoring();
+    this.sortType = this.scoring.getHeatRanking();
+    this.tieBreaker = this.scoring.getHeatRankingTiebreaker();
     this.currentStandings = this.calculateStandings();
   }
 
@@ -45,32 +48,35 @@ public class HeatStandings {
   public StandingsUpdate onLap(int lane, double lapTime) {
     List<String> newStandings = calculateStandings();
     StandingsUpdate.Builder updateBuilder = StandingsUpdate.newBuilder();
-    boolean changed = false;
 
-    // Check for changes and build update only for changed positions
+    // Always send an update for all drivers to ensure gaps are refreshed on the
+    // client
     for (int i = 0; i < newStandings.size(); i++) {
       String objectId = newStandings.get(i);
-      // If position i changed (was different objectId or list size grew)
-      if (i >= currentStandings.size() || !objectId.equals(currentStandings.get(i))) {
-        changed = true;
+      DriverHeatData dhd = driverHeatData.stream().filter(d -> d.getObjectId().equals(objectId)).findFirst()
+          .orElse(null);
+      if (dhd != null) {
         updateBuilder.addUpdates(HeatPositionUpdate.newBuilder()
             .setObjectId(objectId)
             .setRank(i + 1)
+            .setGapLeader(dhd.getGapLeader())
+            .setGapPosition(dhd.getGapPosition())
             .build());
       }
     }
 
-    if (changed) {
-      System.out.println("HeatStandings: Standings changed. New order: " + newStandings);
-      currentStandings = newStandings;
-      return updateBuilder.build();
-    }
-    return null;
+    currentStandings = newStandings;
+    return updateBuilder.build();
   }
 
   private List<String> calculateStandings() {
-    List<String> standings = driverHeatData.stream()
+    List<DriverHeatData> sortedDrivers = driverHeatData.stream()
         .sorted(getComparator())
+        .collect(Collectors.toList());
+
+    calculateGaps(sortedDrivers);
+
+    List<String> standings = sortedDrivers.stream()
         .map(DriverHeatData::getObjectId)
         .collect(Collectors.toList());
 
@@ -84,6 +90,54 @@ public class HeatStandings {
         .collect(Collectors.joining(", ")));
 
     return standings;
+  }
+
+  private void calculateGaps(List<DriverHeatData> sortedDrivers) {
+    if (sortedDrivers.isEmpty()) {
+      return;
+    }
+
+    DriverHeatData leader = sortedDrivers.get(0);
+    leader.setGapLeader(0.0);
+    leader.setGapPosition(0.0);
+
+    for (int i = 1; i < sortedDrivers.size(); i++) {
+      DriverHeatData current = sortedDrivers.get(i);
+      DriverHeatData ahead = sortedDrivers.get(i - 1);
+
+      current.setGapLeader(calculateGap(leader, current));
+      current.setGapPosition(calculateGap(ahead, current));
+    }
+  }
+
+  private double calculateGap(DriverHeatData leadDriver, DriverHeatData curDriver) {
+    switch (sortType) {
+      case LAP_COUNT:
+        return calculateGapForLapCount(leadDriver, curDriver);
+      case TOTAL_TIME:
+        return curDriver.getTotalTime() - leadDriver.getTotalTime();
+      case FASTEST_LAP:
+        return curDriver.getBestLapTime() - leadDriver.getBestLapTime();
+      default:
+        throw new IllegalArgumentException("Invalid sort type for gap calculation: " + sortType);
+    }
+  }
+
+  private double calculateGapForLapCount(DriverHeatData leadDriver, DriverHeatData curDriver) {
+    if (leadDriver.getLapCount() == curDriver.getLapCount()) {
+      return curDriver.getTotalTime() - leadDriver.getTotalTime();
+    } else if (curDriver.getLapCount() == 0) {
+      return (double) leadDriver.getTotalTime();
+    } else {
+      double avgLapTime = curDriver.getAverageLapTime();
+      double lapDiff = (double) leadDriver.getLapCount() - (double) curDriver.getLapCount();
+      if (avgLapTime < leadDriver.getAverageLapTime()) {
+        return avgLapTime * lapDiff;
+      } else {
+        double timeDiff = curDriver.getTotalTime() - leadDriver.getTotalTime();
+        return Math.min(avgLapTime, timeDiff) + (avgLapTime * lapDiff);
+      }
+    }
   }
 
   private Comparator<DriverHeatData> getComparator() {

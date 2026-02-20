@@ -14,6 +14,8 @@ public class DriverHeatData extends ServerToClientObject {
   private double bestLapTime = 0.0f;
   private double reactionTime = 0.0f;
   private double pendingLapTime = 0.0f;
+  private double gapLeader = 0.0;
+  private double gapPosition = 0.0;
 
   private static void logToFile(String message) {
     try {
@@ -140,6 +142,8 @@ public class DriverHeatData extends ServerToClientObject {
     bestLapTime = 0.0f;
     reactionTime = 0.0f;
     pendingLapTime = 0.0f;
+    gapLeader = 0.0;
+    gapPosition = 0.0;
   }
 
   public double getPendingLapTime() {
@@ -152,5 +156,21 @@ public class DriverHeatData extends ServerToClientObject {
 
   public void addPendingLapTime(double lapTime) {
     this.pendingLapTime += lapTime;
+  }
+
+  public double getGapLeader() {
+    return gapLeader;
+  }
+
+  public void setGapLeader(double gapLeader) {
+    this.gapLeader = gapLeader;
+  }
+
+  public double getGapPosition() {
+    return gapPosition;
+  }
+
+  public void setGapPosition(double gapPosition) {
+    this.gapPosition = gapPosition;
   }
 }

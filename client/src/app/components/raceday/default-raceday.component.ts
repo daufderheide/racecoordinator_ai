@@ -229,7 +229,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       console.log('RacedayComponent: Received Standings Update:', update);
       if (this.heat && update.updates) {
         update.updates.forEach(u => {
-          if (u.objectId) this.driverRankings.set(u.objectId, u.rank || 0);
+          if (u.objectId) {
+            this.driverRankings.set(u.objectId, u.rank || 0);
+
+            // Apply gaps to the local driver data
+            const driverData = this.heat!.heatDrivers.find(d => d.objectId === u.objectId);
+            if (driverData) {
+              driverData.gapLeader = u.gapLeader || 0;
+              driverData.gapPosition = u.gapPosition || 0;
+            }
+          }
         });
 
         this.sortHeatDrivers();
@@ -518,29 +527,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   // Helper method to format column value for display
   formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition): string {
     const value = this.getPropertyValue(heatDriver, column.propertyName);
-
-    // Special handling for Name/Nickname columns
-    if (column.propertyName === 'driver.name') {
-      if (heatDriver.actualDriver && heatDriver.actualDriver.name) {
-        return heatDriver.actualDriver.name;
-      }
-      return heatDriver.driver.name;
-    }
-
-    if (column.propertyName === 'driver.nickname') {
-      if (heatDriver.actualDriver && heatDriver.actualDriver.nickname) {
-        return heatDriver.actualDriver.nickname;
-      }
-      return heatDriver.driver.nickname || heatDriver.driver.name;
-    }
-
-    // Format numeric lap times
-    if (column.propertyName.includes('LapTime')) {
-      return value > 0 ? value.toFixed(3) : '--';
-    }
-
-    // Return value as-is for other types
-    return value !== undefined && value !== null ? value.toString() : '--';
+    return column.formatter(value, heatDriver);
   }
 
   // Menu logic
@@ -961,12 +948,27 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     // Ensure Name or Nickname is always first for the template to render correctly
     const nameKeys = ['driver.name', 'driver.nickname'];
+    const columnOrder = [
+      'driver.name',
+      'driver.nickname',
+      'lapCount',
+      'reactionTime',
+      'lastLapTime',
+      'medianLapTime',
+      'averageLapTime',
+      'bestLapTime',
+      'gapLeader',
+      'gapPosition'
+    ];
+
     selectedColumns = [...selectedColumns].sort((a, b) => {
-      const aIsName = nameKeys.includes(a);
-      const bIsName = nameKeys.includes(b);
-      if (aIsName && !bIsName) return -1;
-      if (!aIsName && bIsName) return 1;
-      return 0;
+      let aIndex = columnOrder.indexOf(a);
+      let bIndex = columnOrder.indexOf(b);
+
+      if (aIndex === -1) aIndex = 999;
+      if (bIndex === -1) bIndex = 999;
+
+      return aIndex - bIndex;
     });
 
     // Specific widths as per requirements
@@ -976,15 +978,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     const fixedWidths: { [key: string]: number } = {
       'lapCount': 180,
+      'reactionTime': 275,
       'lastLapTime': 275,
       'medianLapTime': 275,
       'averageLapTime': 275,
-      'bestLapTime': 275
+      'bestLapTime': 275,
+      'gapLeader': 275,
+      'gapPosition': 275
     };
 
     let totalFixedWidth = 0;
     selectedColumns.forEach(key => {
-      if (fixedWidths[key]) {
+      if (fixedWidths[key] && !nameKeys.includes(key)) {
         totalFixedWidth += fixedWidths[key];
       }
     });
@@ -992,15 +997,38 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     const remainingWidth = 1560 - totalFixedWidth;
 
     this.columns = selectedColumns.map(key => {
+      const labelKey = this.getLabelKeyForColumn(key);
+      const width = fixedWidths[key] || 275;
+
       if (key === 'driver.name') {
-        return new ColumnDefinition('RD_COL_NAME', 'driver.name', remainingWidth, true, 'start', 30);
+        return new ColumnDefinition(labelKey, key, remainingWidth, true, 'start', 30, (v, hd) => {
+          return hd.actualDriver?.name || hd.driver.name;
+        });
       }
       if (key === 'driver.nickname') {
-        return new ColumnDefinition('RD_COL_NICKNAME', 'driver.nickname', remainingWidth, true, 'start', 30);
+        return new ColumnDefinition(labelKey, key, remainingWidth, true, 'start', 30, (v, hd) => {
+          return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
+        });
       }
 
-      const labelKey = this.getLabelKeyForColumn(key);
-      return new ColumnDefinition(labelKey, key, fixedWidths[key] || 275);
+      // Formatters for numeric fields
+      let formatter: (v: any, hd: DriverHeatData) => string = (v) => v?.toString() ?? '';
+      if (key.includes('LapTime') || key === 'reactionTime') {
+        formatter = (v: any) => v > 0 ? v.toFixed(3) : '--.---';
+      } else if (key === 'gapLeader' || key === 'gapPosition') {
+        formatter = (v: any) => {
+          if (v === 0) return '--.---';
+          const sign = v > 0 ? '+' : '';
+          return sign + v.toFixed(3);
+        };
+      } else if (key === 'lapCount') {
+        formatter = (v: any, hd: any) => {
+          if (v === 0 && hd.reactionTime === 0) return '--';
+          return v.toString();
+        };
+      }
+
+      return new ColumnDefinition(labelKey, key, width, false, 'middle', 0, formatter);
     });
   }
 
@@ -1010,7 +1038,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'lastLapTime': 'RD_COL_LAP_TIME',
       'medianLapTime': 'RD_COL_MEDIAN_LAP',
       'averageLapTime': 'RD_COL_AVG_LAP',
-      'bestLapTime': 'RD_COL_BEST_LAP'
+      'bestLapTime': 'RD_COL_BEST_LAP',
+      'gapLeader': 'RD_COL_GAP_LEADER',
+      'gapPosition': 'RD_COL_GAP_POSITION',
+      'reactionTime': 'RD_COL_REACTION_TIME'
     };
     return labels[key] || 'UNKNOWN';
   }

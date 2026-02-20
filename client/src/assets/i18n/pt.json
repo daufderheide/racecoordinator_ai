@@ -273,6 +273,9 @@
     "RD_COL_LAP_TIME": "TEMPO",
     "RD_COL_MEDIAN_LAP": "MÉDIA",
     "RD_COL_AVG_LAP": "MÉDIA",
+    "RD_COL_GAP_LEADER": "DIFERENÇA LÍDER",
+    "RD_COL_GAP_POSITION": "DIFERENÇA POSIÇÃO",
+    "RD_COL_REACTION_TIME": "TEMPO REAÇÃO",
     "RD_COL_NAME": "NOME",
     "RD_COL_NICKNAME": "APELIDO",
     "RD_EMPTY_LANE": "Raia Vazia",
@@ -418,5 +421,8 @@
     "UE_TITLE_SELECT_IMAGE": "SELECIONAR IMAGEM",
     "UE_BTN_REMOVE_IMAGE": "REMOVER IMAGEM",
     "UE_LABEL_SORT_STANDINGS": "Ordenar dia de corrida por classificação",
-    "UE_LABEL_COLUMNS": "COLUNAS SELECIONADAS"
+    "UE_LABEL_COLUMNS": "COLUNAS SELECIONADAS",
+    "UI_EDITOR_COL_GAP_LEADER": "Diferença para o líder",
+    "UI_EDITOR_COL_GAP_POSITION": "Diferença para a posição",
+    "UI_EDITOR_COL_REACTION_TIME": "Tempo de reação"
 }

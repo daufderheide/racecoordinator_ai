@@ -9,6 +9,7 @@ export class ColumnDefinition {
   readonly scaleToFit: boolean;
   readonly textAnchor: 'start' | 'middle' | 'end';
   readonly padding: number;
+  readonly formatter: (value: any, hd: any) => string;
 
   constructor(
     labelKey: string,
@@ -16,7 +17,8 @@ export class ColumnDefinition {
     width: number,
     scaleToFit: boolean = false,
     textAnchor: 'start' | 'middle' | 'end' = 'middle',
-    padding: number = 0
+    padding: number = 0,
+    formatter: (value: any, hd: any) => string = (v) => v?.toString() ?? ''
   ) {
     this.labelKey = labelKey;
     this.propertyName = propertyName;
@@ -24,5 +26,6 @@ export class ColumnDefinition {
     this.scaleToFit = scaleToFit;
     this.textAnchor = textAnchor;
     this.padding = padding;
+    this.formatter = formatter;
   }
 }
