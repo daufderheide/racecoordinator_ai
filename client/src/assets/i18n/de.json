@@ -272,7 +272,9 @@
     "RD_COL_LAP": "RUNDE",
     "RD_COL_LAP_TIME": "RUNDENZEIT",
     "RD_COL_MEDIAN_LAP": "MEDIAN RUNDE",
+    "RD_COL_AVG_LAP": "DURCHSCHNITT",
     "RD_COL_NAME": "NAME",
+    "RD_COL_NICKNAME": "SPITZNAME",
     "RD_EMPTY_LANE": "Leere Spur",
     "RD_ERROR_NO_DRIVERS": "Keine Fahrer ausgewählt.",
     "RD_MENU_ADD_LAP": "Runde hinzufügen",
@@ -415,5 +417,6 @@
     "UE_HINT_DRAG_IMAGE": "BILD HIERHER ZIEHEN",
     "UE_TITLE_SELECT_IMAGE": "BILD AUSWÄHLEN",
     "UE_BTN_REMOVE_IMAGE": "BILD ENTFERNEN",
-    "UE_LABEL_SORT_STANDINGS": "Renntag nach Stand sortieren"
+    "UE_LABEL_SORT_STANDINGS": "Renntag nach Stand sortieren",
+    "UE_LABEL_COLUMNS": "AUSGEWÄHLTE SPALTEN"
 }

@@ -272,7 +272,9 @@
     "RD_COL_LAP": "VOLTA",
     "RD_COL_LAP_TIME": "TEMPO",
     "RD_COL_MEDIAN_LAP": "MÉDIA",
+    "RD_COL_AVG_LAP": "MÉDIA",
     "RD_COL_NAME": "NOME",
+    "RD_COL_NICKNAME": "APELIDO",
     "RD_EMPTY_LANE": "Raia Vazia",
     "RD_ERROR_NO_DRIVERS": "Nenhum piloto selecionado.",
     "RD_MENU_ADD_LAP": "Adicionar Volta",
@@ -415,5 +417,6 @@
     "UE_HINT_DRAG_IMAGE": "ARRASTE A IMAGEM AQUI",
     "UE_TITLE_SELECT_IMAGE": "SELECIONAR IMAGEM",
     "UE_BTN_REMOVE_IMAGE": "REMOVER IMAGEM",
-    "UE_LABEL_SORT_STANDINGS": "Ordenar dia de corrida por classificação"
+    "UE_LABEL_SORT_STANDINGS": "Ordenar dia de corrida por classificação",
+    "UE_LABEL_COLUMNS": "COLUNAS SELECIONADAS"
 }

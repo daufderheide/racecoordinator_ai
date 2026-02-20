@@ -52,7 +52,20 @@ describe('UIEditorComponent', () => {
     mockDataService = jasmine.createSpyObj('DataService', ['listAssets']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
-    const settings = new Settings([], [], '127.0.0.1', 8080, 'en', true, 'g', 'y', 'r', 'w', 'b', 'c');
+    const settings = Object.assign(new Settings(), {
+      recentRaceIds: [],
+      selectedDriverIds: [],
+      serverIp: '127.0.0.1',
+      serverPort: 8080,
+      language: 'en',
+      racedaySetupWalkthroughSeen: true,
+      flagGreen: 'g',
+      flagYellow: 'y',
+      flagRed: 'r',
+      flagWhite: 'w',
+      flagBlack: 'b',
+      flagCheckered: 'c'
+    });
     mockSettingsService.getSettings.and.returnValue(settings);
     mockDataService.listAssets.and.returnValue(of([{ type: 'image', url: 'img1.png' }]));
     mockFileSystem.getCustomDirectoryHandle.and.returnValue(of({ name: 'CustomUI' }));

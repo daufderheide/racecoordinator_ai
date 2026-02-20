@@ -60,7 +60,15 @@ describe('DefaultRacedaySetupComponent', () => {
       { code: 'en', nameKey: 'RDS_LANG_EN' },
       { code: 'es', nameKey: 'RDS_LANG_ES' }
     ]);
-    mockSettingsService.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, '', false, undefined, undefined, undefined, undefined, undefined, undefined, true));
+    mockSettingsService.getSettings.and.returnValue(Object.assign(new Settings(), {
+      recentRaceIds: [],
+      selectedDriverIds: [],
+      serverIp: 'localhost',
+      serverPort: 7070,
+      language: '',
+      racedaySetupWalkthroughSeen: false,
+      sortByStandings: true
+    }));
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],

@@ -272,7 +272,9 @@
     "RD_COL_LAP": "TOUR",
     "RD_COL_LAP_TIME": "TEMPS",
     "RD_COL_MEDIAN_LAP": "MÉDIAN",
+    "RD_COL_AVG_LAP": "MOYENNE",
     "RD_COL_NAME": "NOM",
+    "RD_COL_NICKNAME": "SURNOM",
     "RD_EMPTY_LANE": "Voie Vide",
     "RD_ERROR_NO_DRIVERS": "Aucun pilote sélectionné.",
     "RD_MENU_ADD_LAP": "Ajouter Tour",
@@ -398,5 +400,6 @@
     "UE_HINT_DRAG_IMAGE": "GLISSER L'IMAGE ICI",
     "UE_TITLE_SELECT_IMAGE": "SÉLECTIONNER L'IMAGE",
     "UE_BTN_REMOVE_IMAGE": "SUPPRIMER L'IMAGE",
-    "UE_LABEL_SORT_STANDINGS": "Trier la page de course par classement"
+    "UE_LABEL_SORT_STANDINGS": "Trier la page de course par classement",
+    "UE_LABEL_COLUMNS": "COLONNES SÉLECTIONNÉES"
 }

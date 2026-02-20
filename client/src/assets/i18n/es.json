@@ -272,7 +272,9 @@
     "RD_COL_LAP": "VUELTA",
     "RD_COL_LAP_TIME": "TIEMPO",
     "RD_COL_MEDIAN_LAP": "MEDIA",
+    "RD_COL_AVG_LAP": "PROMEDIO",
     "RD_COL_NAME": "NOMBRE",
+    "RD_COL_NICKNAME": "APODO",
     "RD_EMPTY_LANE": "Carril Vacío",
     "RD_ERROR_NO_DRIVERS": "Sin pilotos seleccionados.",
     "RD_MENU_ADD_LAP": "Añadir Vuelta",
@@ -415,5 +417,6 @@
     "UE_HINT_DRAG_IMAGE": "ARRASTRA LA IMAGEN AQUÍ",
     "UE_TITLE_SELECT_IMAGE": "SELECCIONAR IMAGEN",
     "UE_BTN_REMOVE_IMAGE": "ELIMINAR IMAGEN",
-    "UE_LABEL_SORT_STANDINGS": "Ordenar día de carrera por posiciones"
+    "UE_LABEL_SORT_STANDINGS": "Ordenar día de carrera por posiciones",
+    "UE_LABEL_COLUMNS": "COLUMNAS SELECCIONADAS"
 }

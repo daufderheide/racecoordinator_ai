@@ -24,7 +24,13 @@ describe('SettingsService', () => {
   });
 
   it('should save and retrieve language setting', () => {
-    const settings = new Settings(['r1'], ['d1'], '1.2.3.4', 8080, 'es');
+    const settings = Object.assign(new Settings(), {
+      recentRaceIds: ['r1'],
+      selectedDriverIds: ['d1'],
+      serverIp: '1.2.3.4',
+      serverPort: 8080,
+      language: 'es'
+    });
     service.saveSettings(settings);
 
     const retrieved = service.getSettings();

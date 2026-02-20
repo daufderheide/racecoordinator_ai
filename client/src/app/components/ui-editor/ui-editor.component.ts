@@ -24,6 +24,16 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   customDirectoryName: string | null = null;
   isNavigationApproved = false;
 
+  availableColumns = [
+    { key: 'driver.name', label: 'RD_COL_NAME' },
+    { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
+    { key: 'lapCount', label: 'RD_COL_LAP' },
+    { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
+    { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
+    { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
+    { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' }
+  ];
+
   undoManager!: UndoManager<Settings>;
 
   constructor(
@@ -109,21 +119,51 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private cloneSettings(s: Settings): Settings {
-    return new Settings(
-      [...s.recentRaceIds],
-      [...s.selectedDriverIds],
-      s.serverIp,
-      s.serverPort,
-      s.language,
-      s.racedaySetupWalkthroughSeen,
-      s.flagGreen,
-      s.flagYellow,
-      s.flagRed,
-      s.flagWhite,
-      s.flagBlack,
-      s.flagCheckered,
-      s.sortByStandings
-    );
+    const clone = Object.assign(new Settings(), s);
+    clone.recentRaceIds = [...s.recentRaceIds];
+    clone.selectedDriverIds = [...s.selectedDriverIds];
+    clone.racedayColumns = [...s.racedayColumns];
+    return clone;
+  }
+
+  onColumnToggle(columnKey: string) {
+    const columns = this.editingSettings.racedayColumns;
+    const index = columns.indexOf(columnKey);
+
+    if (index > -1) {
+      // Don't allow deselecting if it's the only one left and it's name/nickname?
+      // Actually, user said either name OR nickname is required.
+      // And selecting one deselects the other.
+      columns.splice(index, 1);
+    } else {
+      columns.push(columnKey);
+
+      // Mutually exclusive Name/Nickname
+      if (columnKey === 'driver.name') {
+        const nicknameIndex = columns.indexOf('driver.nickname');
+        if (nicknameIndex > -1) columns.splice(nicknameIndex, 1);
+      } else if (columnKey === 'driver.nickname') {
+        const nameIndex = columns.indexOf('driver.name');
+        if (nameIndex > -1) columns.splice(nameIndex, 1);
+      }
+    }
+
+    // Ensure at least one of Name or Nickname is selected
+    if (!columns.includes('driver.name') && !columns.includes('driver.nickname')) {
+      // If we just removed one, and neither is present, add the other back?
+      // Or just prevent removal.
+      if (columnKey === 'driver.name') {
+        columns.push('driver.nickname');
+      } else if (columnKey === 'driver.nickname') {
+        columns.push('driver.name');
+      }
+    }
+
+    this.captureState();
+  }
+
+  isColumnSelected(columnKey: string): boolean {
+    return this.editingSettings.racedayColumns.includes(columnKey);
   }
 
   private areSettingsEqual(a: Settings, b: Settings): boolean {
@@ -133,7 +173,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagWhite === b.flagWhite &&
       a.flagBlack === b.flagBlack &&
       a.flagCheckered === b.flagCheckered &&
-      a.sortByStandings === b.sortByStandings;
+      a.sortByStandings === b.sortByStandings &&
+      JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns);
   }
 
   async selectDirectory() {

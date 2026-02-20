@@ -272,7 +272,9 @@
     "RD_COL_LAP": "GIRO",
     "RD_COL_LAP_TIME": "TEMPO",
     "RD_COL_MEDIAN_LAP": "MEDIANO",
+    "RD_COL_AVG_LAP": "MEDIA",
     "RD_COL_NAME": "NOME",
+    "RD_COL_NICKNAME": "SOPRANNOME",
     "RD_EMPTY_LANE": "Corsia Vuota",
     "RD_ERROR_NO_DRIVERS": "Nessun pilota selezionato.",
     "RD_MENU_ADD_LAP": "Aggiungi Giro",
@@ -415,5 +417,6 @@
     "UE_HINT_DRAG_IMAGE": "TRASCINA L'IMMAGINE QUI",
     "UE_TITLE_SELECT_IMAGE": "SELEZIONA IMMAGINE",
     "UE_BTN_REMOVE_IMAGE": "RIMUOVI IMMAGINE",
-    "UE_LABEL_SORT_STANDINGS": "Ordina giorno di gara per classifica"
+    "UE_LABEL_SORT_STANDINGS": "Ordina giorno di gara per classifica",
+    "UE_LABEL_COLUMNS": "COLONNE SELEZIONATE"
 }

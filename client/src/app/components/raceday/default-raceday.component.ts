@@ -15,6 +15,7 @@ import { RaceParticipantConverter } from 'src/app/converters/race_participant.co
 import { playSound } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
+import { Settings } from 'src/app/models/settings';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
@@ -68,14 +69,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
-    // Define columns to display with translation keys
-    this.columns = [
-      new ColumnDefinition('RD_COL_NAME', 'driver.name', 480, true, 'start', 30),
-      new ColumnDefinition('RD_COL_LAP', 'lapCount', 275),
-      new ColumnDefinition('RD_COL_LAP_TIME', 'lastLapTime', 275),
-      new ColumnDefinition('RD_COL_MEDIAN_LAP', 'medianLapTime', 275),
-      new ColumnDefinition('RD_COL_BEST_LAP', 'bestLapTime', 275),
-    ];
+    // Initial default columns, will be overwritten in ngOnInit
+    this.columns = [];
   }
 
   protected driverRankings = new Map<string, number>();
@@ -89,6 +84,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('RacedayComponent: Initializing...');
+    this.loadColumns();
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();
@@ -475,8 +471,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Helper method to get column X position
   getColumnX(columnIndex: number): number {
+    if (!this.columns || this.columns.length === 0) return 20;
     let x = 20; // Start position
-    for (let i = 0; i < columnIndex; i++) {
+    const limit = Math.min(columnIndex, this.columns.length);
+    for (let i = 0; i < limit; i++) {
       x += this.columns[i].width;
     }
     return x;
@@ -484,12 +482,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Helper method to get column center X position
   getColumnCenterX(columnIndex: number): number {
+    if (!this.columns || !this.columns[columnIndex]) return 0;
     return this.getColumnX(columnIndex) + (this.columns[columnIndex].width / 2);
   }
 
   // Helper method to get column text X position
   getColumnTextX(columnIndex: number): number {
-    const column = this.columns[columnIndex];
+    const column = this.columns ? this.columns[columnIndex] : undefined;
+    if (!column) return 0;
     if (column.textAnchor === 'start') {
       return this.getColumnX(columnIndex) + column.padding;
     }
@@ -498,7 +498,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Helper method to get max width for column text
   getColumnMaxWidth(columnIndex: number): number {
-    const column = this.columns[columnIndex];
+    const column = this.columns ? this.columns[columnIndex] : undefined;
+    if (!column) return 0;
     return column.width - (column.padding * 2);
   }
 
@@ -518,12 +519,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition): string {
     const value = this.getPropertyValue(heatDriver, column.propertyName);
 
-    // Special handling for Name column
+    // Special handling for Name/Nickname columns
     if (column.propertyName === 'driver.name') {
       if (heatDriver.actualDriver && heatDriver.actualDriver.name) {
         return heatDriver.actualDriver.name;
       }
       return heatDriver.driver.name;
+    }
+
+    if (column.propertyName === 'driver.nickname') {
+      if (heatDriver.actualDriver && heatDriver.actualDriver.nickname) {
+        return heatDriver.actualDriver.nickname;
+      }
+      return heatDriver.driver.nickname || heatDriver.driver.name;
     }
 
     // Format numeric lap times
@@ -942,6 +950,69 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   public get isEditLapsDisabled(): boolean {
     // Always enabled.
     return false;
+  }
+
+  private loadColumns() {
+    const settings = this.settingsService.getSettings();
+    let selectedColumns = settings.racedayColumns;
+    if (!selectedColumns || selectedColumns.length === 0) {
+      selectedColumns = Settings.DEFAULT_COLUMNS;
+    }
+
+    // Ensure Name or Nickname is always first for the template to render correctly
+    const nameKeys = ['driver.name', 'driver.nickname'];
+    selectedColumns = [...selectedColumns].sort((a, b) => {
+      const aIsName = nameKeys.includes(a);
+      const bIsName = nameKeys.includes(b);
+      if (aIsName && !bIsName) return -1;
+      if (!aIsName && bIsName) return 1;
+      return 0;
+    });
+
+    // Specific widths as per requirements
+    // Time fields: 275
+    // Lap count: 180
+    // Name/Nickname: Remaining width (1560 - sum(other_widths))
+
+    const fixedWidths: { [key: string]: number } = {
+      'lapCount': 180,
+      'lastLapTime': 275,
+      'medianLapTime': 275,
+      'averageLapTime': 275,
+      'bestLapTime': 275
+    };
+
+    let totalFixedWidth = 0;
+    selectedColumns.forEach(key => {
+      if (fixedWidths[key]) {
+        totalFixedWidth += fixedWidths[key];
+      }
+    });
+
+    const remainingWidth = 1560 - totalFixedWidth;
+
+    this.columns = selectedColumns.map(key => {
+      if (key === 'driver.name') {
+        return new ColumnDefinition('RD_COL_NAME', 'driver.name', remainingWidth, true, 'start', 30);
+      }
+      if (key === 'driver.nickname') {
+        return new ColumnDefinition('RD_COL_NICKNAME', 'driver.nickname', remainingWidth, true, 'start', 30);
+      }
+
+      const labelKey = this.getLabelKeyForColumn(key);
+      return new ColumnDefinition(labelKey, key, fixedWidths[key] || 275);
+    });
+  }
+
+  private getLabelKeyForColumn(key: string): string {
+    const labels: { [key: string]: string } = {
+      'lapCount': 'RD_COL_LAP',
+      'lastLapTime': 'RD_COL_LAP_TIME',
+      'medianLapTime': 'RD_COL_MEDIAN_LAP',
+      'averageLapTime': 'RD_COL_AVG_LAP',
+      'bestLapTime': 'RD_COL_BEST_LAP'
+    };
+    return labels[key] || 'UNKNOWN';
   }
 
   protected trackByDriverId(index: number, hd: DriverHeatData): string {
