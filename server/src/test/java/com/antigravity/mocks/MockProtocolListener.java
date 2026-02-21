@@ -27,6 +27,10 @@ public class MockProtocolListener implements ProtocolListener {
   }
 
   @Override
+  public void onCallbutton(int lane) {
+  }
+
+  @Override
   public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
     lastStatus = status;
   }

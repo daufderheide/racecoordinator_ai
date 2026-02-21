@@ -51,4 +51,10 @@ public class HeatOver implements IRaceState {
   public void onCarData(com.antigravity.protocols.CarData carData) {
     System.out.println("HeatOver: Ignored onCarData - Heat is over");
   }
+
+  @Override
+  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+    System.out.println("HeatOver.onCallbutton() called. Moving to next heat.");
+    nextHeat(race);
+  }
 }

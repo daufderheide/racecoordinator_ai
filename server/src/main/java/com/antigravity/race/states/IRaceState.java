@@ -24,4 +24,6 @@ public interface IRaceState {
 	void onLap(int lane, double lapTime, int interfaceId);
 
 	void onCarData(CarData carData);
+
+	void onCallbutton(Race race, int lane);
 }

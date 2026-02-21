@@ -794,14 +794,51 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.showExitConfirmation = false;
     this.router.navigate(['/raceday-setup']);
   }
-
   onExitCancel() {
     this.showExitConfirmation = false;
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  handleKeyUpEvent(event: KeyboardEvent) {
+    if (event.code === 'Space') {
+      // Don't trigger if typing in an input field
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      const s = this.raceState;
+      const RS = com.antigravity.RaceState;
+
+      if (s === RS.HEAT_OVER) {
+        if (!this.isNextHeatDisabled) {
+          this.onMenuSelect('NEXT_HEAT');
+        }
+      } else if (s === RS.NOT_STARTED || s === RS.PAUSED) {
+        if (!this.isStartResumeDisabled) {
+          this.onMenuSelect('START_RESUME');
+        }
+      } else {
+        if (!this.isPauseDisabled) {
+          this.onMenuSelect('PAUSE');
+        }
+      }
+    }
   }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+    // Space bar
+    if (event.code === 'Space') {
+      // Don't trigger if typing in an input field
+      if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      event.preventDefault(); // Prevent page scroll
+      return;
+    }
 
     // Ctrl+S or Cmd+S for Start/Resume
     if (isCtrlOrCmd && event.key === 's') {

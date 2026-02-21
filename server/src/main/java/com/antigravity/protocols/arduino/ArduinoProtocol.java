@@ -538,6 +538,9 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   private void onCallButton(int laneIndex, int state) {
     logger.info("Received Call Button - Lane: {}, State: {}", laneIndex, state);
+    if (listener != null) {
+      listener.onCallbutton(laneIndex);
+    }
   }
 
   private void buildPinLookup() {

@@ -25,6 +25,10 @@ public class TestDemoProtocol {
       }
 
       @Override
+      public void onCallbutton(int lane) {
+      }
+
+      @Override
       public void onCarData(CarData carData) {
       }
 

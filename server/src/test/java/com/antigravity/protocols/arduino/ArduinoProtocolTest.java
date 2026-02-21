@@ -79,6 +79,10 @@ public class ArduinoProtocolTest {
     }
 
     @Override
+    public void onCallbutton(int lane) {
+    }
+
+    @Override
     public void onInterfaceStatus(InterfaceStatus status) {
       lastStatus = status;
     }

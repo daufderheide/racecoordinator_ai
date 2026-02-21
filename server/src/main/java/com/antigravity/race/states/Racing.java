@@ -331,4 +331,10 @@ public class Racing implements IRaceState {
   public void onCarData(com.antigravity.protocols.CarData carData) {
     System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getTime());
   }
+
+  @Override
+  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+    System.out.println("Racing.onCallbutton() called. Pausing race.");
+    pause(race);
+  }
 }
