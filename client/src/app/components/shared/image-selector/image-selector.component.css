@@ -1,3 +1,8 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
 .image-selector-container {
     display: flex;
     flex-direction: column;
@@ -13,7 +18,6 @@
 
 .image-preview {
     width: 100%;
-    height: 120px;
     background: rgba(255, 255, 255, 0.05);
     border: 2px dashed rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -24,6 +28,19 @@
     position: relative;
     overflow: hidden;
     transition: all 0.2s ease;
+}
+
+.image-preview.small {
+    height: 80px;
+}
+
+.image-preview.medium {
+    height: 120px;
+}
+
+.image-preview.large {
+    height: 200px;
+    width: 200px;
 }
 
 .image-preview:hover {

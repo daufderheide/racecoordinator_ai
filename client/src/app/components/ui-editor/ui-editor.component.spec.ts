@@ -9,6 +9,7 @@ import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTr
 import { FormsModule } from '@angular/forms';
 import { of, throwError, delay } from 'rxjs';
 import { Settings } from 'src/app/models/settings';
+import { AnchorPoint } from '../raceday/column_definition';
 
 @Component({ selector: 'app-image-selector', template: '', standalone: false })
 class MockImageSelectorComponent {
@@ -164,5 +165,52 @@ describe('UIEditorComponent', () => {
     component.editingSettings.flagGreen = 'new-green';
     component.captureState();
     expect(component.hasChanges()).toBeTrue();
+  });
+
+  it('should return correct column slots', () => {
+    component.editingSettings.racedayColumns = ['driver.name', 'lapCount'];
+    const slots = component.columnSlots;
+    expect(slots.length).toBe(2);
+    expect(slots[0].label).toBe('RD_COL_NAME');
+    expect(slots[1].label).toBe('RD_COL_LAP');
+  });
+
+  it('should determine resizing column key', () => {
+    component.editingSettings.racedayColumns = ['lapCount', 'driver.name'];
+    component.editingSettings.columnLayouts = {
+      'lapCount': { [AnchorPoint.CenterCenter]: 'lapCount' },
+      'driver.name': { [AnchorPoint.CenterCenter]: 'driver.name' }
+    };
+    // driver.name is a name key, so it should be prioritized for resizing
+    expect(component.resizingColumnKey).toBe('driver.name');
+
+    component.editingSettings.racedayColumns = ['lapCount'];
+    component.editingSettings.columnLayouts = { 'lapCount': { [AnchorPoint.CenterCenter]: 'lapCount' } };
+    expect(component.resizingColumnKey).toBe('lapCount');
+  });
+
+  it('should open and handle reorder dialog', () => {
+    component.openReorderDialog();
+    expect(component.showReorderModal).toBeTrue();
+    expect(component.reorderModalData).toBeTruthy();
+
+    const result = {
+      columns: ['lapCount'],
+      columnLayouts: { 'lapCount': { [AnchorPoint.CenterCenter]: 'lapCount' } }
+    };
+    component.onReorderSave(result as any);
+    expect(component.editingSettings.racedayColumns).toEqual(['lapCount']);
+    expect(component.showReorderModal).toBeFalse();
+
+    component.openReorderDialog();
+    component.onReorderCancel();
+    expect(component.showReorderModal).toBeFalse();
+  });
+
+  it('should handle sortByStandings change', () => {
+    component.editingSettings.sortByStandings = false;
+    expect(component.editingSettings.sortByStandings).toBeFalse();
+    component.editingSettings.sortByStandings = true;
+    expect(component.editingSettings.sortByStandings).toBeTrue();
   });
 });

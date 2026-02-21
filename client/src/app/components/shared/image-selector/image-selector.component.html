@@ -1,7 +1,8 @@
 <div class="image-selector-container">
   <label *ngIf="label" class="image-label">{{ label }}</label>
-  <div class="image-preview" [class.dragging]="isDragging" (drop)="onDrop($event)" (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave($event)" (click)="openSelector()">
+  <div class="image-preview" [class.dragging]="isDragging" [class.small]="size === 'small'"
+    [class.medium]="size === 'medium'" [class.large]="size === 'large'" (drop)="onDrop($event)"
+    (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (click)="openSelector()">
     <img *ngIf="imageUrl || pendingPreview" [src]="pendingPreview || (imageUrl | avatarUrl)" alt="Image Preview">
     <div class="remove-button" *ngIf="imageUrl && !pendingPreview && !isUploading" (click)="removeImage($event)"
       [title]="'UE_BTN_REMOVE_IMAGE' | translate">

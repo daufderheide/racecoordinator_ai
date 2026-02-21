@@ -11,6 +11,7 @@ export class ImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
   @Input() assets: any[] = [];
+  @Input() size: 'small' | 'medium' | 'large' = 'medium';
 
   @Output() imageUrlChange = new EventEmitter<string>();
   @Output() uploadStarted = new EventEmitter<void>();

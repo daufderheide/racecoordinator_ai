@@ -38,14 +38,30 @@ test.describe('UI Editor Visuals', () => {
     await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
 
     // Click on the first image selector (Green Flag)
-    await page.locator('app-image-selector').first().click();
+    await page.locator('app-image-selector .image-preview').first().click();
 
     // Modal should be visible
-    const modal = page.locator('app-item-selector');
+    const modal = page.locator('app-image-selector').first().locator('app-item-selector .modal-backdrop');
     await expect(modal).toBeVisible();
-    await expect(modal.locator('.modal-header')).toContainText('SELECT IMAGE');
+    await expect(modal.locator('.modal-title')).toContainText('SELECT IMAGE');
 
     // Screenshot the modal overlay
     await expect(page).toHaveScreenshot('ui-editor-image-selector-modal.png', { fullPage: true });
+  });
+
+  test('should show column config dialog when clicking configure columns', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
+    await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
+
+    // Click "CONFIGURE COLUMNS" button
+    await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
+
+    // Modal should be visible
+    const modal = page.locator('.reorder-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.title')).toContainText('CONFIGURE COLUMNS');
+
+    // Screenshot the reorder modal
+    await expect(page).toHaveScreenshot('ui-editor-reorder-modal.png', { fullPage: true });
   });
 });

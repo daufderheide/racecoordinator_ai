@@ -38,7 +38,7 @@ test.describe('Team Editor Visuals', () => {
     await expect(page.locator('.driver-item')).toHaveCount(4, { timeout: 10000 });
 
     // Click on avatar to open selector
-    const avatar = page.locator('.avatar-preview-large');
+    const avatar = page.locator('app-image-selector .image-preview');
     await expect(avatar).toBeVisible();
     await avatar.click({ force: true });
 

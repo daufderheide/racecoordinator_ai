@@ -1,6 +1,5 @@
-
 import { test, expect } from '@playwright/test';
-import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { TestSetupHelper } from '../../../testing/test-setup_helper';
 
 test.describe('Image Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {
