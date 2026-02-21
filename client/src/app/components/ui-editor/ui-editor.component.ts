@@ -36,14 +36,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: 'driver.name', label: 'RD_COL_NAME' },
     { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
     { key: 'lapCount', label: 'RD_COL_LAP' },
-    { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
+    { key: 'reactionTime', label: 'UI_EDITOR_COL_REACTION_TIME' },
     { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
     { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
     { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
     { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
-    { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
-    { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
-    { key: 'participant.team.name', label: 'RD_COL_TEAM' },
+    { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
+    { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
+    { key: 'participant.team.name', label: 'UI_EDITOR_COL_TEAM' },
   ];
 
 
@@ -141,16 +141,32 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  openReorderDialog() {
-    // Current selected slots in order
-    const selectedSlots = this.editingSettings.racedayColumns.map(key => {
+  get columnSlots() {
+    if (!this.editingSettings) return [];
+    return this.editingSettings.racedayColumns.map(key => {
       const col = this.availableColumns.find(c => c.key === key);
       return { key, label: col ? col.label : key };
     });
+  }
 
+  get resizingColumnKey(): string | null {
+    if (!this.editingSettings) return null;
+    const columns = this.editingSettings.racedayColumns;
+    const layouts = this.editingSettings.columnLayouts || {};
+    const nameKeys = ['driver.name', 'driver.nickname'];
+
+    for (const key of columns) {
+      const layout = layouts[key] || { [AnchorPoint.CenterCenter]: key };
+      const containsName = Object.values(layout).some(v => nameKeys.includes((v as string).split('_')[0]));
+      if (containsName) return key;
+    }
+    return columns.length > 0 ? columns[0] : null;
+  }
+
+  openReorderDialog() {
     this.reorderModalData = {
       availableValues: this.availableColumns,
-      columnSlots: selectedSlots,
+      columnSlots: this.columnSlots,
       columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {}))
     };
     this.showReorderModal = true;
@@ -185,55 +201,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
 
-  onColumnToggle(columnKey: string) {
-    const columns = this.editingSettings.racedayColumns;
-    const index = columns.indexOf(columnKey);
-
-    if (index > -1) {
-      columns.splice(index, 1);
-      delete this.editingSettings.columnAnchors[columnKey];
-      delete this.editingSettings.columnLayouts[columnKey];
-    } else {
-      columns.push(columnKey);
-      this.editingSettings.columnAnchors[columnKey] = AnchorPoint.CenterCenter;
-
-      // Initialize layout with default value at CenterCenter
-      if (!this.editingSettings.columnLayouts[columnKey]) {
-        this.editingSettings.columnLayouts[columnKey] = {
-          [AnchorPoint.CenterCenter]: columnKey
-        };
-      }
-
-      // Mutually exclusive Name/Nickname
-      if (columnKey === 'driver.name') {
-        const nicknameIndex = columns.indexOf('driver.nickname');
-        if (nicknameIndex > -1) {
-          columns.splice(nicknameIndex, 1);
-          delete this.editingSettings.columnAnchors['driver.nickname'];
-        }
-      } else if (columnKey === 'driver.nickname') {
-        const nameIndex = columns.indexOf('driver.name');
-        if (nameIndex > -1) {
-          columns.splice(nameIndex, 1);
-          delete this.editingSettings.columnAnchors['driver.name'];
-        }
-      }
-    }
-
-    // Ensure at least one of Name or Nickname is selected
-    if (!columns.includes('driver.name') && !columns.includes('driver.nickname')) {
-      if (columnKey === 'driver.name') {
-        columns.push('driver.nickname');
-        this.editingSettings.columnAnchors['driver.nickname'] = AnchorPoint.CenterCenter;
-      } else if (columnKey === 'driver.nickname') {
-        columns.push('driver.name');
-        this.editingSettings.columnAnchors['driver.name'] = AnchorPoint.CenterCenter;
-      }
-    }
-
-    this.captureState();
-  }
-
   isColumnSelected(columnKey: string): boolean {
     return this.editingSettings.racedayColumns.includes(columnKey);
   }
@@ -247,7 +214,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
-      JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors);
+      JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts);
   }
 
   async selectDirectory() {

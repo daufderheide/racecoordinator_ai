@@ -42,6 +42,27 @@
   display: flex;
   flex-direction: column;
   gap: 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+}
+
+.content-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 255, 0.5);
 }
 
 .config-grid {
@@ -125,7 +146,8 @@
 .footer-actions {
   display: flex;
   justify-content: flex-end;
-  padding: 20px 0;
+  padding: 20px 0 0 0;
+  flex-shrink: 0;
 }
 
 .btn {
@@ -220,9 +242,7 @@
 }
 
 .sorting-selector {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  /* No extra spacing needed when inside layout-controls */
 }
 
 .checkbox-container {
@@ -281,46 +301,28 @@
   display: block;
 }
 
-.column-selector {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 255, 255, 0.2);
+.layout-panel {
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.column-layout-section {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 24px;
+  padding: 24px;
 }
 
-.column-selector label {
-  font-size: 14px;
-  color: #00ffff;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.layout-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 255, 255, 0.15);
 }
 
-.column-options {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  max-height: 250px;
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.column-options::-webkit-scrollbar {
-  width: 6px;
-}
-
-.column-options::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.column-options::-webkit-scrollbar-thumb {
-  background: rgba(0, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-.column-options::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 255, 0.5);
+.column-actions {
+  display: flex;
+  justify-content: center;
 }

@@ -603,7 +603,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   // Helper method to get value from HeatDriver using property path
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
     if (!heatDriver) return undefined;
-    const parts = propertyPath.split('.');
+
+    // Strip suffixes like _1, _2 from each part if they exist
+    const parts = propertyPath.split('.').map(part => part.split('_')[0]);
     let value: any = heatDriver;
     for (const part of parts) {
       if (value === undefined || value === null) return undefined;
@@ -1116,20 +1118,22 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Format any value based on property name
   formatValue(propertyName: string, value: any, hd: DriverHeatData): string {
-    if (propertyName.includes('LapTime') || propertyName === 'reactionTime') {
+    const baseKey = propertyName.split('_')[0];
+
+    if (baseKey.includes('LapTime') || baseKey === 'reactionTime') {
       return value > 0 ? value.toFixed(3) : '--.---';
-    } else if (propertyName === 'gapLeader' || propertyName === 'gapPosition') {
+    } else if (baseKey === 'gapLeader' || baseKey === 'gapPosition') {
       if (value === 0) return '--.---';
       const sign = value > 0 ? '+' : '';
       return sign + value.toFixed(3);
-    } else if (propertyName === 'lapCount') {
+    } else if (baseKey === 'lapCount') {
       if (value === 0 && hd.reactionTime === 0) return '--';
       return value.toString();
-    } else if (propertyName === 'driver.name') {
+    } else if (baseKey === 'driver.name') {
       return hd.actualDriver?.name || hd.driver.name;
-    } else if (propertyName === 'driver.nickname') {
+    } else if (baseKey === 'driver.nickname') {
       return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
-    } else if (propertyName === 'participant.team.name') {
+    } else if (baseKey === 'participant.team.name') {
       return hd.participant?.team?.name || '';
     }
     return value?.toString() ?? '';

@@ -13,9 +13,9 @@
 }
 
 .reorder-modal.large-modal {
-  width: 1200px;
+  width: 1400px;
   max-width: 95vw;
-  max-height: 90vh;
+  height: 85vh;
   background: #1a1c1e;
   border-radius: 16px;
   border: 1px solid #333;
@@ -40,6 +40,7 @@
   flex: 1;
   overflow: hidden;
   display: flex;
+  min-height: 0;
 }
 
 .enhanced-dialog-layout {
@@ -47,17 +48,20 @@
   gap: 20px;
   width: 100%;
   height: 100%;
+  min-height: 0;
 }
 
 /* Sidebar: Available Values */
 .values-sidebar {
-  flex: 0 0 220px;
+  flex: 0 0 200px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
   padding: 15px;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  min-height: 0;
 }
 
 .value-pool {
@@ -79,6 +83,7 @@
   border-left: 4px solid #3b82f6;
   transition: all 0.2s;
   color: #e2e8f0;
+  text-transform: uppercase;
 }
 
 .value-chip:hover {
@@ -99,7 +104,7 @@
   padding: 15px;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  max-height: 520px;
+  min-height: 0;
 }
 
 
@@ -174,8 +179,8 @@
 
 .grid-row {
   display: flex;
-  gap: 6px;
-  height: 44px;
+  gap: 8px;
+  height: 60px;
 }
 
 .grid-cell {
@@ -191,8 +196,17 @@
 }
 
 .grid-cell.cdk-drop-list-receiving {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  border-color: #00ffff;
+  background: rgba(0, 255, 255, 0.15);
+  box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.2);
+  transform: scale(1.02);
+  z-index: 10;
+}
+
+.grid-cell.cdk-drop-list-dragging {
+  border-color: rgba(0, 255, 255, 0.5);
+  border-style: solid;
+  background: rgba(0, 255, 255, 0.05);
 }
 
 .cell-placeholder {
@@ -221,6 +235,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #fff;
+  text-transform: uppercase;
 }
 
 .clear-btn {
@@ -245,7 +260,7 @@
 
 /* Preview Panel */
 .preview-panel {
-  flex: 0 0 320px;
+  flex: 0 0 300px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -395,8 +410,14 @@
   opacity: 0.1;
 }
 
+.cdk-drag-dragging,
+.cdk-drag-preview,
+.cdk-drag-placeholder {
+  transition: none !important;
+}
+
 .cdk-drag-animating {
-  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1) !important;
 }
 
 .material-icons {

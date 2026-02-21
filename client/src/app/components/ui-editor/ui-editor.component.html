@@ -12,6 +12,33 @@
   </div>
 
   <div class="content-area" *ngIf="!isLoading">
+    <!-- Full-Width Column Layout Preview -->
+    <div class="panel layout-panel">
+      <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
+      <div class="panel-content column-layout-section">
+        <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
+          [resizingColumnKey]="resizingColumnKey">
+        </app-column-preview>
+
+        <div class="layout-controls">
+          <div class="sorting-selector">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
+              <span class="checkmark"></span>
+              {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
+            </label>
+          </div>
+
+          <div class="column-actions">
+            <button class="btn btn-secondary" (click)="openReorderDialog()">
+              <span class="material-icons"></span>
+              {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="config-grid">
       <!-- Custom UI Settings -->
       <div class="panel config-panel">
@@ -21,7 +48,8 @@
             <label>{{ 'UE_DIRECTORY_LABEL' | translate }}</label>
             <div class="directory-info">
               <span class="directory-path" *ngIf="customDirectoryName">{{ customDirectoryName }}</span>
-              <span class="directory-path placeholder" *ngIf="!customDirectoryName">No directory selected</span>
+              <span class="directory-path placeholder" *ngIf="!customDirectoryName">{{ 'UE_LABEL_NO_DIRECTORY' |
+                translate }}</span>
             </div>
             <div class="directory-actions">
               <button class="btn btn-secondary" (click)="selectDirectory()">
@@ -29,32 +57,6 @@
               </button>
               <button class="btn btn-danger" (click)="resetDefault()" [disabled]="!customDirectoryName">
                 {{ 'UE_BTN_RESET_DEFAULT' | translate }}
-              </button>
-            </div>
-          </div>
-
-          <div class="sorting-selector">
-            <label class="checkbox-container">
-              <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
-              <span class="checkmark"></span>
-              {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
-            </label>
-          </div>
-
-          <div class="column-selector">
-            <label>{{ 'UE_LABEL_COLUMNS' | translate }}</label>
-            <div class="column-options">
-              <label *ngFor="let col of availableColumns" class="checkbox-container">
-                <input type="checkbox" [checked]="isColumnSelected(col.key)" (change)="onColumnToggle(col.key)">
-                <span class="checkmark"></span>
-                {{ col.label | translate }}
-              </label>
-            </div>
-            <div class="column-actions">
-              <button class="btn btn-secondary btn-sm" (click)="openReorderDialog()"
-                [disabled]="editingSettings.racedayColumns.length === 0">
-                <span class="material-icons">reorder</span>
-                {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
               </button>
             </div>
           </div>
@@ -87,12 +89,12 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="footer-actions">
-      <button class="btn btn-save" (click)="save()" [disabled]="!hasChanges()">
-        {{ 'UE_BTN_SAVE' | translate }}
-      </button>
-    </div>
+  <div class="footer-actions" *ngIf="!isLoading">
+    <button class="btn btn-save" (click)="save()" [disabled]="!hasChanges()">
+      {{ 'UE_BTN_SAVE' | translate }}
+    </button>
   </div>
 
   <!-- Loading Overlay -->

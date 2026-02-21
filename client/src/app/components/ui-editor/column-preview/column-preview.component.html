@@ -1,0 +1,15 @@
+<div class="lane-preview-container">
+  <div class="lane-visual">
+    <div class="lane-column" *ngFor="let slot of columnSlots; trackBy: trackByKey"
+      [class.resizing]="slot.key === resizingColumnKey">
+      <div class="anchor-preview-grid">
+        <div class="preview-point" *ngFor="let opt of anchorOptions; trackBy: trackByAnchor">
+          <span class="preview-text" *ngIf="columnLayouts[slot.key]?.[opt]">
+            {{ (getLabel(columnLayouts[slot.key][opt]) | translate) || '???' }}
+          </span>
+        </div>
+      </div>
+      <div class="column-label">{{ getColumnLabel(slot.key) | translate }}</div>
+    </div>
+  </div>
+</div>
