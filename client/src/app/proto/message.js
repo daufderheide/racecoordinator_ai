@@ -11624,6 +11624,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IHeatScoring|null} [heatScoring] RaceModel heatScoring
              * @property {com.antigravity.IOverallScoring|null} [overallScoring] RaceModel overallScoring
              * @property {number|null} [minLapTime] RaceModel minLapTime
+             * @property {com.antigravity.IAnalogFuelOptions|null} [fuelOptions] RaceModel fuelOptions
              */
 
             /**
@@ -11690,6 +11691,14 @@ export const com = $root.com = (() => {
             RaceModel.prototype.minLapTime = 0;
 
             /**
+             * RaceModel fuelOptions.
+             * @member {com.antigravity.IAnalogFuelOptions|null|undefined} fuelOptions
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.fuelOptions = null;
+
+            /**
              * Creates a new RaceModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceModel
@@ -11725,6 +11734,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.OverallScoring.encode(message.overallScoring, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
                 if (message.minLapTime != null && Object.hasOwnProperty.call(message, "minLapTime"))
                     writer.uint32(/* id 6, wireType 1 =*/49).double(message.minLapTime);
+                if (message.fuelOptions != null && Object.hasOwnProperty.call(message, "fuelOptions"))
+                    $root.com.antigravity.AnalogFuelOptions.encode(message.fuelOptions, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
                 return writer;
             };
 
@@ -11783,6 +11794,10 @@ export const com = $root.com = (() => {
                         }
                     case 6: {
                             message.minLapTime = reader.double();
+                            break;
+                        }
+                    case 7: {
+                            message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -11846,6 +11861,11 @@ export const com = $root.com = (() => {
                 if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
                     if (typeof message.minLapTime !== "number")
                         return "minLapTime: number expected";
+                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions")) {
+                    let error = $root.com.antigravity.AnalogFuelOptions.verify(message.fuelOptions);
+                    if (error)
+                        return "fuelOptions." + error;
+                }
                 return null;
             };
 
@@ -11885,6 +11905,11 @@ export const com = $root.com = (() => {
                 }
                 if (object.minLapTime != null)
                     message.minLapTime = Number(object.minLapTime);
+                if (object.fuelOptions != null) {
+                    if (typeof object.fuelOptions !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.fuelOptions: object expected");
+                    message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.fromObject(object.fuelOptions);
+                }
                 return message;
             };
 
@@ -11908,6 +11933,7 @@ export const com = $root.com = (() => {
                     object.heatScoring = null;
                     object.overallScoring = null;
                     object.minLapTime = 0;
+                    object.fuelOptions = null;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -11921,6 +11947,8 @@ export const com = $root.com = (() => {
                     object.overallScoring = $root.com.antigravity.OverallScoring.toObject(message.overallScoring, options);
                 if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
                     object.minLapTime = options.json && !isFinite(message.minLapTime) ? String(message.minLapTime) : message.minLapTime;
+                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions"))
+                    object.fuelOptions = $root.com.antigravity.AnalogFuelOptions.toObject(message.fuelOptions, options);
                 return object;
             };
 
@@ -11951,6 +11979,436 @@ export const com = $root.com = (() => {
             };
 
             return RaceModel;
+        })();
+
+        /**
+         * FuelUsageType enum.
+         * @name com.antigravity.FuelUsageType
+         * @enum {number}
+         * @property {number} LINEAR=0 LINEAR value
+         * @property {number} QUADRATIC=1 QUADRATIC value
+         * @property {number} CUBIC=2 CUBIC value
+         */
+        antigravity.FuelUsageType = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "LINEAR"] = 0;
+            values[valuesById[1] = "QUADRATIC"] = 1;
+            values[valuesById[2] = "CUBIC"] = 2;
+            return values;
+        })();
+
+        antigravity.AnalogFuelOptions = (function() {
+
+            /**
+             * Properties of an AnalogFuelOptions.
+             * @memberof com.antigravity
+             * @interface IAnalogFuelOptions
+             * @property {boolean|null} [enabled] AnalogFuelOptions enabled
+             * @property {boolean|null} [resetFuelAtHeatStart] AnalogFuelOptions resetFuelAtHeatStart
+             * @property {boolean|null} [endHeatOnOutOfFuel] AnalogFuelOptions endHeatOnOutOfFuel
+             * @property {number|null} [capacity] AnalogFuelOptions capacity
+             * @property {com.antigravity.FuelUsageType|null} [usageType] AnalogFuelOptions usageType
+             * @property {number|null} [usageRate] AnalogFuelOptions usageRate
+             * @property {number|null} [startLevel] AnalogFuelOptions startLevel
+             * @property {number|null} [refuelRate] AnalogFuelOptions refuelRate
+             * @property {number|null} [pitStopDelay] AnalogFuelOptions pitStopDelay
+             */
+
+            /**
+             * Constructs a new AnalogFuelOptions.
+             * @memberof com.antigravity
+             * @classdesc Represents an AnalogFuelOptions.
+             * @implements IAnalogFuelOptions
+             * @constructor
+             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
+             */
+            function AnalogFuelOptions(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * AnalogFuelOptions enabled.
+             * @member {boolean} enabled
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.enabled = false;
+
+            /**
+             * AnalogFuelOptions resetFuelAtHeatStart.
+             * @member {boolean} resetFuelAtHeatStart
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.resetFuelAtHeatStart = false;
+
+            /**
+             * AnalogFuelOptions endHeatOnOutOfFuel.
+             * @member {boolean} endHeatOnOutOfFuel
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.endHeatOnOutOfFuel = false;
+
+            /**
+             * AnalogFuelOptions capacity.
+             * @member {number} capacity
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.capacity = 0;
+
+            /**
+             * AnalogFuelOptions usageType.
+             * @member {com.antigravity.FuelUsageType} usageType
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.usageType = 0;
+
+            /**
+             * AnalogFuelOptions usageRate.
+             * @member {number} usageRate
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.usageRate = 0;
+
+            /**
+             * AnalogFuelOptions startLevel.
+             * @member {number} startLevel
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.startLevel = 0;
+
+            /**
+             * AnalogFuelOptions refuelRate.
+             * @member {number} refuelRate
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.refuelRate = 0;
+
+            /**
+             * AnalogFuelOptions pitStopDelay.
+             * @member {number} pitStopDelay
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.pitStopDelay = 0;
+
+            /**
+             * Creates a new AnalogFuelOptions instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions instance
+             */
+            AnalogFuelOptions.create = function create(properties) {
+                return new AnalogFuelOptions(properties);
+            };
+
+            /**
+             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AnalogFuelOptions.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.enabled);
+                if (message.resetFuelAtHeatStart != null && Object.hasOwnProperty.call(message, "resetFuelAtHeatStart"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).bool(message.resetFuelAtHeatStart);
+                if (message.endHeatOnOutOfFuel != null && Object.hasOwnProperty.call(message, "endHeatOnOutOfFuel"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).bool(message.endHeatOnOutOfFuel);
+                if (message.capacity != null && Object.hasOwnProperty.call(message, "capacity"))
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.capacity);
+                if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.usageType);
+                if (message.usageRate != null && Object.hasOwnProperty.call(message, "usageRate"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.usageRate);
+                if (message.startLevel != null && Object.hasOwnProperty.call(message, "startLevel"))
+                    writer.uint32(/* id 7, wireType 1 =*/57).double(message.startLevel);
+                if (message.refuelRate != null && Object.hasOwnProperty.call(message, "refuelRate"))
+                    writer.uint32(/* id 8, wireType 1 =*/65).double(message.refuelRate);
+                if (message.pitStopDelay != null && Object.hasOwnProperty.call(message, "pitStopDelay"))
+                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.pitStopDelay);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AnalogFuelOptions.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AnalogFuelOptions.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.AnalogFuelOptions();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.enabled = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.resetFuelAtHeatStart = reader.bool();
+                            break;
+                        }
+                    case 3: {
+                            message.endHeatOnOutOfFuel = reader.bool();
+                            break;
+                        }
+                    case 4: {
+                            message.capacity = reader.double();
+                            break;
+                        }
+                    case 5: {
+                            message.usageType = reader.int32();
+                            break;
+                        }
+                    case 6: {
+                            message.usageRate = reader.double();
+                            break;
+                        }
+                    case 7: {
+                            message.startLevel = reader.double();
+                            break;
+                        }
+                    case 8: {
+                            message.refuelRate = reader.double();
+                            break;
+                        }
+                    case 9: {
+                            message.pitStopDelay = reader.double();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AnalogFuelOptions.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an AnalogFuelOptions message.
+             * @function verify
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            AnalogFuelOptions.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    if (typeof message.enabled !== "boolean")
+                        return "enabled: boolean expected";
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    if (typeof message.resetFuelAtHeatStart !== "boolean")
+                        return "resetFuelAtHeatStart: boolean expected";
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    if (typeof message.endHeatOnOutOfFuel !== "boolean")
+                        return "endHeatOnOutOfFuel: boolean expected";
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    if (typeof message.capacity !== "number")
+                        return "capacity: number expected";
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    switch (message.usageType) {
+                    default:
+                        return "usageType: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    if (typeof message.usageRate !== "number")
+                        return "usageRate: number expected";
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    if (typeof message.startLevel !== "number")
+                        return "startLevel: number expected";
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    if (typeof message.refuelRate !== "number")
+                        return "refuelRate: number expected";
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    if (typeof message.pitStopDelay !== "number")
+                        return "pitStopDelay: number expected";
+                return null;
+            };
+
+            /**
+             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             */
+            AnalogFuelOptions.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.AnalogFuelOptions)
+                    return object;
+                let message = new $root.com.antigravity.AnalogFuelOptions();
+                if (object.enabled != null)
+                    message.enabled = Boolean(object.enabled);
+                if (object.resetFuelAtHeatStart != null)
+                    message.resetFuelAtHeatStart = Boolean(object.resetFuelAtHeatStart);
+                if (object.endHeatOnOutOfFuel != null)
+                    message.endHeatOnOutOfFuel = Boolean(object.endHeatOnOutOfFuel);
+                if (object.capacity != null)
+                    message.capacity = Number(object.capacity);
+                switch (object.usageType) {
+                default:
+                    if (typeof object.usageType === "number") {
+                        message.usageType = object.usageType;
+                        break;
+                    }
+                    break;
+                case "LINEAR":
+                case 0:
+                    message.usageType = 0;
+                    break;
+                case "QUADRATIC":
+                case 1:
+                    message.usageType = 1;
+                    break;
+                case "CUBIC":
+                case 2:
+                    message.usageType = 2;
+                    break;
+                }
+                if (object.usageRate != null)
+                    message.usageRate = Number(object.usageRate);
+                if (object.startLevel != null)
+                    message.startLevel = Number(object.startLevel);
+                if (object.refuelRate != null)
+                    message.refuelRate = Number(object.refuelRate);
+                if (object.pitStopDelay != null)
+                    message.pitStopDelay = Number(object.pitStopDelay);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.AnalogFuelOptions} message AnalogFuelOptions
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            AnalogFuelOptions.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.enabled = false;
+                    object.resetFuelAtHeatStart = false;
+                    object.endHeatOnOutOfFuel = false;
+                    object.capacity = 0;
+                    object.usageType = options.enums === String ? "LINEAR" : 0;
+                    object.usageRate = 0;
+                    object.startLevel = 0;
+                    object.refuelRate = 0;
+                    object.pitStopDelay = 0;
+                }
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    object.enabled = message.enabled;
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    object.resetFuelAtHeatStart = message.resetFuelAtHeatStart;
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    object.endHeatOnOutOfFuel = message.endHeatOnOutOfFuel;
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    object.capacity = options.json && !isFinite(message.capacity) ? String(message.capacity) : message.capacity;
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    object.usageType = options.enums === String ? $root.com.antigravity.FuelUsageType[message.usageType] === undefined ? message.usageType : $root.com.antigravity.FuelUsageType[message.usageType] : message.usageType;
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    object.usageRate = options.json && !isFinite(message.usageRate) ? String(message.usageRate) : message.usageRate;
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    object.startLevel = options.json && !isFinite(message.startLevel) ? String(message.startLevel) : message.startLevel;
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    object.refuelRate = options.json && !isFinite(message.refuelRate) ? String(message.refuelRate) : message.refuelRate;
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    object.pitStopDelay = options.json && !isFinite(message.pitStopDelay) ? String(message.pitStopDelay) : message.pitStopDelay;
+                return object;
+            };
+
+            /**
+             * Converts this AnalogFuelOptions to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            AnalogFuelOptions.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for AnalogFuelOptions
+             * @function getTypeUrl
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            AnalogFuelOptions.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.AnalogFuelOptions";
+            };
+
+            return AnalogFuelOptions;
         })();
 
         antigravity.TrackModel = (function() {
@@ -13169,6 +13627,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [rankValue] RaceParticipant rankValue
              * @property {number|null} [seed] RaceParticipant seed
              * @property {com.antigravity.ITeamModel|null} [team] RaceParticipant team
+             * @property {number|null} [fuelLevel] RaceParticipant fuelLevel
              */
 
             /**
@@ -13275,6 +13734,14 @@ export const com = $root.com = (() => {
             RaceParticipant.prototype.team = null;
 
             /**
+             * RaceParticipant fuelLevel.
+             * @member {number} fuelLevel
+             * @memberof com.antigravity.RaceParticipant
+             * @instance
+             */
+            RaceParticipant.prototype.fuelLevel = 0;
+
+            /**
              * Creates a new RaceParticipant instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceParticipant
@@ -13320,6 +13787,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 10, wireType 0 =*/80).int32(message.seed);
                 if (message.team != null && Object.hasOwnProperty.call(message, "team"))
                     $root.com.antigravity.TeamModel.encode(message.team, writer.uint32(/* id 11, wireType 2 =*/90).fork()).ldelim();
+                if (message.fuelLevel != null && Object.hasOwnProperty.call(message, "fuelLevel"))
+                    writer.uint32(/* id 12, wireType 1 =*/97).double(message.fuelLevel);
                 return writer;
             };
 
@@ -13400,6 +13869,10 @@ export const com = $root.com = (() => {
                             message.team = $root.com.antigravity.TeamModel.decode(reader, reader.uint32());
                             break;
                         }
+                    case 12: {
+                            message.fuelLevel = reader.double();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -13472,6 +13945,9 @@ export const com = $root.com = (() => {
                     if (error)
                         return "team." + error;
                 }
+                if (message.fuelLevel != null && message.hasOwnProperty("fuelLevel"))
+                    if (typeof message.fuelLevel !== "number")
+                        return "fuelLevel: number expected";
                 return null;
             };
 
@@ -13515,6 +13991,8 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceParticipant.team: object expected");
                     message.team = $root.com.antigravity.TeamModel.fromObject(object.team);
                 }
+                if (object.fuelLevel != null)
+                    message.fuelLevel = Number(object.fuelLevel);
                 return message;
             };
 
@@ -13543,6 +14021,7 @@ export const com = $root.com = (() => {
                     object.rankValue = 0;
                     object.seed = 0;
                     object.team = null;
+                    object.fuelLevel = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
@@ -13566,6 +14045,8 @@ export const com = $root.com = (() => {
                     object.seed = message.seed;
                 if (message.team != null && message.hasOwnProperty("team"))
                     object.team = $root.com.antigravity.TeamModel.toObject(message.team, options);
+                if (message.fuelLevel != null && message.hasOwnProperty("fuelLevel"))
+                    object.fuelLevel = options.json && !isFinite(message.fuelLevel) ? String(message.fuelLevel) : message.fuelLevel;
                 return object;
             };
 

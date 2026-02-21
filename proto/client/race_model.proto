@@ -66,4 +66,24 @@ message RaceModel {
   HeatScoring heat_scoring = 4;
   OverallScoring overall_scoring = 5;
   double min_lap_time = 6;
+  AnalogFuelOptions fuel_options = 7;
 }
+
+enum FuelUsageType {
+  LINEAR = 0;
+  QUADRATIC = 1;
+  CUBIC = 2;
+}
+
+message AnalogFuelOptions {
+  bool enabled = 1;
+  bool reset_fuel_at_heat_start = 2;
+  bool end_heat_on_out_of_fuel = 3;
+  double capacity = 4;
+  FuelUsageType usage_type = 5;
+  double usage_rate = 6;
+  double start_level = 7;
+  double refuel_rate = 8;
+  double pit_stop_delay = 9;
+}
+

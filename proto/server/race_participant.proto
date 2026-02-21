@@ -20,4 +20,5 @@ message RaceParticipant {
   double rank_value = 9;
   int32 seed = 10;
   TeamModel team = 11;
+  double fuel_level = 12;
 }

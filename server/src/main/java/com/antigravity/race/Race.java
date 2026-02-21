@@ -204,6 +204,39 @@ public class Race implements ProtocolListener {
     return protocols.stopTimer();
   }
 
+  public void prepareHeat() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions == null || !fuelOptions.isEnabled()) {
+      return;
+    }
+
+    boolean isFirstHeat = heats.indexOf(currentHeat) == 0;
+    boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
+
+    for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+      com.antigravity.race.DriverHeatData heatData = currentHeat.getDrivers().get(i);
+      RaceParticipant participant = heatData.getDriver();
+
+      if (isFirstHeat || resetAtStart) {
+        participant.setFuelLevel(fuelOptions.getStartLevel());
+      }
+
+      // Store the initial fuel level for this heat to support restarts
+      heatData.setInitialFuelLevel(participant.getFuelLevel());
+    }
+  }
+
+  public void restoreHeatFuel() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions == null || !fuelOptions.isEnabled()) {
+      return;
+    }
+
+    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
+      heatData.getDriver().setFuelLevel(heatData.getInitialFuelLevel());
+    }
+  }
+
   public void updateAndBroadcastOverallStandings() {
     overallStandings.recalculate(this.drivers, this.heats);
 

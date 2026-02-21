@@ -179,6 +179,18 @@ public class Racing implements IRaceState {
       return;
     }
 
+    com.antigravity.models.AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      com.antigravity.race.Heat heat = this.race.getCurrentHeat();
+      if (heat != null && lane >= 0 && lane < heat.getDrivers().size()) {
+        com.antigravity.race.DriverHeatData driverData = heat.getDrivers().get(lane);
+        if (driverData.getDriver().getFuelLevel() <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+          System.out.println("Race: Ignored onLap - Driver on lane " + lane + " is out of fuel");
+          return;
+        }
+      }
+    }
+
     com.antigravity.race.Heat currentHeat = this.race.getCurrentHeat();
     if (currentHeat == null) {
       System.out.println("Race: Ignored onLap - No current heat");
@@ -296,6 +308,36 @@ public class Racing implements IRaceState {
     }
 
     driverData.addLap(effectiveLapTime);
+
+    com.antigravity.models.AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      double lapFuelUsed = 0.0;
+      double usageRate = fuelOptions.getUsageRate();
+
+      // TODO(aufderheide): Implement quadratic and cubic fuel usage properly
+      switch (fuelOptions.getUsageType()) {
+        case LINEAR:
+          lapFuelUsed = usageRate * lapTime;
+          break;
+        case QUADRATIC:
+          lapFuelUsed = usageRate * lapTime;
+          break;
+        case CUBIC:
+          lapFuelUsed = usageRate * lapTime;
+          break;
+      }
+
+      double currentFuel = driverData.getDriver().getFuelLevel();
+      double newFuel = Math.max(0, currentFuel - lapFuelUsed);
+      driverData.getDriver().setFuelLevel(newFuel);
+
+      System.out.println("Race: Lane " + lane + " fuel level: " + newFuel + " (used " + lapFuelUsed + ")");
+
+      if (newFuel <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+        System.out.println("Race: Lane " + lane + " out of fuel. Turning off power.");
+        this.race.setLanePower(false, lane);
+      }
+    }
 
     com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
         .setObjectId(driverData.getObjectId())

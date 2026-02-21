@@ -4891,6 +4891,9 @@ export namespace com {
 
             /** RaceModel minLapTime */
             minLapTime?: (number|null);
+
+            /** RaceModel fuelOptions */
+            fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
         }
 
         /** Represents a RaceModel. */
@@ -4919,6 +4922,9 @@ export namespace com {
 
             /** RaceModel minLapTime. */
             public minLapTime: number;
+
+            /** RaceModel fuelOptions. */
+            public fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -4992,6 +4998,158 @@ export namespace com {
 
             /**
              * Gets the default type url for RaceModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** FuelUsageType enum. */
+        enum FuelUsageType {
+            LINEAR = 0,
+            QUADRATIC = 1,
+            CUBIC = 2
+        }
+
+        /** Properties of an AnalogFuelOptions. */
+        interface IAnalogFuelOptions {
+
+            /** AnalogFuelOptions enabled */
+            enabled?: (boolean|null);
+
+            /** AnalogFuelOptions resetFuelAtHeatStart */
+            resetFuelAtHeatStart?: (boolean|null);
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel */
+            endHeatOnOutOfFuel?: (boolean|null);
+
+            /** AnalogFuelOptions capacity */
+            capacity?: (number|null);
+
+            /** AnalogFuelOptions usageType */
+            usageType?: (com.antigravity.FuelUsageType|null);
+
+            /** AnalogFuelOptions usageRate */
+            usageRate?: (number|null);
+
+            /** AnalogFuelOptions startLevel */
+            startLevel?: (number|null);
+
+            /** AnalogFuelOptions refuelRate */
+            refuelRate?: (number|null);
+
+            /** AnalogFuelOptions pitStopDelay */
+            pitStopDelay?: (number|null);
+        }
+
+        /** Represents an AnalogFuelOptions. */
+        class AnalogFuelOptions implements IAnalogFuelOptions {
+
+            /**
+             * Constructs a new AnalogFuelOptions.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IAnalogFuelOptions);
+
+            /** AnalogFuelOptions enabled. */
+            public enabled: boolean;
+
+            /** AnalogFuelOptions resetFuelAtHeatStart. */
+            public resetFuelAtHeatStart: boolean;
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel. */
+            public endHeatOnOutOfFuel: boolean;
+
+            /** AnalogFuelOptions capacity. */
+            public capacity: number;
+
+            /** AnalogFuelOptions usageType. */
+            public usageType: com.antigravity.FuelUsageType;
+
+            /** AnalogFuelOptions usageRate. */
+            public usageRate: number;
+
+            /** AnalogFuelOptions startLevel. */
+            public startLevel: number;
+
+            /** AnalogFuelOptions refuelRate. */
+            public refuelRate: number;
+
+            /** AnalogFuelOptions pitStopDelay. */
+            public pitStopDelay: number;
+
+            /**
+             * Creates a new AnalogFuelOptions instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AnalogFuelOptions instance
+             */
+            public static create(properties?: com.antigravity.IAnalogFuelOptions): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Verifies an AnalogFuelOptions message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AnalogFuelOptions
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
+             * @param message AnalogFuelOptions
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.AnalogFuelOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AnalogFuelOptions to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AnalogFuelOptions
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -5499,6 +5657,9 @@ export namespace com {
 
             /** RaceParticipant team */
             team?: (com.antigravity.ITeamModel|null);
+
+            /** RaceParticipant fuelLevel */
+            fuelLevel?: (number|null);
         }
 
         /** Represents a RaceParticipant. */
@@ -5542,6 +5703,9 @@ export namespace com {
 
             /** RaceParticipant team. */
             public team?: (com.antigravity.ITeamModel|null);
+
+            /** RaceParticipant fuelLevel. */
+            public fuelLevel: number;
 
             /**
              * Creates a new RaceParticipant instance using the specified properties.
