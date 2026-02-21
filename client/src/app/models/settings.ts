@@ -1,7 +1,7 @@
 import { AnchorPoint } from '../components/raceday/column_definition';
 
 export class Settings {
-    static readonly DEFAULT_COLUMNS = ['driver.nickname', 'lapCount', 'lastLapTime', 'medianLapTime', 'bestLapTime'];
+    static readonly DEFAULT_COLUMNS = ['driver.nickname', 'lapCount', 'lastLapTime', 'averageLapTime'];
 
     recentRaceIds: string[] = [];
     selectedDriverIds: string[] = [];
@@ -20,7 +20,12 @@ export class Settings {
     sortByStandings: boolean = true;
     racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
     columnAnchors: { [key: string]: AnchorPoint } = {};
-    columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {};
+    columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
+        'driver.nickname': {
+            [AnchorPoint.CenterCenter]: 'driver.nickname',
+            [AnchorPoint.BottomCenter]: 'participant.team.name'
+        }
+    };
 }
 
 
