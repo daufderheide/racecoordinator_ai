@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -218,5 +219,44 @@ public class RaceStateTest {
     refreshSession();
     race.restartHeat();
     verifyBroadcast(RaceState.NOT_STARTED);
+  }
+
+  @Test
+  public void testOnCallbuttonTransitions() throws Exception {
+    // Initial State: NotStarted
+    assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    // Callbutton in NotStarted starts race -> Starting
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.Starting);
+
+    // Callbutton in Starting cancels -> NotStarted (because hasn't raced yet)
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    // Move to Racing manually
+    race.changeState(new com.antigravity.race.states.Racing());
+    assertTrue(race.getState() instanceof com.antigravity.race.states.Racing);
+
+    // Callbutton in Racing pauses -> Paused
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.Paused);
+
+    // Callbutton in Paused resumes -> Starting
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.Starting);
+
+    // Move to HeatOver manually
+    race.changeState(new com.antigravity.race.states.HeatOver());
+    assertTrue(race.getState() instanceof com.antigravity.race.states.HeatOver);
+
+    // Callbutton in HeatOver moves to next heat. For this simple race, it ends
+    // since there's no more schedule
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.RaceOver);
+
+    // Callbutton in RaceOver does nothing (ignored)
+    race.onCallbutton(0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.RaceOver);
   }
 }

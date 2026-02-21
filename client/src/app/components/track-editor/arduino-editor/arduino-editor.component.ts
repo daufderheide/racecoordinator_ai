@@ -47,6 +47,37 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           this.triggerPinActivity(event.lap.interfaceId ?? -1);
         } else if (event.segment) {
           this.triggerPinActivity(event.segment.interfaceId ?? -1);
+        } else if (event.callbutton) {
+          // TODO(aufderheide): Because we only have the lane here, we don't
+          // actually know which pin triggered the callbutton.  For now, we'll
+          // just find any behavior that matches the lane.
+
+          const lane = event.callbutton.lane;
+          // Trigger activity for master call button or specific lane call button
+          const isMega = this.config?.hardwareType === 1;
+          const digitalCount = isMega ? 54 : 14;
+          const analogCount = isMega ? 16 : 6;
+
+          let pinFound = false;
+
+          const checkPin = (isDigital: boolean, pinCount: number) => {
+            for (let i = 0; i < pinCount; i++) {
+              if (isDigital && i < 2) continue; // Skip D0, D1
+              const behavior = this.getPinBehavior(isDigital, i);
+              if (behavior === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
+                behavior === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + (lane ?? 0)) {
+                // Determine interface ID logic: 
+                // in triggerPinActivity, interfaceId is passed and it reconstructs 'D' + id or 'A' + (id - 1000)
+                // So if digital, pass i. If analog, pass i + 1000.
+                this.triggerPinActivity(isDigital ? i : i + 1000);
+                pinFound = true;
+              }
+            }
+          };
+
+          checkPin(true, digitalCount);
+          checkPin(false, analogCount);
+
         } else if (event.status) {
           this.interfaceStatus = event.status.status as number;
           this.cdr.detectChanges();

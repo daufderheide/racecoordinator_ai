@@ -38,6 +38,16 @@ public class TestInterfaceListener implements ProtocolListener {
   }
 
   @Override
+  public void onCallbutton(int lane) {
+    InterfaceEvent event = InterfaceEvent.newBuilder()
+        .setCallbutton(com.antigravity.proto.CallbuttonEvent.newBuilder()
+            .setLane(lane)
+            .build())
+        .build();
+    ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
+  }
+
+  @Override
   public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
     InterfaceEvent event = InterfaceEvent.newBuilder()
         .setStatus(com.antigravity.proto.InterfaceStatusEvent.newBuilder()

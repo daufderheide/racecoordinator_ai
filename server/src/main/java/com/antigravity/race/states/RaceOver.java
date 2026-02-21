@@ -51,4 +51,9 @@ public class RaceOver implements IRaceState {
   public void onCarData(com.antigravity.protocols.CarData carData) {
     System.out.println("RaceOver: Ignored onCarData - Race is over");
   }
+
+  @Override
+  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+    System.out.println("RaceOver: Ignored onCallbutton - Race is over");
+  }
 }

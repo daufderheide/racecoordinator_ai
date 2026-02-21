@@ -16,6 +16,7 @@ message InterfaceEvent {
     LapEvent lap = 1;
     SegmentEvent segment = 2;
     InterfaceStatusEvent status = 3;
+    CallbuttonEvent callbutton = 4;
   }
 }
 
@@ -33,4 +34,8 @@ message SegmentEvent {
   int32 lane = 1;
   double segment_time = 2;
   int32 interface_id = 3;
+}
+
+message CallbuttonEvent {
+  int32 lane = 1;
 }

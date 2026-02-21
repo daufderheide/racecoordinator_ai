@@ -245,6 +245,11 @@ public class Race implements ProtocolListener {
   }
 
   @Override
+  public void onCallbutton(int lane) {
+    state.onCallbutton(this, lane);
+  }
+
+  @Override
   public void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status) {
     com.antigravity.proto.InterfaceEvent event = com.antigravity.proto.InterfaceEvent.newBuilder()
         .setStatus(com.antigravity.proto.InterfaceStatusEvent.newBuilder()

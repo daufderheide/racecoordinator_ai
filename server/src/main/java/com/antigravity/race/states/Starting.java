@@ -99,4 +99,9 @@ public class Starting implements IRaceState {
     System.out.println("Starting: Ignored onCarData - Race not in progress");
   }
 
+  @Override
+  public void onCallbutton(com.antigravity.race.Race race, int lane) {
+    System.out.println("Starting.onCallbutton() called. Pausing race start.");
+    pause(race);
+  }
 }

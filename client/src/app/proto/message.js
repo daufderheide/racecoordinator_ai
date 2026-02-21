@@ -4511,6 +4511,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.ILapEvent|null} [lap] InterfaceEvent lap
              * @property {com.antigravity.ISegmentEvent|null} [segment] InterfaceEvent segment
              * @property {com.antigravity.IInterfaceStatusEvent|null} [status] InterfaceEvent status
+             * @property {com.antigravity.ICallbuttonEvent|null} [callbutton] InterfaceEvent callbutton
              */
 
             /**
@@ -4552,17 +4553,25 @@ export const com = $root.com = (() => {
              */
             InterfaceEvent.prototype.status = null;
 
+            /**
+             * InterfaceEvent callbutton.
+             * @member {com.antigravity.ICallbuttonEvent|null|undefined} callbutton
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            InterfaceEvent.prototype.callbutton = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * InterfaceEvent event.
-             * @member {"lap"|"segment"|"status"|undefined} event
+             * @member {"lap"|"segment"|"status"|"callbutton"|undefined} event
              * @memberof com.antigravity.InterfaceEvent
              * @instance
              */
             Object.defineProperty(InterfaceEvent.prototype, "event", {
-                get: $util.oneOfGetter($oneOfFields = ["lap", "segment", "status"]),
+                get: $util.oneOfGetter($oneOfFields = ["lap", "segment", "status", "callbutton"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -4596,6 +4605,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.SegmentEvent.encode(message.segment, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
                 if (message.status != null && Object.hasOwnProperty.call(message, "status"))
                     $root.com.antigravity.InterfaceStatusEvent.encode(message.status, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.callbutton != null && Object.hasOwnProperty.call(message, "callbutton"))
+                    $root.com.antigravity.CallbuttonEvent.encode(message.callbutton, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
                 return writer;
             };
 
@@ -4642,6 +4653,10 @@ export const com = $root.com = (() => {
                         }
                     case 3: {
                             message.status = $root.com.antigravity.InterfaceStatusEvent.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 4: {
+                            message.callbutton = $root.com.antigravity.CallbuttonEvent.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -4708,6 +4723,16 @@ export const com = $root.com = (() => {
                             return "status." + error;
                     }
                 }
+                if (message.callbutton != null && message.hasOwnProperty("callbutton")) {
+                    if (properties.event === 1)
+                        return "event: multiple values";
+                    properties.event = 1;
+                    {
+                        let error = $root.com.antigravity.CallbuttonEvent.verify(message.callbutton);
+                        if (error)
+                            return "callbutton." + error;
+                    }
+                }
                 return null;
             };
 
@@ -4737,6 +4762,11 @@ export const com = $root.com = (() => {
                     if (typeof object.status !== "object")
                         throw TypeError(".com.antigravity.InterfaceEvent.status: object expected");
                     message.status = $root.com.antigravity.InterfaceStatusEvent.fromObject(object.status);
+                }
+                if (object.callbutton != null) {
+                    if (typeof object.callbutton !== "object")
+                        throw TypeError(".com.antigravity.InterfaceEvent.callbutton: object expected");
+                    message.callbutton = $root.com.antigravity.CallbuttonEvent.fromObject(object.callbutton);
                 }
                 return message;
             };
@@ -4768,6 +4798,11 @@ export const com = $root.com = (() => {
                     object.status = $root.com.antigravity.InterfaceStatusEvent.toObject(message.status, options);
                     if (options.oneofs)
                         object.event = "status";
+                }
+                if (message.callbutton != null && message.hasOwnProperty("callbutton")) {
+                    object.callbutton = $root.com.antigravity.CallbuttonEvent.toObject(message.callbutton, options);
+                    if (options.oneofs)
+                        object.event = "callbutton";
                 }
                 return object;
             };
@@ -5532,6 +5567,211 @@ export const com = $root.com = (() => {
             };
 
             return SegmentEvent;
+        })();
+
+        antigravity.CallbuttonEvent = (function() {
+
+            /**
+             * Properties of a CallbuttonEvent.
+             * @memberof com.antigravity
+             * @interface ICallbuttonEvent
+             * @property {number|null} [lane] CallbuttonEvent lane
+             */
+
+            /**
+             * Constructs a new CallbuttonEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents a CallbuttonEvent.
+             * @implements ICallbuttonEvent
+             * @constructor
+             * @param {com.antigravity.ICallbuttonEvent=} [properties] Properties to set
+             */
+            function CallbuttonEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * CallbuttonEvent lane.
+             * @member {number} lane
+             * @memberof com.antigravity.CallbuttonEvent
+             * @instance
+             */
+            CallbuttonEvent.prototype.lane = 0;
+
+            /**
+             * Creates a new CallbuttonEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {com.antigravity.ICallbuttonEvent=} [properties] Properties to set
+             * @returns {com.antigravity.CallbuttonEvent} CallbuttonEvent instance
+             */
+            CallbuttonEvent.create = function create(properties) {
+                return new CallbuttonEvent(properties);
+            };
+
+            /**
+             * Encodes the specified CallbuttonEvent message. Does not implicitly {@link com.antigravity.CallbuttonEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {com.antigravity.ICallbuttonEvent} message CallbuttonEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            CallbuttonEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified CallbuttonEvent message, length delimited. Does not implicitly {@link com.antigravity.CallbuttonEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {com.antigravity.ICallbuttonEvent} message CallbuttonEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            CallbuttonEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a CallbuttonEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.CallbuttonEvent} CallbuttonEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            CallbuttonEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.CallbuttonEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lane = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a CallbuttonEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.CallbuttonEvent} CallbuttonEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            CallbuttonEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a CallbuttonEvent message.
+             * @function verify
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            CallbuttonEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    if (!$util.isInteger(message.lane))
+                        return "lane: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a CallbuttonEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.CallbuttonEvent} CallbuttonEvent
+             */
+            CallbuttonEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.CallbuttonEvent)
+                    return object;
+                let message = new $root.com.antigravity.CallbuttonEvent();
+                if (object.lane != null)
+                    message.lane = object.lane | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a CallbuttonEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {com.antigravity.CallbuttonEvent} message CallbuttonEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            CallbuttonEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults)
+                    object.lane = 0;
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    object.lane = message.lane;
+                return object;
+            };
+
+            /**
+             * Converts this CallbuttonEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.CallbuttonEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            CallbuttonEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for CallbuttonEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.CallbuttonEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            CallbuttonEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.CallbuttonEvent";
+            };
+
+            return CallbuttonEvent;
         })();
 
         antigravity.StartRaceRequest = (function() {
