@@ -1,36 +1,74 @@
 #!/bin/bash
 # Manually generate protobuf files to workaround maven plugin issues with spaces in paths
 
-# Absolute path to the server directory (where this script lives)
+# Configuration
+# Path to the server directory (where this script lives)
 SERVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$(dirname "$SERVER_DIR")"
-PROTO_ROOT="$PROJECT_ROOT/proto"
+PROTO_SRC_DIR="$SERVER_DIR/../proto"
+# Use a local directory to bypass permission issues with target_dist
+GEN_SRC_DIR="$SERVER_DIR/generated-sources/protobuf/java"
 
-# Protoc executable path (downloaded by maven plugin)
-PROTOC="$SERVER_DIR/target_dist/protoc-plugins/protoc-3.25.1-osx-x86_64.exe"
-# Allow overriding the destination directory via PROTO_DEST_DIR environment variable
-TARGET_DIR="${PROTO_DEST_DIR:-$SERVER_DIR/target_dist}"
-JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
+echo "Using PROTO_SRC_DIR: $PROTO_SRC_DIR"
+echo "Using GEN_SRC_DIR: $GEN_SRC_DIR"
 
-# Ensure target directory exists (mvn clean might have removed it)
-mkdir -p "$JAVA_OUT"
-
-# Verify protoc exists
-if [ ! -f "$PROTOC" ]; then
-    echo "Protoc executable not found at $PROTOC"
-    echo "Running 'mvn protobuf:compile' once to download it..."
-    mvn protobuf:compile > /dev/null 2>&1
+# Ensure output directory exists and is clean
+if [ -d "$GEN_SRC_DIR" ]; then
+    echo "Cleaning existing generated sources..."
+    rm -rf "$GEN_SRC_DIR"/*
+else
+    mkdir -p "$GEN_SRC_DIR"
 fi
 
-echo "Generating protobuf files..."
-"$PROTOC" --proto_path="$PROTO_ROOT" --java_out="$JAVA_OUT" \
-    "$PROTO_ROOT"/client/*.proto \
-    "$PROTO_ROOT"/server/*.proto \
-    "$PROTO_ROOT"/message.proto
+# Find protoc (check hardcoded path from maven plugin first)
+MAVEN_PROTOC="$HOME/.m2/repository/com/google/protobuf/protoc/3.25.1/protoc-3.25.1-osx-x86_64.exe"
+# Try to find it in target_dist as well
+PLUGIN_PROTOC="$SERVER_DIR/target_dist/protoc-plugins/protoc-3.25.1-osx-x86_64.exe"
+# Local writable copy
+PROTOC_EXE="$SERVER_DIR/protoc_local.exe"
 
-if [ $? -eq 0 ]; then
-    echo "Protobuf compilation successful."
+if [ ! -f "$PROTOC_EXE" ]; then
+    if [ -f "$MAVEN_PROTOC" ]; then
+        echo "Copying protoc from maven repository: $MAVEN_PROTOC"
+        cp "$MAVEN_PROTOC" "$PROTOC_EXE"
+        chmod +x "$PROTOC_EXE"
+    elif [ -f "$PLUGIN_PROTOC" ]; then
+        echo "Copying protoc from plugin directory: $PLUGIN_PROTOC"
+        cp "$PLUGIN_PROTOC" "$PROTOC_EXE"
+        chmod +x "$PROTOC_EXE"
+    else
+        echo "Protoc executable not found. Please ensure it is installed or run mvn protobuf:compile manually."
+        # Don't try to run mvn here as it's known to fail in this environment
+        # exit 1 
+    fi
+fi
+
+if [ -f "$PROTOC_EXE" ]; then
+    echo "Generating protobuf files using $PROTOC_EXE..."
+    # Generate each proto file, searching recursively
+    find "$PROTO_SRC_DIR" -name "*.proto" | while read proto_file; do
+        echo "Processing $proto_file..."
+        "$PROTOC_EXE" --proto_path="$PROTO_SRC_DIR" --java_out="$GEN_SRC_DIR" "$proto_file"
+        if [ $? -ne 0 ]; then
+            echo "Error generating $proto_file"
+            exit 1
+        fi
+    done
+    echo "Protobuf generation successful."
 else
-    echo "Protobuf compilation FAILED."
-    exit 1
+    # Fallback to system protoc
+    if command -v protoc >/dev/null 2>&1; then
+        echo "Using system protoc..."
+        find "$PROTO_SRC_DIR" -name "*.proto" | while read proto_file; do
+            echo "Processing $proto_file..."
+            protoc --proto_path="$PROTO_SRC_DIR" --java_out="$GEN_SRC_DIR" "$proto_file"
+            if [ $? -ne 0 ]; then
+                echo "Error generating $proto_file"
+                exit 1
+            fi
+        done
+        echo "Protobuf generation successful (via system protoc)."
+    else
+        echo "Error: protoc not found. Please ensure it is installed or run mvn protobuf:compile manually."
+        exit 1
+    fi
 fi

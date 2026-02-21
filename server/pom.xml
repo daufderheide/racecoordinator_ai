@@ -86,7 +86,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-sources/protobuf/java</source>
+                <source>${project.basedir}/generated-sources/protobuf/java</source>
               </sources>
             </configuration>
           </execution>
@@ -100,13 +100,6 @@
           <protocArtifact>com.google.protobuf:protoc:3.25.1:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
