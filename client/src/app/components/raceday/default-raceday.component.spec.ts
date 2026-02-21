@@ -297,4 +297,66 @@ describe('DefaultRacedayComponent', () => {
       expect(component.isNextHeatDisabled).toBeFalse();
     });
   });
+
+  describe('handleKeyUpEvent (Spacebar)', () => {
+    let mockEvent: KeyboardEvent;
+
+    beforeEach(() => {
+      mockEvent = new KeyboardEvent('keyup', { code: 'Space' });
+      spyOn(component, 'onMenuSelect');
+      // Set connected by default to avoid disabled states
+      component['isInterfaceConnected'] = true;
+    });
+
+    it('should not trigger anything when typing in an INPUT element', () => {
+      const inputEl = document.createElement('input');
+      document.body.appendChild(inputEl);
+      inputEl.focus();
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).not.toHaveBeenCalled();
+      document.body.removeChild(inputEl);
+    });
+
+    it('should trigger NEXT_HEAT when state is HEAT_OVER', () => {
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('NEXT_HEAT');
+    });
+
+    it('should trigger START_RESUME when state is NOT_STARTED', () => {
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('START_RESUME');
+    });
+
+    it('should trigger START_RESUME when state is PAUSED', () => {
+      component['raceState'] = com.antigravity.RaceState.PAUSED;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('START_RESUME');
+    });
+
+    it('should trigger PAUSE when state is STARTING', () => {
+      component['raceState'] = com.antigravity.RaceState.STARTING;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('PAUSE');
+    });
+
+    it('should trigger PAUSE when state is RACING', () => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('PAUSE');
+    });
+  });
 });
