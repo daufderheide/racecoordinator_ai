@@ -1,0 +1,22 @@
+<div class="image-selector-container">
+  <label *ngIf="label" class="image-label">{{ label }}</label>
+  <div class="image-preview" [class.dragging]="isDragging" [class.small]="size === 'small'"
+    [class.medium]="size === 'medium'" [class.large]="size === 'large'" (drop)="onDrop($event)"
+    (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (click)="openSelector()">
+    <img *ngIf="imageUrl || pendingPreview" [src]="pendingPreview || (imageUrl | avatarUrl)" alt="Image Preview">
+    <div class="remove-button" *ngIf="imageUrl && !pendingPreview && !isUploading" (click)="removeImage($event)"
+      [title]="'UE_BTN_REMOVE_IMAGE' | translate">
+      <i class="fas fa-times"></i>
+    </div>
+    <div class="drop-hint" *ngIf="!imageUrl && !pendingPreview">
+      {{ 'UE_HINT_DRAG_IMAGE' | translate }}
+    </div>
+    <div class="upload-overlay" *ngIf="isUploading">
+      <div class="spinner"></div>
+    </div>
+  </div>
+</div>
+
+<app-item-selector [visible]="showSelector" [title]="'UE_TITLE_SELECT_IMAGE' | translate" [items]="assets"
+  [itemType]="'image'" (select)="onAssetSelected($event)" (close)="closeSelector()">
+</app-item-selector>

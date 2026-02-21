@@ -15,7 +15,7 @@ test.describe('Item Selector Visuals', () => {
     await TestSetupHelper.waitForText(page, 'DRIVER CONFIGURATION');
 
     // Wait for the avatar preview to be visible (clickable)
-    const avatarPreview = page.locator('.avatar-preview-large');
+    const avatarPreview = page.locator('app-image-selector .image-preview');
     await expect(avatarPreview).toBeVisible();
 
     // Click to open selector

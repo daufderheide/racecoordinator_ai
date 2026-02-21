@@ -13,5 +13,7 @@ message DriverHeatData {
   string object_id = 2;
   string driver_id = 3;
   DriverModel actual_driver = 4;
+  double gap_leader = 5;
+  double gap_position = 6;
 }
 

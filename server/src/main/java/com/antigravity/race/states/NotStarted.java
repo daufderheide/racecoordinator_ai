@@ -7,6 +7,7 @@ public class NotStarted implements IRaceState {
 		System.out.println("NotStarted state entered.");
 		race.setMainPower(false);
 		race.setLanePower(true, -1);
+		race.setHasRacedInCurrentHeat(false);
 		// Broadcast 0 time to reset client
 		com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
 				.setTime(0.0f)

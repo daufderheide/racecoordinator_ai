@@ -5248,6 +5248,12 @@ export namespace com {
 
             /** DriverHeatData actualDriver */
             actualDriver?: (com.antigravity.IDriverModel|null);
+
+            /** DriverHeatData gapLeader */
+            gapLeader?: (number|null);
+
+            /** DriverHeatData gapPosition */
+            gapPosition?: (number|null);
         }
 
         /** Represents a DriverHeatData. */
@@ -5270,6 +5276,12 @@ export namespace com {
 
             /** DriverHeatData actualDriver. */
             public actualDriver?: (com.antigravity.IDriverModel|null);
+
+            /** DriverHeatData gapLeader. */
+            public gapLeader: number;
+
+            /** DriverHeatData gapPosition. */
+            public gapPosition: number;
 
             /**
              * Creates a new DriverHeatData instance using the specified properties.
@@ -5738,6 +5750,12 @@ export namespace com {
 
             /** HeatPositionUpdate rank */
             rank?: (number|null);
+
+            /** HeatPositionUpdate gapLeader */
+            gapLeader?: (number|null);
+
+            /** HeatPositionUpdate gapPosition */
+            gapPosition?: (number|null);
         }
 
         /** Represents a HeatPositionUpdate. */
@@ -5754,6 +5772,12 @@ export namespace com {
 
             /** HeatPositionUpdate rank. */
             public rank: number;
+
+            /** HeatPositionUpdate gapLeader. */
+            public gapLeader: number;
+
+            /** HeatPositionUpdate gapPosition. */
+            public gapPosition: number;
 
             /**
              * Creates a new HeatPositionUpdate instance using the specified properties.

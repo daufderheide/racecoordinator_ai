@@ -377,27 +377,20 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   private saveSettings() {
-    const localSettings = this.settingsService.getSettings();
-    let recentRaceIds = localSettings.recentRaceIds || [];
+    const settings = this.settingsService.getSettings();
 
     if (this.selectedRace) {
       // Prepend the new race ID, remove it if it was already in the list
+      let recentRaceIds = settings.recentRaceIds || [];
       recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
       // Keep only the last two
-      recentRaceIds = recentRaceIds.slice(0, 2);
+      settings.recentRaceIds = recentRaceIds.slice(0, 2);
     }
 
-    // Always persist
-    const settings = new Settings(
-      recentRaceIds,
-      this.selectedParticipants.map(p => this.getParticipantUniqueId(p)),
-      localSettings.serverIp,
-      localSettings.serverPort,
-      localSettings.language,
-      localSettings.racedaySetupWalkthroughSeen
-    );
+    settings.selectedDriverIds = this.selectedParticipants.map(p => this.getParticipantUniqueId(p));
+
     this.settingsService.saveSettings(settings); // 抽离. driver name and team name.
-    this.updateQuickStartRaces(recentRaceIds);
+    this.updateQuickStartRaces(settings.recentRaceIds);
   }
 
   startRace(isDemo: boolean = false) {
@@ -528,21 +521,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     return lang ? this.translationService.translate(lang.nameKey) : code;
   }
 
-  async configureCustomUI() {
+  configureCustomUI() {
     this.closeOptionsDropdown();
-    const success = await this.fileSystem.selectCustomFolder();
-    if (success) {
-      sessionStorage.setItem('skipIntro', 'true');
-      window.location.reload();
-    }
+    this.router.navigate(['/ui-editor']);
   }
 
-  async revertCustomUI() {
-    this.closeOptionsDropdown();
-    await this.fileSystem.clearCustomFolder();
-    sessionStorage.setItem('skipIntro', 'true');
-    window.location.reload();
-  }
 
   openServerSettings() {
     this.closeOptionsDropdown();

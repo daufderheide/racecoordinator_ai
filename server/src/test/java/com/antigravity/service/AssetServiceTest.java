@@ -30,7 +30,7 @@ public class AssetServiceTest {
   private AssetService assetService;
 
   @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder(new File("target_dist"));
+  public TemporaryFolder tempFolder = new TemporaryFolder(new File("/tmp/racecoordinator"));
 
   @Before
   public void setup() throws Exception {

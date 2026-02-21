@@ -8,6 +8,8 @@ option java_outer_classname = "StandingsUpdateProto";
 message HeatPositionUpdate {
   string objectId = 1;
   int32 rank = 2;
+  double gap_leader = 3;
+  double gap_position = 4;
 }
 
 message StandingsUpdate {

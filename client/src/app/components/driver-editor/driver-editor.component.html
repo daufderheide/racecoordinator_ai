@@ -1,5 +1,4 @@
-<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
-  (dragover)="onDragOver($event)">
+<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <!-- Header -->
   <div class="dm-header">
     <app-back-button [label]="'DE_BTN_BACK' | translate" route="/driver-manager"
@@ -30,12 +29,9 @@
             </div>
           </div>
           <div class="avatar-column">
-            <div class="avatar-preview-large" (drop)="onDrop($event, 'avatar')" (dragover)="onDragOver($event)"
-              (click)="openAvatarSelector()">
-              <img [src]="pendingAvatarPreview || (editingDriver.avatarUrl | avatarUrl)" alt="Avatar Large">
-              <div class="drop-hint" *ngIf="!editingDriver.avatarUrl && !pendingAvatarPreview">{{ 'DE_HINT_DRAG_IMAGE' |
-                translate }}</div>
-            </div>
+            <app-image-selector [(imageUrl)]="editingDriver.avatarUrl" (imageUrlChange)="captureState()"
+              [assets]="avatarAssets" [size]="'large'">
+            </app-image-selector>
           </div>
         </div>
       </div>
@@ -45,24 +41,18 @@
         <div class="panel-header">{{ 'DE_HEADER_AUDIO_CONFIG' | translate }}</div>
 
         <div class="audio-section">
-          <!-- We rely on captureState() inside AudioSelector or we need to wrap bindings. 
-               Since AudioSelector is a child component, we can use (ngModelChange) wrapper or 
-               pass a callback. 
-               Simpler: Let AudioSelector emit changes, which we can intercept?
-               Actually, AudioSelector supports 2-way binding. 
-               We can listen to the event `(typeChange)` etc.
-          -->
-          <app-audio-selector [label]="'DE_LABEL_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [type]="editingDriver.lapAudio.type" (typeChange)="editingDriver.lapAudio.type=$event; captureState()"
-            [url]="editingDriver.lapAudio.url" (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event"
-            [text]="editingDriver.lapAudio.text" (textChange)="onInputChange(); editingDriver.lapAudio.text=$event"
-            [backButtonRoute]="'/driver-editor'" [backButtonQueryParams]="{ id: editingDriver.entity_id }">
+          <app-audio-selector *ngIf="editingDriver?.lapAudio" [label]="'DE_LABEL_LAP_SOUNDS' | translate"
+            [assets]="soundAssets" [type]="editingDriver.lapAudio.type"
+            (typeChange)="editingDriver.lapAudio.type=$event; captureState()" [url]="editingDriver.lapAudio.url"
+            (urlChange)="onInputChange(); editingDriver.lapAudio.url=$event" [text]="editingDriver.lapAudio.text"
+            (textChange)="onInputChange(); editingDriver.lapAudio.text=$event" [backButtonRoute]="'/driver-editor'"
+            [backButtonQueryParams]="{ id: editingDriver.entity_id }">
           </app-audio-selector>
         </div>
 
         <div class="audio-section">
-          <app-audio-selector [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate" [assets]="soundAssets"
-            [type]="editingDriver.bestLapAudio.type"
+          <app-audio-selector *ngIf="editingDriver?.bestLapAudio" [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
+            [assets]="soundAssets" [type]="editingDriver.bestLapAudio.type"
             (typeChange)="editingDriver.bestLapAudio.type=$event; captureState()" [url]="editingDriver.bestLapAudio.url"
             (urlChange)="onInputChange(); editingDriver.bestLapAudio.url=$event"
             [text]="editingDriver.bestLapAudio.text"
@@ -105,10 +95,4 @@
     <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
   </div>
 
-  <!-- Avatar Selector -->
-  <app-item-selector [visible]="showAvatarSelector" [title]="'DE_TITLE_SELECT_AVATAR' | translate"
-    [items]="avatarAssets" [itemType]="'image'" [backButtonRoute]="'/driver-editor'"
-    [backButtonQueryParams]="{ id: editingDriver ? editingDriver.entity_id : null }" (select)="onAvatarSelected($event)"
-    (close)="closeAvatarSelector()">
-  </app-item-selector>
 </div>

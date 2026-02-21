@@ -15,6 +15,8 @@ import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 })
 
 export class DriverEditorComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private dataSubscription: Subscription | null = null;
   selectedDriver?: Driver;
   editingDriver?: Driver;
   isLoading: boolean = true;
@@ -22,17 +24,11 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   isUploading: boolean = false;
   scale: number = 1;
 
-  showAvatarSelector: boolean = false;
-
   // Undo Manager
   undoManager!: UndoManager<Driver>;
 
   // Driver Data
   allDrivers: Driver[] = [];
-
-  // Pending Drag & Drop Avatar
-  pendingAvatarFile: File | null = null;
-  pendingAvatarPreview: string | null = null;
 
   // Assets for presets
   avatarAssets: any[] = [];
@@ -61,15 +57,11 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingDriver) {
             this.editingDriver.entity_id = currentId;
           }
-          this.clearPendingAvatar();
         }
       },
       () => this.editingDriver // snapshotGetter
     );
   }
-
-  // Remove old properties
-  // undoStack, redoStack, initialState, _snapshot, textChange$ -> Removed
 
   ngOnInit() {
     this.updateScale();
@@ -79,13 +71,15 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+    }
     this.undoManager.destroy();
   }
-
-  // ...
 
   @HostListener('window:resize')
   onResize() {
@@ -127,7 +121,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    forkJoin({
+    this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       assets: this.dataService.listAssets()
     }).subscribe({
@@ -136,13 +130,17 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.loadDataInternal(result.drivers, result.assets);
         } finally {
           this.isLoading = false;
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         }
       },
       error: (err) => {
         console.error('Failed to load data', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }
@@ -153,8 +151,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       driver.name,
       driver.nickname,
       driver.avatarUrl,
-      { ...driver.lapAudio },
-      { ...driver.bestLapAudio }
+      driver.lapAudio ? { ...driver.lapAudio } : undefined,
+      driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined
     );
   }
 
@@ -162,18 +160,18 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     return d1.name === d2.name &&
       d1.nickname === d2.nickname &&
       d1.avatarUrl === d2.avatarUrl &&
-      d1.lapAudio.url === d2.lapAudio.url &&
-      d1.bestLapAudio.url === d2.bestLapAudio.url &&
-      d1.lapAudio.type === d2.lapAudio.type &&
-      d1.bestLapAudio.type === d2.bestLapAudio.type &&
-      d1.lapAudio.text === d2.lapAudio.text &&
-      d1.bestLapAudio.text === d2.bestLapAudio.text;
+      (d1.lapAudio?.url || '') === (d2.lapAudio?.url || '') &&
+      (d1.bestLapAudio?.url || '') === (d2.bestLapAudio?.url || '') &&
+      (d1.lapAudio?.type || 'preset') === (d2.lapAudio?.type || 'preset') &&
+      (d1.bestLapAudio?.type || 'preset') === (d2.bestLapAudio?.type || 'preset') &&
+      (d1.lapAudio?.text || '') === (d2.lapAudio?.text || '') &&
+      (d1.bestLapAudio?.text || '') === (d2.bestLapAudio?.text || '');
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
     if (!this.editingDriver) return true;
     const name = this.editingDriver.name.trim().toLowerCase();
-    if (!name) return false; // Empty name is not unique/valid
+    if (!name) return false;
 
     return !this.allDrivers.some(d =>
       (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
@@ -184,17 +182,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   isNicknameUnique(excludeSelf: boolean = true): boolean {
     if (!this.editingDriver) return true;
     const nickname = this.editingDriver.nickname?.trim().toLowerCase();
-    if (!nickname) return true; // Empty nickname is allowed
+    if (!nickname) return true;
 
     return !this.allDrivers.some(d =>
       (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
       d.nickname?.toLowerCase() === nickname
     );
-  }
-
-  private clearPendingAvatar() {
-    this.pendingAvatarFile = null;
-    this.pendingAvatarPreview = null;
   }
 
   private mapSoundType(type: string | undefined): 'preset' | 'tts' {
@@ -210,23 +203,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         this.handleConnectionLoss();
       }
     });
-  }
-
-  openAvatarSelector() {
-    this.showAvatarSelector = true;
-  }
-
-  closeAvatarSelector() {
-    this.showAvatarSelector = false;
-  }
-
-  onAvatarSelected(asset: any) {
-    if (this.editingDriver) {
-      this.editingDriver.avatarUrl = asset.url;
-      this.clearPendingAvatar();
-      this.captureState();
-    }
-    this.closeAvatarSelector();
   }
 
   handleConnectionLoss() {
@@ -259,32 +235,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (!isSaveAsNew && !this.hasChanges()) return;
 
     this.isSaving = true;
-
-    if (this.pendingAvatarFile) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const bytes = new Uint8Array(e.target.result);
-        this.dataService.uploadAsset(this.pendingAvatarFile!.name, 'image', bytes).subscribe({
-          next: (asset) => {
-            if (this.editingDriver) {
-              // We don't capture state for upload completion as it's an internal sync
-              this.editingDriver.avatarUrl = asset.url ?? undefined;
-              this.pendingAvatarFile = null;
-              this.pendingAvatarPreview = null;
-              this.saveDriverData(isSaveAsNew);
-            }
-          },
-          error: (err) => {
-            console.error('Avatar upload failed', err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          }
-        });
-      };
-      reader.readAsArrayBuffer(this.pendingAvatarFile);
-    } else {
-      this.saveDriverData(isSaveAsNew);
-    }
+    this.saveDriverData(isSaveAsNew);
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
@@ -312,7 +263,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (idParam === 'new') {
       this.selectedDriver = undefined;
       this.editingDriver = new Driver('new', '', '', '', { type: 'preset' }, { type: 'preset' });
-      this.clearPendingAvatar();
     } else if (idParam) {
       const found = this.allDrivers.find(d => d.entity_id === idParam);
       if (found) {
@@ -322,13 +272,11 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Initialize tracking
     if (this.editingDriver) {
       this.undoManager.initialize(this.editingDriver);
     }
   }
 
-  // Proxy methods
   undo() { this.undoManager.undo(); }
   redo() { this.undoManager.redo(); }
   hasChanges() { return this.undoManager.hasChanges(); }
@@ -341,19 +289,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   selectDriver(driver: Driver) {
     this.selectedDriver = driver;
     this.editingDriver = this.cloneDriver(driver);
-    this.clearPendingAvatar();
-
     this.undoManager.initialize(this.editingDriver);
   }
 
-  // Update saveDriverData
   private saveDriverData(isSaveAsNew: boolean = false) {
     if (!this.editingDriver) return;
 
-    // Create a copy to send, setting id to 'new' if it's a "Save as New" operation
-    // or if we are already in "new" mode.
-    // TODO(aufderheide): Update shouldn't accept "new".  If it's a new driver, we should
-    // create it.
     const driverToSend = { ...this.editingDriver };
     const wasNew = isSaveAsNew || driverToSend.entity_id === 'new';
 
@@ -369,10 +310,8 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.isSaving = false;
 
-        // Update snapshot on save, BUT KEEP STACKS
         if (this.editingDriver) {
           this.editingDriver.entity_id = result.entity_id;
-          // Reset tracking baseline but KEEP history
           this.undoManager.resetTracking(this.editingDriver);
         }
 
@@ -380,7 +319,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
         }
 
-        // Refresh valid drivers list without resetting current editor state
         this.refreshDriverList();
       },
       error: (err) => {
@@ -399,7 +337,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   private refreshDriverList() {
     this.dataService.getDrivers().subscribe({
       next: (drivers) => {
-        // Just update the list for uniqueness checks and sidebar
         this.allDrivers = drivers.map(d => new Driver(
           d.entity_id, d.name, d.nickname || '',
           d.avatarUrl,
@@ -420,7 +357,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-
   deleteDriver() {
     if (!this.editingDriver) return;
     if (confirm(this.translationService.translate('DE_CONFIRM_DELETE'))) {
@@ -435,33 +371,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.isSaving = false;
         }
       });
-    }
-  }
-
-  // Drag & Drop
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  onDrop(event: DragEvent, type: 'avatar') {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      if (type === 'avatar') {
-        const file = files[0];
-
-        this.pendingAvatarFile = file;
-        this.captureState();
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.pendingAvatarPreview = e.target.result;
-          this.cdr.detectChanges();
-        };
-        reader.readAsDataURL(file);
-      }
     }
   }
 

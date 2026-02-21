@@ -32,8 +32,8 @@ export class Driver implements Model {
         this.avatarUrl = avatarUrl;
 
         // Ensure we always have an object to avoid null checks everywhere
-        this.lapAudio = lapAudio || { type: 'preset' };
-        this.bestLapAudio = bestLapAudio || { type: 'preset' };
+        this.lapAudio = (lapAudio && lapAudio.type) ? lapAudio : { type: 'preset' };
+        this.bestLapAudio = (bestLapAudio && bestLapAudio.type) ? bestLapAudio : { type: 'preset' };
     }
 
     get objectId(): string {

@@ -12591,6 +12591,8 @@ export const com = $root.com = (() => {
              * @property {string|null} [objectId] DriverHeatData objectId
              * @property {string|null} [driverId] DriverHeatData driverId
              * @property {com.antigravity.IDriverModel|null} [actualDriver] DriverHeatData actualDriver
+             * @property {number|null} [gapLeader] DriverHeatData gapLeader
+             * @property {number|null} [gapPosition] DriverHeatData gapPosition
              */
 
             /**
@@ -12641,6 +12643,22 @@ export const com = $root.com = (() => {
             DriverHeatData.prototype.actualDriver = null;
 
             /**
+             * DriverHeatData gapLeader.
+             * @member {number} gapLeader
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.gapLeader = 0;
+
+            /**
+             * DriverHeatData gapPosition.
+             * @member {number} gapPosition
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.gapPosition = 0;
+
+            /**
              * Creates a new DriverHeatData instance using the specified properties.
              * @function create
              * @memberof com.antigravity.DriverHeatData
@@ -12672,6 +12690,10 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 3, wireType 2 =*/26).string(message.driverId);
                 if (message.actualDriver != null && Object.hasOwnProperty.call(message, "actualDriver"))
                     $root.com.antigravity.DriverModel.encode(message.actualDriver, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.gapLeader != null && Object.hasOwnProperty.call(message, "gapLeader"))
+                    writer.uint32(/* id 5, wireType 1 =*/41).double(message.gapLeader);
+                if (message.gapPosition != null && Object.hasOwnProperty.call(message, "gapPosition"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.gapPosition);
                 return writer;
             };
 
@@ -12722,6 +12744,14 @@ export const com = $root.com = (() => {
                         }
                     case 4: {
                             message.actualDriver = $root.com.antigravity.DriverModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.gapLeader = reader.double();
+                            break;
+                        }
+                    case 6: {
+                            message.gapPosition = reader.double();
                             break;
                         }
                     default:
@@ -12775,6 +12805,12 @@ export const com = $root.com = (() => {
                     if (error)
                         return "actualDriver." + error;
                 }
+                if (message.gapLeader != null && message.hasOwnProperty("gapLeader"))
+                    if (typeof message.gapLeader !== "number")
+                        return "gapLeader: number expected";
+                if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
+                    if (typeof message.gapPosition !== "number")
+                        return "gapPosition: number expected";
                 return null;
             };
 
@@ -12804,6 +12840,10 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.DriverHeatData.actualDriver: object expected");
                     message.actualDriver = $root.com.antigravity.DriverModel.fromObject(object.actualDriver);
                 }
+                if (object.gapLeader != null)
+                    message.gapLeader = Number(object.gapLeader);
+                if (object.gapPosition != null)
+                    message.gapPosition = Number(object.gapPosition);
                 return message;
             };
 
@@ -12825,6 +12865,8 @@ export const com = $root.com = (() => {
                     object.objectId = "";
                     object.driverId = "";
                     object.actualDriver = null;
+                    object.gapLeader = 0;
+                    object.gapPosition = 0;
                 }
                 if (message.driver != null && message.hasOwnProperty("driver"))
                     object.driver = $root.com.antigravity.RaceParticipant.toObject(message.driver, options);
@@ -12834,6 +12876,10 @@ export const com = $root.com = (() => {
                     object.driverId = message.driverId;
                 if (message.actualDriver != null && message.hasOwnProperty("actualDriver"))
                     object.actualDriver = $root.com.antigravity.DriverModel.toObject(message.actualDriver, options);
+                if (message.gapLeader != null && message.hasOwnProperty("gapLeader"))
+                    object.gapLeader = options.json && !isFinite(message.gapLeader) ? String(message.gapLeader) : message.gapLeader;
+                if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
+                    object.gapPosition = options.json && !isFinite(message.gapPosition) ? String(message.gapPosition) : message.gapPosition;
                 return object;
             };
 
@@ -13869,6 +13915,8 @@ export const com = $root.com = (() => {
              * @interface IHeatPositionUpdate
              * @property {string|null} [objectId] HeatPositionUpdate objectId
              * @property {number|null} [rank] HeatPositionUpdate rank
+             * @property {number|null} [gapLeader] HeatPositionUpdate gapLeader
+             * @property {number|null} [gapPosition] HeatPositionUpdate gapPosition
              */
 
             /**
@@ -13903,6 +13951,22 @@ export const com = $root.com = (() => {
             HeatPositionUpdate.prototype.rank = 0;
 
             /**
+             * HeatPositionUpdate gapLeader.
+             * @member {number} gapLeader
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @instance
+             */
+            HeatPositionUpdate.prototype.gapLeader = 0;
+
+            /**
+             * HeatPositionUpdate gapPosition.
+             * @member {number} gapPosition
+             * @memberof com.antigravity.HeatPositionUpdate
+             * @instance
+             */
+            HeatPositionUpdate.prototype.gapPosition = 0;
+
+            /**
              * Creates a new HeatPositionUpdate instance using the specified properties.
              * @function create
              * @memberof com.antigravity.HeatPositionUpdate
@@ -13930,6 +13994,10 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.objectId);
                 if (message.rank != null && Object.hasOwnProperty.call(message, "rank"))
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.rank);
+                if (message.gapLeader != null && Object.hasOwnProperty.call(message, "gapLeader"))
+                    writer.uint32(/* id 3, wireType 1 =*/25).double(message.gapLeader);
+                if (message.gapPosition != null && Object.hasOwnProperty.call(message, "gapPosition"))
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.gapPosition);
                 return writer;
             };
 
@@ -13974,6 +14042,14 @@ export const com = $root.com = (() => {
                             message.rank = reader.int32();
                             break;
                         }
+                    case 3: {
+                            message.gapLeader = reader.double();
+                            break;
+                        }
+                    case 4: {
+                            message.gapPosition = reader.double();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -14015,6 +14091,12 @@ export const com = $root.com = (() => {
                 if (message.rank != null && message.hasOwnProperty("rank"))
                     if (!$util.isInteger(message.rank))
                         return "rank: integer expected";
+                if (message.gapLeader != null && message.hasOwnProperty("gapLeader"))
+                    if (typeof message.gapLeader !== "number")
+                        return "gapLeader: number expected";
+                if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
+                    if (typeof message.gapPosition !== "number")
+                        return "gapPosition: number expected";
                 return null;
             };
 
@@ -14034,6 +14116,10 @@ export const com = $root.com = (() => {
                     message.objectId = String(object.objectId);
                 if (object.rank != null)
                     message.rank = object.rank | 0;
+                if (object.gapLeader != null)
+                    message.gapLeader = Number(object.gapLeader);
+                if (object.gapPosition != null)
+                    message.gapPosition = Number(object.gapPosition);
                 return message;
             };
 
@@ -14053,11 +14139,17 @@ export const com = $root.com = (() => {
                 if (options.defaults) {
                     object.objectId = "";
                     object.rank = 0;
+                    object.gapLeader = 0;
+                    object.gapPosition = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
                 if (message.rank != null && message.hasOwnProperty("rank"))
                     object.rank = message.rank;
+                if (message.gapLeader != null && message.hasOwnProperty("gapLeader"))
+                    object.gapLeader = options.json && !isFinite(message.gapLeader) ? String(message.gapLeader) : message.gapLeader;
+                if (message.gapPosition != null && message.hasOwnProperty("gapPosition"))
+                    object.gapPosition = options.json && !isFinite(message.gapPosition) ? String(message.gapPosition) : message.gapPosition;
                 return object;
             };
 

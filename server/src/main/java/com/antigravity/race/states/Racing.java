@@ -18,12 +18,12 @@ public class Racing implements IRaceState {
 
     com.antigravity.models.HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring != null && scoring.getFinishMethod() == com.antigravity.models.HeatScoring.FinishMethod.Timed) {
-      // If starting fresh (time is 0), set it to finish value.
-      // If resuming (time > 0), assume it's already set.
       if (race.getRaceTime() == 0) {
         race.addRaceTime((float) scoring.getFinishValue());
       }
     }
+
+    race.setHasRacedInCurrentHeat(true);
 
     race.startProtocols();
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
@@ -273,6 +273,16 @@ public class Racing implements IRaceState {
 
       this.race.broadcast(rtDataMsg);
       System.out.println("Race: Broadcasted reaction time for lane " + lane + ": " + lapTime);
+
+      com.antigravity.proto.StandingsUpdate standingsUpdate = this.race.getCurrentHeat().getHeatStandings()
+          .updateStandings();
+      if (standingsUpdate != null) {
+        com.antigravity.proto.RaceData standingsDataMsg = com.antigravity.proto.RaceData.newBuilder()
+            .setStandingsUpdate(standingsUpdate)
+            .build();
+        this.race.broadcast(standingsDataMsg);
+      }
+
       return true;
     }
     return false;

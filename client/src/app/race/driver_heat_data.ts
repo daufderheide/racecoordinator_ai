@@ -1,5 +1,3 @@
-
-
 import { RaceParticipant } from "./race_participant";
 import { Driver } from "../models/driver";
 
@@ -20,6 +18,8 @@ export class DriverHeatData {
     private _averageLapTime!: number;
     private _medianLapTime!: number;
     private _reactionTime: number = 0;
+    private _gapLeader: number = 0;
+    private _gapPosition: number = 0;
 
     constructor(objectId: string, participant: RaceParticipant, laneIndex: number, actualDriver?: Driver) {
         this.objectId = objectId;
@@ -41,6 +41,8 @@ export class DriverHeatData {
         this._averageLapTime = 0;
         this._medianLapTime = 0;
         this._reactionTime = 0;
+        this._gapLeader = 0;
+        this._gapPosition = 0;
     }
 
     addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number): void {
@@ -98,5 +100,21 @@ export class DriverHeatData {
 
     get totalTime(): number {
         return this.laps.reduce((acc, curr) => acc + curr, 0);
+    }
+
+    get gapLeader(): number {
+        return this._gapLeader;
+    }
+
+    set gapLeader(value: number) {
+        this._gapLeader = value;
+    }
+
+    get gapPosition(): number {
+        return this._gapPosition;
+    }
+
+    set gapPosition(value: number) {
+        this._gapPosition = value;
     }
 }

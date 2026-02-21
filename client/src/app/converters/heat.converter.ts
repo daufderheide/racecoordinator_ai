@@ -47,7 +47,10 @@ export class HeatConverter {
                             }
 
                             const heatDriverId = dProto.objectId;
-                            return new DriverHeatData(heatDriverId || '', participant, index, actualDriver);
+                            const hd = new DriverHeatData(heatDriverId || '', participant, index, actualDriver);
+                            hd.gapLeader = dProto.gapLeader || 0;
+                            hd.gapPosition = dProto.gapPosition || 0;
+                            return hd;
                         }
                         return null;
                     });

@@ -18,6 +18,16 @@ class MockBackButtonComponent {
   @Input() label: string = '';
 }
 
+@Component({ selector: 'app-image-selector', template: '', standalone: false })
+class MockImageSelectorComponent {
+  @Input() label?: string;
+  @Input() imageUrl?: string;
+  @Input() assets: any[] = [];
+  @Output() imageUrlChange = new EventEmitter<string>();
+  @Output() uploadStarted = new EventEmitter<void>();
+  @Output() uploadFinished = new EventEmitter<void>();
+}
+
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
@@ -89,6 +99,7 @@ describe('TeamEditorComponent', () => {
         TeamEditorComponent,
         MockBackButtonComponent,
         MockItemSelectorComponent,
+        MockImageSelectorComponent,
         MockUndoRedoControlsComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe

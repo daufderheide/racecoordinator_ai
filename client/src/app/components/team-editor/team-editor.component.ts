@@ -15,6 +15,8 @@ import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
   standalone: false
 })
 export class TeamEditorComponent implements OnInit, OnDestroy {
+  private isDestroyed = false;
+  private dataSubscription: Subscription | null = null;
   selectedTeam?: Team;
   editingTeam?: Team;
   isLoading: boolean = true;
@@ -22,18 +24,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   isUploading: boolean = false;
   scale: number = 1;
 
-  showAvatarSelector: boolean = false;
-
   // Undo Manager
   undoManager!: UndoManager<Team>;
 
   // Data
   allDrivers: Driver[] = [];
   allTeams: Team[] = []; // For name uniqueness check
-
-  // Pending Drag & Drop Avatar
-  pendingAvatarFile: File | null = null;
-  pendingAvatarPreview: string | null = null;
 
   // Assets
   avatarAssets: any[] = [];
@@ -60,7 +56,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingTeam) {
             this.editingTeam.entity_id = currentId;
           }
-          this.clearPendingAvatar();
         }
       },
       () => this.editingTeam
@@ -75,8 +70,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.isDestroyed = true;
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
+    }
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
     }
     this.undoManager.destroy();
   }
@@ -125,7 +124,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    forkJoin({
+    this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
       assets: this.dataService.listAssets()
@@ -144,13 +143,17 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
           this.loadDataInternal(result.assets);
         } finally {
           this.isLoading = false;
-          this.cdr.detectChanges();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         }
       },
       error: (err) => {
         console.error('Failed to load data', err);
         this.isLoading = false;
-        this.cdr.detectChanges();
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     });
   }
@@ -185,11 +188,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     );
   }
 
-  private clearPendingAvatar() {
-    this.pendingAvatarFile = null;
-    this.pendingAvatarPreview = null;
-  }
-
   monitorConnection() {
     this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
       this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
@@ -197,23 +195,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.handleConnectionLoss();
       }
     });
-  }
-
-  openAvatarSelector() {
-    this.showAvatarSelector = true;
-  }
-
-  closeAvatarSelector() {
-    this.showAvatarSelector = false;
-  }
-
-  onAvatarSelected(asset: any) {
-    if (this.editingTeam) {
-      this.editingTeam.avatarUrl = asset.url;
-      this.clearPendingAvatar();
-      this.captureState();
-    }
-    this.closeAvatarSelector();
   }
 
   handleConnectionLoss() {
@@ -232,20 +213,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   private loadDataInternal(assets: any[]) {
     const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter(a => a.type === 'image');
+    this.avatarAssets = allAssets.filter(a => a && a.type === 'image');
 
     const idParam = this.route.snapshot.queryParamMap.get('id');
 
     if (idParam === 'new') {
       this.selectedTeam = undefined;
       this.editingTeam = new Team('new', '', '', []);
-      this.clearPendingAvatar();
     } else if (idParam) {
       const found = this.allTeams.find(t => t.entity_id === idParam);
       if (found) {
         this.selectedTeam = found;
         this.editingTeam = this.cloneTeam(found);
-        this.clearPendingAvatar();
       } else {
         throw new Error(`Team Editor: Invalid entity ID "${idParam}".`);
       }
@@ -270,31 +249,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     if (!isSaveAsNew && !this.hasChanges()) return;
 
     this.isSaving = true;
-
-    if (this.pendingAvatarFile) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const bytes = new Uint8Array(e.target.result);
-        this.dataService.uploadAsset(this.pendingAvatarFile!.name, 'image', bytes).subscribe({
-          next: (asset) => {
-            if (this.editingTeam) {
-              this.editingTeam.avatarUrl = asset.url ?? undefined;
-              this.pendingAvatarFile = null;
-              this.pendingAvatarPreview = null;
-              this.saveTeamData(isSaveAsNew);
-            }
-          },
-          error: (err) => {
-            console.error('Avatar upload failed', err);
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          }
-        });
-      };
-      reader.readAsArrayBuffer(this.pendingAvatarFile);
-    } else {
-      this.saveTeamData(isSaveAsNew);
-    }
+    this.saveTeamData(isSaveAsNew);
   }
 
   private saveTeamData(isSaveAsNew: boolean = false) {
@@ -365,31 +320,5 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   saveAsNew() {
     if (!this.editingTeam) return;
     this.updateTeam(true);
-  }
-
-  // Drag & Drop
-  onDragOver(event: DragEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  onDrop(event: DragEvent, type: 'avatar') {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const files = event.dataTransfer?.files;
-    if (files && files.length > 0) {
-      if (type === 'avatar') {
-        const file = files[0];
-        this.pendingAvatarFile = file;
-        this.captureState();
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          this.pendingAvatarPreview = e.target.result;
-          this.cdr.detectChanges();
-        };
-        reader.readAsDataURL(file);
-      }
-    }
   }
 }

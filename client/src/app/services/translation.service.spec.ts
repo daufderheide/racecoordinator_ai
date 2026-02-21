@@ -25,7 +25,7 @@ describe('TranslationService', () => {
   });
 
   it('should load language from settings if available', () => {
-    settingsServiceSpy.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, 'fr'));
+    settingsServiceSpy.getSettings.and.returnValue(Object.assign(new Settings(), { language: 'fr' }));
 
     service = TestBed.inject(TranslationService);
 
@@ -35,7 +35,7 @@ describe('TranslationService', () => {
   });
 
   it('should fallback to browser language if settings language is empty', () => {
-    settingsServiceSpy.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, ''));
+    settingsServiceSpy.getSettings.and.returnValue(Object.assign(new Settings(), { language: '' }));
     // Force browser language to 'es' for testing if possible, or just check it calls getBrowserLanguage
 
     service = TestBed.inject(TranslationService);
@@ -59,7 +59,7 @@ describe('TranslationService', () => {
   });
 
   it('should translate keys correctly', (done) => {
-    settingsServiceSpy.getSettings.and.returnValue(new Settings([], [], 'localhost', 7070, 'en'));
+    settingsServiceSpy.getSettings.and.returnValue(Object.assign(new Settings(), { language: 'en' }));
     service = TestBed.inject(TranslationService);
 
     const req = httpMock.expectOne(request => request.url.startsWith('assets/i18n/en.json'));

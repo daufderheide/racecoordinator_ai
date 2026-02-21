@@ -1,25 +1,31 @@
+import { AnchorPoint } from '../components/raceday/column_definition';
+
 export class Settings {
-    recentRaceIds: string[];
-    selectedDriverIds: string[];
+    static readonly DEFAULT_COLUMNS = ['driver.nickname', 'lapCount', 'lastLapTime', 'averageLapTime'];
 
-    serverIp: string;
-    serverPort: number;
-    language: string;
-    racedaySetupWalkthroughSeen: boolean;
+    recentRaceIds: string[] = [];
+    selectedDriverIds: string[] = [];
 
-    constructor(
-        recentRaceIds: string[] = [],
-        selectedDriverIds: string[] = [],
-        serverIp: string = 'localhost',
-        serverPort: number = 7070,
-        language: string = '',
-        racedaySetupWalkthroughSeen: boolean = false
-    ) {
-        this.recentRaceIds = recentRaceIds;
-        this.selectedDriverIds = selectedDriverIds;
-        this.serverIp = serverIp;
-        this.serverPort = serverPort;
-        this.language = language;
-        this.racedaySetupWalkthroughSeen = racedaySetupWalkthroughSeen;
-    }
+    serverIp: string = 'localhost';
+    serverPort: number = 7070;
+    language: string = '';
+    racedaySetupWalkthroughSeen: boolean = false;
+
+    flagGreen?: string;
+    flagYellow?: string;
+    flagRed?: string;
+    flagWhite?: string;
+    flagBlack?: string;
+    flagCheckered?: string;
+    sortByStandings: boolean = true;
+    racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
+    columnAnchors: { [key: string]: AnchorPoint } = {};
+    columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
+        'driver.nickname': {
+            [AnchorPoint.CenterCenter]: 'driver.nickname',
+            [AnchorPoint.BottomCenter]: 'participant.team.name'
+        }
+    };
 }
+
+

@@ -104,6 +104,8 @@ public class RaceStateTest {
     injectSession(currentMockWsContext, mockSession);
 
     ClientSubscriptionManager.getInstance().addSession(currentMockWsContext);
+    ClientSubscriptionManager.getInstance().handleRaceSubscription(currentMockWsContext,
+        com.antigravity.proto.RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
   }
 
   private void injectSession(WsContext ctx, org.eclipse.jetty.websocket.api.Session session) throws Exception {

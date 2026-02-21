@@ -1,0 +1,109 @@
+<div class="ue-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <!-- Header -->
+  <div class="ue-header">
+    <app-back-button [label]="'UE_BTN_BACK' | translate" route="/raceday-setup" [confirm]="hasChanges()"
+      [confirmTitle]="'UE_CONFIRM_DISCARD_TITLE' | translate"
+      [confirmMessage]="'UE_CONFIRM_DISCARD_MESSAGE' | translate" (back)="onBack()"></app-back-button>
+
+    <div class="title">{{ 'UE_TITLE' | translate }}</div>
+
+    <!-- Undo/Redo Controls -->
+    <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
+  </div>
+
+  <div class="content-area" *ngIf="!isLoading">
+    <!-- Full-Width Column Layout Preview -->
+    <div class="panel layout-panel">
+      <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
+      <div class="panel-content column-layout-section">
+        <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
+          [resizingColumnKey]="resizingColumnKey">
+        </app-column-preview>
+
+        <div class="layout-controls">
+          <div class="sorting-selector">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
+              <span class="checkmark"></span>
+              {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
+            </label>
+          </div>
+
+          <div class="column-actions">
+            <button class="btn btn-secondary" (click)="openReorderDialog()">
+              <span class="material-icons"></span>
+              {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-grid">
+      <!-- Custom UI Settings -->
+      <div class="panel config-panel">
+        <div class="panel-header">{{ 'UE_HEADER_CUSTOM_UI' | translate }}</div>
+        <div class="panel-content">
+          <div class="directory-selector">
+            <label>{{ 'UE_DIRECTORY_LABEL' | translate }}</label>
+            <div class="directory-info">
+              <span class="directory-path" *ngIf="customDirectoryName">{{ customDirectoryName }}</span>
+              <span class="directory-path placeholder" *ngIf="!customDirectoryName">{{ 'UE_LABEL_NO_DIRECTORY' |
+                translate }}</span>
+            </div>
+            <div class="directory-actions">
+              <button class="btn btn-secondary" (click)="selectDirectory()">
+                {{ 'UE_BTN_SELECT_DIRECTORY' | translate }}
+              </button>
+              <button class="btn btn-danger" (click)="resetDefault()" [disabled]="!customDirectoryName">
+                {{ 'UE_BTN_RESET_DEFAULT' | translate }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Flag Image Settings -->
+      <div class="panel flags-panel">
+        <div class="panel-header">{{ 'UE_HEADER_FLAGS' | translate }}</div>
+        <div class="panel-content flags-grid">
+          <app-image-selector [label]="'UE_LABEL_GREEN_FLAG' | translate" [(imageUrl)]="editingSettings.flagGreen"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_YELLOW_FLAG' | translate" [(imageUrl)]="editingSettings.flagYellow"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_RED_FLAG' | translate" [(imageUrl)]="editingSettings.flagRed"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_WHITE_FLAG' | translate" [(imageUrl)]="editingSettings.flagWhite"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_BLACK_FLAG' | translate" [(imageUrl)]="editingSettings.flagBlack"
+            (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+          <app-image-selector [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
+            [(imageUrl)]="editingSettings.flagCheckered" (imageUrlChange)="captureState()" [assets]="assets">
+          </app-image-selector>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-actions" *ngIf="!isLoading">
+    <button class="btn btn-save" (click)="save()" [disabled]="!hasChanges()">
+      {{ 'UE_BTN_SAVE' | translate }}
+    </button>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loader-overlay" *ngIf="isLoading || isSaving">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Reorder Modal -->
+  <app-reorder-dialog [visible]="showReorderModal" [data]="reorderModalData" (save)="onReorderSave($event)"
+    (cancel)="onReorderCancel()">
+  </app-reorder-dialog>
+</div>

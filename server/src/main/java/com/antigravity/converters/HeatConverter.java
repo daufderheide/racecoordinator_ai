@@ -63,6 +63,8 @@ public class HeatConverter {
           .setActualDriver(data.getActualDriver() != null
               ? DriverConverter.toProto(data.getActualDriver(), sentObjectIds)
               : com.antigravity.proto.DriverModel.getDefaultInstance())
+          .setGapLeader(data.getGapLeader())
+          .setGapPosition(data.getGapPosition())
           .build();
     }
   }

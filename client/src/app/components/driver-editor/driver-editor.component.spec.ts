@@ -1,5 +1,5 @@
 
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { DriverEditorComponent } from './driver-editor.component';
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
@@ -33,6 +33,16 @@ class MockAudioSelectorComponent {
   @Input() assets: any[] = [];
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
+}
+
+@Component({ selector: 'app-image-selector', template: '', standalone: false })
+class MockImageSelectorComponent {
+  @Input() label?: string;
+  @Input() imageUrl?: string;
+  @Input() assets: any[] = [];
+  @Output() imageUrlChange = new EventEmitter<string>();
+  @Output() uploadStarted = new EventEmitter<void>();
+  @Output() uploadFinished = new EventEmitter<void>();
 }
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
@@ -100,6 +110,7 @@ describe('DriverEditorComponent', () => {
         MockAudioSelectorComponent,
         MockItemSelectorComponent,
         MockUndoRedoControlsComponent,
+        MockImageSelectorComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe
       ],
@@ -376,6 +387,8 @@ describe('DriverEditorComponent', () => {
 
     component.undo();
     expect(component.editingDriver!.name).toBe('Start');
+
+    discardPeriodicTasks();
   }));
 });
 

@@ -193,36 +193,7 @@
 .avatar-column {
     display: flex;
     justify-content: center;
-    align-items: center;
-}
-
-.avatar-preview-large {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 4px solid #00ffff;
-    background: #000;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-}
-
-.avatar-preview-large img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.drop-hint {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    font-size: 12px;
-    color: #00ffff;
-    pointer-events: none;
+    align-items: stretch;
 }
 
 

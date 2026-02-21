@@ -35,6 +35,7 @@ public class Race implements ProtocolListener {
   // Dynamic race data
   private IRaceState state;
   private float accumulatedRaceTime = 0.0f;
+  private boolean hasRacedInCurrentHeat = false;
 
   public Race(MongoDatabase database,
       com.antigravity.models.Race model,
@@ -128,6 +129,14 @@ public class Race implements ProtocolListener {
     accumulatedRaceTime = 0.0f;
   }
 
+  public boolean hasRacedInCurrentHeat() {
+    return hasRacedInCurrentHeat;
+  }
+
+  public void setHasRacedInCurrentHeat(boolean hasRaced) {
+    this.hasRacedInCurrentHeat = hasRaced;
+  }
+
   public void broadcast(com.google.protobuf.GeneratedMessageV3 message) {
     ClientSubscriptionManager.getInstance().broadcast(message);
   }
@@ -140,21 +149,6 @@ public class Race implements ProtocolListener {
     state.enter(this);
 
     com.antigravity.proto.RaceState protoState = getProtoState(state);
-    try {
-      String tmpDir = System.getProperty("java.io.tmpdir");
-      java.nio.file.Path logPath = java.nio.file.Paths.get(tmpDir, "race_debug.log");
-      java.nio.file.Files.write(logPath,
-          ("changeState to " + state.getClass().getSimpleName() + " -> Proto: " + protoState + "\n")
-              .getBytes(),
-          java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
-    } catch (java.nio.channels.ClosedByInterruptException e) {
-      System.err.println("Debug log write interrupted (harmless): " + e.getMessage());
-      // Clear the interrupted status so we don't affect subsequent operations
-      Thread.interrupted();
-    } catch (java.io.IOException e) {
-      System.err.println("Failed to write debug log: " + e.getMessage());
-      e.printStackTrace();
-    }
 
     com.antigravity.proto.RaceData raceData = com.antigravity.proto.RaceData.newBuilder()
         .setRaceState(protoState)
@@ -233,6 +227,10 @@ public class Race implements ProtocolListener {
 
   public boolean isRacing() {
     return state instanceof com.antigravity.race.states.Racing;
+  }
+
+  public boolean isActive() {
+    return !(state instanceof com.antigravity.race.states.RaceOver);
   }
 
   @Override
