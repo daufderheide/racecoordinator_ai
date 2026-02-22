@@ -85,5 +85,6 @@ message AnalogFuelOptions {
   double start_level = 7;
   double refuel_rate = 8;
   double pit_stop_delay = 9;
+  double reference_time = 10;
 }
 

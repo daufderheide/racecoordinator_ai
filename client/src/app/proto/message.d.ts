@@ -5040,6 +5040,9 @@ export namespace com {
 
             /** AnalogFuelOptions pitStopDelay */
             pitStopDelay?: (number|null);
+
+            /** AnalogFuelOptions referenceTime */
+            referenceTime?: (number|null);
         }
 
         /** Represents an AnalogFuelOptions. */
@@ -5077,6 +5080,9 @@ export namespace com {
 
             /** AnalogFuelOptions pitStopDelay. */
             public pitStopDelay: number;
+
+            /** AnalogFuelOptions referenceTime. */
+            public referenceTime: number;
 
             /**
              * Creates a new AnalogFuelOptions instance using the specified properties.

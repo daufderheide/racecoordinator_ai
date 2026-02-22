@@ -48,6 +48,10 @@ public class AnalogFuelOptions {
   @JsonProperty("pit_stop_delay")
   private final double pitStopDelay;
 
+  @BsonProperty("reference_time")
+  @JsonProperty("reference_time")
+  private final double referenceTime;
+
   public AnalogFuelOptions() {
     this.enabled = false;
     this.resetFuelAtHeatStart = false;
@@ -58,6 +62,7 @@ public class AnalogFuelOptions {
     this.startLevel = 100.0;
     this.refuelRate = 10.0;
     this.pitStopDelay = 2.0;
+    this.referenceTime = 6.0;
   }
 
   @BsonCreator
@@ -71,7 +76,8 @@ public class AnalogFuelOptions {
       @BsonProperty("usage_rate") @JsonProperty("usage_rate") double usageRate,
       @BsonProperty("start_level") @JsonProperty("start_level") double startLevel,
       @BsonProperty("refuel_rate") @JsonProperty("refuel_rate") double refuelRate,
-      @BsonProperty("pit_stop_delay") @JsonProperty("pit_stop_delay") double pitStopDelay) {
+      @BsonProperty("pit_stop_delay") @JsonProperty("pit_stop_delay") double pitStopDelay,
+      @BsonProperty("reference_time") @JsonProperty("reference_time") Double referenceTime) {
     this.enabled = enabled;
     this.resetFuelAtHeatStart = resetFuelAtHeatStart;
     this.endHeatOnOutOfFuel = endHeatOnOutOfFuel;
@@ -81,6 +87,7 @@ public class AnalogFuelOptions {
     this.startLevel = startLevel;
     this.refuelRate = refuelRate;
     this.pitStopDelay = pitStopDelay;
+    this.referenceTime = referenceTime != null && referenceTime > 0 ? referenceTime : 6.0;
   }
 
   public boolean isEnabled() {
@@ -117,5 +124,9 @@ public class AnalogFuelOptions {
 
   public double getPitStopDelay() {
     return pitStopDelay;
+  }
+
+  public double getReferenceTime() {
+    return referenceTime;
   }
 }

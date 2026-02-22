@@ -314,18 +314,36 @@ public class Racing implements IRaceState {
       double lapFuelUsed = 0.0;
       double usageRate = fuelOptions.getUsageRate();
 
-      // TODO(aufderheide): Implement quadratic and cubic fuel usage properly
+      // Fuel usage is proportional to the lap time. Faster laps use more
+      // fuel than slower laps. And quadratic and cubic usage use more
+      // the faster the lap is.
       switch (fuelOptions.getUsageType()) {
         case LINEAR:
-          lapFuelUsed = usageRate * lapTime;
+          double refL = Math.max(0.1, fuelOptions.getReferenceTime());
+          double x1 = refL * 2.0;
+          double y1 = usageRate / 2.0;
+          double x2 = refL;
+          double y2 = usageRate;
+          double m = (y2 - y1) / (x2 - x1);
+          double b = y1 - m * x1;
+          lapFuelUsed = m * lapTime + b;
           break;
         case QUADRATIC:
-          lapFuelUsed = usageRate * lapTime;
+          double refQ = Math.max(0.1, fuelOptions.getReferenceTime());
+          double safeTimeQ = Math.max(0.1, lapTime);
+          lapFuelUsed = usageRate * (refQ * refQ) / (safeTimeQ * safeTimeQ);
           break;
         case CUBIC:
-          lapFuelUsed = usageRate * lapTime;
+          double refC = Math.max(0.1, fuelOptions.getReferenceTime());
+          double safeTimeC = Math.max(0.1, lapTime);
+          lapFuelUsed = usageRate * (refC * refC * refC) / (safeTimeC * safeTimeC * safeTimeC);
           break;
       }
+
+      if (Double.isNaN(lapFuelUsed) || Double.isInfinite(lapFuelUsed)) {
+        lapFuelUsed = 0.0;
+      }
+      lapFuelUsed = Math.max(0, lapFuelUsed);
 
       double currentFuel = driverData.getDriver().getFuelLevel();
       double newFuel = Math.max(0, currentFuel - lapFuelUsed);

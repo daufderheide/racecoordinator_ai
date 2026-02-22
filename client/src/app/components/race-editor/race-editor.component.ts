@@ -115,7 +115,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         const race = races.find(r => r.entity_id === id);
         if (race) {
           this.editingRace = this.deepCopy(race);
-          this.originalRace = this.deepCopy(race);
+          if (!this.editingRace.fuel_options) {
+            this.editingRace.fuel_options = {
+              enabled: false,
+              reset_fuel_at_heat_start: false,
+              end_heat_on_out_of_fuel: false,
+              capacity: 100,
+              usage_type: 'LINEAR',
+              usage_rate: 4.0,
+              start_level: 100,
+              refuel_rate: 10,
+              pit_stop_delay: 2.0,
+              reference_time: 6.0
+            };
+          }
+          this.originalRace = this.deepCopy(this.editingRace);
           this.undoManager.initialize(this.editingRace);
           // Load heats if we have a valid race
           if (this.driverCount > 0) {
@@ -163,6 +177,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         dropped_heats: 0,
         ranking_method: 'LAP_COUNT',
         tiebreaker: 'FASTEST_LAP_TIME'
+      },
+      fuel_options: {
+        enabled: false,
+        reset_fuel_at_heat_start: false,
+        end_heat_on_out_of_fuel: false,
+        capacity: 100,
+        usage_type: 'LINEAR',
+        usage_rate: 4.0,
+        start_level: 100,
+        refuel_rate: 10,
+        pit_stop_delay: 2.0,
+        reference_time: 6.0
       },
       min_lap_time: 0
     };
@@ -258,6 +284,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         ranking_method: this.editingRace.overall_scoring.ranking_method,
         tiebreaker: this.editingRace.overall_scoring.tiebreaker
       },
+      fuel_options: {
+        enabled: this.editingRace.fuel_options.enabled,
+        reset_fuel_at_heat_start: this.editingRace.fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: this.editingRace.fuel_options.end_heat_on_out_of_fuel,
+        capacity: this.editingRace.fuel_options.capacity,
+        usage_type: this.editingRace.fuel_options.usage_type,
+        usage_rate: this.editingRace.fuel_options.usage_rate,
+        start_level: this.editingRace.fuel_options.start_level,
+        refuel_rate: this.editingRace.fuel_options.refuel_rate,
+        pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay,
+        reference_time: this.editingRace.fuel_options.reference_time
+      },
       min_lap_time: this.editingRace.min_lap_time
     };
 
@@ -319,6 +357,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         dropped_heats: this.editingRace.overall_scoring.dropped_heats,
         ranking_method: this.editingRace.overall_scoring.ranking_method,
         tiebreaker: this.editingRace.overall_scoring.tiebreaker
+      },
+      fuel_options: {
+        enabled: this.editingRace.fuel_options.enabled,
+        reset_fuel_at_heat_start: this.editingRace.fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: this.editingRace.fuel_options.end_heat_on_out_of_fuel,
+        capacity: this.editingRace.fuel_options.capacity,
+        usage_type: this.editingRace.fuel_options.usage_type,
+        usage_rate: this.editingRace.fuel_options.usage_rate,
+        start_level: this.editingRace.fuel_options.start_level,
+        refuel_rate: this.editingRace.fuel_options.refuel_rate,
+        pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay
       },
       min_lap_time: this.editingRace.min_lap_time
     };
@@ -423,4 +472,279 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   closeAckModal() {
     this.showAckModal = false;
   }
+
+  // Fuel Graph Hover State
+  hoveredPoint: {
+    svgX: number,
+    svgY: number,
+    screenX: number,
+    screenY: number,
+    time: number,
+    value: number,
+    type: 'usage' | 'pit'
+  } | null = null;
+
+  // Cache for graph performance
+  private usageGraphCache: {
+    path: string;
+    labels: string[];
+    maxVal: number;
+    argsKey: string;
+  } | null = null;
+
+  private pitGraphCache: {
+    path: string;
+    labels: string[];
+    maxVal: number;
+    argsKey: string;
+  } | null = null;
+
+  private getMaxFuelUsage(): number {
+    if (!this.editingRace?.fuel_options) return 1;
+    const usageRate = this.editingRace.fuel_options.usage_rate || 0;
+    const usageType = this.editingRace.fuel_options.usage_type;
+    const minTime = 2;
+    const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+
+    let maxFuel = getAnalogFuelUsage(usageType, usageRate, minTime, referenceTime);
+
+    if (isNaN(maxFuel) || !isFinite(maxFuel)) maxFuel = 0;
+    return maxFuel <= 0 ? 1 : maxFuel;
+  }
+
+  private updateUsageGraphCache() {
+    if (!this.editingRace?.fuel_options) return;
+
+    const options = this.editingRace.fuel_options;
+    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}`;
+
+    if (this.usageGraphCache && this.usageGraphCache.argsKey === key) return;
+
+    const maxFuelValue = this.getMaxFuelUsage();
+    const width = 400;
+    const height = 150;
+    const minTime = 2;
+    const maxTime = 15;
+    const usageRate = options.usage_rate || 0;
+    const usageType = options.usage_type;
+    const referenceTime = Number(options.reference_time) || 6;
+
+    const points: string[] = [];
+    const steps = 50;
+    for (let i = 0; i <= steps; i++) {
+      const time = minTime + (i / steps) * (maxTime - minTime);
+      const fuel = getAnalogFuelUsage(usageType, usageRate, time, referenceTime);
+      const x = (i / steps) * width;
+      const yRatio = maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / maxFuelValue)) : 0;
+      const y = height - (yRatio * height);
+      points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+
+    const labels = [];
+    for (let i = 4; i >= 0; i--) {
+      labels.push(((maxFuelValue * i) / 4).toFixed(2));
+    }
+
+    this.usageGraphCache = {
+      path: `M ${points.join(' L ')}`,
+      labels: labels,
+      maxVal: maxFuelValue,
+      argsKey: key
+    };
+  }
+
+  private getMaxPitTime(): number {
+    if (!this.editingRace?.fuel_options) return 3600;
+    const usageRate = Number(this.editingRace.fuel_options.usage_rate) || 0;
+    const capacity = Number(this.editingRace.fuel_options.capacity) || 100;
+    const usageType = this.editingRace.fuel_options.usage_type;
+    const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+    const maxTime = 15;
+
+    if (usageRate <= 0) return 3600;
+
+    const minFuel = getAnalogFuelUsage(usageType, usageRate, maxTime, referenceTime);
+    if (minFuel <= 0) return 3600;
+
+    const pitTimeSeconds = (capacity / minFuel) * maxTime;
+    const safePitTime = isNaN(pitTimeSeconds) || !isFinite(pitTimeSeconds) ? 3600 : Math.min(3600, pitTimeSeconds);
+    return Math.max(1, safePitTime);
+  }
+
+  private updatePitGraphCache() {
+    if (!this.editingRace?.fuel_options) return;
+
+    const options = this.editingRace.fuel_options;
+    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}_${options.capacity}`;
+
+    if (this.pitGraphCache && this.pitGraphCache.argsKey === key) return;
+
+    const maxPitTime = this.getMaxPitTime();
+    const width = 400;
+    const height = 150;
+    const minLapTime = 2;
+    const maxLapTime = 15;
+    const capacity = Number(options.capacity) || 100;
+    const usageRate = Number(options.usage_rate) || 0;
+    const usageType = options.usage_type;
+    const referenceTime = Number(options.reference_time) || 6;
+
+    const points: string[] = [];
+    const steps = 50;
+
+    for (let i = 0; i <= steps; i++) {
+      const lapTime = minLapTime + (i / steps) * (maxLapTime - minLapTime);
+      const fuelPerLap = getAnalogFuelUsage(usageType, usageRate, lapTime, referenceTime);
+
+      let pitTimeSeconds = 0;
+      if (fuelPerLap > 0) {
+        pitTimeSeconds = (capacity / fuelPerLap) * lapTime;
+      } else {
+        pitTimeSeconds = maxPitTime;
+      }
+
+      const y = height - (i / steps) * height; // 2s at bottom, 15s at top
+      const xPercent = maxPitTime > 0 ? Math.max(0, Math.min(1, pitTimeSeconds / maxPitTime)) : 1;
+      const x = xPercent * width;
+      points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+
+    const labels = [];
+    for (let i = 0; i <= 4; i++) {
+      labels.push(Math.round((maxPitTime * i) / 4).toString());
+    }
+
+    this.pitGraphCache = {
+      path: `M ${points.join(' L ')}`,
+      labels: labels,
+      maxVal: maxPitTime,
+      argsKey: key
+    };
+  }
+
+  getFuelUsagePath(): string {
+    this.updateUsageGraphCache();
+    return this.usageGraphCache?.path || '';
+  }
+
+  getFuelUsageYLabels(): string[] {
+    this.updateUsageGraphCache();
+    if (this.usageGraphCache) return this.usageGraphCache.labels;
+
+    if (!this.editingRace?.fuel_options?.enabled) {
+      return ['0.00', '0.00', '0.00', '0.00', '0.00'];
+    }
+    return [];
+  }
+
+  getPitGraphPath(): string {
+    this.updatePitGraphCache();
+    return this.pitGraphCache?.path || '';
+  }
+
+  getPitGraphXLabels(): string[] {
+    this.updatePitGraphCache();
+    if (this.pitGraphCache) return this.pitGraphCache.labels;
+
+    if (!this.editingRace?.fuel_options?.enabled) {
+      return ['0', '0', '0', '0', '0'];
+    }
+    return [];
+  }
+
+  onGraphMouseMove(event: MouseEvent, type: 'usage' | 'pit') {
+    if (!this.editingRace?.fuel_options) return;
+
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    const width = rect.width;
+    const height = rect.height;
+
+    const minTime = 2;
+    const maxTime = 15;
+
+    if (type === 'usage') {
+      const xPercent = Math.max(0, Math.min(1, mouseX / width));
+      const time = minTime + xPercent * (maxTime - minTime);
+      const usageRate = this.editingRace.fuel_options.usage_rate || 0;
+      const usageType = this.editingRace.fuel_options.usage_type;
+      const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+      const fuel = getAnalogFuelUsage(usageType, usageRate, time, referenceTime);
+
+      this.updateUsageGraphCache();
+      const maxVal = this.usageGraphCache?.maxVal || 1;
+      const yPercent = Math.max(0, Math.min(1.5, fuel / maxVal));
+
+      this.hoveredPoint = {
+        svgX: Number((xPercent * 400).toFixed(2)),
+        svgY: Number((150 - (yPercent * 150)).toFixed(2)),
+        screenX: mouseX,
+        screenY: mouseY,
+        time: time,
+        value: fuel,
+        type: 'usage'
+      };
+    } else {
+      // Pit Graph: Y is Lap Time (bottom 2, top 15)
+      const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
+      const lapTime = minTime + yPercent * (maxTime - minTime);
+
+      const usageRate = this.editingRace.fuel_options.usage_rate || 0;
+      const usageType = this.editingRace.fuel_options.usage_type;
+      const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+      const capacity = this.editingRace.fuel_options.capacity || 100;
+
+      const fuelPerLap = getAnalogFuelUsage(usageType, usageRate, lapTime, referenceTime);
+      let pitTime = 0;
+      if (fuelPerLap > 0) pitTime = (capacity / fuelPerLap) * lapTime;
+
+      this.updatePitGraphCache();
+      const maxVal = this.pitGraphCache?.maxVal || 1;
+      const xPercent = Math.max(0, Math.min(1.5, pitTime / maxVal));
+
+      this.hoveredPoint = {
+        svgX: Number((xPercent * 400).toFixed(2)),
+        svgY: Number(((1 - yPercent) * 150).toFixed(2)),
+        screenX: mouseX,
+        screenY: mouseY,
+        time: lapTime,
+        value: pitTime,
+        type: 'pit'
+      };
+    }
+  }
+
+  onGraphMouseLeave() {
+    this.hoveredPoint = null;
+  }
 }
+
+function getAnalogFuelUsage(usageType: string, usageRate: number, time: number, referenceTime: number): number {
+  if (usageType === 'LINEAR') {
+    const safeRefTime = Math.max(0.1, referenceTime);
+    const x1 = safeRefTime * 2;
+    const y1 = usageRate / 2;
+    const x2 = safeRefTime;
+    const y2 = usageRate;
+
+    const m = (y2 - y1) / (x2 - x1);
+    const b = y1 - m * x1;
+
+    const val = m * time + b;
+    return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
+  }
+
+  const safeTime = Math.max(0.1, time);
+  const safeRefTime = Math.max(0.1, referenceTime);
+  let val = 0;
+  if (usageType === 'QUADRATIC') {
+    val = usageRate * (safeRefTime * safeRefTime) / (safeTime * safeTime);
+  } else if (usageType === 'CUBIC') {
+    val = usageRate * (safeRefTime * safeRefTime * safeRefTime) / (safeTime * safeTime * safeTime);
+  }
+
+  return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
+}
+

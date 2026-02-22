@@ -279,6 +279,68 @@
   background: rgba(0, 255, 255, 0.05);
 }
 
+/* Checkbox Styling */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.checkbox-wrapper {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  /* Matches input height */
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.rm-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: default;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-custom {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.rm-checkbox:checked~.checkbox-custom {
+  background: rgba(0, 255, 255, 0.2);
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.checkbox-custom::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #00ffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.rm-checkbox:checked~.checkbox-custom::after {
+  display: block;
+}
+
 .scrollable-content {
   flex: 1;
   display: flex;

@@ -172,6 +172,188 @@
           </div>
         </div>
       </div>
+
+      <!-- Analog Fuel Section -->
+      <div class="config-section-group fuel-config-section">
+        <h2 class="config-header">{{ 'RE_ANALOG_FUEL_HEADER' | translate }}</h2>
+        <div class="config-row fuel-enabled-row">
+          <div class="config-section checkbox-section">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingRace.fuel_options.enabled" (ngModelChange)="captureState()">
+              <span class="checkmark"></span>
+              <span class="checkbox-label">{{ 'RE_FUEL_ENABLED' | translate }}</span>
+            </label>
+          </div>
+          <div class="config-section checkbox-section">
+            <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+              <input type="checkbox" [(ngModel)]="editingRace.fuel_options.reset_fuel_at_heat_start"
+                (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+              <span class="checkmark"></span>
+              <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
+            </label>
+          </div>
+          <div class="config-section checkbox-section">
+            <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+              <input type="checkbox" [(ngModel)]="editingRace.fuel_options.end_heat_on_out_of_fuel"
+                (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+              <span class="checkmark"></span>
+              <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="fuel-options-grid" [class.options-disabled]="!editingRace.fuel_options.enabled">
+          <div class="config-row fuel-options-row">
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_USAGE_TYPE' | translate }}</label>
+              <select [(ngModel)]="editingRace.fuel_options.usage_type" (ngModelChange)="captureState()"
+                [disabled]="!editingRace.fuel_options.enabled">
+                <option value="LINEAR">{{ 'RE_FUEL_USAGE_LINEAR' | translate }}</option>
+                <option value="QUADRATIC">{{ 'RE_FUEL_USAGE_QUADRATIC' | translate }}</option>
+                <option value="CUBIC">{{ 'RE_FUEL_USAGE_CUBIC' | translate }}</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_USAGE_RATE' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.usage_rate" (ngModelChange)="captureState()"
+                min="0" step="0.1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_REFERENCE_TIME' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.reference_time"
+                (ngModelChange)="captureState()" step="1" min="1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <!-- Empty for alignment -->
+            </div>
+          </div>
+
+          <div class="config-row fuel-options-row">
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_CAPACITY' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.capacity" (ngModelChange)="captureState()"
+                min="0" step="1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_START_LEVEL' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.start_level" (ngModelChange)="captureState()"
+                min="0" max="100" step="1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_REFUEL_RATE' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.refuel_rate" (ngModelChange)="captureState()"
+                min="0" step="1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_PIT_DELAY' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
+                (ngModelChange)="captureState()" min="0" step="0.1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+          </div>
+        </div>
+
+        <!-- Fuel Graphs -->
+        <div class="fuel-graphs-container" *ngIf="editingRace.fuel_options.enabled">
+          <!-- Graph 1: Fuel Usage -->
+          <div class="fuel-graph-section">
+            <div class="graph-header">
+              <span class="graph-title">{{ 'RE_FUEL_GRAPH_USAGE_TITLE' | translate }} (2s - 15s)</span>
+            </div>
+            <div class="graph-body">
+              <div class="y-axis-labels">
+                <span *ngFor="let label of getFuelUsageYLabels()">{{ label }}</span>
+              </div>
+              <div class="y-axis-label">FUEL USED</div>
+              <div class="graph-svg-wrapper">
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" class="fuel-graph"
+                  (mousemove)="onGraphMouseMove($event, 'usage')" (mouseleave)="onGraphMouseLeave()">
+                  <line x1="0" y1="0" x2="0" y2="150" class="axis" />
+                  <line x1="0" y1="150" x2="400" y2="150" class="axis" />
+                  <line *ngFor="let h of [37.5, 75, 112.5]" x1="0" [attr.y1]="h" x2="400" [attr.y2]="h" class="grid" />
+                  <line *ngFor="let v of [100, 200, 300]" [attr.x1]="v" y1="0" [attr.x2]="v" y2="150" class="grid" />
+                  <path [attr.d]="getFuelUsagePath()" class="usage-path" />
+                  <g *ngIf="hoveredPoint && hoveredPoint.type === 'usage'">
+                    <line [attr.x1]="hoveredPoint.svgX" y1="0" [attr.x2]="hoveredPoint.svgX" y2="150"
+                      class="hover-line" />
+                    <circle [attr.cx]="hoveredPoint.svgX" [attr.cy]="hoveredPoint.svgY" r="6" class="hover-point" />
+                  </g>
+                </svg>
+                <!-- Tooltip for Usage Graph -->
+                <div *ngIf="hoveredPoint && hoveredPoint.type === 'usage'" class="graph-tooltip"
+                  [style.left.px]="hoveredPoint.screenX + 35" [style.top.px]="hoveredPoint.screenY">
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_FUEL_GRAPH_LAP_TIME' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.time | number:'1.2-2' }}s</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_FUEL_GRAPH_FUEL' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.value | number:'1.1-1' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="x-axis-labels">
+              <span>2s</span>
+              <span>5.25s</span>
+              <span>8.5s</span>
+              <span>11.75s</span>
+              <span>15s</span>
+            </div>
+            <div class="graph-footer">
+              <span class="x-axis-label">{{ 'RE_FUEL_GRAPH_LAP_TIME' | translate }}</span>
+            </div>
+          </div>
+
+          <!-- Graph 2: Time to Pit -->
+          <div class="fuel-graph-section">
+            <div class="graph-header">
+              <span class="graph-title">{{ 'RE_FUEL_GRAPH_PIT_TITLE' | translate }}</span>
+            </div>
+            <div class="graph-body">
+              <div class="y-axis-labels">
+                <span>15s</span>
+                <span>11.75s</span>
+                <span>8.5s</span>
+                <span>5.25s</span>
+                <span>2s</span>
+              </div>
+              <div class="y-axis-label">{{ 'RE_FUEL_GRAPH_LAP_TIME' | translate }}</div>
+              <div class="graph-svg-wrapper">
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" class="fuel-graph"
+                  (mousemove)="onGraphMouseMove($event, 'pit')" (mouseleave)="onGraphMouseLeave()">
+                  <line x1="0" y1="0" x2="0" y2="150" class="axis" />
+                  <line x1="0" y1="150" x2="400" y2="150" class="axis" />
+                  <line *ngFor="let h of [37.5, 75, 112.5]" x1="0" [attr.y1]="h" x2="400" [attr.y2]="h" class="grid" />
+                  <line *ngFor="let v of [100, 200, 300]" [attr.x1]="v" y1="0" [attr.x2]="v" y2="150" class="grid" />
+                  <path [attr.d]="getPitGraphPath()" class="usage-path" />
+                  <g *ngIf="hoveredPoint && hoveredPoint.type === 'pit'">
+                    <circle [attr.cx]="hoveredPoint.svgX" [attr.cy]="hoveredPoint.svgY" r="6" class="hover-point" />
+                  </g>
+                </svg>
+                <!-- Tooltip for Pit Graph -->
+                <div *ngIf="hoveredPoint && hoveredPoint.type === 'pit'" class="graph-tooltip"
+                  [style.left.px]="hoveredPoint.screenX + 35" [style.top.px]="hoveredPoint.screenY">
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_FUEL_GRAPH_LAP_TIME' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.time | number:'1.2-2' }}s</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_FUEL_GRAPH_PIT_IN' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.value | number:'1.1-1' }}s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="x-axis-labels">
+              <span *ngFor="let label of getPitGraphXLabels()">{{ label }}</span>
+            </div>
+            <div class="graph-footer">
+              <span class="x-axis-label">{{ 'RE_FUEL_GRAPH_PIT_TIME' | translate }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 

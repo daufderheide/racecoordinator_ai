@@ -527,6 +527,7 @@ public class DatabaseTaskHandler {
                     race.getHeatScoring(),
                     race.getOverallScoring(),
                     race.getMinLapTime(),
+                    race.getFuelOptions(),
                     nextId,
                     null);
         }
@@ -573,6 +574,7 @@ public class DatabaseTaskHandler {
                 race.getHeatScoring(),
                 race.getOverallScoring(),
                 race.getMinLapTime(),
+                race.getFuelOptions(),
                 id,
                 race.getId());
 
@@ -644,6 +646,7 @@ public class DatabaseTaskHandler {
             raceMap.put("heat_scoring", race.getHeatScoring());
             raceMap.put("overall_scoring", race.getOverallScoring());
             raceMap.put("min_lap_time", race.getMinLapTime());
+            raceMap.put("fuel_options", race.getFuelOptions());
             response.add(raceMap);
         }
         ctx.json(response);

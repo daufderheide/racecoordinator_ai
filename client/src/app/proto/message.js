@@ -12012,6 +12012,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [startLevel] AnalogFuelOptions startLevel
              * @property {number|null} [refuelRate] AnalogFuelOptions refuelRate
              * @property {number|null} [pitStopDelay] AnalogFuelOptions pitStopDelay
+             * @property {number|null} [referenceTime] AnalogFuelOptions referenceTime
              */
 
             /**
@@ -12102,6 +12103,14 @@ export const com = $root.com = (() => {
             AnalogFuelOptions.prototype.pitStopDelay = 0;
 
             /**
+             * AnalogFuelOptions referenceTime.
+             * @member {number} referenceTime
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.referenceTime = 0;
+
+            /**
              * Creates a new AnalogFuelOptions instance using the specified properties.
              * @function create
              * @memberof com.antigravity.AnalogFuelOptions
@@ -12143,6 +12152,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 8, wireType 1 =*/65).double(message.refuelRate);
                 if (message.pitStopDelay != null && Object.hasOwnProperty.call(message, "pitStopDelay"))
                     writer.uint32(/* id 9, wireType 1 =*/73).double(message.pitStopDelay);
+                if (message.referenceTime != null && Object.hasOwnProperty.call(message, "referenceTime"))
+                    writer.uint32(/* id 10, wireType 1 =*/81).double(message.referenceTime);
                 return writer;
             };
 
@@ -12215,6 +12226,10 @@ export const com = $root.com = (() => {
                             message.pitStopDelay = reader.double();
                             break;
                         }
+                    case 10: {
+                            message.referenceTime = reader.double();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -12283,6 +12298,9 @@ export const com = $root.com = (() => {
                 if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
                     if (typeof message.pitStopDelay !== "number")
                         return "pitStopDelay: number expected";
+                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
+                    if (typeof message.referenceTime !== "number")
+                        return "referenceTime: number expected";
                 return null;
             };
 
@@ -12334,6 +12352,8 @@ export const com = $root.com = (() => {
                     message.refuelRate = Number(object.refuelRate);
                 if (object.pitStopDelay != null)
                     message.pitStopDelay = Number(object.pitStopDelay);
+                if (object.referenceTime != null)
+                    message.referenceTime = Number(object.referenceTime);
                 return message;
             };
 
@@ -12360,6 +12380,7 @@ export const com = $root.com = (() => {
                     object.startLevel = 0;
                     object.refuelRate = 0;
                     object.pitStopDelay = 0;
+                    object.referenceTime = 0;
                 }
                 if (message.enabled != null && message.hasOwnProperty("enabled"))
                     object.enabled = message.enabled;
@@ -12379,6 +12400,8 @@ export const com = $root.com = (() => {
                     object.refuelRate = options.json && !isFinite(message.refuelRate) ? String(message.refuelRate) : message.refuelRate;
                 if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
                     object.pitStopDelay = options.json && !isFinite(message.pitStopDelay) ? String(message.pitStopDelay) : message.pitStopDelay;
+                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
+                    object.referenceTime = options.json && !isFinite(message.referenceTime) ? String(message.referenceTime) : message.referenceTime;
                 return object;
             };
 
