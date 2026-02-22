@@ -278,6 +278,10 @@
     "RD_COL_REACTION_TIME": "REAKTIONSZEIT",
     "RD_COL_NAME": "NAME",
     "RD_COL_NICKNAME": "SPITZNAME",
+    "RD_COL_TEAM": "TEAM",
+    "RD_COL_FUEL_LEVEL": "KRAFTSTOFFSTAND",
+    "RD_COL_FUEL_CAPACITY": "KRAFTSTOFFKAPAZITÄT",
+    "RD_COL_FUEL_PERCENTAGE": "KRAFTSTOFF %",
     "RD_EMPTY_LANE": "Leere Spur",
     "RD_ERROR_NO_DRIVERS": "Keine Fahrer ausgewählt.",
     "RD_MENU_ADD_LAP": "Runde hinzufügen",
@@ -449,12 +453,14 @@
     "UI_EDITOR_COL_GAP_POSITION": "ABSTAND ZUR POSITION",
     "UI_EDITOR_COL_REACTION_TIME": "REAKTIONSZEIT",
     "UI_EDITOR_COL_TEAM": "TEAMNAME",
+    "UI_EDITOR_COL_FUEL_LEVEL": "KRAFTSTOFFSTAND",
+    "UI_EDITOR_COL_FUEL_CAPACITY": "KRAFTSTOFFKAPAZITÄT",
+    "UI_EDITOR_COL_FUEL_PERCENTAGE": "KRAFTSTOFFPROZENT",
     "UE_BTN_REORDER_COLUMNS": "SPALTEN NEU ORDNEN",
     "UE_REORDER_DIALOG_TITLE": "Spalten neu anordnen",
     "UE_LABEL_AVAILABLE_VALUES": "Verfügbare Werte",
     "UE_LABEL_COLUMN_SLOTS": "Spaltenplätze",
     "UE_REORDER_DIALOG_PREVIEW": "Spur-Vorschau",
     "UE_REORDER_HINT": "Ziehen Sie Werte auf die Spaltenanker, um das Layout anzupassen. CenterCenter ist der Primärwert.",
-    "UE_HINT_DROP_TO_ADD_COLUMN": "Hier ablegen, um Spalte hinzuzufügen",
-    "RD_COL_TEAM": "TEAM"
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Hier ablegen, um Spalte hinzuzufügen"
 }

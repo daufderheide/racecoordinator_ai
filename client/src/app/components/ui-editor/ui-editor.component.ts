@@ -44,6 +44,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
     { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
     { key: 'participant.team.name', label: 'UI_EDITOR_COL_TEAM' },
+    { key: 'participant.fuelLevel', label: 'UI_EDITOR_COL_FUEL_LEVEL' },
+    { key: 'fuelCapacity', label: 'UI_EDITOR_COL_FUEL_CAPACITY' },
+    { key: 'fuelPercentage', label: 'UI_EDITOR_COL_FUEL_PERCENTAGE' },
   ];
 
 

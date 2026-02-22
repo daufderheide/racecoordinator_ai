@@ -67,6 +67,18 @@ public class Race implements ProtocolListener {
 
     this.state = new NotStarted();
     this.state.enter(this);
+
+    initializeFuelLevels();
+  }
+
+  private void initializeFuelLevels() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      double initialLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
+      for (RaceParticipant driver : drivers) {
+        driver.setFuelLevel(initialLevel);
+      }
+    }
   }
 
   private void createProtocols(boolean isDemoMode) {
@@ -210,15 +222,17 @@ public class Race implements ProtocolListener {
       return;
     }
 
-    boolean isFirstHeat = heats.indexOf(currentHeat) == 0;
     boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
+    double startLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
 
-    for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
-      com.antigravity.race.DriverHeatData heatData = currentHeat.getDrivers().get(i);
+    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
       RaceParticipant participant = heatData.getDriver();
+      if (participant == null || participant.getDriver() == null || participant.getDriver().getEntityId() == null) {
+        continue;
+      }
 
-      if (isFirstHeat || resetAtStart) {
-        participant.setFuelLevel(fuelOptions.getStartLevel());
+      if (resetAtStart) {
+        participant.setFuelLevel(startLevel);
       }
 
       // Store the initial fuel level for this heat to support restarts

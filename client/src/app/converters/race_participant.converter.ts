@@ -14,9 +14,23 @@ export class RaceParticipantConverter {
   static fromProto(proto: com.antigravity.IRaceParticipant): RaceParticipant {
     const id = proto.objectId || '';
 
-    // If driver is missing, this is a reference to a participant already in the cache
-    if (!proto.driver && this.cache.has(id)) {
-      return this.cache.get(id)!;
+    const cached = this.cache.get(id);
+    if (cached && proto.driver) {
+      // Update existing object in place to preserve references
+      cached.driver = DriverConverter.fromProto(proto.driver);
+      cached.rank = proto.rank || 0;
+      cached.totalLaps = proto.totalLaps || 0;
+      cached.totalTime = proto.totalTime || 0;
+      cached.bestLapTime = proto.bestLapTime || 0;
+      cached.averageLapTime = proto.averageLapTime || 0;
+      cached.medianLapTime = proto.medianLapTime || 0;
+      cached.rankValue = proto.rankValue || 0;
+      cached.seed = proto.seed || 0;
+      cached.fuelLevel = proto.fuelLevel || 0;
+      if (proto.team) {
+        cached.team = TeamConverter.fromProto(proto.team);
+      }
+      return cached;
     }
 
     return this.cache.process(id, false, () => {
@@ -34,6 +48,7 @@ export class RaceParticipantConverter {
         proto.medianLapTime || 0,
         proto.rankValue || 0,
         proto.seed || 0,
+        proto.fuelLevel || 0,
         team
       );
     });

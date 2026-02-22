@@ -604,23 +604,14 @@
 
 .fuel-enabled-row {
   margin-bottom: 20px;
-  display: flex;
-  gap: 30px;
-  flex-wrap: wrap;
 }
 
 .fuel-options-grid {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 10px;
   animation: slideDown 0.3s ease-out;
   transition: opacity 0.3s ease;
-}
-
-.fuel-options-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
 }
 
 .options-disabled {

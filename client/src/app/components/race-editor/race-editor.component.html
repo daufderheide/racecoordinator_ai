@@ -184,26 +184,10 @@
               <span class="checkbox-label">{{ 'RE_FUEL_ENABLED' | translate }}</span>
             </label>
           </div>
-          <div class="config-section checkbox-section">
-            <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
-              <input type="checkbox" [(ngModel)]="editingRace.fuel_options.reset_fuel_at_heat_start"
-                (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
-              <span class="checkmark"></span>
-              <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
-            </label>
-          </div>
-          <div class="config-section checkbox-section">
-            <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
-              <input type="checkbox" [(ngModel)]="editingRace.fuel_options.end_heat_on_out_of_fuel"
-                (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
-              <span class="checkmark"></span>
-              <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
-            </label>
-          </div>
         </div>
 
         <div class="fuel-options-grid" [class.options-disabled]="!editingRace.fuel_options.enabled">
-          <div class="config-row fuel-options-row">
+          <div class="config-row">
             <div class="config-section">
               <label>{{ 'RE_FUEL_USAGE_TYPE' | translate }}</label>
               <select [(ngModel)]="editingRace.fuel_options.usage_type" (ngModelChange)="captureState()"
@@ -223,12 +207,9 @@
               <input type="number" [(ngModel)]="editingRace.fuel_options.reference_time"
                 (ngModelChange)="captureState()" step="1" min="1" [disabled]="!editingRace.fuel_options.enabled">
             </div>
-            <div class="config-section">
-              <!-- Empty for alignment -->
-            </div>
           </div>
 
-          <div class="config-row fuel-options-row">
+          <div class="config-row">
             <div class="config-section">
               <label>{{ 'RE_FUEL_CAPACITY' | translate }}</label>
               <input type="number" [(ngModel)]="editingRace.fuel_options.capacity" (ngModelChange)="captureState()"
@@ -248,6 +229,25 @@
               <label>{{ 'RE_FUEL_PIT_DELAY' | translate }}</label>
               <input type="number" [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
                 (ngModelChange)="captureState()" min="0" step="0.1" [disabled]="!editingRace.fuel_options.enabled">
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div class="config-section checkbox-section">
+              <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+                <input type="checkbox" [(ngModel)]="editingRace.fuel_options.reset_fuel_at_heat_start"
+                  (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
+              </label>
+            </div>
+            <div class="config-section checkbox-section">
+              <label class="checkbox-container" [class.disabled]="!editingRace.fuel_options.enabled">
+                <input type="checkbox" [(ngModel)]="editingRace.fuel_options.end_heat_on_out_of_fuel"
+                  (ngModelChange)="captureState()" [disabled]="!editingRace.fuel_options.enabled">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
+              </label>
             </div>
           </div>
         </div>

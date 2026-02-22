@@ -184,7 +184,7 @@ public class Racing implements IRaceState {
       com.antigravity.race.Heat heat = this.race.getCurrentHeat();
       if (heat != null && lane >= 0 && lane < heat.getDrivers().size()) {
         com.antigravity.race.DriverHeatData driverData = heat.getDrivers().get(lane);
-        if (driverData.getDriver().getFuelLevel() <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+        if (driverData.getDriver().getFuelLevel() <= 0) {
           System.out.println("Race: Ignored onLap - Driver on lane " + lane + " is out of fuel");
           return;
         }
@@ -366,6 +366,7 @@ public class Racing implements IRaceState {
         .setBestLapTime(driverData.getBestLapTime())
         .setInterfaceId(interfaceId)
         .setDriverId(driverData.getActualDriver() != null ? driverData.getActualDriver().getEntityId() : "")
+        .setFuelLevel(driverData.getDriver().getFuelLevel())
         .build();
 
     com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()

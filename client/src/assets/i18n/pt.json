@@ -278,6 +278,10 @@
     "RD_COL_REACTION_TIME": "TEMPO REAÇÃO",
     "RD_COL_NAME": "NOME",
     "RD_COL_NICKNAME": "APELIDO",
+    "RD_COL_TEAM": "EQUIPA",
+    "RD_COL_FUEL_LEVEL": "NÍVEL DE COMBUSTÍVEL",
+    "RD_COL_FUEL_CAPACITY": "CAPACIDADE DE COMBUSTÍVEL",
+    "RD_COL_FUEL_PERCENTAGE": "COMBUSTÍVEL %",
     "RD_EMPTY_LANE": "Raia Vazia",
     "RD_ERROR_NO_DRIVERS": "Nenhum piloto selecionado.",
     "RD_MENU_ADD_LAP": "Adicionar Volta",
@@ -455,6 +459,5 @@
     "UE_LABEL_COLUMN_SLOTS": "Slots de coluna",
     "UE_REORDER_DIALOG_PREVIEW": "Visualização da pista",
     "UE_REORDER_HINT": "Arraste os valores para as âncoras da coluna para personalizar o layout. CenterCenter é o valor principal.",
-    "UE_HINT_DROP_TO_ADD_COLUMN": "Solte aqui para adicionar coluna",
-    "RD_COL_TEAM": "EQUIPE"
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Solte aqui para adicionar coluna"
 }

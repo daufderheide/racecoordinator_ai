@@ -259,6 +259,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       if (update.participants) {
         const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
         this.raceService.setParticipants(participants);
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     }));
 
@@ -1095,7 +1098,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'gapPosition': 275,
       'driver.name': 400,
       'driver.nickname': 400,
-      'participant.team.name': 275
+      'participant.team.name': 275,
+      'participant.fuelLevel': 180,
+      'fuelCapacity': 180,
+      'fuelPercentage': 180
     };
 
     let totalFixedWithoutResizingColumn = 0;
@@ -1172,6 +1178,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
     } else if (baseKey === 'participant.team.name') {
       return hd.participant?.team?.name || '';
+    } else if (baseKey === 'participant.fuelLevel') {
+      return value !== undefined ? value.toFixed(1) : '--.-';
+    } else if (baseKey === 'fuelCapacity') {
+      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      return capacity !== undefined ? capacity.toFixed(1) : '--.-';
+    } else if (baseKey === 'fuelPercentage') {
+      const level = hd.participant?.fuelLevel;
+      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      if (level !== undefined && capacity !== undefined && capacity > 0) {
+        const percentage = Math.round((level / capacity) * 100);
+        return percentage + '%';
+      }
+      return '--%';
     }
     return value?.toString() ?? '';
   }
@@ -1196,7 +1215,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'reactionTime': 'RD_COL_REACTION_TIME',
       'participant.team.name': 'RD_COL_TEAM',
       'driver.name': 'RD_COL_NAME',
-      'driver.nickname': 'RD_COL_NICKNAME'
+      'driver.nickname': 'RD_COL_NICKNAME',
+      'participant.fuelLevel': 'RD_COL_FUEL_LEVEL',
+      'fuelCapacity': 'RD_COL_FUEL_CAPACITY',
+      'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE'
     };
     return labels[baseKey] || 'UNKNOWN';
   }

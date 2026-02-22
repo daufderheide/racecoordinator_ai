@@ -278,6 +278,10 @@
     "RD_COL_REACTION_TIME": "TEMPS RÉACTION",
     "RD_COL_NAME": "NOM",
     "RD_COL_NICKNAME": "SURNOM",
+    "RD_COL_TEAM": "ÉQUIPE",
+    "RD_COL_FUEL_LEVEL": "NIVEAU DE CARBURANT",
+    "RD_COL_FUEL_CAPACITY": "CAPACITÉ DE CARBURANT",
+    "RD_COL_FUEL_PERCENTAGE": "CARBURANT %",
     "RD_EMPTY_LANE": "Voie Vide",
     "RD_ERROR_NO_DRIVERS": "Aucun pilote sélectionné.",
     "RD_MENU_ADD_LAP": "Ajouter Tour",
@@ -432,12 +436,14 @@
     "UI_EDITOR_COL_GAP_POSITION": "ÉCART À LA POSITION",
     "UI_EDITOR_COL_REACTION_TIME": "TEMPS DE RÉACTION",
     "UI_EDITOR_COL_TEAM": "NOM DE L'ÉQUIPE",
+    "UI_EDITOR_COL_FUEL_LEVEL": "NIVEAU DE CARBURANT",
+    "UI_EDITOR_COL_FUEL_CAPACITY": "CAPACITÉ DE CARBURANT",
+    "UI_EDITOR_COL_FUEL_PERCENTAGE": "POURCENTAGE DE CARBURANT",
     "UE_BTN_REORDER_COLUMNS": "RÉORDONNER LES COLONNES",
     "UE_REORDER_DIALOG_TITLE": "Réorganiser les colonnes",
     "UE_LABEL_AVAILABLE_VALUES": "Valeurs disponibles",
     "UE_LABEL_COLUMN_SLOTS": "Emplacements de colonnes",
     "UE_REORDER_DIALOG_PREVIEW": "Aperçu de la piste",
     "UE_REORDER_HINT": "Faites glisser les valeurs vers les ancres de colonne pour personnaliser la mise en page. CenterCenter est la valeur principale.",
-    "UE_HINT_DROP_TO_ADD_COLUMN": "Déposer ici pour ajouter une colonne",
-    "RD_COL_TEAM": "ÉQUIPE"
+    "UE_HINT_DROP_TO_ADD_COLUMN": "Déposer ici pour ajouter une colonne"
 }

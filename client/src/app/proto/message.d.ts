@@ -4222,6 +4222,9 @@ export namespace com {
 
             /** Lap driverId */
             driverId?: (string|null);
+
+            /** Lap fuelLevel */
+            fuelLevel?: (number|null);
         }
 
         /** Represents a Lap. */
@@ -4256,6 +4259,9 @@ export namespace com {
 
             /** Lap driverId. */
             public driverId: string;
+
+            /** Lap fuelLevel. */
+            public fuelLevel: number;
 
             /**
              * Creates a new Lap instance using the specified properties.

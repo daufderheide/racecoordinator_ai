@@ -9575,6 +9575,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [bestLapTime] Lap bestLapTime
              * @property {number|null} [interfaceId] Lap interfaceId
              * @property {string|null} [driverId] Lap driverId
+             * @property {number|null} [fuelLevel] Lap fuelLevel
              */
 
             /**
@@ -9657,6 +9658,14 @@ export const com = $root.com = (() => {
             Lap.prototype.driverId = "";
 
             /**
+             * Lap fuelLevel.
+             * @member {number} fuelLevel
+             * @memberof com.antigravity.Lap
+             * @instance
+             */
+            Lap.prototype.fuelLevel = 0;
+
+            /**
              * Creates a new Lap instance using the specified properties.
              * @function create
              * @memberof com.antigravity.Lap
@@ -9696,6 +9705,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 7, wireType 0 =*/56).int32(message.interfaceId);
                 if (message.driverId != null && Object.hasOwnProperty.call(message, "driverId"))
                     writer.uint32(/* id 8, wireType 2 =*/66).string(message.driverId);
+                if (message.fuelLevel != null && Object.hasOwnProperty.call(message, "fuelLevel"))
+                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.fuelLevel);
                 return writer;
             };
 
@@ -9764,6 +9775,10 @@ export const com = $root.com = (() => {
                             message.driverId = reader.string();
                             break;
                         }
+                    case 9: {
+                            message.fuelLevel = reader.double();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -9823,6 +9838,9 @@ export const com = $root.com = (() => {
                 if (message.driverId != null && message.hasOwnProperty("driverId"))
                     if (!$util.isString(message.driverId))
                         return "driverId: string expected";
+                if (message.fuelLevel != null && message.hasOwnProperty("fuelLevel"))
+                    if (typeof message.fuelLevel !== "number")
+                        return "fuelLevel: number expected";
                 return null;
             };
 
@@ -9854,6 +9872,8 @@ export const com = $root.com = (() => {
                     message.interfaceId = object.interfaceId | 0;
                 if (object.driverId != null)
                     message.driverId = String(object.driverId);
+                if (object.fuelLevel != null)
+                    message.fuelLevel = Number(object.fuelLevel);
                 return message;
             };
 
@@ -9879,6 +9899,7 @@ export const com = $root.com = (() => {
                     object.bestLapTime = 0;
                     object.interfaceId = 0;
                     object.driverId = "";
+                    object.fuelLevel = 0;
                 }
                 if (message.objectId != null && message.hasOwnProperty("objectId"))
                     object.objectId = message.objectId;
@@ -9896,6 +9917,8 @@ export const com = $root.com = (() => {
                     object.interfaceId = message.interfaceId;
                 if (message.driverId != null && message.hasOwnProperty("driverId"))
                     object.driverId = message.driverId;
+                if (message.fuelLevel != null && message.hasOwnProperty("fuelLevel"))
+                    object.fuelLevel = options.json && !isFinite(message.fuelLevel) ? String(message.fuelLevel) : message.fuelLevel;
                 return object;
             };
 
