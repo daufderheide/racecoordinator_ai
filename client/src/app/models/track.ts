@@ -12,43 +12,43 @@ export const MAX_ANALOG_PINS = 16;
  * everything from lap counting, to lane power and visual effects like led lights.
  */
 export class Track implements Model {
-    readonly entity_id: string;
-    readonly name: string;
-    readonly lanes: Lane[];
-    readonly arduino_config?: ArduinoConfig;
+  readonly entity_id: string;
+  readonly name: string;
+  readonly lanes: Lane[];
+  readonly arduino_config?: ArduinoConfig;
 
-    constructor(entity_id: string, name: string, lanes: Lane[], arduino_config?: ArduinoConfig) {
-        this.entity_id = entity_id;
-        this.name = name;
-        this.lanes = lanes;
-        this.arduino_config = arduino_config;
-    }
+  constructor(entity_id: string, name: string, lanes: Lane[], arduino_config?: ArduinoConfig) {
+    this.entity_id = entity_id;
+    this.name = name;
+    this.lanes = lanes;
+    this.arduino_config = arduino_config;
+  }
 
-    get objectId(): string {
-        return this.entity_id;
-    }
+  get objectId(): string {
+    return this.entity_id;
+  }
 }
 
 export interface ArduinoConfig {
-    name: string;
-    commPort: string;
-    baudRate: number;
-    debounceUs: number;
-    hardwareType: number;
+  name: string;
+  commPort: string;
+  baudRate: number;
+  debounceUs: number;
+  hardwareType: number;
 
-    globalInvertLanes: number;
-    normallyClosedRelays: boolean;
-    globalInvertLights: number;
+  globalInvertLanes: number;
+  normallyClosedRelays: boolean;
+  globalInvertLights: number;
 
-    useLapsForPits: number;
-    useLapsForPitEnd: number;
-    usePitsAsLaps: number;
-    useLapsForSegments: number;
+  useLapsForPits: number;
+  useLapsForPitEnd: number;
+  usePitsAsLaps: number;
+  useLapsForSegments: number;
 
-    // Arrays of mapped behaviors (codes)
-    digitalIds: number[];
-    analogIds: number[];
+  // Arrays of mapped behaviors (codes)
+  digitalIds: number[];
+  analogIds: number[];
 
-    ledStrings: any[] | null;
-    ledLaneColorOverrides: any[] | null;
+  ledStrings: any[] | null;
+  ledLaneColorOverrides: any[] | null;
 }

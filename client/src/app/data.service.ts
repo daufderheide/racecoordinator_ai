@@ -452,7 +452,27 @@ export class DataService {
     );
   }
 
+  saveImageSet(name: string, entries: com.antigravity.ISaveImageSetEntry[], id?: string): Observable<com.antigravity.IAssetMessage> {
+    const request = com.antigravity.SaveImageSetRequest.create({ id, name, entries });
+    const buffer = com.antigravity.SaveImageSetRequest.encode(request).finish();
+    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+
+    return this.http.post(`${this.baseUrl}/api/assets/save-image-set`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const saveResponse = com.antigravity.SaveImageSetResponse.decode(new Uint8Array(response as any));
+        if (!saveResponse.success) {
+          throw new Error(saveResponse.message ?? 'Unknown error saving image set');
+        }
+        return saveResponse.asset!;
+      })
+    );
+  }
+
   deleteAsset(id: string): Observable<boolean> {
+
     const request = com.antigravity.DeleteAssetRequest.create({ id });
     const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();
 

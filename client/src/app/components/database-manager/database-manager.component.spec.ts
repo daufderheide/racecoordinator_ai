@@ -80,6 +80,7 @@ describe('DatabaseManagerComponent', () => {
   });
 
   it('should handle error during initial load', () => {
+    spyOn(console, 'error');
     mockDataService.getDatabases.and.returnValue(throwError(() => new Error('Error')));
     component.initialLoad();
     expect(component.loading).toBeFalse();

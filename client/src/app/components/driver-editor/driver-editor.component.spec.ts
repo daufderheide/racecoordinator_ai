@@ -186,6 +186,7 @@ describe('DriverEditorComponent', () => {
   });
 
   it('should stay on page and keep original ID when save as new fails', () => {
+    spyOn(console, 'error');
     const driver = new Driver('d1', 'Original', 'Orig');
     setupDriver(driver);
 

@@ -59,6 +59,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
+  isCustomUIPanelOpen: boolean = false;
 
   supportedLanguages: { code: string, nameKey: string }[] = [];
   currentLanguage: string = '';
@@ -154,7 +155,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
               participantMap.delete(prefixedId);
             }
           }
-        } // 抽离. driver name and team name. Unselected (Alphabetical)
+        }
         this.unselectedParticipants = Array.from(participantMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 
         this.cdr.detectChanges();
@@ -198,8 +199,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }
   }
 
-
-
   private updateScale() {
     const targetWidth = 1600;
     const targetHeight = 900;
@@ -221,7 +220,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   onParticipantImageError(participant: Participant) {
-    this.imageErrors.add((this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id); // 抽离. driver name and team name.
+    this.imageErrors.add((this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id);
   }
 
   // --- Participant Logic ---
@@ -242,7 +241,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         this.selectedParticipants = [...this.selectedParticipants, participant];
       }
     });
-  } // 抽离. driver name and team name.
+  }
 
   addAllParticipants() {
     this.updateListWithRefresh(() => {
@@ -288,7 +287,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   getParticipantUniqueId(participant: Participant): string {
     return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id;
-  } // 抽离. driver name and team name.
+  }
 
   private updateListWithRefresh(action: () => void) {
     this.clearSelectionAndBlur();
@@ -331,7 +330,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   trackByParticipant = (index: number, participant: Participant): string => {
-    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id; // 抽离. driver name and team name.
+    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id;
   }
 
   preventSelection(event: Event) {
@@ -364,6 +363,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       this.isLocalizationDropdownOpen = false;
     }
     this.isDropdownOpen = newState;
+    this.cdr.detectChanges();
   }
 
   closeDropdown() {
@@ -374,6 +374,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.selectedRace = race;
     this.saveSettings();
     this.closeDropdown();
+    this.cdr.detectChanges();
   }
 
   private saveSettings() {
@@ -389,7 +390,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
     settings.selectedDriverIds = this.selectedParticipants.map(p => this.getParticipantUniqueId(p));
 
-    this.settingsService.saveSettings(settings); // 抽离. driver name and team name.
+    this.settingsService.saveSettings(settings);
     this.updateQuickStartRaces(settings.recentRaceIds);
   }
 
@@ -400,7 +401,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       // Ensure settings are up to date before redirecting
       this.saveSettings();
 
-      const settings = this.settingsService.getSettings(); // Get back what we just saved (or what was there)
+      const settings = this.settingsService.getSettings();
 
       this.dataService.initializeRace(this.selectedRace.entity_id, settings.selectedDriverIds, isDemo).subscribe({
         next: (response) => {
@@ -459,7 +460,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getRaceCardBackgroundClass(index: number): string {
-    const backgrounds = ['card-bg-gp', 'card-bg-tt']; // Add more if available
+    const backgrounds = ['card-bg-gp', 'card-bg-tt'];
     return backgrounds[index % backgrounds.length];
   }
 
@@ -492,11 +493,13 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     if (!this.isOptionsDropdownOpen) {
       this.isLocalizationDropdownOpen = false;
     }
+    this.cdr.detectChanges();
   }
 
   toggleLocalizationDropdown(event: Event) {
     event.stopPropagation();
     this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
+    this.cdr.detectChanges();
   }
 
   closeOptionsDropdown() {
@@ -526,7 +529,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/ui-editor']);
   }
 
-
   openServerSettings() {
     this.closeOptionsDropdown();
     this.requestServerConfig.emit();
@@ -544,6 +546,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       this.isLocalizationDropdownOpen = false;
     }
     this.isFileDropdownOpen = newState;
+    this.cdr.detectChanges();
   }
 
   closeFileDropdown() {
@@ -572,7 +575,6 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   openRaceManager() {
     const queryParams: any = this.selectedRace ? { id: this.selectedRace.entity_id } : {};
-    // Pass the number of selected participants to the race manager for heat generation
     queryParams.driverCount = this.selectedParticipants.length;
     this.closeConfigDropdown();
     this.router.navigate(['/race-manager'], { queryParams });
@@ -588,6 +590,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       this.isLocalizationDropdownOpen = false;
     }
     this.isConfigDropdownOpen = newState;
+    this.cdr.detectChanges();
   }
 
   closeConfigDropdown() {
@@ -597,6 +600,10 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   openDatabaseManager() {
     this.closeFileDropdown();
     this.router.navigate(['/database-manager']);
+  }
+
+  onSearchChange() {
+    this.cdr.detectChanges();
   }
 
   startHelp() {

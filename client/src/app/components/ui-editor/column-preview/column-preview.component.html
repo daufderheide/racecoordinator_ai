@@ -5,8 +5,8 @@
       <div class="column-frame">
         <div class="anchor-preview-grid">
           <div class="preview-point" *ngFor="let opt of anchorOptions; trackBy: trackByAnchor">
-            <span class="preview-text" *ngIf="columnLayouts[slot.key]?.[opt]">
-              {{ (getLabel(columnLayouts[slot.key][opt]) | translate) || '???' }}
+            <span class="preview-text" *ngIf="getAnchorValue(slot.key, opt)">
+              {{ (getLabel(getAnchorValue(slot.key, opt)) | translate) }}
             </span>
           </div>
         </div>

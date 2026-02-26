@@ -13,9 +13,9 @@
 }
 
 .reorder-modal.large-modal {
-  width: 1400px;
-  max-width: 95vw;
-  height: 85vh;
+  width: 1600px;
+  max-width: 98vw;
+  height: 90vh;
   background: #1a1c1e;
   border-radius: 16px;
   border: 1px solid #333;
@@ -59,7 +59,7 @@
 
 /* Sidebar: Available Values */
 .values-sidebar {
-  flex: 0 0 200px;
+  flex: 0 0 250px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
   padding: 15px;
@@ -105,7 +105,7 @@
 /* Main Area: Column Slots */
 .slots-container {
   flex: 1;
-  min-width: 500px;
+  min-width: 600px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 12px;
   padding: 15px;
@@ -300,66 +300,7 @@
   overflow: hidden;
 }
 
-.lane-preview-container {
-  flex: 1;
-  background: #0d1117;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #333;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
-}
 
-.lane-visual {
-  width: 100%;
-  height: 160px;
-  background: #1a2a3a;
-  border-radius: 8px;
-  display: flex;
-  border: 3px solid #4ade80;
-  box-shadow: 0 0 20px rgba(74, 222, 128, 0.2);
-}
-
-.lane-column {
-  flex: 1;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
-}
-
-.lane-column:last-child {
-  border-right: none;
-}
-
-.anchor-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  width: 100%;
-  height: 100%;
-  padding: 4px;
-}
-
-.preview-point {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  overflow: hidden;
-}
-
-.preview-text {
-  font-size: 0.6em;
-  font-family: monospace;
-  color: #fff;
-  text-align: center;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
 
 /* Blank Add Slot */
 .slot-add-blank {

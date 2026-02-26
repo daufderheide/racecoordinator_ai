@@ -161,12 +161,22 @@
           <ng-container *ngFor="let column of columns; let colIndex = index">
             <!-- Iterate over all assigned anchors in the layout -->
             <ng-container *ngFor="let entry of column.layout | keyvalue">
-              <text [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
+              <image
+                *ngIf="entry.value?.toString()?.includes('avatarUrl') || entry.value?.toString()?.startsWith('imageset_')"
+                [attr.x]="getColumnCenterX(colIndex) - ((560 / track.lanes.length) * 0.4)"
+                [attr.y]="(560 / track.lanes.length) * 0.1" [attr.width]="(560 / track.lanes.length) * 0.8"
+                [attr.height]="(560 / track.lanes.length) * 0.8"
+                [attr.href]="formatColumnValue(hd, column, entry.value?.toString() || '')"
+                preserveAspectRatio="xMidYMid slice" />
+
+              <text
+                *ngIf="!entry.value?.toString()?.includes('avatarUrl') && !entry.value?.toString()?.startsWith('imageset_')"
+                [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
                 [attr.font-size]="getAnchorFontSize(entry.key)" font-weight="800"
                 [attr.fill]="track.lanes[hd.laneIndex].foreground_color"
                 [attr.text-anchor]="getColumnTextAnchor(colIndex, entry.key)" font-family="monospace" appSvgTextScaler
                 [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{ formatColumnValue(hd,
-                column, entry.value) }}</text>
+                column, entry.value?.toString() || '') }}</text>
             </ng-container>
           </ng-container>
 

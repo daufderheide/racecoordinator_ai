@@ -196,7 +196,7 @@
       <div class="search-bar">
         <div class="search-wrapper">
           <input type="text" class="search-input driver-search" [placeholder]="'DM_PLACEHOLDER_SEARCH' | translate"
-            [(ngModel)]="driverSearchQuery">
+            [(ngModel)]="driverSearchQuery" (ngModelChange)="onSearchChange()">
         </div>
       </div>
     </div>
@@ -219,7 +219,7 @@
       <div class="all-races-selector">
         <div class="search-wrapper">
           <input type="text" class="search-input race-search" [placeholder]="'RDS_FILTER_RACES' | translate"
-            [(ngModel)]="raceSearchQuery">
+            [(ngModel)]="raceSearchQuery" (ngModelChange)="onSearchChange()">
           <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
           </svg>

@@ -26,3 +26,10 @@ message RenameAssetResponse {
   bool success = 1;
   string message = 2;
 }
+
+message SaveImageSetResponse {
+  bool success = 1;
+  string message = 2;
+  AssetMessage asset = 3;
+}
+

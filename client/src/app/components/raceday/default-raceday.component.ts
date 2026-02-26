@@ -97,7 +97,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     LaneConverter.clearCache();
 
     this.subscriptions.push(this.dataService.listAssets().subscribe(assets => {
-      this.assets = assets?.filter((a: any) => a.type === 'image') || [];
+      this.assets = assets || [];
+      this.loadColumns(); // Refresh column definitions to pick up asset names and update formatters
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }
@@ -216,7 +217,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.dataService.getCarData().subscribe(carData => {
-      if (this.heat && this.heat.heatDrivers && carData.lane != null) {
+      if (this.heat && this.heat.heatDrivers && carData && carData.lane != null) {
         const driverData = this.heat.heatDrivers[carData.lane];
         if (driverData && carData.fuelLevel != null) {
           driverData.participant.fuelLevel = carData.fuelLevel as number;
@@ -240,7 +241,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
-      if (this.heat && update.updates) {
+      if (this.heat && update && update.updates) {
         update.updates.forEach(u => {
           if (u.objectId) {
             this.driverRankings.set(u.objectId, u.rank || 0);
@@ -259,7 +260,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      if (update.participants) {
+      if (update && update.participants) {
         const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
         this.raceService.setParticipants(participants);
         if (!this.isDestroyed) {
@@ -311,6 +312,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     // Start watchdog
     this.resetWatchdog();
+
+    // Test hooks for screendiff tests
+    (window as any).mockRaceData = (data: com.antigravity.IRaceData) => {
+      if (data.race) {
+        this.processRaceUpdate(data.race);
+        this.cdr.detectChanges();
+      }
+    };
   }
 
   private processRaceUpdate(update: com.antigravity.IRace) {
@@ -621,9 +630,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return value;
   }
 
-  // Helper method to format column value for display
   formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition, propertyName?: string): string {
     const prop = propertyName || column.propertyName;
+    // Use column formatter if it's the main property for this column
+    if (prop === column.propertyName && column.formatter) {
+      return column.formatter(this.getPropertyValue(heatDriver, prop), heatDriver);
+    }
     const value = this.getPropertyValue(heatDriver, prop);
     return this.formatValue(prop, value, heatDriver);
   }
@@ -1115,10 +1127,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'gapPosition': 275,
       'driver.name': 400,
       'driver.nickname': 400,
+      'driver.avatarUrl': 100,
       'participant.team.name': 275,
       'participant.fuelLevel': 180,
       'fuelCapacity': 180,
-      'fuelPercentage': 180
+      'fuelPercentage': 180,
+      'imageset': 180
     };
 
     let totalFixedWithoutResizingColumn = 0;
@@ -1166,6 +1180,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         return this.formatValue(baseKey, v, hd);
       };
 
+      if (key.startsWith('imageset_')) {
+        const assetId = key.replace('imageset_', '');
+        const asset = this.findAssetById(assetId);
+        const label = ''; // Hide label for image set columns on raceday
+
+        const renderer = (v: any, hd: DriverHeatData) => {
+          return this.getSelectedImageFromSet(asset, hd);
+        };
+
+        return new ColumnDefinition(label, key, width, false, 'middle', 0, anchor, renderer, layout);
+      }
+
       if (isResizing) {
         return new ColumnDefinition(labelKey, key, width, true, 'start', 30, anchor, renderer, layout);
       }
@@ -1174,7 +1200,55 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Helper method to get the selected image URL from an image set based on fuel percentage
+  private getSelectedImageFromSet(asset: com.antigravity.IAssetMessage | undefined, hd: DriverHeatData): string {
+    if (!asset || asset.type !== 'image_set' || !asset.images || asset.images.length === 0) {
+      return '';
+    }
 
+    const level = hd.participant?.fuelLevel;
+    const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+    if (level === undefined || capacity === undefined || capacity <= 0) {
+      return '';
+    }
+
+    const fuelPercentage = (level / capacity) * 100;
+
+    // Special case: 0 percent should only be used if it is exactly 0
+    if (fuelPercentage === 0) {
+      const zeroImage = asset.images.find(img => img.percentage === 0);
+      return zeroImage ? this.getFullUrl(zeroImage.url || '') : '';
+    }
+
+    // Filter out 0 from candidates for non-zero percentages
+    const candidates = asset.images.filter(img => img.percentage !== 0);
+    if (candidates.length === 0) return '';
+
+    // Find the image with percentage closest to current fuelPercentage
+    let bestMatch = candidates[0];
+    let minDiff = Math.abs((bestMatch.percentage || 0) - fuelPercentage);
+
+    for (const img of candidates) {
+      const diff = Math.abs((img.percentage || 0) - fuelPercentage);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestMatch = img;
+      }
+    }
+
+    return this.getFullUrl(bestMatch.url || '');
+  }
+
+  private findAssetById(assetId: string): com.antigravity.IAssetMessage | undefined {
+    let asset = this.assets.find(a => a.model?.entityId === assetId);
+
+    // Robustness: fallback for builtin fuel gauge if ID doesn't match
+    if (!asset && assetId === 'fuel-gauge-builtin') {
+      asset = this.assets.find(a => a.type === 'image_set' && a.name === 'Fuel Gauge');
+    }
+
+    return asset;
+  }
 
   // Format any value based on property name
   formatValue(propertyName: string, value: any, hd: DriverHeatData): string {
@@ -1208,6 +1282,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         return percentage + '%';
       }
       return '--%';
+    } else if (baseKey === 'driver.avatarUrl') {
+      return this.getFullUrl(value);
+    } else if (propertyName.startsWith('imageset_')) {
+      const assetId = propertyName.replace('imageset_', '');
+      const asset = this.findAssetById(assetId);
+      return this.getSelectedImageFromSet(asset, hd);
     }
     return value?.toString() ?? '';
   }
@@ -1235,9 +1315,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'driver.nickname': 'RD_COL_NICKNAME',
       'participant.fuelLevel': 'RD_COL_FUEL_LEVEL',
       'fuelCapacity': 'RD_COL_FUEL_CAPACITY',
-      'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE'
+      'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE',
+      'driver.avatarUrl': 'RD_COL_AVATAR'
     };
-    return labels[baseKey] || 'UNKNOWN';
+    return labels[baseKey] ?? 'UNKNOWN';
   }
 
 

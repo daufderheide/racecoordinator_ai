@@ -163,7 +163,22 @@ describe('TrackEditorComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 't-new-id' } });
   });
 
+  it('should stay on page and keep original ID when save as new fails', () => {
+    spyOn(console, 'error');
+    spyOn(dataService, 'createTrack').and.returnValue(throwError(() => ({ status: 409, error: 'Conflict' })));
+    spyOn(window, 'alert');
+
+    const originalTrackId = component.editingTrack?.entity_id;
+    component.saveAsNew();
+
+    expect(dataService.createTrack).toHaveBeenCalled();
+    expect(component.editingTrack?.entity_id).toBe(originalTrackId);
+    expect(component.isSaving).toBeFalse();
+    expect(window.alert).toHaveBeenCalled();
+  });
+
   it('should handle save error', () => {
+    spyOn(console, 'error');
     spyOn(window, 'alert');
     spyOn(dataService, 'updateTrack').and.returnValue(throwError(() => ({ status: 500 })));
 

@@ -84,7 +84,7 @@ describe('DefaultRacedayComponent', () => {
     mockDataService.getInterfaceEvents.and.returnValue(interfaceEventsSubject.asObservable());
     mockDataService.getRaceState.and.returnValue(of(com.antigravity.RaceState.NOT_STARTED));
     mockDataService.getDrivers.and.returnValue(of([]));
-    mockDataService.getCarData.and.returnValue(of(null));
+    mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.serverUrl = 'http://localhost';
 
     const mockTranslationService = {
@@ -419,6 +419,12 @@ describe('DefaultRacedayComponent', () => {
       const result = component.formatValue('fuelPercentage', null, mockHd);
       expect(result).toBe('--%');
     });
+
+    it('should format driver.avatarUrl using getFullUrl', () => {
+      const avatarUrl = '/assets/avatars/driver1.png';
+      const result = component.formatValue('driver.avatarUrl', avatarUrl, mockHd);
+      expect(result).toBe('http://localhost/assets/avatars/driver1.png');
+    });
   });
 
   describe('loadColumns with visibility', () => {
@@ -449,6 +455,11 @@ describe('DefaultRacedayComponent', () => {
       (component as any).loadColumns();
 
       expect(component['columns'].some(c => c.propertyName === 'lapCount')).toBeFalse();
+    });
+
+    it('should return correct label key for driver.avatarUrl', () => {
+      const result = (component as any).getLabelKeyForColumn('driver.avatarUrl');
+      expect(result).toBe('RD_COL_AVATAR');
     });
   });
 

@@ -72,7 +72,10 @@ server/target_dev/
 server/target_exec/
 client/tmp-karma/
 server/generated-sources/
+server/target_generated/
 server/protoc_local.exe
 server/target_test/
 client/.npmrc
 server/gen-proto/
+client/node_modules_backup/
+data_v2

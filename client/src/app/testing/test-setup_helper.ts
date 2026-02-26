@@ -79,6 +79,24 @@ export class TestSetupHelper {
         }),
       });
     });
+
+    // Mock Settings using localStorage (since no component actually calls /api/settings)
+    await this.setupSettings(page, {
+      racedayColumns: ['driver.name', 'lapCount'],
+      columnLayouts: {
+        'driver.name': { 'CenterCenter': 'driver.name' },
+        'lapCount': { 'CenterCenter': 'lapCount' }
+      },
+      columnAnchors: {
+        'driver.name': 'Center',
+        'lapCount': 'Center'
+      },
+      columnWidths: {
+        'driver.name': 200,
+        'lapCount': 100
+      },
+      columnVisibility: {}
+    });
   }
 
   static async setupTeamMocks(page: Page) {
@@ -289,6 +307,18 @@ export class TestSetupHelper {
           size: '50 KB',
           url: '',
           filename: 'snd1.mp3'
+        },
+        {
+          model: { entityId: 'set123' },
+          name: 'Custom Dash',
+          type: 'image_set',
+          size: '1.2 MB',
+          url: '',
+          filename: 'dash.json',
+          images: [
+            { percentage: 30, url: 'img1.png', name: 'img1.png' },
+            { percentage: 70, url: 'img2.png', name: 'img2.png' }
+          ]
         }
       ];
 
@@ -299,6 +329,17 @@ export class TestSetupHelper {
         status: 200,
         contentType: 'application/octet-stream',
         body: Buffer.from(buffer),
+      });
+    });
+
+    // Mock Asset Download API
+    await page.route('**/api/assets/download*', async (route) => {
+      // Return a 1x1 transparent pixel for all downloads in tests
+      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: transparentPixel
       });
     });
   }
@@ -316,6 +357,13 @@ export class TestSetupHelper {
               { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
               { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
             ]
+          },
+          fuelOptions: {
+            enabled: true,
+            capacity: 100,
+            usageType: 0, // Per lap
+            usageRate: 1.0,
+            startLevel: 100
           }
         },
         currentHeat: {
@@ -323,21 +371,25 @@ export class TestSetupHelper {
           heatDrivers: [
             {
               objectId: 'hd1',
-              driver: {
+              driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                 objectId: 'rp1',
-                driver: {
+                fuelLevel: 75.5,
+                driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                   model: { entityId: 'd1' },
-                  name: 'Driver 1'
+                  name: 'Driver 1',
+                  avatarUrl: '/api/assets/download?filename=img1.png'
                 }
               }
             },
             {
               objectId: 'hd2',
-              driver: {
+              driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                 objectId: 'rp2',
-                driver: {
+                fuelLevel: 42.0,
+                driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                   model: { entityId: 'd2' },
-                  name: 'Driver 2'
+                  name: 'Driver 2',
+                  avatarUrl: '/api/assets/download?filename=img1.png'
                 }
               }
             }
@@ -522,6 +574,16 @@ export class TestSetupHelper {
         };
       }
     }, customFiles);
+  }
+
+  /**
+   * Mock Settings using localStorage.
+   * Raceday component reads settings directly from localStorage via SettingsService.
+   */
+  static async setupSettings(page: Page, settings: any) {
+    await page.addInitScript((s) => {
+      localStorage.setItem('racecoordinator_settings', JSON.stringify(s));
+    }, settings);
   }
 
   static async disableAnimations(page: Page) {

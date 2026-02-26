@@ -33,21 +33,24 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
 
+
+  // TODO(aufderheide): I think this list is duplicated below.  If they're the same they should share the code.
   availableColumns = [
     { key: 'driver.name', label: 'RD_COL_NAME' },
     { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
+    { key: 'driver.avatarUrl', label: 'RD_COL_AVATAR' },
     { key: 'lapCount', label: 'RD_COL_LAP' },
-    { key: 'reactionTime', label: 'UI_EDITOR_COL_REACTION_TIME' },
+    { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
     { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
     { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
     { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
     { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
-    { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
-    { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
-    { key: 'participant.team.name', label: 'UI_EDITOR_COL_TEAM' },
-    { key: 'participant.fuelLevel', label: 'UI_EDITOR_COL_FUEL_LEVEL' },
-    { key: 'fuelCapacity', label: 'UI_EDITOR_COL_FUEL_CAPACITY' },
-    { key: 'fuelPercentage', label: 'UI_EDITOR_COL_FUEL_PERCENTAGE' },
+    { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
+    { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
+    { key: 'participant.team.name', label: 'RD_COL_TEAM' },
+    { key: 'participant.fuelLevel', label: 'RD_COL_FUEL_LEVEL' },
+    { key: 'fuelCapacity', label: 'RD_COL_FUEL_CAPACITY' },
+    { key: 'fuelPercentage', label: 'RD_COL_FUEL_PERCENTAGE' },
   ];
 
 
@@ -125,7 +128,49 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       dirHandle: this.fileSystem.getCustomDirectoryHandle()
     }).subscribe({
       next: (result) => {
+        // Include both images (for existing background selections) and image_sets (for new column support)
         this.assets = result.assets.filter((a: any) => a.type === 'image');
+
+        // Dynamic columns for image sets
+        const imageSetColumns = result.assets
+          .filter((a: any) => a.type === 'image_set')
+          .map((a: any) => ({
+            key: `imageset_${a.model?.entityId}`,
+            label: a.name || 'Unknown Image Set'
+          }));
+
+        // Robustness: ensure imageset_fuel-gauge-builtin is available if a "Fuel Gauge" set exists
+        const builtinKey = 'imageset_fuel-gauge-builtin';
+        if (!imageSetColumns.find(c => c.key === builtinKey)) {
+          const fuelGaugeAsset = result.assets.find((a: any) => a.type === 'image_set' && a.name === 'Fuel Gauge');
+          if (fuelGaugeAsset) {
+            imageSetColumns.push({
+              key: builtinKey,
+              label: fuelGaugeAsset.name
+            });
+          }
+        }
+
+        // Reset availableColumns to base set + dynamic image sets
+        this.availableColumns = [
+          { key: 'driver.name', label: 'RD_COL_NAME' },
+          { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
+          { key: 'driver.avatarUrl', label: 'RD_COL_AVATAR' },
+          { key: 'lapCount', label: 'RD_COL_LAP' },
+          { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
+          { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
+          { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
+          { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
+          { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
+          { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
+          { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
+          { key: 'participant.team.name', label: 'RD_COL_TEAM' },
+          { key: 'participant.fuelLevel', label: 'RD_COL_FUEL_LEVEL' },
+          { key: 'fuelCapacity', label: 'RD_COL_FUEL_CAPACITY' },
+          { key: 'fuelPercentage', label: 'RD_COL_FUEL_PERCENTAGE' },
+          ...imageSetColumns
+        ];
+
         this.customDirectoryName = result.dirHandle?.name || null;
         this.settings = this.settingsService.getSettings();
         this.editingSettings = this.cloneSettings(this.settings);
@@ -202,8 +247,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
     clone.racedayColumns = [...(s.racedayColumns || [])];
     clone.columnAnchors = { ...(s.columnAnchors || {}) };
-    clone.columnLayouts = JSON.parse(JSON.stringify(s.columnLayouts || {}));
-    clone.columnVisibility = JSON.parse(JSON.stringify(s.columnVisibility || {}));
+
+    // Safely clone layouts and visibility
+    const layouts = s.columnLayouts || {};
+    clone.columnLayouts = JSON.parse(JSON.stringify(layouts));
+
+    const visibility = s.columnVisibility || {};
+    clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
+
     return clone;
   }
 

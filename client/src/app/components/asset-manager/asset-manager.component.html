@@ -19,7 +19,6 @@
           <img src="assets/images/am_icon_database.png" alt="Database" class="db-icon">
         </div>
 
-        <!-- Usage Text -->
         <div class="usage-text">{{ 'ASSET_MANAGER_TOTAL_USED' | translate: {value: totalSize} }}</div>
 
         <!-- Breakdown -->
@@ -65,6 +64,14 @@
           <div class="upload-btn">{{ 'AM_UPLOADING' | translate }}</div>
         </div>
       </div>
+
+      <!-- New Image Set Button -->
+      <div class="new-set-zone">
+        <button class="btn-new-set" (click)="openNewImageSetEditor()" [disabled]="isUploading">
+          <img src="assets/images/am_icon_image_set.png" alt="Set" class="mini-icon">
+          {{ 'AM_BTN_NEW_IMAGE_SET' | translate }}
+        </button>
+      </div>
     </div>
 
     <!-- RIGHT PANEL: ASSET LIBRARY -->
@@ -81,10 +88,12 @@
         <!-- Filter Controls -->
         <div class="library-controls">
           <div class="filter-tabs">
-            <div class="tab" [class.active]="filterType === 'all'" (click)="setFilterType('all')">{{ 'AM_FILTER_ALL' |
-              translate }}</div>
+            <div class="tab" [class.active]="filterType === 'all'" (click)="setFilterType('all')">{{ 'AM_FILTER_ALL'
+              | translate }}</div>
             <div class="tab" [class.active]="filterType === 'image'" (click)="setFilterType('image')">{{
               'AM_FILTER_IMAGES' | translate }}</div>
+            <div class="tab" [class.active]="filterType === 'image_set'" (click)="setFilterType('image_set')">{{
+              'AM_FILTER_IMAGE_SETS' | translate }}</div>
             <div class="tab" [class.active]="filterType === 'sound'" (click)="setFilterType('sound')">{{
               'AM_FILTER_SOUNDS' | translate }}</div>
           </div>
@@ -99,11 +108,13 @@
 
       <!-- Asset Grid -->
       <div class="asset-grid">
-        <div class="asset-card" *ngFor="let asset of filteredAssets">
+        <div class="asset-card" *ngFor="let asset of filteredAssets" [draggable]="asset.type === 'image'"
+          (dragstart)="onAssetDragStart($event, asset)">
           <!-- Preview Area -->
           <div class="asset-preview">
-            <ng-container *ngIf="asset.type === 'image'">
-              <img [src]="asset.url || 'assets/images/am_icon_image_placeholder.png'" class="preview-img" alt="preview">
+            <ng-container *ngIf="asset.type === 'image' || asset.type === 'image_set'">
+              <img [src]="getAssetImageUrl(asset) || 'assets/images/am_icon_image_placeholder.png'" class="preview-img"
+                alt="preview" [class.image-set]="asset.type === 'image_set'">
             </ng-container>
             <ng-container *ngIf="asset.type === 'sound'">
               <img src="assets/images/default_audio_icon.png" class="preview-icon" alt="sound">
@@ -127,7 +138,8 @@
             <div class="view-mode" *ngIf="!asset.editMode">
               <div class="asset-name" [title]="asset.name">{{ asset.name }}</div>
               <div class="asset-actions">
-                <img src="assets/images/am_icon_edit.png" class="action-icon" (click)="startEditing(asset.id)"
+                <img src="assets/images/am_icon_edit.png" class="action-icon"
+                  (click)="asset.type === 'image_set' ? openEditImageSetEditor(asset) : startEditing(asset.id)"
                   title="Edit">
                 <img src="assets/images/am_icon_trash.png" class="action-icon delete" (click)="onDelete(asset.id)"
                   title="Delete">
@@ -144,4 +156,14 @@
     <div class="connection-spinner"></div>
     <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
   </div>
+
+  <!-- Image Set Editor -->
+  <app-image-set-editor [visible]="showImageSetEditor" [assetId]="editingAssetId" [initialName]="editingAssetName"
+    [initialEntries]="editingAssetEntries" [allImages]="allImages" (close)="showImageSetEditor = false"
+    (saved)="onImageSetSaved($event)">
+  </app-image-set-editor>
+
+  <app-confirmation-modal [visible]="showDeleteConfirm" title="AM_CONFIRM_DELETE_TITLE" message="AM_CONFIRM_DELETE"
+    confirmText="AM_BTN_DELETE" cancelText="AM_BTN_CANCEL" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+  </app-confirmation-modal>
 </div>

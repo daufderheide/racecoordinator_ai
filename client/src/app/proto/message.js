@@ -818,6 +818,281 @@ export const com = $root.com = (() => {
             return AudioConfig;
         })();
 
+        antigravity.ImageSetEntry = (function() {
+
+            /**
+             * Properties of an ImageSetEntry.
+             * @memberof com.antigravity
+             * @interface IImageSetEntry
+             * @property {string|null} [url] ImageSetEntry url
+             * @property {number|null} [percentage] ImageSetEntry percentage
+             * @property {string|null} [name] ImageSetEntry name
+             * @property {string|null} [size] ImageSetEntry size
+             */
+
+            /**
+             * Constructs a new ImageSetEntry.
+             * @memberof com.antigravity
+             * @classdesc Represents an ImageSetEntry.
+             * @implements IImageSetEntry
+             * @constructor
+             * @param {com.antigravity.IImageSetEntry=} [properties] Properties to set
+             */
+            function ImageSetEntry(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * ImageSetEntry url.
+             * @member {string} url
+             * @memberof com.antigravity.ImageSetEntry
+             * @instance
+             */
+            ImageSetEntry.prototype.url = "";
+
+            /**
+             * ImageSetEntry percentage.
+             * @member {number} percentage
+             * @memberof com.antigravity.ImageSetEntry
+             * @instance
+             */
+            ImageSetEntry.prototype.percentage = 0;
+
+            /**
+             * ImageSetEntry name.
+             * @member {string} name
+             * @memberof com.antigravity.ImageSetEntry
+             * @instance
+             */
+            ImageSetEntry.prototype.name = "";
+
+            /**
+             * ImageSetEntry size.
+             * @member {string} size
+             * @memberof com.antigravity.ImageSetEntry
+             * @instance
+             */
+            ImageSetEntry.prototype.size = "";
+
+            /**
+             * Creates a new ImageSetEntry instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {com.antigravity.IImageSetEntry=} [properties] Properties to set
+             * @returns {com.antigravity.ImageSetEntry} ImageSetEntry instance
+             */
+            ImageSetEntry.create = function create(properties) {
+                return new ImageSetEntry(properties);
+            };
+
+            /**
+             * Encodes the specified ImageSetEntry message. Does not implicitly {@link com.antigravity.ImageSetEntry.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {com.antigravity.IImageSetEntry} message ImageSetEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ImageSetEntry.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.url != null && Object.hasOwnProperty.call(message, "url"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.url);
+                if (message.percentage != null && Object.hasOwnProperty.call(message, "percentage"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.percentage);
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.name);
+                if (message.size != null && Object.hasOwnProperty.call(message, "size"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.size);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ImageSetEntry message, length delimited. Does not implicitly {@link com.antigravity.ImageSetEntry.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {com.antigravity.IImageSetEntry} message ImageSetEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ImageSetEntry.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an ImageSetEntry message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.ImageSetEntry} ImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ImageSetEntry.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.ImageSetEntry();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.url = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.percentage = reader.int32();
+                            break;
+                        }
+                    case 3: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            message.size = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an ImageSetEntry message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.ImageSetEntry} ImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ImageSetEntry.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an ImageSetEntry message.
+             * @function verify
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ImageSetEntry.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.url != null && message.hasOwnProperty("url"))
+                    if (!$util.isString(message.url))
+                        return "url: string expected";
+                if (message.percentage != null && message.hasOwnProperty("percentage"))
+                    if (!$util.isInteger(message.percentage))
+                        return "percentage: integer expected";
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.size != null && message.hasOwnProperty("size"))
+                    if (!$util.isString(message.size))
+                        return "size: string expected";
+                return null;
+            };
+
+            /**
+             * Creates an ImageSetEntry message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.ImageSetEntry} ImageSetEntry
+             */
+            ImageSetEntry.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.ImageSetEntry)
+                    return object;
+                let message = new $root.com.antigravity.ImageSetEntry();
+                if (object.url != null)
+                    message.url = String(object.url);
+                if (object.percentage != null)
+                    message.percentage = object.percentage | 0;
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.size != null)
+                    message.size = String(object.size);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an ImageSetEntry message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {com.antigravity.ImageSetEntry} message ImageSetEntry
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ImageSetEntry.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.url = "";
+                    object.percentage = 0;
+                    object.name = "";
+                    object.size = "";
+                }
+                if (message.url != null && message.hasOwnProperty("url"))
+                    object.url = message.url;
+                if (message.percentage != null && message.hasOwnProperty("percentage"))
+                    object.percentage = message.percentage;
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.size != null && message.hasOwnProperty("size"))
+                    object.size = message.size;
+                return object;
+            };
+
+            /**
+             * Converts this ImageSetEntry to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.ImageSetEntry
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ImageSetEntry.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for ImageSetEntry
+             * @function getTypeUrl
+             * @memberof com.antigravity.ImageSetEntry
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            ImageSetEntry.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.ImageSetEntry";
+            };
+
+            return ImageSetEntry;
+        })();
+
         antigravity.AssetMessage = (function() {
 
             /**
@@ -829,6 +1104,7 @@ export const com = $root.com = (() => {
              * @property {string|null} [type] AssetMessage type
              * @property {string|null} [size] AssetMessage size
              * @property {string|null} [url] AssetMessage url
+             * @property {Array.<com.antigravity.IImageSetEntry>|null} [images] AssetMessage images
              */
 
             /**
@@ -840,6 +1116,7 @@ export const com = $root.com = (() => {
              * @param {com.antigravity.IAssetMessage=} [properties] Properties to set
              */
             function AssetMessage(properties) {
+                this.images = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -887,6 +1164,14 @@ export const com = $root.com = (() => {
             AssetMessage.prototype.url = "";
 
             /**
+             * AssetMessage images.
+             * @member {Array.<com.antigravity.IImageSetEntry>} images
+             * @memberof com.antigravity.AssetMessage
+             * @instance
+             */
+            AssetMessage.prototype.images = $util.emptyArray;
+
+            /**
              * Creates a new AssetMessage instance using the specified properties.
              * @function create
              * @memberof com.antigravity.AssetMessage
@@ -920,6 +1205,9 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 4, wireType 2 =*/34).string(message.size);
                 if (message.url != null && Object.hasOwnProperty.call(message, "url"))
                     writer.uint32(/* id 5, wireType 2 =*/42).string(message.url);
+                if (message.images != null && message.images.length)
+                    for (let i = 0; i < message.images.length; ++i)
+                        $root.com.antigravity.ImageSetEntry.encode(message.images[i], writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
                 return writer;
             };
 
@@ -976,6 +1264,12 @@ export const com = $root.com = (() => {
                             message.url = reader.string();
                             break;
                         }
+                    case 6: {
+                            if (!(message.images && message.images.length))
+                                message.images = [];
+                            message.images.push($root.com.antigravity.ImageSetEntry.decode(reader, reader.uint32()));
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -1028,6 +1322,15 @@ export const com = $root.com = (() => {
                 if (message.url != null && message.hasOwnProperty("url"))
                     if (!$util.isString(message.url))
                         return "url: string expected";
+                if (message.images != null && message.hasOwnProperty("images")) {
+                    if (!Array.isArray(message.images))
+                        return "images: array expected";
+                    for (let i = 0; i < message.images.length; ++i) {
+                        let error = $root.com.antigravity.ImageSetEntry.verify(message.images[i]);
+                        if (error)
+                            return "images." + error;
+                    }
+                }
                 return null;
             };
 
@@ -1056,6 +1359,16 @@ export const com = $root.com = (() => {
                     message.size = String(object.size);
                 if (object.url != null)
                     message.url = String(object.url);
+                if (object.images) {
+                    if (!Array.isArray(object.images))
+                        throw TypeError(".com.antigravity.AssetMessage.images: array expected");
+                    message.images = [];
+                    for (let i = 0; i < object.images.length; ++i) {
+                        if (typeof object.images[i] !== "object")
+                            throw TypeError(".com.antigravity.AssetMessage.images: object expected");
+                        message.images[i] = $root.com.antigravity.ImageSetEntry.fromObject(object.images[i]);
+                    }
+                }
                 return message;
             };
 
@@ -1072,6 +1385,8 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
+                if (options.arrays || options.defaults)
+                    object.images = [];
                 if (options.defaults) {
                     object.model = null;
                     object.name = "";
@@ -1089,6 +1404,11 @@ export const com = $root.com = (() => {
                     object.size = message.size;
                 if (message.url != null && message.hasOwnProperty("url"))
                     object.url = message.url;
+                if (message.images && message.images.length) {
+                    object.images = [];
+                    for (let j = 0; j < message.images.length; ++j)
+                        object.images[j] = $root.com.antigravity.ImageSetEntry.toObject(message.images[j], options);
+                }
                 return object;
             };
 
@@ -1991,6 +2311,564 @@ export const com = $root.com = (() => {
             };
 
             return RenameAssetRequest;
+        })();
+
+        antigravity.SaveImageSetRequest = (function() {
+
+            /**
+             * Properties of a SaveImageSetRequest.
+             * @memberof com.antigravity
+             * @interface ISaveImageSetRequest
+             * @property {string|null} [id] SaveImageSetRequest id
+             * @property {string|null} [name] SaveImageSetRequest name
+             * @property {Array.<com.antigravity.ISaveImageSetEntry>|null} [entries] SaveImageSetRequest entries
+             */
+
+            /**
+             * Constructs a new SaveImageSetRequest.
+             * @memberof com.antigravity
+             * @classdesc Represents a SaveImageSetRequest.
+             * @implements ISaveImageSetRequest
+             * @constructor
+             * @param {com.antigravity.ISaveImageSetRequest=} [properties] Properties to set
+             */
+            function SaveImageSetRequest(properties) {
+                this.entries = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SaveImageSetRequest id.
+             * @member {string} id
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @instance
+             */
+            SaveImageSetRequest.prototype.id = "";
+
+            /**
+             * SaveImageSetRequest name.
+             * @member {string} name
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @instance
+             */
+            SaveImageSetRequest.prototype.name = "";
+
+            /**
+             * SaveImageSetRequest entries.
+             * @member {Array.<com.antigravity.ISaveImageSetEntry>} entries
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @instance
+             */
+            SaveImageSetRequest.prototype.entries = $util.emptyArray;
+
+            /**
+             * Creates a new SaveImageSetRequest instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {com.antigravity.ISaveImageSetRequest=} [properties] Properties to set
+             * @returns {com.antigravity.SaveImageSetRequest} SaveImageSetRequest instance
+             */
+            SaveImageSetRequest.create = function create(properties) {
+                return new SaveImageSetRequest(properties);
+            };
+
+            /**
+             * Encodes the specified SaveImageSetRequest message. Does not implicitly {@link com.antigravity.SaveImageSetRequest.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {com.antigravity.ISaveImageSetRequest} message SaveImageSetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetRequest.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.id != null && Object.hasOwnProperty.call(message, "id"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.id);
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.entries != null && message.entries.length)
+                    for (let i = 0; i < message.entries.length; ++i)
+                        $root.com.antigravity.SaveImageSetEntry.encode(message.entries[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SaveImageSetRequest message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetRequest.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {com.antigravity.ISaveImageSetRequest} message SaveImageSetRequest message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetRequest.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SaveImageSetRequest message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SaveImageSetRequest} SaveImageSetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetRequest.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SaveImageSetRequest();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.id = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            if (!(message.entries && message.entries.length))
+                                message.entries = [];
+                            message.entries.push($root.com.antigravity.SaveImageSetEntry.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SaveImageSetRequest message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SaveImageSetRequest} SaveImageSetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetRequest.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SaveImageSetRequest message.
+             * @function verify
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SaveImageSetRequest.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.id != null && message.hasOwnProperty("id"))
+                    if (!$util.isString(message.id))
+                        return "id: string expected";
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.entries != null && message.hasOwnProperty("entries")) {
+                    if (!Array.isArray(message.entries))
+                        return "entries: array expected";
+                    for (let i = 0; i < message.entries.length; ++i) {
+                        let error = $root.com.antigravity.SaveImageSetEntry.verify(message.entries[i]);
+                        if (error)
+                            return "entries." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a SaveImageSetRequest message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SaveImageSetRequest} SaveImageSetRequest
+             */
+            SaveImageSetRequest.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SaveImageSetRequest)
+                    return object;
+                let message = new $root.com.antigravity.SaveImageSetRequest();
+                if (object.id != null)
+                    message.id = String(object.id);
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.entries) {
+                    if (!Array.isArray(object.entries))
+                        throw TypeError(".com.antigravity.SaveImageSetRequest.entries: array expected");
+                    message.entries = [];
+                    for (let i = 0; i < object.entries.length; ++i) {
+                        if (typeof object.entries[i] !== "object")
+                            throw TypeError(".com.antigravity.SaveImageSetRequest.entries: object expected");
+                        message.entries[i] = $root.com.antigravity.SaveImageSetEntry.fromObject(object.entries[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SaveImageSetRequest message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {com.antigravity.SaveImageSetRequest} message SaveImageSetRequest
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SaveImageSetRequest.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.entries = [];
+                if (options.defaults) {
+                    object.id = "";
+                    object.name = "";
+                }
+                if (message.id != null && message.hasOwnProperty("id"))
+                    object.id = message.id;
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.entries && message.entries.length) {
+                    object.entries = [];
+                    for (let j = 0; j < message.entries.length; ++j)
+                        object.entries[j] = $root.com.antigravity.SaveImageSetEntry.toObject(message.entries[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this SaveImageSetRequest to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SaveImageSetRequest.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SaveImageSetRequest
+             * @function getTypeUrl
+             * @memberof com.antigravity.SaveImageSetRequest
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SaveImageSetRequest.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SaveImageSetRequest";
+            };
+
+            return SaveImageSetRequest;
+        })();
+
+        antigravity.SaveImageSetEntry = (function() {
+
+            /**
+             * Properties of a SaveImageSetEntry.
+             * @memberof com.antigravity
+             * @interface ISaveImageSetEntry
+             * @property {string|null} [name] SaveImageSetEntry name
+             * @property {number|null} [percentage] SaveImageSetEntry percentage
+             * @property {string|null} [url] SaveImageSetEntry url
+             * @property {Uint8Array|null} [data] SaveImageSetEntry data
+             */
+
+            /**
+             * Constructs a new SaveImageSetEntry.
+             * @memberof com.antigravity
+             * @classdesc Represents a SaveImageSetEntry.
+             * @implements ISaveImageSetEntry
+             * @constructor
+             * @param {com.antigravity.ISaveImageSetEntry=} [properties] Properties to set
+             */
+            function SaveImageSetEntry(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SaveImageSetEntry name.
+             * @member {string} name
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @instance
+             */
+            SaveImageSetEntry.prototype.name = "";
+
+            /**
+             * SaveImageSetEntry percentage.
+             * @member {number} percentage
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @instance
+             */
+            SaveImageSetEntry.prototype.percentage = 0;
+
+            /**
+             * SaveImageSetEntry url.
+             * @member {string} url
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @instance
+             */
+            SaveImageSetEntry.prototype.url = "";
+
+            /**
+             * SaveImageSetEntry data.
+             * @member {Uint8Array} data
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @instance
+             */
+            SaveImageSetEntry.prototype.data = $util.newBuffer([]);
+
+            /**
+             * Creates a new SaveImageSetEntry instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {com.antigravity.ISaveImageSetEntry=} [properties] Properties to set
+             * @returns {com.antigravity.SaveImageSetEntry} SaveImageSetEntry instance
+             */
+            SaveImageSetEntry.create = function create(properties) {
+                return new SaveImageSetEntry(properties);
+            };
+
+            /**
+             * Encodes the specified SaveImageSetEntry message. Does not implicitly {@link com.antigravity.SaveImageSetEntry.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {com.antigravity.ISaveImageSetEntry} message SaveImageSetEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetEntry.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
+                if (message.percentage != null && Object.hasOwnProperty.call(message, "percentage"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.percentage);
+                if (message.url != null && Object.hasOwnProperty.call(message, "url"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.url);
+                if (message.data != null && Object.hasOwnProperty.call(message, "data"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).bytes(message.data);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SaveImageSetEntry message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetEntry.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {com.antigravity.ISaveImageSetEntry} message SaveImageSetEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetEntry.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SaveImageSetEntry message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SaveImageSetEntry} SaveImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetEntry.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SaveImageSetEntry();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.percentage = reader.int32();
+                            break;
+                        }
+                    case 3: {
+                            message.url = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            message.data = reader.bytes();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SaveImageSetEntry message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SaveImageSetEntry} SaveImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetEntry.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SaveImageSetEntry message.
+             * @function verify
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SaveImageSetEntry.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.percentage != null && message.hasOwnProperty("percentage"))
+                    if (!$util.isInteger(message.percentage))
+                        return "percentage: integer expected";
+                if (message.url != null && message.hasOwnProperty("url"))
+                    if (!$util.isString(message.url))
+                        return "url: string expected";
+                if (message.data != null && message.hasOwnProperty("data"))
+                    if (!(message.data && typeof message.data.length === "number" || $util.isString(message.data)))
+                        return "data: buffer expected";
+                return null;
+            };
+
+            /**
+             * Creates a SaveImageSetEntry message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SaveImageSetEntry} SaveImageSetEntry
+             */
+            SaveImageSetEntry.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SaveImageSetEntry)
+                    return object;
+                let message = new $root.com.antigravity.SaveImageSetEntry();
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.percentage != null)
+                    message.percentage = object.percentage | 0;
+                if (object.url != null)
+                    message.url = String(object.url);
+                if (object.data != null)
+                    if (typeof object.data === "string")
+                        $util.base64.decode(object.data, message.data = $util.newBuffer($util.base64.length(object.data)), 0);
+                    else if (object.data.length >= 0)
+                        message.data = object.data;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SaveImageSetEntry message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {com.antigravity.SaveImageSetEntry} message SaveImageSetEntry
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SaveImageSetEntry.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.name = "";
+                    object.percentage = 0;
+                    object.url = "";
+                    if (options.bytes === String)
+                        object.data = "";
+                    else {
+                        object.data = [];
+                        if (options.bytes !== Array)
+                            object.data = $util.newBuffer(object.data);
+                    }
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.percentage != null && message.hasOwnProperty("percentage"))
+                    object.percentage = message.percentage;
+                if (message.url != null && message.hasOwnProperty("url"))
+                    object.url = message.url;
+                if (message.data != null && message.hasOwnProperty("data"))
+                    object.data = options.bytes === String ? $util.base64.encode(message.data, 0, message.data.length) : options.bytes === Array ? Array.prototype.slice.call(message.data) : message.data;
+                return object;
+            };
+
+            /**
+             * Converts this SaveImageSetEntry to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SaveImageSetEntry.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SaveImageSetEntry
+             * @function getTypeUrl
+             * @memberof com.antigravity.SaveImageSetEntry
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SaveImageSetEntry.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SaveImageSetEntry";
+            };
+
+            return SaveImageSetEntry;
         })();
 
         antigravity.InitializeRaceRequest = (function() {
@@ -9375,6 +10253,263 @@ export const com = $root.com = (() => {
             };
 
             return RenameAssetResponse;
+        })();
+
+        antigravity.SaveImageSetResponse = (function() {
+
+            /**
+             * Properties of a SaveImageSetResponse.
+             * @memberof com.antigravity
+             * @interface ISaveImageSetResponse
+             * @property {boolean|null} [success] SaveImageSetResponse success
+             * @property {string|null} [message] SaveImageSetResponse message
+             * @property {com.antigravity.IAssetMessage|null} [asset] SaveImageSetResponse asset
+             */
+
+            /**
+             * Constructs a new SaveImageSetResponse.
+             * @memberof com.antigravity
+             * @classdesc Represents a SaveImageSetResponse.
+             * @implements ISaveImageSetResponse
+             * @constructor
+             * @param {com.antigravity.ISaveImageSetResponse=} [properties] Properties to set
+             */
+            function SaveImageSetResponse(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * SaveImageSetResponse success.
+             * @member {boolean} success
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @instance
+             */
+            SaveImageSetResponse.prototype.success = false;
+
+            /**
+             * SaveImageSetResponse message.
+             * @member {string} message
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @instance
+             */
+            SaveImageSetResponse.prototype.message = "";
+
+            /**
+             * SaveImageSetResponse asset.
+             * @member {com.antigravity.IAssetMessage|null|undefined} asset
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @instance
+             */
+            SaveImageSetResponse.prototype.asset = null;
+
+            /**
+             * Creates a new SaveImageSetResponse instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {com.antigravity.ISaveImageSetResponse=} [properties] Properties to set
+             * @returns {com.antigravity.SaveImageSetResponse} SaveImageSetResponse instance
+             */
+            SaveImageSetResponse.create = function create(properties) {
+                return new SaveImageSetResponse(properties);
+            };
+
+            /**
+             * Encodes the specified SaveImageSetResponse message. Does not implicitly {@link com.antigravity.SaveImageSetResponse.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {com.antigravity.ISaveImageSetResponse} message SaveImageSetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetResponse.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.success != null && Object.hasOwnProperty.call(message, "success"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.message != null && Object.hasOwnProperty.call(message, "message"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.message);
+                if (message.asset != null && Object.hasOwnProperty.call(message, "asset"))
+                    $root.com.antigravity.AssetMessage.encode(message.asset, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SaveImageSetResponse message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetResponse.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {com.antigravity.ISaveImageSetResponse} message SaveImageSetResponse message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SaveImageSetResponse.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a SaveImageSetResponse message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.SaveImageSetResponse} SaveImageSetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetResponse.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.SaveImageSetResponse();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.success = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.message = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.asset = $root.com.antigravity.AssetMessage.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a SaveImageSetResponse message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.SaveImageSetResponse} SaveImageSetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SaveImageSetResponse.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SaveImageSetResponse message.
+             * @function verify
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SaveImageSetResponse.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.success != null && message.hasOwnProperty("success"))
+                    if (typeof message.success !== "boolean")
+                        return "success: boolean expected";
+                if (message.message != null && message.hasOwnProperty("message"))
+                    if (!$util.isString(message.message))
+                        return "message: string expected";
+                if (message.asset != null && message.hasOwnProperty("asset")) {
+                    let error = $root.com.antigravity.AssetMessage.verify(message.asset);
+                    if (error)
+                        return "asset." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates a SaveImageSetResponse message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.SaveImageSetResponse} SaveImageSetResponse
+             */
+            SaveImageSetResponse.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.SaveImageSetResponse)
+                    return object;
+                let message = new $root.com.antigravity.SaveImageSetResponse();
+                if (object.success != null)
+                    message.success = Boolean(object.success);
+                if (object.message != null)
+                    message.message = String(object.message);
+                if (object.asset != null) {
+                    if (typeof object.asset !== "object")
+                        throw TypeError(".com.antigravity.SaveImageSetResponse.asset: object expected");
+                    message.asset = $root.com.antigravity.AssetMessage.fromObject(object.asset);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SaveImageSetResponse message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {com.antigravity.SaveImageSetResponse} message SaveImageSetResponse
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SaveImageSetResponse.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.success = false;
+                    object.message = "";
+                    object.asset = null;
+                }
+                if (message.success != null && message.hasOwnProperty("success"))
+                    object.success = message.success;
+                if (message.message != null && message.hasOwnProperty("message"))
+                    object.message = message.message;
+                if (message.asset != null && message.hasOwnProperty("asset"))
+                    object.asset = $root.com.antigravity.AssetMessage.toObject(message.asset, options);
+                return object;
+            };
+
+            /**
+             * Converts this SaveImageSetResponse to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SaveImageSetResponse.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for SaveImageSetResponse
+             * @function getTypeUrl
+             * @memberof com.antigravity.SaveImageSetResponse
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            SaveImageSetResponse.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.SaveImageSetResponse";
+            };
+
+            return SaveImageSetResponse;
         })();
 
         antigravity.RaceTime = (function() {

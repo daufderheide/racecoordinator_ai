@@ -9,7 +9,7 @@ cd "$SERVER_DIR" || exit
 
 # Use a specific directory for tests to avoid conflicts with running server or IDE builds
 # This also helps isolate from target_dist which seems to have locking issues on macOS
-export PROTO_DEST_DIR="$(pwd)/target_test"
+export PROTO_DEST_DIR="target_test"
 
 # Use a temp dir that avoids spaces in path and ensures write permissions
 SERVER_TMP="/tmp/racecoordinator"

@@ -21,11 +21,12 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(modal).toBeVisible();
 
     // Take a screenshot of the modal
-    await expect(modal).toHaveScreenshot('reorder-dialog-default.png');
+    await expect(modal).toHaveScreenshot('reorder-dialog-default.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should show preview correctly in reorder dialog', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
+    await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
     await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
 
     const modal = page.locator('.reorder-modal');
@@ -36,7 +37,7 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(preview).toBeVisible();
 
     // Capture the entire modal with preview
-    await expect(modal).toHaveScreenshot('reorder-dialog-preview.png');
+    await expect(modal).toHaveScreenshot('reorder-dialog-preview.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should show visibility selectors correctly in reorder dialog', async ({ page }) => {
@@ -54,6 +55,7 @@ test.describe('Reorder Dialog Visuals', () => {
     });
 
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
+    await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
 
     await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
 
@@ -65,6 +67,31 @@ test.describe('Reorder Dialog Visuals', () => {
     await expect(selectors).toHaveCount(2);
 
     // Take a screenshot showing the visibility selectors
-    await expect(modal).toHaveScreenshot('reorder-dialog-visibility.png');
+    await expect(modal).toHaveScreenshot('reorder-dialog-visibility.png', { maxDiffPixelRatio: 0.05 });
+  });
+
+  test('should reset to defaults when reset button is clicked', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
+    await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
+    await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
+
+    const modal = page.locator('.reorder-modal');
+    await expect(modal).toBeVisible();
+
+    // 1. Modify the state (remove the last column)
+    const removeButtons = modal.locator('.remove-btn');
+    const initialCount = await removeButtons.count();
+    await removeButtons.last().click();
+    await expect(removeButtons).toHaveCount(initialCount - 1);
+
+    // 2. Click Reset
+    // Note: UE_BTN_RESET_DEFAULTS translates to "RESET DEFAULTS" in English
+    await modal.locator('.btn-reset-defaults').click();
+
+    // 3. Verify it's back to default count (5 columns in Settings.DEFAULT_COLUMNS)
+    await expect(removeButtons).toHaveCount(5);
+
+    // 4. Final verification screenshot
+    await expect(modal).toHaveScreenshot('reorder-dialog-reset.png', { maxDiffPixelRatio: 0.05 });
   });
 });

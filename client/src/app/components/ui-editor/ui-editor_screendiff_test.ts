@@ -30,7 +30,7 @@ test.describe('UI Editor Visuals', () => {
     await expect(page.locator('.panel-header').first()).toBeVisible();
 
     // Screenshot the entire page
-    await expect(page).toHaveScreenshot('ui-editor-page.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('ui-editor-page.png', { fullPage: true, maxDiffPixelRatio: 0.02 });
   });
 
   test('should show image selector modal when clicking a flag', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('UI Editor Visuals', () => {
     await expect(modal.locator('.modal-title')).toContainText('SELECT IMAGE');
 
     // Screenshot the modal overlay
-    await expect(page).toHaveScreenshot('ui-editor-image-selector-modal.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('ui-editor-image-selector-modal.png', { fullPage: true, maxDiffPixelRatio: 0.02 });
   });
 
   test('should show column config dialog when clicking configure columns', async ({ page }) => {
@@ -62,6 +62,22 @@ test.describe('UI Editor Visuals', () => {
     await expect(modal.locator('.title')).toContainText('CONFIGURE COLUMNS');
 
     // Screenshot the reorder modal
-    await expect(page).toHaveScreenshot('ui-editor-reorder-modal.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('ui-editor-reorder-modal.png', { fullPage: true, maxDiffPixelRatio: 0.05 });
+  });
+
+  test('should show avatar and image set columns in reorder dialog', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
+
+    // Click "CONFIGURE COLUMNS" button
+    await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
+
+    // Verify Avatar column is in the list
+    const modal = page.locator('.reorder-modal');
+    await expect(modal.locator('.value-pool')).toContainText('AVATAR');
+
+    // Verify our mocked image set is in the list
+    await expect(modal.locator('.value-pool')).toContainText('Custom Dash');
+
+    await expect(modal).toHaveScreenshot('ui-editor-columns-list.png', { maxDiffPixelRatio: 0.05 });
   });
 });

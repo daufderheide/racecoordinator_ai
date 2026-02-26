@@ -155,14 +155,19 @@
 
 .icon-cyan {
   filter: hue-rotate(0deg);
-  /* Original is likely cyan or white? If white, this does nothing. If cyan, it stays cyan. */
-  /* If the original audio icon is white, we might need a sepia/saturate filter to colorize it, or the user provided colored icons. */
-  /* Assuming provided icons are colored or this class was pre-existing. */
-  /* Actually, looking at previous CSS: .icon-cyan { filter: hue-rotate(90deg); } for audio. */
-  /* If audio uses hue-rotate 90deg, it implies the base icon is a different color (maybe red or blue). */
-  /* I will strictly just ensure the class exists as is, or modify if I need a different color. */
-  /* I will use the code from the previous view. */
 }
+
+/*- Add styles for the new image set editor.
+
+#### [MODIFY] [reorder-dialog.component.css](file:///Users/dave/dev/Slot%20Cars/racecoordinator/racecoordinator_ai/client/src/app/components/ui-editor/reorder-dialog/reorder-dialog.component.css)
+- Increase modal width from 1400px to 1600px.
+- Increase `values-sidebar` width for better readability.
+- Increase `slots-container` `min-width` to provide more space for the 3x3 grid editor.
+
+#### [MODIFY] [reorder-dialog.component.ts](file:///Users/dave/dev/Slot%20Cars/racecoordinator/racecoordinator_ai/client/src/app/components/ui-editor/reorder-dialog/reorder-dialog.component.ts)
+- Update sorting logic for `availableValues` to ensure image sets (keys starting with `imageset_`) are kept at the bottom of the list, after alphabetized system columns.
+
+---*/
 
 .progress-bar {
   height: 6px;
@@ -402,6 +407,11 @@
   /* or contain, depending on preference */
 }
 
+.preview-img.image-set {
+  border: 1px solid;
+  box-shadow: 0 0 5px;
+}
+
 .preview-icon {
   width: 100%;
   height: 100%;
@@ -582,4 +592,42 @@
   text-transform: uppercase;
   letter-spacing: 2px;
   text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+}
+
+.new-set-zone {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px dashed rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-new-set {
+  background: #00ffff;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-new-set:hover:not(:disabled) {
+  background: #00cccc;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-new-set:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

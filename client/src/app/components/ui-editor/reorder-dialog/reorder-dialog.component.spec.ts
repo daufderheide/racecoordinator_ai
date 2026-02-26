@@ -5,7 +5,7 @@ import { TranslationService } from '../../../services/translation.service';
 import { ChangeDetectorRef, Pipe, PipeTransform, Component, Input } from '@angular/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { AnchorPoint } from '../../raceday/column_definition';
-import { ColumnVisibility } from '../../../models/settings';
+import { ColumnVisibility, Settings } from '../../../models/settings';
 import { of } from 'rxjs';
 
 @Pipe({ name: 'translate', standalone: false })
@@ -187,5 +187,44 @@ describe('ReorderDialogComponent', () => {
     spyOn(component.cancel, 'emit');
     component.onCancel();
     expect(component.cancel.emit).toHaveBeenCalled();
+  });
+
+  it('should reset to defaults when onReset is called', () => {
+    // 1. Initialize with some non-default data
+    component.data = {
+      availableValues: [
+        { key: 'lapCount', label: 'L' },
+        { key: 'driver.nickname', label: 'N' },
+        { key: 'lastLapTime', label: 'T' },
+        { key: 'gapLeader', label: 'G' },
+        { key: 'imageset_fuel-gauge-builtin', label: 'F' }
+      ],
+      columnSlots: [{ key: 'custom_slot', label: 'Custom' }],
+      columnLayouts: { 'custom_slot': { [AnchorPoint.TopLeft]: 'lapCount' } },
+      columnVisibility: { 'custom_slot': ColumnVisibility.NonFuelRaceOnly }
+    };
+
+    expect(component.columnSlots.length).toBe(1);
+    expect(component.columnSlots[0].key).toBe('custom_slot');
+
+    // 2. Call reset
+    component.onReset();
+
+    // 3. Verify it matches DEFAULT_COLUMNS and Settings defaults
+    expect(component.columnSlots.length).toBe(Settings.DEFAULT_COLUMNS.length);
+    expect(component.columnSlots[0].key).toBe('driver.nickname');
+    expect(component.columnSlots[1].key).toBe('imageset_fuel-gauge-builtin');
+    expect(component.columnSlots[2].key).toBe('lapCount');
+
+    // Verify layout reset (from new Settings())
+    expect(component.columnLayouts['driver.nickname']).toEqual({
+      [AnchorPoint.CenterCenter]: 'driver.nickname',
+      [AnchorPoint.BottomCenter]: 'participant.team.name'
+    });
+    expect(component.columnLayouts['custom_slot']).toBeUndefined();
+
+    // Verify visibility reset
+    expect(component.columnVisibility['imageset_fuel-gauge-builtin']).toBe(ColumnVisibility.FuelRaceOnly);
+    expect(component.columnVisibility['custom_slot']).toBeUndefined();
   });
 });

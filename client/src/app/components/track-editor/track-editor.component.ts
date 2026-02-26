@@ -77,6 +77,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.dataService.disconnectFromInterfaceDataSocket();
     this.subscriptions.forEach(s => s.unsubscribe());
     this.subscriptions = [];
+    if (this.colorDebounceTimer) {
+      clearTimeout(this.colorDebounceTimer);
+    }
   }
 
   @HostListener('window:resize')

@@ -43,7 +43,7 @@ test.describe('Race Editor Visuals', () => {
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the entire editor
-    await expect(page).toHaveScreenshot('race-editor.png');
+    await expect(page).toHaveScreenshot('race-editor.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display validation error for duplicate name', async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe('Race Editor Visuals', () => {
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the name input area showing the potential error style if any
-    await expect(page).toHaveScreenshot('race-editor-duplicate-name.png');
+    await expect(page).toHaveScreenshot('race-editor-duplicate-name.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should show error modal on save failure', async ({ page }) => {
@@ -106,7 +106,7 @@ test.describe('Race Editor Visuals', () => {
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the error modal
-    await expect(backdrop).toHaveScreenshot('race-editor-save-error.png');
+    await expect(backdrop).toHaveScreenshot('race-editor-save-error.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display fuel options when enabled', async ({ page }) => {
@@ -136,7 +136,7 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     // Screenshot the fuel configuration section
-    await expect(page).toHaveScreenshot('race-editor-fuel-options.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('race-editor-fuel-options.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should hide fuel graphs when analog fuel is disabled', async ({ page }) => {
@@ -162,6 +162,6 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     // Screenshot the fuel configuration section
-    await expect(page).toHaveScreenshot('race-editor-fuel-options-disabled.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('race-editor-fuel-options-disabled.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 });

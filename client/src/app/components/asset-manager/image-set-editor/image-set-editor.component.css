@@ -1,0 +1,276 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: #1e1e1e;
+  color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  min-width: 500px;
+  max-width: 700px;
+  max-height: 85vh;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-title {
+  margin-top: 0;
+  color: #00ffff;
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.form-input {
+  width: 100%;
+  background: #2b2b2b;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+/* Drop Overlay */
+.drop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 255, 255, 0.1);
+  backdrop-filter: blur(2px);
+  z-index: 2100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+  border: 4px dashed #00ffff;
+  box-sizing: border-box;
+}
+
+.drop-msg {
+  background: #1e1e1e;
+  padding: 20px 40px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid #00ffff;
+}
+
+.drop-msg i {
+  font-size: 3rem;
+  color: #00ffff;
+}
+
+.drop-msg span {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.entries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.hint {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #666;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-recalc {
+  background: #333;
+  color: #00ffff;
+  border: 1px solid #444;
+  width: 35px;
+  height: 35px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-recalc:hover {
+  background: #444;
+  border-color: #00ffff;
+}
+
+.btn-add {
+  background: #008888;
+  color: #fff;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+
+.btn-add:hover {
+  background: #00aaaa;
+}
+
+.entries-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 25px;
+  padding-right: 5px;
+}
+
+.entry-item {
+  display: flex;
+  align-items: center;
+  background: #2b2b2b;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  gap: 15px;
+  border: 1px solid #333;
+}
+
+.entry-preview {
+  width: 80px;
+}
+
+.entry-percent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.entry-percent label {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.percent-input {
+  width: 70px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.btn-remove {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-remove:hover {
+  opacity: 1;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #333;
+}
+
+button {
+  padding: 10px 25px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #333;
+  color: #fff;
+  border: 1px solid #444;
+}
+
+.btn-cancel:hover {
+  background: #444;
+}
+
+.btn-save {
+  background: #00ffff;
+  color: #000;
+  border: none;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #00cccc;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

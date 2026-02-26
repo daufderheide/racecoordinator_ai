@@ -19,7 +19,9 @@ public class AssetTaskHandler {
     app.post("/api/assets/upload", this::uploadAsset);
     app.post("/api/assets/delete", this::deleteAsset);
     app.post("/api/assets/rename", this::renameAsset);
+    app.post("/api/assets/save-image-set", this::saveImageSet);
     app.get("/assets/{filename}", this::serveAsset);
+
   }
 
   private void serveAsset(Context ctx) {
@@ -155,6 +157,32 @@ public class AssetTaskHandler {
       RenameAssetResponse response = RenameAssetResponse.newBuilder()
           .setSuccess(false)
           .setMessage("Error renaming asset: " + e.getMessage())
+          .build();
+      ctx.contentType("application/octet-stream").result(response.toByteArray());
+    }
+  }
+
+  private void saveImageSet(Context ctx) {
+    try {
+      SaveImageSetRequest request = SaveImageSetRequest.parseFrom(ctx.bodyAsBytes());
+      String currentDbName = databaseContext.getCurrentDatabaseName();
+      if (currentDbName == null)
+        currentDbName = "Race Coordinator AI DB";
+      AssetService service = new AssetService(databaseContext.getDatabase(),
+          databaseContext.getDataRoot() + currentDbName + "/assets");
+      AssetMessage asset = service.saveImageSet(request.getId(), request.getName(), request.getEntriesList());
+
+      SaveImageSetResponse response = SaveImageSetResponse.newBuilder()
+          .setSuccess(true)
+          .setMessage("Image set saved successfully")
+          .setAsset(asset)
+          .build();
+      ctx.contentType("application/octet-stream").result(response.toByteArray());
+    } catch (Exception e) {
+      e.printStackTrace();
+      SaveImageSetResponse response = SaveImageSetResponse.newBuilder()
+          .setSuccess(false)
+          .setMessage("Error saving image set: " + e.getMessage())
           .build();
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     }

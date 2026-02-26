@@ -84,16 +84,20 @@
 }
 
 .preview-text {
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   font-family: 'Inter', monospace;
-  color: #fff;
+  color: #00ffff;
   text-align: center;
   line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  font-weight: 500;
+  font-weight: 700;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
 }
 
 .column-label {
