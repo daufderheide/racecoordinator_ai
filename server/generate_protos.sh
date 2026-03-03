@@ -45,7 +45,8 @@ esac
 
 # Protoc binary name (matches maven protobuf plugin layout)
 PROTOC_BIN="protoc-${PROTOC_VERSION}-${PROTOC_OS}-${PROTOC_ARCH}.exe"
-PROTOC="$SERVER_DIR/target_dist/protoc-plugins/$PROTOC_BIN"
+M2_REPO="${HOME}/.m2/repository"
+PROTOC_M2="$M2_REPO/com/google/protobuf/protoc/${PROTOC_VERSION}/${PROTOC_BIN}"
 
 # Allow overriding the destination directory
 TARGET_DIR="${PROTO_DEST_DIR:-$SERVER_DIR/target_dist}"
@@ -54,24 +55,33 @@ JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
 # Ensure output directory exists
 mkdir -p "$JAVA_OUT"
 
-# Ensure protoc exists (downloaded by maven plugin)
-if [ ! -f "$PROTOC" ]; then
+# Ensure protoc exists in local maven repository (downloaded by maven plugin)
+if [ ! -f "$PROTOC_M2" ]; then
   echo "Protoc not found at:"
-  echo "  $PROTOC"
+  echo "  $PROTOC_M2"
   echo "Attempting to download via 'mvn protobuf:compile'..."
   mvn protobuf:compile > /dev/null 2>&1
 fi
 
 # Final verification
-if [ ! -f "$PROTOC" ]; then
+if [ ! -f "$PROTOC_M2" ]; then
   echo "ERROR: Protoc still not found after maven download."
   exit 1
 fi
 
-echo "Generating protobuf files using:"
-echo "  $PROTOC"
+PROTOC_LOCAL="$TARGET_DIR/protoc-plugins/$PROTOC_BIN"
+mkdir -p "$(dirname "$PROTOC_LOCAL")"
 
-"$PROTOC" \
+# Only copy if needed
+if [ ! -f "$PROTOC_LOCAL" ] || [ "$PROTOC_M2" -nt "$PROTOC_LOCAL" ]; then
+  cp "$PROTOC_M2" "$PROTOC_LOCAL"
+  chmod +x "$PROTOC_LOCAL"
+fi
+
+echo "Generating protobuf files using:"
+echo "  $PROTOC_LOCAL"
+
+"$PROTOC_LOCAL" \
   --proto_path="$PROTO_ROOT" \
   --java_out="$JAVA_OUT" \
   "$PROTO_ROOT"/client/*.proto \
