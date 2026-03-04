@@ -61,6 +61,7 @@ mkdir -p release/RaceCoordinator_Offline/web
 for dir in release/RaceCoordinator release/RaceCoordinator_Offline; do
     cp server/target_dist/server-1.0-SNAPSHOT.jar "$dir/RaceCoordinator.jar"
     cp -r client/dist/client/* "$dir/web/"
+    cp -r server/src/main/resources/arduino "$dir/"
 done
 
 # Extract and Bundle Dependencies
