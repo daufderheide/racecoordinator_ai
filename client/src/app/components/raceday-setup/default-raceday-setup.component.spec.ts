@@ -148,12 +148,38 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.isDropdownOpen).toBeTrue();
   });
 
-  it('should select a race', () => {
+  it('should select a race without updating quick start races', () => {
     const raceToSelect = component.races.find((r: any) => r.entity_id === 'r2')!;
+    const initialQuickStart = [...component.quickStartRaces];
+
     component.selectRace(raceToSelect);
 
     expect(component.selectedRace?.entity_id).toBe('r2');
     expect(component.isDropdownOpen).toBeFalse();
+    // Quick start races should NOT have changed order
+    expect(component.quickStartRaces).toEqual(initialQuickStart);
+    // Settings should be saved with selectedRaceId
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    const savedSettings = mockSettingsService.saveSettings.calls.mostRecent().args[0];
+    expect(savedSettings.selectedRaceId).toBe('r2');
+  });
+
+  it('should update quick start races when starting a race', () => {
+    const raceToSelect = component.races.find((r: any) => r.entity_id === 'r2')!;
+    component.selectRace(raceToSelect);
+    // Must have participants to start a race
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+
+    const response = com.antigravity.InitializeRaceResponse.fromObject({ success: true });
+    mockDataService.initializeRace.and.returnValue(of(response));
+
+    component.startRace(false);
+
+    // After starting, r2 should be the first in quickStartRaces
+    expect(component.quickStartRaces[0].entity_id).toBe('r2');
+    // Settings should be saved with updated recentRaceIds
+    const savedSettings = mockSettingsService.saveSettings.calls.mostRecent().args[0];
+    expect(savedSettings.recentRaceIds[0]).toBe('r2');
   });
 
   it('should start race', () => {

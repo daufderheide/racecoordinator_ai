@@ -122,8 +122,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);
 
-        if (localSettings && localSettings.recentRaceIds?.length > 0) {
-          const defaultRaceId = localSettings.recentRaceIds[0];
+        if (localSettings && (localSettings.selectedRaceId || localSettings.recentRaceIds?.length > 0)) {
+          const defaultRaceId = localSettings.selectedRaceId || localSettings.recentRaceIds[0];
           this.selectedRace = this.races.find(r => r.entity_id === defaultRaceId);
         }
 
@@ -386,29 +386,35 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-  private saveSettings() {
+  private saveSettings(updateRecent: boolean = false) {
     const settings = this.settingsService.getSettings();
 
     if (this.selectedRace) {
-      // Prepend the new race ID, remove it if it was already in the list
-      let recentRaceIds = settings.recentRaceIds || [];
-      recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
-      // Keep only the last two
-      settings.recentRaceIds = recentRaceIds.slice(0, 2);
+      settings.selectedRaceId = this.selectedRace.entity_id;
+
+      if (updateRecent) {
+        let recentRaceIds = settings.recentRaceIds || [];
+        recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
+        // Keep only the last two
+        settings.recentRaceIds = recentRaceIds.slice(0, 2);
+      }
     }
 
     settings.selectedDriverIds = this.selectedParticipants.map(p => this.getParticipantUniqueId(p));
 
     this.settingsService.saveSettings(settings);
-    this.updateQuickStartRaces(settings.recentRaceIds);
+
+    if (updateRecent) {
+      this.updateQuickStartRaces(settings.recentRaceIds);
+    }
   }
 
   startRace(isDemo: boolean = false) {
     if (this.selectedRace && this.selectedParticipants.length > 0) {
       console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`);
 
-      // Ensure settings are up to date before redirecting
-      this.saveSettings();
+      // Update recent races list and save other settings
+      this.saveSettings(true);
 
       const settings = this.settingsService.getSettings();
 

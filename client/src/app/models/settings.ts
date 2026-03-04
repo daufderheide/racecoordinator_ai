@@ -10,6 +10,7 @@ export class Settings {
   static readonly DEFAULT_COLUMNS = ['driver.nickname', 'imageset_fuel-gauge-builtin', 'lapCount', 'lastLapTime', 'gapLeader'];
 
   recentRaceIds: string[] = [];
+  selectedRaceId: string = '';
   selectedDriverIds: string[] = [];
 
   serverIp: string = 'localhost';
