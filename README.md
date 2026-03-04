@@ -3,7 +3,9 @@ RaceCoordinator 2.0 built with google antigravity
 
 ## How to Run
 
-### First Time Setup
+### How to Run (Linux/Mac)
+
+#### First Time Setup
 The `run_server_headless.sh` script handles dependency downloading (including `protoc`) automatically.
 The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing.
 
@@ -13,19 +15,30 @@ The `run_client.sh` script handles `npm install` automatically if `node_modules`
 
 **Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server_headless.sh` again.
 
+### How to Run (Windows)
+
+#### First Time Setup
+The `run_server_headless.ps1` script handles dependency downloading (including `protoc`) automatically.
+The `run_client.ps1` script handles `npm install` automatically if `node_modules` is missing.
+
+- Run Server: `.\run_server_headless.ps1`
+- Run Client: `.\run_client.ps1` (will take a moment to install dependencies first time)
+
+**Note:** If you get a script execution error, run `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process` in your terminal first.
+
 ### Troubleshooting
 If the server fails to start with "Address already in use", you likely have a zombie MongoDB process.
 Run the provided script to fix it (updated to handle permissions better):
-```bash
-./kill_zombie_mongo.sh
-```
+- **Linux/Mac**: `./kill_zombie_mongo.sh`
+- **Windows**: `.\kill_zombie_mongo.ps1`
+
 Or use the Antigravity command:
 - `/kill_zombie_mongo`
 
-If the client or server faile to starup, ensure a previous run is not still running.  Simply kill the client and server and try again.
-```bash
-./kill_client_server.sh
-```
+If the client or server fail to startup, ensure a previous run is not still running. Simply kill them and try again.
+- **Linux/Mac**: `./kill_client_server.sh`
+- **Windows**: `.\kill_client_server.ps1`
+
 Or use the Antigravity command:
 - `/kill_client_server`
 
@@ -153,9 +166,9 @@ You can create installable packages for macOS and Windows using the provided scr
 
 ### Create All Installers
 Run the build script from the root directory:
-```bash
-./create_installers.sh
-```
+
+- **Linux/Mac**: `./create_installers.sh`
+- **Windows**: `.\create_installers.ps1`
 
 This script will:
 - Build the production Angular client.
