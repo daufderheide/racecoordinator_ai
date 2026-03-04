@@ -29,8 +29,10 @@ if ($null -eq $ProtocExe) {
 }
 
 Write-Host "Generating Protobuf files using $ProtocExe..." -ForegroundColor Cyan
-$ProtoFiles = Get-ChildItem -Path $PROTO_ROOT -Recurse -Filter "*.proto" | Select-Object -ExpandProperty FullName
-& $ProtocExe --proto_path="$PROTO_ROOT" --java_out="$JAVA_OUT" $ProtoFiles
+Push-Location $PROTO_ROOT
+$RelativeFiles = Get-ChildItem -Recurse -Filter "*.proto" | Resolve-Path -Relative
+& $ProtocExe --proto_path=. --java_out="$JAVA_OUT" $RelativeFiles
+Pop-Location
 
 Write-Host "Starting Server..." -ForegroundColor Green
 Set-Location $SERVER_DIR
@@ -55,5 +57,5 @@ if ($null -eq $MvnCmd) {
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
-$MvnArgs = @("compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR")
+$MvnArgs = @("clean", "compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR")
 & $MvnExecutable @MvnArgs
