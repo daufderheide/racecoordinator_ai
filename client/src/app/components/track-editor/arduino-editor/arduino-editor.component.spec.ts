@@ -23,6 +23,9 @@ class MockDataService {
   updateInterfaceConfig(config: any) {
     return of({ success: true });
   }
+  closeInterface() {
+    return of({ success: true });
+  }
 }
 
 describe('ArduinoEditorComponent', () => {
@@ -57,7 +60,7 @@ describe('ArduinoEditorComponent', () => {
       digitalIds: new Array(MAX_DIGITAL_PINS).fill(-1),
       analogIds: new Array(MAX_ANALOG_PINS).fill(-1),
       globalInvertLanes: 0,
-      normallyClosedRelays: false,
+      normallyClosedRelays: true,
       globalInvertLights: 0,
       useLapsForPits: 0,
       useLapsForPitEnd: 0,

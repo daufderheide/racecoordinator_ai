@@ -111,11 +111,15 @@
     <h2 class="modal-title">{{ inputModalTitle | translate }}</h2>
     <p class="modal-message">{{ inputModalMessage | translate:inputModalParams }}</p>
     <div class="input-container">
-      <input type="text" [(ngModel)]="inputValue" (keyup.enter)="onInputConfirm()" autoFocus>
+      <input type="text" [(ngModel)]="inputValue" (keyup.enter)="onInputConfirm()" autoFocus
+        [class.invalid]="inputValue && !isNameUnique(inputValue)">
+      <div class="error-msg" [style.visibility]="(inputValue && !isNameUnique(inputValue)) ? 'visible' : 'hidden'">{{
+        'DBM_ERR_EXISTS' | translate }}</div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" (click)="onCancelInput()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
-      <button class="btn-confirm" (click)="onInputConfirm()">{{ 'ACK_MODAL_BTN_OK' | translate }}</button>
+      <button class="btn-confirm" (click)="onInputConfirm()" [disabled]="!inputValue || !isNameUnique(inputValue)">{{
+        'ACK_MODAL_BTN_OK' | translate }}</button>
     </div>
   </div>
 </div>

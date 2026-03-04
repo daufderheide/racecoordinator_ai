@@ -17,7 +17,7 @@
       <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
       <div class="panel-content column-layout-section">
         <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
-          [resizingColumnKey]="resizingColumnKey">
+          [resizingColumnKey]="resizingColumnKey" [columnVisibility]="editingSettings.columnVisibility">
         </app-column-preview>
 
         <div class="layout-controls">

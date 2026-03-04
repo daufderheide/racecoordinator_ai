@@ -13,38 +13,71 @@ public class Demo extends DefaultProtocol {
   private java.util.concurrent.ScheduledFuture<?> statusFuture;
   private java.util.concurrent.ScheduledFuture<?> timerHandle;
   private java.util.Random random;
+  private boolean isFuelRace;
 
   private class LaneState {
     long currentLapElapsedTime = 0;
     long targetLapDuration;
     long currentLapStartTime = 0;
     boolean isFirstLap = true;
+    int lapsUntilNextPit = 0;
+    boolean isPitLap = false;
+    long pitEntryOffset = 0;
+    long pitExitOffset = 0;
+    boolean pitEntrySent = false;
+    boolean pitExitSent = false;
 
     LaneState() {
       setNextTarget();
     }
 
     void setNextTarget() {
+      pitEntrySent = false;
+      pitExitSent = false;
       if (isFirstLap) {
         // First lap is reaction time: (0, 0.5]s
         targetLapDuration = 1 + random.nextInt(500);
         isFirstLap = false;
+        if (isFuelRace) {
+          lapsUntilNextPit = 3 + random.nextInt(5); // 3 to 7 laps
+        }
       } else {
         // Regular lap time: [3s, 5s]
-        targetLapDuration = 3000 + random.nextInt(2001);
+        long lapDuration = 3000 + random.nextInt(2001);
+
+        if (isFuelRace) {
+          if (lapsUntilNextPit <= 0) {
+            isPitLap = true;
+            long pitDuration = 5000 + random.nextInt(5001); // 5 to 10 seconds
+            targetLapDuration = lapDuration + pitDuration;
+            pitEntryOffset = 500 + random.nextInt(501);
+            pitExitOffset = pitEntryOffset + pitDuration;
+            lapsUntilNextPit = 3 + random.nextInt(5);
+            System.out.println("Demo: Lane scheduled for pit stop. Duration: " + pitDuration + "ms, Lap Total: "
+                + targetLapDuration + "ms");
+          } else {
+            isPitLap = false;
+            targetLapDuration = lapDuration;
+            lapsUntilNextPit--;
+          }
+        } else {
+          isPitLap = false;
+          targetLapDuration = lapDuration;
+        }
       }
     }
   }
 
   private LaneState[] laneStates;
 
-  public Demo(int numLanes) {
-    this(numLanes, new java.util.Random());
+  public Demo(int numLanes, boolean isFuelRace) {
+    this(numLanes, new java.util.Random(), isFuelRace);
   }
 
-  protected Demo(int numLanes, java.util.Random random) {
+  protected Demo(int numLanes, java.util.Random random, boolean isFuelRace) {
     super(numLanes);
     this.random = random;
+    this.isFuelRace = isFuelRace;
     laneStates = new LaneState[numLanes];
     for (int i = 0; i < numLanes; i++) {
       laneStates[i] = new LaneState();
@@ -53,6 +86,7 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public boolean open() {
+    System.out.println("DEBUG: Opening Demo Protocol for " + getNumLanes() + " lanes");
     startStatusScheduler();
     return true;
   }
@@ -76,8 +110,12 @@ public class Demo extends DefaultProtocol {
       statusScheduler = createScheduler();
     }
     statusFuture = statusScheduler.scheduleAtFixedRate(() -> {
-      if (listener != null) {
-        listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+      try {
+        if (listener != null) {
+          listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED);
+        }
+      } catch (Exception e) {
+        System.err.println("Demo: Error reporting status: " + e.getMessage());
       }
     }, 0, 1, java.util.concurrent.TimeUnit.SECONDS);
   }
@@ -102,6 +140,29 @@ public class Demo extends DefaultProtocol {
           for (int i = 0; i < laneStates.length; i++) {
             LaneState state = laneStates[i];
             long totalElapsed = nowMs - state.currentLapStartTime;
+
+            if (state.isPitLap) {
+              if (totalElapsed >= state.pitEntryOffset && !state.pitEntrySent) {
+                state.pitEntrySent = true;
+                if (listener != null) {
+                  com.antigravity.protocols.CarData carData = new com.antigravity.protocols.CarData(
+                      i, totalElapsed / 1000.0, 0.0, 0.0, true,
+                      com.antigravity.protocols.CarLocation.PitRow,
+                      com.antigravity.protocols.CarLocation.Main, 0);
+                  listener.onCarData(carData);
+                }
+              }
+              if (totalElapsed >= state.pitExitOffset && !state.pitExitSent) {
+                state.pitExitSent = true;
+                if (listener != null) {
+                  com.antigravity.protocols.CarData carData = new com.antigravity.protocols.CarData(
+                      i, totalElapsed / 1000.0, 0.5, 0.5, false,
+                      com.antigravity.protocols.CarLocation.Main,
+                      com.antigravity.protocols.CarLocation.PitRow, 0);
+                  listener.onCarData(carData);
+                }
+              }
+            }
 
             if (totalElapsed >= state.targetLapDuration) {
               double lapTime = totalElapsed / 1000.0;

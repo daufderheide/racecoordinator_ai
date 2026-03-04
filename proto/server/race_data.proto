@@ -10,6 +10,8 @@ import "server/standings_update.proto";
 import "server/overall_standings_update.proto";
 import "server/race_state.proto";
 
+import "server/car_data.proto";
+
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "RaceDataProto";
@@ -23,5 +25,6 @@ message RaceData {
     StandingsUpdate standings_update = 5;
     OverallStandingsUpdate overall_standings_update = 6;
     RaceState race_state = 7;
+    CarData car_data = 8;
   }
 }

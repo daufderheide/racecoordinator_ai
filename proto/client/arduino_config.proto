@@ -14,6 +14,14 @@ enum PinBehavior {
   BEHAVIOR_SEGMENT_BASE = 2000;
   BEHAVIOR_CALL_BUTTON_BASE = 3000;
   BEHAVIOR_RELAY_BASE = 4000;
+  BEHAVIOR_PIT_IN_BASE = 5000;
+  BEHAVIOR_PIT_OUT_BASE = 6000;
+}
+
+enum LapPinPitBehavior {
+  LAP_PIN_PIT_NONE = 0;
+  LAP_PIN_PIT_IN = 1;
+  LAP_PIN_PIT_OUT = 2;
 }
 
 enum PinId {
@@ -31,12 +39,11 @@ message ArduinoConfig {
   int32 global_invert_lanes = 5;
   bool normally_closed_relays = 6;
   int32 global_invert_lights = 7;
-  int32 use_laps_for_pits = 8;
-  int32 use_laps_for_pit_end = 9;
   int32 use_pits_as_laps = 10;
   int32 use_laps_for_segments = 11;
   int32 hardware_type = 12;
   repeated int32 digital_ids = 13;
   repeated int32 analog_ids = 14;
   repeated string led_lane_color_overrides = 15;
+  LapPinPitBehavior lap_pin_pit_behavior = 16;
 }

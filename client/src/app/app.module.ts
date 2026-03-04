@@ -14,6 +14,7 @@ import { RaceService } from './services/race.service';
 
 import { LeaderBoardComponent } from './components/leader_board/leader_board.component';
 import { AssetManagerComponent } from './components/asset-manager/asset-manager.component';
+import { ImageSetEditorComponent } from './components/asset-manager/image-set-editor/image-set-editor.component';
 import { DriverEditorComponent } from './components/driver-editor/driver-editor.component';
 import { DriverManagerComponent } from './components/driver-manager/driver-manager.component';
 import { TrackManagerComponent } from './components/track-manager/track-manager.component';
@@ -38,6 +39,7 @@ import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
     DefaultRacedaySetupComponent,
     LeaderBoardComponent,
     AssetManagerComponent,
+    ImageSetEditorComponent,
     DriverEditorComponent,
     DriverManagerComponent,
     TeamManagerComponent,

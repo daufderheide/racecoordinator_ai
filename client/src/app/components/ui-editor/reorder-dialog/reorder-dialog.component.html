@@ -10,7 +10,8 @@
         <div class="values-sidebar">
           <label class="section-label">{{ 'UE_LABEL_AVAILABLE_VALUES' | translate }}</label>
           <div cdkDropList [cdkDropListData]="availableValues" class="value-pool"
-            [cdkDropListConnectedTo]="cachedDropListIds">
+            [cdkDropListConnectedTo]="cachedDropListIds" cdkScrollable>
+
             <div class="value-chip" *ngFor="let val of availableValues; trackBy: trackByKey" cdkDrag
               [cdkDragData]="val.key">
               {{ val.label | translate }}
@@ -19,7 +20,8 @@
         </div>
 
         <!-- Panel 2: Column Slots -->
-        <div class="slots-container">
+        <div class="slots-container" cdkScrollable>
+
           <label class="section-label">{{ 'UE_LABEL_COLUMN_SLOTS' | translate }}</label>
           <div cdkDropList class="slot-list" (cdkDropListDropped)="dropColumn($event)">
             <div class="slot-item" *ngFor="let slot of columnSlots; trackBy: trackByKey" cdkDrag>
@@ -28,6 +30,13 @@
                   <span class="material-icons">open_with</span>
                 </div>
                 <div class="slot-title">{{ getColumnLabel(slot.key) | translate }}</div>
+                <div class="visibility-selector">
+                  <select class="visibility-select" [(ngModel)]="columnVisibility[slot.key]"
+                    (change)="cdr.markForCheck()">
+                    <option *ngFor="let opt of visibilityOptions" [value]="opt">{{ 'UE_VISIBILITY_' + opt | translate }}
+                    </option>
+                  </select>
+                </div>
                 <button class="remove-btn" (click)="removeColumn(slot.key)">
                   <span class="material-icons">delete</span>
                 </button>
@@ -72,13 +81,17 @@
         <!-- Panel 3: Lane Preview -->
         <div class="preview-panel">
           <label class="section-label">{{ 'UE_REORDER_DIALOG_PREVIEW' | translate }}</label>
-          <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="columnLayouts"></app-column-preview>
+          <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="columnLayouts"
+            [columnVisibility]="columnVisibility"></app-column-preview>
           <p class="hint">{{ 'UE_REORDER_HINT' | translate }}</p>
         </div>
       </div>
     </div>
 
     <div class="modal-footer">
+      <button class="btn btn-danger btn-reset-defaults" (click)="onReset()">{{ 'UE_BTN_RESET_DEFAULTS' | translate
+        }}</button>
+      <div class="spacer" style="flex: 1"></div>
       <button class="btn btn-secondary" (click)="onCancel()">{{ 'UE_BTN_CANCEL' | translate }}</button>
       <button class="btn btn-save" (click)="onSave()">{{ 'UE_BTN_SAVE' | translate }}</button>
     </div>

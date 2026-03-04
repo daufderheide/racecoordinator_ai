@@ -264,6 +264,90 @@ public class RacingTest {
     org.mockito.Mockito.verify(mockRace, org.mockito.Mockito.never()).changeState(org.mockito.ArgumentMatchers.any());
   }
 
+  @Test
+  public void testFuelConsumption_Linear() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
+        true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.LINEAR, 4.0, 100.0, 10.0, 2.0,
+        5.0);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
+        new OverallScoring(), 0.0, fuelOptions, "race1", new ObjectId());
+
+    Race raceWithFuel = new Race(raceModel, participants, track, true);
+
+    // Set initial fuel level
+    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    Racing racing = new Racing();
+    raceWithFuel.changeState(racing);
+
+    // Reaction
+    racing.onLap(0, 1.0, 1);
+
+    // Lap time exactly equal to reference time (5.0s) should use exactly the
+    // usageRate (4.0)
+    racing.onLap(0, 5.0, 1);
+
+    assertEquals(96.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
+  public void testFuelConsumption_Quadratic() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
+        true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.QUADRATIC, 4.0, 100.0, 10.0,
+        2.0, 5.0);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
+        new OverallScoring(), 0.0, fuelOptions, "race1", new ObjectId());
+
+    Race raceWithFuel = new Race(raceModel, participants, track, true);
+
+    // Set initial fuel level
+    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    Racing racing = new Racing();
+    raceWithFuel.changeState(racing);
+
+    // Reaction
+    racing.onLap(0, 1.0, 1);
+
+    // Lap time 2.5s (half of reference). Logic: usageRate * (ref^2) / (lap^2) = 4.0
+    // * 25 / 6.25 = 16.0 fuel used.
+    racing.onLap(0, 2.5, 1);
+
+    assertEquals(100.0 - 16.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
+  public void testFuelConsumption_Cubic() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
+        true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.CUBIC, 4.0, 100.0, 10.0, 2.0,
+        5.0);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
+        new OverallScoring(), 0.0, fuelOptions, "race1", new ObjectId());
+
+    Race raceWithFuel = new Race(raceModel, participants, track, true);
+
+    // Set initial fuel level
+    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    Racing racing = new Racing();
+    raceWithFuel.changeState(racing);
+
+    // Reaction
+    racing.onLap(0, 1.0, 1);
+
+    // Lap time 10.0s (double reference time). Logic: usageRate * (ref^3) / (lap^3)
+    // = 4.0 * 125 / 1000 = 0.5 fuel used.
+    racing.onLap(0, 10.0, 1);
+
+    assertEquals(100.0 - 0.5, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
   private void assertEquals(long expected, long actual) {
     if (expected != actual) {
       throw new AssertionError("Expected " + expected + " but got " + actual);

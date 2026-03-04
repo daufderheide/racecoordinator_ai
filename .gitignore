@@ -66,11 +66,18 @@ client/.chrome-home/
 client/browsers/
 
 # I think this is generated code on the client/server
-client/src/app/types/
 server/build_output/
 server/target_dist/
+server/target_dev/
 server/target_exec/
 client/tmp-karma/
 server/generated-sources/
+server/target_generated/
 server/protoc_local.exe
 server/target_test/
+client/.npmrc
+server/gen-proto/
+client/node_modules_backup/
+data_v2
+client/package-lock.json
+

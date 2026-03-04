@@ -137,6 +137,13 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.filteredRaces[0].name).toBe('Time Trial');
   });
 
+  it('should auto-open race dropdown when searching races', () => {
+    expect(component.isDropdownOpen).toBeFalse();
+    component.raceSearchQuery = 'Grand';
+    component.onSearchChange();
+    expect(component.isDropdownOpen).toBeTrue();
+  });
+
   it('should select a race', () => {
     const raceToSelect = component.races.find((r: any) => r.entity_id === 'r2')!;
     component.selectRace(raceToSelect);

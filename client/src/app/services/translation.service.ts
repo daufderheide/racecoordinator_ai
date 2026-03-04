@@ -10,7 +10,7 @@ export class TranslationService {
     private currentLanguage = new BehaviorSubject<string>('en');
     private translationsLoaded = new BehaviorSubject<boolean>(false);
     private translations: { [key: string]: any } = {};
-    private supportedLanguages = ['en', 'es', 'fr', 'de', 'pt', 'it'];
+    private supportedLanguages = ['en', 'es', 'fr', 'de', 'nl', 'pt', 'it'];
 
     constructor(private http: HttpClient, private settingsService: SettingsService) {
         // Load from settings if available, otherwise detect browser language

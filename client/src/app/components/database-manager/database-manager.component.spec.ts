@@ -19,8 +19,6 @@ describe('DatabaseManagerComponent', () => {
     { name: 'db2', driverCount: 5, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
   ];
 
-  const mockCurrentDatabase = { name: 'db1' };
-
   beforeEach(async () => {
     mockDataService = jasmine.createSpyObj('DataService', [
       'getDatabases',
@@ -34,8 +32,8 @@ describe('DatabaseManagerComponent', () => {
       'importDatabase'
     ]);
 
-    mockDataService.getDatabases.and.returnValue(of(mockDatabases));
-    mockDataService.getCurrentDatabase.and.returnValue(of(mockCurrentDatabase));
+    mockDataService.getDatabases.and.callFake(() => of(JSON.parse(JSON.stringify(mockDatabases))));
+    mockDataService.getCurrentDatabase.and.returnValue(of({ name: 'db1' }));
     mockDataService.switchDatabase.and.returnValue(of({ name: 'db2' }));
     mockDataService.createDatabase.and.returnValue(of({ name: 'newDB', driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 }));
     mockDataService.copyDatabase.and.returnValue(of({ name: 'copyDB', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 }));
@@ -80,6 +78,7 @@ describe('DatabaseManagerComponent', () => {
   });
 
   it('should handle error during initial load', () => {
+    spyOn(console, 'error');
     mockDataService.getDatabases.and.returnValue(throwError(() => new Error('Error')));
     component.initialLoad();
     expect(component.loading).toBeFalse();
@@ -116,6 +115,7 @@ describe('DatabaseManagerComponent', () => {
     });
 
     it('should handle error during switch', () => {
+      spyOn(console, 'error');
       mockDataService.switchDatabase.and.returnValue(throwError(() => new Error('Error')));
       component.selectedDatabase = mockDatabases[1];
       component.useDatabase();
@@ -144,19 +144,10 @@ describe('DatabaseManagerComponent', () => {
       expect(component.selectedDatabase.name).toBe('newDB');
     });
 
-    it('should handle conflict error (409)', () => {
-      mockDataService.createDatabase.and.returnValue(throwError(() => ({ status: 409 })));
-      component.createDatabase();
-      component.inputValue = 'existingDB';
-      component.onInputConfirm();
-
-      expect(component.loading).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_EXISTS');
-    });
-
-    it('should handle general error', () => {
+    it('should handle general error during creation', () => {
+      spyOn(console, 'error');
       mockDataService.createDatabase.and.returnValue(throwError(() => new Error('Error')));
+
       component.createDatabase();
       component.inputValue = 'newDB';
       component.onInputConfirm();
@@ -164,6 +155,19 @@ describe('DatabaseManagerComponent', () => {
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe('DBM_ERR_CREATE');
+    });
+
+    it('should handle conflict error during creation', () => {
+      spyOn(console, 'error');
+      mockDataService.createDatabase.and.returnValue(throwError(() => ({ status: 409 })));
+
+      component.createDatabase();
+      component.inputValue = 'existingDB';
+      component.onInputConfirm();
+
+      expect(component.loading).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalMessage).toBe('DBM_ERR_EXISTS');
     });
   });
 
@@ -200,6 +204,7 @@ describe('DatabaseManagerComponent', () => {
     });
 
     it('should handle conflict error (409)', () => {
+      spyOn(console, 'error');
       mockDataService.copyDatabase.and.returnValue(throwError(() => ({ status: 409 })));
       component.selectedDatabase = mockDatabases[0];
       component.copyDatabase();
@@ -301,7 +306,30 @@ describe('DatabaseManagerComponent', () => {
     expect(component.showInputModal).toBeFalse();
   });
 
+  describe('importDatabaseNaming', () => {
+    it('should default name to filename without extension', () => {
+      const event = { target: { files: [{ name: 'mybackup.zip' }], value: 'test' } };
+      component.onFileSelected(event);
+      expect(component.inputValue).toBe('mybackup');
+    });
+
+    it('should add postfix if name already exists', () => {
+      // db1 and db2 exist in mockDatabases
+      const event = { target: { files: [{ name: 'db1.zip' }], value: 'test' } };
+      component.onFileSelected(event);
+      expect(component.inputValue).toBe('db1_1');
+    });
+
+    it('should increment postfix if multiple exist', () => {
+      component.databases.push({ name: 'db1_1' });
+      const event = { target: { files: [{ name: 'db1.zip' }], value: 'test' } };
+      component.onFileSelected(event);
+      expect(component.inputValue).toBe('db1_2');
+    });
+  });
+
   it('should handle error during import', () => {
+    spyOn(console, 'error');
     mockDataService.importDatabase.and.returnValue(throwError(() => new Error('Error')));
     const event = { target: { files: [{ name: 'db.zip' }], value: 'test' } };
     component.onFileSelected(event);

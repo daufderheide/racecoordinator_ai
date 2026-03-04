@@ -30,7 +30,7 @@
         </div>
       </div>
       <div class="control-group">
-        <label>{{ 'AE_DEBOUNCE_TIME' | translate }}</label>
+        <label>{{ 'AE_DEBOUNCE_TIME' | translate }} <span class="unit-lowercase">(µs)</span></label>
         <input type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
           step="100">
       </div>

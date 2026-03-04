@@ -101,9 +101,11 @@
   width: 50%;
   max-width: 800px;
   height: 40px;
-  background: url('../../../assets/images/progress_bar_container.png') no-repeat center center;
-  background-size: 100% 100%;
-  position: relative;
+  background: transparent;
+  position: absolute;
+  top: 150px;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 4px;
   box-sizing: border-box;
 }
@@ -155,7 +157,7 @@
 
 .quote-container {
   position: absolute;
-  top: 70px;
+  bottom: 40px;
   left: 20px;
   width: 400px;
   max-width: 90vw;

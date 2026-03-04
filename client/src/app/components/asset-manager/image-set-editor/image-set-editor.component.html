@@ -1,0 +1,61 @@
+<div class="modal-backdrop" *ngIf="visible" (dragenter)="onElementDragEnter($event)"
+  (dragover)="onElementDragOver($event)" (dragleave)="onElementDragLeave($event)" (drop)="onElementDrop($event)">
+
+  <div class="drop-overlay" *ngIf="isDragging" (dragenter)="onElementDragEnter($event)"
+    (dragover)="onElementDragOver($event)" (dragleave)="onElementDragLeave($event)" (drop)="onElementDrop($event)">
+    <div class="drop-msg">
+      <i class="fas fa-file-upload"></i>
+      <span>{{ 'AM_SET_EDITOR_DROP_OVERLAY' | translate }}</span>
+    </div>
+  </div>
+
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <h2 class="modal-title">{{ (assetId ? 'AM_SET_EDITOR_TITLE_EDIT' : 'AM_SET_EDITOR_TITLE_NEW') | translate }}</h2>
+
+    <div class="form-group">
+      <label>{{ 'AM_SET_EDITOR_NAME' | translate }}</label>
+      <input type="text" [(ngModel)]="name" class="form-input" [placeholder]="'AM_SET_EDITOR_NAME' | translate">
+    </div>
+
+    <div class="entries-header">
+      <div class="header-main">
+        <span>{{ 'AM_SET_EDITOR_IMAGES' | translate }}</span>
+        <span class="hint" *ngIf="entries.length === 0">{{ 'AM_SET_EDITOR_EMPTY' | translate }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-recalc" (click)="recalculatePercentages()" [title]="'AM_SET_EDITOR_RECALC' | translate">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <button class="btn-add" (click)="addEntry()">{{ 'AM_SET_EDITOR_BTN_ADD' | translate }}</button>
+      </div>
+    </div>
+
+    <div class="entries-list">
+      <div class="entry-item" *ngFor="let entry of entries; let i = index">
+        <div class="entry-preview">
+          <app-image-selector [imageUrl]="entry.url ?? undefined" [assets]="allImages"
+            (imageUrlChange)="entry.url = $event; entry.name = entry.name || entry.url" size="small">
+          </app-image-selector>
+        </div>
+        <div class="entry-percent">
+          <label>{{ 'AM_SET_EDITOR_PERCENT' | translate }}</label>
+          <input type="number" [(ngModel)]="entry.percentage" min="0" max="100" class="percent-input">
+          <span>%</span>
+        </div>
+        <button class="btn-remove" (click)="removeEntry(i)" [title]="'UE_BTN_REMOVE_IMAGE' | translate">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="onCancel()" [disabled]="isSaving">{{ 'AM_SET_EDITOR_BTN_CANCEL' | translate
+        }}</button>
+      <button class="btn-save" (click)="onSave()" [disabled]="isSaving || !name || entries.length === 0">
+        <span *ngIf="!isSaving">{{ 'AM_SET_EDITOR_BTN_SAVE' | translate }}</span>
+        <div class="spinner small" *ngIf="isSaving"></div>
+      </button>
+    </div>
+  </div>
+</div>

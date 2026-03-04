@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
 import { Track } from 'src/app/models/track';
+import { Race } from 'src/app/models/race';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -13,11 +14,11 @@ import { HeatConverter } from 'src/app/converters/heat.converter';
 import { TrackConverter } from 'src/app/converters/track.converter';
 import { LaneConverter } from 'src/app/converters/lane.converter';
 import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
-import { playSound } from 'src/app/utils/audio';
+import { playSound, createTTSContext } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
 import { AnchorPoint } from './column_definition';
-import { Settings } from 'src/app/models/settings';
+import { Settings, ColumnVisibility } from 'src/app/models/settings';
 import { FinishMethod } from 'src/app/models/heat_scoring';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
@@ -38,6 +39,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
   protected track!: Track;
+  protected race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
   protected startResumeShortcut: string = 'Ctrl+S';
@@ -58,10 +60,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   ackModalMessage = '';
   ackModalButtonText = 'ACK_MODAL_BTN_OK';
 
-  private wasInterfaceErrorShown = false;
   private disconnectedTimeout: any;
   private noStatusWatchdog: any;
   private lastInterfaceStatus: InterfaceStatus | number = -1;
+  private hasInitiallyConnected = false;
   private readonly WATCHDOG_TIMEOUT = 5000;
 
 
@@ -97,7 +99,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     LaneConverter.clearCache();
 
     this.subscriptions.push(this.dataService.listAssets().subscribe(assets => {
-      this.assets = assets?.filter((a: any) => a.type === 'image') || [];
+      this.assets = assets || [];
+      this.loadColumns(); // Refresh column definitions to pick up asset names and update formatters
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }
@@ -194,25 +197,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
           const driver = driverData.driver;
           const isBestLap = lap.lapTime === lap.bestLapTime;
 
-          console.log('Lap Audio Debug:', {
-            driverName: driver.name,
-            isBestLap,
-            lapTime: lap.lapTime,
-            bestLapTime: lap.bestLapTime,
-            audioConfig: {
-              bestSound: driver.bestLapAudio,
-              lapSound: driver.lapAudio
-            }
-          });
+          const ttsContext = createTTSContext(driver, driverData);
 
           if (isBestLap && (driver.bestLapAudio.url || (driver.bestLapAudio.type === 'tts' && driver.bestLapAudio.text))) {
             // Play Best Lap Sound
             console.log('Triggering Best Lap Sound');
-            playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl);
+            playSound(driver.bestLapAudio.type, driver.bestLapAudio.url, driver.bestLapAudio.text, this.dataService.serverUrl, ttsContext);
           } else if (driver.lapAudio.url || (driver.lapAudio.type === 'tts' && driver.lapAudio.text)) {
             // Play Regular Lap Sound
             console.log('Triggering Regular Lap Sound');
-            playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl);
+            playSound(driver.lapAudio.type, driver.lapAudio.url, driver.lapAudio.text, this.dataService.serverUrl, ttsContext);
           } else {
             console.log('No audio configured for this driver/scenario');
           }
@@ -221,6 +215,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         }
       } else {
         console.warn('Lap received but heat or drivers not ready', { heat: !!this.heat, lap: !!lap });
+      }
+    }));
+
+    this.subscriptions.push(this.dataService.getCarData().subscribe(carData => {
+      if (this.heat && this.heat.heatDrivers && carData && carData.lane != null) {
+        const driverData = this.heat.heatDrivers[carData.lane];
+        if (driverData && carData.fuelLevel != null) {
+          driverData.participant.fuelLevel = carData.fuelLevel as number;
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
+        }
       }
     }));
 
@@ -237,7 +243,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
-      if (this.heat && update.updates) {
+      if (this.heat && update && update.updates) {
         update.updates.forEach(u => {
           if (u.objectId) {
             this.driverRankings.set(u.objectId, u.rank || 0);
@@ -256,9 +262,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      if (update.participants) {
+      if (update && update.participants) {
         const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
         this.raceService.setParticipants(participants);
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
       }
     }));
 
@@ -275,14 +284,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;
 
         if (status === InterfaceStatus.NO_DATA) {
-          this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          if (!this.hasInitiallyConnected) {
+            this.scheduleDisconnectedError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          } else {
+            this.showInterfaceError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          }
         } else if (status === InterfaceStatus.DISCONNECTED) {
-          this.scheduleDisconnectedError();
+          this.scheduleDisconnectedError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
         } else if (status === InterfaceStatus.CONNECTED) {
           this.clearDisconnectedError();
-          if (this.wasInterfaceErrorShown) {
+          if (this.showAckModal) {
             this.showInterfaceError('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
           }
+          this.hasInitiallyConnected = true;
         }
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
@@ -305,6 +319,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     // Start watchdog
     this.resetWatchdog();
+
+    // Test hooks for screendiff tests
+    (window as any).mockRaceData = (data: com.antigravity.IRaceData) => {
+      if (data.race) {
+        this.processRaceUpdate(data.race);
+        this.cdr.detectChanges();
+      }
+    };
   }
 
   private processRaceUpdate(update: com.antigravity.IRace) {
@@ -366,7 +388,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.noStatusWatchdog = setTimeout(() => {
       this.lastInterfaceStatus = -1;
-      this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+      if (!this.hasInitiallyConnected) {
+        this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+      } else {
+        this.showInterfaceError('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+      }
     }, this.WATCHDOG_TIMEOUT);
   }
 
@@ -375,14 +401,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.ackModalTitle = titleKey;
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
-    this.wasInterfaceErrorShown = true;
     this.cdr.detectChanges();
   }
 
-  private scheduleDisconnectedError() {
+  private scheduleDisconnectedError(title: string = 'ACK_MODAL_TITLE_DISCONNECTED', message: string = 'ACK_MODAL_MSG_DISCONNECTED') {
     if (this.disconnectedTimeout) return; // Already scheduled
+
+    if (this.noStatusWatchdog) {
+      clearTimeout(this.noStatusWatchdog);
+      this.noStatusWatchdog = null;
+    }
+
     this.disconnectedTimeout = setTimeout(() => {
-      this.showInterfaceError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+      this.showInterfaceError(title, message);
     }, 5000);
   }
 
@@ -395,9 +426,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   onAcknowledgeModal() {
     this.showAckModal = false;
-    if (this.ackModalTitle === 'ACK_MODAL_TITLE_CONNECTED') {
-      this.wasInterfaceErrorShown = false;
-    }
   }
 
   private sortHeatDrivers() {
@@ -436,7 +464,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (race) {
       console.log('RacedayComponent: using selected race:', race);
       console.log('RacedayComponent: Race tracks/lanes:', race.track, race.track?.lanes);
+      this.race = race;
       this.track = race.track;
+      this.loadColumns();
       this.initializeHeat();
     } else {
       console.log('RacedayComponent: Waiting for race data...');
@@ -614,9 +644,12 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return value;
   }
 
-  // Helper method to format column value for display
   formatColumnValue(heatDriver: DriverHeatData, column: ColumnDefinition, propertyName?: string): string {
     const prop = propertyName || column.propertyName;
+    // Use column formatter if it's the main property for this column
+    if (prop === column.propertyName && column.formatter) {
+      return column.formatter(this.getPropertyValue(heatDriver, prop), heatDriver);
+    }
     const value = this.getPropertyValue(heatDriver, prop);
     return this.formatValue(prop, value, heatDriver);
   }
@@ -1077,6 +1110,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       selectedColumns = Settings.DEFAULT_COLUMNS;
     }
 
+    // Filter columns based on race settings
+    const race = this.raceService.getRace();
+    const isFuelRace = race?.fuel_options?.enabled ?? false;
+    const visibilityMap = settings.columnVisibility || {};
+
+    selectedColumns = selectedColumns.filter(key => {
+      const visibility = visibilityMap[key] || ColumnVisibility.Always;
+      if (visibility === ColumnVisibility.Always) return true;
+      if (visibility === ColumnVisibility.FuelRaceOnly) return isFuelRace;
+      if (visibility === ColumnVisibility.NonFuelRaceOnly) return !isFuelRace;
+      return true;
+    });
+
     const nameKeys = ['driver.name', 'driver.nickname'];
 
     // Specific widths as per requirements
@@ -1095,7 +1141,15 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'gapPosition': 275,
       'driver.name': 400,
       'driver.nickname': 400,
-      'participant.team.name': 275
+      'driver.avatarUrl': 100,
+      'participant.team.name': 275,
+      'participant.fuelLevel': 180,
+      'fuelCapacity': 180,
+      'fuelPercentage': 180,
+      'seed': 180,
+      'rankHeat': 180,
+      'rankOverall': 180,
+      'imageset': 180
     };
 
     let totalFixedWithoutResizingColumn = 0;
@@ -1143,6 +1197,18 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         return this.formatValue(baseKey, v, hd);
       };
 
+      if (key.startsWith('imageset_')) {
+        const assetId = key.replace('imageset_', '');
+        const asset = this.findAssetById(assetId);
+        const label = ''; // Hide label for image set columns on raceday
+
+        const renderer = (v: any, hd: DriverHeatData) => {
+          return this.getSelectedImageFromSet(asset, hd);
+        };
+
+        return new ColumnDefinition(label, key, width, false, 'middle', 0, anchor, renderer, layout);
+      }
+
       if (isResizing) {
         return new ColumnDefinition(labelKey, key, width, true, 'start', 30, anchor, renderer, layout);
       }
@@ -1151,7 +1217,55 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Helper method to get the selected image URL from an image set based on fuel percentage
+  private getSelectedImageFromSet(asset: com.antigravity.IAssetMessage | undefined, hd: DriverHeatData): string {
+    if (!asset || asset.type !== 'image_set' || !asset.images || asset.images.length === 0) {
+      return '';
+    }
 
+    const level = hd.participant?.fuelLevel;
+    const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+    if (level === undefined || capacity === undefined || capacity <= 0) {
+      return '';
+    }
+
+    const fuelPercentage = (level / capacity) * 100;
+
+    // Special case: 0 percent should only be used if it is exactly 0
+    if (fuelPercentage === 0) {
+      const zeroImage = asset.images.find(img => img.percentage === 0);
+      return zeroImage ? this.getFullUrl(zeroImage.url || '') : '';
+    }
+
+    // Filter out 0 from candidates for non-zero percentages
+    const candidates = asset.images.filter(img => img.percentage !== 0);
+    if (candidates.length === 0) return '';
+
+    // Find the image with percentage closest to current fuelPercentage
+    let bestMatch = candidates[0];
+    let minDiff = Math.abs((bestMatch.percentage || 0) - fuelPercentage);
+
+    for (const img of candidates) {
+      const diff = Math.abs((img.percentage || 0) - fuelPercentage);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestMatch = img;
+      }
+    }
+
+    return this.getFullUrl(bestMatch.url || '');
+  }
+
+  private findAssetById(assetId: string): com.antigravity.IAssetMessage | undefined {
+    let asset = this.assets.find(a => a.model?.entityId === assetId);
+
+    // Robustness: fallback for builtin fuel gauge if ID doesn't match
+    if (!asset && assetId === 'fuel-gauge-builtin') {
+      asset = this.assets.find(a => a.type === 'image_set' && a.name === 'Fuel Gauge');
+    }
+
+    return asset;
+  }
 
   // Format any value based on property name
   formatValue(propertyName: string, value: any, hd: DriverHeatData): string {
@@ -1172,6 +1286,34 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       return hd.actualDriver?.nickname || hd.driver.nickname || hd.driver.name;
     } else if (baseKey === 'participant.team.name') {
       return hd.participant?.team?.name || '';
+    } else if (baseKey === 'participant.fuelLevel') {
+      return value !== undefined ? value.toFixed(1) : '--.-';
+    } else if (baseKey === 'fuelCapacity') {
+      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      return capacity !== undefined ? capacity.toFixed(1) : '--.-';
+    } else if (baseKey === 'fuelPercentage') {
+      const level = hd.participant?.fuelLevel;
+      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      if (level !== undefined && capacity !== undefined && capacity > 0) {
+        const percentage = Math.round((level / capacity) * 100);
+        return percentage + '%';
+      }
+      return '--%';
+    } else if (baseKey === 'driver.avatarUrl') {
+      return this.getFullUrl(value);
+    } else if (baseKey === 'seed') {
+      const seed = hd.participant?.seed;
+      return seed ? `(${seed})` : '--';
+    } else if (baseKey === 'rankHeat') {
+      const rank = this.driverRankings.get(hd.objectId);
+      return rank ? `(${rank})` : '--';
+    } else if (baseKey === 'rankOverall') {
+      const rank = hd.participant?.rank;
+      return rank ? `(${rank})` : '--';
+    } else if (propertyName.startsWith('imageset_')) {
+      const assetId = propertyName.replace('imageset_', '');
+      const asset = this.findAssetById(assetId);
+      return this.getSelectedImageFromSet(asset, hd);
     }
     return value?.toString() ?? '';
   }
@@ -1196,9 +1338,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'reactionTime': 'RD_COL_REACTION_TIME',
       'participant.team.name': 'RD_COL_TEAM',
       'driver.name': 'RD_COL_NAME',
-      'driver.nickname': 'RD_COL_NICKNAME'
+      'driver.nickname': 'RD_COL_NICKNAME',
+      'participant.fuelLevel': 'RD_COL_FUEL_LEVEL',
+      'fuelCapacity': 'RD_COL_FUEL_CAPACITY',
+      'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE',
+      'seed': 'RD_COL_SEED',
+      'rankHeat': 'RD_COL_RANK_HEAT',
+      'rankOverall': 'RD_COL_RANK_OVERALL',
+      'driver.avatarUrl': 'RD_COL_AVATAR'
     };
-    return labels[baseKey] || 'UNKNOWN';
+    return labels[baseKey] ?? 'UNKNOWN';
   }
 
 

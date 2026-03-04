@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
-import com.antigravity.proto.InterfaceStatus;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +25,8 @@ public class DemoProtocolTest {
     long mockedTime = 10000; // Start at arbitrary non-zero time
     MockScheduler mockScheduler;
 
-    public TestableDemo(int numLanes, MockScheduler scheduler, MockRandom random) {
-      super(numLanes, random);
+    public TestableDemo(int numLanes, MockScheduler scheduler, MockRandom random, boolean isFuelRace) {
+      super(numLanes, random, isFuelRace);
       this.mockScheduler = scheduler;
     }
 
@@ -60,7 +59,7 @@ public class DemoProtocolTest {
     random.addNextInt(1000);
     random.addNextInt(1000);
 
-    demo = new TestableDemo(2, scheduler, random); // 2 lanes
+    demo = new TestableDemo(2, scheduler, random, false); // 2 lanes
     listener = new MockProtocolListener();
     demo.setListener(listener);
   }
@@ -126,9 +125,84 @@ public class DemoProtocolTest {
   }
 
   @Test
-  public void testStatusMessaging() {
-    demo.open();
+  public void testPitStopSimulation() {
+    MockRandom random = new MockRandom();
+    // Lane 0: first lap reaction (100ms)
+    random.addNextInt(100);
+    // lapsUntilNextPit = 3 + 0 = 3
+    random.addNextInt(0);
+
+    // Regular lap 1 (target 4000ms)
+    random.addNextInt(1000);
+    // lapsUntilNextPit decr to 2
+
+    // Regular lap 2 (target 4000ms)
+    random.addNextInt(1000);
+    // lapsUntilNextPit decr to 1
+
+    // Regular lap 3 (target 4000ms)
+    random.addNextInt(1000);
+    // lapsUntilNextPit decr to 0 (pit scheduled for NEXT lap)
+
+    // Pit Lap: lapDuration (4000) + pitDuration (6000) = 10000ms
+    random.addNextInt(1000); // lapDuration offset
+    random.addNextInt(1000); // pitDuration offset
+    random.addNextInt(100); // pitEntryOffset offset
+    // lapsUntilNextPit reset to 3 + 1 = 4
+    random.addNextInt(1);
+
+    TestableDemo fuelDemo = new TestableDemo(1, scheduler, random, true);
+    MockProtocolListener fuelListener = new MockProtocolListener();
+    fuelDemo.setListener(fuelListener);
+    fuelDemo.startTimer();
+
+    // 1. Reaction lap (100ms)
+    fuelDemo.advanceTime(150);
     scheduler.tick();
-    assertEquals("Status should be CONNECTED", InterfaceStatus.CONNECTED, listener.lastStatus);
+    assertEquals(1, fuelListener.laps.size());
+    fuelListener.laps.clear();
+
+    // 2. Lap 1 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    assertEquals(1, fuelListener.laps.size());
+    fuelListener.laps.clear();
+
+    // 3. Lap 2 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    assertEquals(1, fuelListener.laps.size());
+    fuelListener.laps.clear();
+
+    // 4. Lap 3 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    assertEquals(1, fuelListener.laps.size());
+    fuelListener.laps.clear();
+
+    // 5. Pit Lap (10000ms). Pit scheduled for here.
+    // target = 4000 + 6000 = 10000.
+    // pitEntryOffset = 500 + 100 = 600.
+    // pitExitOffset = 600 + 6000 = 6600.
+
+    // Advance past pitEntryOffset
+    fuelDemo.advanceTime(700);
+    scheduler.tick();
+    assertEquals("Should have sent pit entry CarData", 1, fuelListener.carData.size());
+    assertEquals(com.antigravity.protocols.CarLocation.PitRow, fuelListener.carData.get(0).getLocation());
+    assertTrue(fuelListener.carData.get(0).getCanRefuel());
+
+    // Advance past pitExitOffset
+    fuelDemo.advanceTime(6000); // Total 6700ms since lap start
+    scheduler.tick();
+    assertEquals("Should have sent pit exit CarData", 2, fuelListener.carData.size());
+    assertEquals(com.antigravity.protocols.CarLocation.Main, fuelListener.carData.get(1).getLocation());
+    assertFalse(fuelListener.carData.get(1).getCanRefuel());
+
+    // Advance past targetLapDuration (10000)
+    fuelDemo.advanceTime(3500); // Total 10200ms
+    scheduler.tick();
+    assertEquals("Should have completed pit lap", 1, fuelListener.laps.size());
+    assertEquals(10.2, fuelListener.laps.get(0), 0.001);
   }
 }

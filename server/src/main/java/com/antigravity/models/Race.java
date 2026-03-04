@@ -30,6 +30,10 @@ public class Race extends Model {
 	@JsonProperty("min_lap_time")
 	private final double minLapTime;
 
+	@BsonProperty("fuel_options")
+	@JsonProperty("fuel_options")
+	private final AnalogFuelOptions fuelOptions;
+
 	@BsonCreator
 	@JsonCreator
 	public Race(@BsonProperty("name") @JsonProperty("name") String name,
@@ -39,6 +43,7 @@ public class Race extends Model {
 			@BsonProperty("race_scoring") @JsonProperty("race_scoring") HeatScoring oldHeatScoring,
 			@BsonProperty("overall_scoring") @JsonProperty("overall_scoring") OverallScoring overallScoring,
 			@BsonProperty("min_lap_time") @JsonProperty("min_lap_time") Double minLapTime,
+			@BsonProperty("fuel_options") @JsonProperty("fuel_options") AnalogFuelOptions fuelOptions,
 			@BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
 			@BsonId @JsonProperty("_id") ObjectId id) {
 		super(id, entityId);
@@ -49,25 +54,32 @@ public class Race extends Model {
 				: (oldHeatScoring != null ? oldHeatScoring : new HeatScoring());
 		this.overallScoring = overallScoring != null ? overallScoring : new OverallScoring();
 		this.minLapTime = minLapTime != null ? minLapTime : 0.0;
+		this.fuelOptions = fuelOptions != null ? fuelOptions : new AnalogFuelOptions();
+	}
+
+	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
+			OverallScoring overallScoring, Double minLapTime, AnalogFuelOptions fuelOptions, String entityId, ObjectId id) {
+		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, fuelOptions, entityId,
+				id);
 	}
 
 	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
 			OverallScoring overallScoring, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, entityId, id);
+		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, null, entityId, id);
 	}
 
 	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
 			OverallScoring overallScoring, double minLapTime, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, entityId, id);
+		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, null, entityId, id);
 	}
 
 	public Race(String name, String trackEntityId) {
-		this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null, 0.0, null, null);
+		this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null, 0.0, null, null, null);
 	}
 
 	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
 			OverallScoring overallScoring) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, null, null);
+		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, null, null, null);
 	}
 
 	public double getMinLapTime() {
@@ -92,5 +104,9 @@ public class Race extends Model {
 
 	public OverallScoring getOverallScoring() {
 		return overallScoring;
+	}
+
+	public AnalogFuelOptions getFuelOptions() {
+		return fuelOptions;
 	}
 }

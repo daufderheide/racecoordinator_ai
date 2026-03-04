@@ -10,6 +10,10 @@ public class Racing implements IRaceState {
   private com.antigravity.race.Race race;
   private Set<Integer> finishedLanes = new HashSet<>();
 
+  private double[] refuelDelayRemaining;
+  private boolean[] isRefueling;
+  private double[] accumulatedRefuelTime;
+
   @Override
   public void enter(com.antigravity.race.Race race) {
     System.out.println("Racing state entered. Race started!");
@@ -24,6 +28,22 @@ public class Racing implements IRaceState {
     }
 
     race.setHasRacedInCurrentHeat(true);
+
+    int laneCount = 0;
+    if (race.getTrack() != null && race.getTrack().getLanes() != null) {
+      laneCount = race.getTrack().getLanes().size();
+      for (int i = 0; i < laneCount; i++) {
+        race.setLanePower(true, i);
+      }
+    }
+    refuelDelayRemaining = new double[laneCount];
+    isRefueling = new boolean[laneCount];
+    accumulatedRefuelTime = new double[laneCount];
+    for (int i = 0; i < laneCount; i++) {
+      refuelDelayRemaining[i] = -1.0;
+      isRefueling[i] = false;
+      accumulatedRefuelTime[i] = 0.0;
+    }
 
     race.startProtocols();
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
@@ -49,6 +69,60 @@ public class Racing implements IRaceState {
             race.addRaceTime(-delta);
           } else {
             race.addRaceTime(delta);
+          }
+
+          // Handle refueling
+          com.antigravity.models.AnalogFuelOptions fuelOptions = race.getRaceModel().getFuelOptions();
+          if (fuelOptions != null && fuelOptions.isEnabled()) {
+            java.util.List<com.antigravity.race.DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+            for (int i = 0; i < drivers.size(); i++) {
+              if (finishedLanes.contains(i))
+                continue;
+
+              com.antigravity.race.DriverHeatData driverData = drivers.get(i);
+              com.antigravity.race.RaceParticipant participant = driverData.getDriver();
+
+              if (refuelDelayRemaining[i] > 0) {
+                accumulatedRefuelTime[i] += delta;
+                refuelDelayRemaining[i] -= delta;
+                if (refuelDelayRemaining[i] <= 0) {
+                  refuelDelayRemaining[i] = 0;
+                  isRefueling[i] = true;
+                  System.out.println("Racing: Lane " + i + " starting to refuel after delay.");
+                }
+              }
+
+              if (isRefueling[i]) {
+                accumulatedRefuelTime[i] += delta;
+                double currentFuel = participant.getFuelLevel();
+                double capacity = fuelOptions.getCapacity();
+
+                if (currentFuel < capacity) {
+                  double newFuel = Math.min(capacity, currentFuel + fuelOptions.getRefuelRate() * delta);
+                  participant.setFuelLevel(newFuel);
+
+                  // Broadcast fuel update using CarData instead of Lap
+                  com.antigravity.proto.CarData fuelMsg = com.antigravity.proto.CarData.newBuilder()
+                      .setLane(i)
+                      .setFuelLevel(newFuel)
+                      .setIsRefueling(true)
+                      .build();
+
+                  com.antigravity.proto.RaceData fuelDataMsg = com.antigravity.proto.RaceData.newBuilder()
+                      .setCarData(fuelMsg)
+                      .build();
+
+                  race.broadcast(fuelDataMsg);
+
+                  if (newFuel >= capacity) {
+                    isRefueling[i] = false;
+                    System.out.println("Racing: Lane " + i + " reached full fuel capacity.");
+                  }
+                } else {
+                  isRefueling[i] = false;
+                }
+              }
+            }
           }
 
           // Check finish conditions
@@ -179,6 +253,18 @@ public class Racing implements IRaceState {
       return;
     }
 
+    com.antigravity.models.AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      com.antigravity.race.Heat heat = this.race.getCurrentHeat();
+      if (heat != null && lane >= 0 && lane < heat.getDrivers().size()) {
+        com.antigravity.race.DriverHeatData driverData = heat.getDrivers().get(lane);
+        if (driverData.getDriver().getFuelLevel() <= 0) {
+          System.out.println("Race: Ignored onLap - Driver on lane " + lane + " is out of fuel");
+          return;
+        }
+      }
+    }
+
     com.antigravity.race.Heat currentHeat = this.race.getCurrentHeat();
     if (currentHeat == null) {
       System.out.println("Race: Ignored onLap - No current heat");
@@ -297,6 +383,57 @@ public class Racing implements IRaceState {
 
     driverData.addLap(effectiveLapTime);
 
+    com.antigravity.models.AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      double lapFuelUsed = 0.0;
+      double usageRate = fuelOptions.getUsageRate();
+
+      double racingTime = Math.max(0.1, lapTime - accumulatedRefuelTime[lane]);
+      accumulatedRefuelTime[lane] = 0.0; // reset for next lap
+
+      // Fuel usage is proportional to the lap time. Faster laps use more
+      // fuel than slower laps. And quadratic and cubic usage use more
+      // the faster the lap is.
+      switch (fuelOptions.getUsageType()) {
+        case LINEAR:
+          double refL = Math.max(0.1, fuelOptions.getReferenceTime());
+          double x1 = refL * 2.0;
+          double y1 = usageRate / 2.0;
+          double x2 = refL;
+          double y2 = usageRate;
+          double m = (y2 - y1) / (x2 - x1);
+          double b = y1 - m * x1;
+          lapFuelUsed = m * racingTime + b;
+          break;
+        case QUADRATIC:
+          double refQ = Math.max(0.1, fuelOptions.getReferenceTime());
+          double safeTimeQ = Math.max(0.1, racingTime);
+          lapFuelUsed = usageRate * (refQ * refQ) / (safeTimeQ * safeTimeQ);
+          break;
+        case CUBIC:
+          double refC = Math.max(0.1, fuelOptions.getReferenceTime());
+          double safeTimeC = Math.max(0.1, racingTime);
+          lapFuelUsed = usageRate * (refC * refC * refC) / (safeTimeC * safeTimeC * safeTimeC);
+          break;
+      }
+
+      if (Double.isNaN(lapFuelUsed) || Double.isInfinite(lapFuelUsed)) {
+        lapFuelUsed = 0.0;
+      }
+      lapFuelUsed = Math.max(0, lapFuelUsed);
+
+      double currentFuel = driverData.getDriver().getFuelLevel();
+      double newFuel = Math.max(0, currentFuel - lapFuelUsed);
+      driverData.getDriver().setFuelLevel(newFuel);
+
+      System.out.println("Race: Lane " + lane + " fuel level: " + newFuel + " (used " + lapFuelUsed + ")");
+
+      if (newFuel <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+        System.out.println("Race: Lane " + lane + " out of fuel. Turning off power.");
+        this.race.setLanePower(false, lane);
+      }
+    }
+
     com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
         .setObjectId(driverData.getObjectId())
         .setLapTime(effectiveLapTime)
@@ -306,6 +443,7 @@ public class Racing implements IRaceState {
         .setBestLapTime(driverData.getBestLapTime())
         .setInterfaceId(interfaceId)
         .setDriverId(driverData.getActualDriver() != null ? driverData.getActualDriver().getEntityId() : "")
+        .setFuelLevel(driverData.getDriver().getFuelLevel())
         .build();
 
     com.antigravity.proto.RaceData lapDataMsg = com.antigravity.proto.RaceData.newBuilder()
@@ -329,6 +467,65 @@ public class Racing implements IRaceState {
 
   @Override
   public void onCarData(com.antigravity.protocols.CarData carData) {
+    if (carData.getLocation() != carData.getLastLocation()) {
+      System.out.println("Race: Lane " + carData.getLane() + " location changed from " + carData.getLastLocation()
+          + " to " + carData.getLocation());
+    }
+
+    int lane = carData.getLane();
+    com.antigravity.models.AnalogFuelOptions fuelOptions = race.getRaceModel().getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled() && lane >= 0 && lane < isRefueling.length) {
+      com.antigravity.protocols.CarLocation loc = carData.getLocation();
+      boolean inPit = loc == com.antigravity.protocols.CarLocation.PitRow
+          || loc.getValue() >= com.antigravity.protocols.CarLocation.PitBayBase.getValue();
+      boolean canRefuel = carData.getCanRefuel();
+
+      if (inPit && canRefuel) {
+        if (!isRefueling[lane] && refuelDelayRemaining[lane] < 0) {
+          // Check if already at full fuel
+          com.antigravity.race.DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+          if (driverData.getDriver().getFuelLevel() < fuelOptions.getCapacity()) {
+            refuelDelayRemaining[lane] = fuelOptions.getPitStopDelay();
+            System.out.println("Racing: Lane " + lane + " in pit and can refuel. Starting delay: "
+                + refuelDelayRemaining[lane]);
+          }
+        }
+      } else {
+        // Left pit or cannot refuel
+        if (isRefueling[lane] || refuelDelayRemaining[lane] >= 0) {
+          isRefueling[lane] = false;
+          refuelDelayRemaining[lane] = -1.0;
+          System.out.println("Racing: Lane " + lane + " refueling stopped (left pit or canRefuel=false).");
+        }
+      }
+    }
+
+    // Broadcast the CarData to clients
+    com.antigravity.proto.CarData.Builder dataBuilder = com.antigravity.proto.CarData.newBuilder()
+        .setLane(carData.getLane())
+        .setControllerThrottlePct(carData.getControllerThrottlePCT())
+        .setCarThrottlePct(carData.getCarThrottlePCT())
+        .setLocation(carData.getLocation().getValue())
+        .setLocationId(carData.getLocationId())
+        .setIsRefueling(isRefueling[lane]);
+
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
+      if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
+        com.antigravity.race.DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+        if (driverData != null && driverData.getDriver() != null) {
+          dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
+        }
+      }
+    }
+
+    com.antigravity.proto.CarData protoCarData = dataBuilder.build();
+
+    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+        .setCarData(protoCarData)
+        .build();
+
+    race.broadcast(raceDataMsg);
+
     System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getTime());
   }
 

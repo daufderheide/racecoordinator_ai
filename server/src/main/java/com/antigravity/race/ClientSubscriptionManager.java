@@ -164,6 +164,11 @@ public class ClientSubscriptionManager {
       return;
     }
 
+    if (event.hasStatus()) {
+      System.out.println("DEBUG: Broadcasting Interface Status: " + event.getStatus().getStatus() + " to "
+          + interfaceSubscribers.size() + " subscribers");
+    }
+
     byte[] bytes = event.toByteArray();
 
     interfaceSubscribers.stream()

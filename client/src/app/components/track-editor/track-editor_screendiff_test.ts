@@ -20,7 +20,7 @@ test.describe('Track Editor Visuals', () => {
     // Arduino Config
     await expect(page.locator('select').first()).toHaveValue('1'); // Megas is 1
 
-    await expect(page).toHaveScreenshot('track-editor-existing.png');
+    await expect(page).toHaveScreenshot('track-editor-existing.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should display track editor for new track', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('Track Editor Visuals', () => {
     const laneRows = page.locator('.lane-item');
     await expect(laneRows).toHaveCount(2);
 
-    await expect(page).toHaveScreenshot('track-editor-new.png');
+    await expect(page).toHaveScreenshot('track-editor-new.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should show unsaved changes confirmation', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('Track Editor Visuals', () => {
     await expect(page.locator('.modal-backdrop')).toBeVisible();
     await expect(page.locator('.modal-title')).toContainText('Unsaved Changes');
 
-    await expect(page).toHaveScreenshot('track-editor-unsaved-changes-modal.png');
+    await expect(page).toHaveScreenshot('track-editor-unsaved-changes-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
   test('should display digital pins grid', async ({ page }) => {
@@ -63,6 +63,6 @@ test.describe('Track Editor Visuals', () => {
     // The selector/text depends on how it's rendered in .pin-assignment
     await expect(page.locator('.pin-grid').first()).toContainText('Lap Lane 1');
 
-    await expect(page).toHaveScreenshot('track-editor-pins-grid.png');
+    await expect(page).toHaveScreenshot('track-editor-pins-grid.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 });

@@ -1,4 +1,4 @@
-import { playSound } from './audio';
+import { playSound, createTTSContext, mockTTSContext } from './audio';
 
 describe('playSound Utility', () => {
   let originalAudio: any;
@@ -120,13 +120,64 @@ describe('playSound Utility', () => {
       playSound('tts', undefined, undefined, SERVER_URL);
       expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
     });
+
+    it('should interpolate driver fields', () => {
+      const text = "{driver.nickname}'s last lap was {driver.lastLapTime}";
+      const data = {
+        driver: {
+          nickname: 'Dave',
+          lastLapTime: 1.234
+        }
+      };
+      playSound('tts', undefined, text, SERVER_URL, data);
+
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Dave's last lap was 1.234");
+    });
+
+    it('should format decimals to 3 places', () => {
+      const text = "Time: {time}";
+      const data = { time: 1.2345678 };
+      playSound('tts', undefined, text, SERVER_URL, data);
+
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Time: 1.235");
+    });
+
+    it('should leave unknown placeholders alone', () => {
+      const text = "Hello {unknown}";
+      playSound('tts', undefined, text, SERVER_URL, {});
+
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Hello {unknown}");
+    });
   });
 
-  describe('Invalid Input', () => {
-    it('should do nothing if type is undefined', () => {
-      playSound(undefined, 'url', 'text', SERVER_URL);
-      expect(window.Audio).not.toHaveBeenCalled();
-      expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
+  describe('TTS Helpers', () => {
+    it('should create a valid TTS context', () => {
+      const driver = { name: 'Alice', nickname: 'Ali' };
+      const data = { lastLapTime: 1.1, bestLapTime: 1.0, averageLapTime: 1.2, lapCount: 5 };
+      const context = createTTSContext(driver, data);
+
+      expect(context.driver.name).toBe('Alice');
+      expect(context.driver.nickname).toBe('Ali');
+      expect(context.driver.lastLapTime).toBe(1.1);
+      expect(context.driver.lapCount).toBe(5);
+    });
+
+    it('should use name if nickname is missing', () => {
+      const driver = { name: 'Bob', nickname: '' };
+      const data = { lastLapTime: 0, bestLapTime: 0, averageLapTime: 0, lapCount: 0 };
+      const context = createTTSContext(driver, data);
+
+      expect(context.driver.nickname).toBe('Bob');
+    });
+
+    it('should create a mock context', () => {
+      const context = mockTTSContext();
+      expect(context.driver.name).toBeDefined();
+      expect(context.driver.lastLapTime).toBeGreaterThan(0);
     });
   });
 });

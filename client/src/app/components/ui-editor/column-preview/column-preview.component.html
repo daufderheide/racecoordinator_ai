@@ -2,14 +2,19 @@
   <div class="lane-visual">
     <div class="lane-column" *ngFor="let slot of columnSlots; trackBy: trackByKey"
       [class.resizing]="slot.key === resizingColumnKey">
-      <div class="anchor-preview-grid">
-        <div class="preview-point" *ngFor="let opt of anchorOptions; trackBy: trackByAnchor">
-          <span class="preview-text" *ngIf="columnLayouts[slot.key]?.[opt]">
-            {{ (getLabel(columnLayouts[slot.key][opt]) | translate) || '???' }}
-          </span>
+      <div class="column-frame">
+        <div class="anchor-preview-grid">
+          <div class="preview-point" *ngFor="let opt of anchorOptions; trackBy: trackByAnchor">
+            <span class="preview-text" *ngIf="getAnchorValue(slot.key, opt)">
+              {{ (getLabel(getAnchorValue(slot.key, opt)) | translate) }}
+            </span>
+          </div>
         </div>
       </div>
-      <div class="column-label">{{ getColumnLabel(slot.key) | translate }}</div>
+      <div class="column-label">
+        <span class="material-icons visibility-icon" *ngIf="isOptional(slot.key)">visibility</span>
+        {{ getColumnLabel(slot.key) | translate }}
+      </div>
     </div>
   </div>
 </div>

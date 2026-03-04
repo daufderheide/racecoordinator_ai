@@ -213,4 +213,28 @@ describe('UIEditorComponent', () => {
     component.editingSettings.sortByStandings = true;
     expect(component.editingSettings.sortByStandings).toBeTrue();
   });
+
+  it('should include image sets in availableColumns correctly', () => {
+    mockDataService.listAssets.and.returnValue(of([
+      { type: 'image', url: 'img1.png' },
+      { type: 'image_set', name: 'My Set', model: { entityId: 'set123' } }
+    ]));
+
+    component.loadData();
+
+    const avatarCol = component.availableColumns.find(c => c.key === 'driver.avatarUrl');
+    expect(avatarCol).toBeTruthy();
+    expect(avatarCol?.label).toBe('RD_COL_AVATAR');
+
+    const imageSetCol = component.availableColumns.find(c => c.key === 'imageset_set123');
+    expect(imageSetCol).toBeTruthy();
+    expect(imageSetCol?.label).toBe('My Set');
+  });
+
+  it('should return correct label for avatar column in columnSlots', () => {
+    component.editingSettings.racedayColumns = ['driver.avatarUrl'];
+    const slots = component.columnSlots;
+    expect(slots.length).toBe(1);
+    expect(slots[0].label).toBe('RD_COL_AVATAR');
+  });
 });

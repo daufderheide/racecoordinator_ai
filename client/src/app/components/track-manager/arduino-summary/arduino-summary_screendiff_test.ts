@@ -28,7 +28,7 @@ test.describe('Arduino Summary Component Visuals', () => {
             digitalIds: [3, 4000, -1, -1], // 3=Master Relay, 4000=Lane Relay
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,

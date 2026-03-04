@@ -26,6 +26,9 @@ class MockDataService {
   getRaceState() {
     return of(0); // com.antigravity.RaceState.NOT_STARTED
   }
+  closeInterface() {
+    return of({ success: true });
+  }
 }
 
 // Mock TranslationService

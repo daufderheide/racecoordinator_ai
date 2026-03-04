@@ -339,6 +339,121 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of an ImageSetEntry. */
+        interface IImageSetEntry {
+
+            /** ImageSetEntry url */
+            url?: (string|null);
+
+            /** ImageSetEntry percentage */
+            percentage?: (number|null);
+
+            /** ImageSetEntry name */
+            name?: (string|null);
+
+            /** ImageSetEntry size */
+            size?: (string|null);
+        }
+
+        /** Represents an ImageSetEntry. */
+        class ImageSetEntry implements IImageSetEntry {
+
+            /**
+             * Constructs a new ImageSetEntry.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IImageSetEntry);
+
+            /** ImageSetEntry url. */
+            public url: string;
+
+            /** ImageSetEntry percentage. */
+            public percentage: number;
+
+            /** ImageSetEntry name. */
+            public name: string;
+
+            /** ImageSetEntry size. */
+            public size: string;
+
+            /**
+             * Creates a new ImageSetEntry instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns ImageSetEntry instance
+             */
+            public static create(properties?: com.antigravity.IImageSetEntry): com.antigravity.ImageSetEntry;
+
+            /**
+             * Encodes the specified ImageSetEntry message. Does not implicitly {@link com.antigravity.ImageSetEntry.verify|verify} messages.
+             * @param message ImageSetEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IImageSetEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified ImageSetEntry message, length delimited. Does not implicitly {@link com.antigravity.ImageSetEntry.verify|verify} messages.
+             * @param message ImageSetEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IImageSetEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an ImageSetEntry message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns ImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.ImageSetEntry;
+
+            /**
+             * Decodes an ImageSetEntry message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns ImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.ImageSetEntry;
+
+            /**
+             * Verifies an ImageSetEntry message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an ImageSetEntry message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns ImageSetEntry
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.ImageSetEntry;
+
+            /**
+             * Creates a plain object from an ImageSetEntry message. Also converts values to other types if specified.
+             * @param message ImageSetEntry
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.ImageSetEntry, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this ImageSetEntry to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for ImageSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of an AssetMessage. */
         interface IAssetMessage {
 
@@ -356,6 +471,9 @@ export namespace com {
 
             /** AssetMessage url */
             url?: (string|null);
+
+            /** AssetMessage images */
+            images?: (com.antigravity.IImageSetEntry[]|null);
         }
 
         /** Represents an AssetMessage. */
@@ -381,6 +499,9 @@ export namespace com {
 
             /** AssetMessage url. */
             public url: string;
+
+            /** AssetMessage images. */
+            public images: com.antigravity.IImageSetEntry[];
 
             /**
              * Creates a new AssetMessage instance using the specified properties.
@@ -860,6 +981,230 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a SaveImageSetRequest. */
+        interface ISaveImageSetRequest {
+
+            /** SaveImageSetRequest id */
+            id?: (string|null);
+
+            /** SaveImageSetRequest name */
+            name?: (string|null);
+
+            /** SaveImageSetRequest entries */
+            entries?: (com.antigravity.ISaveImageSetEntry[]|null);
+        }
+
+        /** Represents a SaveImageSetRequest. */
+        class SaveImageSetRequest implements ISaveImageSetRequest {
+
+            /**
+             * Constructs a new SaveImageSetRequest.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISaveImageSetRequest);
+
+            /** SaveImageSetRequest id. */
+            public id: string;
+
+            /** SaveImageSetRequest name. */
+            public name: string;
+
+            /** SaveImageSetRequest entries. */
+            public entries: com.antigravity.ISaveImageSetEntry[];
+
+            /**
+             * Creates a new SaveImageSetRequest instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SaveImageSetRequest instance
+             */
+            public static create(properties?: com.antigravity.ISaveImageSetRequest): com.antigravity.SaveImageSetRequest;
+
+            /**
+             * Encodes the specified SaveImageSetRequest message. Does not implicitly {@link com.antigravity.SaveImageSetRequest.verify|verify} messages.
+             * @param message SaveImageSetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISaveImageSetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SaveImageSetRequest message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetRequest.verify|verify} messages.
+             * @param message SaveImageSetRequest message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISaveImageSetRequest, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SaveImageSetRequest message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SaveImageSetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SaveImageSetRequest;
+
+            /**
+             * Decodes a SaveImageSetRequest message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SaveImageSetRequest
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SaveImageSetRequest;
+
+            /**
+             * Verifies a SaveImageSetRequest message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SaveImageSetRequest message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SaveImageSetRequest
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SaveImageSetRequest;
+
+            /**
+             * Creates a plain object from a SaveImageSetRequest message. Also converts values to other types if specified.
+             * @param message SaveImageSetRequest
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SaveImageSetRequest, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SaveImageSetRequest to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SaveImageSetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a SaveImageSetEntry. */
+        interface ISaveImageSetEntry {
+
+            /** SaveImageSetEntry name */
+            name?: (string|null);
+
+            /** SaveImageSetEntry percentage */
+            percentage?: (number|null);
+
+            /** SaveImageSetEntry url */
+            url?: (string|null);
+
+            /** SaveImageSetEntry data */
+            data?: (Uint8Array|null);
+        }
+
+        /** Represents a SaveImageSetEntry. */
+        class SaveImageSetEntry implements ISaveImageSetEntry {
+
+            /**
+             * Constructs a new SaveImageSetEntry.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISaveImageSetEntry);
+
+            /** SaveImageSetEntry name. */
+            public name: string;
+
+            /** SaveImageSetEntry percentage. */
+            public percentage: number;
+
+            /** SaveImageSetEntry url. */
+            public url: string;
+
+            /** SaveImageSetEntry data. */
+            public data: Uint8Array;
+
+            /**
+             * Creates a new SaveImageSetEntry instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SaveImageSetEntry instance
+             */
+            public static create(properties?: com.antigravity.ISaveImageSetEntry): com.antigravity.SaveImageSetEntry;
+
+            /**
+             * Encodes the specified SaveImageSetEntry message. Does not implicitly {@link com.antigravity.SaveImageSetEntry.verify|verify} messages.
+             * @param message SaveImageSetEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISaveImageSetEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SaveImageSetEntry message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetEntry.verify|verify} messages.
+             * @param message SaveImageSetEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISaveImageSetEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SaveImageSetEntry message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SaveImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SaveImageSetEntry;
+
+            /**
+             * Decodes a SaveImageSetEntry message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SaveImageSetEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SaveImageSetEntry;
+
+            /**
+             * Verifies a SaveImageSetEntry message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SaveImageSetEntry message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SaveImageSetEntry
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SaveImageSetEntry;
+
+            /**
+             * Creates a plain object from a SaveImageSetEntry message. Also converts values to other types if specified.
+             * @param message SaveImageSetEntry
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SaveImageSetEntry, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SaveImageSetEntry to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SaveImageSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of an InitializeRaceRequest. */
         interface IInitializeRaceRequest {
 
@@ -1281,7 +1626,16 @@ export namespace com {
             BEHAVIOR_LAP_BASE = 1000,
             BEHAVIOR_SEGMENT_BASE = 2000,
             BEHAVIOR_CALL_BUTTON_BASE = 3000,
-            BEHAVIOR_RELAY_BASE = 4000
+            BEHAVIOR_RELAY_BASE = 4000,
+            BEHAVIOR_PIT_IN_BASE = 5000,
+            BEHAVIOR_PIT_OUT_BASE = 6000
+        }
+
+        /** LapPinPitBehavior enum. */
+        enum LapPinPitBehavior {
+            LAP_PIN_PIT_NONE = 0,
+            LAP_PIN_PIT_IN = 1,
+            LAP_PIN_PIT_OUT = 2
         }
 
         /** PinId enum. */
@@ -1315,12 +1669,6 @@ export namespace com {
             /** ArduinoConfig globalInvertLights */
             globalInvertLights?: (number|null);
 
-            /** ArduinoConfig useLapsForPits */
-            useLapsForPits?: (number|null);
-
-            /** ArduinoConfig useLapsForPitEnd */
-            useLapsForPitEnd?: (number|null);
-
             /** ArduinoConfig usePitsAsLaps */
             usePitsAsLaps?: (number|null);
 
@@ -1338,6 +1686,9 @@ export namespace com {
 
             /** ArduinoConfig ledLaneColorOverrides */
             ledLaneColorOverrides?: (string[]|null);
+
+            /** ArduinoConfig lapPinPitBehavior */
+            lapPinPitBehavior?: (com.antigravity.LapPinPitBehavior|null);
         }
 
         /** Represents an ArduinoConfig. */
@@ -1370,12 +1721,6 @@ export namespace com {
             /** ArduinoConfig globalInvertLights. */
             public globalInvertLights: number;
 
-            /** ArduinoConfig useLapsForPits. */
-            public useLapsForPits: number;
-
-            /** ArduinoConfig useLapsForPitEnd. */
-            public useLapsForPitEnd: number;
-
             /** ArduinoConfig usePitsAsLaps. */
             public usePitsAsLaps: number;
 
@@ -1393,6 +1738,9 @@ export namespace com {
 
             /** ArduinoConfig ledLaneColorOverrides. */
             public ledLaneColorOverrides: string[];
+
+            /** ArduinoConfig lapPinPitBehavior. */
+            public lapPinPitBehavior: com.antigravity.LapPinPitBehavior;
 
             /**
              * Creates a new ArduinoConfig instance using the specified properties.
@@ -4099,6 +4447,115 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a SaveImageSetResponse. */
+        interface ISaveImageSetResponse {
+
+            /** SaveImageSetResponse success */
+            success?: (boolean|null);
+
+            /** SaveImageSetResponse message */
+            message?: (string|null);
+
+            /** SaveImageSetResponse asset */
+            asset?: (com.antigravity.IAssetMessage|null);
+        }
+
+        /** Represents a SaveImageSetResponse. */
+        class SaveImageSetResponse implements ISaveImageSetResponse {
+
+            /**
+             * Constructs a new SaveImageSetResponse.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ISaveImageSetResponse);
+
+            /** SaveImageSetResponse success. */
+            public success: boolean;
+
+            /** SaveImageSetResponse message. */
+            public message: string;
+
+            /** SaveImageSetResponse asset. */
+            public asset?: (com.antigravity.IAssetMessage|null);
+
+            /**
+             * Creates a new SaveImageSetResponse instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SaveImageSetResponse instance
+             */
+            public static create(properties?: com.antigravity.ISaveImageSetResponse): com.antigravity.SaveImageSetResponse;
+
+            /**
+             * Encodes the specified SaveImageSetResponse message. Does not implicitly {@link com.antigravity.SaveImageSetResponse.verify|verify} messages.
+             * @param message SaveImageSetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ISaveImageSetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SaveImageSetResponse message, length delimited. Does not implicitly {@link com.antigravity.SaveImageSetResponse.verify|verify} messages.
+             * @param message SaveImageSetResponse message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ISaveImageSetResponse, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SaveImageSetResponse message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns SaveImageSetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.SaveImageSetResponse;
+
+            /**
+             * Decodes a SaveImageSetResponse message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns SaveImageSetResponse
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.SaveImageSetResponse;
+
+            /**
+             * Verifies a SaveImageSetResponse message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SaveImageSetResponse message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SaveImageSetResponse
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.SaveImageSetResponse;
+
+            /**
+             * Creates a plain object from a SaveImageSetResponse message. Also converts values to other types if specified.
+             * @param message SaveImageSetResponse
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.SaveImageSetResponse, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SaveImageSetResponse to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for SaveImageSetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceTime. */
         interface IRaceTime {
 
@@ -4222,6 +4679,9 @@ export namespace com {
 
             /** Lap driverId */
             driverId?: (string|null);
+
+            /** Lap fuelLevel */
+            fuelLevel?: (number|null);
         }
 
         /** Represents a Lap. */
@@ -4256,6 +4716,9 @@ export namespace com {
 
             /** Lap driverId. */
             public driverId: string;
+
+            /** Lap fuelLevel. */
+            public fuelLevel: number;
 
             /**
              * Creates a new Lap instance using the specified properties.
@@ -4358,6 +4821,9 @@ export namespace com {
 
             /** RaceData raceState */
             raceState?: (com.antigravity.RaceState|null);
+
+            /** RaceData carData */
+            carData?: (com.antigravity.ICarData|null);
         }
 
         /** Represents a RaceData. */
@@ -4390,8 +4856,11 @@ export namespace com {
             /** RaceData raceState. */
             public raceState?: (com.antigravity.RaceState|null);
 
+            /** RaceData carData. */
+            public carData?: (com.antigravity.ICarData|null);
+
             /** RaceData data. */
-            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState");
+            public data?: ("raceTime"|"lap"|"race"|"reactionTime"|"standingsUpdate"|"overallStandingsUpdate"|"raceState"|"carData");
 
             /**
              * Creates a new RaceData instance using the specified properties.
@@ -4891,6 +5360,9 @@ export namespace com {
 
             /** RaceModel minLapTime */
             minLapTime?: (number|null);
+
+            /** RaceModel fuelOptions */
+            fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
         }
 
         /** Represents a RaceModel. */
@@ -4919,6 +5391,9 @@ export namespace com {
 
             /** RaceModel minLapTime. */
             public minLapTime: number;
+
+            /** RaceModel fuelOptions. */
+            public fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -4992,6 +5467,164 @@ export namespace com {
 
             /**
              * Gets the default type url for RaceModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** FuelUsageType enum. */
+        enum FuelUsageType {
+            LINEAR = 0,
+            QUADRATIC = 1,
+            CUBIC = 2
+        }
+
+        /** Properties of an AnalogFuelOptions. */
+        interface IAnalogFuelOptions {
+
+            /** AnalogFuelOptions enabled */
+            enabled?: (boolean|null);
+
+            /** AnalogFuelOptions resetFuelAtHeatStart */
+            resetFuelAtHeatStart?: (boolean|null);
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel */
+            endHeatOnOutOfFuel?: (boolean|null);
+
+            /** AnalogFuelOptions capacity */
+            capacity?: (number|null);
+
+            /** AnalogFuelOptions usageType */
+            usageType?: (com.antigravity.FuelUsageType|null);
+
+            /** AnalogFuelOptions usageRate */
+            usageRate?: (number|null);
+
+            /** AnalogFuelOptions startLevel */
+            startLevel?: (number|null);
+
+            /** AnalogFuelOptions refuelRate */
+            refuelRate?: (number|null);
+
+            /** AnalogFuelOptions pitStopDelay */
+            pitStopDelay?: (number|null);
+
+            /** AnalogFuelOptions referenceTime */
+            referenceTime?: (number|null);
+        }
+
+        /** Represents an AnalogFuelOptions. */
+        class AnalogFuelOptions implements IAnalogFuelOptions {
+
+            /**
+             * Constructs a new AnalogFuelOptions.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IAnalogFuelOptions);
+
+            /** AnalogFuelOptions enabled. */
+            public enabled: boolean;
+
+            /** AnalogFuelOptions resetFuelAtHeatStart. */
+            public resetFuelAtHeatStart: boolean;
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel. */
+            public endHeatOnOutOfFuel: boolean;
+
+            /** AnalogFuelOptions capacity. */
+            public capacity: number;
+
+            /** AnalogFuelOptions usageType. */
+            public usageType: com.antigravity.FuelUsageType;
+
+            /** AnalogFuelOptions usageRate. */
+            public usageRate: number;
+
+            /** AnalogFuelOptions startLevel. */
+            public startLevel: number;
+
+            /** AnalogFuelOptions refuelRate. */
+            public refuelRate: number;
+
+            /** AnalogFuelOptions pitStopDelay. */
+            public pitStopDelay: number;
+
+            /** AnalogFuelOptions referenceTime. */
+            public referenceTime: number;
+
+            /**
+             * Creates a new AnalogFuelOptions instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AnalogFuelOptions instance
+             */
+            public static create(properties?: com.antigravity.IAnalogFuelOptions): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Verifies an AnalogFuelOptions message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AnalogFuelOptions
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
+             * @param message AnalogFuelOptions
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.AnalogFuelOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AnalogFuelOptions to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AnalogFuelOptions
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -5499,6 +6132,9 @@ export namespace com {
 
             /** RaceParticipant team */
             team?: (com.antigravity.ITeamModel|null);
+
+            /** RaceParticipant fuelLevel */
+            fuelLevel?: (number|null);
         }
 
         /** Represents a RaceParticipant. */
@@ -5542,6 +6178,9 @@ export namespace com {
 
             /** RaceParticipant team. */
             public team?: (com.antigravity.ITeamModel|null);
+
+            /** RaceParticipant fuelLevel. */
+            public fuelLevel: number;
 
             /**
              * Creates a new RaceParticipant instance using the specified properties.
@@ -6148,6 +6787,139 @@ export namespace com {
 
             /**
              * Gets the default type url for OverallStandingsUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CarData. */
+        interface ICarData {
+
+            /** CarData lane */
+            lane?: (number|null);
+
+            /** CarData controllerThrottlePct */
+            controllerThrottlePct?: (number|null);
+
+            /** CarData carThrottlePct */
+            carThrottlePct?: (number|null);
+
+            /** CarData location */
+            location?: (number|null);
+
+            /** CarData locationId */
+            locationId?: (number|null);
+
+            /** CarData fuelLevel */
+            fuelLevel?: (number|null);
+
+            /** CarData isRefueling */
+            isRefueling?: (boolean|null);
+        }
+
+        /** Represents a CarData. */
+        class CarData implements ICarData {
+
+            /**
+             * Constructs a new CarData.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ICarData);
+
+            /** CarData lane. */
+            public lane: number;
+
+            /** CarData controllerThrottlePct. */
+            public controllerThrottlePct: number;
+
+            /** CarData carThrottlePct. */
+            public carThrottlePct: number;
+
+            /** CarData location. */
+            public location: number;
+
+            /** CarData locationId. */
+            public locationId: number;
+
+            /** CarData fuelLevel. */
+            public fuelLevel?: (number|null);
+
+            /** CarData isRefueling. */
+            public isRefueling: boolean;
+
+            /**
+             * Creates a new CarData instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CarData instance
+             */
+            public static create(properties?: com.antigravity.ICarData): com.antigravity.CarData;
+
+            /**
+             * Encodes the specified CarData message. Does not implicitly {@link com.antigravity.CarData.verify|verify} messages.
+             * @param message CarData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ICarData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CarData message, length delimited. Does not implicitly {@link com.antigravity.CarData.verify|verify} messages.
+             * @param message CarData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ICarData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CarData message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CarData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.CarData;
+
+            /**
+             * Decodes a CarData message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CarData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.CarData;
+
+            /**
+             * Verifies a CarData message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CarData message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CarData
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.CarData;
+
+            /**
+             * Creates a plain object from a CarData message. Also converts values to other types if specified.
+             * @param message CarData
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.CarData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CarData to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CarData
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

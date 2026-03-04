@@ -12,6 +12,22 @@ public class ArduinoConfig {
     WRITE
   }
 
+  public enum LapPinPitBehavior {
+    NONE(0),
+    PIT_IN(1),
+    PIT_OUT(2);
+
+    private final int value;
+
+    LapPinPitBehavior(int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
+
   private static final Map<Integer, PinDirection> PIN_BEHAVIOR_MAP = new HashMap<>();
   public static final int MAX_LANES = 64;
 
@@ -24,6 +40,8 @@ public class ArduinoConfig {
       PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + i, PinDirection.READ);
       PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + i, PinDirection.READ);
       PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + i, PinDirection.WRITE);
+      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_PIT_IN_BASE.getNumber() + i, PinDirection.READ);
+      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + i, PinDirection.READ);
     }
   }
 
@@ -43,10 +61,9 @@ public class ArduinoConfig {
   public int globalInvertLanes;
   public boolean normallyClosedRelays;
   public int globalInvertLights;
-  public int useLapsForPits;
-  public int useLapsForPitEnd;
   public int usePitsAsLaps;
   public int useLapsForSegments;
+  public LapPinPitBehavior lapPinPitBehavior;
 
   public int hardwareType;
 
@@ -76,12 +93,11 @@ public class ArduinoConfig {
     this.debounceUs = 200;
     this.hardwareType = 1;
     this.globalInvertLanes = 0;
-    this.normallyClosedRelays = false;
+    this.normallyClosedRelays = true;
     this.globalInvertLights = 0;
-    this.useLapsForPits = 0;
-    this.useLapsForPitEnd = 0;
     this.usePitsAsLaps = 0;
     this.useLapsForSegments = 0;
+    this.lapPinPitBehavior = LapPinPitBehavior.PIT_OUT;
   }
 
   public ArduinoConfig(String name,
@@ -92,10 +108,9 @@ public class ArduinoConfig {
       int globalInvertLanes,
       boolean normallyClosedRelays,
       int globalInvertLights,
-      int useLapsForPits,
-      int useLapsForPitEnd,
       int usePitsAsLaps,
       int useLapsForSegments,
+      LapPinPitBehavior lapPinPitBehavior,
       List<Integer> digitalIds,
       List<Integer> analogIds,
       List<LedString> ledStrings,
@@ -108,10 +123,9 @@ public class ArduinoConfig {
     this.globalInvertLanes = globalInvertLanes;
     this.normallyClosedRelays = normallyClosedRelays;
     this.globalInvertLights = globalInvertLights;
-    this.useLapsForPits = useLapsForPits;
-    this.useLapsForPitEnd = useLapsForPitEnd;
     this.usePitsAsLaps = usePitsAsLaps;
     this.useLapsForSegments = useLapsForSegments;
+    this.lapPinPitBehavior = lapPinPitBehavior;
     this.digitalIds = digitalIds;
     this.analogIds = analogIds;
     this.ledStrings = ledStrings;

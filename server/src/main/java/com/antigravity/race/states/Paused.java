@@ -48,6 +48,8 @@ public class Paused implements IRaceState {
       // Reset race time
       race.resetRaceTime();
 
+      race.restoreHeatFuel();
+
       // Broadcast update to client
       java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
       for (com.antigravity.race.RaceParticipant p : race.getDrivers()) {

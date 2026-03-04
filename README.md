@@ -170,7 +170,35 @@ After running the script, check the `release/` folder for:
 - **`RaceCoordinator_Windows_Offline.zip`**: A Windows-specific distribution that includes bundled JREs (Java 8 for XP/7/8, Java 17 for 10/11). Works without an internet connection.
 - **`RaceCoordinator_Mac.dmg`**: (macOS only) A Disk Image for easy installation on Mac. Only generated if the script is run on a Mac.
 
+### Windows Installer (.exe)
+For a professional Windows installation experience, you can create a standalone `.exe` installer using **Inno Setup**.
+
+#### Prerequisites
+1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php) (stable version recommended).
+2. Ensure `iscc` is in your system PATH (optional, but recommended for command-line builds).
+
+#### Building the Installer
+1. First, run the standard build script to prepare all artifacts:
+   ```bash
+   ./create_installers.sh
+   ```
+2. If `iscc` is in your PATH, the script will automatically attempt to build the `.exe`. Otherwise, run it manually from the root directory:
+   ```bash
+   iscc installer.iss
+   ```
+
+#### Output Location
+The generated installer will be located in the **`Output/`** folder:
+- **`Output/RaceCoordinatorAI_Setup.exe`**
+
+This installer will:
+- Install the application to `C:\Program Files\RaceCoordinator AI`.
+- Setup writable data (database, assets) in `C:\ProgramData\RaceCoordinator AI`.
+- Create desktop shortcuts for both the **Headless Server** and the **Web Client**.
+- Bundle a compatible Java Runtime (Java 8 for legacy Windows, Java 17 for modern Windows) so the user doesn't need to install Java manually.
+
 ### System Requirements for Installers
 - **macOS**: 10.15 (Catalina) or newer recommended.
 - **Windows**: Windows XP SP3 or newer. 32-bit and 64-bit supported.
+  - **Windows 7/8/XP Note**: Requires the [Microsoft Visual C++ 2013 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=40784) to be installed for MongoDB 3.2 to run.
 - **Linux / Raspberry Pi**: Any modern distribution with Java 8 or newer.

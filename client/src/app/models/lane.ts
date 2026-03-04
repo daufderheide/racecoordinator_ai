@@ -6,19 +6,19 @@ import { Model } from "./model";
  * race in that lane.
  */
 export class Lane implements Model {
-    readonly entity_id: string;
-    readonly foreground_color: string;
-    readonly background_color: string;
-    readonly length: number;
+  readonly entity_id: string;
+  readonly foreground_color: string;
+  readonly background_color: string;
+  readonly length: number;
 
-    constructor(entity_id: string, foreground_color: string, background_color: string, length: number) {
-        this.entity_id = entity_id;
-        this.foreground_color = foreground_color;
-        this.background_color = background_color;
-        this.length = length;
-    }
+  constructor(entity_id: string, foreground_color: string, background_color: string, length: number) {
+    this.entity_id = entity_id;
+    this.foreground_color = foreground_color;
+    this.background_color = background_color;
+    this.length = length;
+  }
 
-    get objectId(): string {
-        return this.entity_id;
-    }
+  get objectId(): string {
+    return this.entity_id;
+  }
 }

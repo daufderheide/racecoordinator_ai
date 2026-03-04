@@ -13,6 +13,7 @@ export class RaceParticipant {
     public medianLapTime: number,
     public rankValue: number,
     public seed: number,
+    public fuelLevel: number,
     public team?: Team
   ) { }
 }

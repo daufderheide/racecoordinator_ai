@@ -14,26 +14,7 @@ test.describe('Acknowledgement Modal Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
     await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
 
-    // Simulate NO_DATA
-    await page.evaluate(() => {
-      const statusEvent = {
-        status: {
-          status: 2 // NO_DATA
-        }
-      };
-      // We need to encode it if the app expects binary, but DefaultRacedayComponent receives decoded object from DataService?
-      // DataService uses protobufjs to decode.
-      // Wait, TestSetupHelper mocks the WebSocket with BINARY data.
-      // The app decodes it.
-      // So I need to send binary data.
-
-      // However, usually one would use the proto class to encode.
-      // But I can't easily import the proto class inside page.evaluate.
-      // I can encode it in Node context (here) and pass the buffer to page.evaluate.
-    });
-
-    // Wait 1s for sockets to be ready
-    await page.waitForTimeout(1000);
+    await page.clock.install();
 
     // Construct the message in Node
     const interfaceEvent = com.antigravity.InterfaceEvent.create({
@@ -55,6 +36,9 @@ test.describe('Acknowledgement Modal Visuals', () => {
         if (socket.onmessage) socket.onmessage(event);
       });
     }, dataArray);
+
+    // Fast forward 5.1s
+    await page.clock.fastForward(5100);
 
     const modal = page.locator('app-acknowledgement-modal .modal-content');
     await expect(modal).toBeVisible();

@@ -307,6 +307,9 @@ export class DatabaseManagerComponent implements OnInit {
     const file = event.target.files[0];
     if (!file) return;
 
+    const baseName = file.name.replace(/\.[^/.]+$/, "");
+    const uniqueName = this.generateUniqueName(baseName);
+
     this.openInput(
       'DBM_PROMPT_IMPORT_TITLE',
       'DBM_PROMPT_IMPORT_MSG',
@@ -327,10 +330,25 @@ export class DatabaseManagerComponent implements OnInit {
             this.cdr.detectChanges();
           }
         });
-      }
+      },
+      uniqueName
     );
     // Reset input so the same file can be selected again
     event.target.value = '';
+  }
+
+  generateUniqueName(base: string): string {
+    let name = base;
+    let counter = 1;
+    while (!this.isNameUnique(name)) {
+      name = `${base}_${counter}`;
+      counter++;
+    }
+    return name;
+  }
+
+  isNameUnique(name: string): boolean {
+    return !this.databases.find(db => db.name.toLowerCase() === name.toLowerCase());
   }
 
   onBack() {
@@ -371,18 +389,18 @@ export class DatabaseManagerComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  openInput(titleKey: string, messageKey: string, msgParams: any, onConfirm: (val: string) => void) {
+  openInput(titleKey: string, messageKey: string, msgParams: any, onConfirm: (val: string) => void, initialValue: string = '') {
     this.inputModalTitle = titleKey;
     this.inputModalMessage = messageKey;
     this.inputModalParams = msgParams || {};
-    this.inputValue = '';
+    this.inputValue = initialValue;
     this.onInputConfirmAction = onConfirm;
     this.showInputModal = true;
     this.cdr.detectChanges();
   }
 
   onInputConfirm() {
-    if (this.inputValue) {
+    if (this.inputValue && this.isNameUnique(this.inputValue)) {
       this.showInputModal = false;
       this.onInputConfirmAction(this.inputValue);
     }

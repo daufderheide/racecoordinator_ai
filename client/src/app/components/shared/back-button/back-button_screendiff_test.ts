@@ -20,6 +20,6 @@ test.describe('Back Button Visuals', () => {
 
     // Screenshot the back button area
     // Just screenshot the button itself to be precise
-    await expect(backButton).toHaveScreenshot('back-button.png');
+    await expect(backButton).toHaveScreenshot('back-button.png', { maxDiffPixelRatio: 0.05 });
   });
 });

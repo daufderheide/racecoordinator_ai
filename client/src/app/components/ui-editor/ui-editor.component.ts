@@ -9,6 +9,7 @@ import { forkJoin, Subscription } from 'rxjs';
 import { DirtyComponent } from 'src/app/interfaces/dirty-component';
 import { AnchorPoint } from '../raceday/column_definition';
 import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from './reorder-dialog/reorder-dialog.component';
+import { ColumnVisibility } from 'src/app/models/settings';
 
 
 @Component({
@@ -32,18 +33,24 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
 
+
+  // TODO(aufderheide): I think this list is duplicated below.  If they're the same they should share the code.
   availableColumns = [
     { key: 'driver.name', label: 'RD_COL_NAME' },
     { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
+    { key: 'driver.avatarUrl', label: 'RD_COL_AVATAR' },
     { key: 'lapCount', label: 'RD_COL_LAP' },
-    { key: 'reactionTime', label: 'UI_EDITOR_COL_REACTION_TIME' },
+    { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
     { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
     { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
     { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
     { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
-    { key: 'gapLeader', label: 'UI_EDITOR_COL_GAP_LEADER' },
-    { key: 'gapPosition', label: 'UI_EDITOR_COL_GAP_POSITION' },
-    { key: 'participant.team.name', label: 'UI_EDITOR_COL_TEAM' },
+    { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
+    { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
+    { key: 'participant.team.name', label: 'RD_COL_TEAM' },
+    { key: 'participant.fuelLevel', label: 'RD_COL_FUEL_LEVEL' },
+    { key: 'fuelCapacity', label: 'RD_COL_FUEL_CAPACITY' },
+    { key: 'fuelPercentage', label: 'RD_COL_FUEL_PERCENTAGE' },
   ];
 
 
@@ -121,7 +128,52 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       dirHandle: this.fileSystem.getCustomDirectoryHandle()
     }).subscribe({
       next: (result) => {
+        // Include both images (for existing background selections) and image_sets (for new column support)
         this.assets = result.assets.filter((a: any) => a.type === 'image');
+
+        // Dynamic columns for image sets
+        const imageSetColumns = result.assets
+          .filter((a: any) => a.type === 'image_set')
+          .map((a: any) => ({
+            key: `imageset_${a.model?.entityId}`,
+            label: a.name || 'Unknown Image Set'
+          }));
+
+        // Robustness: ensure imageset_fuel-gauge-builtin is available if a "Fuel Gauge" set exists
+        const builtinKey = 'imageset_fuel-gauge-builtin';
+        if (!imageSetColumns.find(c => c.key === builtinKey)) {
+          const fuelGaugeAsset = result.assets.find((a: any) => a.type === 'image_set' && a.name === 'Fuel Gauge');
+          if (fuelGaugeAsset) {
+            imageSetColumns.push({
+              key: builtinKey,
+              label: fuelGaugeAsset.name
+            });
+          }
+        }
+
+        // Reset availableColumns to base set + dynamic image sets
+        this.availableColumns = [
+          { key: 'driver.name', label: 'RD_COL_NAME' },
+          { key: 'driver.nickname', label: 'RD_COL_NICKNAME' },
+          { key: 'driver.avatarUrl', label: 'RD_COL_AVATAR' },
+          { key: 'lapCount', label: 'RD_COL_LAP' },
+          { key: 'reactionTime', label: 'RD_COL_REACTION_TIME' },
+          { key: 'lastLapTime', label: 'RD_COL_LAP_TIME' },
+          { key: 'medianLapTime', label: 'RD_COL_MEDIAN_LAP' },
+          { key: 'averageLapTime', label: 'RD_COL_AVG_LAP' },
+          { key: 'bestLapTime', label: 'RD_COL_BEST_LAP' },
+          { key: 'gapLeader', label: 'RD_COL_GAP_LEADER' },
+          { key: 'gapPosition', label: 'RD_COL_GAP_POSITION' },
+          { key: 'seed', label: 'RD_COL_SEED' },
+          { key: 'rankHeat', label: 'RD_COL_RANK_HEAT' },
+          { key: 'rankOverall', label: 'RD_COL_RANK_OVERALL' },
+          { key: 'participant.team.name', label: 'RD_COL_TEAM' },
+          { key: 'participant.fuelLevel', label: 'RD_COL_FUEL_LEVEL' },
+          { key: 'fuelCapacity', label: 'RD_COL_FUEL_CAPACITY' },
+          { key: 'fuelPercentage', label: 'RD_COL_FUEL_PERCENTAGE' },
+          ...imageSetColumns
+        ];
+
         this.customDirectoryName = result.dirHandle?.name || null;
         this.settings = this.settingsService.getSettings();
         this.editingSettings = this.cloneSettings(this.settings);
@@ -167,7 +219,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.reorderModalData = {
       availableValues: this.availableColumns,
       columnSlots: this.columnSlots,
-      columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {}))
+      columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {})),
+      columnVisibility: JSON.parse(JSON.stringify(this.editingSettings.columnVisibility || {}))
     };
     this.showReorderModal = true;
   }
@@ -175,6 +228,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onReorderSave(result: ReorderDialogResult) {
     this.editingSettings.racedayColumns = result.columns;
     this.editingSettings.columnLayouts = result.columnLayouts;
+    this.editingSettings.columnVisibility = result.columnVisibility;
     this.showReorderModal = false;
     this.reorderModalData = null;
     this.captureState();
@@ -196,7 +250,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
     clone.racedayColumns = [...(s.racedayColumns || [])];
     clone.columnAnchors = { ...(s.columnAnchors || {}) };
-    clone.columnLayouts = JSON.parse(JSON.stringify(s.columnLayouts || {}));
+
+    // Safely clone layouts and visibility
+    const layouts = s.columnLayouts || {};
+    clone.columnLayouts = JSON.parse(JSON.stringify(layouts));
+
+    const visibility = s.columnVisibility || {};
+    clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
+
     return clone;
   }
 
@@ -214,7 +275,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
-      JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts);
+      JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
+      JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility);
   }
 
   async selectDirectory() {

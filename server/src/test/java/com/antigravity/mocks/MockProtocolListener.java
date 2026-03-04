@@ -35,7 +35,10 @@ public class MockProtocolListener implements ProtocolListener {
     lastStatus = status;
   }
 
+  public List<CarData> carData = new ArrayList<>();
+
   @Override
-  public void onCarData(CarData carData) {
+  public void onCarData(CarData data) {
+    carData.add(data);
   }
 }

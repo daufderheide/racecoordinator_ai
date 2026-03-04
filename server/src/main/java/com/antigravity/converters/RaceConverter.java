@@ -58,6 +58,21 @@ public class RaceConverter {
 
       builder.setMinLapTime(race.getMinLapTime());
 
+      if (race.getFuelOptions() != null) {
+        com.antigravity.models.AnalogFuelOptions fuel = race.getFuelOptions();
+        builder.setFuelOptions(com.antigravity.proto.AnalogFuelOptions.newBuilder()
+            .setEnabled(fuel.isEnabled())
+            .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
+            .setEndHeatOnOutOfFuel(fuel.isEndHeatOnOutOfFuel())
+            .setCapacity(fuel.getCapacity())
+            .setUsageType(com.antigravity.proto.FuelUsageType
+                .valueOf(fuel.getUsageType().name()))
+            .setUsageRate(fuel.getUsageRate())
+            .setStartLevel(fuel.getStartLevel())
+            .setRefuelRate(fuel.getRefuelRate())
+            .setPitStopDelay(fuel.getPitStopDelay())
+            .build());
+      }
       return builder.build();
     }
   }

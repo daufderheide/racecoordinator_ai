@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
-import { playSound } from 'src/app/utils/audio';
+import { playSound, mockTTSContext } from 'src/app/utils/audio';
 
 @Component({
   selector: 'app-audio-selector',
@@ -25,6 +25,7 @@ export class AudioSelectorComponent {
   // Back button configuration passed through to Item Selector
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
+  @Input() context?: any;
 
   showItemSelector = false;
 
@@ -76,7 +77,8 @@ export class AudioSelectorComponent {
   }
 
   play() {
-    playSound(this.type, this.url, this.text, this.dataService.serverUrl);
+    const playContext = this.context || mockTTSContext();
+    playSound(this.type, this.url, this.text, this.dataService.serverUrl, playContext);
   }
 
   // Drag & Drop

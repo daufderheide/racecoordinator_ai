@@ -34,6 +34,7 @@ public class RaceParticipantConverter {
         .setMedianLapTime(participant.getMedianLapTime())
         .setRankValue(participant.getRankValue())
         .setSeed(participant.getSeed())
+        .setFuelLevel(participant.getFuelLevel())
         .build();
   }
 }

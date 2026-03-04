@@ -57,10 +57,20 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
-            <input type="text" [ngModel]="getHeatRotationTypeDisplay(editingRace.heat_rotation_type)" class="rm-input"
-              readonly>
+          <div class="form-row">
+            <div class="form-group">
+              <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
+              <input type="text" [ngModel]="getHeatRotationTypeDisplay(editingRace.heat_rotation_type)" class="rm-input"
+                readonly>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label>{{ 'RM_LABEL_FUEL_RACE' | translate }}</label>
+              <div class="checkbox-wrapper">
+                <input type="checkbox" [checked]="editingRace.fuel_options?.enabled" disabled class="rm-checkbox">
+                <span class="checkbox-custom"></span>
+              </div>
+            </div>
           </div>
 
           <!-- Heat List -->

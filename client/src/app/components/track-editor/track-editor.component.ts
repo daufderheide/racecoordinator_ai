@@ -77,6 +77,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.dataService.disconnectFromInterfaceDataSocket();
     this.subscriptions.forEach(s => s.unsubscribe());
     this.subscriptions = [];
+    if (this.colorDebounceTimer) {
+      clearTimeout(this.colorDebounceTimer);
+    }
   }
 
   @HostListener('window:resize')
@@ -162,22 +165,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           // Now initialize tracking with a fully populated model
           this.undoManager.initialize(this.editingTrack);
 
-          // Initialize Interface Protocol on server
-          if (this.arduinoConfig) {
-            this.subscriptions.push(this.dataService.initializeInterface(this.arduinoConfig, this.lanes.length).subscribe({
-              next: (response) => {
-                if (!response.success && !this.isDestroyed) {
-                  alert(`Failed to initialize interface: ${response.message}`);
-                }
-              },
-              error: (err) => {
-                console.error('Error calling initializeInterface', err);
-                if (!this.isDestroyed) {
-                  alert('An error occurred while connecting to the track interface.');
-                }
-              }
-            }));
-          }
         }
 
         this.isLoading = false;

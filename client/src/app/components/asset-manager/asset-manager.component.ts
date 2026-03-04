@@ -11,10 +11,12 @@ import { Subscription } from 'rxjs';
 export interface AssetView {
   id: string;
   name: string;
-  type: 'image' | 'sound';
+  type: 'image' | 'sound' | 'image_set';
   size: string;
   url: string;
   editMode?: boolean;
+  images?: com.antigravity.IImageSetEntry[];
+  currentPreviewIndex?: number;
 }
 
 @Component({
@@ -28,11 +30,21 @@ export class AssetManagerComponent implements OnInit {
   assets: AssetView[] = [];
 
   // Filtering
-  filterType: 'all' | 'image' | 'sound' = 'all';
+  filterType: 'all' | 'image' | 'sound' | 'image_set' = 'all';
   filterName: string = '';
   isUploading: boolean = false;
   isLoading: boolean = true;
   isDragOver: boolean = false;
+
+  // Image Set Editor
+  showImageSetEditor: boolean = false;
+  editingAssetId?: string;
+  editingAssetName: string = '';
+  editingAssetEntries: com.antigravity.ISaveImageSetEntry[] = [];
+
+  // Delete Confirmation
+  showDeleteConfirm: boolean = false;
+  assetToDeleteId: string | null = null;
 
   constructor(
     private dataService: DataService,
@@ -67,11 +79,17 @@ export class AssetManagerComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.connectionMonitor.stopMonitoring(); // Or let service handle app lifecycle if global, but good to be safe
+    this.isDestroyed = true;
+    this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    if (this.previewInterval) {
+      clearInterval(this.previewInterval);
+    }
   }
+
+  isDestroyed = false;
 
   // Connection Monitoring
   isConnectionLost = false;
@@ -128,22 +146,29 @@ export class AssetManagerComponent implements OnInit {
             return {
               id: a.model?.entityId || '',
               name: a.name || 'Unknown',
-              type: (a.type === 'image' || a.type === 'sound') ? a.type : 'image',
+              type: (a.type === 'image' || a.type === 'sound' || a.type === 'image_set') ? a.type as any : 'image',
               size: a.size || '0 B',
               url: this.getAssetUrl(a),
-              editMode: false
+              editMode: false,
+              images: a.images || [],
+              currentPreviewIndex: 0
             };
           });
+          this.startPreviewCycling();
         } else {
           this.assets = [];
         }
         this.isLoading = false;
-        this.cdr.detectChanges(); // Force update
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges(); // Force update
+        }
       },
       error: (err) => {
         console.error('Failed to list assets', err);
         this.isLoading = false;
-        this.cdr.detectChanges(); // Force update
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges(); // Force update
+        }
       }
     });
   }
@@ -159,10 +184,21 @@ export class AssetManagerComponent implements OnInit {
 
   get filteredAssets(): AssetView[] {
     return this.assets.filter(asset => {
-      const typeMatch = this.filterType === 'all' || asset.type === this.filterType;
+      let typeMatch = false;
+      if (this.filterType === 'all') {
+        typeMatch = true;
+      } else if (this.filterType === 'image') {
+        typeMatch = asset.type === 'image';
+      } else {
+        typeMatch = asset.type === this.filterType;
+      }
       const nameMatch = !this.filterName || asset.name.toLowerCase().includes(this.filterName.toLowerCase());
       return typeMatch && nameMatch;
     });
+  }
+
+  get allImages(): AssetView[] {
+    return this.assets.filter(a => a.type === 'image');
   }
 
   get totalSize(): string {
@@ -232,35 +268,71 @@ export class AssetManagerComponent implements OnInit {
     return this.assets.filter(a => a.type === 'sound').length;
   }
 
-  setFilterType(type: 'all' | 'image' | 'sound') {
+  setFilterType(type: 'all' | 'image' | 'sound' | 'image_set') {
     this.filterType = type;
+  }
+
+  private previewInterval: any;
+  private startPreviewCycling() {
+    if (this.previewInterval) {
+      clearInterval(this.previewInterval);
+    }
+    this.previewInterval = setInterval(() => {
+      this.assets.forEach(asset => {
+        if (asset.type === 'image_set' && asset.images && asset.images.length > 0) {
+          // Cycle from 100% to 0%. 
+          // Assuming images are already sorted or we sort them now.
+          // Let's assume they are sorted by percentage descending (100 to 0).
+          const index = asset.currentPreviewIndex ?? 0;
+          asset.currentPreviewIndex = (index + 1) % asset.images.length;
+        }
+      });
+      this.cdr.detectChanges();
+    }, 1000); // 1 second per image
+  }
+
+  getAssetImageUrl(asset: AssetView): string {
+    if (asset.type === 'image_set' && asset.images && asset.images.length > 0) {
+      const entry = asset.images[asset.currentPreviewIndex ?? 0];
+      return this.getFullUrl(entry.url ?? '');
+    }
+    return asset.url;
+  }
+
+  onAssetDragStart(event: DragEvent, asset: AssetView) {
+    if (asset.type === 'image') {
+      event.dataTransfer?.setData('text/plain', asset.url);
+      // Optional: hide the drag image or customize it
+    }
+  }
+
+  private getFullUrl(url: string): string {
+    if (url && url.startsWith('/')) {
+      return `http://${this.dataService.serverUrl.split('//')[1].split(':')[0]}:${this.dataService.serverUrl.split(':')[2].split('/')[0]}${url}`;
+    }
+    return url;
   }
 
   onContainerDragOver(event: DragEvent) {
     event.preventDefault();
-    event.stopPropagation();
   }
 
   onContainerDrop(event: DragEvent) {
     event.preventDefault();
-    event.stopPropagation();
   }
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragOver = true;
   }
 
   onDragLeave(event: DragEvent) {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragOver = false;
   }
 
   onDrop(event: DragEvent) {
     event.preventDefault();
-    event.stopPropagation();
     this.isDragOver = false;
 
     const files = event.dataTransfer?.files;
@@ -320,15 +392,28 @@ export class AssetManagerComponent implements OnInit {
   }
 
   onDelete(id: string) {
-    const msg = this.translationService.translate('AM_CONFIRM_DELETE');
-    if (confirm(msg)) {
-      this.dataService.deleteAsset(id).subscribe({
+    this.assetToDeleteId = id;
+    this.showDeleteConfirm = true;
+  }
+
+  onConfirmDelete() {
+    if (this.assetToDeleteId) {
+      this.dataService.deleteAsset(this.assetToDeleteId).subscribe({
         next: () => {
           this.loadAssets();
+          this.onCancelDelete();
         },
-        error: (err) => console.error('Delete failed', err)
+        error: (err) => {
+          console.error('Delete failed', err);
+          this.onCancelDelete();
+        }
       });
     }
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
+    this.assetToDeleteId = null;
   }
 
   startEditing(id: string) {
@@ -358,5 +443,29 @@ export class AssetManagerComponent implements OnInit {
         error: (err) => console.error('Rename failed', err)
       });
     }
+  }
+
+  // Image Set Editor Methods
+  openNewImageSetEditor() {
+    this.editingAssetId = undefined;
+    this.editingAssetName = '';
+    this.editingAssetEntries = [];
+    this.showImageSetEditor = true;
+  }
+
+  openEditImageSetEditor(asset: AssetView) {
+    this.editingAssetId = asset.id;
+    this.editingAssetName = asset.name;
+    this.editingAssetEntries = (asset.images || []).map(img => ({
+      percentage: img.percentage,
+      url: img.url,
+      name: img.name,
+      data: new Uint8Array()
+    }));
+    this.showImageSetEditor = true;
+  }
+
+  onImageSetSaved(asset: com.antigravity.IAssetMessage) {
+    this.loadAssets();
   }
 }

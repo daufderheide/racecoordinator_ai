@@ -14,20 +14,24 @@
 
 .lane-visual {
   width: 100%;
-  height: 140px;
-  background: #1a2a3a;
-  border-radius: 8px;
+  height: 180px;
+  /* Accommodate frame (140px) + labels (40px) */
+  background: transparent;
+  /* No background on container */
   display: flex;
-  border: 3px solid #4ade80;
-  box-shadow: 0 0 20px rgba(74, 222, 128, 0.1);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4ade80 #1a2a3a;
+  padding: 0 5px;
+  /* Tiny buffer */
 }
 
 .lane-column {
   flex: 0 0 150px;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .lane-column.resizing {
@@ -36,6 +40,29 @@
 
 .lane-column:last-child {
   border-right: none;
+}
+
+.column-frame {
+  height: 140px;
+  background: #1a2a3a;
+  border-top: 3px solid #4ade80;
+  border-bottom: 3px solid #4ade80;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.lane-column:first-child .column-frame {
+  border-left: 3px solid #4ade80;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.lane-column:last-child .column-frame {
+  border-right: 3px solid #4ade80;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .anchor-preview-grid {
@@ -57,22 +84,24 @@
 }
 
 .preview-text {
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   font-family: 'Inter', monospace;
-  color: #fff;
+  color: #00ffff;
   text-align: center;
   line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  font-weight: 500;
+  font-weight: 700;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
 }
 
 .column-label {
-  position: absolute;
-  bottom: -30px;
-  left: 0;
+  padding-top: 10px;
   width: 100%;
   text-align: center;
   font-size: 0.75rem;
@@ -83,4 +112,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.visibility-icon {
+  font-size: 14px !important;
+  color: #fbbf24;
+  /* Amber color to highlight optionality */
+  opacity: 0.9;
 }

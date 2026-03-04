@@ -100,10 +100,16 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.translationService.getCurrentLanguage().subscribe(() => {
       this.updatePinActions();
     });
+
+    this.updateArduinoConfig();
   }
 
   ngOnDestroy() {
     this.interfaceEventsSubscription?.unsubscribe();
+    this.dataService.closeInterface().subscribe({
+      next: () => console.log('Interface closed successfully'),
+      error: (err) => console.error('Error closing interface', err)
+    });
   }
 
   fetchPorts() {
@@ -119,7 +125,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   updateArduinoConfig() {
     this.configChange.emit();
 
-    if (this.config && this.config.commPort) {
+    if (this.config) {
       this.dataService.initializeInterface(this.config, this.lanes.length).subscribe({
         next: (response) => {
           if (!response.success) {

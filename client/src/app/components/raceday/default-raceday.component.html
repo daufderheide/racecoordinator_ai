@@ -130,10 +130,11 @@
           <!-- Logo -->
           <text x="30" y="70" font-size="50" font-weight="800" fill="#3b82f6" class="logo">RACE <tspan fill="#60a5fa">
               COORDINATOR AI</tspan></text>
-          <text x="30" y="110" font-size="22" font-style="italic" fill="#94a3b8">Bright Plume Raceway</text>
+          <text x="30" y="110" font-size="22" font-style="italic" fill="#94a3b8">{{ track.name }}</text>
 
           <!-- Timer & Info -->
-          <text x="800" y="60" font-size="36" font-weight="700" fill="#4ade80" text-anchor="middle">ROUND ROBIN</text>
+          <text x="800" y="60" font-size="36" font-weight="700" fill="#4ade80" text-anchor="middle">{{ race.name
+            }}</text>
           <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle"
             filter="url(#timerGlow)" font-family="monospace">{{ time | number:timeFormat }}</text>
           <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat {{
@@ -161,12 +162,22 @@
           <ng-container *ngFor="let column of columns; let colIndex = index">
             <!-- Iterate over all assigned anchors in the layout -->
             <ng-container *ngFor="let entry of column.layout | keyvalue">
-              <text [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
+              <image
+                *ngIf="entry.value?.toString()?.includes('avatarUrl') || entry.value?.toString()?.startsWith('imageset_')"
+                [attr.x]="getColumnCenterX(colIndex) - ((560 / track.lanes.length) * 0.4)"
+                [attr.y]="(560 / track.lanes.length) * 0.1" [attr.width]="(560 / track.lanes.length) * 0.8"
+                [attr.height]="(560 / track.lanes.length) * 0.8"
+                [attr.href]="formatColumnValue(hd, column, entry.value?.toString() || '')"
+                preserveAspectRatio="xMidYMid slice" />
+
+              <text
+                *ngIf="!entry.value?.toString()?.includes('avatarUrl') && !entry.value?.toString()?.startsWith('imageset_')"
+                [attr.x]="getColumnTextX(colIndex, entry.key)" [attr.y]="getColumnTextY(colIndex, false, entry.key)"
                 [attr.font-size]="getAnchorFontSize(entry.key)" font-weight="800"
                 [attr.fill]="track.lanes[hd.laneIndex].foreground_color"
                 [attr.text-anchor]="getColumnTextAnchor(colIndex, entry.key)" font-family="monospace" appSvgTextScaler
                 [maxWidth]="getColumnMaxWidth(colIndex)" [scaleToFit]="column.scaleToFit">{{ formatColumnValue(hd,
-                column, entry.value) }}</text>
+                column, entry.value?.toString() || '') }}</text>
             </ng-container>
           </ng-container>
 

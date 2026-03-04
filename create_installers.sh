@@ -13,52 +13,85 @@ cd ..
 # 2. Clean and Build Server (Fat Jar)
 echo "Building Server..."
 cd server
-mvn clean
+mvn clean -Dbuild.dist.dir=target_dist
 chmod +x generate_protos.sh
 ./generate_protos.sh
-mvn package -Dmaven.test.skip=true
+mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=target_dist
 cd ..
 
-# 3. Download JREs for Offline Installer
-echo "Downloading JREs for Offline Installer..."
+# 3. Download Dependencies for Offline Installer
+echo "Downloading Dependencies for Offline Installer..."
 mkdir -p build_cache
+
+# Java 8 (x86/32-bit for XP/7 Compatibility)
 if [ ! -s build_cache/java8.zip ]; then
-    echo "Downloading Java 8 (x86/32-bit for XP Compatibility)..."
+    echo "Downloading Java 8..."
     curl -L "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java8.zip || echo "Warning: Java 8 download failed"
-else
-    echo "Java 8 already exists in build_cache, skipping download."
 fi
 
+# Java 17 (x64 for Win 10/11)
 if [ ! -s build_cache/java17.zip ]; then
-    echo "Downloading Java 17 (x64)..."
+    echo "Downloading Java 17..."
     curl -L "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java17.zip || echo "Warning: Java 17 download failed"
-else
-    echo "Java 17 already exists in build_cache, skipping download."
+fi
+
+# MongoDB 3.2 (32-bit for Legacy Windows)
+if [ ! -s build_cache/mongodb32.zip ]; then
+    echo "Downloading MongoDB 3.2 (32-bit)..."
+    curl -L "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" -o build_cache/mongodb32.zip || echo "Warning: MongoDB 3.2 download failed"
+fi
+
+# MongoDB 4.4 (64-bit for Modern Windows)
+if [ ! -s build_cache/mongodb44.zip ]; then
+    echo "Downloading MongoDB 4.4 (64-bit)..."
+    curl -L "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-4.4.26.zip" -o build_cache/mongodb44.zip || echo "Warning: MongoDB 4.4 download failed"
 fi
 
 # 4. Create Release Directory Structure
 echo "Creating Release Structure..."
 rm -rf release 2>/dev/null || true
 mkdir -p release/RaceCoordinator/web
+mkdir -p release/RaceCoordinator/jre8
+mkdir -p release/RaceCoordinator/jre17
+mkdir -p release/RaceCoordinator/mongodb32
+mkdir -p release/RaceCoordinator/mongodb44
 mkdir -p release/RaceCoordinator_Offline/web
 
-# Copy Artifacts to both
+# Copy Artifacts
 for dir in release/RaceCoordinator release/RaceCoordinator_Offline; do
     cp server/target_dist/server-1.0-SNAPSHOT.jar "$dir/RaceCoordinator.jar"
     cp -r client/dist/client/* "$dir/web/"
 done
 
-# Copy Offline Bundles
+# Extract and Bundle Dependencies
 if [ -r build_cache/java8.zip ]; then
     cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
-else
-    echo "Warning: build_cache/java8.zip not readable, skipping offline bundle"
+    echo "Extracting JRE 8 (Legacy Support)..."
+    unzip -q build_cache/java8.zip -d release/RaceCoordinator/temp_jre8
+    mv release/RaceCoordinator/temp_jre8/*/* release/RaceCoordinator/jre8/
+    rm -rf release/RaceCoordinator/temp_jre8
 fi
 
 if [ -r build_cache/java17.zip ]; then
     cp build_cache/java17.zip release/RaceCoordinator_Offline/bundled_jre17.zip
-else
-    echo "Warning: build_cache/java17.zip not readable, skipping offline bundle"
+    echo "Extracting JRE 17 (Modern Support)..."
+    unzip -q build_cache/java17.zip -d release/RaceCoordinator/temp_jre17
+    mv release/RaceCoordinator/temp_jre17/*/* release/RaceCoordinator/jre17/
+    rm -rf release/RaceCoordinator/temp_jre17
+fi
+
+if [ -r build_cache/mongodb32.zip ]; then
+    echo "Extracting MongoDB 3.2..."
+    unzip -q build_cache/mongodb32.zip -d release/RaceCoordinator/temp_mongo32
+    mv release/RaceCoordinator/temp_mongo32/*/* release/RaceCoordinator/mongodb32/
+    rm -rf release/RaceCoordinator/temp_mongo32
+fi
+
+if [ -r build_cache/mongodb44.zip ]; then
+    echo "Extracting MongoDB 4.4..."
+    unzip -q build_cache/mongodb44.zip -d release/RaceCoordinator/temp_mongo44
+    mv release/RaceCoordinator/temp_mongo44/*/* release/RaceCoordinator/mongodb44/
+    rm -rf release/RaceCoordinator/temp_mongo44
 fi
 
 # 5. Create Launch Scripts
@@ -286,6 +319,22 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cp -r release/RaceCoordinator/* release/dmg_content/
     hdiutil create -volname "RaceCoordinator" -srcfolder release/dmg_content -ov -format UDZO release/RaceCoordinator_Mac.dmg || echo "Warning: Mac DMG creation failed, but continuing..."
     rm -rf release/dmg_content
+fi
+
+# 7. Create Windows Installer (.exe) with Inno Setup
+if command -v iscc &> /dev/null; then
+    echo "Creating Windows Installer (.exe) using Inno Setup..."
+    iscc installer.iss
+    iscc installer_offline.iss
+    iscc installer_offline_legacy.iss
+elif [[ -f "/c/Program Files (x86)/Inno Setup 6/iscc.exe" ]]; then
+    echo "Creating Windows Installer (.exe) using Inno Setup (found in default path)..."
+    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer.iss
+    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer_offline.iss
+    "/c/Program Files (x86)/Inno Setup 6/iscc.exe" installer_offline_legacy.iss
+else
+    echo "Warning: Inno Setup (iscc) not found. Skipping .exe installer creation."
+    echo "To build the .exe installer, install Inno Setup and run: iscc installer.iss, installer_offline.iss, etc."
 fi
 
 echo "Build Complete!"

@@ -16,6 +16,7 @@ public class RaceParticipant extends ServerToClientObject {
   private double medianLapTime;
   private double rankValue;
   private int seed;
+  private double fuelLevel;
 
   public RaceParticipant(com.antigravity.models.Driver driver) {
     super();
@@ -159,4 +160,11 @@ public class RaceParticipant extends ServerToClientObject {
     this.seed = seed;
   }
 
+  public double getFuelLevel() {
+    return fuelLevel;
+  }
+
+  public void setFuelLevel(double fuelLevel) {
+    this.fuelLevel = fuelLevel;
+  }
 }

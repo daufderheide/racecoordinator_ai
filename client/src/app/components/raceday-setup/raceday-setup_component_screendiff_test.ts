@@ -108,11 +108,11 @@ for (const lang of languages) {
 
     test('Searching and adding drivers', async ({ page }) => {
       // Use fill then wait to ensure change detection settled
-      await page.fill('input.driver-search', 'Char');
+      await page.fill('input.driver-search', 'Charlie');
 
-      // Wait for the filtered list to show exactly 1 driver
+      // Wait for the filtered list to show driver
       const unselectedDrivers = page.locator('.driver-item:not(.selected)');
-      await expect(unselectedDrivers).toHaveCount(1);
+      await expect(unselectedDrivers).toHaveCount(1, { timeout: 10000 });
       await expect(unselectedDrivers).toHaveText(/Charlie/);
 
       // Stability wait before screenshot

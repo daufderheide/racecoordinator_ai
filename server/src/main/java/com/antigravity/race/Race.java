@@ -67,12 +67,32 @@ public class Race implements ProtocolListener {
 
     this.state = new NotStarted();
     this.state.enter(this);
+
+    initializeFuelLevels();
+  }
+
+  public void init() {
+    if (this.protocols != null) {
+      this.protocols.open();
+    }
+  }
+
+  private void initializeFuelLevels() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      double initialLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
+      for (RaceParticipant driver : drivers) {
+        driver.setFuelLevel(initialLevel);
+      }
+    }
   }
 
   private void createProtocols(boolean isDemoMode) {
     List<IProtocol> protocols = new ArrayList<>();
     if (isDemoMode) {
-      Demo protocol = new Demo(this.track.getLanes().size());
+      com.antigravity.models.AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
+      boolean isFuelRace = fuelOptions != null && fuelOptions.isEnabled();
+      Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace);
       protocols.add(protocol);
     } else {
       com.antigravity.protocols.arduino.ArduinoConfig config = this.track.getArduinoConfig();
@@ -86,7 +106,6 @@ public class Race implements ProtocolListener {
     }
     this.protocols = new ProtocolDelegate(protocols);
     this.protocols.setListener(this);
-    this.protocols.open();
   }
 
   public com.antigravity.models.Race getRaceModel() {
@@ -177,6 +196,9 @@ public class Race implements ProtocolListener {
   }
 
   public void stop() {
+    if (protocols != null) {
+      protocols.close();
+    }
     if (state != null) {
       state.exit(this);
     }
@@ -202,6 +224,41 @@ public class Race implements ProtocolListener {
 
   public java.util.List<com.antigravity.protocols.PartialTime> stopProtocols() {
     return protocols.stopTimer();
+  }
+
+  public void prepareHeat() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions == null || !fuelOptions.isEnabled()) {
+      return;
+    }
+
+    boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
+    double startLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
+
+    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
+      RaceParticipant participant = heatData.getDriver();
+      if (participant == null || participant.getDriver() == null || participant.getDriver().getEntityId() == null) {
+        continue;
+      }
+
+      if (resetAtStart) {
+        participant.setFuelLevel(startLevel);
+      }
+
+      // Store the initial fuel level for this heat to support restarts
+      heatData.setInitialFuelLevel(participant.getFuelLevel());
+    }
+  }
+
+  public void restoreHeatFuel() {
+    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    if (fuelOptions == null || !fuelOptions.isEnabled()) {
+      return;
+    }
+
+    for (com.antigravity.race.DriverHeatData heatData : currentHeat.getDrivers()) {
+      heatData.getDriver().setFuelLevel(heatData.getInitialFuelLevel());
+    }
   }
 
   public void updateAndBroadcastOverallStandings() {
@@ -306,6 +363,8 @@ public class Race implements ProtocolListener {
     state.nextHeat(this);
   }
 
+  // TODO(aufderheide): We should ask the state for it's enum value rather than
+  // doing all these instanceof checks.
   private com.antigravity.proto.RaceState getProtoState(IRaceState state) {
     if (state instanceof NotStarted) {
       return com.antigravity.proto.RaceState.NOT_STARTED;

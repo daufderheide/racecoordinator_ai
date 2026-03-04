@@ -58,7 +58,7 @@ public class App {
         Paths.get(projectDir, "app_data").toString());
     appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
     System.out.println("Using app data directory: " + appDataDir);
-    String tmpDir = Paths.get(appDataDir, "server_tmp").toString();
+    String tmpDir = Paths.get(appDataDir, "server_temp").toString();
     try {
       java.nio.file.Path tmpPath = Paths.get(tmpDir);
       if (!Files.exists(tmpPath)) {
@@ -109,6 +109,30 @@ public class App {
         mongodProcess.close();
         logger.info("Embedded MongoDB stopped.");
       }
+      if (manualMongoProcess != null) {
+        logger.info("Stopping manual MongoDB process...");
+        manualMongoProcess.destroy();
+        try {
+          if (!manualMongoProcess.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
+            logger.warn("MongoDB did not shut down gracefully. Forcing termination...");
+            manualMongoProcess.destroyForcibly();
+          }
+        } catch (InterruptedException e) {
+          manualMongoProcess.destroyForcibly();
+        }
+
+        // Fallback for Windows if process is still alive (often happens on Win7)
+        if (manualMongoProcess.isAlive() && System.getProperty("os.name").toLowerCase().contains("win")) {
+          logger.info("MongoDB still alive on Windows. Using taskkill fallback...");
+          try {
+            // Kill by image name to be sure, targeting the one we started
+            Runtime.getRuntime().exec("taskkill /F /IM mongod.exe /T");
+          } catch (IOException e) {
+            logger.error("Failed to run taskkill: " + e.getMessage());
+          }
+        }
+        logger.info("Manual MongoDB process handling complete.");
+      }
       logger.info("Server stopped.");
     }));
 
@@ -119,10 +143,36 @@ public class App {
     MongoClientSettings settings = MongoClientSettings.builder()
         .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
         .codecRegistry(pojoCodecRegistry)
-        .applyToClusterSettings(b -> b.serverSelectionTimeout(2000, java.util.concurrent.TimeUnit.MILLISECONDS))
+        .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, java.util.concurrent.TimeUnit.MILLISECONDS))
         .build();
 
     mongoClient = MongoClients.create(settings);
+
+    // Wait for MongoDB to be ready
+    boolean mongoReady = false;
+    for (int i = 0; i < 30; i++) {
+      try {
+        mongoClient.listDatabaseNames().first();
+        mongoReady = true;
+        System.out.println("MongoDB is ready.");
+        break;
+      } catch (Exception e) {
+        System.out.println("Waiting for MongoDB... (" + (i + 1) + "/30)");
+        if (manualMongoProcess != null && !manualMongoProcess.isAlive()) {
+          System.err.println("Bundled MongoDB process has stopped unexpectedly!");
+          break;
+        }
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+        }
+      }
+    }
+
+    if (!mongoReady) {
+      System.err.println("Fatal: MongoDB failed to start correctly within 30 seconds.");
+      System.exit(1);
+    }
     // Initialize Database
 
     // Migration: Move legacy assets if they exist
@@ -316,37 +366,92 @@ public class App {
     }
   }
 
+  private static Process manualMongoProcess;
+
   private static void startEmbeddedMongo() {
     try {
-      System.out.println("Starting embedded MongoDB 4.x...");
+      System.out.println("Starting MongoDB...");
 
-      // Use a writable location for database storage
-      // Use a writable location for database storage
-      String appDataDir = System.getProperty("app.data.dir",
-          Paths.get(System.getProperty("user.dir"), "app_data").toString());
+      String appDir = System.getProperty("user.dir");
+      String appDataDir = System.getProperty("app.data.dir", Paths.get(appDir, "app_data").toString());
       String dataDir = Paths.get(appDataDir, "mongodb_data").toString();
-
-      // Set temp directory for flapdoodle extraction
-      System.setProperty("de.flapdoodle.embed.io.tmpdir", appDataDir);
-
-      System.out.println("Using MongoDB data directory: " + dataDir);
 
       if (!Files.exists(Paths.get(dataDir))) {
         Files.createDirectories(Paths.get(dataDir));
       }
 
-      de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
+      // Check for Bundled MongoDB (Offline Support)
       String osName = System.getProperty("os.name");
       String osArch = System.getProperty("os.arch");
+      String lowerOs = osName != null ? osName.toLowerCase() : "";
+      String mongoBinName = lowerOs.contains("win") ? "mongod.exe" : "mongod";
+
+      // Look for bundled mongo in ./mongodb/bin/
+      java.io.File bundledMongo = new java.io.File(appDir, "mongodb/bin/" + mongoBinName);
+      if (bundledMongo.exists()) {
+        System.out.println("Found bundled MongoDB: " + bundledMongo.getAbsolutePath());
+        List<String> command = new java.util.ArrayList<>();
+        command.add(bundledMongo.getAbsolutePath());
+        command.add("--dbpath");
+        command.add(dataDir);
+        command.add("--port");
+        command.add(String.valueOf(MONGO_PORT));
+        command.add("--bind_ip");
+        command.add("localhost");
+
+        if (osName != null) {
+          String lowerOsName = osName.toLowerCase();
+          String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
+          boolean isLegacyWindows = lowerOsName.contains("windows")
+              && (lowerOsName.contains("xp") || lowerOsName.contains("2003") || lowerOsName.contains("vista")
+                  || lowerOsName.contains("windows 7") || lowerOsName.contains("windows 8"));
+          boolean is32Bit = !(lowerArch.contains("64") || lowerArch.contains("amd64") || lowerArch.contains("aarch64"));
+
+          if (isLegacyWindows || is32Bit) {
+            System.out.println("Legacy/32-bit Windows detected. Adding --storageEngine mmapv1 for bundled MongoDB.");
+            command.add("--storageEngine");
+            command.add("mmapv1");
+          }
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true); // Merge stdout and stderr
+        manualMongoProcess = pb.start();
+
+        // Print output in a separate thread so it doesn't block the server but stays
+        // visible
+        new Thread(() -> {
+          try (java.io.BufferedReader reader = new java.io.BufferedReader(
+              new java.io.InputStreamReader(manualMongoProcess.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+              System.out.println("[MongoDB] " + line);
+            }
+          } catch (IOException e) {
+            // Ignore
+          }
+        }).start();
+
+        System.out.println("Bundled MongoDB started. Waiting for initialization...");
+        return;
+      }
+
+      System.out.println("Bundled MongoDB not found. Starting embedded MongoDB via Flapdoodle...");
+
+      // Set temp directory for flapdoodle extraction
+      System.setProperty("de.flapdoodle.embed.io.tmpdir", appDataDir);
+      System.out.println("Using MongoDB data directory: " + dataDir);
+
+      de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
 
       ImmutableMongod mongod = Mongod.instance();
       if (osName != null) {
         System.out.println("Detected OS: " + osName + " (" + osArch + ")");
-        String lowerOs = osName.toLowerCase();
         String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";
 
         boolean isLegacyWindows = lowerOs.contains("windows")
-            && (lowerOs.contains("xp") || lowerOs.contains("2003") || lowerOs.contains("vista"));
+            && (lowerOs.contains("xp") || lowerOs.contains("2003") || lowerOs.contains("vista")
+                || lowerOs.contains("windows 7") || lowerOs.contains("windows 8"));
         boolean is64Bit = lowerArch.contains("64") || lowerArch.contains("amd64")
             || lowerArch.contains("aarch64");
         boolean is32Bit = !is64Bit;
@@ -374,7 +479,7 @@ public class App {
 
       System.out.println("Embedded MongoDB started with storage at " + dataDir);
     } catch (IOException e) {
-      System.err.println("Error starting embedded MongoDB: " + e.getMessage());
+      System.err.println("Error starting MongoDB: " + e.getMessage());
       e.printStackTrace();
       System.exit(1);
     }

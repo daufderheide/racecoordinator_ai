@@ -13,6 +13,10 @@ describe('SettingsService', () => {
     service = TestBed.inject(SettingsService);
   });
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });

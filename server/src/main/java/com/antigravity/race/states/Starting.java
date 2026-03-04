@@ -8,6 +8,11 @@ public class Starting implements IRaceState {
   public void enter(com.antigravity.race.Race race) {
     System.out.println("Starting state entered. Countdown initiating.");
     race.setMainPower(false);
+
+    if (!race.hasRacedInCurrentHeat()) {
+      race.prepareHeat();
+    }
+
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {
       int countdown = 50; // 5 seconds * 10 (100ms interval)

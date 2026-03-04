@@ -3,14 +3,14 @@ module.exports = function (config) {
   const fs = require('fs');
   const path = require('path');
 
-  // Use a local directory to avoid permission issues with system temp
-  const tmpDir = path.join(__dirname, 'tmp-karma');
+  // Use a local directory to avoid permission issues with system temp, but short enough for socket limits
+  const tmpDir = '/tmp/kc';
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
   // Define dedicated directories
-  const chromeHome = path.join(tmpDir, 'chrome-home');
-  const chromeUserData = path.join(tmpDir, 'chrome-user-data');
-  const chromeCrashDumps = path.join(tmpDir, 'chrome-crash');
+  const chromeHome = path.join(tmpDir, 'h');
+  const chromeUserData = path.join(tmpDir, 'u');
+  const chromeCrashDumps = path.join(tmpDir, 'c');
 
   // Create them proactively
   if (!fs.existsSync(chromeHome)) fs.mkdirSync(chromeHome, { recursive: true });
@@ -28,6 +28,7 @@ module.exports = function (config) {
   config.set({
     basePath: '',
     frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    reporters: ['progress', 'kjhtml'],
     plugins: [
       require('karma-jasmine'),
       require('karma-chrome-launcher'),
@@ -55,7 +56,6 @@ module.exports = function (config) {
         { type: 'text-summary' }
       ]
     },
-    reporters: ['progress', 'kjhtml'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,

@@ -2,16 +2,19 @@ import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, Change
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AnchorPoint } from '../../raceday/column_definition';
 import { TranslationService } from '../../../services/translation.service';
+import { Settings, ColumnVisibility } from '../../../models/settings';
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
   columnSlots: { key: string; label: string }[];
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } };
+  columnVisibility: { [columnKey: string]: ColumnVisibility };
 }
 
 export interface ReorderDialogResult {
   columns: string[];
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } };
+  columnVisibility: { [columnKey: string]: ColumnVisibility };
 }
 
 @Component({
@@ -19,7 +22,7 @@ export interface ReorderDialogResult {
   templateUrl: './reorder-dialog.component.html',
   styleUrls: ['./reorder-dialog.component.css'],
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class ReorderDialogComponent {
   @Input() visible = false;
@@ -30,28 +33,49 @@ export class ReorderDialogComponent {
         translatedLabel: this.translationService.translate(v.label).toUpperCase()
       }));
 
-      // Alphabetize available values list by translated label
-      this.availableValues.sort((a, b) => a.translatedLabel.localeCompare(b.translatedLabel));
+      // Alphabetize available values list by translated label, but keep image sets at the bottom
+      this.availableValues.sort((a, b) => {
+        const aIsImageSet = a.key.startsWith('imageset_');
+        const bIsImageSet = b.key.startsWith('imageset_');
+        if (aIsImageSet && !bIsImageSet) return 1;
+        if (!aIsImageSet && bIsImageSet) return -1;
+        return a.translatedLabel.localeCompare(b.translatedLabel);
+      });
 
       // Build faster lookup map
       this.availableValuesMap.clear();
       this.availableValues.forEach(v => this.availableValuesMap.set(v.key, v));
 
-      this.columnSlots = value.columnSlots.map(s => ({ ...s }));
-      this.columnLayouts = JSON.parse(JSON.stringify(value.columnLayouts));
+      const newSlots = value.columnSlots.map(s => ({ ...s }));
+      const newLayouts = JSON.parse(JSON.stringify(value.columnLayouts || {}));
+      const newVisibility = JSON.parse(JSON.stringify(value.columnVisibility || {}));
 
-      // Initialize slots in layout if missing
-      this.columnSlots.forEach(slot => {
-        if (!this.columnLayouts[slot.key]) {
-          this.columnLayouts[slot.key] = { [AnchorPoint.CenterCenter]: slot.key };
+      // Initialize items if missing or empty. Every slot MUST have at least one anchor filled.
+      newSlots.forEach(slot => {
+        const layout = newLayouts[slot.key] || {};
+        // If the layout is completely empty, or specifically has no primary CenterCenter value
+        if (Object.keys(layout).length === 0 || !layout[AnchorPoint.CenterCenter]) {
+          newLayouts[slot.key] = { ...layout, [AnchorPoint.CenterCenter]: slot.key };
+        }
+        if (!newVisibility[slot.key]) {
+          newVisibility[slot.key] = ColumnVisibility.Always;
         }
       });
+
+      this.columnSlots = newSlots;
+      this.columnLayouts = newLayouts;
+      this.columnVisibility = newVisibility;
+
       this.updateDropListIds();
       this.cdr.markForCheck();
+      this.cdr.detectChanges();
     }
   }
 
-  constructor(private cdr: ChangeDetectorRef, private translationService: TranslationService) { }
+  constructor(
+    public cdr: ChangeDetectorRef,
+    private translationService: TranslationService
+  ) { }
 
   @Output() save = new EventEmitter<ReorderDialogResult>();
   @Output() cancel = new EventEmitter<void>();
@@ -60,7 +84,9 @@ export class ReorderDialogComponent {
   availableValuesMap = new Map<string, { key: string; label: string; translatedLabel: string }>();
   columnSlots: { key: string; label: string }[] = [];
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {};
+  columnVisibility: { [columnKey: string]: ColumnVisibility } = {};
   anchorOptions = Object.values(AnchorPoint);
+  visibilityOptions = Object.values(ColumnVisibility);
   cachedDropListIds: string[] = [];
 
   private updateDropListIds() {
@@ -80,29 +106,42 @@ export class ReorderDialogComponent {
   selectedSlotKey: string | null = null;
 
   dropColumn(event: CdkDragDrop<string[]>) {
-    moveItemInArray(this.columnSlots, event.previousIndex, event.currentIndex);
+    const newSlots = [...this.columnSlots];
+    moveItemInArray(newSlots, event.previousIndex, event.currentIndex);
+    this.columnSlots = newSlots;
     this.updateDropListIds();
     this.cdr.markForCheck();
   }
 
   onValueDrop(slotKey: string, anchor: AnchorPoint, propertyName: string) {
-    if (!this.columnLayouts[slotKey]) {
-      this.columnLayouts[slotKey] = {};
-    }
-    this.columnLayouts[slotKey][anchor] = propertyName;
+    const newLayouts = { ...this.columnLayouts };
+    newLayouts[slotKey] = { ...(newLayouts[slotKey] || {}), [anchor]: propertyName };
+    this.columnLayouts = newLayouts;
     this.cdr.markForCheck();
   }
 
   clearAnchor(slotKey: string, anchor: AnchorPoint) {
     if (this.columnLayouts[slotKey]) {
-      delete this.columnLayouts[slotKey][anchor];
+      const newLayouts = { ...this.columnLayouts };
+      const newSlotLayout = { ...newLayouts[slotKey] };
+      delete newSlotLayout[anchor];
+      newLayouts[slotKey] = newSlotLayout;
+      this.columnLayouts = newLayouts;
       this.cdr.markForCheck();
     }
   }
 
   removeColumn(slotKey: string) {
     this.columnSlots = this.columnSlots.filter(s => s.key !== slotKey);
-    delete this.columnLayouts[slotKey];
+
+    const newLayouts = { ...this.columnLayouts };
+    delete newLayouts[slotKey];
+    this.columnLayouts = newLayouts;
+
+    const newVisibility = { ...this.columnVisibility };
+    delete newVisibility[slotKey];
+    this.columnVisibility = newVisibility;
+
     this.updateDropListIds();
     this.cdr.markForCheck();
   }
@@ -120,8 +159,16 @@ export class ReorderDialogComponent {
     }
 
     const label = this.getLabel(propertyKey);
-    this.columnSlots.push({ key: newKey, label: label });
-    this.columnLayouts[newKey] = { [AnchorPoint.CenterCenter]: propertyKey };
+    this.columnSlots = [...this.columnSlots, { key: newKey, label: label }];
+
+    const newLayouts = { ...this.columnLayouts };
+    newLayouts[newKey] = { [AnchorPoint.CenterCenter]: propertyKey };
+    this.columnLayouts = newLayouts;
+
+    const newVisibility = { ...this.columnVisibility };
+    newVisibility[newKey] = ColumnVisibility.Always;
+    this.columnVisibility = newVisibility;
+
     this.updateDropListIds();
     this.cdr.markForCheck();
   }
@@ -148,8 +195,20 @@ export class ReorderDialogComponent {
   onSave() {
     this.save.emit({
       columns: this.columnSlots.map(c => c.key),
-      columnLayouts: this.columnLayouts
+      columnLayouts: this.columnLayouts,
+      columnVisibility: this.columnVisibility
     });
+  }
+
+  onReset() {
+    this.columnSlots = Settings.DEFAULT_COLUMNS.map(key => ({
+      key,
+      label: this.getLabel(key)
+    }));
+    this.columnLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
+    this.columnVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
+    this.updateDropListIds();
+    this.cdr.markForCheck();
   }
 
   onCancel() {

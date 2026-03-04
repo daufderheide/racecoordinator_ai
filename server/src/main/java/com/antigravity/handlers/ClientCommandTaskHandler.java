@@ -32,6 +32,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/update-interface-config", this::updateInterfaceConfig);
     app.post("/api/initialize-interface", this::initializeInterface);
     app.post("/api/set-interface-pin-state", this::setInterfacePinState);
+    app.post("/api/close-interface", this::closeInterface);
     app.get("/api/serial-ports", this::getSerialPorts);
   }
 
@@ -167,7 +168,16 @@ public class ClientCommandTaskHandler {
         databaseContext.getDatabase(), raceModel,
         participants,
         request.getIsDemoMode());
-    ClientSubscriptionManager.getInstance().setRace(race);
+
+    try {
+      ClientSubscriptionManager.getInstance().setRace(race);
+      race.init();
+    } catch (Exception e) {
+      System.err.println("Failed to set or initialize race: " + e.getMessage());
+      race.stop(); // Ensure protocols are closed
+      return TaskResult.error(409, e.getMessage());
+    }
+
     System.out.println("Initialized race: " + race.getRaceModel().getName());
 
     // com.antigravity.models.Track track = race.getTrack();
@@ -451,6 +461,17 @@ public class ClientCommandTaskHandler {
           java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
     } catch (Exception e) {
       // Ignore
+    }
+  }
+
+  private void closeInterface(io.javalin.http.Context ctx) {
+    try {
+      System.out.println("Explicit close-interface requested");
+      ClientSubscriptionManager.getInstance().setProtocol(null);
+      ctx.status(200).result("OK");
+    } catch (Exception e) {
+      System.err.println("Error closing interface: " + e.getMessage());
+      ctx.status(500).result("Error closing interface: " + e.getMessage());
     }
   }
 }

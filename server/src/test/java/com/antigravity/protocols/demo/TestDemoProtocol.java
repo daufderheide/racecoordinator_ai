@@ -11,7 +11,7 @@ public class TestDemoProtocol {
 
   @Test
   public void testStatusSchedulerCleanup() throws Exception {
-    Demo demo = new Demo(2);
+    Demo demo = new Demo(2, false);
 
     final AtomicInteger statusUpdates = new AtomicInteger(0);
 

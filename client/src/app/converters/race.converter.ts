@@ -4,6 +4,7 @@ import { TrackConverter } from "./track.converter";
 import { ConverterCache } from "./converter_cache";
 import { HeatScoring, FinishMethod, HeatRanking, HeatRankingTiebreaker, AllowFinish } from "../models/heat_scoring";
 import { OverallScoring, OverallRanking, OverallRankingTiebreaker } from "../models/overall_scoring";
+import { AnalogFuelOptionsConverter } from "./analog_fuel_options.converter";
 
 export class RaceConverter {
     private static cache = new ConverterCache<Race>();
@@ -71,12 +72,15 @@ export class RaceConverter {
                     );
                 }
 
+                const fuelOptions = AnalogFuelOptionsConverter.fromProto(proto.fuelOptions);
+
                 return new Race(
                     objectId || '',
                     proto.name || '',
                     TrackConverter.fromProto(proto.track!),
                     heatScoring,
-                    overallScoring
+                    overallScoring,
+                    fuelOptions
                 );
             },
             () => {

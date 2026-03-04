@@ -125,4 +125,40 @@ test.describe('Database Manager Visuals', () => {
 
     await expect(page.locator('.list-item').nth(1).locator('.active-bagde')).toBeVisible();
   });
+
+  test('should handle database import visuals', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/database-manager'));
+
+    // Prepare file upload (mock doesn't actually need the file, just the event)
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('button:has-text("IMPORT")').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'import_test.zip',
+      mimeType: 'application/zip',
+      buffer: Buffer.from([])
+    });
+
+    // Check Import Modal pre-filled name (should be import_test)
+    // Note: If 'import_test' existed it would be 'import_test_1', but here it's new
+    await expect(page.locator('.modal-title')).toContainText(/Import/i);
+    const input = page.locator('.input-container input');
+    await expect(input).toHaveValue('import_test');
+
+    // Take screenshot of initial modal state
+    await expect(page).toHaveScreenshot('database-manager-import-initial.png');
+
+    // Trigger duplicate name error
+    await input.fill('db1'); // db1 is in our mock list
+    await expect(page.locator('.error-msg')).toBeVisible();
+    await expect(page.locator('.error-msg')).toContainText(/already exists/i);
+
+    // Take screenshot of error state (should be same size, no shifting)
+    await expect(page).toHaveScreenshot('database-manager-import-error.png');
+
+    // Clear name to check disabled button
+    await input.fill('');
+    await expect(page.locator('.btn-confirm')).toBeDisabled();
+    await expect(page).toHaveScreenshot('database-manager-import-empty.png');
+  });
 });

@@ -25,7 +25,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { RaceService } from 'src/app/services/race.service';
 import { Router } from '@angular/router';
 import { SettingsService } from 'src/app/services/settings.service';
-import { Settings } from 'src/app/models/settings';
+import { Settings, ColumnVisibility } from 'src/app/models/settings';
 import { ChangeDetectorRef } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { com } from 'src/app/proto/message';
@@ -60,6 +60,8 @@ describe('DefaultRacedayComponent', () => {
   let component: DefaultRacedayComponent;
   let fixture: ComponentFixture<DefaultRacedayComponent>;
   let mockDataService: any;
+  let mockRaceService: any;
+  let mockSettings: Settings;
   let interfaceEventsSubject: Subject<com.antigravity.IInterfaceEvent>;
 
   beforeEach(async () => {
@@ -70,7 +72,7 @@ describe('DefaultRacedayComponent', () => {
       'getReactionTimes', 'getStandingsUpdate', 'getOverallStandingsUpdate',
       'getInterfaceEvents', 'getRaceState', 'getDrivers',
       'connectToInterfaceDataSocket', 'disconnectFromInterfaceDataSocket',
-      'listAssets'
+      'listAssets', 'getCarData'
     ]);
     mockDataService.getRaceUpdate.and.returnValue(of({}));
     mockDataService.listAssets.and.returnValue(of([]));
@@ -82,6 +84,7 @@ describe('DefaultRacedayComponent', () => {
     mockDataService.getInterfaceEvents.and.returnValue(interfaceEventsSubject.asObservable());
     mockDataService.getRaceState.and.returnValue(of(com.antigravity.RaceState.NOT_STARTED));
     mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.serverUrl = 'http://localhost';
 
     const mockTranslationService = {
@@ -89,12 +92,19 @@ describe('DefaultRacedayComponent', () => {
       translate: (key: string) => key
     };
 
-    const mockRaceService = {
-      setRace: jasmine.createSpy('setRace'),
-      setParticipants: jasmine.createSpy('setParticipants'),
-      setHeats: jasmine.createSpy('setHeats'),
-      setCurrentHeat: jasmine.createSpy('setCurrentHeat')
-    };
+    mockRaceService = jasmine.createSpyObj('RaceService', [
+      'setRace', 'setParticipants', 'setHeats', 'setCurrentHeat', 'getRace', 'getHeats'
+    ]);
+    mockRaceService.getRace.and.returnValue({ name: 'Some Race Name', track: { name: 'Bright Plume Raceway', lanes: [] }, fuel_options: { enabled: false } });
+    mockRaceService.getHeats.and.returnValue([]);
+
+    mockSettings = Object.assign(new Settings(), {
+      sortByStandings: true,
+      racedayColumns: ['driver.nickname', 'lapCount', 'fuelPercentage'],
+      columnVisibility: {
+        'fuelPercentage': ColumnVisibility.FuelRaceOnly
+      }
+    });
 
     const mockRouter = {
       navigate: jasmine.createSpy('navigate')
@@ -106,7 +116,12 @@ describe('DefaultRacedayComponent', () => {
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: RaceService, useValue: mockRaceService },
-        { provide: SettingsService, useValue: { getSettings: () => Object.assign(new Settings(), { sortByStandings: true }) } },
+        {
+          provide: SettingsService, useValue: {
+            getSettings: () => mockSettings,
+            saveSettings: jasmine.createSpy('saveSettings')
+          }
+        },
         { provide: Router, useValue: mockRouter },
         ChangeDetectorRef
       ]
@@ -153,8 +168,29 @@ describe('DefaultRacedayComponent', () => {
     expect((component as any).isInterfaceConnected).toBeFalse();
   });
 
-  it('should show modal immediately on NO_DATA', () => {
+  it('should wait 5s before showing modal on NO_DATA during startup', fakeAsync(() => {
     fixture.detectChanges();
+    interfaceEventsSubject.next({
+      status: { status: com.antigravity.InterfaceStatus.NO_DATA }
+    });
+
+    // Should not show immediately
+    expect(component.showAckModal).toBeFalse();
+
+    // Advance 5s
+    tick(5000);
+
+    expect(component.showAckModal).toBeTrue();
+    expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_NO_DATA');
+
+    flush();
+  }));
+
+  it('should show NO_DATA immediately if already initially connected', () => {
+    fixture.detectChanges();
+    // Simulate initial connection success
+    (component as any).hasInitiallyConnected = true;
+
     interfaceEventsSubject.next({
       status: { status: com.antigravity.InterfaceStatus.NO_DATA }
     });
@@ -215,7 +251,8 @@ describe('DefaultRacedayComponent', () => {
   it('should show CONNECTED modal if recovered after error shown', () => {
     fixture.detectChanges();
     // Force error state
-    (component as any).wasInterfaceErrorShown = true;
+    component.showAckModal = true;
+    component.ackModalTitle = 'ACK_MODAL_TITLE_DISCONNECTED';
 
     interfaceEventsSubject.next({
       status: { status: com.antigravity.InterfaceStatus.CONNECTED }
@@ -225,16 +262,29 @@ describe('DefaultRacedayComponent', () => {
     expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_CONNECTED');
   });
 
-  it('should trigger watchdog on NO_STATUS after timeout', fakeAsync(() => {
+  it('should trigger DISCONNECTED on NO_STATUS watchdog if not initially connected', fakeAsync(() => {
     fixture.detectChanges(); // Starts the watchdog in the fakeAsync zone
-    // Reset watchdog happens on init.
     // Advance time by 5s
+    tick(5000);
+
+    expect(component.showAckModal).toBeTrue();
+    expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_DISCONNECTED');
+
+    // Clear pending timers
+    flush();
+  }));
+
+  it('should trigger NO_STATUS on watchdog if successfully connected first', fakeAsync(() => {
+    fixture.detectChanges();
+    // Simulate initial connection success
+    (component as any).hasInitiallyConnected = true;
+    (component as any).resetWatchdog(); // Reset to clear the first watchdog timer
+
     tick(5000);
 
     expect(component.showAckModal).toBeTrue();
     expect(component.ackModalTitle).toBe('ACK_MODAL_TITLE_NO_STATUS');
 
-    // Clear pending timers
     flush();
   }));
 
@@ -358,5 +408,177 @@ describe('DefaultRacedayComponent', () => {
 
       expect(component.onMenuSelect).toHaveBeenCalledWith('PAUSE');
     });
+  });
+
+  describe('formatValue', () => {
+    let mockHd: any;
+
+    beforeEach(() => {
+      mockHd = {
+        participant: {
+          fuelLevel: 55.5
+        }
+      };
+
+      const mockRace = {
+        fuel_options: {
+          capacity: 100
+        }
+      };
+      (component as any).raceService.getRace = jasmine.createSpy().and.returnValue(mockRace);
+    });
+
+    it('should format participant.fuelLevel directly', () => {
+      const result = component.formatValue('participant.fuelLevel', mockHd.participant.fuelLevel, mockHd);
+      expect(result).toBe('55.5');
+    });
+
+    it('should format participant.fuelLevel as --.- if undefined', () => {
+      const result = component.formatValue('participant.fuelLevel', undefined, mockHd);
+      expect(result).toBe('--.-');
+    });
+
+    it('should format fuelCapacity from the race settings', () => {
+      const result = component.formatValue('fuelCapacity', null, mockHd);
+      expect(result).toBe('100.0');
+    });
+
+    it('should format fuelPercentage correctly based on fuelLevel and capacity', () => {
+      // 55.5 / 100 = 56% (Math.round(55.5) == 56)
+      const result = component.formatValue('fuelPercentage', null, mockHd);
+      expect(result).toBe('56%');
+    });
+
+    it('should format fuelPercentage as --% if capacity or level is undefined', () => {
+      mockHd.participant.fuelLevel = undefined;
+      const result = component.formatValue('fuelPercentage', null, mockHd);
+      expect(result).toBe('--%');
+    });
+
+    it('should format driver.avatarUrl using getFullUrl', () => {
+      const avatarUrl = '/assets/avatars/driver1.png';
+      const result = component.formatValue('driver.avatarUrl', avatarUrl, mockHd);
+      expect(result).toBe('http://localhost/assets/avatars/driver1.png');
+    });
+
+    it('should format seed in (#) format', () => {
+      mockHd.participant.seed = 5;
+      const result = component.formatValue('seed', 5, mockHd);
+      expect(result).toBe('(5)');
+    });
+
+    it('should format rankHeat in (#) format', () => {
+      component['driverRankings'].set('driverId123', 2);
+      mockHd.objectId = 'driverId123';
+      const result = component.formatValue('rankHeat', null, mockHd);
+      expect(result).toBe('(2)');
+    });
+
+    it('should format rankOverall in (#) format', () => {
+      mockHd.participant.rank = 10;
+      const result = component.formatValue('rankOverall', 10, mockHd);
+      expect(result).toBe('(10)');
+    });
+
+    it('should return -- for undefined values in (#) columns', () => {
+      mockHd.participant.seed = 0;
+      expect(component.formatValue('seed', 0, mockHd)).toBe('--');
+
+      mockHd.participant.rank = 0;
+      expect(component.formatValue('rankOverall', 0, mockHd)).toBe('--');
+
+      component['driverRankings'].clear();
+      expect(component.formatValue('rankHeat', null, mockHd)).toBe('--');
+    });
+  });
+
+  describe('loadColumns with visibility', () => {
+    it('should filter out FuelRaceOnly columns when fuel is disabled', () => {
+      const mockRace = { fuel_options: { enabled: false } };
+      mockRaceService.getRace.and.returnValue(mockRace);
+
+      (component as any).loadColumns();
+
+      expect(component['columns'].some(c => c.propertyName === 'fuelPercentage')).toBeFalse();
+    });
+
+    it('should include FuelRaceOnly columns when fuel is enabled', () => {
+      const mockRace = { fuel_options: { enabled: true } };
+      mockRaceService.getRace.and.returnValue(mockRace);
+
+      (component as any).loadColumns();
+
+      expect(component['columns'].some(c => c.propertyName === 'fuelPercentage')).toBeTrue();
+    });
+
+    it('should filter out NonFuelRaceOnly columns when fuel is enabled', () => {
+      mockSettings.columnVisibility['lapCount'] = ColumnVisibility.NonFuelRaceOnly;
+
+      const mockRace = { fuel_options: { enabled: true } };
+      mockRaceService.getRace.and.returnValue(mockRace);
+
+      (component as any).loadColumns();
+
+      expect(component['columns'].some(c => c.propertyName === 'lapCount')).toBeFalse();
+    });
+
+    it('should return correct label key for driver.avatarUrl', () => {
+      const result = (component as any).getLabelKeyForColumn('driver.avatarUrl');
+      expect(result).toBe('RD_COL_AVATAR');
+    });
+  });
+
+  it('should call loadColumns when loadRaceData is called', () => {
+    const spy = spyOn(component as any, 'loadColumns');
+    const mockRace = { track: { lanes: [] } };
+    mockRaceService.getRace.and.returnValue(mockRace);
+
+    (component as any).loadRaceData();
+
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('should render the dynamic track name in the header', () => {
+    const trackName = 'Test Raceway';
+    const mockRace = {
+      name: 'Any Race',
+      track: {
+        name: trackName,
+        lanes: []
+      }
+    };
+    mockRaceService.getRace.and.returnValue(mockRace);
+    component['race'] = mockRace as any;
+    component['track'] = mockRace['track'] as any;
+    component['heat'] = {} as any; // Header is inside *ngIf="heat"
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const trackText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === trackName);
+    expect(trackText).toBeTruthy();
+    expect(trackText?.textContent).toBe(trackName);
+  });
+
+  it('should render the dynamic race name in the header', () => {
+    const raceName = 'Test Championship';
+    const mockRace = {
+      name: raceName,
+      track: {
+        name: 'Any Track',
+        lanes: []
+      }
+    };
+    mockRaceService.getRace.and.returnValue(mockRace);
+    component['race'] = mockRace as any;
+    component['track'] = mockRace['track'] as any;
+    component['heat'] = {} as any;
+
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const raceText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === raceName);
+    expect(raceText).toBeTruthy();
+    expect(raceText?.textContent).toBe(raceName);
   });
 });

@@ -17,6 +17,7 @@ export class RaceParticipant {
         public medianLapTime: number = 0,
         public rankValue: number = 0,
         public seed: number = 0,
+        public fuelLevel: number = 100,
         team?: Team
     ) {
         this.driver = driver;

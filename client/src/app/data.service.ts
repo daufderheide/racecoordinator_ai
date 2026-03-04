@@ -157,8 +157,6 @@ export class DataService {
         globalInvertLanes: config.globalInvertLanes,
         normallyClosedRelays: config.normallyClosedRelays,
         globalInvertLights: config.globalInvertLights,
-        useLapsForPits: config.useLapsForPits,
-        useLapsForPitEnd: config.useLapsForPitEnd,
         usePitsAsLaps: config.usePitsAsLaps,
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
@@ -195,8 +193,6 @@ export class DataService {
         globalInvertLanes: config.globalInvertLanes,
         normallyClosedRelays: config.normallyClosedRelays,
         globalInvertLights: config.globalInvertLights,
-        useLapsForPits: config.useLapsForPits,
-        useLapsForPitEnd: config.useLapsForPitEnd,
         usePitsAsLaps: config.usePitsAsLaps,
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
@@ -242,6 +238,10 @@ export class DataService {
         return com.antigravity.SetInterfacePinStateResponse.decode(new Uint8Array(response as any));
       })
     );
+  }
+
+  closeInterface(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/api/close-interface`, {});
   }
 
   startRace(): Observable<boolean> {
@@ -456,7 +456,27 @@ export class DataService {
     );
   }
 
+  saveImageSet(name: string, entries: com.antigravity.ISaveImageSetEntry[], id?: string): Observable<com.antigravity.IAssetMessage> {
+    const request = com.antigravity.SaveImageSetRequest.create({ id, name, entries });
+    const buffer = com.antigravity.SaveImageSetRequest.encode(request).finish();
+    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
+
+    return this.http.post(`${this.baseUrl}/api/assets/save-image-set`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        const saveResponse = com.antigravity.SaveImageSetResponse.decode(new Uint8Array(response as any));
+        if (!saveResponse.success) {
+          throw new Error(saveResponse.message ?? 'Unknown error saving image set');
+        }
+        return saveResponse.asset!;
+      })
+    );
+  }
+
   deleteAsset(id: string): Observable<boolean> {
+
     const request = com.antigravity.DeleteAssetRequest.create({ id });
     const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();
 
@@ -511,6 +531,7 @@ export class DataService {
   private overallStandingsSubject = new Subject<com.antigravity.IOverallStandingsUpdate>();
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
   private interfaceEventSubject = new Subject<com.antigravity.IInterfaceEvent>();
+  private carDataSubject = new Subject<com.antigravity.ICarData>();
   private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
 
   private shouldSubscribeToRaceData = false;
@@ -586,6 +607,8 @@ export class DataService {
           if (raceData.race.state) {
             this.raceStateSubject.next(raceData.race.state);
           }
+        } else if (raceData.carData) {
+          this.carDataSubject.next(raceData.carData);
         }
       } catch (e) {
         console.error('Error parsing race data message', e);
@@ -679,5 +702,9 @@ export class DataService {
 
   public getRaceState(): Observable<com.antigravity.RaceState> {
     return this.raceStateSubject.asObservable();
+  }
+
+  public getCarData(): Observable<com.antigravity.ICarData> {
+    return this.carDataSubject.asObservable();
   }
 }

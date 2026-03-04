@@ -53,7 +53,7 @@ describe('TranslationService', () => {
     httpMock.match(request => request.url.startsWith('assets/i18n/'))[0].flush({});
 
     const languages = service.getSupportedLanguages();
-    expect(languages.length).toBe(6);
+    expect(languages.length).toBe(7);
     expect(languages.find(l => l.code === 'en')).toBeDefined();
     expect(languages.find(l => l.code === 'de')).toBeDefined();
   });

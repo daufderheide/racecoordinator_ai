@@ -48,7 +48,7 @@ test.describe('Arduino Editor Component Visuals', () => {
             digitalIds: [0, 1, 2, 3], // Unused, Reserved, Call Button (Master), Relay (Master)
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,

@@ -6,6 +6,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
+import { createTTSContext, mockTTSContext } from 'src/app/utils/audio';
 
 @Component({
   selector: 'app-driver-editor',
@@ -79,6 +80,16 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       this.dataSubscription.unsubscribe();
     }
     this.undoManager.destroy();
+  }
+
+  get ttsContext(): any {
+    if (!this.editingDriver) return mockTTSContext();
+    return createTTSContext(this.editingDriver, {
+      lastLapTime: 1.234,
+      bestLapTime: 1.234,
+      averageLapTime: 1.5,
+      lapCount: 10
+    });
   }
 
   @HostListener('window:resize')

@@ -1,5 +1,5 @@
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ImageSelectorComponent } from './image-selector.component';
 import { DataService } from 'src/app/data.service';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
@@ -74,8 +74,8 @@ describe('ImageSelectorComponent', () => {
     expect(component.isDragging).toBeFalse();
   });
 
-  it('should handle drop and upload file', (done) => {
-    const file = new File([''], 'test.png', { type: 'image/png' });
+  it('should handle drop and upload file', fakeAsync(() => {
+    const file = new File(['upload-content'], 'test.png', { type: 'image/png' });
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
     const dropEvent = new DragEvent('drop', { dataTransfer });
@@ -87,59 +87,57 @@ describe('ImageSelectorComponent', () => {
     spyOn(component.uploadStarted, 'emit');
     spyOn(component.uploadFinished, 'emit');
 
-    // Mock FileReader behavior for drop and upload
-    const mockReader: any = {
-      readAsDataURL: jasmine.createSpy('readAsDataURL').and.callFake(function (this: any) {
-        this.onload({ target: { result: 'data:image/png;base64,' } });
-      }),
-      readAsArrayBuffer: jasmine.createSpy('readAsArrayBuffer').and.callFake(function (this: any) {
-        this.onload({ target: { result: new ArrayBuffer(0) } });
-      })
-    };
-    spyOn(window as any, 'FileReader').and.returnValue(mockReader);
+    spyOn(window as any, 'FileReader').and.callFake(function () {
+      return {
+        readAsDataURL: jasmine.createSpy('readAsDataURL').and.callFake(function (this: any) {
+          setTimeout(() => { if (this.onload) this.onload({ target: { result: 'data:img' } }); });
+        }),
+        readAsArrayBuffer: jasmine.createSpy('readAsArrayBuffer').and.callFake(function (this: any) {
+          setTimeout(() => { if (this.onload) this.onload({ target: { result: new ArrayBuffer(0) } }); });
+        }),
+        onload: null
+      };
+    });
 
     component.onDrop(dropEvent);
+    tick(); // Process both readers
 
     expect(component.uploadStarted.emit).toHaveBeenCalled();
     expect(mockDataService.uploadAsset).toHaveBeenCalled();
+    expect(component.imageUrl).toBe(mockAsset.url);
+    expect(component.imageUrlChange.emit).toHaveBeenCalledWith(mockAsset.url);
+    expect(component.uploadFinished.emit).toHaveBeenCalled();
+    expect(component.isUploading).toBeFalse();
+  }));
 
-    fixture.whenStable().then(() => {
-      expect(component.imageUrl).toBe(mockAsset.url);
-      expect(component.imageUrlChange.emit).toHaveBeenCalledWith(mockAsset.url);
-      expect(component.uploadFinished.emit).toHaveBeenCalled();
-      expect(component.isUploading).toBeFalse();
-      done();
-    });
-  });
-
-  it('should handle upload error', (done) => {
-    const file = new File([''], 'test.png', { type: 'image/png' });
+  it('should handle upload error', fakeAsync(() => {
+    const file = new File(['content'], 'test.png', { type: 'image/png' });
     const dataTransfer = new DataTransfer();
     dataTransfer.items.add(file);
     const dropEvent = new DragEvent('drop', { dataTransfer });
 
     mockDataService.uploadAsset.and.returnValue(throwError(() => new Error('Upload failed')));
-
+    spyOn(console, 'error');
     spyOn(component.uploadFinished, 'emit');
 
-    const mockReader: any = {
-      readAsDataURL: jasmine.createSpy('readAsDataURL').and.callFake(function (this: any) {
-        this.onload({ target: { result: 'data:' } });
-      }),
-      readAsArrayBuffer: jasmine.createSpy('readAsArrayBuffer').and.callFake(function (this: any) {
-        this.onload({ target: { result: new ArrayBuffer(0) } });
-      })
-    };
-    spyOn(window as any, 'FileReader').and.returnValue(mockReader);
+    spyOn(window as any, 'FileReader').and.callFake(function () {
+      return {
+        readAsDataURL: jasmine.createSpy('readAsDataURL').and.callFake(function (this: any) {
+          setTimeout(() => { if (this.onload) this.onload({ target: { result: 'data:' } }); });
+        }),
+        readAsArrayBuffer: jasmine.createSpy('readAsArrayBuffer').and.callFake(function (this: any) {
+          setTimeout(() => { if (this.onload) this.onload({ target: { result: new ArrayBuffer(0) } }); });
+        }),
+        onload: null
+      };
+    });
 
     component.onDrop(dropEvent);
+    tick();
 
-    fixture.whenStable().then(() => {
-      expect(component.isUploading).toBeFalse();
-      expect(component.uploadFinished.emit).toHaveBeenCalled();
-      done();
-    });
-  });
+    expect(component.isUploading).toBeFalse();
+    expect(component.uploadFinished.emit).toHaveBeenCalled();
+  }));
 
   it('should open and close selector', () => {
     component.openSelector();

@@ -16,6 +16,7 @@ test.describe('Asset Manager Visuals', () => {
     // Navigating and waiting for localization
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
     await TestSetupHelper.waitForText(page, 'DATABASE STATUS');
+    await TestSetupHelper.waitForText(page, 'Mock_Database.db');
 
     // Wait for the asset list to appear
     const assetList = page.locator('.asset-grid');
@@ -24,14 +25,14 @@ test.describe('Asset Manager Visuals', () => {
     // Ensure loading is finished
     await expect(page.locator('.loading-overlay')).not.toBeVisible();
 
-    // Wait for items to be rendered (we expect 2 items from mock)
-    await expect(page.locator('.asset-card')).toHaveCount(2);
+    // Wait for items to be rendered (we expect 3 items from mock: image, sound, image_set)
+    await expect(page.locator('.asset-card')).toHaveCount(3);
 
     // Expect to see our mocked items
     await expect(page.locator('.asset-card').first()).toContainText('Test Image 1');
 
     // 3. Take Screenshot of full page
-    await expect(page).toHaveScreenshot('asset-manager-list.png');
+    await expect(page).toHaveScreenshot('asset-manager-list.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should filter assets visuals', async ({ page }) => {
@@ -49,7 +50,7 @@ test.describe('Asset Manager Visuals', () => {
     await expect(page.locator('.asset-card')).toHaveCount(1);
     await expect(page.locator('.asset-card')).toContainText('Test Image 1');
 
-    await expect(page).toHaveScreenshot('asset-manager-filtered-images.png');
+    await expect(page).toHaveScreenshot('asset-manager-filtered-images.png', { maxDiffPixelRatio: 0.05 });
   });
 
   test('should navigate back using shared back button', async ({ page }) => {

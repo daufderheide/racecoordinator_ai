@@ -23,6 +23,14 @@ export class TestSetupHelper {
         entity_id: id,
         name: name,
         track_entity_id: 't1',
+        track: {
+          entity_id: 't1',
+          name: 'Classic Circuit',
+          lanes: [
+            { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
+            { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+          ]
+        },
         heat_rotation_type: 'RoundRobin',
         heat_scoring: {
           finish_method: 'Lap',
@@ -65,6 +73,38 @@ export class TestSetupHelper {
 
     // Mock Assets API
     await this.setupAssetMocks(page);
+
+    // Mock Database Stats API
+    await page.route('**/api/databases/current*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          name: 'Mock_Database.db',
+          totalSize: '450 KB',
+          imageCount: 5,
+          soundCount: 3
+        }),
+      });
+    });
+
+    // Mock Settings using localStorage (since no component actually calls /api/settings)
+    await this.setupSettings(page, {
+      racedayColumns: ['driver.name', 'lapCount'],
+      columnLayouts: {
+        'driver.name': { 'CenterCenter': 'driver.name' },
+        'lapCount': { 'CenterCenter': 'lapCount' }
+      },
+      columnAnchors: {
+        'driver.name': 'Center',
+        'lapCount': 'Center'
+      },
+      columnWidths: {
+        'driver.name': 200,
+        'lapCount': 100
+      },
+      columnVisibility: {}
+    });
   }
 
   static async setupTeamMocks(page: Page) {
@@ -201,7 +241,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, -1, -1],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -229,7 +269,7 @@ export class TestSetupHelper {
             digitalIds: [1001, 1002, 1003, 1004],
             analogIds: [-1, -1, -1, -1],
             globalInvertLanes: 0,
-            normallyClosedRelays: false,
+            normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
@@ -275,6 +315,18 @@ export class TestSetupHelper {
           size: '50 KB',
           url: '',
           filename: 'snd1.mp3'
+        },
+        {
+          model: { entityId: 'set123' },
+          name: 'Custom Dash',
+          type: 'image_set',
+          size: '1.2 MB',
+          url: '',
+          filename: 'dash.json',
+          images: [
+            { percentage: 30, url: 'img1.png', name: 'img1.png' },
+            { percentage: 70, url: 'img2.png', name: 'img2.png' }
+          ]
         }
       ];
 
@@ -285,6 +337,17 @@ export class TestSetupHelper {
         status: 200,
         contentType: 'application/octet-stream',
         body: Buffer.from(buffer),
+      });
+    });
+
+    // Mock Asset Download API
+    await page.route('**/api/assets/download*', async (route) => {
+      // Return a 1x1 transparent pixel for all downloads in tests
+      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: transparentPixel
       });
     });
   }
@@ -302,6 +365,13 @@ export class TestSetupHelper {
               { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
               { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
             ]
+          },
+          fuelOptions: {
+            enabled: true,
+            capacity: 100,
+            usageType: 0, // Per lap
+            usageRate: 1.0,
+            startLevel: 100
           }
         },
         currentHeat: {
@@ -309,21 +379,25 @@ export class TestSetupHelper {
           heatDrivers: [
             {
               objectId: 'hd1',
-              driver: {
+              driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                 objectId: 'rp1',
-                driver: {
+                fuelLevel: 75.5,
+                driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                   model: { entityId: 'd1' },
-                  name: 'Driver 1'
+                  name: 'Driver 1',
+                  avatarUrl: '/api/assets/download?filename=img1.png'
                 }
               }
             },
             {
               objectId: 'hd2',
-              driver: {
+              driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                 objectId: 'rp2',
-                driver: {
+                fuelLevel: 42.0,
+                driver: { // This MUST be named 'driver' to match IDriverHeatData.driver proto
                   model: { entityId: 'd2' },
-                  name: 'Driver 2'
+                  name: 'Driver 2',
+                  avatarUrl: '/api/assets/download?filename=img1.png'
                 }
               }
             }
@@ -510,6 +584,16 @@ export class TestSetupHelper {
     }, customFiles);
   }
 
+  /**
+   * Mock Settings using localStorage.
+   * Raceday component reads settings directly from localStorage via SettingsService.
+   */
+  static async setupSettings(page: Page, settings: any) {
+    await page.addInitScript((s) => {
+      localStorage.setItem('racecoordinator_settings', JSON.stringify(s));
+    }, settings);
+  }
+
   static async disableAnimations(page: Page) {
     await page.addStyleTag({
       content: `
@@ -518,6 +602,7 @@ export class TestSetupHelper {
           animation: none !important;
           transition-duration: 0s !important;
           animation-duration: 0s !important;
+          scroll-behavior: auto !important;
           caret-color: transparent !important;
         }
       `

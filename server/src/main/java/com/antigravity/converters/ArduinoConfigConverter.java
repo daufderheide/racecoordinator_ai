@@ -14,10 +14,9 @@ public class ArduinoConfigConverter {
         proto.getGlobalInvertLanes(),
         proto.getNormallyClosedRelays(),
         proto.getGlobalInvertLights(),
-        proto.getUseLapsForPits(),
-        proto.getUseLapsForPitEnd(),
         proto.getUsePitsAsLaps(),
         proto.getUseLapsForSegments(),
+        ArduinoConfig.LapPinPitBehavior.values()[proto.getLapPinPitBehaviorValue()],
         new ArrayList<>(proto.getDigitalIdsList()),
         new ArrayList<>(proto.getAnalogIdsList()),
         null, // ledStrings - excluded as per request
