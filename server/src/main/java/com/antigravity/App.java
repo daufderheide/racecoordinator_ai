@@ -380,6 +380,14 @@ public class App {
         Files.createDirectories(Paths.get(dataDir));
       }
 
+      // Cleanup stale lock file if it exists (prevents boot failure after crash on
+      // legacy Windows)
+      java.io.File lockFile = new java.io.File(dataDir, "mongod.lock");
+      if (lockFile.exists()) {
+        System.out.println("Stale MongoDB lock file detected. Cleaning up...");
+        lockFile.delete();
+      }
+
       // Check for Bundled MongoDB (Offline Support)
       String osName = System.getProperty("os.name");
       String osArch = System.getProperty("os.arch");
@@ -408,9 +416,11 @@ public class App {
           boolean is32Bit = !(lowerArch.contains("64") || lowerArch.contains("amd64") || lowerArch.contains("aarch64"));
 
           if (isLegacyWindows || is32Bit) {
-            System.out.println("Legacy/32-bit Windows detected. Adding --storageEngine mmapv1 for bundled MongoDB.");
+            System.out.println(
+                "Legacy/32-bit Windows detected. Adding --storageEngine mmapv1 and --journal for bundled MongoDB.");
             command.add("--storageEngine");
             command.add("mmapv1");
+            command.add("--journal");
           }
         }
 

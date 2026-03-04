@@ -84,12 +84,11 @@
 
 /* Sidebar List */
 .sidebar-list {
-  margin-top: 140px;
+  margin-top: 100px;
   margin-left: 135px;
-  height: 395px;
+  height: 465px;
   display: flex;
   flex-direction: column;
-  background: rgba(30, 41, 59, 0.5);
   /* Slate 800 */
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 8px;
@@ -139,14 +138,13 @@
 /* Detail Panel */
 .detail-panel {
   flex: 1;
-  background: rgba(30, 41, 59, 0.3);
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 8px;
   padding: 30px;
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-top: 120px;
+  margin-top: 70px;
   margin-left: 170px;
   margin-right: 125px;
   height: 375px;
@@ -314,7 +312,6 @@
   color: #ffffff;
   font-weight: 300;
   margin: 0;
-  text-transform: uppercase;
   letter-spacing: 1px;
 }
 
