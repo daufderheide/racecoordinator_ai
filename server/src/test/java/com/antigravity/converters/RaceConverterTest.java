@@ -73,7 +73,7 @@ public class RaceConverterTest {
         true, false, true, 120.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.LINEAR, 5.0, 100.0, 8.0, 3.0,
         5.0);
     Race race = new Race("Test Race", "track-id", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring, null,
-        0.0, fuelOptions, null, null);
+        0.0, fuelOptions, null, null, null);
     Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());

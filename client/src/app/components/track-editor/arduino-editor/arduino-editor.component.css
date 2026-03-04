@@ -11,9 +11,9 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 30px;
+  padding: 0 30px 5px 30px;
   box-sizing: border-box;
-  color: #e2e8f0;
+  color: #ffffff;
 }
 
 .panel-header {
@@ -25,7 +25,7 @@
 .panel-header h3 {
   margin: 0;
   font-size: 1.8rem;
-  color: #38bdf8;
+  color: #ffffff;
   font-weight: 300;
   letter-spacing: 1px;
 }
@@ -145,32 +145,95 @@
 /* Pins Section */
 .pins-section.scrollable {
   flex: 1;
-  overflow-y: auto;
-  padding-right: 15px;
+  padding-right: 5px;
   border-top: 1px solid rgba(148, 163, 184, 0.1);
   padding-top: 20px;
 }
 
-.pins-section.scrollable::-webkit-scrollbar {
+.sections-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 15px;
+  margin-right: -20px;
+}
+
+.sections-wrapper::-webkit-scrollbar {
   width: 6px;
 }
 
-.pins-section.scrollable::-webkit-scrollbar-track {
+.sections-wrapper::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.3);
 }
 
-.pins-section.scrollable::-webkit-scrollbar-thumb {
+.sections-wrapper::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 3px;
 }
 
-.pins-config h4 {
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.config-section {
+  margin-bottom: 10px;
+}
+
+.section-content {
+  padding: 10px 0 10px 0;
+}
+
+.pins-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pins-section::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.pins-section::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.pins-config h4,
+.section-header h4 {
   color: #e2e8f0;
   font-size: 1.1rem;
-  margin-top: 0;
-  margin-bottom: 15px;
+  margin: 0;
   border-left: 3px solid #38bdf8;
   padding-left: 10px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
 }
 
 .pin-grid {
@@ -227,4 +290,142 @@
   font-size: 0.9rem;
   padding: 4px;
   border-radius: 2px;
+}
+
+/* Enlarged Voltage Configuration Items */
+.voltage-config-section .pin-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.voltage-config-section .pin-item {
+  padding: 12px;
+}
+
+.voltage-config-section .pin-item label {
+  font-size: 1rem;
+}
+
+.voltage-config-section .pin-item input[type="number"] {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 8px;
+}
+
+.voltage-config-section .unit-lowercase {
+  font-size: 0.9rem !important;
+}
+
+.voltage-config-section .live-voltage-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  margin-top: 5px;
+}
+
+.voltage-config-section .live-label {
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+.voltage-config-section .live-value {
+  font-size: 1.3rem;
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+/* Link Toggle Button */
+.link-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.link-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.05);
+  color: #cbd5e1;
+}
+
+.link-toggle-btn.linked {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.8);
+  color: #38bdf8;
+}
+
+/* Set Max Button */
+.set-max-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border-radius: 4px;
+  padding: 6px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.set-max-btn:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.set-max-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+/* Shared Spacer */
+.spacer {
+  flex: 1;
+}
+
+/* Actions Buttons (shared from track-editor) */
+.action-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: #475569;
+  color: white;
+}
+
+.action-btn:hover {
+  background: #64748b;
+}
+
+.action-btn.small {
+  padding: 5px 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.4);
 }

@@ -117,25 +117,29 @@ describe('TrackManagerComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 'new' } });
   });
 
-  it('should delete track after confirmation', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
+  it('should show delete confirmation modal on deleteTrack', () => {
+    component.deleteTrack();
+    expect(component.showDeleteConfirm).toBeTrue();
+  });
+
+  it('should delete track when onConfirmDelete is called', () => {
     spyOn(dataService, 'deleteTrack').and.callThrough();
     spyOn(component, 'loadTracks').and.callThrough();
 
-    component.deleteTrack();
+    component.onConfirmDelete();
 
-    expect(window.confirm).toHaveBeenCalled();
+    expect(component.showDeleteConfirm).toBeFalse();
     expect(dataService.deleteTrack).toHaveBeenCalledWith('t1');
     expect(component.loadTracks).toHaveBeenCalled();
   });
 
-  it('should not delete track if confirmation denied', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
+  it('should hide delete confirmation modal when onCancelDelete is called', () => {
     spyOn(dataService, 'deleteTrack').and.callThrough();
 
-    component.deleteTrack();
+    component.showDeleteConfirm = true;
+    component.onCancelDelete();
 
-    expect(window.confirm).toHaveBeenCalled();
+    expect(component.showDeleteConfirm).toBeFalse();
     expect(dataService.deleteTrack).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,6 @@
+<app-confirmation-modal [visible]="showDeleteConfirm" [title]="'TM_DELETE' | translate"
+  [message]="'TM_CONFIRM_DELETE' | translate" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+</app-confirmation-modal>
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <div class="header">
     <div class="header-left">
@@ -26,30 +29,35 @@
     <div class="detail-panel" *ngIf="selectedTrack">
       <div class="detail-header">
         <h2>{{ selectedTrack.name }}</h2>
+        <div class="header-actions">
+          <button class="action-btn ghost small icon-only" (click)="editTrack()" [disabled]="isSaving"
+            [title]="'TM_EDIT' | translate">
+            <span class="material-icons" style="font-size: 1.4rem;">edit</span>
+          </button>
+          <button class="action-btn danger small icon-only" (click)="deleteTrack()" [disabled]="isSaving"
+            [title]="'TM_DELETE' | translate">
+            <span style="font-family: sans-serif; font-weight: bold;">X</span>
+          </button>
+        </div>
       </div>
       <div class="detail-content">
-        <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_config" style="padding: 0; border: none;">
+        <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_configs" style="padding: 0; border: none;">
           <app-arduino-summary [track]="selectedTrack"></app-arduino-summary>
         </div>
         <div class="lane-viz-container">
-          <label>{{ 'TM_LANE_COUNT' | translate }}: {{ selectedTrack.lanes.length }}</label>
+          <div class="section-header" style="margin-bottom: 15px;">
+            <h1>{{ 'TM_LANE_COUNT' | translate }} ({{ selectedTrack.lanes.length }})</h1>
+          </div>
           <div class="lanes-grid">
-            <div *ngFor="let lane of selectedTrack.lanes" class="lane-badge"
+            <div *ngFor="let lane of selectedTrack.lanes; let i = index" class="lane-badge"
               [style.background-color]="lane.background_color" [style.color]="lane.foreground_color">
-              {{ lane.length }}
+              {{ 'TM_LANE_LENGTH' | translate:{ lane: i + 1, length: lane.length } }}
             </div>
           </div>
         </div>
         <!-- Future details can go here -->
       </div>
-      <div class="detail-actions">
-        <button class="action-btn warning" (click)="deleteTrack()" [disabled]="isSaving">
-          {{ 'TM_DELETE' | translate }}
-        </button>
-        <button class="action-btn primary" (click)="editTrack()" [disabled]="isSaving">
-          {{ 'TM_EDIT' | translate }}
-        </button>
-      </div>
+      <!-- detail-actions removed -->
     </div>
 
     <div class="detail-panel empty-state" *ngIf="!selectedTrack && !isLoading">

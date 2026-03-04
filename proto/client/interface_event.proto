@@ -17,6 +17,7 @@ message InterfaceEvent {
     SegmentEvent segment = 2;
     InterfaceStatusEvent status = 3;
     CallbuttonEvent callbutton = 4;
+    InterfaceAnalogDataEvent analogData = 5;
   }
 }
 
@@ -38,4 +39,9 @@ message SegmentEvent {
 
 message CallbuttonEvent {
   int32 lane = 1;
+}
+
+message InterfaceAnalogDataEvent {
+  int32 pin = 1;
+  int32 value = 2;
 }

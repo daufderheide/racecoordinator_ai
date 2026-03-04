@@ -3,6 +3,7 @@ package com.antigravity;
 
 import "client/lane_model.proto";
 import "client/model.proto";
+import "client/arduino_config.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -12,4 +13,6 @@ message TrackModel {
   Model model = 1;
   string name = 2;
   repeated LaneModel lanes = 3;
+  bool has_digital_fuel = 4;
+  repeated ArduinoConfig arduino_configs = 5;
 }

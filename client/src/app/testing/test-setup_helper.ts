@@ -127,12 +127,17 @@ export class TestSetupHelper {
 
     // Try to locate the assets folder relative to CWD
     console.log('DEBUG: CWD:', process.cwd());
-    const i18nPath = path.resolve(process.cwd(), 'client/src/assets/i18n'); // Adjusted based on common structure
+    const i18nPath = path.resolve(process.cwd(), 'client/src/assets/i18n');
     const altPath = path.resolve(process.cwd(), 'src/assets/i18n');
+    const rootPath = path.resolve(process.cwd(), 'assets/i18n');
 
     let finalPath = i18nPath;
-    if (!fs.existsSync(finalPath) && fs.existsSync(altPath)) {
-      finalPath = altPath;
+    if (!fs.existsSync(finalPath)) {
+      if (fs.existsSync(altPath)) {
+        finalPath = altPath;
+      } else if (fs.existsSync(rootPath)) {
+        finalPath = rootPath;
+      }
     }
     console.log('DEBUG: Using i18nPath:', finalPath);
 
@@ -171,8 +176,20 @@ export class TestSetupHelper {
       if (!match) return route.continue();
 
       const fileName = match[1];
-      const imagesPath = path.resolve(process.cwd(), 'client/src/assets/images');
-      const filePath = path.join(imagesPath, fileName);
+      const imagesPath1 = path.resolve(process.cwd(), 'client/src/assets/images');
+      const imagesPath2 = path.resolve(process.cwd(), 'src/assets/images');
+      const imagesPath3 = path.resolve(process.cwd(), 'assets/images');
+
+      let finalImagesPath = imagesPath1;
+      if (!fs.existsSync(finalImagesPath)) {
+        if (fs.existsSync(imagesPath2)) {
+          finalImagesPath = imagesPath2;
+        } else if (fs.existsSync(imagesPath3)) {
+          finalImagesPath = imagesPath3;
+        }
+      }
+
+      const filePath = path.join(finalImagesPath, fileName);
 
       if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath);
@@ -232,7 +249,7 @@ export class TestSetupHelper {
             { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
             { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
           ],
-          arduino_config: {
+          arduino_configs: [{
             name: 'Arduino 1',
             commPort: 'COM3',
             baudRate: 115200,
@@ -249,7 +266,7 @@ export class TestSetupHelper {
             useLapsForSegments: 0,
             ledStrings: null,
             ledLaneColorOverrides: null
-          }
+          }]
         },
         {
           entity_id: 't2',
@@ -260,7 +277,7 @@ export class TestSetupHelper {
             { entity_id: 'l3', length: 15.0, backgroundColor: '#ff00ff', foregroundColor: '#ffffff' },
             { entity_id: 'l4', length: 15.0, backgroundColor: '#00ffff', foregroundColor: '#000000' }
           ],
-          arduino_config: {
+          arduino_configs: [{
             name: 'Arduino 2',
             commPort: 'COM4',
             baudRate: 115200,
@@ -277,7 +294,7 @@ export class TestSetupHelper {
             useLapsForSegments: 0,
             ledStrings: null,
             ledLaneColorOverrides: null
-          }
+          }]
         }
       ];
 
@@ -297,6 +314,46 @@ export class TestSetupHelper {
     });
   }
 
+  static async setupDigitalTrackMocks(page: Page) {
+    await page.route('**/api/tracks', async (route) => {
+      const tracks = [
+        {
+          entity_id: 't_digital',
+          name: 'Digital Haven',
+          has_digital_fuel: true, // Use the new property we added to the model/converter
+          lanes: [
+            { entity_id: 'l1', length: 15.0, backgroundColor: '#ffff00', foregroundColor: '#000000' }
+          ],
+          arduino_configs: [{
+            name: 'Arduino Digital',
+            commPort: 'COM5',
+            baudRate: 115200,
+            debounceUs: 5000,
+            hardwareType: 1,
+            digitalIds: [1001],
+            analogIds: [-1],
+            voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
+            globalInvertLanes: 0,
+            normallyClosedRelays: true,
+            globalInvertLights: 0,
+            useLapsForPits: 0,
+            useLapsForPitEnd: 0,
+            usePitsAsLaps: 0,
+            useLapsForSegments: 0,
+            ledStrings: null,
+            ledLaneColorOverrides: null
+          }]
+        }
+      ];
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tracks),
+      });
+    });
+  }
+
   static async setupAssetMocks(page: Page) {
     await page.route('**/api/assets/list', async (route) => {
       const assets = [
@@ -305,7 +362,7 @@ export class TestSetupHelper {
           name: 'Test Image 1',
           type: 'image',
           size: '150 KB',
-          url: '',
+          url: '/api/assets/download?filename=img1.png',
           filename: 'img1.png'
         },
         {
@@ -313,7 +370,7 @@ export class TestSetupHelper {
           name: 'Test Sound 1',
           type: 'sound',
           size: '50 KB',
-          url: '',
+          url: '/api/assets/download?filename=snd1.mp3',
           filename: 'snd1.mp3'
         },
         {
@@ -321,11 +378,11 @@ export class TestSetupHelper {
           name: 'Custom Dash',
           type: 'image_set',
           size: '1.2 MB',
-          url: '',
+          url: '/api/assets/download?filename=dash.json',
           filename: 'dash.json',
           images: [
-            { percentage: 30, url: 'img1.png', name: 'img1.png' },
-            { percentage: 70, url: 'img2.png', name: 'img2.png' }
+            { percentage: 30, url: '/api/assets/download?filename=img1.png', name: 'img1.png' },
+            { percentage: 70, url: '/api/assets/download?filename=img2.png', name: 'img2.png' }
           ]
         }
       ];
@@ -604,6 +661,7 @@ export class TestSetupHelper {
           animation-duration: 0s !important;
           scroll-behavior: auto !important;
           caret-color: transparent !important;
+          clip-path: none !important;
         }
       `
     });

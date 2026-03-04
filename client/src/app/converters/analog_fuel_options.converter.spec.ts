@@ -1,11 +1,12 @@
 import { AnalogFuelOptionsConverter } from "./analog_fuel_options.converter";
-import { FuelUsageType } from "../models/analog_fuel_options";
+import { FuelUsageType } from "../models/fuel_options";
 
 describe('AnalogFuelOptionsConverter', () => {
   it('should convert from proto with default values', () => {
     const result = AnalogFuelOptionsConverter.fromProto(null);
     expect(result.enabled).toBeFalse();
     expect(result.capacity).toBe(100);
+    expect(result.usage_type).toBe(FuelUsageType.LINEAR);
   });
 
   it('should convert from proto with provided values', () => {

@@ -96,7 +96,7 @@
       <div class="driver-list-spacer" id="driver-list-target"
         style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
         <ng-container *ngIf="!isRefreshingList">
-          <div class="driver-list-container" cdkScrollable (selectstart)="preventSelection($event)">
+          <div class="driver-list-container" #scrollContainer cdkScrollable (selectstart)="preventSelection($event)">
 
             <!-- Drop Zone for Reordering -->
             <div class="drop-zone" id="selected-list" cdkDropList [cdkDropListData]="selectedParticipants"
@@ -108,8 +108,9 @@
 
               <div *ngFor="let participant of selectedParticipants; let i = index; trackBy: trackByParticipant"
                 class="driver-item selected" cdkDrag (cdkDragStarted)="onDragStarted($event)"
-                (click)="toggleParticipantSelection(participant, true)">
-                <div class="checkbox">
+                (dblclick)="toggleParticipantSelection(participant, true)">
+                <div class="checkbox"
+                  (dblclick)="toggleParticipantSelection(participant, true); $event.stopPropagation()">
                   <div class="checkbox-icon">✓</div>
                 </div>
                 <div class="driver-seed">({{ i + 1 }})</div>
@@ -168,7 +169,7 @@
               translate }}</div>
 
             <div *ngFor="let participant of filteredUnselectedParticipants" class="driver-item"
-              (click)="toggleParticipantSelection(participant, false)">
+              (dblclick)="toggleParticipantSelection(participant, false)">
               <div class="checkbox"></div>
               <div class="driver-avatar">
                 <img *ngIf="participant.avatarUrl && !imageErrors.has(getParticipantUniqueId(participant))"

@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.PinId;
+import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceAnalogDataEvent;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
@@ -46,6 +48,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   // Lane specific
   private boolean[] laneInPits;
   private long[] lastRefuelTimeMs;
+  private long[] lastAnalogTimeMs;
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
 
   // Data sent from PC to Arduino
@@ -56,6 +59,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private static final byte OPCODE_HEARTBEAT = 0x54; // 'T'
   private static final byte OPCODE_VERSION = 0x56; // 'V'
   private static final byte OPCODE_INPUT = 0x49; // 'I'
+  private static final byte OPCODE_ANALOG_DATA = 0x41; // 'A'
   private static final byte TERMINATOR = 0x3B; // ';'
   private static final byte DIGITAL = 0x44; // 'D'
   private static final byte ANALOG = 0x41; // 'A'
@@ -90,8 +94,10 @@ public class ArduinoProtocol extends DefaultProtocol {
     hwReset = 1;
     laneInPits = new boolean[numLanes];
     lastRefuelTimeMs = new long[numLanes];
+    lastAnalogTimeMs = new long[numLanes];
     for (int i = 0; i < numLanes; i++) {
       lastRefuelTimeMs[i] = 0;
+      lastAnalogTimeMs[i] = 0;
     }
   }
 
@@ -146,7 +152,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
           byte[] data = event.getReceivedData();
           if (data != null && data.length > 0) {
-            logger.info("[{}] Received: {}", getLogTime(), bytesToHex(data));
+            logger.debug("[{}] Received: {}", getLogTime(), bytesToHex(data));
             rxBuffer.write(data);
             processData();
           }
@@ -265,6 +271,7 @@ public class ArduinoProtocol extends DefaultProtocol {
       if (digitalPinsChanged || analogPinsChanged) {
         sendPinModeRead();
         sendPinModeWrite();
+        sendPinModeAnalogRead();
       }
       if (debounceChanged) {
         sendDebounce();
@@ -310,6 +317,15 @@ public class ArduinoProtocol extends DefaultProtocol {
           break;
         case OPCODE_INPUT:
           messageLength = 5;
+          break;
+        case OPCODE_ANALOG_DATA:
+          if (rxBuffer.size() >= 2) {
+            int count = rxBuffer.peek(1) & 0xFF;
+            messageLength = 3 + count * 5;
+          } else {
+            // Not enough data to read the count byte yet, break and wait for more
+            return;
+          }
           break;
         default:
           // Unknown opcode, skip one byte to resync
@@ -367,6 +383,18 @@ public class ArduinoProtocol extends DefaultProtocol {
         int state = message[3] & 0xFF;
         onInput(isDigital, pin, state);
         break;
+      case OPCODE_ANALOG_DATA:
+        int count = message[1] & 0xFF;
+        int idx = 2;
+        for (int i = 0; i < count; i++) {
+          int aPin = message[idx++] & 0xFF;
+          int val = ((message[idx++] & 0xFF) << 24) |
+              ((message[idx++] & 0xFF) << 16) |
+              ((message[idx++] & 0xFF) << 8) |
+              (message[idx++] & 0xFF);
+          onAnalogData(aPin, val);
+        }
+        break;
       default:
         logger.error("Unknown opcode: {}", opcode);
         break;
@@ -405,6 +433,7 @@ public class ArduinoProtocol extends DefaultProtocol {
         logger.info("Version verified - {}.{}.{}.{}", major, minor, patch, build);
         sendPinModeRead();
         sendPinModeWrite();
+        sendPinModeAnalogRead();
         sendDebounce();
         sendTimeReset();
       } else {
@@ -414,14 +443,18 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   private void sendPinModeRead() {
-    sendPinMode((byte) 0x49, true);
+    sendPinMode((byte) 0x49, ArduinoConfig.PinMode.READ);
   }
 
   private void sendPinModeWrite() {
-    sendPinMode((byte) 0x4F, false);
+    sendPinMode((byte) 0x4F, ArduinoConfig.PinMode.WRITE);
   }
 
-  private void sendPinMode(byte opcode, boolean isRead) {
+  private void sendPinModeAnalogRead() {
+    sendPinMode((byte) 0x70, ArduinoConfig.PinMode.READ_ANALOG);
+  }
+
+  private void sendPinMode(byte opcode, ArduinoConfig.PinMode mode) {
     int digitalCount = 0;
     if (config.digitalIds != null) {
       for (int id : config.digitalIds) {
@@ -429,7 +462,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           throw new IllegalArgumentException("Invalid pin ID: " + id);
         }
 
-        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
+        if (ArduinoConfig.getPinMode(id) == mode) {
           digitalCount++;
         }
       }
@@ -441,25 +474,31 @@ public class ArduinoProtocol extends DefaultProtocol {
         if (id < 0) {
           throw new IllegalArgumentException("Invalid pin ID: " + id);
         }
-        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
+        if (ArduinoConfig.getPinMode(id) == mode) {
           analogCount++;
         }
       }
     }
 
     int totalPins = digitalCount + analogCount;
-    // P + I/O + Count + (Type + Pin) * totalPins + Terminator
-    byte[] message = new byte[3 + (totalPins * 2) + 1];
-
+    byte[] message;
     int idx = 0;
-    message[idx++] = 0x50; // 'P'
+    if (mode == ArduinoConfig.PinMode.READ_ANALOG) {
+      // opcode + Count + (Type + Pin) * totalPins + Terminator
+      message = new byte[2 + (totalPins * 2) + 1];
+    } else {
+      // P + opcode + Count + (Type + Pin) * totalPins + Terminator
+      message = new byte[3 + (totalPins * 2) + 1];
+      message[idx++] = 0x50; // 'P'
+    }
+
     message[idx++] = opcode;
     message[idx++] = (byte) totalPins;
 
     if (config.digitalIds != null) {
       for (int i = 0; i < config.digitalIds.size(); i++) {
         int id = config.digitalIds.get(i);
-        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
+        if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = DIGITAL;
           message[idx++] = (byte) i;
         }
@@ -469,7 +508,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     if (config.analogIds != null) {
       for (int i = 0; i < config.analogIds.size(); i++) {
         int id = config.analogIds.get(i);
-        if (isRead ? ArduinoConfig.isReadPin(id) : ArduinoConfig.isWritePin(id)) {
+        if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = ANALOG;
           message[idx++] = (byte) i;
         }
@@ -480,9 +519,9 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     try {
       serialConnection.writeData(message);
-      logger.info("[{}] Sent PIN_MODE {}", getLogTime(), (isRead ? "READ" : "WRITE"));
+      logger.info("[{}] Sent PIN_MODE {} (opcode: 0x{})", getLogTime(), mode, String.format("%02X", opcode));
     } catch (IOException e) {
-      logger.error("Failed to send PIN_MODE {}", (isRead ? "READ" : "WRITE"), e);
+      logger.error("Failed to send PIN_MODE {} (opcode: 0x{})", mode, String.format("%02X", opcode), e);
     }
   }
 
@@ -552,6 +591,51 @@ public class ArduinoProtocol extends DefaultProtocol {
     } else {
       logger.info("[{}] Received Input - Type: {}, Pin: {}, State: {}", getLogTime(),
           (isDigital ? "Digital" : "Analog"), pin, state);
+    }
+  }
+
+  private void onAnalogData(int pin, int value) {
+    logger.debug("[{}] Received Analog Data - Pin: A{}, Value: {}", getLogTime(), pin, value);
+
+    if (listener != null) {
+      // Send the raw interface event
+      InterfaceEvent event = InterfaceEvent.newBuilder()
+          .setAnalogData(InterfaceAnalogDataEvent.newBuilder()
+              .setPin(pin)
+              .setValue(value)
+              .build())
+          .build();
+      listener.onInterfaceEvent(event);
+
+      // Handle CarData if this is a voltage level pin
+      PinConfig pinConfig = pinLookup.get("A" + pin);
+      if (pinConfig != null && pinConfig.behavior == InputBehavior.VOLTAGE_LEVEL) {
+        int laneIndex = pinConfig.laneIndex;
+        if (laneIndex >= 0 && laneIndex < numLanes) {
+          long currentTime = now();
+          double deltaTimeSeconds = 0.0;
+          if (lastAnalogTimeMs[laneIndex] > 0) {
+            deltaTimeSeconds = (currentTime - lastAnalogTimeMs[laneIndex]) / 1000.0;
+          }
+          lastAnalogTimeMs[laneIndex] = currentTime;
+
+          // Calculate throttle percentages
+          // Key for voltageConfigs is 1-based lane number string
+          String key = String.valueOf(laneIndex + 1);
+          Integer maxVoltage = config.voltageConfigs != null ? config.voltageConfigs.get(key) : null;
+          double pct = 0.0;
+          if (maxVoltage != null && maxVoltage > 0) {
+            pct = Math.min(1.0, Math.max(0.0, (double) value / maxVoltage));
+          }
+
+          CarLocation location = laneInPits[laneIndex] ? CarLocation.PitRow : CarLocation.Main;
+          // For now, simplify and set lastLocation same as current, as Racing.java tracks
+          // it separately
+          // canRefuel is true if in pits
+          listener.onCarData(new CarData(laneIndex, deltaTimeSeconds, pct, pct, laneInPits[laneIndex],
+              location, location, -1));
+        }
+      }
     }
   }
 
@@ -743,6 +827,10 @@ public class ArduinoProtocol extends DefaultProtocol {
           code < PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.PIT_OUT;
         laneIndex = code - PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber();
+      } else if (code >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() &&
+          code < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() + numLanes) {
+        behavior = InputBehavior.VOLTAGE_LEVEL;
+        laneIndex = code - PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber();
       }
 
       if (behavior != null) {
@@ -759,6 +847,8 @@ public class ArduinoProtocol extends DefaultProtocol {
     LANE_RELAY,
     PIT_IN,
     PIT_OUT,
+    // TODO(aufderheide): Rename this to VOLTAGE_DIVIDER
+    VOLTAGE_LEVEL,
     RESERVED
   }
 
@@ -825,6 +915,18 @@ public class ArduinoProtocol extends DefaultProtocol {
         setPinState(pinConfig.isDigital, pinConfig.pin, on);
       }
     }
+  }
+
+  @Override
+  public boolean hasDigitalFuel() {
+    if (pinLookup == null)
+      return false;
+    for (PinConfig pc : pinLookup.values()) {
+      if (pc.behavior == InputBehavior.VOLTAGE_LEVEL) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

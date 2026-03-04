@@ -18,8 +18,23 @@ test.describe('Track Editor Visuals', () => {
     await expect(laneRows).toHaveCount(2);
 
     // Arduino Config
-    await expect(page.locator('select').first()).toHaveValue('1'); // Megas is 1
+    await expect(page.locator('app-arduino-editor select').first()).toHaveValue('1'); // Megas is 1
 
+    // Wait for board image to be loaded and stable
+    const boardImg = page.locator('.board-image');
+    if (await boardImg.count() > 0) {
+      await expect(boardImg).toBeVisible();
+      await boardImg.evaluate((img: any) => {
+        return new Promise((resolve) => {
+          if ((img as HTMLImageElement).complete) resolve(true);
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          setTimeout(() => resolve(false), 5000);
+        });
+      });
+    }
+
+    await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-existing.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
@@ -33,6 +48,7 @@ test.describe('Track Editor Visuals', () => {
     const laneRows = page.locator('.lane-item');
     await expect(laneRows).toHaveCount(2);
 
+    await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-new.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
@@ -49,6 +65,7 @@ test.describe('Track Editor Visuals', () => {
     await expect(page.locator('.modal-backdrop')).toBeVisible();
     await expect(page.locator('.modal-title')).toContainText('Unsaved Changes');
 
+    await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-unsaved-changes-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 
@@ -58,11 +75,12 @@ test.describe('Track Editor Visuals', () => {
     // Scroll to Arduino Config if needed, though it's likely visible in 1600x900
     await expect(page.locator('.pin-grid').first()).toBeVisible();
 
-    // Check if pin 2 is assigned to Lap Lane 1
-    // Note: Behavior for Lap Lane 0 is 1000, 1001 is Lap Lane 1
+    // Check if pin 2 is assigned to Lap L1
+    // Note: Behavior for Lap L0 is 1000, 1001 is Lap L1
     // The selector/text depends on how it's rendered in .pin-assignment
-    await expect(page.locator('.pin-grid').first()).toContainText('Lap Lane 1');
+    await expect(page.locator('.pin-grid').first()).toContainText('Lap L1');
 
+    await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-pins-grid.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 });

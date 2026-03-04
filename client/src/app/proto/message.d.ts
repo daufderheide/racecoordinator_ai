@@ -1628,7 +1628,8 @@ export namespace com {
             BEHAVIOR_CALL_BUTTON_BASE = 3000,
             BEHAVIOR_RELAY_BASE = 4000,
             BEHAVIOR_PIT_IN_BASE = 5000,
-            BEHAVIOR_PIT_OUT_BASE = 6000
+            BEHAVIOR_PIT_OUT_BASE = 6000,
+            BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
         }
 
         /** LapPinPitBehavior enum. */
@@ -1689,6 +1690,9 @@ export namespace com {
 
             /** ArduinoConfig lapPinPitBehavior */
             lapPinPitBehavior?: (com.antigravity.LapPinPitBehavior|null);
+
+            /** ArduinoConfig voltageConfigs */
+            voltageConfigs?: (com.antigravity.IVoltageConfig[]|null);
         }
 
         /** Represents an ArduinoConfig. */
@@ -1741,6 +1745,9 @@ export namespace com {
 
             /** ArduinoConfig lapPinPitBehavior. */
             public lapPinPitBehavior: com.antigravity.LapPinPitBehavior;
+
+            /** ArduinoConfig voltageConfigs. */
+            public voltageConfigs: com.antigravity.IVoltageConfig[];
 
             /**
              * Creates a new ArduinoConfig instance using the specified properties.
@@ -1814,6 +1821,109 @@ export namespace com {
 
             /**
              * Gets the default type url for ArduinoConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a VoltageConfig. */
+        interface IVoltageConfig {
+
+            /** VoltageConfig lane */
+            lane?: (number|null);
+
+            /** VoltageConfig maxVoltage */
+            maxVoltage?: (number|null);
+        }
+
+        /** Represents a VoltageConfig. */
+        class VoltageConfig implements IVoltageConfig {
+
+            /**
+             * Constructs a new VoltageConfig.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IVoltageConfig);
+
+            /** VoltageConfig lane. */
+            public lane: number;
+
+            /** VoltageConfig maxVoltage. */
+            public maxVoltage: number;
+
+            /**
+             * Creates a new VoltageConfig instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns VoltageConfig instance
+             */
+            public static create(properties?: com.antigravity.IVoltageConfig): com.antigravity.VoltageConfig;
+
+            /**
+             * Encodes the specified VoltageConfig message. Does not implicitly {@link com.antigravity.VoltageConfig.verify|verify} messages.
+             * @param message VoltageConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IVoltageConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified VoltageConfig message, length delimited. Does not implicitly {@link com.antigravity.VoltageConfig.verify|verify} messages.
+             * @param message VoltageConfig message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IVoltageConfig, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a VoltageConfig message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns VoltageConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.VoltageConfig;
+
+            /**
+             * Decodes a VoltageConfig message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns VoltageConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.VoltageConfig;
+
+            /**
+             * Verifies a VoltageConfig message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a VoltageConfig message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns VoltageConfig
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.VoltageConfig;
+
+            /**
+             * Creates a plain object from a VoltageConfig message. Also converts values to other types if specified.
+             * @param message VoltageConfig
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.VoltageConfig, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this VoltageConfig to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for VoltageConfig
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -2253,6 +2363,9 @@ export namespace com {
 
             /** InterfaceEvent callbutton */
             callbutton?: (com.antigravity.ICallbuttonEvent|null);
+
+            /** InterfaceEvent analogData */
+            analogData?: (com.antigravity.IInterfaceAnalogDataEvent|null);
         }
 
         /** Represents an InterfaceEvent. */
@@ -2276,8 +2389,11 @@ export namespace com {
             /** InterfaceEvent callbutton. */
             public callbutton?: (com.antigravity.ICallbuttonEvent|null);
 
+            /** InterfaceEvent analogData. */
+            public analogData?: (com.antigravity.IInterfaceAnalogDataEvent|null);
+
             /** InterfaceEvent event. */
-            public event?: ("lap"|"segment"|"status"|"callbutton");
+            public event?: ("lap"|"segment"|"status"|"callbutton"|"analogData");
 
             /**
              * Creates a new InterfaceEvent instance using the specified properties.
@@ -2763,6 +2879,109 @@ export namespace com {
 
             /**
              * Gets the default type url for CallbuttonEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an InterfaceAnalogDataEvent. */
+        interface IInterfaceAnalogDataEvent {
+
+            /** InterfaceAnalogDataEvent pin */
+            pin?: (number|null);
+
+            /** InterfaceAnalogDataEvent value */
+            value?: (number|null);
+        }
+
+        /** Represents an InterfaceAnalogDataEvent. */
+        class InterfaceAnalogDataEvent implements IInterfaceAnalogDataEvent {
+
+            /**
+             * Constructs a new InterfaceAnalogDataEvent.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IInterfaceAnalogDataEvent);
+
+            /** InterfaceAnalogDataEvent pin. */
+            public pin: number;
+
+            /** InterfaceAnalogDataEvent value. */
+            public value: number;
+
+            /**
+             * Creates a new InterfaceAnalogDataEvent instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns InterfaceAnalogDataEvent instance
+             */
+            public static create(properties?: com.antigravity.IInterfaceAnalogDataEvent): com.antigravity.InterfaceAnalogDataEvent;
+
+            /**
+             * Encodes the specified InterfaceAnalogDataEvent message. Does not implicitly {@link com.antigravity.InterfaceAnalogDataEvent.verify|verify} messages.
+             * @param message InterfaceAnalogDataEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IInterfaceAnalogDataEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified InterfaceAnalogDataEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceAnalogDataEvent.verify|verify} messages.
+             * @param message InterfaceAnalogDataEvent message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IInterfaceAnalogDataEvent, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an InterfaceAnalogDataEvent message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns InterfaceAnalogDataEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.InterfaceAnalogDataEvent;
+
+            /**
+             * Decodes an InterfaceAnalogDataEvent message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns InterfaceAnalogDataEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.InterfaceAnalogDataEvent;
+
+            /**
+             * Verifies an InterfaceAnalogDataEvent message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an InterfaceAnalogDataEvent message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns InterfaceAnalogDataEvent
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.InterfaceAnalogDataEvent;
+
+            /**
+             * Creates a plain object from an InterfaceAnalogDataEvent message. Also converts values to other types if specified.
+             * @param message InterfaceAnalogDataEvent
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.InterfaceAnalogDataEvent, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this InterfaceAnalogDataEvent to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for InterfaceAnalogDataEvent
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */
@@ -4024,6 +4243,1078 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a LaneModel. */
+        interface ILaneModel {
+
+            /** LaneModel backgroundColor */
+            backgroundColor?: (string|null);
+
+            /** LaneModel foregroundColor */
+            foregroundColor?: (string|null);
+
+            /** LaneModel length */
+            length?: (number|null);
+
+            /** LaneModel objectId */
+            objectId?: (string|null);
+        }
+
+        /** Represents a LaneModel. */
+        class LaneModel implements ILaneModel {
+
+            /**
+             * Constructs a new LaneModel.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ILaneModel);
+
+            /** LaneModel backgroundColor. */
+            public backgroundColor: string;
+
+            /** LaneModel foregroundColor. */
+            public foregroundColor: string;
+
+            /** LaneModel length. */
+            public length: number;
+
+            /** LaneModel objectId. */
+            public objectId: string;
+
+            /**
+             * Creates a new LaneModel instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LaneModel instance
+             */
+            public static create(properties?: com.antigravity.ILaneModel): com.antigravity.LaneModel;
+
+            /**
+             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @param message LaneModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ILaneModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @param message LaneModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ILaneModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.LaneModel;
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.LaneModel;
+
+            /**
+             * Verifies a LaneModel message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LaneModel
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.LaneModel;
+
+            /**
+             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
+             * @param message LaneModel
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.LaneModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LaneModel to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LaneModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TrackModel. */
+        interface ITrackModel {
+
+            /** TrackModel model */
+            model?: (com.antigravity.IModel|null);
+
+            /** TrackModel name */
+            name?: (string|null);
+
+            /** TrackModel lanes */
+            lanes?: (com.antigravity.ILaneModel[]|null);
+
+            /** TrackModel hasDigitalFuel */
+            hasDigitalFuel?: (boolean|null);
+
+            /** TrackModel arduinoConfigs */
+            arduinoConfigs?: (com.antigravity.IArduinoConfig[]|null);
+        }
+
+        /** Represents a TrackModel. */
+        class TrackModel implements ITrackModel {
+
+            /**
+             * Constructs a new TrackModel.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ITrackModel);
+
+            /** TrackModel model. */
+            public model?: (com.antigravity.IModel|null);
+
+            /** TrackModel name. */
+            public name: string;
+
+            /** TrackModel lanes. */
+            public lanes: com.antigravity.ILaneModel[];
+
+            /** TrackModel hasDigitalFuel. */
+            public hasDigitalFuel: boolean;
+
+            /** TrackModel arduinoConfigs. */
+            public arduinoConfigs: com.antigravity.IArduinoConfig[];
+
+            /**
+             * Creates a new TrackModel instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TrackModel instance
+             */
+            public static create(properties?: com.antigravity.ITrackModel): com.antigravity.TrackModel;
+
+            /**
+             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @param message TrackModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ITrackModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @param message TrackModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ITrackModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.TrackModel;
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.TrackModel;
+
+            /**
+             * Verifies a TrackModel message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TrackModel
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.TrackModel;
+
+            /**
+             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
+             * @param message TrackModel
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.TrackModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TrackModel to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TrackModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a HeatScoring. */
+        interface IHeatScoring {
+
+            /** HeatScoring finishMethod */
+            finishMethod?: (com.antigravity.HeatScoring.FinishMethod|null);
+
+            /** HeatScoring finishValue */
+            finishValue?: (number|Long|null);
+
+            /** HeatScoring heatRanking */
+            heatRanking?: (com.antigravity.HeatScoring.HeatRanking|null);
+
+            /** HeatScoring heatRankingTiebreaker */
+            heatRankingTiebreaker?: (com.antigravity.HeatScoring.HeatRankingTiebreaker|null);
+
+            /** HeatScoring allowFinish */
+            allowFinish?: (com.antigravity.HeatScoring.AllowFinish|null);
+        }
+
+        /** Represents a HeatScoring. */
+        class HeatScoring implements IHeatScoring {
+
+            /**
+             * Constructs a new HeatScoring.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IHeatScoring);
+
+            /** HeatScoring finishMethod. */
+            public finishMethod: com.antigravity.HeatScoring.FinishMethod;
+
+            /** HeatScoring finishValue. */
+            public finishValue: (number|Long);
+
+            /** HeatScoring heatRanking. */
+            public heatRanking: com.antigravity.HeatScoring.HeatRanking;
+
+            /** HeatScoring heatRankingTiebreaker. */
+            public heatRankingTiebreaker: com.antigravity.HeatScoring.HeatRankingTiebreaker;
+
+            /** HeatScoring allowFinish. */
+            public allowFinish: com.antigravity.HeatScoring.AllowFinish;
+
+            /**
+             * Creates a new HeatScoring instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns HeatScoring instance
+             */
+            public static create(properties?: com.antigravity.IHeatScoring): com.antigravity.HeatScoring;
+
+            /**
+             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @param message HeatScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @param message HeatScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a HeatScoring message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns HeatScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HeatScoring;
+
+            /**
+             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns HeatScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HeatScoring;
+
+            /**
+             * Verifies a HeatScoring message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns HeatScoring
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.HeatScoring;
+
+            /**
+             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
+             * @param message HeatScoring
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.HeatScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this HeatScoring to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for HeatScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace HeatScoring {
+
+            /** FinishMethod enum. */
+            enum FinishMethod {
+                Lap = 0,
+                Timed = 1
+            }
+
+            /** HeatRanking enum. */
+            enum HeatRanking {
+                HR_LAP_COUNT = 0,
+                HR_FASTEST_LAP = 1,
+                HR_TOTAL_TIME = 2
+            }
+
+            /** HeatRankingTiebreaker enum. */
+            enum HeatRankingTiebreaker {
+                HRT_FASTEST_LAP_TIME = 0,
+                HRT_MEDIAN_LAP_TIME = 1,
+                HRT_AVERAGE_LAP_TIME = 2
+            }
+
+            /** AllowFinish enum. */
+            enum AllowFinish {
+                AF_NONE = 0,
+                AF_ALLOW = 1,
+                AF_SINGLE_LAP = 2
+            }
+        }
+
+        /** Properties of an OverallScoring. */
+        interface IOverallScoring {
+
+            /** OverallScoring droppedHeats */
+            droppedHeats?: (number|null);
+
+            /** OverallScoring rankingMethod */
+            rankingMethod?: (com.antigravity.OverallScoring.OverallRanking|null);
+
+            /** OverallScoring tiebreaker */
+            tiebreaker?: (com.antigravity.OverallScoring.OverallRankingTiebreaker|null);
+        }
+
+        /** Represents an OverallScoring. */
+        class OverallScoring implements IOverallScoring {
+
+            /**
+             * Constructs a new OverallScoring.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IOverallScoring);
+
+            /** OverallScoring droppedHeats. */
+            public droppedHeats: number;
+
+            /** OverallScoring rankingMethod. */
+            public rankingMethod: com.antigravity.OverallScoring.OverallRanking;
+
+            /** OverallScoring tiebreaker. */
+            public tiebreaker: com.antigravity.OverallScoring.OverallRankingTiebreaker;
+
+            /**
+             * Creates a new OverallScoring instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OverallScoring instance
+             */
+            public static create(properties?: com.antigravity.IOverallScoring): com.antigravity.OverallScoring;
+
+            /**
+             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @param message OverallScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @param message OverallScoring message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallScoring;
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallScoring;
+
+            /**
+             * Verifies an OverallScoring message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OverallScoring
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallScoring;
+
+            /**
+             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
+             * @param message OverallScoring
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.OverallScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OverallScoring to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OverallScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        namespace OverallScoring {
+
+            /** OverallRanking enum. */
+            enum OverallRanking {
+                OR_LAP_COUNT = 0,
+                OR_FASTEST_LAP = 1,
+                OR_TOTAL_TIME = 2,
+                OR_AVERAGE_LAP = 3
+            }
+
+            /** OverallRankingTiebreaker enum. */
+            enum OverallRankingTiebreaker {
+                ORT_FASTEST_LAP_TIME = 0,
+                ORT_MEDIAN_LAP_TIME = 1,
+                ORT_AVERAGE_LAP_TIME = 2,
+                ORT_TOTAL_TIME = 3
+            }
+        }
+
+        /** Properties of a RaceModel. */
+        interface IRaceModel {
+
+            /** RaceModel model */
+            model?: (com.antigravity.IModel|null);
+
+            /** RaceModel name */
+            name?: (string|null);
+
+            /** RaceModel track */
+            track?: (com.antigravity.ITrackModel|null);
+
+            /** RaceModel heatScoring */
+            heatScoring?: (com.antigravity.IHeatScoring|null);
+
+            /** RaceModel overallScoring */
+            overallScoring?: (com.antigravity.IOverallScoring|null);
+
+            /** RaceModel minLapTime */
+            minLapTime?: (number|null);
+
+            /** RaceModel fuelOptions */
+            fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
+
+            /** RaceModel digitalFuelOptions */
+            digitalFuelOptions?: (com.antigravity.IDigitalFuelOptions|null);
+        }
+
+        /** Represents a RaceModel. */
+        class RaceModel implements IRaceModel {
+
+            /**
+             * Constructs a new RaceModel.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRaceModel);
+
+            /** RaceModel model. */
+            public model?: (com.antigravity.IModel|null);
+
+            /** RaceModel name. */
+            public name: string;
+
+            /** RaceModel track. */
+            public track?: (com.antigravity.ITrackModel|null);
+
+            /** RaceModel heatScoring. */
+            public heatScoring?: (com.antigravity.IHeatScoring|null);
+
+            /** RaceModel overallScoring. */
+            public overallScoring?: (com.antigravity.IOverallScoring|null);
+
+            /** RaceModel minLapTime. */
+            public minLapTime: number;
+
+            /** RaceModel fuelOptions. */
+            public fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
+
+            /** RaceModel digitalFuelOptions. */
+            public digitalFuelOptions?: (com.antigravity.IDigitalFuelOptions|null);
+
+            /**
+             * Creates a new RaceModel instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RaceModel instance
+             */
+            public static create(properties?: com.antigravity.IRaceModel): com.antigravity.RaceModel;
+
+            /**
+             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @param message RaceModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRaceModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @param message RaceModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRaceModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RaceModel;
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RaceModel;
+
+            /**
+             * Verifies a RaceModel message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RaceModel
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceModel;
+
+            /**
+             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
+             * @param message RaceModel
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RaceModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RaceModel to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RaceModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** FuelUsageType enum. */
+        enum FuelUsageType {
+            LINEAR = 0,
+            QUADRATIC = 1,
+            CUBIC = 2
+        }
+
+        /** Properties of an AnalogFuelOptions. */
+        interface IAnalogFuelOptions {
+
+            /** AnalogFuelOptions enabled */
+            enabled?: (boolean|null);
+
+            /** AnalogFuelOptions resetFuelAtHeatStart */
+            resetFuelAtHeatStart?: (boolean|null);
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel */
+            endHeatOnOutOfFuel?: (boolean|null);
+
+            /** AnalogFuelOptions capacity */
+            capacity?: (number|null);
+
+            /** AnalogFuelOptions usageType */
+            usageType?: (com.antigravity.FuelUsageType|null);
+
+            /** AnalogFuelOptions usageRate */
+            usageRate?: (number|null);
+
+            /** AnalogFuelOptions startLevel */
+            startLevel?: (number|null);
+
+            /** AnalogFuelOptions refuelRate */
+            refuelRate?: (number|null);
+
+            /** AnalogFuelOptions pitStopDelay */
+            pitStopDelay?: (number|null);
+
+            /** AnalogFuelOptions referenceTime */
+            referenceTime?: (number|null);
+        }
+
+        /** Represents an AnalogFuelOptions. */
+        class AnalogFuelOptions implements IAnalogFuelOptions {
+
+            /**
+             * Constructs a new AnalogFuelOptions.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IAnalogFuelOptions);
+
+            /** AnalogFuelOptions enabled. */
+            public enabled: boolean;
+
+            /** AnalogFuelOptions resetFuelAtHeatStart. */
+            public resetFuelAtHeatStart: boolean;
+
+            /** AnalogFuelOptions endHeatOnOutOfFuel. */
+            public endHeatOnOutOfFuel: boolean;
+
+            /** AnalogFuelOptions capacity. */
+            public capacity: number;
+
+            /** AnalogFuelOptions usageType. */
+            public usageType: com.antigravity.FuelUsageType;
+
+            /** AnalogFuelOptions usageRate. */
+            public usageRate: number;
+
+            /** AnalogFuelOptions startLevel. */
+            public startLevel: number;
+
+            /** AnalogFuelOptions refuelRate. */
+            public refuelRate: number;
+
+            /** AnalogFuelOptions pitStopDelay. */
+            public pitStopDelay: number;
+
+            /** AnalogFuelOptions referenceTime. */
+            public referenceTime: number;
+
+            /**
+             * Creates a new AnalogFuelOptions instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns AnalogFuelOptions instance
+             */
+            public static create(properties?: com.antigravity.IAnalogFuelOptions): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @param message AnalogFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Verifies an AnalogFuelOptions message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns AnalogFuelOptions
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.AnalogFuelOptions;
+
+            /**
+             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
+             * @param message AnalogFuelOptions
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.AnalogFuelOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this AnalogFuelOptions to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for AnalogFuelOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a DigitalFuelOptions. */
+        interface IDigitalFuelOptions {
+
+            /** DigitalFuelOptions enabled */
+            enabled?: (boolean|null);
+
+            /** DigitalFuelOptions resetFuelAtHeatStart */
+            resetFuelAtHeatStart?: (boolean|null);
+
+            /** DigitalFuelOptions endHeatOnOutOfFuel */
+            endHeatOnOutOfFuel?: (boolean|null);
+
+            /** DigitalFuelOptions capacity */
+            capacity?: (number|null);
+
+            /** DigitalFuelOptions usageType */
+            usageType?: (com.antigravity.FuelUsageType|null);
+
+            /** DigitalFuelOptions usageRate */
+            usageRate?: (number|null);
+
+            /** DigitalFuelOptions startLevel */
+            startLevel?: (number|null);
+
+            /** DigitalFuelOptions refuelRate */
+            refuelRate?: (number|null);
+
+            /** DigitalFuelOptions pitStopDelay */
+            pitStopDelay?: (number|null);
+        }
+
+        /** Represents a DigitalFuelOptions. */
+        class DigitalFuelOptions implements IDigitalFuelOptions {
+
+            /**
+             * Constructs a new DigitalFuelOptions.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IDigitalFuelOptions);
+
+            /** DigitalFuelOptions enabled. */
+            public enabled: boolean;
+
+            /** DigitalFuelOptions resetFuelAtHeatStart. */
+            public resetFuelAtHeatStart: boolean;
+
+            /** DigitalFuelOptions endHeatOnOutOfFuel. */
+            public endHeatOnOutOfFuel: boolean;
+
+            /** DigitalFuelOptions capacity. */
+            public capacity: number;
+
+            /** DigitalFuelOptions usageType. */
+            public usageType: com.antigravity.FuelUsageType;
+
+            /** DigitalFuelOptions usageRate. */
+            public usageRate: number;
+
+            /** DigitalFuelOptions startLevel. */
+            public startLevel: number;
+
+            /** DigitalFuelOptions refuelRate. */
+            public refuelRate: number;
+
+            /** DigitalFuelOptions pitStopDelay. */
+            public pitStopDelay: number;
+
+            /**
+             * Creates a new DigitalFuelOptions instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns DigitalFuelOptions instance
+             */
+            public static create(properties?: com.antigravity.IDigitalFuelOptions): com.antigravity.DigitalFuelOptions;
+
+            /**
+             * Encodes the specified DigitalFuelOptions message. Does not implicitly {@link com.antigravity.DigitalFuelOptions.verify|verify} messages.
+             * @param message DigitalFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IDigitalFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified DigitalFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.DigitalFuelOptions.verify|verify} messages.
+             * @param message DigitalFuelOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IDigitalFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a DigitalFuelOptions message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns DigitalFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.DigitalFuelOptions;
+
+            /**
+             * Decodes a DigitalFuelOptions message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns DigitalFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.DigitalFuelOptions;
+
+            /**
+             * Verifies a DigitalFuelOptions message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a DigitalFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns DigitalFuelOptions
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.DigitalFuelOptions;
+
+            /**
+             * Creates a plain object from a DigitalFuelOptions message. Also converts values to other types if specified.
+             * @param message DigitalFuelOptions
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.DigitalFuelOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this DigitalFuelOptions to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for DigitalFuelOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a TeamModel. */
+        interface ITeamModel {
+
+            /** TeamModel model */
+            model?: (com.antigravity.IModel|null);
+
+            /** TeamModel name */
+            name?: (string|null);
+
+            /** TeamModel avatarUrl */
+            avatarUrl?: (string|null);
+
+            /** TeamModel driverIds */
+            driverIds?: (string[]|null);
+        }
+
+        /** Represents a TeamModel. */
+        class TeamModel implements ITeamModel {
+
+            /**
+             * Constructs a new TeamModel.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ITeamModel);
+
+            /** TeamModel model. */
+            public model?: (com.antigravity.IModel|null);
+
+            /** TeamModel name. */
+            public name: string;
+
+            /** TeamModel avatarUrl. */
+            public avatarUrl: string;
+
+            /** TeamModel driverIds. */
+            public driverIds: string[];
+
+            /**
+             * Creates a new TeamModel instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TeamModel instance
+             */
+            public static create(properties?: com.antigravity.ITeamModel): com.antigravity.TeamModel;
+
+            /**
+             * Encodes the specified TeamModel message. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
+             * @param message TeamModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ITeamModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TeamModel message, length delimited. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
+             * @param message TeamModel message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ITeamModel, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TeamModel message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TeamModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.TeamModel;
+
+            /**
+             * Decodes a TeamModel message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TeamModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.TeamModel;
+
+            /**
+             * Verifies a TeamModel message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TeamModel message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TeamModel
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.TeamModel;
+
+            /**
+             * Creates a plain object from a TeamModel message. Also converts values to other types if specified.
+             * @param message TeamModel
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.TeamModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TeamModel to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TeamModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** RaceState enum. */
         enum RaceState {
             UNKNOWN_STATE = 0,
@@ -5061,800 +6352,6 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
-        /** Properties of a HeatScoring. */
-        interface IHeatScoring {
-
-            /** HeatScoring finishMethod */
-            finishMethod?: (com.antigravity.HeatScoring.FinishMethod|null);
-
-            /** HeatScoring finishValue */
-            finishValue?: (number|Long|null);
-
-            /** HeatScoring heatRanking */
-            heatRanking?: (com.antigravity.HeatScoring.HeatRanking|null);
-
-            /** HeatScoring heatRankingTiebreaker */
-            heatRankingTiebreaker?: (com.antigravity.HeatScoring.HeatRankingTiebreaker|null);
-
-            /** HeatScoring allowFinish */
-            allowFinish?: (com.antigravity.HeatScoring.AllowFinish|null);
-        }
-
-        /** Represents a HeatScoring. */
-        class HeatScoring implements IHeatScoring {
-
-            /**
-             * Constructs a new HeatScoring.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IHeatScoring);
-
-            /** HeatScoring finishMethod. */
-            public finishMethod: com.antigravity.HeatScoring.FinishMethod;
-
-            /** HeatScoring finishValue. */
-            public finishValue: (number|Long);
-
-            /** HeatScoring heatRanking. */
-            public heatRanking: com.antigravity.HeatScoring.HeatRanking;
-
-            /** HeatScoring heatRankingTiebreaker. */
-            public heatRankingTiebreaker: com.antigravity.HeatScoring.HeatRankingTiebreaker;
-
-            /** HeatScoring allowFinish. */
-            public allowFinish: com.antigravity.HeatScoring.AllowFinish;
-
-            /**
-             * Creates a new HeatScoring instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns HeatScoring instance
-             */
-            public static create(properties?: com.antigravity.IHeatScoring): com.antigravity.HeatScoring;
-
-            /**
-             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
-             * @param message HeatScoring message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
-             * @param message HeatScoring message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IHeatScoring, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a HeatScoring message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns HeatScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.HeatScoring;
-
-            /**
-             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns HeatScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.HeatScoring;
-
-            /**
-             * Verifies a HeatScoring message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns HeatScoring
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.HeatScoring;
-
-            /**
-             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
-             * @param message HeatScoring
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.HeatScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this HeatScoring to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for HeatScoring
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        namespace HeatScoring {
-
-            /** FinishMethod enum. */
-            enum FinishMethod {
-                Lap = 0,
-                Timed = 1
-            }
-
-            /** HeatRanking enum. */
-            enum HeatRanking {
-                HR_LAP_COUNT = 0,
-                HR_FASTEST_LAP = 1,
-                HR_TOTAL_TIME = 2
-            }
-
-            /** HeatRankingTiebreaker enum. */
-            enum HeatRankingTiebreaker {
-                HRT_FASTEST_LAP_TIME = 0,
-                HRT_MEDIAN_LAP_TIME = 1,
-                HRT_AVERAGE_LAP_TIME = 2
-            }
-
-            /** AllowFinish enum. */
-            enum AllowFinish {
-                AF_NONE = 0,
-                AF_ALLOW = 1,
-                AF_SINGLE_LAP = 2
-            }
-        }
-
-        /** Properties of an OverallScoring. */
-        interface IOverallScoring {
-
-            /** OverallScoring droppedHeats */
-            droppedHeats?: (number|null);
-
-            /** OverallScoring rankingMethod */
-            rankingMethod?: (com.antigravity.OverallScoring.OverallRanking|null);
-
-            /** OverallScoring tiebreaker */
-            tiebreaker?: (com.antigravity.OverallScoring.OverallRankingTiebreaker|null);
-        }
-
-        /** Represents an OverallScoring. */
-        class OverallScoring implements IOverallScoring {
-
-            /**
-             * Constructs a new OverallScoring.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IOverallScoring);
-
-            /** OverallScoring droppedHeats. */
-            public droppedHeats: number;
-
-            /** OverallScoring rankingMethod. */
-            public rankingMethod: com.antigravity.OverallScoring.OverallRanking;
-
-            /** OverallScoring tiebreaker. */
-            public tiebreaker: com.antigravity.OverallScoring.OverallRankingTiebreaker;
-
-            /**
-             * Creates a new OverallScoring instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns OverallScoring instance
-             */
-            public static create(properties?: com.antigravity.IOverallScoring): com.antigravity.OverallScoring;
-
-            /**
-             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
-             * @param message OverallScoring message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
-             * @param message OverallScoring message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IOverallScoring, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes an OverallScoring message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns OverallScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallScoring;
-
-            /**
-             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns OverallScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallScoring;
-
-            /**
-             * Verifies an OverallScoring message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns OverallScoring
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallScoring;
-
-            /**
-             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
-             * @param message OverallScoring
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.OverallScoring, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this OverallScoring to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for OverallScoring
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        namespace OverallScoring {
-
-            /** OverallRanking enum. */
-            enum OverallRanking {
-                OR_LAP_COUNT = 0,
-                OR_FASTEST_LAP = 1,
-                OR_TOTAL_TIME = 2,
-                OR_AVERAGE_LAP = 3
-            }
-
-            /** OverallRankingTiebreaker enum. */
-            enum OverallRankingTiebreaker {
-                ORT_FASTEST_LAP_TIME = 0,
-                ORT_MEDIAN_LAP_TIME = 1,
-                ORT_AVERAGE_LAP_TIME = 2,
-                ORT_TOTAL_TIME = 3
-            }
-        }
-
-        /** Properties of a RaceModel. */
-        interface IRaceModel {
-
-            /** RaceModel model */
-            model?: (com.antigravity.IModel|null);
-
-            /** RaceModel name */
-            name?: (string|null);
-
-            /** RaceModel track */
-            track?: (com.antigravity.ITrackModel|null);
-
-            /** RaceModel heatScoring */
-            heatScoring?: (com.antigravity.IHeatScoring|null);
-
-            /** RaceModel overallScoring */
-            overallScoring?: (com.antigravity.IOverallScoring|null);
-
-            /** RaceModel minLapTime */
-            minLapTime?: (number|null);
-
-            /** RaceModel fuelOptions */
-            fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
-        }
-
-        /** Represents a RaceModel. */
-        class RaceModel implements IRaceModel {
-
-            /**
-             * Constructs a new RaceModel.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IRaceModel);
-
-            /** RaceModel model. */
-            public model?: (com.antigravity.IModel|null);
-
-            /** RaceModel name. */
-            public name: string;
-
-            /** RaceModel track. */
-            public track?: (com.antigravity.ITrackModel|null);
-
-            /** RaceModel heatScoring. */
-            public heatScoring?: (com.antigravity.IHeatScoring|null);
-
-            /** RaceModel overallScoring. */
-            public overallScoring?: (com.antigravity.IOverallScoring|null);
-
-            /** RaceModel minLapTime. */
-            public minLapTime: number;
-
-            /** RaceModel fuelOptions. */
-            public fuelOptions?: (com.antigravity.IAnalogFuelOptions|null);
-
-            /**
-             * Creates a new RaceModel instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns RaceModel instance
-             */
-            public static create(properties?: com.antigravity.IRaceModel): com.antigravity.RaceModel;
-
-            /**
-             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @param message RaceModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IRaceModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @param message RaceModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IRaceModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RaceModel;
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RaceModel;
-
-            /**
-             * Verifies a RaceModel message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns RaceModel
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.RaceModel;
-
-            /**
-             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
-             * @param message RaceModel
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.RaceModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this RaceModel to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for RaceModel
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        /** FuelUsageType enum. */
-        enum FuelUsageType {
-            LINEAR = 0,
-            QUADRATIC = 1,
-            CUBIC = 2
-        }
-
-        /** Properties of an AnalogFuelOptions. */
-        interface IAnalogFuelOptions {
-
-            /** AnalogFuelOptions enabled */
-            enabled?: (boolean|null);
-
-            /** AnalogFuelOptions resetFuelAtHeatStart */
-            resetFuelAtHeatStart?: (boolean|null);
-
-            /** AnalogFuelOptions endHeatOnOutOfFuel */
-            endHeatOnOutOfFuel?: (boolean|null);
-
-            /** AnalogFuelOptions capacity */
-            capacity?: (number|null);
-
-            /** AnalogFuelOptions usageType */
-            usageType?: (com.antigravity.FuelUsageType|null);
-
-            /** AnalogFuelOptions usageRate */
-            usageRate?: (number|null);
-
-            /** AnalogFuelOptions startLevel */
-            startLevel?: (number|null);
-
-            /** AnalogFuelOptions refuelRate */
-            refuelRate?: (number|null);
-
-            /** AnalogFuelOptions pitStopDelay */
-            pitStopDelay?: (number|null);
-
-            /** AnalogFuelOptions referenceTime */
-            referenceTime?: (number|null);
-        }
-
-        /** Represents an AnalogFuelOptions. */
-        class AnalogFuelOptions implements IAnalogFuelOptions {
-
-            /**
-             * Constructs a new AnalogFuelOptions.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IAnalogFuelOptions);
-
-            /** AnalogFuelOptions enabled. */
-            public enabled: boolean;
-
-            /** AnalogFuelOptions resetFuelAtHeatStart. */
-            public resetFuelAtHeatStart: boolean;
-
-            /** AnalogFuelOptions endHeatOnOutOfFuel. */
-            public endHeatOnOutOfFuel: boolean;
-
-            /** AnalogFuelOptions capacity. */
-            public capacity: number;
-
-            /** AnalogFuelOptions usageType. */
-            public usageType: com.antigravity.FuelUsageType;
-
-            /** AnalogFuelOptions usageRate. */
-            public usageRate: number;
-
-            /** AnalogFuelOptions startLevel. */
-            public startLevel: number;
-
-            /** AnalogFuelOptions refuelRate. */
-            public refuelRate: number;
-
-            /** AnalogFuelOptions pitStopDelay. */
-            public pitStopDelay: number;
-
-            /** AnalogFuelOptions referenceTime. */
-            public referenceTime: number;
-
-            /**
-             * Creates a new AnalogFuelOptions instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns AnalogFuelOptions instance
-             */
-            public static create(properties?: com.antigravity.IAnalogFuelOptions): com.antigravity.AnalogFuelOptions;
-
-            /**
-             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
-             * @param message AnalogFuelOptions message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
-             * @param message AnalogFuelOptions message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IAnalogFuelOptions, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns AnalogFuelOptions
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.AnalogFuelOptions;
-
-            /**
-             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns AnalogFuelOptions
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.AnalogFuelOptions;
-
-            /**
-             * Verifies an AnalogFuelOptions message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns AnalogFuelOptions
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.AnalogFuelOptions;
-
-            /**
-             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
-             * @param message AnalogFuelOptions
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.AnalogFuelOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this AnalogFuelOptions to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for AnalogFuelOptions
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        /** Properties of a TrackModel. */
-        interface ITrackModel {
-
-            /** TrackModel model */
-            model?: (com.antigravity.IModel|null);
-
-            /** TrackModel name */
-            name?: (string|null);
-
-            /** TrackModel lanes */
-            lanes?: (com.antigravity.ILaneModel[]|null);
-        }
-
-        /** Represents a TrackModel. */
-        class TrackModel implements ITrackModel {
-
-            /**
-             * Constructs a new TrackModel.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.ITrackModel);
-
-            /** TrackModel model. */
-            public model?: (com.antigravity.IModel|null);
-
-            /** TrackModel name. */
-            public name: string;
-
-            /** TrackModel lanes. */
-            public lanes: com.antigravity.ILaneModel[];
-
-            /**
-             * Creates a new TrackModel instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns TrackModel instance
-             */
-            public static create(properties?: com.antigravity.ITrackModel): com.antigravity.TrackModel;
-
-            /**
-             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @param message TrackModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.ITrackModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @param message TrackModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.ITrackModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.TrackModel;
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.TrackModel;
-
-            /**
-             * Verifies a TrackModel message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns TrackModel
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.TrackModel;
-
-            /**
-             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
-             * @param message TrackModel
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.TrackModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this TrackModel to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for TrackModel
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        /** Properties of a LaneModel. */
-        interface ILaneModel {
-
-            /** LaneModel backgroundColor */
-            backgroundColor?: (string|null);
-
-            /** LaneModel foregroundColor */
-            foregroundColor?: (string|null);
-
-            /** LaneModel length */
-            length?: (number|null);
-
-            /** LaneModel objectId */
-            objectId?: (string|null);
-        }
-
-        /** Represents a LaneModel. */
-        class LaneModel implements ILaneModel {
-
-            /**
-             * Constructs a new LaneModel.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.ILaneModel);
-
-            /** LaneModel backgroundColor. */
-            public backgroundColor: string;
-
-            /** LaneModel foregroundColor. */
-            public foregroundColor: string;
-
-            /** LaneModel length. */
-            public length: number;
-
-            /** LaneModel objectId. */
-            public objectId: string;
-
-            /**
-             * Creates a new LaneModel instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns LaneModel instance
-             */
-            public static create(properties?: com.antigravity.ILaneModel): com.antigravity.LaneModel;
-
-            /**
-             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @param message LaneModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.ILaneModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @param message LaneModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.ILaneModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.LaneModel;
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.LaneModel;
-
-            /**
-             * Verifies a LaneModel message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns LaneModel
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.LaneModel;
-
-            /**
-             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
-             * @param message LaneModel
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.LaneModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this LaneModel to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for LaneModel
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
         /** Properties of a Heat. */
         interface IHeat {
 
@@ -6254,121 +6751,6 @@ export namespace com {
 
             /**
              * Gets the default type url for RaceParticipant
-             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns The default type url
-             */
-            public static getTypeUrl(typeUrlPrefix?: string): string;
-        }
-
-        /** Properties of a TeamModel. */
-        interface ITeamModel {
-
-            /** TeamModel model */
-            model?: (com.antigravity.IModel|null);
-
-            /** TeamModel name */
-            name?: (string|null);
-
-            /** TeamModel avatarUrl */
-            avatarUrl?: (string|null);
-
-            /** TeamModel driverIds */
-            driverIds?: (string[]|null);
-        }
-
-        /** Represents a TeamModel. */
-        class TeamModel implements ITeamModel {
-
-            /**
-             * Constructs a new TeamModel.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.ITeamModel);
-
-            /** TeamModel model. */
-            public model?: (com.antigravity.IModel|null);
-
-            /** TeamModel name. */
-            public name: string;
-
-            /** TeamModel avatarUrl. */
-            public avatarUrl: string;
-
-            /** TeamModel driverIds. */
-            public driverIds: string[];
-
-            /**
-             * Creates a new TeamModel instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns TeamModel instance
-             */
-            public static create(properties?: com.antigravity.ITeamModel): com.antigravity.TeamModel;
-
-            /**
-             * Encodes the specified TeamModel message. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
-             * @param message TeamModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.ITeamModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified TeamModel message, length delimited. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
-             * @param message TeamModel message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.ITeamModel, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a TeamModel message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns TeamModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.TeamModel;
-
-            /**
-             * Decodes a TeamModel message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns TeamModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.TeamModel;
-
-            /**
-             * Verifies a TeamModel message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a TeamModel message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns TeamModel
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.TeamModel;
-
-            /**
-             * Creates a plain object from a TeamModel message. Also converts values to other types if specified.
-             * @param message TeamModel
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.TeamModel, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this TeamModel to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the default type url for TeamModel
              * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
              * @returns The default type url
              */

@@ -1,4 +1,5 @@
-import { AnalogFuelOptions, FuelUsageType } from "../models/analog_fuel_options";
+import { AnalogFuelOptions } from "../models/analog_fuel_options";
+import { FuelUsageType } from "../models/fuel_options";
 import { com } from "../proto/message";
 
 export class AnalogFuelOptionsConverter {

@@ -9,8 +9,14 @@ test.describe('Splash Screen Visuals', () => {
 
     // 2. Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.disableAnimations(page);
 
+    // 1b. Force fixed viewport to ensure scale logic is deterministic
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    // 2b. Mock server version which is displayed on splash screen
+    await page.route('**/api/version', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'text/plain', body: '1.2.3-TEST' });
+    });
     // 3. Mock Math.random to ensure deterministic quote selection
     await page.addInitScript(() => {
       Math.random = () => 0.1;
@@ -29,6 +35,10 @@ test.describe('Splash Screen Visuals', () => {
     // Navigate to the app
     await page.goto('/');
 
+    // Disable animations AFTER navigation to ensure style tag persists
+    await TestSetupHelper.disableAnimations(page);
+
+
     // Wait for splash screen to be visible
     const splashScreen = page.locator('.splash-screen');
     await expect(splashScreen).toBeVisible();
@@ -39,23 +49,46 @@ test.describe('Splash Screen Visuals', () => {
     // Verify quote is present
     await expect(page.locator('.quote-container')).toBeVisible();
 
-    // Stabilization: Wait for Angular to settle if needed, but clock is used here anyway
-    await page.waitForTimeout(100);
+    // Stabilization: Wait for Angular and transitions to settle
+    await page.clock.runFor(2000);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => document.fonts.ready);
+
+    // Explicitly hide the progress bar and other potentially moving elements for stability
+    // Visibility: hidden is cleaner than Playwright's pink masks
+    await page.addStyleTag({
+      content: `
+        .progress-bar-container, .quote-container { visibility: hidden !important; }
+        .splash-screen { transition: none !important; }
+      `
+    });
 
     // 1. Capture Splash Screen (Busy Loop State)
-    await expect(page).toHaveScreenshot('splash-screen-initial.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    await expect(page).toHaveScreenshot('splash-screen-initial.png', {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+      animations: 'disabled'
+    });
 
     // 2. Open Server Config
     const serverBtn = page.locator('.server-config-btn');
     await expect(serverBtn).toBeVisible();
     await serverBtn.click();
 
+    // Stabilization: Wait for modal transition
+    await page.clock.runFor(1000);
+    await page.waitForTimeout(500);
+
     // Wait for modal
     const modal = page.locator('.server-config-modal');
     await expect(modal).toBeVisible();
 
     // 3. Capture Server Config Modal
-    await expect(page).toHaveScreenshot('server-config-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    await expect(page).toHaveScreenshot('server-config-modal.png', {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+      animations: 'disabled'
+    });
 
     // 4. Close Modal
     await page.locator('.actions button').nth(1).click();

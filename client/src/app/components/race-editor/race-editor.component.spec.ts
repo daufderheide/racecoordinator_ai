@@ -7,6 +7,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from 'src/app/pipes/translate.pipe';
+import { FuelUsageType } from 'src/app/models/fuel_options';
+import { Track } from 'src/app/models/track';
 
 describe('RaceEditorComponent', () => {
   let component: RaceEditorComponent;
@@ -453,6 +455,85 @@ describe('RaceEditorComponent', () => {
 
       component.editingRace.fuel_options!.capacity = 200;
       expect(component.hasChanges()).toBeTrue();
+    });
+  });
+
+  describe('Digital Fuel Options', () => {
+    it('should initialize with default digital fuel options if not present', fakeAsync(() => {
+      const raceWithoutFuel: any = {
+        entity_id: '1',
+        name: 'Race No Fuel',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap' },
+        overall_scoring: { dropped_heats: 0 }
+      };
+
+      mockDataService.getRaces.and.returnValue(of([raceWithoutFuel]));
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.editingRace.digital_fuel_options).toBeDefined();
+      expect(component.editingRace.digital_fuel_options?.enabled).toBeFalse();
+      expect(component.editingRace.digital_fuel_options?.usage_type).toBe(FuelUsageType.LINEAR);
+    }));
+
+    it('should correctly identify digital fuel capability of a track', () => {
+      component.tracks = [
+        new Track('track1', 'Analog Track', [], false),
+        new Track('track2', 'Digital Track', [], true)
+      ];
+
+      component.editingRace.track_entity_id = 'track1';
+      expect(component.hasDigitalFuel).toBeFalse();
+
+      component.editingRace.track_entity_id = 'track2';
+      expect(component.hasDigitalFuel).toBeTrue();
+    });
+
+    it('should enforce fuel rules: disable digital fuel if track is analog', () => {
+      component.tracks = [new Track('track1', 'Analog Track', [], false)];
+      component.editingRace.track_entity_id = 'track1';
+      component.editingRace.digital_fuel_options = { enabled: true } as any;
+
+      component.enforceFuelRules();
+      expect(component.editingRace.digital_fuel_options.enabled).toBeFalse();
+    });
+
+    it('should generate valid usage path for digital fuel', () => {
+      component.editingRace.digital_fuel_options = {
+        enabled: true,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        capacity: 100
+      } as any;
+
+      const path = component.getDigitalUsagePath();
+      expect(path).toContain('M');
+      expect(path).toContain('L');
+    });
+
+    it('should update hoveredPoint on digital graph mouse move', () => {
+      component.editingRace.digital_fuel_options = {
+        enabled: true,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        capacity: 100
+      } as any;
+
+      const mockEvent = {
+        currentTarget: {
+          getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 150 })
+        },
+        clientX: 200,
+        clientY: 75
+      } as any;
+
+      component.onDigitalGraphMouseMove(mockEvent, 'usage');
+      expect(component.hoveredPoint).toBeDefined();
+      expect(component.hoveredPoint?.type).toBe('digital_usage');
+      expect(component.hoveredPoint?.time).toBe(50); // 50% throttle at middle
     });
   });
 

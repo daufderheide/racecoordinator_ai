@@ -20,15 +20,41 @@ interface PinAction {
 })
 export class ArduinoEditorComponent implements OnInit, OnDestroy {
   @Input() config?: ArduinoConfig;
-  @Input() lanes: Lane[] = [];
+  @Input() index: number = 0;
+  @Input() count: number = 1;
+
+  private _lanes: Lane[] = [];
+  @Input() set lanes(value: Lane[]) {
+    this._lanes = value;
+    this.updatePinActions();
+  }
+  get lanes(): Lane[] {
+    return this._lanes;
+  }
   @Output() configChange = new EventEmitter<void>();
+  @Output() remove = new EventEmitter<void>();
 
   availablePorts: string[] = [];
   interfaceStatus: number = 1; // 0=Connected, 1=Disconnected, 2=NoData
   pinActivity: { [key: string]: boolean } = {};
+  sectionsExpanded = {
+    arduino: true,
+    main: true,
+    digital: true,
+    analog: true,
+    voltage: true
+  };
+  liveVoltages: { [key: number]: number | undefined } = {};
+  maxVoltagesSeen: { [key: number]: number | undefined } = {};
+  isVoltageLinked: boolean = false;
 
   private interfaceEventsSubscription?: Subscription;
   private pinActivityTimers: { [key: string]: any } = {};
+
+  resetMaxSeenAll() {
+    this.maxVoltagesSeen = {};
+    this.cdr.detectChanges();
+  }
 
   constructor(
     private dataService: DataService,
@@ -80,6 +106,19 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
         } else if (event.status) {
           this.interfaceStatus = event.status.status as number;
+          this.cdr.detectChanges();
+        } else if (event.analogData) {
+          const pin = event.analogData.pin ?? -1;
+          const value = event.analogData.value ?? 0;
+          this.liveVoltages[pin] = value;
+
+          const lane = this.getLaneForAnalogPin(pin);
+          if (lane !== -1) {
+            const currentMax = this.maxVoltagesSeen[lane] ?? 0;
+            if (value > currentMax) {
+              this.maxVoltagesSeen[lane] = value;
+            }
+          }
           this.cdr.detectChanges();
         }
       }
@@ -276,7 +315,8 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   // Pin Action Logic
-  pinActions: PinAction[] = [];
+  digitalPinActions: PinAction[] = [];
+  analogPinActions: PinAction[] = [];
 
   getPinAction(isDigital: boolean, pinIndex: number): string {
     const val = this.getPinBehavior(isDigital, pinIndex);
@@ -297,6 +337,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       return `relay_${val - com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE}`;
 
     if (val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED) return 'reserved';
+
+    if (val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000)
+      return `voltage_${val - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE}`;
 
     return '';
   }
@@ -321,6 +364,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       val = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + laneIndex;
     } else if (action === 'reserved') {
       val = com.antigravity.PinBehavior.BEHAVIOR_RESERVED;
+    } else if (action.startsWith('voltage_')) {
+      const laneIndex = parseInt(action.split('_')[1], 10);
+      val = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + laneIndex;
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
@@ -367,6 +413,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         label: this.translationService.translate('AE_PIN_SEGMENT_LANE', { lane: i + 1 }),
         value: `segment_${i}`
       });
+      // Relay
+      otherActions.push({
+        label: this.translationService.translate('AE_PIN_RELAY_LANE', { lane: i + 1 }),
+        value: `relay_${i}`
+      });
     });
 
     // Sort other actions alphabetically by label
@@ -378,18 +429,146 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       value: 'master_relay'
     });
 
-    // Relay Lane X
-    this.lanes.forEach((_, i) => {
-      otherActions.push({
-        label: this.translationService.translate('AE_PIN_RELAY_LANE', { lane: i + 1 }),
-        value: `relay_${i}`
-      });
-    });
-
     // Re-sort after adding relays
     otherActions.sort((a, b) => a.label.localeCompare(b.label));
 
-    // Combine
-    this.pinActions = [...actions, ...otherActions];
+    // Combine for digital
+    this.digitalPinActions = [...actions, ...otherActions];
+
+    // Add Voltage Level for analog only
+    const analogOnlyActions: PinAction[] = [];
+    this.lanes.forEach((_, i) => {
+      analogOnlyActions.push({
+        label: this.translationService.translate('AE_PIN_VOLTAGE_LANE', { lane: i + 1 }),
+        value: `voltage_${i}`
+      });
+    });
+    analogOnlyActions.sort((a, b) => a.label.localeCompare(b.label));
+
+    // Combine for analog
+    this.analogPinActions = [...actions, ...otherActions, ...analogOnlyActions];
+    // Re-sort analog if needed, but usually we want voltage at the end or intermixed? 
+    // Let's re-sort the whole thing to keep it clean.
+    this.analogPinActions.sort((a, b) => {
+      if (a.value === '' || a.value === 'reserved') return -1;
+      if (b.value === '' || b.value === 'reserved') return 1;
+      return a.label.localeCompare(b.label);
+    });
+
+    // Also re-sort digital for consistency
+    this.digitalPinActions.sort((a, b) => {
+      if (a.value === '' || a.value === 'reserved') return -1;
+      if (b.value === '' || b.value === 'reserved') return 1;
+      return a.label.localeCompare(b.label);
+    });
+  }
+
+  getVoltageLanes(): number[] {
+    if (!this.config) return [];
+    const lanes = new Set<number>();
+
+    // Check analog pins only for voltage level
+    const isMega = this.config.hardwareType === 1;
+    const analogCount = isMega ? 16 : 6;
+    const analogIds = this.config.analogIds || [];
+    for (let i = 0; i < analogCount; i++) {
+      const behavior = analogIds[i];
+      if (behavior !== undefined &&
+        behavior >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+        behavior < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000) {
+        lanes.add(behavior - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE);
+      }
+    }
+    return Array.from(lanes).sort((a, b) => a - b);
+  }
+
+  getLiveVoltageForLane(lane: number): number {
+    if (!this.config) return 0;
+    const isMega = this.config.hardwareType === 1;
+    const analogCount = isMega ? 16 : 6;
+    const analogIds = this.config.analogIds || [];
+
+    const targetBehavior = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + lane;
+    for (let i = 0; i < analogCount; i++) {
+      if (analogIds[i] === targetBehavior) {
+        return this.liveVoltages[i] ?? 0;
+      }
+    }
+    return 0;
+  }
+
+  getVoltageMax(lane: number): number {
+    if (!this.config || !this.config.voltageConfigs) return 1023;
+    const val = this.config.voltageConfigs[lane];
+    return val !== undefined ? val : 1023;
+  }
+
+  getLaneForAnalogPin(pin: number): number {
+    if (!this.config) return -1;
+    const isMega = this.config.hardwareType === 1;
+    const analogCount = isMega ? 16 : 6;
+    const analogIds = this.config.analogIds || [];
+    if (pin >= 0 && pin < analogCount) {
+      const behavior = analogIds[pin];
+      if (behavior !== undefined &&
+        behavior >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+        behavior < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000) {
+        return behavior - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+      }
+    }
+    return -1;
+  }
+
+  setVoltageMax(lane: number, value: string | number) {
+    if (!this.config) return;
+
+    let val: number;
+    if (typeof value === 'string') {
+      val = parseInt(value, 10);
+    } else {
+      val = value;
+    }
+
+    if (isNaN(val)) return;
+
+    if (this.isVoltageLinked) {
+      for (const l of this.getVoltageLanes()) {
+        this.setVoltageMaxInternal(l, val);
+      }
+    } else {
+      this.setVoltageMaxInternal(lane, val);
+    }
+    this.updateArduinoConfig();
+  }
+
+  private setVoltageMaxInternal(lane: number, value: number) {
+    if (!this.config) return;
+    if (!this.config.voltageConfigs) this.config.voltageConfigs = {};
+    this.config.voltageConfigs[lane] = value;
+  }
+
+  setMaxToSeen(lane: number) {
+    if (this.isVoltageLinked) {
+      let globalMax = 0;
+      for (const l of this.getVoltageLanes()) {
+        globalMax = Math.max(globalMax, this.maxVoltagesSeen[l] ?? 0);
+      }
+      for (const l of this.getVoltageLanes()) {
+        this.setVoltageMaxInternal(l, globalMax);
+      }
+    } else {
+      const maxSeen = this.maxVoltagesSeen[lane] ?? 0;
+      this.setVoltageMaxInternal(lane, maxSeen);
+    }
+    this.updateArduinoConfig();
+  }
+
+  toggleSection(section: keyof typeof this.sectionsExpanded) {
+    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  }
+
+  removeInterface(event: Event) {
+    event.stopPropagation();
+    this.remove.emit();
   }
 }

@@ -581,4 +581,52 @@ describe('DefaultRacedayComponent', () => {
     expect(raceText).toBeTruthy();
     expect(raceText?.textContent).toBe(raceName);
   });
+
+  describe('Digital Fuel Support', () => {
+    it('should include fuel columns for digital fuel races', () => {
+      const mockTrack = { hasDigitalFuel: () => true, hasAnalogFuel: () => false, lanes: [] };
+      const mockRace = {
+        digital_fuel_options: { enabled: true },
+        fuel_options: { enabled: false },
+        track: mockTrack
+      };
+      mockRaceService.getRace.and.returnValue(mockRace);
+      component['track'] = mockTrack as any;
+
+      (component as any).loadColumns();
+
+      expect(component['columns'].some(c => c.propertyName === 'fuelPercentage')).toBeTrue();
+    });
+
+    it('should use digital fuel capacity for formatting', () => {
+      const mockTrack = { hasDigitalFuel: () => true, hasAnalogFuel: () => false, lanes: [] };
+      const mockRace = {
+        digital_fuel_options: { enabled: true, capacity: 50 },
+        fuel_options: { enabled: false, capacity: 100 },
+        track: mockTrack
+      };
+      mockRaceService.getRace.and.returnValue(mockRace);
+      component['track'] = mockTrack as any;
+
+      const mockHd = { participant: { fuelLevel: 25 } };
+      const result = component.formatValue('fuelCapacity', null, mockHd as any);
+      expect(result).toBe('50.0');
+    });
+
+    it('should calculate fuel percentage using digital fuel options', () => {
+      const mockTrack = { hasDigitalFuel: () => true, hasAnalogFuel: () => false, lanes: [] };
+      const mockRace = {
+        digital_fuel_options: { enabled: true, capacity: 50 },
+        fuel_options: { enabled: false, capacity: 100 },
+        track: mockTrack
+      };
+      mockRaceService.getRace.and.returnValue(mockRace);
+      component['track'] = mockTrack as any;
+
+      const mockHd = { participant: { fuelLevel: 25 } };
+      // 25 / 50 = 50%
+      const result = component.formatValue('fuelPercentage', null, mockHd as any);
+      expect(result).toBe('50%');
+    });
+  });
 });

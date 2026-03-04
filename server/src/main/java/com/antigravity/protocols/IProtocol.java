@@ -15,6 +15,8 @@ public interface IProtocol {
 
   boolean hasPerLaneRelays();
 
+  boolean hasDigitalFuel();
+
   void setMainPower(boolean on);
 
   void setLanePower(boolean on, int lane);

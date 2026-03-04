@@ -59,6 +59,11 @@ public class TestInterfaceListener implements ProtocolListener {
 
   @Override
   public void onCarData(CarData carData) {
-    throw new UnsupportedOperationException("Unimplemented method 'onCarData'");
+    // Ignore for test listener
+  }
+
+  @Override
+  public void onInterfaceEvent(InterfaceEvent event) {
+    ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 }

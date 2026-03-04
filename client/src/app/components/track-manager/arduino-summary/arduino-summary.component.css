@@ -5,16 +5,24 @@
 
 .arduino-summary {
   margin-bottom: 20px;
-  padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.arduino-summary h3 {
-  color: #3b82f6;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  letter-spacing: 0.5px;
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
 }
 
 .summary-grid {

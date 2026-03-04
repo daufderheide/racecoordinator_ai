@@ -1,0 +1,18 @@
+node:fs:2752
+      const stats = binding.lstat(base, true, undefined, true /* throwIfNoEntry */);
+                            ^
+
+Error: EPERM: operation not permitted, lstat '/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_ai/client/node_modules'
+    at Object.realpathSync (node:fs:2752:29)
+    at toRealPath (node:internal/modules/helpers:62:13)
+    at Module._findPath (node:internal/modules/cjs/loader:774:22)
+    at resolveMainPath (node:internal/modules/run_main:35:21)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:146:20)
+    at node:internal/main/run_main_module:33:47 {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'lstat',
+  path: '/Users/dave/dev/Slot Cars/racecoordinator/racecoordinator_ai/client/node_modules'
+}
+
+Node.js v25.2.1

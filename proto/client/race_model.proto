@@ -67,6 +67,7 @@ message RaceModel {
   OverallScoring overall_scoring = 5;
   double min_lap_time = 6;
   AnalogFuelOptions fuel_options = 7;
+  DigitalFuelOptions digital_fuel_options = 8;
 }
 
 enum FuelUsageType {
@@ -86,5 +87,17 @@ message AnalogFuelOptions {
   double refuel_rate = 8;
   double pit_stop_delay = 9;
   double reference_time = 10;
+}
+
+message DigitalFuelOptions {
+  bool enabled = 1;
+  bool reset_fuel_at_heat_start = 2;
+  bool end_heat_on_out_of_fuel = 3;
+  double capacity = 4;
+  FuelUsageType usage_type = 5;
+  double usage_rate = 6;
+  double start_level = 7;
+  double refuel_rate = 8;
+  double pit_stop_delay = 9;
 }
 

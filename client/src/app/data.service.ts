@@ -161,7 +161,11 @@ export class DataService {
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
         analogIds: config.analogIds,
-        ledLaneColorOverrides: config.ledLaneColorOverrides || []
+        ledLaneColorOverrides: config.ledLaneColorOverrides || [],
+        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
+          lane: parseInt(lane, 10),
+          maxVoltage: maxVoltage as number
+        }))
       }),
       laneCount
     });
@@ -197,7 +201,11 @@ export class DataService {
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
         analogIds: config.analogIds,
-        ledLaneColorOverrides: config.ledLaneColorOverrides || []
+        ledLaneColorOverrides: config.ledLaneColorOverrides || [],
+        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
+          lane: parseInt(lane, 10),
+          maxVoltage: maxVoltage as number
+        }))
       })
     });
     const buffer = com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();

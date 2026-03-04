@@ -2,7 +2,6 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
@@ -57,14 +56,14 @@ public class RefuelingTest {
 
     com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
         "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, "race1", new ObjectId());
+        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
 
     participants = new ArrayList<>();
     participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
-    track = new Track("Test Track", lanes, mock(ArduinoConfig.class), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
     race = spy(new Race(raceModel, participants, track, true));
     racing = new Racing();

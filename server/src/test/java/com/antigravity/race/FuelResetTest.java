@@ -52,7 +52,7 @@ public class FuelResetTest {
 
     com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
         "Fuel Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, "race1", new ObjectId());
+        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
 
     participants = new ArrayList<>();
 
@@ -73,7 +73,7 @@ public class FuelResetTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
-    track = new Track("Test Track", lanes, mock(ArduinoConfig.class), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
     race = new Race(raceModel, participants, track, true);
   }

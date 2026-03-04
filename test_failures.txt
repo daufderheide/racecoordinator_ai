@@ -1,0 +1,1332 @@
+
+> client@0.0.0 test
+> ng test --watch=false
+
+Node.js version v25.2.1 detected.
+Odd numbered Node.js versions will not enter LTS status and should not be used for production. For more information, please see https://nodejs.org/en/about/previous-releases/.
+- Generating browser application bundles (phase: setup)...
+DEBUG: Overridden process.env.HOME = /tmp/kc/h
+DEBUG: process.env.CHROME_USER_DATA_DIR = /tmp/kc/u
+DEBUG: chromeUserData = /tmp/kc/u
+[32m✔[39m Browser application bundle generation complete.
+[32m02 03 2026 17:15:23.827:INFO [karma-server]: [39mKarma v6.4.4 server started at http://localhost:9876/
+[32m02 03 2026 17:15:23.828:INFO [launcher]: [39mLaunching browsers ChromeHeadlessWithCustomConfig with concurrency unlimited
+[32m02 03 2026 17:15:23.832:INFO [launcher]: [39mStarting browser Chrome
+[32m02 03 2026 17:15:26.335:INFO [Chrome Headless 145.0.0.0 (Mac OS 10.15.7)]: [39mConnected on socket TlSZiCqaOrEF_dqvAAAB with id 46357762
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 0 of 369[32m SUCCESS[39m (0 secs / 0 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 1 of 369[32m SUCCESS[39m (0 secs / 0.17 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 2 of 369[32m SUCCESS[39m (0 secs / 0.179 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 3 of 369[32m SUCCESS[39m (0 secs / 0.186 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 4 of 369[32m SUCCESS[39m (0 secs / 0.194 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 5 of 369[32m SUCCESS[39m (0 secs / 0.201 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 6 of 369[32m SUCCESS[39m (0 secs / 0.207 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 7 of 369[32m SUCCESS[39m (0 secs / 0.213 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 8 of 369[32m SUCCESS[39m (0 secs / 0.218 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 9 of 369[32m SUCCESS[39m (0 secs / 0.225 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 10 of 369[32m SUCCESS[39m (0 secs / 0.231 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 11 of 369[32m SUCCESS[39m (0 secs / 0.236 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 12 of 369[32m SUCCESS[39m (0 secs / 0.241 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 13 of 369[32m SUCCESS[39m (0 secs / 0.246 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 14 of 369[32m SUCCESS[39m (0 secs / 0.252 secs)
+[1A[2KLOG: [36m'Playing audio from URL:', 'http://localhost:8080/sounds/beep.mp3'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 14 of 369[32m SUCCESS[39m (0 secs / 0.252 secs)
+LOG: 'Playing audio from URL:', 'http://localhost:8080/sounds/beep.mp3'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 15 of 369[32m SUCCESS[39m (0 secs / 0.253 secs)
+[1A[2KLOG: [36m'No sound to play (missing type, url, or text)'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 15 of 369[32m SUCCESS[39m (0 secs / 0.253 secs)
+LOG: 'No sound to play (missing type, url, or text)'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 16 of 369[32m SUCCESS[39m (0 secs / 0.253 secs)
+[1A[2KLOG: [36m'Playing audio from URL:', 'http://localhost:8080/error.mp3'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 16 of 369[32m SUCCESS[39m (0 secs / 0.253 secs)
+LOG: 'Playing audio from URL:', 'http://localhost:8080/error.mp3'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 17 of 369[32m SUCCESS[39m (0 secs / 0.254 secs)
+[1A[2KLOG: [36m'Playing audio from URL:', 'http://example.com/sound.mp3'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 17 of 369[32m SUCCESS[39m (0 secs / 0.254 secs)
+LOG: 'Playing audio from URL:', 'http://example.com/sound.mp3'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 18 of 369[32m SUCCESS[39m (0 secs / 0.254 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 19 of 369[32m SUCCESS[39m (0 secs / 0.254 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 20 of 369[32m SUCCESS[39m (0 secs / 0.255 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 21 of 369[32m SUCCESS[39m (0 secs / 0.255 secs)
+[1A[2KLOG: [36m'Playing TTS:', 'Dave's last lap was 1.234'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 21 of 369[32m SUCCESS[39m (0 secs / 0.255 secs)
+LOG: 'Playing TTS:', 'Dave's last lap was 1.234'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 22 of 369[32m SUCCESS[39m (0 secs / 0.255 secs)
+[1A[2KLOG: [36m'No sound to play (missing type, url, or text)'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 22 of 369[32m SUCCESS[39m (0 secs / 0.255 secs)
+LOG: 'No sound to play (missing type, url, or text)'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 23 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+[1A[2KLOG: [36m'Playing TTS:', 'Time: 1.235'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 23 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+LOG: 'Playing TTS:', 'Time: 1.235'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 24 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+[1A[2KLOG: [36m'Playing TTS:', 'Lap 5'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 24 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+LOG: 'Playing TTS:', 'Lap 5'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 25 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+[1A[2KLOG: [36m'Playing TTS:', 'Hello {unknown}'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 25 of 369[32m SUCCESS[39m (0 secs / 0.256 secs)
+LOG: 'Playing TTS:', 'Hello {unknown}'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 26 of 369[32m SUCCESS[39m (0 secs / 0.258 secs)
+[1A[2KLOG: [36m'Playing TTS:', 'Hello'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 26 of 369[32m SUCCESS[39m (0 secs / 0.258 secs)
+LOG: 'Playing TTS:', 'Hello'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 27 of 369[32m SUCCESS[39m (0 secs / 0.258 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 28 of 369[32m SUCCESS[39m (0 secs / 0.264 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 29 of 369[32m SUCCESS[39m (0 secs / 0.266 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 30 of 369[32m SUCCESS[39m (0 secs / 0.27 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 31 of 369[32m SUCCESS[39m (0 secs / 0.275 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 32 of 369[32m SUCCESS[39m (0 secs / 0.279 secs)
+[1A[2KLOG: [36m'ImageSetEditor: Opening modal, resetting form'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 32 of 369[32m SUCCESS[39m (0 secs / 0.279 secs)
+LOG: 'ImageSetEditor: Opening modal, resetting form'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 33 of 369[32m SUCCESS[39m (0 secs / 0.294 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 34 of 369[32m SUCCESS[39m (0 secs / 0.296 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 35 of 369[32m SUCCESS[39m (0 secs / 0.298 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 36 of 369[32m SUCCESS[39m (0 secs / 0.3 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 37 of 369[32m SUCCESS[39m (0 secs / 0.303 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 38 of 369[32m SUCCESS[39m (0 secs / 0.305 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 39 of 369[32m SUCCESS[39m (0 secs / 0.308 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 40 of 369[32m SUCCESS[39m (0 secs / 0.31 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 41 of 369[32m SUCCESS[39m (0 secs / 0.312 secs)
+[1A[2KLOG: [36m'ImageSetEditor: Adding 3 entries to list'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 41 of 369[32m SUCCESS[39m (0 secs / 0.312 secs)
+LOG: 'ImageSetEditor: Adding 3 entries to list'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 42 of 369[32m SUCCESS[39m (0 secs / 0.426 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 43 of 369[32m SUCCESS[39m (0 secs / 0.428 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 44 of 369[32m SUCCESS[39m (0 secs / 0.432 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 45 of 369[32m SUCCESS[39m (0 secs / 0.435 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 46 of 369[32m SUCCESS[39m (0 secs / 0.439 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 47 of 369[32m SUCCESS[39m (0 secs / 0.442 secs)
+[33m02 03 2026 17:15:28.693:WARN [web-server]: [39m404: /_karma_webpack_/assets/test.png
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 48 of 369[32m SUCCESS[39m (0 secs / 0.444 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 49 of 369[32m SUCCESS[39m (0 secs / 0.446 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 49 of 369[32m SUCCESS[39m (0 secs / 0.446 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 50 of 369[32m SUCCESS[39m (0 secs / 0.467 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 50 of 369[32m SUCCESS[39m (0 secs / 0.467 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 51 of 369[32m SUCCESS[39m (0 secs / 0.47 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 51 of 369[32m SUCCESS[39m (0 secs / 0.47 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 52 of 369[32m SUCCESS[39m (0 secs / 0.474 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 52 of 369[32m SUCCESS[39m (0 secs / 0.474 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 53 of 369[32m SUCCESS[39m (0 secs / 0.477 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 53 of 369[32m SUCCESS[39m (0 secs / 0.477 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 54 of 369[32m SUCCESS[39m (0 secs / 0.481 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 54 of 369[32m SUCCESS[39m (0 secs / 0.481 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 55 of 369[32m SUCCESS[39m (0 secs / 0.484 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 55 of 369[32m SUCCESS[39m (0 secs / 0.484 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 56 of 369[32m SUCCESS[39m (0 secs / 0.487 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 56 of 369[32m SUCCESS[39m (0 secs / 0.487 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 57 of 369[32m SUCCESS[39m (0 secs / 0.495 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 57 of 369[32m SUCCESS[39m (0 secs / 0.495 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 58 of 369[32m SUCCESS[39m (0 secs / 0.498 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 58 of 369[32m SUCCESS[39m (0 secs / 0.498 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 59 of 369[32m SUCCESS[39m (0 secs / 0.501 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 59 of 369[32m SUCCESS[39m (0 secs / 0.501 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 60 of 369[32m SUCCESS[39m (0 secs / 0.505 secs)
+[1A[2KLOG: [36m'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 60 of 369[32m SUCCESS[39m (0 secs / 0.505 secs)
+LOG: 'UIEditorSpec: TestBed Compiled. mockSettingsService has saveSettings:', true
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 61 of 369[32m SUCCESS[39m (0 secs / 0.509 secs)
+[1A[2KLOG: [36m'TranslationService: Loading translations for en...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 61 of 369[32m SUCCESS[39m (0 secs / 0.509 secs)
+LOG: 'TranslationService: Loading translations for en...'
+[1A[2KLOG: [36m'TranslationService: Loaded translations for en:', Object{HELLO: 'Hello World'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 61 of 369[32m SUCCESS[39m (0 secs / 0.509 secs)
+LOG: 'TranslationService: Loaded translations for en:', Object{HELLO: 'Hello World'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 62 of 369[32m SUCCESS[39m (0 secs / 0.514 secs)
+[1A[2KLOG: [36m'TranslationService: Loading translations for en...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 62 of 369[32m SUCCESS[39m (0 secs / 0.514 secs)
+LOG: 'TranslationService: Loading translations for en...'
+[1A[2KLOG: [36m'TranslationService: Loaded translations for en:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 62 of 369[32m SUCCESS[39m (0 secs / 0.514 secs)
+LOG: 'TranslationService: Loaded translations for en:', Object{}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 63 of 369[32m SUCCESS[39m (0 secs / 0.515 secs)
+[1A[2KLOG: [36m'TranslationService: Loading translations for en...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 63 of 369[32m SUCCESS[39m (0 secs / 0.515 secs)
+LOG: 'TranslationService: Loading translations for en...'
+[1A[2KLOG: [36m'TranslationService: Loaded translations for en:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 63 of 369[32m SUCCESS[39m (0 secs / 0.515 secs)
+LOG: 'TranslationService: Loaded translations for en:', Object{}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 64 of 369[32m SUCCESS[39m (0 secs / 0.516 secs)
+[1A[2KLOG: [36m'TranslationService: Loading translations for fr...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 64 of 369[32m SUCCESS[39m (0 secs / 0.516 secs)
+LOG: 'TranslationService: Loading translations for fr...'
+[1A[2KLOG: [36m'TranslationService: Loaded translations for fr:', Object{TEST: 'Test FR'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 64 of 369[32m SUCCESS[39m (0 secs / 0.516 secs)
+LOG: 'TranslationService: Loaded translations for fr:', Object{TEST: 'Test FR'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 65 of 369[32m SUCCESS[39m (0 secs / 0.518 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 65 of 369[32m SUCCESS[39m (0 secs / 0.518 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 65 of 369[32m SUCCESS[39m (0 secs / 0.518 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: []}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 65 of 369[32m SUCCESS[39m (0 secs / 0.518 secs)
+LOG: 'Preview heats response:', Object{heats: []}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 66 of 369[32m SUCCESS[39m (0 secs / 0.598 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 67 of 369[32m SUCCESS[39m (0 secs / 0.6 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 68 of 369[32m SUCCESS[39m (0 secs / 0.603 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 69 of 369[32m SUCCESS[39m (0 secs / 0.605 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 69 of 369[32m SUCCESS[39m (0 secs / 0.605 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 69 of 369[32m SUCCESS[39m (0 secs / 0.605 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: []}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 69 of 369[32m SUCCESS[39m (0 secs / 0.605 secs)
+LOG: 'Preview heats response:', Object{heats: []}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 70 of 369[32m SUCCESS[39m (0 secs / 0.617 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 71 of 369[32m SUCCESS[39m (0 secs / 0.619 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 72 of 369[32m SUCCESS[39m (0 secs / 0.622 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 72 of 369[32m SUCCESS[39m (0 secs / 0.622 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 72 of 369[32m SUCCESS[39m (0 secs / 0.622 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: []}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 72 of 369[32m SUCCESS[39m (0 secs / 0.622 secs)
+LOG: 'Preview heats response:', Object{heats: []}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 73 of 369[32m SUCCESS[39m (0 secs / 0.634 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 74 of 369[32m SUCCESS[39m (0 secs / 0.636 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 75 of 369[32m SUCCESS[39m (0 secs / 0.638 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 76 of 369[32m SUCCESS[39m (0 secs / 0.64 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 77 of 369[32m SUCCESS[39m (0 secs / 0.642 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 78 of 369[32m SUCCESS[39m (0 secs / 0.644 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', 'new', 'driverCount:', 10, 'trackId:', '', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 78 of 369[32m SUCCESS[39m (0 secs / 0.644 secs)
+LOG: 'loadHeats called - entity_id:', 'new', 'driverCount:', 10, 'trackId:', '', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Clearing heats - missing required data'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 78 of 369[32m SUCCESS[39m (0 secs / 0.644 secs)
+LOG: 'Clearing heats - missing required data'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 79 of 369[32m SUCCESS[39m (0 secs / 0.646 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: []}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'Preview heats response:', Object{heats: []}
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: []}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 80 of 369[32m SUCCESS[39m (0 secs / 0.648 secs)
+LOG: 'Preview heats response:', Object{heats: []}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 81 of 369[32m SUCCESS[39m (0 secs / 0.66 secs)
+[1A[2KLOG: [36m'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 81 of 369[32m SUCCESS[39m (0 secs / 0.66 secs)
+LOG: 'loadHeats called - entity_id:', '1', 'driverCount:', 10, 'trackId:', 'track1', 'rotationType:', 'RoundRobin'
+[1A[2KLOG: [36m'Calling previewHeats with current form values'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 81 of 369[32m SUCCESS[39m (0 secs / 0.66 secs)
+LOG: 'Calling previewHeats with current form values'
+[1A[2KLOG: [36m'Preview heats response:', Object{heats: [Object{heatNumber: ..., lanes: ...}]}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 81 of 369[32m SUCCESS[39m (0 secs / 0.66 secs)
+LOG: 'Preview heats response:', Object{heats: [Object{heatNumber: ..., lanes: ...}]}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 82 of 369[32m SUCCESS[39m (0 secs / 0.671 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 83 of 369[32m SUCCESS[39m (0 secs / 0.673 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 84 of 369[32m SUCCESS[39m (0 secs / 0.674 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 85 of 369[32m SUCCESS[39m (0 secs / 0.676 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 86 of 369[32m SUCCESS[39m (0 secs / 0.678 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 87 of 369[32m SUCCESS[39m (0 secs / 0.681 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 88 of 369[32m SUCCESS[39m (0 secs / 0.683 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 89 of 369[32m SUCCESS[39m (0 secs / 0.685 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 90 of 369[32m SUCCESS[39m (0 secs / 0.688 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 91 of 369[32m SUCCESS[39m (0 secs / 0.689 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 92 of 369[32m SUCCESS[39m (0 secs / 0.691 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 93 of 369[32m SUCCESS[39m (0 secs / 0.693 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 94 of 369[32m SUCCESS[39m (0 secs / 0.695 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 95 of 369[32m SUCCESS[39m (0 secs / 0.697 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 96 of 369[32m SUCCESS[39m (0 secs / 0.698 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 97 of 369[32m SUCCESS[39m (0 secs / 0.699 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 98 of 369[32m SUCCESS[39m (0 secs / 0.701 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 99 of 369[32m SUCCESS[39m (0 secs / 0.703 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 100 of 369[32m SUCCESS[39m (0 secs / 0.704 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 101 of 369[32m SUCCESS[39m (0 secs / 0.706 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 102 of 369[32m SUCCESS[39m (0 secs / 0.708 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 103 of 369[32m SUCCESS[39m (0 secs / 0.71 secs)
+[1A[2KLOG: [36m'HeatConverter: Processed 1 valid drivers for heat -1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 103 of 369[32m SUCCESS[39m (0 secs / 0.71 secs)
+LOG: 'HeatConverter: Processed 1 valid drivers for heat -1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 104 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+[1A[2KLOG: [36m'HeatConverter (Client): DriverHeatData hd1 has actualDriver:', 'Actual Driver'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 104 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'HeatConverter (Client): DriverHeatData hd1 has actualDriver:', 'Actual Driver'
+[1A[2KLOG: [36m'HeatConverter: Processed 1 valid drivers for heat -1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 104 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'HeatConverter: Processed 1 valid drivers for heat -1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 105 of 369[32m SUCCESS[39m (0 secs / 0.711 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 106 of 369[32m SUCCESS[39m (0 secs / 0.738 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 107 of 369[32m SUCCESS[39m (0 secs / 0.742 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 108 of 369[32m SUCCESS[39m (0 secs / 0.745 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 109 of 369[32m SUCCESS[39m (0 secs / 0.747 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 110 of 369[32m SUCCESS[39m (0 secs / 0.749 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 111 of 369[32m SUCCESS[39m (0 secs / 0.751 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 112 of 369[32m SUCCESS[39m (0 secs / 0.753 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 113 of 369[32m SUCCESS[39m (0 secs / 0.76 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 114 of 369[32m SUCCESS[39m (0 secs / 0.763 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 115 of 369[32m SUCCESS[39m (0 secs / 0.765 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 116 of 369[32m SUCCESS[39m (0 secs / 0.767 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 117 of 369[32m SUCCESS[39m (0 secs / 0.77 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 118 of 369[32m SUCCESS[39m (0 secs / 0.773 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 119 of 369[32m SUCCESS[39m (0 secs / 0.777 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 120 of 369[32m SUCCESS[39m (0 secs / 0.78 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 121 of 369[32m SUCCESS[39m (0 secs / 0.784 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 122 of 369[32m SUCCESS[39m (0 secs / 0.788 secs)
+[1A[2KLOG: [36m'RacedayComponent: Loading race data...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 122 of 369[32m SUCCESS[39m (0 secs / 0.788 secs)
+LOG: 'RacedayComponent: Loading race data...'
+[1A[2KLOG: [36m'RacedayComponent: using selected race:', Object{track: Object{lanes: []}}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 122 of 369[32m SUCCESS[39m (0 secs / 0.788 secs)
+LOG: 'RacedayComponent: using selected race:', Object{track: Object{lanes: []}}
+[1A[2KLOG: [36m'RacedayComponent: Race tracks/lanes:', Object{lanes: []}, [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 122 of 369[32m SUCCESS[39m (0 secs / 0.788 secs)
+LOG: 'RacedayComponent: Race tracks/lanes:', Object{lanes: []}, []
+[1A[2KWARN: [36m'RacedayComponent: No heats available from server.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 122 of 369[32m SUCCESS[39m (0 secs / 0.788 secs)
+WARN: 'RacedayComponent: No heats available from server.'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: true, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: true, lap: false}
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 123 of 369[32m SUCCESS[39m (0 secs / 0.791 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: true, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: true, lap: false}
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KWARN: [36m'Flag resolution for red: No asset found, using ultimate fallback.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 124 of 369[32m SUCCESS[39m (0 secs / 0.797 secs)
+WARN: 'Flag resolution for red: No asset found, using ultimate fallback.'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 125 of 369[32m SUCCESS[39m (0 secs / 0.802 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 126 of 369[32m SUCCESS[39m (0 secs / 0.806 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 127 of 369[32m SUCCESS[39m (0 secs / 0.808 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 128 of 369[32m SUCCESS[39m (0 secs / 0.815 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 129 of 369[32m SUCCESS[39m (0 secs / 0.817 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 130 of 369[32m SUCCESS[39m (0 secs / 0.819 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 131 of 369[32m SUCCESS[39m (0 secs / 0.821 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 132 of 369[32m SUCCESS[39m (0 secs / 0.824 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 133 of 369[32m SUCCESS[39m (0 secs / 0.827 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 134 of 369[32m SUCCESS[39m (0 secs / 0.83 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 135 of 369[32m SUCCESS[39m (0 secs / 0.833 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 136 of 369[32m SUCCESS[39m (0 secs / 0.836 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 137 of 369[32m SUCCESS[39m (0 secs / 0.838 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 138 of 369[32m SUCCESS[39m (0 secs / 0.84 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 139 of 369[32m SUCCESS[39m (0 secs / 0.843 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 140 of 369[32m SUCCESS[39m (0 secs / 0.845 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 141 of 369[32m SUCCESS[39m (0 secs / 0.848 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 142 of 369[32m SUCCESS[39m (0 secs / 0.851 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 143 of 369[32m SUCCESS[39m (0 secs / 0.853 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 144 of 369[32m SUCCESS[39m (0 secs / 0.855 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 145 of 369[32m SUCCESS[39m (0 secs / 0.859 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+[1A[2KLOG: [36m'RacedayComponent: Hydrating 0 drivers into cache.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+LOG: 'RacedayComponent: Hydrating 0 drivers into cache.'
+[1A[2KLOG: [36m'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', [][39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+LOG: 'RacedayComponent: Hydration COMPLETE. Current Cache Keys:', []
+[1A[2KLOG: [36m'RacedayComponent: Processing Race Update:', Object{}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+LOG: 'RacedayComponent: Processing Race Update:', Object{}
+[1A[2KLOG: [36m'Lap Received:', null[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+LOG: 'Lap Received:', null
+[1A[2KWARN: [36m'Lap received but heat or drivers not ready', Object{heat: false, lap: false}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 146 of 369[32m SUCCESS[39m (0 secs / 0.862 secs)
+WARN: 'Lap received but heat or drivers not ready', Object{heat: false, lap: false}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 147 of 369[32m SUCCESS[39m (0 secs / 0.865 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 148 of 369[32m SUCCESS[39m (0 secs / 0.884 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 149 of 369[32m SUCCESS[39m (0 secs / 0.888 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 150 of 369[32m SUCCESS[39m (0 secs / 0.893 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 151 of 369[32m SUCCESS[39m (0 secs / 0.897 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 152 of 369[32m SUCCESS[39m (0 secs / 0.9 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 153 of 369[32m SUCCESS[39m (0 secs / 0.905 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 154 of 369[32m SUCCESS[39m (0 secs / 0.909 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 155 of 369[32m SUCCESS[39m (0 secs / 0.913 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 156 of 369[32m SUCCESS[39m (0 secs / 0.916 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 157 of 369[32m SUCCESS[39m (0 secs / 0.92 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 158 of 369[32m SUCCESS[39m (0 secs / 0.923 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 159 of 369[32m SUCCESS[39m (0 secs / 0.927 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 160 of 369[32m SUCCESS[39m (0 secs / 0.931 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 161 of 369[32m SUCCESS[39m (0 secs / 0.935 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 162 of 369[32m SUCCESS[39m (0 secs / 0.939 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 163 of 369[32m SUCCESS[39m (0 secs / 0.943 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 164 of 369[32m SUCCESS[39m (0 secs / 0.946 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 165 of 369[32m SUCCESS[39m (0 secs / 0.95 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 166 of 369[32m SUCCESS[39m (0 secs / 0.954 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 167 of 369[32m SUCCESS[39m (0 secs / 0.958 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 168 of 369[32m SUCCESS[39m (0 secs / 0.962 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 169 of 369[32m SUCCESS[39m (0 secs / 0.965 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 170 of 369[32m SUCCESS[39m (0 secs / 0.97 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 171 of 369[32m SUCCESS[39m (0 secs / 0.98 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 172 of 369[32m SUCCESS[39m (0 secs / 0.984 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 173 of 369[32m SUCCESS[39m (0 secs / 0.988 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 174 of 369[32m SUCCESS[39m (0 secs / 0.992 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 175 of 369[32m SUCCESS[39m (0 secs / 0.996 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 176 of 369[32m SUCCESS[39m (0 secs / 1 sec)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 177 of 369[32m SUCCESS[39m (0 secs / 1.003 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 178 of 369[32m SUCCESS[39m (0 secs / 1.006 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 179 of 369[32m SUCCESS[39m (0 secs / 1.01 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 180 of 369[32m SUCCESS[39m (0 secs / 1.026 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 181 of 369[32m SUCCESS[39m (0 secs / 1.032 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 182 of 369[32m SUCCESS[39m (0 secs / 1.035 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 183 of 369[32m SUCCESS[39m (0 secs / 1.038 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 184 of 369[32m SUCCESS[39m (0 secs / 1.043 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 185 of 369[32m SUCCESS[39m (0 secs / 1.047 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 186 of 369[32m SUCCESS[39m (0 secs / 1.051 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 187 of 369[32m SUCCESS[39m (0 secs / 1.058 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 188 of 369[32m SUCCESS[39m (0 secs / 1.06 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 189 of 369[32m SUCCESS[39m (0 secs / 1.061 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 190 of 369[32m SUCCESS[39m (0 secs / 1.063 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 191 of 369[32m SUCCESS[39m (0 secs / 1.064 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 192 of 369[32m SUCCESS[39m (0 secs / 1.065 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 193 of 369[32m SUCCESS[39m (0 secs / 1.066 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 194 of 369[32m SUCCESS[39m (0 secs / 1.068 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 195 of 369[32m SUCCESS[39m (0 secs / 1.069 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 196 of 369[32m SUCCESS[39m (0 secs / 1.071 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 197 of 369[32m SUCCESS[39m (0 secs / 1.072 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 198 of 369[32m SUCCESS[39m (0 secs / 1.074 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 199 of 369[32m SUCCESS[39m (0 secs / 1.075 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 200 of 369[32m SUCCESS[39m (0 secs / 1.076 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 201 of 369[32m SUCCESS[39m (0 secs / 1.076 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 202 of 369[32m SUCCESS[39m (0 secs / 1.077 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 203 of 369[32m SUCCESS[39m (0 secs / 1.077 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 204 of 369[32m SUCCESS[39m (0 secs / 1.077 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 205 of 369[32m SUCCESS[39m (0 secs / 1.088 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 206 of 369[32m SUCCESS[39m (0 secs / 1.091 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 207 of 369[32m SUCCESS[39m (0 secs / 1.094 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 208 of 369[32m SUCCESS[39m (0 secs / 1.097 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 209 of 369[32m SUCCESS[39m (0 secs / 1.099 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 210 of 369[32m SUCCESS[39m (0 secs / 1.102 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 211 of 369[32m SUCCESS[39m (0 secs / 1.104 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 211 of 369[32m SUCCESS[39m (0 secs / 1.104 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 211 of 369[32m SUCCESS[39m (0 secs / 1.104 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 212 of 369[32m SUCCESS[39m (0 secs / 1.167 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 212 of 369[32m SUCCESS[39m (0 secs / 1.167 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 212 of 369[32m SUCCESS[39m (0 secs / 1.167 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 213 of 369[32m SUCCESS[39m (0 secs / 1.189 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 213 of 369[32m SUCCESS[39m (0 secs / 1.189 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 213 of 369[32m SUCCESS[39m (0 secs / 1.189 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 214 of 369[32m SUCCESS[39m (0 secs / 1.21 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 214 of 369[32m SUCCESS[39m (0 secs / 1.21 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 214 of 369[32m SUCCESS[39m (0 secs / 1.21 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 215 of 369[32m SUCCESS[39m (0 secs / 1.233 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 215 of 369[32m SUCCESS[39m (0 secs / 1.233 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 215 of 369[32m SUCCESS[39m (0 secs / 1.233 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 216 of 369[32m SUCCESS[39m (0 secs / 1.254 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 216 of 369[32m SUCCESS[39m (0 secs / 1.254 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 216 of 369[32m SUCCESS[39m (0 secs / 1.254 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 217 of 369[32m SUCCESS[39m (0 secs / 1.275 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 217 of 369[32m SUCCESS[39m (0 secs / 1.275 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 217 of 369[32m SUCCESS[39m (0 secs / 1.275 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 217 of 369[32m SUCCESS[39m (0 secs / 1.275 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 218 of 369[32m SUCCESS[39m (0 secs / 1.296 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 218 of 369[32m SUCCESS[39m (0 secs / 1.296 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 218 of 369[32m SUCCESS[39m (0 secs / 1.296 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 219 of 369[32m SUCCESS[39m (0 secs / 1.316 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 219 of 369[32m SUCCESS[39m (0 secs / 1.316 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 219 of 369[32m SUCCESS[39m (0 secs / 1.316 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 220 of 369[32m SUCCESS[39m (0 secs / 1.338 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 220 of 369[32m SUCCESS[39m (0 secs / 1.338 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 220 of 369[32m SUCCESS[39m (0 secs / 1.338 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 221 of 369[32m SUCCESS[39m (0 secs / 1.367 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 221 of 369[32m SUCCESS[39m (0 secs / 1.367 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 221 of 369[32m SUCCESS[39m (0 secs / 1.367 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 222 of 369[32m SUCCESS[39m (0 secs / 1.389 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 222 of 369[32m SUCCESS[39m (0 secs / 1.389 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 222 of 369[32m SUCCESS[39m (0 secs / 1.389 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 223 of 369[32m SUCCESS[39m (0 secs / 1.424 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 223 of 369[32m SUCCESS[39m (0 secs / 1.424 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 223 of 369[32m SUCCESS[39m (0 secs / 1.424 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 224 of 369[32m SUCCESS[39m (0 secs / 1.452 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 224 of 369[32m SUCCESS[39m (0 secs / 1.452 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 224 of 369[32m SUCCESS[39m (0 secs / 1.452 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 225 of 369[32m SUCCESS[39m (0 secs / 1.472 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 225 of 369[32m SUCCESS[39m (0 secs / 1.472 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 225 of 369[32m SUCCESS[39m (0 secs / 1.472 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 226 of 369[32m SUCCESS[39m (0 secs / 1.493 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 226 of 369[32m SUCCESS[39m (0 secs / 1.493 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 226 of 369[32m SUCCESS[39m (0 secs / 1.493 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 227 of 369[32m SUCCESS[39m (0 secs / 1.512 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 227 of 369[32m SUCCESS[39m (0 secs / 1.512 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 227 of 369[32m SUCCESS[39m (0 secs / 1.512 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 228 of 369[32m SUCCESS[39m (0 secs / 1.531 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 228 of 369[32m SUCCESS[39m (0 secs / 1.531 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 228 of 369[32m SUCCESS[39m (0 secs / 1.531 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 229 of 369[32m SUCCESS[39m (0 secs / 1.552 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 229 of 369[32m SUCCESS[39m (0 secs / 1.552 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 229 of 369[32m SUCCESS[39m (0 secs / 1.552 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 230 of 369[32m SUCCESS[39m (0 secs / 1.574 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 230 of 369[32m SUCCESS[39m (0 secs / 1.574 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 230 of 369[32m SUCCESS[39m (0 secs / 1.574 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 231 of 369[32m SUCCESS[39m (0 secs / 1.594 secs)
+[1A[2KLOG: [36m'Interface initialized successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 231 of 369[32m SUCCESS[39m (0 secs / 1.594 secs)
+LOG: 'Interface initialized successfully'
+[1A[2KLOG: [36m'Interface closed successfully'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 231 of 369[32m SUCCESS[39m (0 secs / 1.594 secs)
+LOG: 'Interface closed successfully'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 232 of 369[32m SUCCESS[39m (0 secs / 1.613 secs)
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 232 of 369[32m SUCCESS[39m (0 secs / 1.613 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 233 of 369[32m SUCCESS[39m (0 secs / 1.643 secs)
+[33m02 03 2026 17:15:30.051:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 233 of 369[32m SUCCESS[39m (0 secs / 1.643 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 234 of 369[32m SUCCESS[39m (0 secs / 1.648 secs)
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 234 of 369[32m SUCCESS[39m (0 secs / 1.648 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 235 of 369[32m SUCCESS[39m (0 secs / 1.653 secs)
+[33m02 03 2026 17:15:30.059:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 235 of 369[32m SUCCESS[39m (0 secs / 1.653 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 236 of 369[32m SUCCESS[39m (0 secs / 1.657 secs)
+[33m02 03 2026 17:15:30.067:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 236 of 369[32m SUCCESS[39m (0 secs / 1.657 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 237 of 369[32m SUCCESS[39m (0 secs / 1.662 secs)
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 237 of 369[32m SUCCESS[39m (0 secs / 1.662 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 238 of 369[32m SUCCESS[39m (0 secs / 1.667 secs)
+[33m02 03 2026 17:15:30.077:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 238 of 369[32m SUCCESS[39m (0 secs / 1.667 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 239 of 369[32m SUCCESS[39m (0 secs / 1.672 secs)
+[33m02 03 2026 17:15:30.084:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 239 of 369[32m SUCCESS[39m (0 secs / 1.672 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 240 of 369[32m SUCCESS[39m (0 secs / 1.678 secs)
+[33m02 03 2026 17:15:30.093:WARN [web-server]: [39m404: /_karma_webpack_/img2
+[1A[2KLOG: [36m'AssetManager: Loaded active database stats:', Object{name: 'test_db'}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 240 of 369[32m SUCCESS[39m (0 secs / 1.678 secs)
+LOG: 'AssetManager: Loaded active database stats:', Object{name: 'test_db'}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 241 of 369[32m SUCCESS[39m (0 secs / 1.683 secs)
+[33m02 03 2026 17:15:30.096:WARN [web-server]: [39m404: /_karma_webpack_/assets/images/am_icon_image_set.png
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should update lane properties FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 242 of 369[31m (1 FAILED)[39m (0 secs / 1.688 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should update existing track FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 243 of 369[31m (2 FAILED)[39m (0 secs / 1.691 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should save as new track FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 244 of 369[31m (3 FAILED)[39m (0 secs / 1.694 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should stay on page and keep original ID when save as new fails FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 245 of 369[31m (4 FAILED)[39m (0 secs / 1.697 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should create FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 246 of 369[31m (5 FAILED)[39m (0 secs / 1.7 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should load track data for editing FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 247 of 369[31m (6 FAILED)[39m (0 secs / 1.703 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should handle lane management FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 248 of 369[31m (7 FAILED)[39m (0 secs / 1.706 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should check for unsaved changes (dirty state) FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 249 of 369[31m (8 FAILED)[39m (0 secs / 1.709 secs)
+[1A[2K[31mChrome Headless 145.0.0.0 (Mac OS 10.15.7) TrackEditorComponent should handle save error FAILED[39m
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	
+	"): ng:///TrackEditorComponent/template.html@81:18
+	Error: Errors during JIT compilation of template for TrackEditorComponent: Parser Error: Unexpected token '||' at column 30 in [ 'TE_INTERFACES' | translate || 'Interfaces' ] in ng:///TrackEditorComponent/template.html@81:18 ("n class="expander-icon" [class.collapsed]="!sectionsExpanded.interfaces">▼</span>
+	              <h4>[ERROR ->]{{ 'TE_INTERFACES' | translate || 'Interfaces' }}</h4>
+	            </div>
+	"): ng:///TrackEditorComponent/template.html@81:18
+	    at parseJitTemplate (node_modules/@angular/compiler/fesm2022/compiler.mjs:26771:11)
+	    at CompilerFacadeImpl.compileComponent (node_modules/@angular/compiler/fesm2022/compiler.mjs:26484:9)
+	    at TrackEditorComponent.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17625:37)
+	    at getComponentDef (node_modules/@angular/core/fesm2022/_effect-chunk2.mjs:489:14)
+	    at forEach (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17372:32)
+	    at Array.forEach (<anonymous>)
+	    at verifySemanticsOfNgModuleDef (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17352:16)
+	    at DynamicTestModule.get (node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:17306:22)
+	    at TestBedCompiler.applyProviderOverridesInScope (node_modules/@angular/core/fesm2022/testing.mjs:825:29)
+	    at TestBedCompiler.compileTestModule (node_modules/@angular/core/fesm2022/testing.mjs:1065:10)
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 250 of 369[31m (9 FAILED)[39m (0 secs / 1.712 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 251 of 369[31m (9 FAILED)[39m (0 secs / 1.727 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 252 of 369[31m (9 FAILED)[39m (0 secs / 1.732 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 253 of 369[31m (9 FAILED)[39m (0 secs / 1.738 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 254 of 369[31m (9 FAILED)[39m (0 secs / 1.743 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 255 of 369[31m (9 FAILED)[39m (0 secs / 1.749 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 256 of 369[31m (9 FAILED)[39m (0 secs / 1.754 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 257 of 369[31m (9 FAILED)[39m (0 secs / 1.769 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 258 of 369[31m (9 FAILED)[39m (0 secs / 1.774 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 259 of 369[31m (9 FAILED)[39m (0 secs / 1.779 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 260 of 369[31m (9 FAILED)[39m (0 secs / 1.785 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 261 of 369[31m (9 FAILED)[39m (0 secs / 1.79 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 262 of 369[31m (9 FAILED)[39m (0 secs / 1.795 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 263 of 369[31m (9 FAILED)[39m (0 secs / 1.799 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 264 of 369[31m (9 FAILED)[39m (0 secs / 1.801 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 265 of 369[31m (9 FAILED)[39m (0 secs / 1.802 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 266 of 369[31m (9 FAILED)[39m (0 secs / 1.804 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 267 of 369[31m (9 FAILED)[39m (0 secs / 1.806 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 268 of 369[31m (9 FAILED)[39m (0 secs / 1.81 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 269 of 369[31m (9 FAILED)[39m (0 secs / 1.812 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 270 of 369[31m (9 FAILED)[39m (0 secs / 1.814 secs)
+[1A[2KLOG: [36m'Playing audio from URL:', 'test.mp3'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 270 of 369[31m (9 FAILED)[39m (0 secs / 1.814 secs)
+LOG: 'Playing audio from URL:', 'test.mp3'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 271 of 369[31m (9 FAILED)[39m (0 secs / 1.816 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 272 of 369[31m (9 FAILED)[39m (0 secs / 1.818 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 273 of 369[31m (9 FAILED)[39m (0 secs / 1.821 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 274 of 369[31m (9 FAILED)[39m (0 secs / 1.824 secs)
+[1A[2KLOG: [36m'Connection restored!'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 274 of 369[31m (9 FAILED)[39m (0 secs / 1.824 secs)
+LOG: 'Connection restored!'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 275 of 369[31m (9 FAILED)[39m (0 secs / 1.827 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 276 of 369[31m (9 FAILED)[39m (0 secs / 1.828 secs)
+[1A[2KLOG: [36m'Connection restored!'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 276 of 369[31m (9 FAILED)[39m (0 secs / 1.828 secs)
+LOG: 'Connection restored!'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 277 of 369[31m (9 FAILED)[39m (0 secs / 1.83 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 278 of 369[31m (9 FAILED)[39m (0 secs / 1.831 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 279 of 369[31m (9 FAILED)[39m (0 secs / 1.832 secs)
+[1A[2KLOG: [36m'Connection restored!'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 279 of 369[31m (9 FAILED)[39m (0 secs / 1.832 secs)
+LOG: 'Connection restored!'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 280 of 369[31m (9 FAILED)[39m (0 secs / 1.834 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 281 of 369[31m (9 FAILED)[39m (0 secs / 1.835 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 281 of 369[31m (9 FAILED)[39m (0 secs / 1.835 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 282 of 369[31m (9 FAILED)[39m (0 secs / 1.849 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 282 of 369[31m (9 FAILED)[39m (0 secs / 1.849 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 283 of 369[31m (9 FAILED)[39m (0 secs / 1.854 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 283 of 369[31m (9 FAILED)[39m (0 secs / 1.854 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't2', name: 'Team Beta', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d2']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 283 of 369[31m (9 FAILED)[39m (0 secs / 1.854 secs)
+LOG: 'Selecting team:', Team{entity_id: 't2', name: 'Team Beta', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d2']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 284 of 369[31m (9 FAILED)[39m (0 secs / 1.863 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 284 of 369[31m (9 FAILED)[39m (0 secs / 1.863 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 285 of 369[31m (9 FAILED)[39m (0 secs / 1.868 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 285 of 369[31m (9 FAILED)[39m (0 secs / 1.868 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 286 of 369[31m (9 FAILED)[39m (0 secs / 1.873 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 286 of 369[31m (9 FAILED)[39m (0 secs / 1.873 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 286 of 369[31m (9 FAILED)[39m (0 secs / 1.873 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 287 of 369[31m (9 FAILED)[39m (0 secs / 1.879 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 287 of 369[31m (9 FAILED)[39m (0 secs / 1.879 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 287 of 369[31m (9 FAILED)[39m (0 secs / 1.879 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 287 of 369[31m (9 FAILED)[39m (0 secs / 1.879 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 288 of 369[31m (9 FAILED)[39m (0 secs / 1.885 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 288 of 369[31m (9 FAILED)[39m (0 secs / 1.885 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 289 of 369[31m (9 FAILED)[39m (0 secs / 1.891 secs)
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 289 of 369[31m (9 FAILED)[39m (0 secs / 1.891 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 289 of 369[31m (9 FAILED)[39m (0 secs / 1.891 secs)
+LOG: 'Selecting team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Update team clicked. Selected Team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 289 of 369[31m (9 FAILED)[39m (0 secs / 1.891 secs)
+LOG: 'Update team clicked. Selected Team:', Team{entity_id: 't1', name: 'Team Alpha', avatarUrl: 'assets/images/default_avatar.svg', driverIds: ['d1']}
+[1A[2KLOG: [36m'Navigating to editor with ID:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 289 of 369[31m (9 FAILED)[39m (0 secs / 1.891 secs)
+LOG: 'Navigating to editor with ID:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 290 of 369[31m (9 FAILED)[39m (0 secs / 1.896 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 291 of 369[31m (9 FAILED)[39m (0 secs / 1.942 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 292 of 369[31m (9 FAILED)[39m (0 secs / 1.95 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 293 of 369[31m (9 FAILED)[39m (0 secs / 1.957 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 294 of 369[31m (9 FAILED)[39m (0 secs / 1.964 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 295 of 369[31m (9 FAILED)[39m (0 secs / 1.971 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 296 of 369[31m (9 FAILED)[39m (0 secs / 2.038 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 297 of 369[31m (9 FAILED)[39m (0 secs / 2.047 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 298 of 369[31m (9 FAILED)[39m (0 secs / 2.055 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 299 of 369[31m (9 FAILED)[39m (0 secs / 2.069 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 300 of 369[31m (9 FAILED)[39m (0 secs / 2.084 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 301 of 369[31m (9 FAILED)[39m (0 secs / 2.091 secs)
+[1A[2KLOG: [36m'Starting race: Grand Prix with 1 participants'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 301 of 369[31m (9 FAILED)[39m (0 secs / 2.091 secs)
+LOG: 'Starting race: Grand Prix with 1 participants'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 302 of 369[31m (9 FAILED)[39m (0 secs / 2.099 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 303 of 369[31m (9 FAILED)[39m (0 secs / 2.113 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 304 of 369[31m (9 FAILED)[39m (0 secs / 2.12 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 305 of 369[31m (9 FAILED)[39m (0 secs / 2.126 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 306 of 369[31m (9 FAILED)[39m (0 secs / 2.133 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 307 of 369[31m (9 FAILED)[39m (0 secs / 2.145 secs)
+[1A[2KLOG: [36m'Starting race: Grand Prix with 1 participants'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 307 of 369[31m (9 FAILED)[39m (0 secs / 2.145 secs)
+LOG: 'Starting race: Grand Prix with 1 participants'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 308 of 369[31m (9 FAILED)[39m (0 secs / 2.151 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 309 of 369[31m (9 FAILED)[39m (0 secs / 2.157 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 310 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 311 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 312 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 313 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 314 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 315 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 316 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 317 of 369[31m (9 FAILED)[39m (0 secs / 2.164 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 318 of 369[31m (9 FAILED)[39m (0 secs / 2.168 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 319 of 369[31m (9 FAILED)[39m (0 secs / 2.17 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 320 of 369[31m (9 FAILED)[39m (0 secs / 2.172 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 321 of 369[31m (9 FAILED)[39m (0 secs / 2.173 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 322 of 369[31m (9 FAILED)[39m (0 secs / 2.175 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 323 of 369[31m (9 FAILED)[39m (0 secs / 2.177 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 324 of 369[31m (9 FAILED)[39m (0 secs / 2.179 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 325 of 369[31m (9 FAILED)[39m (0 secs / 2.181 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 326 of 369[31m (9 FAILED)[39m (0 secs / 2.182 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 327 of 369[31m (9 FAILED)[39m (0 secs / 2.184 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 328 of 369[31m (9 FAILED)[39m (0 secs / 2.185 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 329 of 369[31m (9 FAILED)[39m (0 secs / 2.187 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 330 of 369[31m (9 FAILED)[39m (0 secs / 2.187 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 331 of 369[31m (9 FAILED)[39m (0 secs / 2.187 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 332 of 369[31m (9 FAILED)[39m (0 secs / 2.187 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 333 of 369[31m (9 FAILED)[39m (0 secs / 2.199 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 334 of 369[31m (9 FAILED)[39m (0 secs / 2.201 secs)
+[1A[2KWARN: [36m'Connection lost, starting retry sequence...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 334 of 369[31m (9 FAILED)[39m (0 secs / 2.201 secs)
+WARN: 'Connection lost, starting retry sequence...'
+[1A[2KWARN: [36m'Connection retry timed out. Resetting to splash screen.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 334 of 369[31m (9 FAILED)[39m (0 secs / 2.201 secs)
+WARN: 'Connection retry timed out. Resetting to splash screen.'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 335 of 369[31m (9 FAILED)[39m (0 secs / 2.205 secs)
+[1A[2KWARN: [36m'Connection lost, starting retry sequence...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 335 of 369[31m (9 FAILED)[39m (0 secs / 2.205 secs)
+WARN: 'Connection lost, starting retry sequence...'
+[1A[2KWARN: [36m'Connection retry timed out. Resetting to splash screen.'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 335 of 369[31m (9 FAILED)[39m (0 secs / 2.205 secs)
+WARN: 'Connection retry timed out. Resetting to splash screen.'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 336 of 369[31m (9 FAILED)[39m (0 secs / 2.209 secs)
+[1A[2KWARN: [36m'Connection lost, starting retry sequence...'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 336 of 369[31m (9 FAILED)[39m (0 secs / 2.209 secs)
+WARN: 'Connection lost, starting retry sequence...'
+[1A[2KLOG: [36m'Connection restored!'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 336 of 369[31m (9 FAILED)[39m (0 secs / 2.209 secs)
+LOG: 'Connection restored!'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 337 of 369[31m (9 FAILED)[39m (0 secs / 2.213 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 338 of 369[31m (9 FAILED)[39m (0 secs / 2.216 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 339 of 369[31m (9 FAILED)[39m (0 secs / 2.22 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 340 of 369[31m (9 FAILED)[39m (0 secs / 2.222 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 341 of 369[31m (9 FAILED)[39m (0 secs / 2.225 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 342 of 369[31m (9 FAILED)[39m (0 secs / 2.229 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 343 of 369[31m (9 FAILED)[39m (0 secs / 2.231 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 344 of 369[31m (9 FAILED)[39m (0 secs / 2.234 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 345 of 369[31m (9 FAILED)[39m (0 secs / 2.241 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 346 of 369[31m (9 FAILED)[39m (0 secs / 2.244 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 347 of 369[31m (9 FAILED)[39m (0 secs / 2.249 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 348 of 369[31m (9 FAILED)[39m (0 secs / 2.252 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 349 of 369[31m (9 FAILED)[39m (0 secs / 2.254 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 350 of 369[31m (9 FAILED)[39m (0 secs / 2.257 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 351 of 369[31m (9 FAILED)[39m (0 secs / 2.258 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 352 of 369[31m (9 FAILED)[39m (0 secs / 2.258 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 352 of 369[31m (9 FAILED)[39m (0 secs / 2.258 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 352 of 369[31m (9 FAILED)[39m (0 secs / 2.258 secs)
+LOG: 'TeamEditor loadData. ID param:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 353 of 369[31m (9 FAILED)[39m (0 secs / 2.272 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 353 of 369[31m (9 FAILED)[39m (0 secs / 2.272 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 353 of 369[31m (9 FAILED)[39m (0 secs / 2.272 secs)
+LOG: 'TeamEditor loadData. ID param:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 354 of 369[31m (9 FAILED)[39m (0 secs / 2.276 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 354 of 369[31m (9 FAILED)[39m (0 secs / 2.276 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 355 of 369[31m (9 FAILED)[39m (0 secs / 2.28 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 355 of 369[31m (9 FAILED)[39m (0 secs / 2.28 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 355 of 369[31m (9 FAILED)[39m (0 secs / 2.28 secs)
+LOG: 'TeamEditor loadData. ID param:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 356 of 369[31m (9 FAILED)[39m (0 secs / 2.284 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 356 of 369[31m (9 FAILED)[39m (0 secs / 2.284 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 356 of 369[31m (9 FAILED)[39m (0 secs / 2.284 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 357 of 369[31m (9 FAILED)[39m (0 secs / 2.289 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 357 of 369[31m (9 FAILED)[39m (0 secs / 2.289 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 357 of 369[31m (9 FAILED)[39m (0 secs / 2.289 secs)
+LOG: 'TeamEditor loadData. ID param:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 358 of 369[31m (9 FAILED)[39m (0 secs / 2.293 secs)
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 'new'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 358 of 369[31m (9 FAILED)[39m (0 secs / 2.293 secs)
+LOG: 'TeamEditor loadData. ID param:', 'new'
+[1A[2KLOG: [36m'TeamEditor loadData. ID param:', 't1'[39m
+Chrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 358 of 369[31m (9 FAILED)[39m (0 secs / 2.293 secs)
+LOG: 'TeamEditor loadData. ID param:', 't1'
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 359 of 369[31m (9 FAILED)[39m (0 secs / 2.297 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 360 of 369[31m (9 FAILED)[39m (0 secs / 2.297 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 361 of 369[31m (9 FAILED)[39m (0 secs / 2.297 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 362 of 369[31m (9 FAILED)[39m (0 secs / 2.299 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 363 of 369[31m (9 FAILED)[39m (0 secs / 2.301 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 364 of 369[31m (9 FAILED)[39m (0 secs / 2.302 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 365 of 369[31m (9 FAILED)[39m (0 secs / 2.303 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 366 of 369[31m (9 FAILED)[39m (0 secs / 2.304 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 367 of 369[31m (9 FAILED)[39m (0 secs / 2.304 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 368 of 369[31m (9 FAILED)[39m (0 secs / 2.304 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 369 of 369[31m (9 FAILED)[39m (0 secs / 2.305 secs)
+[1A[2KChrome Headless 145.0.0.0 (Mac OS 10.15.7): Executed 369 of 369[31m (9 FAILED)[39m (2.619 secs / 2.305 secs)
+[31mTOTAL: 9 FAILED, 360 SUCCESS[39m
+[32m✔[39m Browser application bundle generation complete.

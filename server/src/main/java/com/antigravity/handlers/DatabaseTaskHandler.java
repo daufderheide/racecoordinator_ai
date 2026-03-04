@@ -433,7 +433,7 @@ public class DatabaseTaskHandler {
                 track = new com.antigravity.models.Track(
                         track.getName(),
                         track.getLanes(),
-                        track.getArduinoConfig(),
+                        track.getArduinoConfigs(),
                         nextId,
                         null);
             }
@@ -464,15 +464,16 @@ public class DatabaseTaskHandler {
             track = new com.antigravity.models.Track(
                     track.getName(),
                     track.getLanes(),
-                    track.getArduinoConfig(),
+                    track.getArduinoConfigs(),
                     id,
                     track.getId());
 
             System.out.println("DEBUG: updateTrack for " + id);
-            if (track.getArduinoConfig() != null) {
-                System.out.println("DEBUG: Saving config with Digitals: " + track.getArduinoConfig().digitalIds);
+            if (track.getArduinoConfigs() != null && !track.getArduinoConfigs().isEmpty()) {
+                System.out
+                        .println("DEBUG: Saving config with Digitals: " + track.getArduinoConfigs().get(0).digitalIds);
             } else {
-                System.out.println("DEBUG: Saving config is NULL");
+                System.out.println("DEBUG: Saving configs is NULL or empty");
             }
 
             col.replaceOne(com.mongodb.client.model.Filters.eq("entity_id", id), track);
@@ -528,6 +529,7 @@ public class DatabaseTaskHandler {
                     race.getOverallScoring(),
                     race.getMinLapTime(),
                     race.getFuelOptions(),
+                    race.getDigitalFuelOptions(),
                     nextId,
                     null);
         }
@@ -575,6 +577,7 @@ public class DatabaseTaskHandler {
                 race.getOverallScoring(),
                 race.getMinLapTime(),
                 race.getFuelOptions(),
+                race.getDigitalFuelOptions(),
                 id,
                 race.getId());
 
@@ -647,6 +650,7 @@ public class DatabaseTaskHandler {
             raceMap.put("overall_scoring", race.getOverallScoring());
             raceMap.put("min_lap_time", race.getMinLapTime());
             raceMap.put("fuel_options", race.getFuelOptions());
+            raceMap.put("digital_fuel_options", race.getDigitalFuelOptions());
             response.add(raceMap);
         }
         ctx.json(response);

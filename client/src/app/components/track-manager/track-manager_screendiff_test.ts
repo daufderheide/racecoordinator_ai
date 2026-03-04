@@ -20,6 +20,17 @@ test.describe('Track Manager Visuals', () => {
     await expect(page.locator('.sidebar-list').locator('text=Classic Circuit')).toBeVisible();
     await expect(page.locator('.sidebar-list').locator('text=Speedway')).toBeVisible();
 
+    // Force the browser to decode the framing image so the CSS renderer isn't left hanging on a black background
+    await page.evaluate(() => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = '/assets/images/track_framing.png';
+      });
+    });
+    // Give Chromium a brief moment to apply the cached image to the CSS OM
+    await page.waitForTimeout(500);
     // Snapshot of the initial state (Classic Circuit selected by default)
     await expect(page).toHaveScreenshot('track-manager-initial.png');
   });
@@ -36,6 +47,7 @@ test.describe('Track Manager Visuals', () => {
     // Check lane count
     await expect(page.locator('.detail-panel')).toContainText('4');
 
+    await page.waitForTimeout(3000);
     await expect(page).toHaveScreenshot('track-manager-selected-speedway.png');
   });
 
@@ -50,6 +62,7 @@ test.describe('Track Manager Visuals', () => {
     await expect(page.locator('text=Arduino Uno')).toBeVisible();
     await expect(page.locator('text=COM4')).toBeVisible();
 
+    await page.waitForTimeout(3000);
     await expect(page).toHaveScreenshot('track-manager-arduino-summary.png');
   });
 });

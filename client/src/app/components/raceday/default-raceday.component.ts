@@ -1112,7 +1112,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     // Filter columns based on race settings
     const race = this.raceService.getRace();
-    const isFuelRace = race?.fuel_options?.enabled ?? false;
+    const isFuelRace = (race?.fuel_options?.enabled || race?.digital_fuel_options?.enabled) ?? false;
     const visibilityMap = settings.columnVisibility || {};
 
     selectedColumns = selectedColumns.filter(key => {
@@ -1224,7 +1224,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
 
     const level = hd.participant?.fuelLevel;
-    const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+    const race = this.raceService.getRace();
+    const capacity = (this.track?.hasDigitalFuel() ? race?.digital_fuel_options?.capacity : race?.fuel_options?.capacity) || 100;
     if (level === undefined || capacity === undefined || capacity <= 0) {
       return '';
     }
@@ -1289,11 +1290,13 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     } else if (baseKey === 'participant.fuelLevel') {
       return value !== undefined ? value.toFixed(1) : '--.-';
     } else if (baseKey === 'fuelCapacity') {
-      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      const race = this.raceService.getRace();
+      const capacity = (this.track?.hasDigitalFuel() ? race?.digital_fuel_options?.capacity : race?.fuel_options?.capacity);
       return capacity !== undefined ? capacity.toFixed(1) : '--.-';
     } else if (baseKey === 'fuelPercentage') {
       const level = hd.participant?.fuelLevel;
-      const capacity = this.raceService.getRace()?.fuel_options?.capacity;
+      const race = this.raceService.getRace();
+      const capacity = (this.track?.hasDigitalFuel() ? race?.digital_fuel_options?.capacity : race?.fuel_options?.capacity);
       if (level !== undefined && capacity !== undefined && capacity > 0) {
         const percentage = Math.round((level / capacity) * 100);
         return percentage + '%';

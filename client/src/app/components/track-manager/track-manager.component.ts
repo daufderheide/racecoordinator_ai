@@ -16,6 +16,7 @@ export class TrackManagerComponent implements OnInit {
   scale: number = 1;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  showDeleteConfirm: boolean = false;
 
   constructor(
     private dataService: DataService,
@@ -51,7 +52,7 @@ export class TrackManagerComponent implements OnInit {
     this.isLoading = true;
     this.dataService.getTracks().subscribe({
       next: (data) => {
-        this.tracks = data.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.arduino_config));
+        this.tracks = data.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.has_digital_fuel ?? false, t.arduino_configs));
         if (this.tracks.length > 0) {
           const queryId = this.route.snapshot.queryParamMap.get('selectedId');
           if (queryId) {
@@ -91,20 +92,28 @@ export class TrackManagerComponent implements OnInit {
 
   deleteTrack() {
     if (!this.selectedTrack) return;
-    if (confirm(this.translationService.translate('TM_CONFIRM_DELETE'))) {
-      this.isSaving = true;
-      this.dataService.deleteTrack(this.selectedTrack.entity_id).subscribe({
-        next: () => {
-          this.selectedTrack = undefined;
-          this.isSaving = false;
-          this.loadTracks();
-        },
-        error: (err) => {
-          console.error('Failed to delete track', err);
-          this.isSaving = false;
-        }
-      });
-    }
+    this.showDeleteConfirm = true;
+  }
+
+  onConfirmDelete() {
+    this.showDeleteConfirm = false;
+    if (!this.selectedTrack) return;
+    this.isSaving = true;
+    this.dataService.deleteTrack(this.selectedTrack.entity_id).subscribe({
+      next: () => {
+        this.selectedTrack = undefined;
+        this.isSaving = false;
+        this.loadTracks();
+      },
+      error: (err) => {
+        console.error('Failed to delete track', err);
+        this.isSaving = false;
+      }
+    });
+  }
+
+  onCancelDelete() {
+    this.showDeleteConfirm = false;
   }
 
   onBack() {

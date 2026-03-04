@@ -12,6 +12,7 @@ public class MockProtocolListener implements ProtocolListener {
   public double lastLapTime;
   public double lastSegmentTime;
   public com.antigravity.proto.InterfaceStatus lastStatus;
+  public com.antigravity.proto.InterfaceEvent lastEvent;
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
@@ -40,5 +41,10 @@ public class MockProtocolListener implements ProtocolListener {
   @Override
   public void onCarData(CarData data) {
     carData.add(data);
+  }
+
+  @Override
+  public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+    lastEvent = event;
   }
 }

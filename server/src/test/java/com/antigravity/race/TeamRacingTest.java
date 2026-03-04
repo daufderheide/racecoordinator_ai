@@ -73,7 +73,7 @@ public class TeamRacingTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
-    track = new Track("Test Track", lanes, mock(ArduinoConfig.class), "track1", new ObjectId());
+    track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
     race = new Race(raceModel, participants, track, true);
   }

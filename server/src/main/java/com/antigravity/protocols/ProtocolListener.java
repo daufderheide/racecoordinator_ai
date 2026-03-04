@@ -10,4 +10,6 @@ public interface ProtocolListener {
   void onInterfaceStatus(com.antigravity.proto.InterfaceStatus status);
 
   void onCarData(CarData carData);
+
+  void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event);
 }

@@ -261,6 +261,7 @@
   stroke: rgba(148, 163, 184, 0.3);
   stroke-width: 1;
   stroke-dasharray: 4;
+  pointer-events: none;
 }
 
 .hover-point {
@@ -268,6 +269,7 @@
   stroke: #fff;
   stroke-width: 2;
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
+  pointer-events: none;
 }
 
 .graph-tooltip {

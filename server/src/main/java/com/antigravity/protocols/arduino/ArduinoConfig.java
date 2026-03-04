@@ -5,11 +5,14 @@ import java.util.List;
 import com.antigravity.proto.PinBehavior;
 import java.util.Map;
 import java.util.HashMap;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ArduinoConfig {
-  public enum PinDirection {
+  public enum PinMode {
     READ,
-    WRITE
+    WRITE,
+    READ_ANALOG
   }
 
   public enum LapPinPitBehavior {
@@ -28,29 +31,34 @@ public class ArduinoConfig {
     }
   }
 
-  private static final Map<Integer, PinDirection> PIN_BEHAVIOR_MAP = new HashMap<>();
+  private static final Map<Integer, PinMode> PIN_MODE_MAP = new HashMap<>();
   public static final int MAX_LANES = 64;
 
   static {
-    PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber(), PinDirection.READ);
-    PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_RELAY.getNumber(), PinDirection.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber(), PinMode.READ);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_RELAY.getNumber(), PinMode.WRITE);
 
     for (int i = 0; i < MAX_LANES; i++) {
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + i, PinDirection.READ);
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + i, PinDirection.READ);
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + i, PinDirection.READ);
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + i, PinDirection.WRITE);
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_PIT_IN_BASE.getNumber() + i, PinDirection.READ);
-      PIN_BEHAVIOR_MAP.put(PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + i, PinDirection.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + i, PinMode.WRITE);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_PIT_IN_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() + i, PinMode.READ_ANALOG);
     }
   }
 
+  public static PinMode getPinMode(int id) {
+    return PIN_MODE_MAP.get(id);
+  }
+
   public static boolean isReadPin(int id) {
-    return PIN_BEHAVIOR_MAP.get(id) == PinDirection.READ;
+    return getPinMode(id) == PinMode.READ;
   }
 
   public static boolean isWritePin(int id) {
-    return PIN_BEHAVIOR_MAP.get(id) == PinDirection.WRITE;
+    return getPinMode(id) == PinMode.WRITE;
   }
 
   public String name;
@@ -63,6 +71,8 @@ public class ArduinoConfig {
   public int globalInvertLights;
   public int usePitsAsLaps;
   public int useLapsForSegments;
+  public int useLapsForPits;
+  public int useLapsForPitEnd;
   public LapPinPitBehavior lapPinPitBehavior;
 
   public int hardwareType;
@@ -71,6 +81,7 @@ public class ArduinoConfig {
   public List<Integer> analogIds;
   public List<LedString> ledStrings;
   public List<String> ledLaneColorOverrides;
+  public Map<String, Integer> voltageConfigs = new HashMap<>();
 
   public static final int MAX_DIGITAL_PINS = 60;
   public static final int MAX_ANALOG_PINS = 16;
@@ -86,6 +97,7 @@ public class ArduinoConfig {
     }
     this.ledStrings = new java.util.ArrayList<>();
     this.ledLaneColorOverrides = new java.util.ArrayList<>();
+    this.voltageConfigs = new HashMap<>();
 
     this.baudRate = 115200;
 
@@ -97,6 +109,8 @@ public class ArduinoConfig {
     this.globalInvertLights = 0;
     this.usePitsAsLaps = 0;
     this.useLapsForSegments = 0;
+    this.useLapsForPits = 0;
+    this.useLapsForPitEnd = 0;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_OUT;
   }
 
@@ -114,7 +128,8 @@ public class ArduinoConfig {
       List<Integer> digitalIds,
       List<Integer> analogIds,
       List<LedString> ledStrings,
-      List<String> ledLaneColorOverrides) {
+      List<String> ledLaneColorOverrides,
+      Map<String, Integer> voltageConfigs) {
     this.name = name;
     this.commPort = commPort;
     this.baudRate = baudRate;
@@ -130,5 +145,6 @@ public class ArduinoConfig {
     this.analogIds = analogIds;
     this.ledStrings = ledStrings;
     this.ledLaneColorOverrides = ledLaneColorOverrides;
+    this.voltageConfigs = voltageConfigs;
   }
 }

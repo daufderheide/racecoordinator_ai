@@ -119,8 +119,19 @@ public class DatabaseService {
     Lane l4 = new Lane("#fbbf24", "black", 100, getNextSequence(database, "lanes"), null);
     lanes.add(l4);
 
+    // Create a default track with no Arduino config
+    List<Lane> defaultLanes = new ArrayList<>();
+    defaultLanes.add(new Lane("#ef4444", "black", 100, "1", null));
+    defaultLanes.add(new Lane("#ffffff", "black", 100, "2", null));
+    defaultLanes.add(new Lane("#3b82f6", "black", 100, "3", null));
+    defaultLanes.add(new Lane("#fbbf24", "black", 100, "4", null));
+    com.antigravity.models.Track defaultTrack = new com.antigravity.models.Track("Default", defaultLanes,
+        new ArrayList<>(), "new", null);
+
     com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
-    Track track = new Track("Bright Plume Raceway", lanes, config, getNextSequence(database, "tracks"),
+    List<com.antigravity.protocols.arduino.ArduinoConfig> configs = new ArrayList<>();
+    configs.add(config);
+    Track track = new Track("Bright Plume Raceway", lanes, configs, getNextSequence(database, "tracks"),
         null);
 
     trackCollection.insertOne(track);

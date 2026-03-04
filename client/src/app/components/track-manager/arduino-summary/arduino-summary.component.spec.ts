@@ -37,12 +37,14 @@ describe('ArduinoSummaryComponent', () => {
     });
 
     it('should return AS_BOARD_MEGA for hardware type 1', () => {
-      component.track = new Track('t1', 'Track 1', [], { hardwareType: 1 } as any);
+      const config: Partial<ArduinoConfig> = { hardwareType: 1 };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getBoardName()).toBe('AS_BOARD_MEGA');
     });
 
     it('should return AS_BOARD_UNO for hardware type 0', () => {
-      component.track = new Track('t1', 'Track 1', [], { hardwareType: 0 } as any);
+      const config: Partial<ArduinoConfig> = { hardwareType: 0 };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getBoardName()).toBe('AS_BOARD_UNO');
     });
   });
@@ -66,7 +68,8 @@ describe('ArduinoSummaryComponent', () => {
         2000 // Counted
       ];
 
-      component.track = new Track('t1', 'Track 1', [], { digitalIds, analogIds } as any);
+      const config: Partial<ArduinoConfig> = { digitalIds, analogIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getConfiguredPinCount()).toBe(3);
     });
   });
@@ -74,38 +77,45 @@ describe('ArduinoSummaryComponent', () => {
   describe('hasBehavior', () => {
     it('should detect laps', () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE]; // 1000
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      const config: Partial<ArduinoConfig> = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('lap')).toBeTrue();
     });
 
     it('should detect segments', () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE]; // 2000
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      const config: Partial<ArduinoConfig> = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('segment')).toBeTrue();
     });
 
     it('should detect call buttons', () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON]; // 2
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      let config: Partial<ArduinoConfig> = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('call')).toBeTrue();
 
       digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE]; // 3000
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      config = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('call')).toBeTrue();
     });
 
     it('should detect relays', () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY]; // 3
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      let config: Partial<ArduinoConfig> = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('relay')).toBeTrue();
 
       digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE]; // 4000
-      component.track = new Track('t1', 'Track 1', [], { digitalIds } as any);
+      config = { digitalIds };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('relay')).toBeTrue();
     });
 
     it('should return false if behavior absent', () => {
-      component.track = new Track('t1', 'Track 1', [], { digitalIds: [], analogIds: [] } as any);
+      const config: Partial<ArduinoConfig> = { digitalIds: [], analogIds: [] };
+      component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('lap')).toBeFalse();
       expect(component.hasBehavior('segment')).toBeFalse();
       expect(component.hasBehavior('call')).toBeFalse();

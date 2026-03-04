@@ -22,7 +22,9 @@ export class TrackConverter {
                 return new Track(
                     objectId || '',
                     proto.name || '',
-                    lanes
+                    lanes,
+                    proto.hasDigitalFuel ?? false,
+                    (proto as any).arduino_configs || []
                 );
             },
             () => {

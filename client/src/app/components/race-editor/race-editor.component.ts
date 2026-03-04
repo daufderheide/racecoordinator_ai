@@ -4,6 +4,8 @@ import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 import { Subscription } from 'rxjs';
+import { Track } from 'src/app/models/track';
+import { FuelUsageType } from 'src/app/models/fuel_options';
 
 @Component({
   selector: 'app-race-editor',
@@ -18,13 +20,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   scale: number = 1;
   undoManager: UndoManager<any>;
-  tracks: any[] = [];
+  tracks: Track[] = [];
   races: any[] = [];
   driverCount: number = 10;
   generatedHeats: any[] = [];
 
   heatRotationTypes = ['RoundRobin', 'Bracket', 'Swiss'];
   raceScoringTypes = ['Points', 'Time'];
+
+  private static readonly EMPTY_LABELS: string[] = [];
 
   // Acknowledgement modal properties
   showAckModal: boolean = false;
@@ -64,7 +68,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     const id = this.route.snapshot.queryParamMap.get('id');
-    if (id) {
+    if (id && id !== 'new') {
       this.loadRace(id);
     } else {
       this.createNewRace();
@@ -121,7 +125,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               reset_fuel_at_heat_start: false,
               end_heat_on_out_of_fuel: false,
               capacity: 100,
-              usage_type: 'LINEAR',
+              usage_type: FuelUsageType.LINEAR,
               usage_rate: 4.0,
               start_level: 100,
               refuel_rate: 10,
@@ -129,18 +133,34 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               reference_time: 6.0
             };
           }
-          this.originalRace = this.deepCopy(this.editingRace);
-          this.undoManager.initialize(this.editingRace);
-          // Load heats if we have a valid race
-          if (this.driverCount > 0) {
-            this.loadHeats();
-          }
+        } else {
+          this.createNewRace();
+        }
+        if (!this.editingRace.digital_fuel_options) {
+          this.editingRace.digital_fuel_options = {
+            enabled: false,
+            reset_fuel_at_heat_start: false,
+            end_heat_on_out_of_fuel: false,
+            capacity: 100,
+            usage_type: FuelUsageType.LINEAR,
+            usage_rate: 4.0,
+            start_level: 100,
+            refuel_rate: 10,
+            pit_stop_delay: 2.0
+          };
+        }
+        this.enforceFuelRules();
+        this.originalRace = this.deepCopy(this.editingRace);
+        this.undoManager.initialize(this.editingRace);
+        // Load heats if we have a valid race
+        if (this.driverCount > 0) {
+          this.loadHeats();
         }
         this.isLoading = false;
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load race', err);
         this.isLoading = false;
       }
@@ -150,7 +170,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   loadTracks() {
     this.dataService.getTracks().subscribe({
       next: (tracks) => {
-        this.tracks = tracks;
+        this.tracks = tracks.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.has_digital_fuel ?? false, t.arduino_configs));
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
@@ -183,12 +203,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         reset_fuel_at_heat_start: false,
         end_heat_on_out_of_fuel: false,
         capacity: 100,
-        usage_type: 'LINEAR',
+        usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
         reference_time: 6.0
+      },
+      digital_fuel_options: {
+        enabled: false,
+        reset_fuel_at_heat_start: false,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        start_level: 100,
+        refuel_rate: 10,
+        pit_stop_delay: 2.0
       },
       min_lap_time: 0
     };
@@ -204,11 +233,32 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   captureState() {
+    this.enforceFuelRules();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
       this.loadHeats();
     }
+  }
+
+  enforceFuelRules() {
+    if (!this.editingRace) return;
+
+    if (this.hasDigitalFuel) {
+      if (this.editingRace.fuel_options?.enabled) {
+        this.editingRace.fuel_options.enabled = false;
+      }
+    } else {
+      if (this.editingRace.digital_fuel_options?.enabled) {
+        this.editingRace.digital_fuel_options.enabled = false;
+      }
+    }
+  }
+
+  get hasDigitalFuel(): boolean {
+    if (!this.editingRace?.track_entity_id || !this.tracks) return false;
+    const track = this.tracks.find(t => t.entity_id === this.editingRace.track_entity_id);
+    return track ? track.hasDigitalFuel() : false;
   }
 
   onRotationTypeChange() {
@@ -296,6 +346,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay,
         reference_time: this.editingRace.fuel_options.reference_time
       } : undefined,
+      digital_fuel_options: this.editingRace.digital_fuel_options ? {
+        enabled: this.editingRace.digital_fuel_options.enabled,
+        reset_fuel_at_heat_start: this.editingRace.digital_fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: this.editingRace.digital_fuel_options.end_heat_on_out_of_fuel,
+        capacity: this.editingRace.digital_fuel_options.capacity,
+        usage_type: this.editingRace.digital_fuel_options.usage_type,
+        usage_rate: this.editingRace.digital_fuel_options.usage_rate,
+        start_level: this.editingRace.digital_fuel_options.start_level,
+        refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
+        pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
+      } : undefined,
       min_lap_time: this.editingRace.min_lap_time
     };
 
@@ -368,6 +429,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         start_level: this.editingRace.fuel_options.start_level,
         refuel_rate: this.editingRace.fuel_options.refuel_rate,
         pit_stop_delay: this.editingRace.fuel_options.pit_stop_delay
+      } : undefined,
+      digital_fuel_options: this.editingRace.digital_fuel_options ? {
+        enabled: this.editingRace.digital_fuel_options.enabled,
+        reset_fuel_at_heat_start: this.editingRace.digital_fuel_options.reset_fuel_at_heat_start,
+        end_heat_on_out_of_fuel: this.editingRace.digital_fuel_options.end_heat_on_out_of_fuel,
+        capacity: this.editingRace.digital_fuel_options.capacity,
+        usage_type: this.editingRace.digital_fuel_options.usage_type,
+        usage_rate: this.editingRace.digital_fuel_options.usage_rate,
+        start_level: this.editingRace.digital_fuel_options.start_level,
+        refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
+        pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
       } : undefined,
       min_lap_time: this.editingRace.min_lap_time
     };
@@ -481,7 +553,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     screenY: number,
     time: number,
     value: number,
-    type: 'usage' | 'pit'
+    type: 'usage' | 'pit' | 'digital_usage' | 'digital_pit'
   } | null = null;
 
   // Cache for graph performance
@@ -493,6 +565,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   } | null = null;
 
   private pitGraphCache: {
+    path: string;
+    labels: string[];
+    maxVal: number;
+    argsKey: string;
+  } | null = null;
+
+  private digitalUsageGraphCache: {
+    path: string;
+    labels: string[];
+    maxVal: number;
+    argsKey: string;
+  } | null = null;
+
+  private digitalPitGraphCache: {
     path: string;
     labels: string[];
     maxVal: number;
@@ -622,6 +708,179 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     };
   }
 
+  private getMaxDigitalFuelUsage(): number {
+    if (!this.editingRace?.digital_fuel_options) return 1;
+    const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+    const usageType = this.editingRace.digital_fuel_options.usage_type;
+    return usageRate <= 0 ? 1 : usageRate;
+  }
+
+  private updateDigitalUsageGraphCache() {
+    if (!this.editingRace?.digital_fuel_options) return;
+    const options = this.editingRace.digital_fuel_options;
+    const key = `${options.usage_type}_${options.usage_rate}`;
+
+    if (this.digitalUsageGraphCache && this.digitalUsageGraphCache.argsKey === key) return;
+
+    const maxFuelValue = this.getMaxDigitalFuelUsage();
+    const width = 400;
+    const height = 150;
+    const points: string[] = [];
+    const steps = 50;
+    for (let i = 0; i <= steps; i++) {
+      const throttle = (i / steps) * 100;
+      const fuel = getDigitalFuelUsage(options.usage_type, options.usage_rate, throttle);
+      const x = (i / steps) * width;
+      const yRatio = maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / Math.max(0.001, maxFuelValue))) : 0;
+      const y = height - (yRatio * height);
+      points.push(`${(x || 0).toFixed(1)},${(y || 0).toFixed(1)}`);
+    }
+
+    const labels = [];
+    for (let i = 4; i >= 0; i--) {
+      labels.push(((maxFuelValue * i) / 4).toFixed(2));
+    }
+
+    this.digitalUsageGraphCache = {
+      path: `M ${points.join(' L ')}`,
+      labels: labels,
+      maxVal: maxFuelValue,
+      argsKey: key
+    };
+  }
+
+  private getMaxDigitalPitTime(): number {
+    if (!this.editingRace?.digital_fuel_options) return 3600;
+    const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+    const capacity = Number(this.editingRace.digital_fuel_options.capacity) || 100;
+    if (usageRate <= 0) return 3600;
+    return Math.max(1, capacity / usageRate * 10); // arbitrary max based on full throttle
+  }
+
+  private updateDigitalPitGraphCache() {
+    if (!this.editingRace?.digital_fuel_options) return;
+    const options = this.editingRace.digital_fuel_options;
+    const key = `${options.usage_type}_${options.usage_rate}_${options.capacity}`;
+
+    if (this.digitalPitGraphCache && this.digitalPitGraphCache.argsKey === key) return;
+
+    const capacity = Number(options.capacity) || 100;
+    const usageRate = Number(options.usage_rate) || 0;
+    const usageType = options.usage_type;
+
+    // We want to show 0-100% throttle on Y axis [bottom 0, top 100]
+    // And Time to Empty on X axis.
+    // Let's find a reasonable max X (Time to Empty).
+    // Usage at 100% throttle is usageRate. So min time is Capacity/UsageRate.
+    // Usage at 10% throttle is much less.
+    const minTime = capacity / (usageRate || 1);
+    const maxTime = capacity / (getDigitalFuelUsage(usageType, usageRate, 10) || 0.001);
+    const safeMaxTime = isNaN(maxTime) || !isFinite(maxTime) ? 3600 : Math.min(3600, maxTime);
+
+    const width = 400;
+    const height = 150;
+    const points: string[] = [];
+    const steps = 50;
+    for (let i = 0; i <= steps; i++) {
+      const throttle = (i / steps) * 100;
+      const fuelPerSec = getDigitalFuelUsage(usageType, usageRate, throttle);
+      let timeToEmpty = fuelPerSec > 0 ? capacity / fuelPerSec : safeMaxTime;
+
+      const y = height - (i / steps) * height;
+      const divisor = Math.max(0.001, safeMaxTime);
+      const xPercent = divisor > 0 ? Math.max(0, Math.min(1.5, timeToEmpty / divisor)) : 1;
+      const x = xPercent * width;
+      points.push(`${(x || 0).toFixed(1)},${(y || 0).toFixed(1)}`);
+    }
+
+    const labels = [];
+    for (let i = 0; i <= 4; i++) {
+      labels.push(Math.round((safeMaxTime * i) / 4).toString());
+    }
+
+    this.digitalPitGraphCache = {
+      path: `M ${points.join(' L ')}`,
+      labels: labels,
+      maxVal: safeMaxTime,
+      argsKey: key
+    };
+  }
+
+  getDigitalUsagePath(): string {
+    this.updateDigitalUsageGraphCache();
+    return this.digitalUsageGraphCache?.path || '';
+  }
+
+  getDigitalUsageYLabels(): string[] {
+    this.updateDigitalUsageGraphCache();
+    return this.digitalUsageGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS;
+  }
+
+  getDigitalPitPath(): string {
+    this.updateDigitalPitGraphCache();
+    return this.digitalPitGraphCache?.path || '';
+  }
+
+  getDigitalPitXLabels(): string[] {
+    this.updateDigitalPitGraphCache();
+    return this.digitalPitGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS;
+  }
+
+  onDigitalGraphMouseMove(event: MouseEvent, type: 'usage' | 'pit') {
+    if (!this.editingRace?.digital_fuel_options) return;
+
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    const width = rect.width;
+    const height = rect.height;
+
+    if (type === 'usage') {
+      const xPercent = Math.max(0, Math.min(1, mouseX / (width || 1)));
+      const throttle = xPercent * 100;
+      const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+      const usageType = this.editingRace.digital_fuel_options.usage_type;
+      const fuel = getDigitalFuelUsage(usageType, usageRate, throttle);
+
+      this.updateDigitalUsageGraphCache();
+      const maxVal = this.digitalUsageGraphCache?.maxVal || 1;
+      const yPercent = Math.max(0, Math.min(1.5, fuel / maxVal));
+
+      this.hoveredPoint = {
+        svgX: Number(((xPercent || 0) * 400).toFixed(2)) || 0,
+        svgY: Number((150 - ((yPercent || 0) * 150)).toFixed(2)) || 0,
+        screenX: mouseX || 0,
+        screenY: mouseY || 0,
+        time: throttle || 0, // we use 'time' field for 'throttle' here
+        value: fuel || 0,
+        type: 'digital_usage'
+      };
+    } else {
+      const yPercent = 1 - Math.max(0, Math.min(1, mouseY / (height || 1)));
+      const throttle = yPercent * 100;
+      const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+      const usageType = this.editingRace.digital_fuel_options.usage_type;
+      const capacity = Number(this.editingRace.digital_fuel_options.capacity) || 100;
+      const fuelPerSec = getDigitalFuelUsage(usageType, usageRate, throttle);
+
+      this.updateDigitalPitGraphCache();
+      const maxVal = this.digitalPitGraphCache?.maxVal || 1;
+      let timeToEmpty = fuelPerSec > 0 ? capacity / fuelPerSec : maxVal;
+      const xPercent = maxVal > 0 ? Math.max(0, Math.min(1.5, timeToEmpty / Math.max(0.001, maxVal))) : 1;
+
+      this.hoveredPoint = {
+        svgX: Number(((xPercent || 0) * 400).toFixed(2)) || 0,
+        svgY: Number(((1 - (yPercent || 0)) * 150).toFixed(2)) || 0,
+        screenX: mouseX || 0,
+        screenY: mouseY || 0,
+        time: throttle || 0,
+        value: timeToEmpty || 0,
+        type: 'digital_pit'
+      };
+    }
+  }
+
   getFuelUsagePath(): string {
     this.updateUsageGraphCache();
     return this.usageGraphCache?.path || '';
@@ -634,7 +893,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (!this.editingRace?.fuel_options?.enabled) {
       return ['0.00', '0.00', '0.00', '0.00', '0.00'];
     }
-    return [];
+    return RaceEditorComponent.EMPTY_LABELS;
   }
 
   getPitGraphPath(): string {
@@ -649,7 +908,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (!this.editingRace?.fuel_options?.enabled) {
       return ['0', '0', '0', '0', '0'];
     }
-    return [];
+    return RaceEditorComponent.EMPTY_LABELS;
   }
 
   onGraphMouseMove(event: MouseEvent, type: 'usage' | 'pit') {
@@ -721,8 +980,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 }
 
-function getAnalogFuelUsage(usageType: string, usageRate: number, time: number, referenceTime: number): number {
-  if (usageType === 'LINEAR') {
+function getAnalogFuelUsage(usageType: FuelUsageType | string, usageRate: number, time: number, referenceTime: number): number {
+  if (usageType === FuelUsageType.LINEAR) {
     const safeRefTime = Math.max(0.1, referenceTime);
     const x1 = safeRefTime * 2;
     const y1 = usageRate / 2;
@@ -739,12 +998,23 @@ function getAnalogFuelUsage(usageType: string, usageRate: number, time: number, 
   const safeTime = Math.max(0.1, time);
   const safeRefTime = Math.max(0.1, referenceTime);
   let val = 0;
-  if (usageType === 'QUADRATIC') {
+  if (usageType === FuelUsageType.QUADRATIC) {
     val = usageRate * (safeRefTime * safeRefTime) / (safeTime * safeTime);
-  } else if (usageType === 'CUBIC') {
+  } else if (usageType === FuelUsageType.CUBIC) {
     val = usageRate * (safeRefTime * safeRefTime * safeRefTime) / (safeTime * safeTime * safeTime);
   }
 
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
+}
+
+function getDigitalFuelUsage(usageType: FuelUsageType | string, usageRate: number, throttle: number): number {
+  const tRatio = throttle / 100;
+  let val = usageRate * tRatio;
+  if (usageType === FuelUsageType.QUADRATIC) {
+    val *= (1 + (1 - tRatio));
+  } else if (usageType === FuelUsageType.CUBIC) {
+    val *= (1 + (1 - tRatio) * (1 + (1 - tRatio)));
+  }
+  return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, Math.min(val, 100));
 }
 

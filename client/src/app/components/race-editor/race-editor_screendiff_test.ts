@@ -164,4 +164,49 @@ test.describe('Race Editor Visuals', () => {
     // Screenshot the fuel configuration section
     await expect(page).toHaveScreenshot('race-editor-fuel-options-disabled.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
+
+  test('should display digital fuel options for digital track', async ({ page }) => {
+    // Setup digital track mocks
+    await TestSetupHelper.setupDigitalTrackMocks(page);
+
+    // Navigate to Race Editor for a new race with the digital track
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=new&driverCount=4'));
+
+    // Wait for the tracks to load in the select
+    const trackSelect = page.locator('select').first();
+    await expect(async () => {
+      const options = await trackSelect.locator('option').allTextContents();
+      const labels = options.map(o => o.trim()).filter(o => o !== '');
+      if (!labels.includes('Digital Haven')) {
+        throw new Error(`Track 'Digital Haven' not found. Available: ${labels.join(', ')}`);
+      }
+    }).toPass({ timeout: 10000 });
+
+    // Select the digital track
+    await trackSelect.selectOption({ label: 'Digital Haven' });
+
+    // Wait for the UI to update and the digital fuel section to appear
+    await expect(page.locator('#digital-fuel-header')).toBeVisible({ timeout: 10000 });
+
+    // Scroll down to ensure digital fuel section is visible in the panel
+    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.waitForTimeout(500);
+
+    // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
+    await page.locator('#digital-fuel-enabled-label').click();
+    await page.waitForTimeout(500);
+
+    // Ensure digital charts are rendered
+    await expect(page.locator('.fuel-graphs-container')).toBeVisible({ timeout: 10000 });
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Last scroll to bottom to capture everything
+    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.waitForTimeout(1000);
+
+    // Screenshot the digital fuel configuration section
+    await expect(page).toHaveScreenshot('race-editor-digital-fuel-options.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
+  });
 });

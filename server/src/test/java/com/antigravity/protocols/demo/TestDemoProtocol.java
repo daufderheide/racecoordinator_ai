@@ -38,6 +38,10 @@ public class TestDemoProtocol {
           statusUpdates.incrementAndGet();
         }
       }
+
+      @Override
+      public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+      }
     };
 
     demo.setListener(mockListener);

@@ -3822,6 +3822,7 @@ export const com = $root.com = (() => {
          * @property {number} BEHAVIOR_RELAY_BASE=4000 BEHAVIOR_RELAY_BASE value
          * @property {number} BEHAVIOR_PIT_IN_BASE=5000 BEHAVIOR_PIT_IN_BASE value
          * @property {number} BEHAVIOR_PIT_OUT_BASE=6000 BEHAVIOR_PIT_OUT_BASE value
+         * @property {number} BEHAVIOR_VOLTAGE_LEVEL_BASE=7000 BEHAVIOR_VOLTAGE_LEVEL_BASE value
          */
         antigravity.PinBehavior = (function() {
             const valuesById = {}, values = Object.create(valuesById);
@@ -3835,6 +3836,7 @@ export const com = $root.com = (() => {
             values[valuesById[4000] = "BEHAVIOR_RELAY_BASE"] = 4000;
             values[valuesById[5000] = "BEHAVIOR_PIT_IN_BASE"] = 5000;
             values[valuesById[6000] = "BEHAVIOR_PIT_OUT_BASE"] = 6000;
+            values[valuesById[7000] = "BEHAVIOR_VOLTAGE_LEVEL_BASE"] = 7000;
             return values;
         })();
 
@@ -3890,6 +3892,7 @@ export const com = $root.com = (() => {
              * @property {Array.<number>|null} [analogIds] ArduinoConfig analogIds
              * @property {Array.<string>|null} [ledLaneColorOverrides] ArduinoConfig ledLaneColorOverrides
              * @property {com.antigravity.LapPinPitBehavior|null} [lapPinPitBehavior] ArduinoConfig lapPinPitBehavior
+             * @property {Array.<com.antigravity.IVoltageConfig>|null} [voltageConfigs] ArduinoConfig voltageConfigs
              */
 
             /**
@@ -3904,6 +3907,7 @@ export const com = $root.com = (() => {
                 this.digitalIds = [];
                 this.analogIds = [];
                 this.ledLaneColorOverrides = [];
+                this.voltageConfigs = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -4023,6 +4027,14 @@ export const com = $root.com = (() => {
             ArduinoConfig.prototype.lapPinPitBehavior = 0;
 
             /**
+             * ArduinoConfig voltageConfigs.
+             * @member {Array.<com.antigravity.IVoltageConfig>} voltageConfigs
+             * @memberof com.antigravity.ArduinoConfig
+             * @instance
+             */
+            ArduinoConfig.prototype.voltageConfigs = $util.emptyArray;
+
+            /**
              * Creates a new ArduinoConfig instance using the specified properties.
              * @function create
              * @memberof com.antigravity.ArduinoConfig
@@ -4083,6 +4095,9 @@ export const com = $root.com = (() => {
                         writer.uint32(/* id 15, wireType 2 =*/122).string(message.ledLaneColorOverrides[i]);
                 if (message.lapPinPitBehavior != null && Object.hasOwnProperty.call(message, "lapPinPitBehavior"))
                     writer.uint32(/* id 16, wireType 0 =*/128).int32(message.lapPinPitBehavior);
+                if (message.voltageConfigs != null && message.voltageConfigs.length)
+                    for (let i = 0; i < message.voltageConfigs.length; ++i)
+                        $root.com.antigravity.VoltageConfig.encode(message.voltageConfigs[i], writer.uint32(/* id 17, wireType 2 =*/138).fork()).ldelim();
                 return writer;
             };
 
@@ -4191,6 +4206,12 @@ export const com = $root.com = (() => {
                             message.lapPinPitBehavior = reader.int32();
                             break;
                         }
+                    case 17: {
+                            if (!(message.voltageConfigs && message.voltageConfigs.length))
+                                message.voltageConfigs = [];
+                            message.voltageConfigs.push($root.com.antigravity.VoltageConfig.decode(reader, reader.uint32()));
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -4286,6 +4307,15 @@ export const com = $root.com = (() => {
                     case 2:
                         break;
                     }
+                if (message.voltageConfigs != null && message.hasOwnProperty("voltageConfigs")) {
+                    if (!Array.isArray(message.voltageConfigs))
+                        return "voltageConfigs: array expected";
+                    for (let i = 0; i < message.voltageConfigs.length; ++i) {
+                        let error = $root.com.antigravity.VoltageConfig.verify(message.voltageConfigs[i]);
+                        if (error)
+                            return "voltageConfigs." + error;
+                    }
+                }
                 return null;
             };
 
@@ -4362,6 +4392,16 @@ export const com = $root.com = (() => {
                     message.lapPinPitBehavior = 2;
                     break;
                 }
+                if (object.voltageConfigs) {
+                    if (!Array.isArray(object.voltageConfigs))
+                        throw TypeError(".com.antigravity.ArduinoConfig.voltageConfigs: array expected");
+                    message.voltageConfigs = [];
+                    for (let i = 0; i < object.voltageConfigs.length; ++i) {
+                        if (typeof object.voltageConfigs[i] !== "object")
+                            throw TypeError(".com.antigravity.ArduinoConfig.voltageConfigs: object expected");
+                        message.voltageConfigs[i] = $root.com.antigravity.VoltageConfig.fromObject(object.voltageConfigs[i]);
+                    }
+                }
                 return message;
             };
 
@@ -4382,6 +4422,7 @@ export const com = $root.com = (() => {
                     object.digitalIds = [];
                     object.analogIds = [];
                     object.ledLaneColorOverrides = [];
+                    object.voltageConfigs = [];
                 }
                 if (options.defaults) {
                     object.name = "";
@@ -4433,6 +4474,11 @@ export const com = $root.com = (() => {
                 }
                 if (message.lapPinPitBehavior != null && message.hasOwnProperty("lapPinPitBehavior"))
                     object.lapPinPitBehavior = options.enums === String ? $root.com.antigravity.LapPinPitBehavior[message.lapPinPitBehavior] === undefined ? message.lapPinPitBehavior : $root.com.antigravity.LapPinPitBehavior[message.lapPinPitBehavior] : message.lapPinPitBehavior;
+                if (message.voltageConfigs && message.voltageConfigs.length) {
+                    object.voltageConfigs = [];
+                    for (let j = 0; j < message.voltageConfigs.length; ++j)
+                        object.voltageConfigs[j] = $root.com.antigravity.VoltageConfig.toObject(message.voltageConfigs[j], options);
+                }
                 return object;
             };
 
@@ -4463,6 +4509,235 @@ export const com = $root.com = (() => {
             };
 
             return ArduinoConfig;
+        })();
+
+        antigravity.VoltageConfig = (function() {
+
+            /**
+             * Properties of a VoltageConfig.
+             * @memberof com.antigravity
+             * @interface IVoltageConfig
+             * @property {number|null} [lane] VoltageConfig lane
+             * @property {number|null} [maxVoltage] VoltageConfig maxVoltage
+             */
+
+            /**
+             * Constructs a new VoltageConfig.
+             * @memberof com.antigravity
+             * @classdesc Represents a VoltageConfig.
+             * @implements IVoltageConfig
+             * @constructor
+             * @param {com.antigravity.IVoltageConfig=} [properties] Properties to set
+             */
+            function VoltageConfig(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * VoltageConfig lane.
+             * @member {number} lane
+             * @memberof com.antigravity.VoltageConfig
+             * @instance
+             */
+            VoltageConfig.prototype.lane = 0;
+
+            /**
+             * VoltageConfig maxVoltage.
+             * @member {number} maxVoltage
+             * @memberof com.antigravity.VoltageConfig
+             * @instance
+             */
+            VoltageConfig.prototype.maxVoltage = 0;
+
+            /**
+             * Creates a new VoltageConfig instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {com.antigravity.IVoltageConfig=} [properties] Properties to set
+             * @returns {com.antigravity.VoltageConfig} VoltageConfig instance
+             */
+            VoltageConfig.create = function create(properties) {
+                return new VoltageConfig(properties);
+            };
+
+            /**
+             * Encodes the specified VoltageConfig message. Does not implicitly {@link com.antigravity.VoltageConfig.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {com.antigravity.IVoltageConfig} message VoltageConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            VoltageConfig.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lane != null && Object.hasOwnProperty.call(message, "lane"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.lane);
+                if (message.maxVoltage != null && Object.hasOwnProperty.call(message, "maxVoltage"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.maxVoltage);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified VoltageConfig message, length delimited. Does not implicitly {@link com.antigravity.VoltageConfig.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {com.antigravity.IVoltageConfig} message VoltageConfig message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            VoltageConfig.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a VoltageConfig message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.VoltageConfig} VoltageConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            VoltageConfig.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.VoltageConfig();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lane = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.maxVoltage = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a VoltageConfig message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.VoltageConfig} VoltageConfig
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            VoltageConfig.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a VoltageConfig message.
+             * @function verify
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            VoltageConfig.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    if (!$util.isInteger(message.lane))
+                        return "lane: integer expected";
+                if (message.maxVoltage != null && message.hasOwnProperty("maxVoltage"))
+                    if (!$util.isInteger(message.maxVoltage))
+                        return "maxVoltage: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a VoltageConfig message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.VoltageConfig} VoltageConfig
+             */
+            VoltageConfig.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.VoltageConfig)
+                    return object;
+                let message = new $root.com.antigravity.VoltageConfig();
+                if (object.lane != null)
+                    message.lane = object.lane | 0;
+                if (object.maxVoltage != null)
+                    message.maxVoltage = object.maxVoltage | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a VoltageConfig message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {com.antigravity.VoltageConfig} message VoltageConfig
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            VoltageConfig.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.lane = 0;
+                    object.maxVoltage = 0;
+                }
+                if (message.lane != null && message.hasOwnProperty("lane"))
+                    object.lane = message.lane;
+                if (message.maxVoltage != null && message.hasOwnProperty("maxVoltage"))
+                    object.maxVoltage = message.maxVoltage;
+                return object;
+            };
+
+            /**
+             * Converts this VoltageConfig to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.VoltageConfig
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            VoltageConfig.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for VoltageConfig
+             * @function getTypeUrl
+             * @memberof com.antigravity.VoltageConfig
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            VoltageConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.VoltageConfig";
+            };
+
+            return VoltageConfig;
         })();
 
         antigravity.UpdateInterfaceConfigRequest = (function() {
@@ -5411,6 +5686,7 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.ISegmentEvent|null} [segment] InterfaceEvent segment
              * @property {com.antigravity.IInterfaceStatusEvent|null} [status] InterfaceEvent status
              * @property {com.antigravity.ICallbuttonEvent|null} [callbutton] InterfaceEvent callbutton
+             * @property {com.antigravity.IInterfaceAnalogDataEvent|null} [analogData] InterfaceEvent analogData
              */
 
             /**
@@ -5460,17 +5736,25 @@ export const com = $root.com = (() => {
              */
             InterfaceEvent.prototype.callbutton = null;
 
+            /**
+             * InterfaceEvent analogData.
+             * @member {com.antigravity.IInterfaceAnalogDataEvent|null|undefined} analogData
+             * @memberof com.antigravity.InterfaceEvent
+             * @instance
+             */
+            InterfaceEvent.prototype.analogData = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * InterfaceEvent event.
-             * @member {"lap"|"segment"|"status"|"callbutton"|undefined} event
+             * @member {"lap"|"segment"|"status"|"callbutton"|"analogData"|undefined} event
              * @memberof com.antigravity.InterfaceEvent
              * @instance
              */
             Object.defineProperty(InterfaceEvent.prototype, "event", {
-                get: $util.oneOfGetter($oneOfFields = ["lap", "segment", "status", "callbutton"]),
+                get: $util.oneOfGetter($oneOfFields = ["lap", "segment", "status", "callbutton", "analogData"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -5506,6 +5790,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.InterfaceStatusEvent.encode(message.status, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
                 if (message.callbutton != null && Object.hasOwnProperty.call(message, "callbutton"))
                     $root.com.antigravity.CallbuttonEvent.encode(message.callbutton, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.analogData != null && Object.hasOwnProperty.call(message, "analogData"))
+                    $root.com.antigravity.InterfaceAnalogDataEvent.encode(message.analogData, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
                 return writer;
             };
 
@@ -5556,6 +5842,10 @@ export const com = $root.com = (() => {
                         }
                     case 4: {
                             message.callbutton = $root.com.antigravity.CallbuttonEvent.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.analogData = $root.com.antigravity.InterfaceAnalogDataEvent.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -5632,6 +5922,16 @@ export const com = $root.com = (() => {
                             return "callbutton." + error;
                     }
                 }
+                if (message.analogData != null && message.hasOwnProperty("analogData")) {
+                    if (properties.event === 1)
+                        return "event: multiple values";
+                    properties.event = 1;
+                    {
+                        let error = $root.com.antigravity.InterfaceAnalogDataEvent.verify(message.analogData);
+                        if (error)
+                            return "analogData." + error;
+                    }
+                }
                 return null;
             };
 
@@ -5666,6 +5966,11 @@ export const com = $root.com = (() => {
                     if (typeof object.callbutton !== "object")
                         throw TypeError(".com.antigravity.InterfaceEvent.callbutton: object expected");
                     message.callbutton = $root.com.antigravity.CallbuttonEvent.fromObject(object.callbutton);
+                }
+                if (object.analogData != null) {
+                    if (typeof object.analogData !== "object")
+                        throw TypeError(".com.antigravity.InterfaceEvent.analogData: object expected");
+                    message.analogData = $root.com.antigravity.InterfaceAnalogDataEvent.fromObject(object.analogData);
                 }
                 return message;
             };
@@ -5702,6 +6007,11 @@ export const com = $root.com = (() => {
                     object.callbutton = $root.com.antigravity.CallbuttonEvent.toObject(message.callbutton, options);
                     if (options.oneofs)
                         object.event = "callbutton";
+                }
+                if (message.analogData != null && message.hasOwnProperty("analogData")) {
+                    object.analogData = $root.com.antigravity.InterfaceAnalogDataEvent.toObject(message.analogData, options);
+                    if (options.oneofs)
+                        object.event = "analogData";
                 }
                 return object;
             };
@@ -6671,6 +6981,235 @@ export const com = $root.com = (() => {
             };
 
             return CallbuttonEvent;
+        })();
+
+        antigravity.InterfaceAnalogDataEvent = (function() {
+
+            /**
+             * Properties of an InterfaceAnalogDataEvent.
+             * @memberof com.antigravity
+             * @interface IInterfaceAnalogDataEvent
+             * @property {number|null} [pin] InterfaceAnalogDataEvent pin
+             * @property {number|null} [value] InterfaceAnalogDataEvent value
+             */
+
+            /**
+             * Constructs a new InterfaceAnalogDataEvent.
+             * @memberof com.antigravity
+             * @classdesc Represents an InterfaceAnalogDataEvent.
+             * @implements IInterfaceAnalogDataEvent
+             * @constructor
+             * @param {com.antigravity.IInterfaceAnalogDataEvent=} [properties] Properties to set
+             */
+            function InterfaceAnalogDataEvent(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * InterfaceAnalogDataEvent pin.
+             * @member {number} pin
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @instance
+             */
+            InterfaceAnalogDataEvent.prototype.pin = 0;
+
+            /**
+             * InterfaceAnalogDataEvent value.
+             * @member {number} value
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @instance
+             */
+            InterfaceAnalogDataEvent.prototype.value = 0;
+
+            /**
+             * Creates a new InterfaceAnalogDataEvent instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {com.antigravity.IInterfaceAnalogDataEvent=} [properties] Properties to set
+             * @returns {com.antigravity.InterfaceAnalogDataEvent} InterfaceAnalogDataEvent instance
+             */
+            InterfaceAnalogDataEvent.create = function create(properties) {
+                return new InterfaceAnalogDataEvent(properties);
+            };
+
+            /**
+             * Encodes the specified InterfaceAnalogDataEvent message. Does not implicitly {@link com.antigravity.InterfaceAnalogDataEvent.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {com.antigravity.IInterfaceAnalogDataEvent} message InterfaceAnalogDataEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceAnalogDataEvent.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.pin != null && Object.hasOwnProperty.call(message, "pin"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.pin);
+                if (message.value != null && Object.hasOwnProperty.call(message, "value"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.value);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified InterfaceAnalogDataEvent message, length delimited. Does not implicitly {@link com.antigravity.InterfaceAnalogDataEvent.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {com.antigravity.IInterfaceAnalogDataEvent} message InterfaceAnalogDataEvent message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            InterfaceAnalogDataEvent.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an InterfaceAnalogDataEvent message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.InterfaceAnalogDataEvent} InterfaceAnalogDataEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceAnalogDataEvent.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.InterfaceAnalogDataEvent();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.pin = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.value = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an InterfaceAnalogDataEvent message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.InterfaceAnalogDataEvent} InterfaceAnalogDataEvent
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            InterfaceAnalogDataEvent.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an InterfaceAnalogDataEvent message.
+             * @function verify
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            InterfaceAnalogDataEvent.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.pin != null && message.hasOwnProperty("pin"))
+                    if (!$util.isInteger(message.pin))
+                        return "pin: integer expected";
+                if (message.value != null && message.hasOwnProperty("value"))
+                    if (!$util.isInteger(message.value))
+                        return "value: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates an InterfaceAnalogDataEvent message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.InterfaceAnalogDataEvent} InterfaceAnalogDataEvent
+             */
+            InterfaceAnalogDataEvent.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.InterfaceAnalogDataEvent)
+                    return object;
+                let message = new $root.com.antigravity.InterfaceAnalogDataEvent();
+                if (object.pin != null)
+                    message.pin = object.pin | 0;
+                if (object.value != null)
+                    message.value = object.value | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an InterfaceAnalogDataEvent message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {com.antigravity.InterfaceAnalogDataEvent} message InterfaceAnalogDataEvent
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            InterfaceAnalogDataEvent.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.pin = 0;
+                    object.value = 0;
+                }
+                if (message.pin != null && message.hasOwnProperty("pin"))
+                    object.pin = message.pin;
+                if (message.value != null && message.hasOwnProperty("value"))
+                    object.value = message.value;
+                return object;
+            };
+
+            /**
+             * Converts this InterfaceAnalogDataEvent to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            InterfaceAnalogDataEvent.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for InterfaceAnalogDataEvent
+             * @function getTypeUrl
+             * @memberof com.antigravity.InterfaceAnalogDataEvent
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            InterfaceAnalogDataEvent.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.InterfaceAnalogDataEvent";
+            };
+
+            return InterfaceAnalogDataEvent;
         })();
 
         antigravity.StartRaceRequest = (function() {
@@ -9288,6 +9827,3000 @@ export const com = $root.com = (() => {
             };
 
             return RaceSubscriptionRequest;
+        })();
+
+        antigravity.LaneModel = (function() {
+
+            /**
+             * Properties of a LaneModel.
+             * @memberof com.antigravity
+             * @interface ILaneModel
+             * @property {string|null} [backgroundColor] LaneModel backgroundColor
+             * @property {string|null} [foregroundColor] LaneModel foregroundColor
+             * @property {number|null} [length] LaneModel length
+             * @property {string|null} [objectId] LaneModel objectId
+             */
+
+            /**
+             * Constructs a new LaneModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a LaneModel.
+             * @implements ILaneModel
+             * @constructor
+             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
+             */
+            function LaneModel(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * LaneModel backgroundColor.
+             * @member {string} backgroundColor
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.backgroundColor = "";
+
+            /**
+             * LaneModel foregroundColor.
+             * @member {string} foregroundColor
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.foregroundColor = "";
+
+            /**
+             * LaneModel length.
+             * @member {number} length
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.length = 0;
+
+            /**
+             * LaneModel objectId.
+             * @member {string} objectId
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             */
+            LaneModel.prototype.objectId = "";
+
+            /**
+             * Creates a new LaneModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
+             * @returns {com.antigravity.LaneModel} LaneModel instance
+             */
+            LaneModel.create = function create(properties) {
+                return new LaneModel(properties);
+            };
+
+            /**
+             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LaneModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.backgroundColor != null && Object.hasOwnProperty.call(message, "backgroundColor"))
+                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.backgroundColor);
+                if (message.foregroundColor != null && Object.hasOwnProperty.call(message, "foregroundColor"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.foregroundColor);
+                if (message.length != null && Object.hasOwnProperty.call(message, "length"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
+                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.objectId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LaneModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.LaneModel} LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LaneModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LaneModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.backgroundColor = reader.string();
+                            break;
+                        }
+                    case 2: {
+                            message.foregroundColor = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.length = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.objectId = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.LaneModel} LaneModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LaneModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a LaneModel message.
+             * @function verify
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            LaneModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
+                    if (!$util.isString(message.backgroundColor))
+                        return "backgroundColor: string expected";
+                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
+                    if (!$util.isString(message.foregroundColor))
+                        return "foregroundColor: string expected";
+                if (message.length != null && message.hasOwnProperty("length"))
+                    if (!$util.isInteger(message.length))
+                        return "length: integer expected";
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    if (!$util.isString(message.objectId))
+                        return "objectId: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.LaneModel} LaneModel
+             */
+            LaneModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.LaneModel)
+                    return object;
+                let message = new $root.com.antigravity.LaneModel();
+                if (object.backgroundColor != null)
+                    message.backgroundColor = String(object.backgroundColor);
+                if (object.foregroundColor != null)
+                    message.foregroundColor = String(object.foregroundColor);
+                if (object.length != null)
+                    message.length = object.length | 0;
+                if (object.objectId != null)
+                    message.objectId = String(object.objectId);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {com.antigravity.LaneModel} message LaneModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            LaneModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.backgroundColor = "";
+                    object.foregroundColor = "";
+                    object.length = 0;
+                    object.objectId = "";
+                }
+                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
+                    object.backgroundColor = message.backgroundColor;
+                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
+                    object.foregroundColor = message.foregroundColor;
+                if (message.length != null && message.hasOwnProperty("length"))
+                    object.length = message.length;
+                if (message.objectId != null && message.hasOwnProperty("objectId"))
+                    object.objectId = message.objectId;
+                return object;
+            };
+
+            /**
+             * Converts this LaneModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.LaneModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            LaneModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for LaneModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.LaneModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            LaneModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.LaneModel";
+            };
+
+            return LaneModel;
+        })();
+
+        antigravity.TrackModel = (function() {
+
+            /**
+             * Properties of a TrackModel.
+             * @memberof com.antigravity
+             * @interface ITrackModel
+             * @property {com.antigravity.IModel|null} [model] TrackModel model
+             * @property {string|null} [name] TrackModel name
+             * @property {Array.<com.antigravity.ILaneModel>|null} [lanes] TrackModel lanes
+             * @property {boolean|null} [hasDigitalFuel] TrackModel hasDigitalFuel
+             * @property {Array.<com.antigravity.IArduinoConfig>|null} [arduinoConfigs] TrackModel arduinoConfigs
+             */
+
+            /**
+             * Constructs a new TrackModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a TrackModel.
+             * @implements ITrackModel
+             * @constructor
+             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
+             */
+            function TrackModel(properties) {
+                this.lanes = [];
+                this.arduinoConfigs = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * TrackModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.model = null;
+
+            /**
+             * TrackModel name.
+             * @member {string} name
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.name = "";
+
+            /**
+             * TrackModel lanes.
+             * @member {Array.<com.antigravity.ILaneModel>} lanes
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.lanes = $util.emptyArray;
+
+            /**
+             * TrackModel hasDigitalFuel.
+             * @member {boolean} hasDigitalFuel
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.hasDigitalFuel = false;
+
+            /**
+             * TrackModel arduinoConfigs.
+             * @member {Array.<com.antigravity.IArduinoConfig>} arduinoConfigs
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             */
+            TrackModel.prototype.arduinoConfigs = $util.emptyArray;
+
+            /**
+             * Creates a new TrackModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
+             * @returns {com.antigravity.TrackModel} TrackModel instance
+             */
+            TrackModel.create = function create(properties) {
+                return new TrackModel(properties);
+            };
+
+            /**
+             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TrackModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.lanes != null && message.lanes.length)
+                    for (let i = 0; i < message.lanes.length; ++i)
+                        $root.com.antigravity.LaneModel.encode(message.lanes[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.hasDigitalFuel != null && Object.hasOwnProperty.call(message, "hasDigitalFuel"))
+                    writer.uint32(/* id 4, wireType 0 =*/32).bool(message.hasDigitalFuel);
+                if (message.arduinoConfigs != null && message.arduinoConfigs.length)
+                    for (let i = 0; i < message.arduinoConfigs.length; ++i)
+                        $root.com.antigravity.ArduinoConfig.encode(message.arduinoConfigs[i], writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TrackModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.TrackModel} TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TrackModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TrackModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            if (!(message.lanes && message.lanes.length))
+                                message.lanes = [];
+                            message.lanes.push($root.com.antigravity.LaneModel.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    case 4: {
+                            message.hasDigitalFuel = reader.bool();
+                            break;
+                        }
+                    case 5: {
+                            if (!(message.arduinoConfigs && message.arduinoConfigs.length))
+                                message.arduinoConfigs = [];
+                            message.arduinoConfigs.push($root.com.antigravity.ArduinoConfig.decode(reader, reader.uint32()));
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.TrackModel} TrackModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TrackModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a TrackModel message.
+             * @function verify
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            TrackModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.lanes != null && message.hasOwnProperty("lanes")) {
+                    if (!Array.isArray(message.lanes))
+                        return "lanes: array expected";
+                    for (let i = 0; i < message.lanes.length; ++i) {
+                        let error = $root.com.antigravity.LaneModel.verify(message.lanes[i]);
+                        if (error)
+                            return "lanes." + error;
+                    }
+                }
+                if (message.hasDigitalFuel != null && message.hasOwnProperty("hasDigitalFuel"))
+                    if (typeof message.hasDigitalFuel !== "boolean")
+                        return "hasDigitalFuel: boolean expected";
+                if (message.arduinoConfigs != null && message.hasOwnProperty("arduinoConfigs")) {
+                    if (!Array.isArray(message.arduinoConfigs))
+                        return "arduinoConfigs: array expected";
+                    for (let i = 0; i < message.arduinoConfigs.length; ++i) {
+                        let error = $root.com.antigravity.ArduinoConfig.verify(message.arduinoConfigs[i]);
+                        if (error)
+                            return "arduinoConfigs." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.TrackModel} TrackModel
+             */
+            TrackModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.TrackModel)
+                    return object;
+                let message = new $root.com.antigravity.TrackModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.TrackModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.lanes) {
+                    if (!Array.isArray(object.lanes))
+                        throw TypeError(".com.antigravity.TrackModel.lanes: array expected");
+                    message.lanes = [];
+                    for (let i = 0; i < object.lanes.length; ++i) {
+                        if (typeof object.lanes[i] !== "object")
+                            throw TypeError(".com.antigravity.TrackModel.lanes: object expected");
+                        message.lanes[i] = $root.com.antigravity.LaneModel.fromObject(object.lanes[i]);
+                    }
+                }
+                if (object.hasDigitalFuel != null)
+                    message.hasDigitalFuel = Boolean(object.hasDigitalFuel);
+                if (object.arduinoConfigs) {
+                    if (!Array.isArray(object.arduinoConfigs))
+                        throw TypeError(".com.antigravity.TrackModel.arduinoConfigs: array expected");
+                    message.arduinoConfigs = [];
+                    for (let i = 0; i < object.arduinoConfigs.length; ++i) {
+                        if (typeof object.arduinoConfigs[i] !== "object")
+                            throw TypeError(".com.antigravity.TrackModel.arduinoConfigs: object expected");
+                        message.arduinoConfigs[i] = $root.com.antigravity.ArduinoConfig.fromObject(object.arduinoConfigs[i]);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {com.antigravity.TrackModel} message TrackModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            TrackModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults) {
+                    object.lanes = [];
+                    object.arduinoConfigs = [];
+                }
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.hasDigitalFuel = false;
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.lanes && message.lanes.length) {
+                    object.lanes = [];
+                    for (let j = 0; j < message.lanes.length; ++j)
+                        object.lanes[j] = $root.com.antigravity.LaneModel.toObject(message.lanes[j], options);
+                }
+                if (message.hasDigitalFuel != null && message.hasOwnProperty("hasDigitalFuel"))
+                    object.hasDigitalFuel = message.hasDigitalFuel;
+                if (message.arduinoConfigs && message.arduinoConfigs.length) {
+                    object.arduinoConfigs = [];
+                    for (let j = 0; j < message.arduinoConfigs.length; ++j)
+                        object.arduinoConfigs[j] = $root.com.antigravity.ArduinoConfig.toObject(message.arduinoConfigs[j], options);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this TrackModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.TrackModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            TrackModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for TrackModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.TrackModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            TrackModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.TrackModel";
+            };
+
+            return TrackModel;
+        })();
+
+        antigravity.HeatScoring = (function() {
+
+            /**
+             * Properties of a HeatScoring.
+             * @memberof com.antigravity
+             * @interface IHeatScoring
+             * @property {com.antigravity.HeatScoring.FinishMethod|null} [finishMethod] HeatScoring finishMethod
+             * @property {number|Long|null} [finishValue] HeatScoring finishValue
+             * @property {com.antigravity.HeatScoring.HeatRanking|null} [heatRanking] HeatScoring heatRanking
+             * @property {com.antigravity.HeatScoring.HeatRankingTiebreaker|null} [heatRankingTiebreaker] HeatScoring heatRankingTiebreaker
+             * @property {com.antigravity.HeatScoring.AllowFinish|null} [allowFinish] HeatScoring allowFinish
+             */
+
+            /**
+             * Constructs a new HeatScoring.
+             * @memberof com.antigravity
+             * @classdesc Represents a HeatScoring.
+             * @implements IHeatScoring
+             * @constructor
+             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
+             */
+            function HeatScoring(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * HeatScoring finishMethod.
+             * @member {com.antigravity.HeatScoring.FinishMethod} finishMethod
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             */
+            HeatScoring.prototype.finishMethod = 0;
+
+            /**
+             * HeatScoring finishValue.
+             * @member {number|Long} finishValue
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             */
+            HeatScoring.prototype.finishValue = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * HeatScoring heatRanking.
+             * @member {com.antigravity.HeatScoring.HeatRanking} heatRanking
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             */
+            HeatScoring.prototype.heatRanking = 0;
+
+            /**
+             * HeatScoring heatRankingTiebreaker.
+             * @member {com.antigravity.HeatScoring.HeatRankingTiebreaker} heatRankingTiebreaker
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             */
+            HeatScoring.prototype.heatRankingTiebreaker = 0;
+
+            /**
+             * HeatScoring allowFinish.
+             * @member {com.antigravity.HeatScoring.AllowFinish} allowFinish
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             */
+            HeatScoring.prototype.allowFinish = 0;
+
+            /**
+             * Creates a new HeatScoring instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
+             * @returns {com.antigravity.HeatScoring} HeatScoring instance
+             */
+            HeatScoring.create = function create(properties) {
+                return new HeatScoring(properties);
+            };
+
+            /**
+             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            HeatScoring.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.finishMethod != null && Object.hasOwnProperty.call(message, "finishMethod"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.finishMethod);
+                if (message.finishValue != null && Object.hasOwnProperty.call(message, "finishValue"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int64(message.finishValue);
+                if (message.heatRanking != null && Object.hasOwnProperty.call(message, "heatRanking"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.heatRanking);
+                if (message.heatRankingTiebreaker != null && Object.hasOwnProperty.call(message, "heatRankingTiebreaker"))
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.heatRankingTiebreaker);
+                if (message.allowFinish != null && Object.hasOwnProperty.call(message, "allowFinish"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.allowFinish);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            HeatScoring.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a HeatScoring message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.HeatScoring} HeatScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            HeatScoring.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.HeatScoring();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.finishMethod = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.finishValue = reader.int64();
+                            break;
+                        }
+                    case 3: {
+                            message.heatRanking = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.heatRankingTiebreaker = reader.int32();
+                            break;
+                        }
+                    case 5: {
+                            message.allowFinish = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.HeatScoring} HeatScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            HeatScoring.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a HeatScoring message.
+             * @function verify
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            HeatScoring.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
+                    switch (message.finishMethod) {
+                    default:
+                        return "finishMethod: enum value expected";
+                    case 0:
+                    case 1:
+                        break;
+                    }
+                if (message.finishValue != null && message.hasOwnProperty("finishValue"))
+                    if (!$util.isInteger(message.finishValue) && !(message.finishValue && $util.isInteger(message.finishValue.low) && $util.isInteger(message.finishValue.high)))
+                        return "finishValue: integer|Long expected";
+                if (message.heatRanking != null && message.hasOwnProperty("heatRanking"))
+                    switch (message.heatRanking) {
+                    default:
+                        return "heatRanking: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.heatRankingTiebreaker != null && message.hasOwnProperty("heatRankingTiebreaker"))
+                    switch (message.heatRankingTiebreaker) {
+                    default:
+                        return "heatRankingTiebreaker: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.allowFinish != null && message.hasOwnProperty("allowFinish"))
+                    switch (message.allowFinish) {
+                    default:
+                        return "allowFinish: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                return null;
+            };
+
+            /**
+             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.HeatScoring} HeatScoring
+             */
+            HeatScoring.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.HeatScoring)
+                    return object;
+                let message = new $root.com.antigravity.HeatScoring();
+                switch (object.finishMethod) {
+                default:
+                    if (typeof object.finishMethod === "number") {
+                        message.finishMethod = object.finishMethod;
+                        break;
+                    }
+                    break;
+                case "Lap":
+                case 0:
+                    message.finishMethod = 0;
+                    break;
+                case "Timed":
+                case 1:
+                    message.finishMethod = 1;
+                    break;
+                }
+                if (object.finishValue != null)
+                    if ($util.Long)
+                        (message.finishValue = $util.Long.fromValue(object.finishValue)).unsigned = false;
+                    else if (typeof object.finishValue === "string")
+                        message.finishValue = parseInt(object.finishValue, 10);
+                    else if (typeof object.finishValue === "number")
+                        message.finishValue = object.finishValue;
+                    else if (typeof object.finishValue === "object")
+                        message.finishValue = new $util.LongBits(object.finishValue.low >>> 0, object.finishValue.high >>> 0).toNumber();
+                switch (object.heatRanking) {
+                default:
+                    if (typeof object.heatRanking === "number") {
+                        message.heatRanking = object.heatRanking;
+                        break;
+                    }
+                    break;
+                case "HR_LAP_COUNT":
+                case 0:
+                    message.heatRanking = 0;
+                    break;
+                case "HR_FASTEST_LAP":
+                case 1:
+                    message.heatRanking = 1;
+                    break;
+                case "HR_TOTAL_TIME":
+                case 2:
+                    message.heatRanking = 2;
+                    break;
+                }
+                switch (object.heatRankingTiebreaker) {
+                default:
+                    if (typeof object.heatRankingTiebreaker === "number") {
+                        message.heatRankingTiebreaker = object.heatRankingTiebreaker;
+                        break;
+                    }
+                    break;
+                case "HRT_FASTEST_LAP_TIME":
+                case 0:
+                    message.heatRankingTiebreaker = 0;
+                    break;
+                case "HRT_MEDIAN_LAP_TIME":
+                case 1:
+                    message.heatRankingTiebreaker = 1;
+                    break;
+                case "HRT_AVERAGE_LAP_TIME":
+                case 2:
+                    message.heatRankingTiebreaker = 2;
+                    break;
+                }
+                switch (object.allowFinish) {
+                default:
+                    if (typeof object.allowFinish === "number") {
+                        message.allowFinish = object.allowFinish;
+                        break;
+                    }
+                    break;
+                case "AF_NONE":
+                case 0:
+                    message.allowFinish = 0;
+                    break;
+                case "AF_ALLOW":
+                case 1:
+                    message.allowFinish = 1;
+                    break;
+                case "AF_SINGLE_LAP":
+                case 2:
+                    message.allowFinish = 2;
+                    break;
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {com.antigravity.HeatScoring} message HeatScoring
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            HeatScoring.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.finishMethod = options.enums === String ? "Lap" : 0;
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.finishValue = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+                    } else
+                        object.finishValue = options.longs === String ? "0" : 0;
+                    object.heatRanking = options.enums === String ? "HR_LAP_COUNT" : 0;
+                    object.heatRankingTiebreaker = options.enums === String ? "HRT_FASTEST_LAP_TIME" : 0;
+                    object.allowFinish = options.enums === String ? "AF_NONE" : 0;
+                }
+                if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
+                    object.finishMethod = options.enums === String ? $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] === undefined ? message.finishMethod : $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] : message.finishMethod;
+                if (message.finishValue != null && message.hasOwnProperty("finishValue"))
+                    if (typeof message.finishValue === "number")
+                        object.finishValue = options.longs === String ? String(message.finishValue) : message.finishValue;
+                    else
+                        object.finishValue = options.longs === String ? $util.Long.prototype.toString.call(message.finishValue) : options.longs === Number ? new $util.LongBits(message.finishValue.low >>> 0, message.finishValue.high >>> 0).toNumber() : message.finishValue;
+                if (message.heatRanking != null && message.hasOwnProperty("heatRanking"))
+                    object.heatRanking = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] === undefined ? message.heatRanking : $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] : message.heatRanking;
+                if (message.heatRankingTiebreaker != null && message.hasOwnProperty("heatRankingTiebreaker"))
+                    object.heatRankingTiebreaker = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] === undefined ? message.heatRankingTiebreaker : $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] : message.heatRankingTiebreaker;
+                if (message.allowFinish != null && message.hasOwnProperty("allowFinish"))
+                    object.allowFinish = options.enums === String ? $root.com.antigravity.HeatScoring.AllowFinish[message.allowFinish] === undefined ? message.allowFinish : $root.com.antigravity.HeatScoring.AllowFinish[message.allowFinish] : message.allowFinish;
+                return object;
+            };
+
+            /**
+             * Converts this HeatScoring to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.HeatScoring
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            HeatScoring.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for HeatScoring
+             * @function getTypeUrl
+             * @memberof com.antigravity.HeatScoring
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            HeatScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.HeatScoring";
+            };
+
+            /**
+             * FinishMethod enum.
+             * @name com.antigravity.HeatScoring.FinishMethod
+             * @enum {number}
+             * @property {number} Lap=0 Lap value
+             * @property {number} Timed=1 Timed value
+             */
+            HeatScoring.FinishMethod = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "Lap"] = 0;
+                values[valuesById[1] = "Timed"] = 1;
+                return values;
+            })();
+
+            /**
+             * HeatRanking enum.
+             * @name com.antigravity.HeatScoring.HeatRanking
+             * @enum {number}
+             * @property {number} HR_LAP_COUNT=0 HR_LAP_COUNT value
+             * @property {number} HR_FASTEST_LAP=1 HR_FASTEST_LAP value
+             * @property {number} HR_TOTAL_TIME=2 HR_TOTAL_TIME value
+             */
+            HeatScoring.HeatRanking = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "HR_LAP_COUNT"] = 0;
+                values[valuesById[1] = "HR_FASTEST_LAP"] = 1;
+                values[valuesById[2] = "HR_TOTAL_TIME"] = 2;
+                return values;
+            })();
+
+            /**
+             * HeatRankingTiebreaker enum.
+             * @name com.antigravity.HeatScoring.HeatRankingTiebreaker
+             * @enum {number}
+             * @property {number} HRT_FASTEST_LAP_TIME=0 HRT_FASTEST_LAP_TIME value
+             * @property {number} HRT_MEDIAN_LAP_TIME=1 HRT_MEDIAN_LAP_TIME value
+             * @property {number} HRT_AVERAGE_LAP_TIME=2 HRT_AVERAGE_LAP_TIME value
+             */
+            HeatScoring.HeatRankingTiebreaker = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "HRT_FASTEST_LAP_TIME"] = 0;
+                values[valuesById[1] = "HRT_MEDIAN_LAP_TIME"] = 1;
+                values[valuesById[2] = "HRT_AVERAGE_LAP_TIME"] = 2;
+                return values;
+            })();
+
+            /**
+             * AllowFinish enum.
+             * @name com.antigravity.HeatScoring.AllowFinish
+             * @enum {number}
+             * @property {number} AF_NONE=0 AF_NONE value
+             * @property {number} AF_ALLOW=1 AF_ALLOW value
+             * @property {number} AF_SINGLE_LAP=2 AF_SINGLE_LAP value
+             */
+            HeatScoring.AllowFinish = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "AF_NONE"] = 0;
+                values[valuesById[1] = "AF_ALLOW"] = 1;
+                values[valuesById[2] = "AF_SINGLE_LAP"] = 2;
+                return values;
+            })();
+
+            return HeatScoring;
+        })();
+
+        antigravity.OverallScoring = (function() {
+
+            /**
+             * Properties of an OverallScoring.
+             * @memberof com.antigravity
+             * @interface IOverallScoring
+             * @property {number|null} [droppedHeats] OverallScoring droppedHeats
+             * @property {com.antigravity.OverallScoring.OverallRanking|null} [rankingMethod] OverallScoring rankingMethod
+             * @property {com.antigravity.OverallScoring.OverallRankingTiebreaker|null} [tiebreaker] OverallScoring tiebreaker
+             */
+
+            /**
+             * Constructs a new OverallScoring.
+             * @memberof com.antigravity
+             * @classdesc Represents an OverallScoring.
+             * @implements IOverallScoring
+             * @constructor
+             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
+             */
+            function OverallScoring(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * OverallScoring droppedHeats.
+             * @member {number} droppedHeats
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.droppedHeats = 0;
+
+            /**
+             * OverallScoring rankingMethod.
+             * @member {com.antigravity.OverallScoring.OverallRanking} rankingMethod
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.rankingMethod = 0;
+
+            /**
+             * OverallScoring tiebreaker.
+             * @member {com.antigravity.OverallScoring.OverallRankingTiebreaker} tiebreaker
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             */
+            OverallScoring.prototype.tiebreaker = 0;
+
+            /**
+             * Creates a new OverallScoring instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
+             * @returns {com.antigravity.OverallScoring} OverallScoring instance
+             */
+            OverallScoring.create = function create(properties) {
+                return new OverallScoring(properties);
+            };
+
+            /**
+             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallScoring.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.droppedHeats != null && Object.hasOwnProperty.call(message, "droppedHeats"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.droppedHeats);
+                if (message.rankingMethod != null && Object.hasOwnProperty.call(message, "rankingMethod"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.rankingMethod);
+                if (message.tiebreaker != null && Object.hasOwnProperty.call(message, "tiebreaker"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.tiebreaker);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            OverallScoring.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallScoring.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.OverallScoring();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.droppedHeats = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.rankingMethod = reader.int32();
+                            break;
+                        }
+                    case 3: {
+                            message.tiebreaker = reader.int32();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            OverallScoring.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an OverallScoring message.
+             * @function verify
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            OverallScoring.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
+                    if (!$util.isInteger(message.droppedHeats))
+                        return "droppedHeats: integer expected";
+                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
+                    switch (message.rankingMethod) {
+                    default:
+                        return "rankingMethod: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        break;
+                    }
+                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
+                    switch (message.tiebreaker) {
+                    default:
+                        return "tiebreaker: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        break;
+                    }
+                return null;
+            };
+
+            /**
+             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.OverallScoring} OverallScoring
+             */
+            OverallScoring.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.OverallScoring)
+                    return object;
+                let message = new $root.com.antigravity.OverallScoring();
+                if (object.droppedHeats != null)
+                    message.droppedHeats = object.droppedHeats | 0;
+                switch (object.rankingMethod) {
+                default:
+                    if (typeof object.rankingMethod === "number") {
+                        message.rankingMethod = object.rankingMethod;
+                        break;
+                    }
+                    break;
+                case "OR_LAP_COUNT":
+                case 0:
+                    message.rankingMethod = 0;
+                    break;
+                case "OR_FASTEST_LAP":
+                case 1:
+                    message.rankingMethod = 1;
+                    break;
+                case "OR_TOTAL_TIME":
+                case 2:
+                    message.rankingMethod = 2;
+                    break;
+                case "OR_AVERAGE_LAP":
+                case 3:
+                    message.rankingMethod = 3;
+                    break;
+                }
+                switch (object.tiebreaker) {
+                default:
+                    if (typeof object.tiebreaker === "number") {
+                        message.tiebreaker = object.tiebreaker;
+                        break;
+                    }
+                    break;
+                case "ORT_FASTEST_LAP_TIME":
+                case 0:
+                    message.tiebreaker = 0;
+                    break;
+                case "ORT_MEDIAN_LAP_TIME":
+                case 1:
+                    message.tiebreaker = 1;
+                    break;
+                case "ORT_AVERAGE_LAP_TIME":
+                case 2:
+                    message.tiebreaker = 2;
+                    break;
+                case "ORT_TOTAL_TIME":
+                case 3:
+                    message.tiebreaker = 3;
+                    break;
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {com.antigravity.OverallScoring} message OverallScoring
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            OverallScoring.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.droppedHeats = 0;
+                    object.rankingMethod = options.enums === String ? "OR_LAP_COUNT" : 0;
+                    object.tiebreaker = options.enums === String ? "ORT_FASTEST_LAP_TIME" : 0;
+                }
+                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
+                    object.droppedHeats = message.droppedHeats;
+                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
+                    object.rankingMethod = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] === undefined ? message.rankingMethod : $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] : message.rankingMethod;
+                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
+                    object.tiebreaker = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] === undefined ? message.tiebreaker : $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] : message.tiebreaker;
+                return object;
+            };
+
+            /**
+             * Converts this OverallScoring to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.OverallScoring
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            OverallScoring.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for OverallScoring
+             * @function getTypeUrl
+             * @memberof com.antigravity.OverallScoring
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            OverallScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.OverallScoring";
+            };
+
+            /**
+             * OverallRanking enum.
+             * @name com.antigravity.OverallScoring.OverallRanking
+             * @enum {number}
+             * @property {number} OR_LAP_COUNT=0 OR_LAP_COUNT value
+             * @property {number} OR_FASTEST_LAP=1 OR_FASTEST_LAP value
+             * @property {number} OR_TOTAL_TIME=2 OR_TOTAL_TIME value
+             * @property {number} OR_AVERAGE_LAP=3 OR_AVERAGE_LAP value
+             */
+            OverallScoring.OverallRanking = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "OR_LAP_COUNT"] = 0;
+                values[valuesById[1] = "OR_FASTEST_LAP"] = 1;
+                values[valuesById[2] = "OR_TOTAL_TIME"] = 2;
+                values[valuesById[3] = "OR_AVERAGE_LAP"] = 3;
+                return values;
+            })();
+
+            /**
+             * OverallRankingTiebreaker enum.
+             * @name com.antigravity.OverallScoring.OverallRankingTiebreaker
+             * @enum {number}
+             * @property {number} ORT_FASTEST_LAP_TIME=0 ORT_FASTEST_LAP_TIME value
+             * @property {number} ORT_MEDIAN_LAP_TIME=1 ORT_MEDIAN_LAP_TIME value
+             * @property {number} ORT_AVERAGE_LAP_TIME=2 ORT_AVERAGE_LAP_TIME value
+             * @property {number} ORT_TOTAL_TIME=3 ORT_TOTAL_TIME value
+             */
+            OverallScoring.OverallRankingTiebreaker = (function() {
+                const valuesById = {}, values = Object.create(valuesById);
+                values[valuesById[0] = "ORT_FASTEST_LAP_TIME"] = 0;
+                values[valuesById[1] = "ORT_MEDIAN_LAP_TIME"] = 1;
+                values[valuesById[2] = "ORT_AVERAGE_LAP_TIME"] = 2;
+                values[valuesById[3] = "ORT_TOTAL_TIME"] = 3;
+                return values;
+            })();
+
+            return OverallScoring;
+        })();
+
+        antigravity.RaceModel = (function() {
+
+            /**
+             * Properties of a RaceModel.
+             * @memberof com.antigravity
+             * @interface IRaceModel
+             * @property {com.antigravity.IModel|null} [model] RaceModel model
+             * @property {string|null} [name] RaceModel name
+             * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
+             * @property {com.antigravity.IHeatScoring|null} [heatScoring] RaceModel heatScoring
+             * @property {com.antigravity.IOverallScoring|null} [overallScoring] RaceModel overallScoring
+             * @property {number|null} [minLapTime] RaceModel minLapTime
+             * @property {com.antigravity.IAnalogFuelOptions|null} [fuelOptions] RaceModel fuelOptions
+             * @property {com.antigravity.IDigitalFuelOptions|null} [digitalFuelOptions] RaceModel digitalFuelOptions
+             */
+
+            /**
+             * Constructs a new RaceModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a RaceModel.
+             * @implements IRaceModel
+             * @constructor
+             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
+             */
+            function RaceModel(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * RaceModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.model = null;
+
+            /**
+             * RaceModel name.
+             * @member {string} name
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.name = "";
+
+            /**
+             * RaceModel track.
+             * @member {com.antigravity.ITrackModel|null|undefined} track
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.track = null;
+
+            /**
+             * RaceModel heatScoring.
+             * @member {com.antigravity.IHeatScoring|null|undefined} heatScoring
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.heatScoring = null;
+
+            /**
+             * RaceModel overallScoring.
+             * @member {com.antigravity.IOverallScoring|null|undefined} overallScoring
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.overallScoring = null;
+
+            /**
+             * RaceModel minLapTime.
+             * @member {number} minLapTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.minLapTime = 0;
+
+            /**
+             * RaceModel fuelOptions.
+             * @member {com.antigravity.IAnalogFuelOptions|null|undefined} fuelOptions
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.fuelOptions = null;
+
+            /**
+             * RaceModel digitalFuelOptions.
+             * @member {com.antigravity.IDigitalFuelOptions|null|undefined} digitalFuelOptions
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.digitalFuelOptions = null;
+
+            /**
+             * Creates a new RaceModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
+             * @returns {com.antigravity.RaceModel} RaceModel instance
+             */
+            RaceModel.create = function create(properties) {
+                return new RaceModel(properties);
+            };
+
+            /**
+             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.track != null && Object.hasOwnProperty.call(message, "track"))
+                    $root.com.antigravity.TrackModel.encode(message.track, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+                if (message.heatScoring != null && Object.hasOwnProperty.call(message, "heatScoring"))
+                    $root.com.antigravity.HeatScoring.encode(message.heatScoring, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+                if (message.overallScoring != null && Object.hasOwnProperty.call(message, "overallScoring"))
+                    $root.com.antigravity.OverallScoring.encode(message.overallScoring, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+                if (message.minLapTime != null && Object.hasOwnProperty.call(message, "minLapTime"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.minLapTime);
+                if (message.fuelOptions != null && Object.hasOwnProperty.call(message, "fuelOptions"))
+                    $root.com.antigravity.AnalogFuelOptions.encode(message.fuelOptions, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
+                if (message.digitalFuelOptions != null && Object.hasOwnProperty.call(message, "digitalFuelOptions"))
+                    $root.com.antigravity.DigitalFuelOptions.encode(message.digitalFuelOptions, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+                return writer;
+            };
+
+            /**
+             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            RaceModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.RaceModel} RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.track = $root.com.antigravity.TrackModel.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 4: {
+                            message.heatScoring = $root.com.antigravity.HeatScoring.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 5: {
+                            message.overallScoring = $root.com.antigravity.OverallScoring.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 6: {
+                            message.minLapTime = reader.double();
+                            break;
+                        }
+                    case 7: {
+                            message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 8: {
+                            message.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.decode(reader, reader.uint32());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.RaceModel} RaceModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            RaceModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a RaceModel message.
+             * @function verify
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            RaceModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.track != null && message.hasOwnProperty("track")) {
+                    let error = $root.com.antigravity.TrackModel.verify(message.track);
+                    if (error)
+                        return "track." + error;
+                }
+                if (message.heatScoring != null && message.hasOwnProperty("heatScoring")) {
+                    let error = $root.com.antigravity.HeatScoring.verify(message.heatScoring);
+                    if (error)
+                        return "heatScoring." + error;
+                }
+                if (message.overallScoring != null && message.hasOwnProperty("overallScoring")) {
+                    let error = $root.com.antigravity.OverallScoring.verify(message.overallScoring);
+                    if (error)
+                        return "overallScoring." + error;
+                }
+                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
+                    if (typeof message.minLapTime !== "number")
+                        return "minLapTime: number expected";
+                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions")) {
+                    let error = $root.com.antigravity.AnalogFuelOptions.verify(message.fuelOptions);
+                    if (error)
+                        return "fuelOptions." + error;
+                }
+                if (message.digitalFuelOptions != null && message.hasOwnProperty("digitalFuelOptions")) {
+                    let error = $root.com.antigravity.DigitalFuelOptions.verify(message.digitalFuelOptions);
+                    if (error)
+                        return "digitalFuelOptions." + error;
+                }
+                return null;
+            };
+
+            /**
+             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.RaceModel} RaceModel
+             */
+            RaceModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.RaceModel)
+                    return object;
+                let message = new $root.com.antigravity.RaceModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.track != null) {
+                    if (typeof object.track !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.track: object expected");
+                    message.track = $root.com.antigravity.TrackModel.fromObject(object.track);
+                }
+                if (object.heatScoring != null) {
+                    if (typeof object.heatScoring !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.heatScoring: object expected");
+                    message.heatScoring = $root.com.antigravity.HeatScoring.fromObject(object.heatScoring);
+                }
+                if (object.overallScoring != null) {
+                    if (typeof object.overallScoring !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.overallScoring: object expected");
+                    message.overallScoring = $root.com.antigravity.OverallScoring.fromObject(object.overallScoring);
+                }
+                if (object.minLapTime != null)
+                    message.minLapTime = Number(object.minLapTime);
+                if (object.fuelOptions != null) {
+                    if (typeof object.fuelOptions !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.fuelOptions: object expected");
+                    message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.fromObject(object.fuelOptions);
+                }
+                if (object.digitalFuelOptions != null) {
+                    if (typeof object.digitalFuelOptions !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.digitalFuelOptions: object expected");
+                    message.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.fromObject(object.digitalFuelOptions);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {com.antigravity.RaceModel} message RaceModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            RaceModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.track = null;
+                    object.heatScoring = null;
+                    object.overallScoring = null;
+                    object.minLapTime = 0;
+                    object.fuelOptions = null;
+                    object.digitalFuelOptions = null;
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.track != null && message.hasOwnProperty("track"))
+                    object.track = $root.com.antigravity.TrackModel.toObject(message.track, options);
+                if (message.heatScoring != null && message.hasOwnProperty("heatScoring"))
+                    object.heatScoring = $root.com.antigravity.HeatScoring.toObject(message.heatScoring, options);
+                if (message.overallScoring != null && message.hasOwnProperty("overallScoring"))
+                    object.overallScoring = $root.com.antigravity.OverallScoring.toObject(message.overallScoring, options);
+                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
+                    object.minLapTime = options.json && !isFinite(message.minLapTime) ? String(message.minLapTime) : message.minLapTime;
+                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions"))
+                    object.fuelOptions = $root.com.antigravity.AnalogFuelOptions.toObject(message.fuelOptions, options);
+                if (message.digitalFuelOptions != null && message.hasOwnProperty("digitalFuelOptions"))
+                    object.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.toObject(message.digitalFuelOptions, options);
+                return object;
+            };
+
+            /**
+             * Converts this RaceModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            RaceModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for RaceModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.RaceModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            RaceModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.RaceModel";
+            };
+
+            return RaceModel;
+        })();
+
+        /**
+         * FuelUsageType enum.
+         * @name com.antigravity.FuelUsageType
+         * @enum {number}
+         * @property {number} LINEAR=0 LINEAR value
+         * @property {number} QUADRATIC=1 QUADRATIC value
+         * @property {number} CUBIC=2 CUBIC value
+         */
+        antigravity.FuelUsageType = (function() {
+            const valuesById = {}, values = Object.create(valuesById);
+            values[valuesById[0] = "LINEAR"] = 0;
+            values[valuesById[1] = "QUADRATIC"] = 1;
+            values[valuesById[2] = "CUBIC"] = 2;
+            return values;
+        })();
+
+        antigravity.AnalogFuelOptions = (function() {
+
+            /**
+             * Properties of an AnalogFuelOptions.
+             * @memberof com.antigravity
+             * @interface IAnalogFuelOptions
+             * @property {boolean|null} [enabled] AnalogFuelOptions enabled
+             * @property {boolean|null} [resetFuelAtHeatStart] AnalogFuelOptions resetFuelAtHeatStart
+             * @property {boolean|null} [endHeatOnOutOfFuel] AnalogFuelOptions endHeatOnOutOfFuel
+             * @property {number|null} [capacity] AnalogFuelOptions capacity
+             * @property {com.antigravity.FuelUsageType|null} [usageType] AnalogFuelOptions usageType
+             * @property {number|null} [usageRate] AnalogFuelOptions usageRate
+             * @property {number|null} [startLevel] AnalogFuelOptions startLevel
+             * @property {number|null} [refuelRate] AnalogFuelOptions refuelRate
+             * @property {number|null} [pitStopDelay] AnalogFuelOptions pitStopDelay
+             * @property {number|null} [referenceTime] AnalogFuelOptions referenceTime
+             */
+
+            /**
+             * Constructs a new AnalogFuelOptions.
+             * @memberof com.antigravity
+             * @classdesc Represents an AnalogFuelOptions.
+             * @implements IAnalogFuelOptions
+             * @constructor
+             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
+             */
+            function AnalogFuelOptions(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * AnalogFuelOptions enabled.
+             * @member {boolean} enabled
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.enabled = false;
+
+            /**
+             * AnalogFuelOptions resetFuelAtHeatStart.
+             * @member {boolean} resetFuelAtHeatStart
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.resetFuelAtHeatStart = false;
+
+            /**
+             * AnalogFuelOptions endHeatOnOutOfFuel.
+             * @member {boolean} endHeatOnOutOfFuel
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.endHeatOnOutOfFuel = false;
+
+            /**
+             * AnalogFuelOptions capacity.
+             * @member {number} capacity
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.capacity = 0;
+
+            /**
+             * AnalogFuelOptions usageType.
+             * @member {com.antigravity.FuelUsageType} usageType
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.usageType = 0;
+
+            /**
+             * AnalogFuelOptions usageRate.
+             * @member {number} usageRate
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.usageRate = 0;
+
+            /**
+             * AnalogFuelOptions startLevel.
+             * @member {number} startLevel
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.startLevel = 0;
+
+            /**
+             * AnalogFuelOptions refuelRate.
+             * @member {number} refuelRate
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.refuelRate = 0;
+
+            /**
+             * AnalogFuelOptions pitStopDelay.
+             * @member {number} pitStopDelay
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.pitStopDelay = 0;
+
+            /**
+             * AnalogFuelOptions referenceTime.
+             * @member {number} referenceTime
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             */
+            AnalogFuelOptions.prototype.referenceTime = 0;
+
+            /**
+             * Creates a new AnalogFuelOptions instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions instance
+             */
+            AnalogFuelOptions.create = function create(properties) {
+                return new AnalogFuelOptions(properties);
+            };
+
+            /**
+             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AnalogFuelOptions.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.enabled);
+                if (message.resetFuelAtHeatStart != null && Object.hasOwnProperty.call(message, "resetFuelAtHeatStart"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).bool(message.resetFuelAtHeatStart);
+                if (message.endHeatOnOutOfFuel != null && Object.hasOwnProperty.call(message, "endHeatOnOutOfFuel"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).bool(message.endHeatOnOutOfFuel);
+                if (message.capacity != null && Object.hasOwnProperty.call(message, "capacity"))
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.capacity);
+                if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.usageType);
+                if (message.usageRate != null && Object.hasOwnProperty.call(message, "usageRate"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.usageRate);
+                if (message.startLevel != null && Object.hasOwnProperty.call(message, "startLevel"))
+                    writer.uint32(/* id 7, wireType 1 =*/57).double(message.startLevel);
+                if (message.refuelRate != null && Object.hasOwnProperty.call(message, "refuelRate"))
+                    writer.uint32(/* id 8, wireType 1 =*/65).double(message.refuelRate);
+                if (message.pitStopDelay != null && Object.hasOwnProperty.call(message, "pitStopDelay"))
+                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.pitStopDelay);
+                if (message.referenceTime != null && Object.hasOwnProperty.call(message, "referenceTime"))
+                    writer.uint32(/* id 10, wireType 1 =*/81).double(message.referenceTime);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            AnalogFuelOptions.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AnalogFuelOptions.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.AnalogFuelOptions();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.enabled = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.resetFuelAtHeatStart = reader.bool();
+                            break;
+                        }
+                    case 3: {
+                            message.endHeatOnOutOfFuel = reader.bool();
+                            break;
+                        }
+                    case 4: {
+                            message.capacity = reader.double();
+                            break;
+                        }
+                    case 5: {
+                            message.usageType = reader.int32();
+                            break;
+                        }
+                    case 6: {
+                            message.usageRate = reader.double();
+                            break;
+                        }
+                    case 7: {
+                            message.startLevel = reader.double();
+                            break;
+                        }
+                    case 8: {
+                            message.refuelRate = reader.double();
+                            break;
+                        }
+                    case 9: {
+                            message.pitStopDelay = reader.double();
+                            break;
+                        }
+                    case 10: {
+                            message.referenceTime = reader.double();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            AnalogFuelOptions.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies an AnalogFuelOptions message.
+             * @function verify
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            AnalogFuelOptions.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    if (typeof message.enabled !== "boolean")
+                        return "enabled: boolean expected";
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    if (typeof message.resetFuelAtHeatStart !== "boolean")
+                        return "resetFuelAtHeatStart: boolean expected";
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    if (typeof message.endHeatOnOutOfFuel !== "boolean")
+                        return "endHeatOnOutOfFuel: boolean expected";
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    if (typeof message.capacity !== "number")
+                        return "capacity: number expected";
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    switch (message.usageType) {
+                    default:
+                        return "usageType: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    if (typeof message.usageRate !== "number")
+                        return "usageRate: number expected";
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    if (typeof message.startLevel !== "number")
+                        return "startLevel: number expected";
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    if (typeof message.refuelRate !== "number")
+                        return "refuelRate: number expected";
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    if (typeof message.pitStopDelay !== "number")
+                        return "pitStopDelay: number expected";
+                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
+                    if (typeof message.referenceTime !== "number")
+                        return "referenceTime: number expected";
+                return null;
+            };
+
+            /**
+             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
+             */
+            AnalogFuelOptions.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.AnalogFuelOptions)
+                    return object;
+                let message = new $root.com.antigravity.AnalogFuelOptions();
+                if (object.enabled != null)
+                    message.enabled = Boolean(object.enabled);
+                if (object.resetFuelAtHeatStart != null)
+                    message.resetFuelAtHeatStart = Boolean(object.resetFuelAtHeatStart);
+                if (object.endHeatOnOutOfFuel != null)
+                    message.endHeatOnOutOfFuel = Boolean(object.endHeatOnOutOfFuel);
+                if (object.capacity != null)
+                    message.capacity = Number(object.capacity);
+                switch (object.usageType) {
+                default:
+                    if (typeof object.usageType === "number") {
+                        message.usageType = object.usageType;
+                        break;
+                    }
+                    break;
+                case "LINEAR":
+                case 0:
+                    message.usageType = 0;
+                    break;
+                case "QUADRATIC":
+                case 1:
+                    message.usageType = 1;
+                    break;
+                case "CUBIC":
+                case 2:
+                    message.usageType = 2;
+                    break;
+                }
+                if (object.usageRate != null)
+                    message.usageRate = Number(object.usageRate);
+                if (object.startLevel != null)
+                    message.startLevel = Number(object.startLevel);
+                if (object.refuelRate != null)
+                    message.refuelRate = Number(object.refuelRate);
+                if (object.pitStopDelay != null)
+                    message.pitStopDelay = Number(object.pitStopDelay);
+                if (object.referenceTime != null)
+                    message.referenceTime = Number(object.referenceTime);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {com.antigravity.AnalogFuelOptions} message AnalogFuelOptions
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            AnalogFuelOptions.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.enabled = false;
+                    object.resetFuelAtHeatStart = false;
+                    object.endHeatOnOutOfFuel = false;
+                    object.capacity = 0;
+                    object.usageType = options.enums === String ? "LINEAR" : 0;
+                    object.usageRate = 0;
+                    object.startLevel = 0;
+                    object.refuelRate = 0;
+                    object.pitStopDelay = 0;
+                    object.referenceTime = 0;
+                }
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    object.enabled = message.enabled;
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    object.resetFuelAtHeatStart = message.resetFuelAtHeatStart;
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    object.endHeatOnOutOfFuel = message.endHeatOnOutOfFuel;
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    object.capacity = options.json && !isFinite(message.capacity) ? String(message.capacity) : message.capacity;
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    object.usageType = options.enums === String ? $root.com.antigravity.FuelUsageType[message.usageType] === undefined ? message.usageType : $root.com.antigravity.FuelUsageType[message.usageType] : message.usageType;
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    object.usageRate = options.json && !isFinite(message.usageRate) ? String(message.usageRate) : message.usageRate;
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    object.startLevel = options.json && !isFinite(message.startLevel) ? String(message.startLevel) : message.startLevel;
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    object.refuelRate = options.json && !isFinite(message.refuelRate) ? String(message.refuelRate) : message.refuelRate;
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    object.pitStopDelay = options.json && !isFinite(message.pitStopDelay) ? String(message.pitStopDelay) : message.pitStopDelay;
+                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
+                    object.referenceTime = options.json && !isFinite(message.referenceTime) ? String(message.referenceTime) : message.referenceTime;
+                return object;
+            };
+
+            /**
+             * Converts this AnalogFuelOptions to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            AnalogFuelOptions.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for AnalogFuelOptions
+             * @function getTypeUrl
+             * @memberof com.antigravity.AnalogFuelOptions
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            AnalogFuelOptions.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.AnalogFuelOptions";
+            };
+
+            return AnalogFuelOptions;
+        })();
+
+        antigravity.DigitalFuelOptions = (function() {
+
+            /**
+             * Properties of a DigitalFuelOptions.
+             * @memberof com.antigravity
+             * @interface IDigitalFuelOptions
+             * @property {boolean|null} [enabled] DigitalFuelOptions enabled
+             * @property {boolean|null} [resetFuelAtHeatStart] DigitalFuelOptions resetFuelAtHeatStart
+             * @property {boolean|null} [endHeatOnOutOfFuel] DigitalFuelOptions endHeatOnOutOfFuel
+             * @property {number|null} [capacity] DigitalFuelOptions capacity
+             * @property {com.antigravity.FuelUsageType|null} [usageType] DigitalFuelOptions usageType
+             * @property {number|null} [usageRate] DigitalFuelOptions usageRate
+             * @property {number|null} [startLevel] DigitalFuelOptions startLevel
+             * @property {number|null} [refuelRate] DigitalFuelOptions refuelRate
+             * @property {number|null} [pitStopDelay] DigitalFuelOptions pitStopDelay
+             */
+
+            /**
+             * Constructs a new DigitalFuelOptions.
+             * @memberof com.antigravity
+             * @classdesc Represents a DigitalFuelOptions.
+             * @implements IDigitalFuelOptions
+             * @constructor
+             * @param {com.antigravity.IDigitalFuelOptions=} [properties] Properties to set
+             */
+            function DigitalFuelOptions(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * DigitalFuelOptions enabled.
+             * @member {boolean} enabled
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.enabled = false;
+
+            /**
+             * DigitalFuelOptions resetFuelAtHeatStart.
+             * @member {boolean} resetFuelAtHeatStart
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.resetFuelAtHeatStart = false;
+
+            /**
+             * DigitalFuelOptions endHeatOnOutOfFuel.
+             * @member {boolean} endHeatOnOutOfFuel
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.endHeatOnOutOfFuel = false;
+
+            /**
+             * DigitalFuelOptions capacity.
+             * @member {number} capacity
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.capacity = 0;
+
+            /**
+             * DigitalFuelOptions usageType.
+             * @member {com.antigravity.FuelUsageType} usageType
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.usageType = 0;
+
+            /**
+             * DigitalFuelOptions usageRate.
+             * @member {number} usageRate
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.usageRate = 0;
+
+            /**
+             * DigitalFuelOptions startLevel.
+             * @member {number} startLevel
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.startLevel = 0;
+
+            /**
+             * DigitalFuelOptions refuelRate.
+             * @member {number} refuelRate
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.refuelRate = 0;
+
+            /**
+             * DigitalFuelOptions pitStopDelay.
+             * @member {number} pitStopDelay
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             */
+            DigitalFuelOptions.prototype.pitStopDelay = 0;
+
+            /**
+             * Creates a new DigitalFuelOptions instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {com.antigravity.IDigitalFuelOptions=} [properties] Properties to set
+             * @returns {com.antigravity.DigitalFuelOptions} DigitalFuelOptions instance
+             */
+            DigitalFuelOptions.create = function create(properties) {
+                return new DigitalFuelOptions(properties);
+            };
+
+            /**
+             * Encodes the specified DigitalFuelOptions message. Does not implicitly {@link com.antigravity.DigitalFuelOptions.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {com.antigravity.IDigitalFuelOptions} message DigitalFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DigitalFuelOptions.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.enabled);
+                if (message.resetFuelAtHeatStart != null && Object.hasOwnProperty.call(message, "resetFuelAtHeatStart"))
+                    writer.uint32(/* id 2, wireType 0 =*/16).bool(message.resetFuelAtHeatStart);
+                if (message.endHeatOnOutOfFuel != null && Object.hasOwnProperty.call(message, "endHeatOnOutOfFuel"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).bool(message.endHeatOnOutOfFuel);
+                if (message.capacity != null && Object.hasOwnProperty.call(message, "capacity"))
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.capacity);
+                if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.usageType);
+                if (message.usageRate != null && Object.hasOwnProperty.call(message, "usageRate"))
+                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.usageRate);
+                if (message.startLevel != null && Object.hasOwnProperty.call(message, "startLevel"))
+                    writer.uint32(/* id 7, wireType 1 =*/57).double(message.startLevel);
+                if (message.refuelRate != null && Object.hasOwnProperty.call(message, "refuelRate"))
+                    writer.uint32(/* id 8, wireType 1 =*/65).double(message.refuelRate);
+                if (message.pitStopDelay != null && Object.hasOwnProperty.call(message, "pitStopDelay"))
+                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.pitStopDelay);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified DigitalFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.DigitalFuelOptions.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {com.antigravity.IDigitalFuelOptions} message DigitalFuelOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            DigitalFuelOptions.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a DigitalFuelOptions message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.DigitalFuelOptions} DigitalFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DigitalFuelOptions.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.DigitalFuelOptions();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.enabled = reader.bool();
+                            break;
+                        }
+                    case 2: {
+                            message.resetFuelAtHeatStart = reader.bool();
+                            break;
+                        }
+                    case 3: {
+                            message.endHeatOnOutOfFuel = reader.bool();
+                            break;
+                        }
+                    case 4: {
+                            message.capacity = reader.double();
+                            break;
+                        }
+                    case 5: {
+                            message.usageType = reader.int32();
+                            break;
+                        }
+                    case 6: {
+                            message.usageRate = reader.double();
+                            break;
+                        }
+                    case 7: {
+                            message.startLevel = reader.double();
+                            break;
+                        }
+                    case 8: {
+                            message.refuelRate = reader.double();
+                            break;
+                        }
+                    case 9: {
+                            message.pitStopDelay = reader.double();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a DigitalFuelOptions message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.DigitalFuelOptions} DigitalFuelOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            DigitalFuelOptions.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a DigitalFuelOptions message.
+             * @function verify
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            DigitalFuelOptions.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    if (typeof message.enabled !== "boolean")
+                        return "enabled: boolean expected";
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    if (typeof message.resetFuelAtHeatStart !== "boolean")
+                        return "resetFuelAtHeatStart: boolean expected";
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    if (typeof message.endHeatOnOutOfFuel !== "boolean")
+                        return "endHeatOnOutOfFuel: boolean expected";
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    if (typeof message.capacity !== "number")
+                        return "capacity: number expected";
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    switch (message.usageType) {
+                    default:
+                        return "usageType: enum value expected";
+                    case 0:
+                    case 1:
+                    case 2:
+                        break;
+                    }
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    if (typeof message.usageRate !== "number")
+                        return "usageRate: number expected";
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    if (typeof message.startLevel !== "number")
+                        return "startLevel: number expected";
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    if (typeof message.refuelRate !== "number")
+                        return "refuelRate: number expected";
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    if (typeof message.pitStopDelay !== "number")
+                        return "pitStopDelay: number expected";
+                return null;
+            };
+
+            /**
+             * Creates a DigitalFuelOptions message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.DigitalFuelOptions} DigitalFuelOptions
+             */
+            DigitalFuelOptions.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.DigitalFuelOptions)
+                    return object;
+                let message = new $root.com.antigravity.DigitalFuelOptions();
+                if (object.enabled != null)
+                    message.enabled = Boolean(object.enabled);
+                if (object.resetFuelAtHeatStart != null)
+                    message.resetFuelAtHeatStart = Boolean(object.resetFuelAtHeatStart);
+                if (object.endHeatOnOutOfFuel != null)
+                    message.endHeatOnOutOfFuel = Boolean(object.endHeatOnOutOfFuel);
+                if (object.capacity != null)
+                    message.capacity = Number(object.capacity);
+                switch (object.usageType) {
+                default:
+                    if (typeof object.usageType === "number") {
+                        message.usageType = object.usageType;
+                        break;
+                    }
+                    break;
+                case "LINEAR":
+                case 0:
+                    message.usageType = 0;
+                    break;
+                case "QUADRATIC":
+                case 1:
+                    message.usageType = 1;
+                    break;
+                case "CUBIC":
+                case 2:
+                    message.usageType = 2;
+                    break;
+                }
+                if (object.usageRate != null)
+                    message.usageRate = Number(object.usageRate);
+                if (object.startLevel != null)
+                    message.startLevel = Number(object.startLevel);
+                if (object.refuelRate != null)
+                    message.refuelRate = Number(object.refuelRate);
+                if (object.pitStopDelay != null)
+                    message.pitStopDelay = Number(object.pitStopDelay);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a DigitalFuelOptions message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {com.antigravity.DigitalFuelOptions} message DigitalFuelOptions
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            DigitalFuelOptions.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.enabled = false;
+                    object.resetFuelAtHeatStart = false;
+                    object.endHeatOnOutOfFuel = false;
+                    object.capacity = 0;
+                    object.usageType = options.enums === String ? "LINEAR" : 0;
+                    object.usageRate = 0;
+                    object.startLevel = 0;
+                    object.refuelRate = 0;
+                    object.pitStopDelay = 0;
+                }
+                if (message.enabled != null && message.hasOwnProperty("enabled"))
+                    object.enabled = message.enabled;
+                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
+                    object.resetFuelAtHeatStart = message.resetFuelAtHeatStart;
+                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
+                    object.endHeatOnOutOfFuel = message.endHeatOnOutOfFuel;
+                if (message.capacity != null && message.hasOwnProperty("capacity"))
+                    object.capacity = options.json && !isFinite(message.capacity) ? String(message.capacity) : message.capacity;
+                if (message.usageType != null && message.hasOwnProperty("usageType"))
+                    object.usageType = options.enums === String ? $root.com.antigravity.FuelUsageType[message.usageType] === undefined ? message.usageType : $root.com.antigravity.FuelUsageType[message.usageType] : message.usageType;
+                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
+                    object.usageRate = options.json && !isFinite(message.usageRate) ? String(message.usageRate) : message.usageRate;
+                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
+                    object.startLevel = options.json && !isFinite(message.startLevel) ? String(message.startLevel) : message.startLevel;
+                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
+                    object.refuelRate = options.json && !isFinite(message.refuelRate) ? String(message.refuelRate) : message.refuelRate;
+                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
+                    object.pitStopDelay = options.json && !isFinite(message.pitStopDelay) ? String(message.pitStopDelay) : message.pitStopDelay;
+                return object;
+            };
+
+            /**
+             * Converts this DigitalFuelOptions to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            DigitalFuelOptions.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for DigitalFuelOptions
+             * @function getTypeUrl
+             * @memberof com.antigravity.DigitalFuelOptions
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            DigitalFuelOptions.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.DigitalFuelOptions";
+            };
+
+            return DigitalFuelOptions;
+        })();
+
+        antigravity.TeamModel = (function() {
+
+            /**
+             * Properties of a TeamModel.
+             * @memberof com.antigravity
+             * @interface ITeamModel
+             * @property {com.antigravity.IModel|null} [model] TeamModel model
+             * @property {string|null} [name] TeamModel name
+             * @property {string|null} [avatarUrl] TeamModel avatarUrl
+             * @property {Array.<string>|null} [driverIds] TeamModel driverIds
+             */
+
+            /**
+             * Constructs a new TeamModel.
+             * @memberof com.antigravity
+             * @classdesc Represents a TeamModel.
+             * @implements ITeamModel
+             * @constructor
+             * @param {com.antigravity.ITeamModel=} [properties] Properties to set
+             */
+            function TeamModel(properties) {
+                this.driverIds = [];
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * TeamModel model.
+             * @member {com.antigravity.IModel|null|undefined} model
+             * @memberof com.antigravity.TeamModel
+             * @instance
+             */
+            TeamModel.prototype.model = null;
+
+            /**
+             * TeamModel name.
+             * @member {string} name
+             * @memberof com.antigravity.TeamModel
+             * @instance
+             */
+            TeamModel.prototype.name = "";
+
+            /**
+             * TeamModel avatarUrl.
+             * @member {string} avatarUrl
+             * @memberof com.antigravity.TeamModel
+             * @instance
+             */
+            TeamModel.prototype.avatarUrl = "";
+
+            /**
+             * TeamModel driverIds.
+             * @member {Array.<string>} driverIds
+             * @memberof com.antigravity.TeamModel
+             * @instance
+             */
+            TeamModel.prototype.driverIds = $util.emptyArray;
+
+            /**
+             * Creates a new TeamModel instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {com.antigravity.ITeamModel=} [properties] Properties to set
+             * @returns {com.antigravity.TeamModel} TeamModel instance
+             */
+            TeamModel.create = function create(properties) {
+                return new TeamModel(properties);
+            };
+
+            /**
+             * Encodes the specified TeamModel message. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {com.antigravity.ITeamModel} message TeamModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TeamModel.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
+                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
+                if (message.avatarUrl != null && Object.hasOwnProperty.call(message, "avatarUrl"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.avatarUrl);
+                if (message.driverIds != null && message.driverIds.length)
+                    for (let i = 0; i < message.driverIds.length; ++i)
+                        writer.uint32(/* id 4, wireType 2 =*/34).string(message.driverIds[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified TeamModel message, length delimited. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {com.antigravity.ITeamModel} message TeamModel message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TeamModel.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a TeamModel message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.TeamModel} TeamModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TeamModel.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TeamModel();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 2: {
+                            message.name = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.avatarUrl = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            if (!(message.driverIds && message.driverIds.length))
+                                message.driverIds = [];
+                            message.driverIds.push(reader.string());
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a TeamModel message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.TeamModel} TeamModel
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TeamModel.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a TeamModel message.
+             * @function verify
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            TeamModel.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.model != null && message.hasOwnProperty("model")) {
+                    let error = $root.com.antigravity.Model.verify(message.model);
+                    if (error)
+                        return "model." + error;
+                }
+                if (message.name != null && message.hasOwnProperty("name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
+                    if (!$util.isString(message.avatarUrl))
+                        return "avatarUrl: string expected";
+                if (message.driverIds != null && message.hasOwnProperty("driverIds")) {
+                    if (!Array.isArray(message.driverIds))
+                        return "driverIds: array expected";
+                    for (let i = 0; i < message.driverIds.length; ++i)
+                        if (!$util.isString(message.driverIds[i]))
+                            return "driverIds: string[] expected";
+                }
+                return null;
+            };
+
+            /**
+             * Creates a TeamModel message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.TeamModel} TeamModel
+             */
+            TeamModel.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.TeamModel)
+                    return object;
+                let message = new $root.com.antigravity.TeamModel();
+                if (object.model != null) {
+                    if (typeof object.model !== "object")
+                        throw TypeError(".com.antigravity.TeamModel.model: object expected");
+                    message.model = $root.com.antigravity.Model.fromObject(object.model);
+                }
+                if (object.name != null)
+                    message.name = String(object.name);
+                if (object.avatarUrl != null)
+                    message.avatarUrl = String(object.avatarUrl);
+                if (object.driverIds) {
+                    if (!Array.isArray(object.driverIds))
+                        throw TypeError(".com.antigravity.TeamModel.driverIds: array expected");
+                    message.driverIds = [];
+                    for (let i = 0; i < object.driverIds.length; ++i)
+                        message.driverIds[i] = String(object.driverIds[i]);
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a TeamModel message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {com.antigravity.TeamModel} message TeamModel
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            TeamModel.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.driverIds = [];
+                if (options.defaults) {
+                    object.model = null;
+                    object.name = "";
+                    object.avatarUrl = "";
+                }
+                if (message.model != null && message.hasOwnProperty("model"))
+                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
+                if (message.name != null && message.hasOwnProperty("name"))
+                    object.name = message.name;
+                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
+                    object.avatarUrl = message.avatarUrl;
+                if (message.driverIds && message.driverIds.length) {
+                    object.driverIds = [];
+                    for (let j = 0; j < message.driverIds.length; ++j)
+                        object.driverIds[j] = message.driverIds[j];
+                }
+                return object;
+            };
+
+            /**
+             * Converts this TeamModel to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.TeamModel
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            TeamModel.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for TeamModel
+             * @function getTypeUrl
+             * @memberof com.antigravity.TeamModel
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            TeamModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.TeamModel";
+            };
+
+            return TeamModel;
         })();
 
         /**
@@ -12015,2193 +15548,6 @@ export const com = $root.com = (() => {
             return Race;
         })();
 
-        antigravity.HeatScoring = (function() {
-
-            /**
-             * Properties of a HeatScoring.
-             * @memberof com.antigravity
-             * @interface IHeatScoring
-             * @property {com.antigravity.HeatScoring.FinishMethod|null} [finishMethod] HeatScoring finishMethod
-             * @property {number|Long|null} [finishValue] HeatScoring finishValue
-             * @property {com.antigravity.HeatScoring.HeatRanking|null} [heatRanking] HeatScoring heatRanking
-             * @property {com.antigravity.HeatScoring.HeatRankingTiebreaker|null} [heatRankingTiebreaker] HeatScoring heatRankingTiebreaker
-             * @property {com.antigravity.HeatScoring.AllowFinish|null} [allowFinish] HeatScoring allowFinish
-             */
-
-            /**
-             * Constructs a new HeatScoring.
-             * @memberof com.antigravity
-             * @classdesc Represents a HeatScoring.
-             * @implements IHeatScoring
-             * @constructor
-             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
-             */
-            function HeatScoring(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * HeatScoring finishMethod.
-             * @member {com.antigravity.HeatScoring.FinishMethod} finishMethod
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             */
-            HeatScoring.prototype.finishMethod = 0;
-
-            /**
-             * HeatScoring finishValue.
-             * @member {number|Long} finishValue
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             */
-            HeatScoring.prototype.finishValue = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
-
-            /**
-             * HeatScoring heatRanking.
-             * @member {com.antigravity.HeatScoring.HeatRanking} heatRanking
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             */
-            HeatScoring.prototype.heatRanking = 0;
-
-            /**
-             * HeatScoring heatRankingTiebreaker.
-             * @member {com.antigravity.HeatScoring.HeatRankingTiebreaker} heatRankingTiebreaker
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             */
-            HeatScoring.prototype.heatRankingTiebreaker = 0;
-
-            /**
-             * HeatScoring allowFinish.
-             * @member {com.antigravity.HeatScoring.AllowFinish} allowFinish
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             */
-            HeatScoring.prototype.allowFinish = 0;
-
-            /**
-             * Creates a new HeatScoring instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {com.antigravity.IHeatScoring=} [properties] Properties to set
-             * @returns {com.antigravity.HeatScoring} HeatScoring instance
-             */
-            HeatScoring.create = function create(properties) {
-                return new HeatScoring(properties);
-            };
-
-            /**
-             * Encodes the specified HeatScoring message. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            HeatScoring.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.finishMethod != null && Object.hasOwnProperty.call(message, "finishMethod"))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.finishMethod);
-                if (message.finishValue != null && Object.hasOwnProperty.call(message, "finishValue"))
-                    writer.uint32(/* id 2, wireType 0 =*/16).int64(message.finishValue);
-                if (message.heatRanking != null && Object.hasOwnProperty.call(message, "heatRanking"))
-                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.heatRanking);
-                if (message.heatRankingTiebreaker != null && Object.hasOwnProperty.call(message, "heatRankingTiebreaker"))
-                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.heatRankingTiebreaker);
-                if (message.allowFinish != null && Object.hasOwnProperty.call(message, "allowFinish"))
-                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.allowFinish);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified HeatScoring message, length delimited. Does not implicitly {@link com.antigravity.HeatScoring.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {com.antigravity.IHeatScoring} message HeatScoring message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            HeatScoring.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a HeatScoring message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.HeatScoring} HeatScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            HeatScoring.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.HeatScoring();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.finishMethod = reader.int32();
-                            break;
-                        }
-                    case 2: {
-                            message.finishValue = reader.int64();
-                            break;
-                        }
-                    case 3: {
-                            message.heatRanking = reader.int32();
-                            break;
-                        }
-                    case 4: {
-                            message.heatRankingTiebreaker = reader.int32();
-                            break;
-                        }
-                    case 5: {
-                            message.allowFinish = reader.int32();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a HeatScoring message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.HeatScoring} HeatScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            HeatScoring.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a HeatScoring message.
-             * @function verify
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            HeatScoring.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
-                    switch (message.finishMethod) {
-                    default:
-                        return "finishMethod: enum value expected";
-                    case 0:
-                    case 1:
-                        break;
-                    }
-                if (message.finishValue != null && message.hasOwnProperty("finishValue"))
-                    if (!$util.isInteger(message.finishValue) && !(message.finishValue && $util.isInteger(message.finishValue.low) && $util.isInteger(message.finishValue.high)))
-                        return "finishValue: integer|Long expected";
-                if (message.heatRanking != null && message.hasOwnProperty("heatRanking"))
-                    switch (message.heatRanking) {
-                    default:
-                        return "heatRanking: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                        break;
-                    }
-                if (message.heatRankingTiebreaker != null && message.hasOwnProperty("heatRankingTiebreaker"))
-                    switch (message.heatRankingTiebreaker) {
-                    default:
-                        return "heatRankingTiebreaker: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                        break;
-                    }
-                if (message.allowFinish != null && message.hasOwnProperty("allowFinish"))
-                    switch (message.allowFinish) {
-                    default:
-                        return "allowFinish: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                        break;
-                    }
-                return null;
-            };
-
-            /**
-             * Creates a HeatScoring message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.HeatScoring} HeatScoring
-             */
-            HeatScoring.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.HeatScoring)
-                    return object;
-                let message = new $root.com.antigravity.HeatScoring();
-                switch (object.finishMethod) {
-                default:
-                    if (typeof object.finishMethod === "number") {
-                        message.finishMethod = object.finishMethod;
-                        break;
-                    }
-                    break;
-                case "Lap":
-                case 0:
-                    message.finishMethod = 0;
-                    break;
-                case "Timed":
-                case 1:
-                    message.finishMethod = 1;
-                    break;
-                }
-                if (object.finishValue != null)
-                    if ($util.Long)
-                        (message.finishValue = $util.Long.fromValue(object.finishValue)).unsigned = false;
-                    else if (typeof object.finishValue === "string")
-                        message.finishValue = parseInt(object.finishValue, 10);
-                    else if (typeof object.finishValue === "number")
-                        message.finishValue = object.finishValue;
-                    else if (typeof object.finishValue === "object")
-                        message.finishValue = new $util.LongBits(object.finishValue.low >>> 0, object.finishValue.high >>> 0).toNumber();
-                switch (object.heatRanking) {
-                default:
-                    if (typeof object.heatRanking === "number") {
-                        message.heatRanking = object.heatRanking;
-                        break;
-                    }
-                    break;
-                case "HR_LAP_COUNT":
-                case 0:
-                    message.heatRanking = 0;
-                    break;
-                case "HR_FASTEST_LAP":
-                case 1:
-                    message.heatRanking = 1;
-                    break;
-                case "HR_TOTAL_TIME":
-                case 2:
-                    message.heatRanking = 2;
-                    break;
-                }
-                switch (object.heatRankingTiebreaker) {
-                default:
-                    if (typeof object.heatRankingTiebreaker === "number") {
-                        message.heatRankingTiebreaker = object.heatRankingTiebreaker;
-                        break;
-                    }
-                    break;
-                case "HRT_FASTEST_LAP_TIME":
-                case 0:
-                    message.heatRankingTiebreaker = 0;
-                    break;
-                case "HRT_MEDIAN_LAP_TIME":
-                case 1:
-                    message.heatRankingTiebreaker = 1;
-                    break;
-                case "HRT_AVERAGE_LAP_TIME":
-                case 2:
-                    message.heatRankingTiebreaker = 2;
-                    break;
-                }
-                switch (object.allowFinish) {
-                default:
-                    if (typeof object.allowFinish === "number") {
-                        message.allowFinish = object.allowFinish;
-                        break;
-                    }
-                    break;
-                case "AF_NONE":
-                case 0:
-                    message.allowFinish = 0;
-                    break;
-                case "AF_ALLOW":
-                case 1:
-                    message.allowFinish = 1;
-                    break;
-                case "AF_SINGLE_LAP":
-                case 2:
-                    message.allowFinish = 2;
-                    break;
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a HeatScoring message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {com.antigravity.HeatScoring} message HeatScoring
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            HeatScoring.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.finishMethod = options.enums === String ? "Lap" : 0;
-                    if ($util.Long) {
-                        let long = new $util.Long(0, 0, false);
-                        object.finishValue = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
-                    } else
-                        object.finishValue = options.longs === String ? "0" : 0;
-                    object.heatRanking = options.enums === String ? "HR_LAP_COUNT" : 0;
-                    object.heatRankingTiebreaker = options.enums === String ? "HRT_FASTEST_LAP_TIME" : 0;
-                    object.allowFinish = options.enums === String ? "AF_NONE" : 0;
-                }
-                if (message.finishMethod != null && message.hasOwnProperty("finishMethod"))
-                    object.finishMethod = options.enums === String ? $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] === undefined ? message.finishMethod : $root.com.antigravity.HeatScoring.FinishMethod[message.finishMethod] : message.finishMethod;
-                if (message.finishValue != null && message.hasOwnProperty("finishValue"))
-                    if (typeof message.finishValue === "number")
-                        object.finishValue = options.longs === String ? String(message.finishValue) : message.finishValue;
-                    else
-                        object.finishValue = options.longs === String ? $util.Long.prototype.toString.call(message.finishValue) : options.longs === Number ? new $util.LongBits(message.finishValue.low >>> 0, message.finishValue.high >>> 0).toNumber() : message.finishValue;
-                if (message.heatRanking != null && message.hasOwnProperty("heatRanking"))
-                    object.heatRanking = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] === undefined ? message.heatRanking : $root.com.antigravity.HeatScoring.HeatRanking[message.heatRanking] : message.heatRanking;
-                if (message.heatRankingTiebreaker != null && message.hasOwnProperty("heatRankingTiebreaker"))
-                    object.heatRankingTiebreaker = options.enums === String ? $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] === undefined ? message.heatRankingTiebreaker : $root.com.antigravity.HeatScoring.HeatRankingTiebreaker[message.heatRankingTiebreaker] : message.heatRankingTiebreaker;
-                if (message.allowFinish != null && message.hasOwnProperty("allowFinish"))
-                    object.allowFinish = options.enums === String ? $root.com.antigravity.HeatScoring.AllowFinish[message.allowFinish] === undefined ? message.allowFinish : $root.com.antigravity.HeatScoring.AllowFinish[message.allowFinish] : message.allowFinish;
-                return object;
-            };
-
-            /**
-             * Converts this HeatScoring to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.HeatScoring
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            HeatScoring.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for HeatScoring
-             * @function getTypeUrl
-             * @memberof com.antigravity.HeatScoring
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            HeatScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.HeatScoring";
-            };
-
-            /**
-             * FinishMethod enum.
-             * @name com.antigravity.HeatScoring.FinishMethod
-             * @enum {number}
-             * @property {number} Lap=0 Lap value
-             * @property {number} Timed=1 Timed value
-             */
-            HeatScoring.FinishMethod = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "Lap"] = 0;
-                values[valuesById[1] = "Timed"] = 1;
-                return values;
-            })();
-
-            /**
-             * HeatRanking enum.
-             * @name com.antigravity.HeatScoring.HeatRanking
-             * @enum {number}
-             * @property {number} HR_LAP_COUNT=0 HR_LAP_COUNT value
-             * @property {number} HR_FASTEST_LAP=1 HR_FASTEST_LAP value
-             * @property {number} HR_TOTAL_TIME=2 HR_TOTAL_TIME value
-             */
-            HeatScoring.HeatRanking = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "HR_LAP_COUNT"] = 0;
-                values[valuesById[1] = "HR_FASTEST_LAP"] = 1;
-                values[valuesById[2] = "HR_TOTAL_TIME"] = 2;
-                return values;
-            })();
-
-            /**
-             * HeatRankingTiebreaker enum.
-             * @name com.antigravity.HeatScoring.HeatRankingTiebreaker
-             * @enum {number}
-             * @property {number} HRT_FASTEST_LAP_TIME=0 HRT_FASTEST_LAP_TIME value
-             * @property {number} HRT_MEDIAN_LAP_TIME=1 HRT_MEDIAN_LAP_TIME value
-             * @property {number} HRT_AVERAGE_LAP_TIME=2 HRT_AVERAGE_LAP_TIME value
-             */
-            HeatScoring.HeatRankingTiebreaker = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "HRT_FASTEST_LAP_TIME"] = 0;
-                values[valuesById[1] = "HRT_MEDIAN_LAP_TIME"] = 1;
-                values[valuesById[2] = "HRT_AVERAGE_LAP_TIME"] = 2;
-                return values;
-            })();
-
-            /**
-             * AllowFinish enum.
-             * @name com.antigravity.HeatScoring.AllowFinish
-             * @enum {number}
-             * @property {number} AF_NONE=0 AF_NONE value
-             * @property {number} AF_ALLOW=1 AF_ALLOW value
-             * @property {number} AF_SINGLE_LAP=2 AF_SINGLE_LAP value
-             */
-            HeatScoring.AllowFinish = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "AF_NONE"] = 0;
-                values[valuesById[1] = "AF_ALLOW"] = 1;
-                values[valuesById[2] = "AF_SINGLE_LAP"] = 2;
-                return values;
-            })();
-
-            return HeatScoring;
-        })();
-
-        antigravity.OverallScoring = (function() {
-
-            /**
-             * Properties of an OverallScoring.
-             * @memberof com.antigravity
-             * @interface IOverallScoring
-             * @property {number|null} [droppedHeats] OverallScoring droppedHeats
-             * @property {com.antigravity.OverallScoring.OverallRanking|null} [rankingMethod] OverallScoring rankingMethod
-             * @property {com.antigravity.OverallScoring.OverallRankingTiebreaker|null} [tiebreaker] OverallScoring tiebreaker
-             */
-
-            /**
-             * Constructs a new OverallScoring.
-             * @memberof com.antigravity
-             * @classdesc Represents an OverallScoring.
-             * @implements IOverallScoring
-             * @constructor
-             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
-             */
-            function OverallScoring(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * OverallScoring droppedHeats.
-             * @member {number} droppedHeats
-             * @memberof com.antigravity.OverallScoring
-             * @instance
-             */
-            OverallScoring.prototype.droppedHeats = 0;
-
-            /**
-             * OverallScoring rankingMethod.
-             * @member {com.antigravity.OverallScoring.OverallRanking} rankingMethod
-             * @memberof com.antigravity.OverallScoring
-             * @instance
-             */
-            OverallScoring.prototype.rankingMethod = 0;
-
-            /**
-             * OverallScoring tiebreaker.
-             * @member {com.antigravity.OverallScoring.OverallRankingTiebreaker} tiebreaker
-             * @memberof com.antigravity.OverallScoring
-             * @instance
-             */
-            OverallScoring.prototype.tiebreaker = 0;
-
-            /**
-             * Creates a new OverallScoring instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {com.antigravity.IOverallScoring=} [properties] Properties to set
-             * @returns {com.antigravity.OverallScoring} OverallScoring instance
-             */
-            OverallScoring.create = function create(properties) {
-                return new OverallScoring(properties);
-            };
-
-            /**
-             * Encodes the specified OverallScoring message. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            OverallScoring.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.droppedHeats != null && Object.hasOwnProperty.call(message, "droppedHeats"))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.droppedHeats);
-                if (message.rankingMethod != null && Object.hasOwnProperty.call(message, "rankingMethod"))
-                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.rankingMethod);
-                if (message.tiebreaker != null && Object.hasOwnProperty.call(message, "tiebreaker"))
-                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.tiebreaker);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified OverallScoring message, length delimited. Does not implicitly {@link com.antigravity.OverallScoring.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {com.antigravity.IOverallScoring} message OverallScoring message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            OverallScoring.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes an OverallScoring message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.OverallScoring} OverallScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            OverallScoring.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.OverallScoring();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.droppedHeats = reader.int32();
-                            break;
-                        }
-                    case 2: {
-                            message.rankingMethod = reader.int32();
-                            break;
-                        }
-                    case 3: {
-                            message.tiebreaker = reader.int32();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes an OverallScoring message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.OverallScoring} OverallScoring
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            OverallScoring.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies an OverallScoring message.
-             * @function verify
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            OverallScoring.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
-                    if (!$util.isInteger(message.droppedHeats))
-                        return "droppedHeats: integer expected";
-                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
-                    switch (message.rankingMethod) {
-                    default:
-                        return "rankingMethod: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                        break;
-                    }
-                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
-                    switch (message.tiebreaker) {
-                    default:
-                        return "tiebreaker: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                        break;
-                    }
-                return null;
-            };
-
-            /**
-             * Creates an OverallScoring message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.OverallScoring} OverallScoring
-             */
-            OverallScoring.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.OverallScoring)
-                    return object;
-                let message = new $root.com.antigravity.OverallScoring();
-                if (object.droppedHeats != null)
-                    message.droppedHeats = object.droppedHeats | 0;
-                switch (object.rankingMethod) {
-                default:
-                    if (typeof object.rankingMethod === "number") {
-                        message.rankingMethod = object.rankingMethod;
-                        break;
-                    }
-                    break;
-                case "OR_LAP_COUNT":
-                case 0:
-                    message.rankingMethod = 0;
-                    break;
-                case "OR_FASTEST_LAP":
-                case 1:
-                    message.rankingMethod = 1;
-                    break;
-                case "OR_TOTAL_TIME":
-                case 2:
-                    message.rankingMethod = 2;
-                    break;
-                case "OR_AVERAGE_LAP":
-                case 3:
-                    message.rankingMethod = 3;
-                    break;
-                }
-                switch (object.tiebreaker) {
-                default:
-                    if (typeof object.tiebreaker === "number") {
-                        message.tiebreaker = object.tiebreaker;
-                        break;
-                    }
-                    break;
-                case "ORT_FASTEST_LAP_TIME":
-                case 0:
-                    message.tiebreaker = 0;
-                    break;
-                case "ORT_MEDIAN_LAP_TIME":
-                case 1:
-                    message.tiebreaker = 1;
-                    break;
-                case "ORT_AVERAGE_LAP_TIME":
-                case 2:
-                    message.tiebreaker = 2;
-                    break;
-                case "ORT_TOTAL_TIME":
-                case 3:
-                    message.tiebreaker = 3;
-                    break;
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from an OverallScoring message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {com.antigravity.OverallScoring} message OverallScoring
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            OverallScoring.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.droppedHeats = 0;
-                    object.rankingMethod = options.enums === String ? "OR_LAP_COUNT" : 0;
-                    object.tiebreaker = options.enums === String ? "ORT_FASTEST_LAP_TIME" : 0;
-                }
-                if (message.droppedHeats != null && message.hasOwnProperty("droppedHeats"))
-                    object.droppedHeats = message.droppedHeats;
-                if (message.rankingMethod != null && message.hasOwnProperty("rankingMethod"))
-                    object.rankingMethod = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] === undefined ? message.rankingMethod : $root.com.antigravity.OverallScoring.OverallRanking[message.rankingMethod] : message.rankingMethod;
-                if (message.tiebreaker != null && message.hasOwnProperty("tiebreaker"))
-                    object.tiebreaker = options.enums === String ? $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] === undefined ? message.tiebreaker : $root.com.antigravity.OverallScoring.OverallRankingTiebreaker[message.tiebreaker] : message.tiebreaker;
-                return object;
-            };
-
-            /**
-             * Converts this OverallScoring to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.OverallScoring
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            OverallScoring.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for OverallScoring
-             * @function getTypeUrl
-             * @memberof com.antigravity.OverallScoring
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            OverallScoring.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.OverallScoring";
-            };
-
-            /**
-             * OverallRanking enum.
-             * @name com.antigravity.OverallScoring.OverallRanking
-             * @enum {number}
-             * @property {number} OR_LAP_COUNT=0 OR_LAP_COUNT value
-             * @property {number} OR_FASTEST_LAP=1 OR_FASTEST_LAP value
-             * @property {number} OR_TOTAL_TIME=2 OR_TOTAL_TIME value
-             * @property {number} OR_AVERAGE_LAP=3 OR_AVERAGE_LAP value
-             */
-            OverallScoring.OverallRanking = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "OR_LAP_COUNT"] = 0;
-                values[valuesById[1] = "OR_FASTEST_LAP"] = 1;
-                values[valuesById[2] = "OR_TOTAL_TIME"] = 2;
-                values[valuesById[3] = "OR_AVERAGE_LAP"] = 3;
-                return values;
-            })();
-
-            /**
-             * OverallRankingTiebreaker enum.
-             * @name com.antigravity.OverallScoring.OverallRankingTiebreaker
-             * @enum {number}
-             * @property {number} ORT_FASTEST_LAP_TIME=0 ORT_FASTEST_LAP_TIME value
-             * @property {number} ORT_MEDIAN_LAP_TIME=1 ORT_MEDIAN_LAP_TIME value
-             * @property {number} ORT_AVERAGE_LAP_TIME=2 ORT_AVERAGE_LAP_TIME value
-             * @property {number} ORT_TOTAL_TIME=3 ORT_TOTAL_TIME value
-             */
-            OverallScoring.OverallRankingTiebreaker = (function() {
-                const valuesById = {}, values = Object.create(valuesById);
-                values[valuesById[0] = "ORT_FASTEST_LAP_TIME"] = 0;
-                values[valuesById[1] = "ORT_MEDIAN_LAP_TIME"] = 1;
-                values[valuesById[2] = "ORT_AVERAGE_LAP_TIME"] = 2;
-                values[valuesById[3] = "ORT_TOTAL_TIME"] = 3;
-                return values;
-            })();
-
-            return OverallScoring;
-        })();
-
-        antigravity.RaceModel = (function() {
-
-            /**
-             * Properties of a RaceModel.
-             * @memberof com.antigravity
-             * @interface IRaceModel
-             * @property {com.antigravity.IModel|null} [model] RaceModel model
-             * @property {string|null} [name] RaceModel name
-             * @property {com.antigravity.ITrackModel|null} [track] RaceModel track
-             * @property {com.antigravity.IHeatScoring|null} [heatScoring] RaceModel heatScoring
-             * @property {com.antigravity.IOverallScoring|null} [overallScoring] RaceModel overallScoring
-             * @property {number|null} [minLapTime] RaceModel minLapTime
-             * @property {com.antigravity.IAnalogFuelOptions|null} [fuelOptions] RaceModel fuelOptions
-             */
-
-            /**
-             * Constructs a new RaceModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a RaceModel.
-             * @implements IRaceModel
-             * @constructor
-             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
-             */
-            function RaceModel(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * RaceModel model.
-             * @member {com.antigravity.IModel|null|undefined} model
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.model = null;
-
-            /**
-             * RaceModel name.
-             * @member {string} name
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.name = "";
-
-            /**
-             * RaceModel track.
-             * @member {com.antigravity.ITrackModel|null|undefined} track
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.track = null;
-
-            /**
-             * RaceModel heatScoring.
-             * @member {com.antigravity.IHeatScoring|null|undefined} heatScoring
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.heatScoring = null;
-
-            /**
-             * RaceModel overallScoring.
-             * @member {com.antigravity.IOverallScoring|null|undefined} overallScoring
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.overallScoring = null;
-
-            /**
-             * RaceModel minLapTime.
-             * @member {number} minLapTime
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.minLapTime = 0;
-
-            /**
-             * RaceModel fuelOptions.
-             * @member {com.antigravity.IAnalogFuelOptions|null|undefined} fuelOptions
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             */
-            RaceModel.prototype.fuelOptions = null;
-
-            /**
-             * Creates a new RaceModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel=} [properties] Properties to set
-             * @returns {com.antigravity.RaceModel} RaceModel instance
-             */
-            RaceModel.create = function create(properties) {
-                return new RaceModel(properties);
-            };
-
-            /**
-             * Encodes the specified RaceModel message. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            RaceModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
-                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
-                if (message.track != null && Object.hasOwnProperty.call(message, "track"))
-                    $root.com.antigravity.TrackModel.encode(message.track, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                if (message.heatScoring != null && Object.hasOwnProperty.call(message, "heatScoring"))
-                    $root.com.antigravity.HeatScoring.encode(message.heatScoring, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
-                if (message.overallScoring != null && Object.hasOwnProperty.call(message, "overallScoring"))
-                    $root.com.antigravity.OverallScoring.encode(message.overallScoring, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
-                if (message.minLapTime != null && Object.hasOwnProperty.call(message, "minLapTime"))
-                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.minLapTime);
-                if (message.fuelOptions != null && Object.hasOwnProperty.call(message, "fuelOptions"))
-                    $root.com.antigravity.AnalogFuelOptions.encode(message.fuelOptions, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
-                return writer;
-            };
-
-            /**
-             * Encodes the specified RaceModel message, length delimited. Does not implicitly {@link com.antigravity.RaceModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.IRaceModel} message RaceModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            RaceModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.RaceModel} RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            RaceModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.RaceModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 2: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.track = $root.com.antigravity.TrackModel.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 4: {
-                            message.heatScoring = $root.com.antigravity.HeatScoring.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 5: {
-                            message.overallScoring = $root.com.antigravity.OverallScoring.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 6: {
-                            message.minLapTime = reader.double();
-                            break;
-                        }
-                    case 7: {
-                            message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.decode(reader, reader.uint32());
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a RaceModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.RaceModel} RaceModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            RaceModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a RaceModel message.
-             * @function verify
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            RaceModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.model != null && message.hasOwnProperty("model")) {
-                    let error = $root.com.antigravity.Model.verify(message.model);
-                    if (error)
-                        return "model." + error;
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.track != null && message.hasOwnProperty("track")) {
-                    let error = $root.com.antigravity.TrackModel.verify(message.track);
-                    if (error)
-                        return "track." + error;
-                }
-                if (message.heatScoring != null && message.hasOwnProperty("heatScoring")) {
-                    let error = $root.com.antigravity.HeatScoring.verify(message.heatScoring);
-                    if (error)
-                        return "heatScoring." + error;
-                }
-                if (message.overallScoring != null && message.hasOwnProperty("overallScoring")) {
-                    let error = $root.com.antigravity.OverallScoring.verify(message.overallScoring);
-                    if (error)
-                        return "overallScoring." + error;
-                }
-                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
-                    if (typeof message.minLapTime !== "number")
-                        return "minLapTime: number expected";
-                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions")) {
-                    let error = $root.com.antigravity.AnalogFuelOptions.verify(message.fuelOptions);
-                    if (error)
-                        return "fuelOptions." + error;
-                }
-                return null;
-            };
-
-            /**
-             * Creates a RaceModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.RaceModel} RaceModel
-             */
-            RaceModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.RaceModel)
-                    return object;
-                let message = new $root.com.antigravity.RaceModel();
-                if (object.model != null) {
-                    if (typeof object.model !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.model: object expected");
-                    message.model = $root.com.antigravity.Model.fromObject(object.model);
-                }
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.track != null) {
-                    if (typeof object.track !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.track: object expected");
-                    message.track = $root.com.antigravity.TrackModel.fromObject(object.track);
-                }
-                if (object.heatScoring != null) {
-                    if (typeof object.heatScoring !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.heatScoring: object expected");
-                    message.heatScoring = $root.com.antigravity.HeatScoring.fromObject(object.heatScoring);
-                }
-                if (object.overallScoring != null) {
-                    if (typeof object.overallScoring !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.overallScoring: object expected");
-                    message.overallScoring = $root.com.antigravity.OverallScoring.fromObject(object.overallScoring);
-                }
-                if (object.minLapTime != null)
-                    message.minLapTime = Number(object.minLapTime);
-                if (object.fuelOptions != null) {
-                    if (typeof object.fuelOptions !== "object")
-                        throw TypeError(".com.antigravity.RaceModel.fuelOptions: object expected");
-                    message.fuelOptions = $root.com.antigravity.AnalogFuelOptions.fromObject(object.fuelOptions);
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a RaceModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {com.antigravity.RaceModel} message RaceModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            RaceModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.model = null;
-                    object.name = "";
-                    object.track = null;
-                    object.heatScoring = null;
-                    object.overallScoring = null;
-                    object.minLapTime = 0;
-                    object.fuelOptions = null;
-                }
-                if (message.model != null && message.hasOwnProperty("model"))
-                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.track != null && message.hasOwnProperty("track"))
-                    object.track = $root.com.antigravity.TrackModel.toObject(message.track, options);
-                if (message.heatScoring != null && message.hasOwnProperty("heatScoring"))
-                    object.heatScoring = $root.com.antigravity.HeatScoring.toObject(message.heatScoring, options);
-                if (message.overallScoring != null && message.hasOwnProperty("overallScoring"))
-                    object.overallScoring = $root.com.antigravity.OverallScoring.toObject(message.overallScoring, options);
-                if (message.minLapTime != null && message.hasOwnProperty("minLapTime"))
-                    object.minLapTime = options.json && !isFinite(message.minLapTime) ? String(message.minLapTime) : message.minLapTime;
-                if (message.fuelOptions != null && message.hasOwnProperty("fuelOptions"))
-                    object.fuelOptions = $root.com.antigravity.AnalogFuelOptions.toObject(message.fuelOptions, options);
-                return object;
-            };
-
-            /**
-             * Converts this RaceModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.RaceModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            RaceModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for RaceModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.RaceModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            RaceModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.RaceModel";
-            };
-
-            return RaceModel;
-        })();
-
-        /**
-         * FuelUsageType enum.
-         * @name com.antigravity.FuelUsageType
-         * @enum {number}
-         * @property {number} LINEAR=0 LINEAR value
-         * @property {number} QUADRATIC=1 QUADRATIC value
-         * @property {number} CUBIC=2 CUBIC value
-         */
-        antigravity.FuelUsageType = (function() {
-            const valuesById = {}, values = Object.create(valuesById);
-            values[valuesById[0] = "LINEAR"] = 0;
-            values[valuesById[1] = "QUADRATIC"] = 1;
-            values[valuesById[2] = "CUBIC"] = 2;
-            return values;
-        })();
-
-        antigravity.AnalogFuelOptions = (function() {
-
-            /**
-             * Properties of an AnalogFuelOptions.
-             * @memberof com.antigravity
-             * @interface IAnalogFuelOptions
-             * @property {boolean|null} [enabled] AnalogFuelOptions enabled
-             * @property {boolean|null} [resetFuelAtHeatStart] AnalogFuelOptions resetFuelAtHeatStart
-             * @property {boolean|null} [endHeatOnOutOfFuel] AnalogFuelOptions endHeatOnOutOfFuel
-             * @property {number|null} [capacity] AnalogFuelOptions capacity
-             * @property {com.antigravity.FuelUsageType|null} [usageType] AnalogFuelOptions usageType
-             * @property {number|null} [usageRate] AnalogFuelOptions usageRate
-             * @property {number|null} [startLevel] AnalogFuelOptions startLevel
-             * @property {number|null} [refuelRate] AnalogFuelOptions refuelRate
-             * @property {number|null} [pitStopDelay] AnalogFuelOptions pitStopDelay
-             * @property {number|null} [referenceTime] AnalogFuelOptions referenceTime
-             */
-
-            /**
-             * Constructs a new AnalogFuelOptions.
-             * @memberof com.antigravity
-             * @classdesc Represents an AnalogFuelOptions.
-             * @implements IAnalogFuelOptions
-             * @constructor
-             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
-             */
-            function AnalogFuelOptions(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * AnalogFuelOptions enabled.
-             * @member {boolean} enabled
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.enabled = false;
-
-            /**
-             * AnalogFuelOptions resetFuelAtHeatStart.
-             * @member {boolean} resetFuelAtHeatStart
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.resetFuelAtHeatStart = false;
-
-            /**
-             * AnalogFuelOptions endHeatOnOutOfFuel.
-             * @member {boolean} endHeatOnOutOfFuel
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.endHeatOnOutOfFuel = false;
-
-            /**
-             * AnalogFuelOptions capacity.
-             * @member {number} capacity
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.capacity = 0;
-
-            /**
-             * AnalogFuelOptions usageType.
-             * @member {com.antigravity.FuelUsageType} usageType
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.usageType = 0;
-
-            /**
-             * AnalogFuelOptions usageRate.
-             * @member {number} usageRate
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.usageRate = 0;
-
-            /**
-             * AnalogFuelOptions startLevel.
-             * @member {number} startLevel
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.startLevel = 0;
-
-            /**
-             * AnalogFuelOptions refuelRate.
-             * @member {number} refuelRate
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.refuelRate = 0;
-
-            /**
-             * AnalogFuelOptions pitStopDelay.
-             * @member {number} pitStopDelay
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.pitStopDelay = 0;
-
-            /**
-             * AnalogFuelOptions referenceTime.
-             * @member {number} referenceTime
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             */
-            AnalogFuelOptions.prototype.referenceTime = 0;
-
-            /**
-             * Creates a new AnalogFuelOptions instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {com.antigravity.IAnalogFuelOptions=} [properties] Properties to set
-             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions instance
-             */
-            AnalogFuelOptions.create = function create(properties) {
-                return new AnalogFuelOptions(properties);
-            };
-
-            /**
-             * Encodes the specified AnalogFuelOptions message. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            AnalogFuelOptions.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.enabled != null && Object.hasOwnProperty.call(message, "enabled"))
-                    writer.uint32(/* id 1, wireType 0 =*/8).bool(message.enabled);
-                if (message.resetFuelAtHeatStart != null && Object.hasOwnProperty.call(message, "resetFuelAtHeatStart"))
-                    writer.uint32(/* id 2, wireType 0 =*/16).bool(message.resetFuelAtHeatStart);
-                if (message.endHeatOnOutOfFuel != null && Object.hasOwnProperty.call(message, "endHeatOnOutOfFuel"))
-                    writer.uint32(/* id 3, wireType 0 =*/24).bool(message.endHeatOnOutOfFuel);
-                if (message.capacity != null && Object.hasOwnProperty.call(message, "capacity"))
-                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.capacity);
-                if (message.usageType != null && Object.hasOwnProperty.call(message, "usageType"))
-                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.usageType);
-                if (message.usageRate != null && Object.hasOwnProperty.call(message, "usageRate"))
-                    writer.uint32(/* id 6, wireType 1 =*/49).double(message.usageRate);
-                if (message.startLevel != null && Object.hasOwnProperty.call(message, "startLevel"))
-                    writer.uint32(/* id 7, wireType 1 =*/57).double(message.startLevel);
-                if (message.refuelRate != null && Object.hasOwnProperty.call(message, "refuelRate"))
-                    writer.uint32(/* id 8, wireType 1 =*/65).double(message.refuelRate);
-                if (message.pitStopDelay != null && Object.hasOwnProperty.call(message, "pitStopDelay"))
-                    writer.uint32(/* id 9, wireType 1 =*/73).double(message.pitStopDelay);
-                if (message.referenceTime != null && Object.hasOwnProperty.call(message, "referenceTime"))
-                    writer.uint32(/* id 10, wireType 1 =*/81).double(message.referenceTime);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified AnalogFuelOptions message, length delimited. Does not implicitly {@link com.antigravity.AnalogFuelOptions.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {com.antigravity.IAnalogFuelOptions} message AnalogFuelOptions message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            AnalogFuelOptions.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes an AnalogFuelOptions message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            AnalogFuelOptions.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.AnalogFuelOptions();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.enabled = reader.bool();
-                            break;
-                        }
-                    case 2: {
-                            message.resetFuelAtHeatStart = reader.bool();
-                            break;
-                        }
-                    case 3: {
-                            message.endHeatOnOutOfFuel = reader.bool();
-                            break;
-                        }
-                    case 4: {
-                            message.capacity = reader.double();
-                            break;
-                        }
-                    case 5: {
-                            message.usageType = reader.int32();
-                            break;
-                        }
-                    case 6: {
-                            message.usageRate = reader.double();
-                            break;
-                        }
-                    case 7: {
-                            message.startLevel = reader.double();
-                            break;
-                        }
-                    case 8: {
-                            message.refuelRate = reader.double();
-                            break;
-                        }
-                    case 9: {
-                            message.pitStopDelay = reader.double();
-                            break;
-                        }
-                    case 10: {
-                            message.referenceTime = reader.double();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes an AnalogFuelOptions message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            AnalogFuelOptions.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies an AnalogFuelOptions message.
-             * @function verify
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            AnalogFuelOptions.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.enabled != null && message.hasOwnProperty("enabled"))
-                    if (typeof message.enabled !== "boolean")
-                        return "enabled: boolean expected";
-                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
-                    if (typeof message.resetFuelAtHeatStart !== "boolean")
-                        return "resetFuelAtHeatStart: boolean expected";
-                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
-                    if (typeof message.endHeatOnOutOfFuel !== "boolean")
-                        return "endHeatOnOutOfFuel: boolean expected";
-                if (message.capacity != null && message.hasOwnProperty("capacity"))
-                    if (typeof message.capacity !== "number")
-                        return "capacity: number expected";
-                if (message.usageType != null && message.hasOwnProperty("usageType"))
-                    switch (message.usageType) {
-                    default:
-                        return "usageType: enum value expected";
-                    case 0:
-                    case 1:
-                    case 2:
-                        break;
-                    }
-                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
-                    if (typeof message.usageRate !== "number")
-                        return "usageRate: number expected";
-                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
-                    if (typeof message.startLevel !== "number")
-                        return "startLevel: number expected";
-                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
-                    if (typeof message.refuelRate !== "number")
-                        return "refuelRate: number expected";
-                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
-                    if (typeof message.pitStopDelay !== "number")
-                        return "pitStopDelay: number expected";
-                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
-                    if (typeof message.referenceTime !== "number")
-                        return "referenceTime: number expected";
-                return null;
-            };
-
-            /**
-             * Creates an AnalogFuelOptions message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.AnalogFuelOptions} AnalogFuelOptions
-             */
-            AnalogFuelOptions.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.AnalogFuelOptions)
-                    return object;
-                let message = new $root.com.antigravity.AnalogFuelOptions();
-                if (object.enabled != null)
-                    message.enabled = Boolean(object.enabled);
-                if (object.resetFuelAtHeatStart != null)
-                    message.resetFuelAtHeatStart = Boolean(object.resetFuelAtHeatStart);
-                if (object.endHeatOnOutOfFuel != null)
-                    message.endHeatOnOutOfFuel = Boolean(object.endHeatOnOutOfFuel);
-                if (object.capacity != null)
-                    message.capacity = Number(object.capacity);
-                switch (object.usageType) {
-                default:
-                    if (typeof object.usageType === "number") {
-                        message.usageType = object.usageType;
-                        break;
-                    }
-                    break;
-                case "LINEAR":
-                case 0:
-                    message.usageType = 0;
-                    break;
-                case "QUADRATIC":
-                case 1:
-                    message.usageType = 1;
-                    break;
-                case "CUBIC":
-                case 2:
-                    message.usageType = 2;
-                    break;
-                }
-                if (object.usageRate != null)
-                    message.usageRate = Number(object.usageRate);
-                if (object.startLevel != null)
-                    message.startLevel = Number(object.startLevel);
-                if (object.refuelRate != null)
-                    message.refuelRate = Number(object.refuelRate);
-                if (object.pitStopDelay != null)
-                    message.pitStopDelay = Number(object.pitStopDelay);
-                if (object.referenceTime != null)
-                    message.referenceTime = Number(object.referenceTime);
-                return message;
-            };
-
-            /**
-             * Creates a plain object from an AnalogFuelOptions message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {com.antigravity.AnalogFuelOptions} message AnalogFuelOptions
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            AnalogFuelOptions.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.enabled = false;
-                    object.resetFuelAtHeatStart = false;
-                    object.endHeatOnOutOfFuel = false;
-                    object.capacity = 0;
-                    object.usageType = options.enums === String ? "LINEAR" : 0;
-                    object.usageRate = 0;
-                    object.startLevel = 0;
-                    object.refuelRate = 0;
-                    object.pitStopDelay = 0;
-                    object.referenceTime = 0;
-                }
-                if (message.enabled != null && message.hasOwnProperty("enabled"))
-                    object.enabled = message.enabled;
-                if (message.resetFuelAtHeatStart != null && message.hasOwnProperty("resetFuelAtHeatStart"))
-                    object.resetFuelAtHeatStart = message.resetFuelAtHeatStart;
-                if (message.endHeatOnOutOfFuel != null && message.hasOwnProperty("endHeatOnOutOfFuel"))
-                    object.endHeatOnOutOfFuel = message.endHeatOnOutOfFuel;
-                if (message.capacity != null && message.hasOwnProperty("capacity"))
-                    object.capacity = options.json && !isFinite(message.capacity) ? String(message.capacity) : message.capacity;
-                if (message.usageType != null && message.hasOwnProperty("usageType"))
-                    object.usageType = options.enums === String ? $root.com.antigravity.FuelUsageType[message.usageType] === undefined ? message.usageType : $root.com.antigravity.FuelUsageType[message.usageType] : message.usageType;
-                if (message.usageRate != null && message.hasOwnProperty("usageRate"))
-                    object.usageRate = options.json && !isFinite(message.usageRate) ? String(message.usageRate) : message.usageRate;
-                if (message.startLevel != null && message.hasOwnProperty("startLevel"))
-                    object.startLevel = options.json && !isFinite(message.startLevel) ? String(message.startLevel) : message.startLevel;
-                if (message.refuelRate != null && message.hasOwnProperty("refuelRate"))
-                    object.refuelRate = options.json && !isFinite(message.refuelRate) ? String(message.refuelRate) : message.refuelRate;
-                if (message.pitStopDelay != null && message.hasOwnProperty("pitStopDelay"))
-                    object.pitStopDelay = options.json && !isFinite(message.pitStopDelay) ? String(message.pitStopDelay) : message.pitStopDelay;
-                if (message.referenceTime != null && message.hasOwnProperty("referenceTime"))
-                    object.referenceTime = options.json && !isFinite(message.referenceTime) ? String(message.referenceTime) : message.referenceTime;
-                return object;
-            };
-
-            /**
-             * Converts this AnalogFuelOptions to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            AnalogFuelOptions.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for AnalogFuelOptions
-             * @function getTypeUrl
-             * @memberof com.antigravity.AnalogFuelOptions
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            AnalogFuelOptions.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.AnalogFuelOptions";
-            };
-
-            return AnalogFuelOptions;
-        })();
-
-        antigravity.TrackModel = (function() {
-
-            /**
-             * Properties of a TrackModel.
-             * @memberof com.antigravity
-             * @interface ITrackModel
-             * @property {com.antigravity.IModel|null} [model] TrackModel model
-             * @property {string|null} [name] TrackModel name
-             * @property {Array.<com.antigravity.ILaneModel>|null} [lanes] TrackModel lanes
-             */
-
-            /**
-             * Constructs a new TrackModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a TrackModel.
-             * @implements ITrackModel
-             * @constructor
-             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
-             */
-            function TrackModel(properties) {
-                this.lanes = [];
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * TrackModel model.
-             * @member {com.antigravity.IModel|null|undefined} model
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.model = null;
-
-            /**
-             * TrackModel name.
-             * @member {string} name
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.name = "";
-
-            /**
-             * TrackModel lanes.
-             * @member {Array.<com.antigravity.ILaneModel>} lanes
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             */
-            TrackModel.prototype.lanes = $util.emptyArray;
-
-            /**
-             * Creates a new TrackModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel=} [properties] Properties to set
-             * @returns {com.antigravity.TrackModel} TrackModel instance
-             */
-            TrackModel.create = function create(properties) {
-                return new TrackModel(properties);
-            };
-
-            /**
-             * Encodes the specified TrackModel message. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TrackModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
-                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
-                if (message.lanes != null && message.lanes.length)
-                    for (let i = 0; i < message.lanes.length; ++i)
-                        $root.com.antigravity.LaneModel.encode(message.lanes[i], writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-                return writer;
-            };
-
-            /**
-             * Encodes the specified TrackModel message, length delimited. Does not implicitly {@link com.antigravity.TrackModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.ITrackModel} message TrackModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TrackModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.TrackModel} TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TrackModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TrackModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 2: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            if (!(message.lanes && message.lanes.length))
-                                message.lanes = [];
-                            message.lanes.push($root.com.antigravity.LaneModel.decode(reader, reader.uint32()));
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a TrackModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.TrackModel} TrackModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TrackModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a TrackModel message.
-             * @function verify
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            TrackModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.model != null && message.hasOwnProperty("model")) {
-                    let error = $root.com.antigravity.Model.verify(message.model);
-                    if (error)
-                        return "model." + error;
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.lanes != null && message.hasOwnProperty("lanes")) {
-                    if (!Array.isArray(message.lanes))
-                        return "lanes: array expected";
-                    for (let i = 0; i < message.lanes.length; ++i) {
-                        let error = $root.com.antigravity.LaneModel.verify(message.lanes[i]);
-                        if (error)
-                            return "lanes." + error;
-                    }
-                }
-                return null;
-            };
-
-            /**
-             * Creates a TrackModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.TrackModel} TrackModel
-             */
-            TrackModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.TrackModel)
-                    return object;
-                let message = new $root.com.antigravity.TrackModel();
-                if (object.model != null) {
-                    if (typeof object.model !== "object")
-                        throw TypeError(".com.antigravity.TrackModel.model: object expected");
-                    message.model = $root.com.antigravity.Model.fromObject(object.model);
-                }
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.lanes) {
-                    if (!Array.isArray(object.lanes))
-                        throw TypeError(".com.antigravity.TrackModel.lanes: array expected");
-                    message.lanes = [];
-                    for (let i = 0; i < object.lanes.length; ++i) {
-                        if (typeof object.lanes[i] !== "object")
-                            throw TypeError(".com.antigravity.TrackModel.lanes: object expected");
-                        message.lanes[i] = $root.com.antigravity.LaneModel.fromObject(object.lanes[i]);
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a TrackModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {com.antigravity.TrackModel} message TrackModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            TrackModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.arrays || options.defaults)
-                    object.lanes = [];
-                if (options.defaults) {
-                    object.model = null;
-                    object.name = "";
-                }
-                if (message.model != null && message.hasOwnProperty("model"))
-                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.lanes && message.lanes.length) {
-                    object.lanes = [];
-                    for (let j = 0; j < message.lanes.length; ++j)
-                        object.lanes[j] = $root.com.antigravity.LaneModel.toObject(message.lanes[j], options);
-                }
-                return object;
-            };
-
-            /**
-             * Converts this TrackModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.TrackModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            TrackModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for TrackModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.TrackModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            TrackModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.TrackModel";
-            };
-
-            return TrackModel;
-        })();
-
-        antigravity.LaneModel = (function() {
-
-            /**
-             * Properties of a LaneModel.
-             * @memberof com.antigravity
-             * @interface ILaneModel
-             * @property {string|null} [backgroundColor] LaneModel backgroundColor
-             * @property {string|null} [foregroundColor] LaneModel foregroundColor
-             * @property {number|null} [length] LaneModel length
-             * @property {string|null} [objectId] LaneModel objectId
-             */
-
-            /**
-             * Constructs a new LaneModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a LaneModel.
-             * @implements ILaneModel
-             * @constructor
-             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
-             */
-            function LaneModel(properties) {
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * LaneModel backgroundColor.
-             * @member {string} backgroundColor
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.backgroundColor = "";
-
-            /**
-             * LaneModel foregroundColor.
-             * @member {string} foregroundColor
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.foregroundColor = "";
-
-            /**
-             * LaneModel length.
-             * @member {number} length
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.length = 0;
-
-            /**
-             * LaneModel objectId.
-             * @member {string} objectId
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             */
-            LaneModel.prototype.objectId = "";
-
-            /**
-             * Creates a new LaneModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel=} [properties] Properties to set
-             * @returns {com.antigravity.LaneModel} LaneModel instance
-             */
-            LaneModel.create = function create(properties) {
-                return new LaneModel(properties);
-            };
-
-            /**
-             * Encodes the specified LaneModel message. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            LaneModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.backgroundColor != null && Object.hasOwnProperty.call(message, "backgroundColor"))
-                    writer.uint32(/* id 1, wireType 2 =*/10).string(message.backgroundColor);
-                if (message.foregroundColor != null && Object.hasOwnProperty.call(message, "foregroundColor"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.foregroundColor);
-                if (message.length != null && Object.hasOwnProperty.call(message, "length"))
-                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
-                if (message.objectId != null && Object.hasOwnProperty.call(message, "objectId"))
-                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.objectId);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified LaneModel message, length delimited. Does not implicitly {@link com.antigravity.LaneModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.ILaneModel} message LaneModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            LaneModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.LaneModel} LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            LaneModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LaneModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.backgroundColor = reader.string();
-                            break;
-                        }
-                    case 2: {
-                            message.foregroundColor = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.length = reader.int32();
-                            break;
-                        }
-                    case 4: {
-                            message.objectId = reader.string();
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a LaneModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.LaneModel} LaneModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            LaneModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a LaneModel message.
-             * @function verify
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            LaneModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
-                    if (!$util.isString(message.backgroundColor))
-                        return "backgroundColor: string expected";
-                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
-                    if (!$util.isString(message.foregroundColor))
-                        return "foregroundColor: string expected";
-                if (message.length != null && message.hasOwnProperty("length"))
-                    if (!$util.isInteger(message.length))
-                        return "length: integer expected";
-                if (message.objectId != null && message.hasOwnProperty("objectId"))
-                    if (!$util.isString(message.objectId))
-                        return "objectId: string expected";
-                return null;
-            };
-
-            /**
-             * Creates a LaneModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.LaneModel} LaneModel
-             */
-            LaneModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.LaneModel)
-                    return object;
-                let message = new $root.com.antigravity.LaneModel();
-                if (object.backgroundColor != null)
-                    message.backgroundColor = String(object.backgroundColor);
-                if (object.foregroundColor != null)
-                    message.foregroundColor = String(object.foregroundColor);
-                if (object.length != null)
-                    message.length = object.length | 0;
-                if (object.objectId != null)
-                    message.objectId = String(object.objectId);
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a LaneModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {com.antigravity.LaneModel} message LaneModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            LaneModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.defaults) {
-                    object.backgroundColor = "";
-                    object.foregroundColor = "";
-                    object.length = 0;
-                    object.objectId = "";
-                }
-                if (message.backgroundColor != null && message.hasOwnProperty("backgroundColor"))
-                    object.backgroundColor = message.backgroundColor;
-                if (message.foregroundColor != null && message.hasOwnProperty("foregroundColor"))
-                    object.foregroundColor = message.foregroundColor;
-                if (message.length != null && message.hasOwnProperty("length"))
-                    object.length = message.length;
-                if (message.objectId != null && message.hasOwnProperty("objectId"))
-                    object.objectId = message.objectId;
-                return object;
-            };
-
-            /**
-             * Converts this LaneModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.LaneModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            LaneModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for LaneModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.LaneModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            LaneModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.LaneModel";
-            };
-
-            return LaneModel;
-        })();
-
         antigravity.Heat = (function() {
 
             /**
@@ -15314,303 +16660,6 @@ export const com = $root.com = (() => {
             };
 
             return RaceParticipant;
-        })();
-
-        antigravity.TeamModel = (function() {
-
-            /**
-             * Properties of a TeamModel.
-             * @memberof com.antigravity
-             * @interface ITeamModel
-             * @property {com.antigravity.IModel|null} [model] TeamModel model
-             * @property {string|null} [name] TeamModel name
-             * @property {string|null} [avatarUrl] TeamModel avatarUrl
-             * @property {Array.<string>|null} [driverIds] TeamModel driverIds
-             */
-
-            /**
-             * Constructs a new TeamModel.
-             * @memberof com.antigravity
-             * @classdesc Represents a TeamModel.
-             * @implements ITeamModel
-             * @constructor
-             * @param {com.antigravity.ITeamModel=} [properties] Properties to set
-             */
-            function TeamModel(properties) {
-                this.driverIds = [];
-                if (properties)
-                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                        if (properties[keys[i]] != null)
-                            this[keys[i]] = properties[keys[i]];
-            }
-
-            /**
-             * TeamModel model.
-             * @member {com.antigravity.IModel|null|undefined} model
-             * @memberof com.antigravity.TeamModel
-             * @instance
-             */
-            TeamModel.prototype.model = null;
-
-            /**
-             * TeamModel name.
-             * @member {string} name
-             * @memberof com.antigravity.TeamModel
-             * @instance
-             */
-            TeamModel.prototype.name = "";
-
-            /**
-             * TeamModel avatarUrl.
-             * @member {string} avatarUrl
-             * @memberof com.antigravity.TeamModel
-             * @instance
-             */
-            TeamModel.prototype.avatarUrl = "";
-
-            /**
-             * TeamModel driverIds.
-             * @member {Array.<string>} driverIds
-             * @memberof com.antigravity.TeamModel
-             * @instance
-             */
-            TeamModel.prototype.driverIds = $util.emptyArray;
-
-            /**
-             * Creates a new TeamModel instance using the specified properties.
-             * @function create
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {com.antigravity.ITeamModel=} [properties] Properties to set
-             * @returns {com.antigravity.TeamModel} TeamModel instance
-             */
-            TeamModel.create = function create(properties) {
-                return new TeamModel(properties);
-            };
-
-            /**
-             * Encodes the specified TeamModel message. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
-             * @function encode
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {com.antigravity.ITeamModel} message TeamModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TeamModel.encode = function encode(message, writer) {
-                if (!writer)
-                    writer = $Writer.create();
-                if (message.model != null && Object.hasOwnProperty.call(message, "model"))
-                    $root.com.antigravity.Model.encode(message.model, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-                if (message.name != null && Object.hasOwnProperty.call(message, "name"))
-                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.name);
-                if (message.avatarUrl != null && Object.hasOwnProperty.call(message, "avatarUrl"))
-                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.avatarUrl);
-                if (message.driverIds != null && message.driverIds.length)
-                    for (let i = 0; i < message.driverIds.length; ++i)
-                        writer.uint32(/* id 4, wireType 2 =*/34).string(message.driverIds[i]);
-                return writer;
-            };
-
-            /**
-             * Encodes the specified TeamModel message, length delimited. Does not implicitly {@link com.antigravity.TeamModel.verify|verify} messages.
-             * @function encodeDelimited
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {com.antigravity.ITeamModel} message TeamModel message or plain object to encode
-             * @param {$protobuf.Writer} [writer] Writer to encode to
-             * @returns {$protobuf.Writer} Writer
-             */
-            TeamModel.encodeDelimited = function encodeDelimited(message, writer) {
-                return this.encode(message, writer).ldelim();
-            };
-
-            /**
-             * Decodes a TeamModel message from the specified reader or buffer.
-             * @function decode
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @param {number} [length] Message length if known beforehand
-             * @returns {com.antigravity.TeamModel} TeamModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TeamModel.decode = function decode(reader, length, error) {
-                if (!(reader instanceof $Reader))
-                    reader = $Reader.create(reader);
-                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TeamModel();
-                while (reader.pos < end) {
-                    let tag = reader.uint32();
-                    if (tag === error)
-                        break;
-                    switch (tag >>> 3) {
-                    case 1: {
-                            message.model = $root.com.antigravity.Model.decode(reader, reader.uint32());
-                            break;
-                        }
-                    case 2: {
-                            message.name = reader.string();
-                            break;
-                        }
-                    case 3: {
-                            message.avatarUrl = reader.string();
-                            break;
-                        }
-                    case 4: {
-                            if (!(message.driverIds && message.driverIds.length))
-                                message.driverIds = [];
-                            message.driverIds.push(reader.string());
-                            break;
-                        }
-                    default:
-                        reader.skipType(tag & 7);
-                        break;
-                    }
-                }
-                return message;
-            };
-
-            /**
-             * Decodes a TeamModel message from the specified reader or buffer, length delimited.
-             * @function decodeDelimited
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
-             * @returns {com.antigravity.TeamModel} TeamModel
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            TeamModel.decodeDelimited = function decodeDelimited(reader) {
-                if (!(reader instanceof $Reader))
-                    reader = new $Reader(reader);
-                return this.decode(reader, reader.uint32());
-            };
-
-            /**
-             * Verifies a TeamModel message.
-             * @function verify
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {Object.<string,*>} message Plain object to verify
-             * @returns {string|null} `null` if valid, otherwise the reason why it is not
-             */
-            TeamModel.verify = function verify(message) {
-                if (typeof message !== "object" || message === null)
-                    return "object expected";
-                if (message.model != null && message.hasOwnProperty("model")) {
-                    let error = $root.com.antigravity.Model.verify(message.model);
-                    if (error)
-                        return "model." + error;
-                }
-                if (message.name != null && message.hasOwnProperty("name"))
-                    if (!$util.isString(message.name))
-                        return "name: string expected";
-                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
-                    if (!$util.isString(message.avatarUrl))
-                        return "avatarUrl: string expected";
-                if (message.driverIds != null && message.hasOwnProperty("driverIds")) {
-                    if (!Array.isArray(message.driverIds))
-                        return "driverIds: array expected";
-                    for (let i = 0; i < message.driverIds.length; ++i)
-                        if (!$util.isString(message.driverIds[i]))
-                            return "driverIds: string[] expected";
-                }
-                return null;
-            };
-
-            /**
-             * Creates a TeamModel message from a plain object. Also converts values to their respective internal types.
-             * @function fromObject
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {Object.<string,*>} object Plain object
-             * @returns {com.antigravity.TeamModel} TeamModel
-             */
-            TeamModel.fromObject = function fromObject(object) {
-                if (object instanceof $root.com.antigravity.TeamModel)
-                    return object;
-                let message = new $root.com.antigravity.TeamModel();
-                if (object.model != null) {
-                    if (typeof object.model !== "object")
-                        throw TypeError(".com.antigravity.TeamModel.model: object expected");
-                    message.model = $root.com.antigravity.Model.fromObject(object.model);
-                }
-                if (object.name != null)
-                    message.name = String(object.name);
-                if (object.avatarUrl != null)
-                    message.avatarUrl = String(object.avatarUrl);
-                if (object.driverIds) {
-                    if (!Array.isArray(object.driverIds))
-                        throw TypeError(".com.antigravity.TeamModel.driverIds: array expected");
-                    message.driverIds = [];
-                    for (let i = 0; i < object.driverIds.length; ++i)
-                        message.driverIds[i] = String(object.driverIds[i]);
-                }
-                return message;
-            };
-
-            /**
-             * Creates a plain object from a TeamModel message. Also converts values to other types if specified.
-             * @function toObject
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {com.antigravity.TeamModel} message TeamModel
-             * @param {$protobuf.IConversionOptions} [options] Conversion options
-             * @returns {Object.<string,*>} Plain object
-             */
-            TeamModel.toObject = function toObject(message, options) {
-                if (!options)
-                    options = {};
-                let object = {};
-                if (options.arrays || options.defaults)
-                    object.driverIds = [];
-                if (options.defaults) {
-                    object.model = null;
-                    object.name = "";
-                    object.avatarUrl = "";
-                }
-                if (message.model != null && message.hasOwnProperty("model"))
-                    object.model = $root.com.antigravity.Model.toObject(message.model, options);
-                if (message.name != null && message.hasOwnProperty("name"))
-                    object.name = message.name;
-                if (message.avatarUrl != null && message.hasOwnProperty("avatarUrl"))
-                    object.avatarUrl = message.avatarUrl;
-                if (message.driverIds && message.driverIds.length) {
-                    object.driverIds = [];
-                    for (let j = 0; j < message.driverIds.length; ++j)
-                        object.driverIds[j] = message.driverIds[j];
-                }
-                return object;
-            };
-
-            /**
-             * Converts this TeamModel to JSON.
-             * @function toJSON
-             * @memberof com.antigravity.TeamModel
-             * @instance
-             * @returns {Object.<string,*>} JSON object
-             */
-            TeamModel.prototype.toJSON = function toJSON() {
-                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-            };
-
-            /**
-             * Gets the default type url for TeamModel
-             * @function getTypeUrl
-             * @memberof com.antigravity.TeamModel
-             * @static
-             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
-             * @returns {string} The default type url
-             */
-            TeamModel.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-                if (typeUrlPrefix === undefined) {
-                    typeUrlPrefix = "type.googleapis.com";
-                }
-                return typeUrlPrefix + "/com.antigravity.TeamModel";
-            };
-
-            return TeamModel;
         })();
 
         antigravity.ReactionTime = (function() {

@@ -78,7 +78,13 @@ public class Race implements ProtocolListener {
   }
 
   private void initializeFuelLevels() {
-    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    com.antigravity.models.FuelOptions fuelOptions = null;
+    if (track != null && track.hasDigitalFuel()) {
+      fuelOptions = model.getDigitalFuelOptions();
+    } else {
+      fuelOptions = model.getFuelOptions();
+    }
+
     if (fuelOptions != null && fuelOptions.isEnabled()) {
       double initialLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
       for (RaceParticipant driver : drivers) {
@@ -95,10 +101,12 @@ public class Race implements ProtocolListener {
       Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace);
       protocols.add(protocol);
     } else {
-      com.antigravity.protocols.arduino.ArduinoConfig config = this.track.getArduinoConfig();
-      if (config != null) {
-        ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
-        protocols.add(protocol);
+      List<com.antigravity.protocols.arduino.ArduinoConfig> configs = this.track.getArduinoConfigs();
+      if (configs != null && !configs.isEmpty()) {
+        for (com.antigravity.protocols.arduino.ArduinoConfig config : configs) {
+          ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
+          protocols.add(protocol);
+        }
       } else {
         throw new IllegalArgumentException(
             "Race created in Real Mode, but no ArduinoConfig found for track: " + this.track.getName());
@@ -227,7 +235,13 @@ public class Race implements ProtocolListener {
   }
 
   public void prepareHeat() {
-    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    com.antigravity.models.FuelOptions fuelOptions = null;
+    if (track != null && track.hasDigitalFuel()) {
+      fuelOptions = model.getDigitalFuelOptions();
+    } else {
+      fuelOptions = model.getFuelOptions();
+    }
+
     if (fuelOptions == null || !fuelOptions.isEnabled()) {
       return;
     }
@@ -251,7 +265,13 @@ public class Race implements ProtocolListener {
   }
 
   public void restoreHeatFuel() {
-    com.antigravity.models.AnalogFuelOptions fuelOptions = model.getFuelOptions();
+    com.antigravity.models.FuelOptions fuelOptions = null;
+    if (track != null && track.hasDigitalFuel()) {
+      fuelOptions = model.getDigitalFuelOptions();
+    } else {
+      fuelOptions = model.getFuelOptions();
+    }
+
     if (fuelOptions == null || !fuelOptions.isEnabled()) {
       return;
     }
@@ -322,6 +342,11 @@ public class Race implements ProtocolListener {
   @Override
   public void onCarData(CarData carData) {
     state.onCarData(carData);
+  }
+
+  @Override
+  public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+    ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
   public boolean isLastHeat() {

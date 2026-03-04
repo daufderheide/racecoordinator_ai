@@ -125,7 +125,7 @@ for (const lang of languages) {
       });
 
       // Click to add Charlie
-      await page.click('.driver-item:not(.selected):has-text("Charlie")');
+      await page.dblclick('.driver-item:not(.selected):has-text("Charlie")');
 
       // Wait for the refresh hack to finish
       await expect(page.locator('.driver-list-container')).toBeVisible();

@@ -38,7 +38,7 @@ public class RaceStateTest {
   @Before
   public void setUp() throws Exception {
     // Setup Mocks and Real Objects
-    ArduinoConfig mockConfig = mock(ArduinoConfig.class);
+    List<ArduinoConfig> mockConfig = java.util.Collections.singletonList(mock(ArduinoConfig.class));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));

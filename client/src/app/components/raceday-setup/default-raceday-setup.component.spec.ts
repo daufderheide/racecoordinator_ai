@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -93,21 +93,23 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should toggle driver selection', () => {
+  it('should toggle driver selection', fakeAsync(() => {
     const driverToSelect = component.filteredUnselectedParticipants.find((d: any) => d.entity_id === 'd2')!;
     component.toggleParticipantSelection(driverToSelect, false);
+    flush();
 
     expect(component.selectedParticipants.length).toBe(1);
     expect(component.selectedParticipants[0].entity_id).toBe('d2');
 
     const driverToUnselect = component.selectedParticipants[0];
     component.toggleParticipantSelection(driverToUnselect, true);
+    flush();
 
     expect(component.selectedParticipants.length).toBe(0);
     expect(component.filteredUnselectedParticipants.length).toBe(3);
-  });
+  }));
 
-  it('should toggle team selection', () => {
+  it('should toggle team selection', fakeAsync(() => {
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getTeams.and.returnValue(of([
       { entity_id: 't1', name: 'Team 1', driverIds: ['d1'] } as any
@@ -115,13 +117,15 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.filteredUnselectedParticipants.length).toBe(3);
     const teamToSelect = component.filteredUnselectedParticipants.find((d: any) => d.entity_id === 't1')!;
     component.toggleParticipantSelection(teamToSelect, false);
+    flush();
 
     expect(component.selectedParticipants.length).toBe(1);
     expect(component.selectedParticipants[0].entity_id).toBe('t1');
 
     component.toggleParticipantSelection(component.selectedParticipants[0], true);
+    flush();
     expect(component.selectedParticipants.length).toBe(0);
-  });
+  }));
 
   it('should search drivers', () => {
     expect(component.filteredUnselectedParticipants.length).toBe(3);
@@ -175,32 +179,35 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(mockDataService.initializeRace).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(Array), true);
   });
 
-  it('should add all drivers', () => {
+  it('should add all drivers', fakeAsync(() => {
     expect(component.filteredUnselectedParticipants.length).toBe(3);
     expect(component.selectedParticipants.length).toBe(0);
 
     component.addAllParticipants();
+    flush();
 
     expect(component.filteredUnselectedParticipants.length).toBe(0);
     expect(component.selectedParticipants.length).toBe(3);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-  });
+  }));
 
-  it('should remove all drivers', () => {
+  it('should remove all drivers', fakeAsync(() => {
     // Setup initial state: select all
     component.addAllParticipants();
+    flush();
     expect(component.selectedParticipants.length).toBe(3);
 
     component.removeAllParticipants();
+    flush();
 
     expect(component.selectedParticipants.length).toBe(0);
     expect(component.filteredUnselectedParticipants.length).toBe(3);
     // Should be sorted alphabetically
     expect(component.filteredUnselectedParticipants[0].name).toBe('Driver 1');
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-  });
+  }));
 
-  it('should randomize drivers', () => {
+  it('should randomize drivers', fakeAsync(() => {
     // Setup: add 3 mock drivers to have noticeable shuffle
     component.selectedParticipants = [
       { entity_id: 'd1', name: 'D1' } as any,
@@ -215,12 +222,13 @@ describe('DefaultRacedaySetupComponent', () => {
     spyOn(Math, 'random').and.returnValue(0.5); // Simple mock
 
     component.randomizeParticipants();
+    flush();
 
     expect(component.selectedParticipants.length).toBe(3);
     // With fixed random, order might change or not depending on impl, 
     // but main goal is to ensure it runs without error and saves.
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-  });
+  }));
 
   it('should toggle options dropdown', () => {
     component.toggleOptionsDropdown(new MouseEvent('click'));
@@ -264,4 +272,44 @@ describe('DefaultRacedaySetupComponent', () => {
     const guideSteps = mockHelpService.startGuide.calls.mostRecent().args[0];
     expect(guideSteps[0].title).toBe('RDS_HELP_WELCOME_TITLE');
   });
+
+  it('should not toggle selection on single click in available list', () => {
+    spyOn(component, 'toggleParticipantSelection');
+    const driverItem = fixture.debugElement.nativeElement.querySelector('.driver-item');
+    driverItem.click();
+    expect(component.toggleParticipantSelection).not.toHaveBeenCalled();
+  });
+
+  it('should toggle selection on double click in available list', () => {
+    spyOn(component, 'toggleParticipantSelection');
+    const driverItem = fixture.debugElement.nativeElement.querySelector('.driver-item');
+    driverItem.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(component.toggleParticipantSelection).toHaveBeenCalled();
+  });
+
+  it('should preserve scroll position during refresh', fakeAsync(() => {
+    // We use a mock element that doesn't clamp scrollTop
+    const mockElement = { scrollTop: 150 };
+    const mockViewChild = { nativeElement: mockElement };
+
+    // Prevent Angular from overwriting our mock by defining it as a getter
+    Object.defineProperty(component, 'scrollContainer', {
+      get: () => mockViewChild,
+      set: () => { }, // Ignore Angular trying to set it
+      configurable: true
+    });
+
+    let actionCalled = false;
+    component['updateListWithRefresh'](() => {
+      actionCalled = true;
+      // Simulate DOM update resetting scroll or clamping it
+      mockElement.scrollTop = 0;
+    });
+
+    flush();
+    fixture.detectChanges();
+
+    expect(component.isRefreshingList).toBeFalse();
+    expect(mockElement.scrollTop).toBe(150);
+  }));
 });

@@ -20,7 +20,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   trackName: string = '';
   lanes: Lane[] = [];
   editingTrack?: Track;
-  arduinoConfig?: ArduinoConfig;
+  arduinoConfigs: ArduinoConfig[] = [];
 
   scale: number = 1;
   isLoading: boolean = true;
@@ -28,6 +28,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   undoManager!: UndoManager<Track>;
   allTracks: Track[] = [];
+
+  sectionsExpanded = {
+    general: true,
+    interfaces: true,
+    lanes: true
+  };
+
+  toggleSection(section: keyof typeof this.sectionsExpanded) {
+    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  }
 
   constructor(
     private dataService: DataService,
@@ -46,11 +56,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             this.trackName = this.editingTrack.name;
             this.lanes = [...this.editingTrack.lanes];
 
-            // Restore Arduino Config
-            if (this.editingTrack.arduino_config) {
-              this.arduinoConfig = JSON.parse(JSON.stringify(this.editingTrack.arduino_config));
+            // Restore Arduino Configs
+            if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
+              this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
             } else {
-              this.initDefaultArduinoConfig();
+              this.arduinoConfigs = [];
             }
             this.cdr.detectChanges();
           }
@@ -132,7 +142,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           this.editingTrack = new Track('new', '', [
             new Lane(this.generateId(), '#ef4444', 'black', 100),
             new Lane(this.generateId(), '#ffffff', 'black', 100)
-          ]);
+          ], false);
         } else {
           const found = tracks.find(t => t.entity_id === idParam);
           if (found) {
@@ -146,17 +156,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         }
 
         if (this.editingTrack) {
-          // Always ensure Arduino config exists (User requested "assume it's on")
-          // We need to set it on the model BEFORE initializing undoManager so baseline is clean
-          if (this.editingTrack.arduino_config) {
-            this.arduinoConfig = JSON.parse(JSON.stringify(this.editingTrack.arduino_config));
+          // Restore Arduino Config
+          if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
+            this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
             // Ensure arrays exist
-            if (!this.arduinoConfig!.digitalIds) this.arduinoConfig!.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
-            if (!this.arduinoConfig!.analogIds) this.arduinoConfig!.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
+            for (let config of this.arduinoConfigs) {
+              if (!config.digitalIds) config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
+              if (!config.analogIds) config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
+            }
           } else {
-            this.initDefaultArduinoConfig();
+            this.arduinoConfigs = [];
             // Sync it back to the model object so undoManager sees it in initial snapshot
-            (this.editingTrack as any).arduino_config = this.arduinoConfig;
+            (this.editingTrack as any).arduino_configs = this.arduinoConfigs;
           }
 
           this.trackName = this.editingTrack.name;
@@ -189,8 +200,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private cloneTrack(track: Track): Track {
     const lanesCopy = track.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length));
-    const arduinoCopy = track.arduino_config ? JSON.parse(JSON.stringify(track.arduino_config)) : undefined;
-    return new Track(track.entity_id, track.name, lanesCopy, arduinoCopy);
+    const arduinoCopy = track.arduino_configs ? JSON.parse(JSON.stringify(track.arduino_configs)) : [];
+    return new Track(track.entity_id, track.name, lanesCopy, track.has_digital_fuel, arduinoCopy);
   }
 
   get isDirty(): boolean {
@@ -200,14 +211,15 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private createSnapshot(): Track {
     if (!this.editingTrack) {
-      return new Track('new', '', []);
+      return new Track('new', '', [], false);
     }
-    const config = this.arduinoConfig ? JSON.parse(JSON.stringify(this.arduinoConfig)) : undefined;
+    const configs = this.arduinoConfigs ? JSON.parse(JSON.stringify(this.arduinoConfigs)) : [];
     return new Track(
       this.editingTrack.entity_id,
       this.trackName,
       this.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length)),
-      config
+      this.editingTrack.has_digital_fuel,
+      configs
     );
   }
 
@@ -230,35 +242,54 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Check Arduino Config equality
-    const ac1 = t1.arduino_config;
-    const ac2 = t2.arduino_config;
-    if (!ac1 && !ac2) return true;
-    if (!ac1 || !ac2) {
-      console.log('Dirty Check Mismatch: One config is missing', ac1, ac2);
+    // Check Arduino Configs equality
+    const acs1 = t1.arduino_configs || [];
+    const acs2 = t2.arduino_configs || [];
+    if (acs1.length !== acs2.length) {
+      console.log('Dirty Check Mismatch: Config count differ', acs1.length, acs2.length);
       return false;
     }
 
-    // Robust comparison of ArduinoConfig fields
-    const keys = Object.keys(ac1) as (keyof ArduinoConfig)[];
-    for (const key of keys) {
-      const v1 = ac1[key];
-      const v2 = (ac2 as any)[key];
+    for (let c = 0; c < acs1.length; c++) {
+      const ac1 = acs1[c];
+      const ac2 = acs2[c];
 
-      if (Array.isArray(v1)) {
-        if (!Array.isArray(v2) || v1.length !== v2.length) {
-          console.log(`Dirty Check Mismatch: Config ${key} length differ`, v1?.length, v2?.length);
-          return false;
-        }
-        for (let i = 0; i < v1.length; i++) {
-          if (v1[i] !== v2[i]) {
-            console.log(`Dirty Check Mismatch: Config ${key}[${i}] differ`, v1[i], v2[i]);
+      // Robust comparison of ArduinoConfig fields
+      const keys = Object.keys(ac1) as (keyof ArduinoConfig)[];
+      for (const key of keys) {
+        const v1 = ac1[key];
+        const v2 = (ac2 as any)[key];
+
+        if (Array.isArray(v1)) {
+          if (!Array.isArray(v2) || v1.length !== v2.length) {
+            console.log(`Dirty Check Mismatch: Config ${key} length differ`, v1?.length, v2?.length);
             return false;
           }
+          for (let i = 0; i < v1.length; i++) {
+            if (v1[i] !== v2[i]) {
+              console.log(`Dirty Check Mismatch: Config ${key}[${i}] differ`, v1[i], v2[i]);
+              return false;
+            }
+          }
+        } else if (key === 'voltageConfigs') {
+          const vc1 = (v1 || {}) as { [lane: number]: number };
+          const vc2 = (v2 || {}) as { [lane: number]: number };
+          const entries1 = Object.entries(vc1);
+          const entries2 = Object.entries(vc2);
+          if (entries1.length !== entries2.length) {
+            console.log(`Dirty Check Mismatch: Config voltageConfigs length differ`, entries1.length, entries2.length);
+            return false;
+          }
+          for (const [lane, val] of entries1) {
+            if (vc2[lane as any] !== val) {
+              console.log(`Dirty Check Mismatch: Config voltageConfigs lane ${lane} differ`, val, vc2[lane as any]);
+              return false;
+            }
+          }
+        } else if (v1 !== v2) {
+          console.log(`Dirty Check Mismatch: Config ${key} differ`, v1, v2);
+          return false;
         }
-      } else if (v1 !== v2) {
-        console.log(`Dirty Check Mismatch: Config ${key} differ`, v1, v2);
-        return false;
       }
     }
 
@@ -288,6 +319,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   // Lane Management
   addLane() {
     this.lanes.push(new Lane(this.generateId(), '#ffffff', 'black', 100)); // Default white lane
+    this.sectionsExpanded.lanes = true;
     this.captureState();
   }
 
@@ -337,12 +369,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   // --- Arduino Configuration ---
 
-  initDefaultArduinoConfig() {
-    this.arduinoConfig = {
-      name: 'Arduino',
+  addArduinoConfig() {
+    this.arduinoConfigs.push({
+      name: `Arduino ${this.arduinoConfigs.length + 1}`,
       commPort: '',
       baudRate: 9600,
-      debounceUs: 1000,
+      debounceUs: 200,
       globalInvertLanes: 0,
       normallyClosedRelays: true,
       globalInvertLights: 0,
@@ -355,7 +387,25 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       analogIds: new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       ledStrings: null,
       ledLaneColorOverrides: null
-    };
+    });
+    this.arduinoConfigs = [...this.arduinoConfigs]; // Ensure reference change for Angular change detection
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  trackByArduinoConfig(index: number, config: any): number {
+    return index;
+  }
+
+  removeArduinoConfig(index: number) {
+    this.arduinoConfigs.splice(index, 1);
+    this.arduinoConfigs = [...this.arduinoConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
   }
 
   saveAsNew() {
@@ -386,7 +436,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.isSaving = false;
         // Update local state with result (especially ID)
-        this.editingTrack = new Track(result.entity_id, result.name, result.lanes, result.arduino_config);
+        this.editingTrack = new Track(result.entity_id, result.name, result.lanes, result.has_digital_fuel ?? false, result.arduino_configs);
 
         // Update allTracks cache to ensure name uniqueness checks stay in sync
         const idx = this.allTracks.findIndex(t => t.entity_id === result.entity_id);
@@ -401,10 +451,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         // Ensure lanes are proper objects/arrays as expected
         this.lanes = this.editingTrack.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length));
 
-        if (this.editingTrack.arduino_config) {
-          this.arduinoConfig = JSON.parse(JSON.stringify(this.editingTrack.arduino_config));
+        if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
+          this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
         } else {
-          this.arduinoConfig = undefined;
+          this.arduinoConfigs = [];
         }
 
         this.undoManager.resetTracking(this.editingTrack);

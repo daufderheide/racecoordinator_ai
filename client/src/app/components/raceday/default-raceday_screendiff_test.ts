@@ -217,4 +217,70 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await expect(page).toHaveScreenshot('raceday-driver-avatars.png', { maxDiffPixelRatio: 0.1 });
   });
+
+  test('should display digital fuel levels for digital race', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
+
+    // Emit a mock digital race update
+    await page.evaluate(() => {
+      if ((window as any).mockRaceData) {
+        (window as any).mockRaceData({
+          race: {
+            race: {
+              model: { entityId: 'r_digital' },
+              name: 'Digital Haven Race',
+              digitalFuelOptions: {
+                enabled: true,
+                capacity: 50,
+                usageType: 0,
+                usageRate: 4.0,
+                startLevel: 50
+              },
+              track: {
+                model: { entityId: 't_digital' },
+                name: 'Digital Haven',
+                hasDigitalFuel: true,
+                lanes: [
+                  { objectId: 'l1', length: 15, backgroundColor: '#ffff00', foregroundColor: '#000000' }
+                ]
+              }
+            },
+            drivers: [
+              {
+                objectId: 'p1',
+                fuelLevel: 25,
+                driver: { name: 'Digital Racer' }
+              }
+            ],
+            currentHeat: {
+              objectId: 'h1',
+              heatNumber: 1,
+              heatDrivers: [
+                {
+                  objectId: 'hd1',
+                  laneIndex: 0,
+                  driver: {
+                    objectId: 'p1',
+                    fuelLevel: 25,
+                    driver: { name: 'Digital Racer' }
+                  }
+                }
+              ]
+            }
+          }
+        });
+      }
+    });
+
+    // Wait for the component to process
+    await page.waitForTimeout(500);
+
+    // Verify presence of fuel-related columns
+    await expect(page.locator('.table-headers text', { hasText: 'FUEL' }).first()).toBeVisible({ timeout: 10000 });
+
+    // Verify 50% fuel level (25/50)
+    await expect(page.locator('text=50%')).toBeVisible({ timeout: 10000 });
+
+    await expect(page).toHaveScreenshot('raceday-digital-fuel-levels.png', { maxDiffPixelRatio: 0.1 });
+  });
 });

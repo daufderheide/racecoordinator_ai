@@ -67,6 +67,16 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
+  public boolean hasDigitalFuel() {
+    for (IProtocol protocol : protocols) {
+      if (protocol.hasDigitalFuel()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void setMainPower(boolean on) {
     // Don't go directly to the protocols, use the PowerManager instead.
     this.powerManager.setMainPower(on);

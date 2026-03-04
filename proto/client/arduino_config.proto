@@ -16,6 +16,7 @@ enum PinBehavior {
   BEHAVIOR_RELAY_BASE = 4000;
   BEHAVIOR_PIT_IN_BASE = 5000;
   BEHAVIOR_PIT_OUT_BASE = 6000;
+  BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000;
 }
 
 enum LapPinPitBehavior {
@@ -46,4 +47,10 @@ message ArduinoConfig {
   repeated int32 analog_ids = 14;
   repeated string led_lane_color_overrides = 15;
   LapPinPitBehavior lap_pin_pit_behavior = 16;
+  repeated VoltageConfig voltage_configs = 17;
+}
+
+message VoltageConfig {
+  int32 lane = 1;
+  int32 max_voltage = 2;
 }

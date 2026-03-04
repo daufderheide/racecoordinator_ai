@@ -15,17 +15,39 @@ export class Track implements Model {
   readonly entity_id: string;
   readonly name: string;
   readonly lanes: Lane[];
-  readonly arduino_config?: ArduinoConfig;
+  readonly has_digital_fuel: boolean;
+  readonly arduino_configs: ArduinoConfig[];
 
-  constructor(entity_id: string, name: string, lanes: Lane[], arduino_config?: ArduinoConfig) {
+  constructor(entity_id: string, name: string, lanes: Lane[], has_digital_fuel: boolean = false, arduino_configs?: ArduinoConfig[]) {
     this.entity_id = entity_id;
     this.name = name;
     this.lanes = lanes;
-    this.arduino_config = arduino_config;
+    this.has_digital_fuel = has_digital_fuel;
+    this.arduino_configs = arduino_configs || [];
   }
 
   get objectId(): string {
     return this.entity_id;
+  }
+
+  hasDigitalFuel(): boolean {
+    if (this.has_digital_fuel) {
+      return true;
+    }
+    if (!this.arduino_configs || this.arduino_configs.length === 0) {
+      return false;
+    }
+    // For now, if any config has digital fuel, track has digital fuel.
+    for (const config of this.arduino_configs) {
+      if (config.voltageConfigs != null && Object.keys(config.voltageConfigs).length > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  hasAnalogFuel(): boolean {
+    return !this.hasDigitalFuel();
   }
 }
 
@@ -51,4 +73,5 @@ export interface ArduinoConfig {
 
   ledStrings: any[] | null;
   ledLaneColorOverrides: any[] | null;
+  voltageConfigs?: { [lane: number]: number };
 }

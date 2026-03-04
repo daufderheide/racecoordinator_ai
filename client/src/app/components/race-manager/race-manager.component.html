@@ -67,7 +67,9 @@
             <div class="form-group checkbox-group">
               <label>{{ 'RM_LABEL_FUEL_RACE' | translate }}</label>
               <div class="checkbox-wrapper">
-                <input type="checkbox" [checked]="editingRace.fuel_options?.enabled" disabled class="rm-checkbox">
+                <input type="checkbox"
+                  [checked]="editingRace.fuel_options?.enabled || editingRace.digital_fuel_options?.enabled" disabled
+                  class="rm-checkbox">
                 <span class="checkbox-custom"></span>
               </div>
             </div>

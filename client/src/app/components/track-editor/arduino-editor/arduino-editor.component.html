@@ -1,87 +1,174 @@
 <div *ngIf="config" class="arduino-config-container">
 
-  <div class="panel-header">
-    <h3>{{ 'AE_HEADER' | translate }}</h3>
-  </div>
-
-  <!-- Top Section: Controls + Image -->
-  <div class="config-top-section">
-    <div class="board-controls">
-      <div class="control-group">
-        <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
-        <select [ngModel]="config.hardwareType.toString()"
-          (ngModelChange)="config.hardwareType = +$event; updateArduinoConfig()">
-          <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
-          <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>{{ 'AE_COM_PORT' | translate }}</label>
-        <div class="com-port-row">
-          <select [(ngModel)]="config.commPort" (change)="updateArduinoConfig()">
-            <option value="" disabled>{{ 'AE_SELECT_PORT' | translate }}</option>
-            <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
-          </select>
-          <span class="status-badge" [class.connected]="interfaceStatus === 0"
-            [title]="interfaceStatus === 0 ? 'Connected' : 'Disconnected'">
-            <span class="status-dot"></span>
-          </span>
-        </div>
-      </div>
-      <div class="control-group">
-        <label>{{ 'AE_DEBOUNCE_TIME' | translate }} <span class="unit-lowercase">(µs)</span></label>
-        <input type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
-          step="100">
-      </div>
+  <div class="config-section">
+    <div class="section-header" (click)="toggleSection('arduino')">
+      <span class="expander-icon" [class.collapsed]="!sectionsExpanded.arduino">▼</span>
+      <h1>{{ 'AE_HEADER' | translate }}{{ count > 1 ? ' #' + (index + 1) : '' }}</h1>
+      <div class="spacer"></div>
+      <button class="action-btn danger small" (click)="removeInterface($event)">X</button>
     </div>
 
-    <div class="board-preview">
-      <img *ngIf="config.hardwareType == 0" src="assets/arduino_uno_board.png" [alt]="'AE_BOARD_UNO' | translate"
-        class="board-image">
-      <img *ngIf="config.hardwareType == 1" src="assets/arduino_mega_board.png" [alt]="'AE_BOARD_MEGA' | translate"
-        class="board-image">
-    </div>
-
-    <div class="right-controls">
-      <div class="control-group">
-        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <input type="checkbox" [ngModel]="config.normallyClosedRelays"
-            (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
-          {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scrollable Pins Section -->
-  <div class="pins-section scrollable">
-    <div class="pins-config">
-      <h4>{{ 'AE_DIGITAL_PINS' | translate }}</h4>
-      <div class="pin-grid">
-        <div *ngFor="let pin of availablePins" class="pin-item">
-          <div class="pin-header">
-            <label>D{{pin}}</label>
-            <span class="status-badge small" [class.connected]="isPinActive(true, pin)"
-              (click)="togglePinState(true, pin)" style="cursor: pointer;"></span>
+    <div class="section-content" *ngIf="sectionsExpanded.arduino">
+      <div class="sections-wrapper">
+        <!-- Main Configuration Section -->
+        <div class="config-section">
+          <div class="section-header" (click)="toggleSection('main')">
+            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.main">▼</span>
+            <h4>{{ 'AE_MAIN_HEADER' | translate }}</h4>
           </div>
-          <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
-            <option *ngFor="let action of pinActions" [value]="action.value">{{ action.label }}</option>
-          </select>
-        </div>
-      </div>
 
-      <h4>{{ 'AE_ANALOG_PINS' | translate }}</h4>
-      <div class="pin-grid">
-        <div *ngFor="let pin of availableAnalogPins" class="pin-item">
-          <div class="pin-header">
-            <label>A{{pin}}</label>
-            <span class="status-badge small" [class.connected]="isPinActive(false, pin)"
-              (click)="togglePinState(false, pin)" style="cursor: pointer;"></span>
+          <div class="section-content" *ngIf="sectionsExpanded.main">
+            <div class="config-top-section">
+              <div class="board-controls">
+                <div class="control-group">
+                  <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
+                  <select [ngModel]="config.hardwareType.toString()"
+                    (ngModelChange)="config.hardwareType = +$event; updateArduinoConfig()">
+                    <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
+                    <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
+                  </select>
+                </div>
+
+                <div class="control-group">
+                  <label>{{ 'AE_COM_PORT' | translate }}</label>
+                  <div class="com-port-row">
+                    <select [(ngModel)]="config.commPort" (change)="updateArduinoConfig()">
+                      <option value="" disabled>{{ 'AE_SELECT_PORT' | translate }}</option>
+                      <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
+                    </select>
+                    <span class="status-badge" [class.connected]="interfaceStatus === 0"
+                      [title]="interfaceStatus === 0 ? 'Connected' : 'Disconnected'">
+                      <span class="status-dot"></span>
+                    </span>
+                  </div>
+                </div>
+                <div class="control-group">
+                  <label>{{ 'AE_DEBOUNCE_TIME' | translate }} <span class="unit-lowercase">(µs)</span></label>
+                  <input type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
+                    step="100">
+                </div>
+              </div>
+
+              <div class="board-preview">
+                <img *ngIf="config.hardwareType == 0" src="assets/arduino_uno_board.png"
+                  [alt]="'AE_BOARD_UNO' | translate" class="board-image">
+                <img *ngIf="config.hardwareType == 1" src="assets/arduino_mega_board.png"
+                  [alt]="'AE_BOARD_MEGA' | translate" class="board-image">
+              </div>
+
+              <div class="right-controls">
+                <div class="control-group">
+                  <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" [ngModel]="config.normallyClosedRelays"
+                      (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
+                    {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
-          <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
-            <option *ngFor="let action of pinActions" [value]="action.value">{{ action.label }}</option>
-          </select>
+        </div>
+
+        <!-- Scrollable Pins Section -->
+        <div class="pins-section">
+          <div class="pins-config">
+            <!-- Digital Pins Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('digital')">
+                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.digital">▼</span>
+                <h4>{{ 'AE_DIGITAL_PINS' | translate }}</h4>
+              </div>
+
+              <div class="section-content" *ngIf="sectionsExpanded.digital">
+                <div class="pin-grid">
+                  <div *ngFor="let pin of availablePins" class="pin-item">
+                    <div class="pin-header">
+                      <label>D{{pin}}</label>
+                      <span class="status-badge small" [class.connected]="isPinActive(true, pin)"
+                        (click)="togglePinState(true, pin)" style="cursor: pointer;"></span>
+                    </div>
+                    <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
+                      <option *ngFor="let action of digitalPinActions" [value]="action.value">{{ action.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analog Pins Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('analog')">
+                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.analog">▼</span>
+                <h4>{{ 'AE_ANALOG_PINS' | translate }}</h4>
+              </div>
+
+              <div class="section-content" *ngIf="sectionsExpanded.analog">
+                <div class="pin-grid">
+                  <div *ngFor="let pin of availableAnalogPins" class="pin-item">
+                    <div class="pin-header">
+                      <label>A{{pin}}</label>
+                      <span class="status-badge small" [class.connected]="isPinActive(false, pin)"
+                        (click)="togglePinState(false, pin)" style="cursor: pointer;"></span>
+                    </div>
+                    <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
+                      <option *ngFor="let action of analogPinActions" [value]="action.value">{{ action.label }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Voltage Configuration Section inside scrollable pins-config -->
+            <div *ngIf="getVoltageLanes().length > 0" class="config-section voltage-config-section">
+              <div class="section-header" (click)="toggleSection('voltage')">
+                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.voltage">▼</span>
+                <h4>{{ 'AE_VOLTAGE_CONFIG_HEADER' | translate }}</h4>
+              </div>
+
+              <div class="section-content" *ngIf="sectionsExpanded.voltage">
+
+                <div
+                  style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 12px;">
+                  <button class="link-toggle-btn" (click)="resetMaxSeenAll()"
+                    title="Reset all tracked max voltage values">
+                    <i class="fas fa-undo"></i>
+                    <span>{{ 'AE_RESET_MAX_SEEN' | translate }}</span>
+                  </button>
+                  <button class="link-toggle-btn" [class.linked]="isVoltageLinked"
+                    (click)="isVoltageLinked = !isVoltageLinked"
+                    [title]="isVoltageLinked ? ('AE_LANES_LINKED' | translate) : ('AE_LANES_INDEPENDENT' | translate)">
+                    <i class="fas fa-link" *ngIf="isVoltageLinked"></i>
+                    <i class="fas fa-unlink" *ngIf="!isVoltageLinked"></i>
+                    <span>{{ isVoltageLinked ? ('AE_LANES_LINKED' | translate) : ('AE_LANES_INDEPENDENT' | translate)
+                      }}</span>
+                  </button>
+                </div>
+
+                <div class="pin-grid">
+                  <div *ngFor="let lane of getVoltageLanes()" class="pin-item voltage-pin-item">
+                    <label>{{ 'AE_PIN_VOLTAGE_LANE' | translate:{lane: lane + 1} }}</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                      <span class="unit-lowercase" style="color: #94a3b8;">{{ 'AE_VOLTAGE_MAX_VAL' | translate }}</span>
+                      <input type="number" [ngModel]="getVoltageMax(lane)" (ngModelChange)="setVoltageMax(lane, $event)"
+                        min="0" max="1023"
+                        style="width: 80px; background: rgba(15, 23, 42, 0.8); border: none; color: #cbd5e1; border-radius: 4px; text-align: right;">
+                    </div>
+                    <div class="live-voltage-container">
+                      <span class="live-label">{{ 'AE_LIVE_VOLTAGE_LABEL' | translate }}:</span>
+                      <span class="live-value">{{ getLiveVoltageForLane(lane) }}</span>
+                    </div>
+                    <button class="set-max-btn" (click)="setMaxToSeen(lane)"
+                      [disabled]="(maxVoltagesSeen[lane] ?? 0) === 0">
+                      <i class="fas fa-arrow-circle-up" style="color: #4ade80;"></i> Set Max to: {{
+                      maxVoltagesSeen[lane] ??
+                      0 }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

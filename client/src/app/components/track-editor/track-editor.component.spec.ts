@@ -18,11 +18,11 @@ class MockDataService {
         entity_id: 't1',
         name: 'Track 1',
         lanes: [{ entity_id: 'l1', background_color: '#ff0000', foreground_color: '#ffffff', length: 10 }],
-        arduino_config: {
+        arduino_configs: [{
           digitalIds: new Array(60).fill(-1),
           analogIds: new Array(16).fill(-1),
           hardwareType: 0
-        }
+        }]
       }
     ]);
   }

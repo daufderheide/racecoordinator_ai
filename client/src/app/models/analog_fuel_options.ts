@@ -1,20 +1,6 @@
-export enum FuelUsageType {
-  LINEAR = 'LINEAR',
-  QUADRATIC = 'QUADRATIC',
-  CUBIC = 'CUBIC'
-}
+import { FuelOptions, FuelUsageType } from "./fuel_options";
 
-export class AnalogFuelOptions {
-  enabled: boolean;
-  reset_fuel_at_heat_start: boolean;
-  end_heat_on_out_of_fuel: boolean;
-  capacity: number;
-  usage_type: FuelUsageType;
-  usage_rate: number;
-  start_level: number;
-  refuel_rate: number;
-  pit_stop_delay: number;
-
+export class AnalogFuelOptions extends FuelOptions {
   constructor(
     enabled: boolean = false,
     reset_fuel_at_heat_start: boolean = false,
@@ -26,14 +12,6 @@ export class AnalogFuelOptions {
     refuel_rate: number = 10,
     pit_stop_delay: number = 2.0
   ) {
-    this.enabled = enabled;
-    this.reset_fuel_at_heat_start = reset_fuel_at_heat_start;
-    this.end_heat_on_out_of_fuel = end_heat_on_out_of_fuel;
-    this.capacity = capacity;
-    this.usage_type = usage_type;
-    this.usage_rate = usage_rate;
-    this.start_level = start_level;
-    this.refuel_rate = refuel_rate;
-    this.pit_stop_delay = pit_stop_delay;
+    super(enabled, reset_fuel_at_heat_start, end_heat_on_out_of_fuel, capacity, usage_type, usage_rate, start_level, refuel_rate, pit_stop_delay);
   }
 }

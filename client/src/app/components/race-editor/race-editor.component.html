@@ -174,7 +174,7 @@
       </div>
 
       <!-- Analog Fuel Section -->
-      <div class="config-section-group fuel-config-section">
+      <div class="config-section-group fuel-config-section" *ngIf="!hasDigitalFuel">
         <h2 class="config-header">{{ 'RE_ANALOG_FUEL_HEADER' | translate }}</h2>
         <div class="config-row fuel-enabled-row">
           <div class="config-section checkbox-section">
@@ -352,6 +352,189 @@
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Digital Fuel Section -->
+      <div class="config-section-group fuel-config-section" *ngIf="hasDigitalFuel" id="digital-fuel-section">
+        <h2 class="config-header" id="digital-fuel-header">{{ 'RE_DIGITAL_FUEL_HEADER' | translate }}</h2>
+        <div class="config-row fuel-enabled-row">
+          <div class="config-section checkbox-section">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.enabled"
+                (ngModelChange)="captureState()" id="digital-fuel-enabled-checkbox">
+              <span class="checkmark"></span>
+              <span class="checkbox-label" id="digital-fuel-enabled-label">{{ 'RE_DIGITAL_FUEL_ENABLED' | translate
+                }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="fuel-options-grid" [class.options-disabled]="!editingRace.digital_fuel_options.enabled">
+          <div class="config-row">
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_USAGE_TYPE' | translate }}</label>
+              <select [(ngModel)]="editingRace.digital_fuel_options.usage_type" (ngModelChange)="captureState()"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+                <option value="LINEAR">{{ 'RE_FUEL_USAGE_LINEAR' | translate }}</option>
+                <option value="QUADRATIC">{{ 'RE_FUEL_USAGE_QUADRATIC' | translate }}</option>
+                <option value="CUBIC">{{ 'RE_FUEL_USAGE_CUBIC' | translate }}</option>
+              </select>
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_USAGE_RATE' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.digital_fuel_options.usage_rate"
+                (ngModelChange)="captureState()" min="0" step="0.1"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_CAPACITY' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.digital_fuel_options.capacity"
+                (ngModelChange)="captureState()" min="0" step="1"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_START_LEVEL' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.digital_fuel_options.start_level"
+                (ngModelChange)="captureState()" min="0" max="100" step="1"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_REFUEL_RATE' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.digital_fuel_options.refuel_rate"
+                (ngModelChange)="captureState()" min="0" step="1"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+            </div>
+            <div class="config-section">
+              <label>{{ 'RE_FUEL_PIT_DELAY' | translate }}</label>
+              <input type="number" [(ngModel)]="editingRace.digital_fuel_options.pit_stop_delay"
+                (ngModelChange)="captureState()" min="0" step="0.1"
+                [disabled]="!editingRace.digital_fuel_options.enabled">
+            </div>
+          </div>
+
+          <div class="config-row">
+            <div class="config-section checkbox-section">
+              <label class="checkbox-container" [class.disabled]="!editingRace.digital_fuel_options.enabled">
+                <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.reset_fuel_at_heat_start"
+                  (ngModelChange)="captureState()" [disabled]="!editingRace.digital_fuel_options.enabled">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">{{ 'RE_RESET_FUEL_AT_START' | translate }}</span>
+              </label>
+            </div>
+            <div class="config-section checkbox-section">
+              <label class="checkbox-container" [class.disabled]="!editingRace.digital_fuel_options.enabled">
+                <input type="checkbox" [(ngModel)]="editingRace.digital_fuel_options.end_heat_on_out_of_fuel"
+                  (ngModelChange)="captureState()" [disabled]="!editingRace.digital_fuel_options.enabled">
+                <span class="checkmark"></span>
+                <span class="checkbox-label">{{ 'RE_END_HEAT_ON_OUT_OF_FUEL' | translate }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Digital Fuel Graphs -->
+        <div class="fuel-graphs-container" *ngIf="editingRace.digital_fuel_options.enabled">
+          <!-- Digital Graph 1: Fuel Usage -->
+          <div class="fuel-graph-section">
+            <div class="graph-header">
+              <span class="graph-title">{{ 'RE_DIGITAL_FUEL_GRAPH_USAGE_TITLE' | translate }}</span>
+            </div>
+            <div class="graph-body">
+              <div class="y-axis-labels">
+                <span *ngFor="let label of getDigitalUsageYLabels()">{{ label }}</span>
+              </div>
+              <div class="y-axis-label">{{ 'RE_DIGITAL_FUEL_USAGE_PER_SEC' | translate }}</div>
+              <div class="graph-svg-wrapper">
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" class="fuel-graph"
+                  (mousemove)="onDigitalGraphMouseMove($event, 'usage')" (mouseleave)="onGraphMouseLeave()">
+                  <line x1="0" y1="0" x2="0" y2="150" class="axis" />
+                  <line x1="0" y1="150" x2="400" y2="150" class="axis" />
+                  <line *ngFor="let h of [37.5, 75, 112.5]" x1="0" [attr.y1]="h" x2="400" [attr.y2]="h" class="grid" />
+                  <line *ngFor="let v of [100, 200, 300]" [attr.x1]="v" y1="0" [attr.x2]="v" y2="150" class="grid" />
+                  <path [attr.d]="getDigitalUsagePath()" class="usage-path" />
+                  <g *ngIf="hoveredPoint && hoveredPoint.type === 'digital_usage'">
+                    <line [attr.x1]="hoveredPoint.svgX" y1="0" [attr.x2]="hoveredPoint.svgX" y2="150"
+                      class="hover-line" />
+                    <circle [attr.cx]="hoveredPoint.svgX" [attr.cy]="hoveredPoint.svgY" r="6" class="hover-point" />
+                  </g>
+                </svg>
+                <!-- Tooltip for Digital Usage Graph -->
+                <div *ngIf="hoveredPoint && hoveredPoint.type === 'digital_usage'" class="graph-tooltip"
+                  [style.left.px]="hoveredPoint.screenX + 35" [style.top.px]="hoveredPoint.screenY">
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_DIGITAL_FUEL_THROTTLE' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.time | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_FUEL_GRAPH_FUEL' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.value | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="x-axis-labels">
+              <span>0%</span>
+              <span>25%</span>
+              <span>50%</span>
+              <span>75%</span>
+              <span>100%</span>
+            </div>
+            <div class="graph-footer">
+              <span class="x-axis-label">{{ 'RE_DIGITAL_FUEL_THROTTLE' | translate }}</span>
+            </div>
+          </div>
+
+          <!-- Digital Graph 2: Time to Empty -->
+          <div class="fuel-graph-section">
+            <div class="graph-header">
+              <span class="graph-title">{{ 'RE_DIGITAL_FUEL_GRAPH_PIT_TITLE' | translate }}</span>
+            </div>
+            <div class="graph-body">
+              <div class="y-axis-labels">
+                <span>100%</span>
+                <span>75%</span>
+                <span>50%</span>
+                <span>25%</span>
+                <span>0%</span>
+              </div>
+              <div class="y-axis-label">{{ 'RE_DIGITAL_FUEL_THROTTLE' | translate }}</div>
+              <div class="graph-svg-wrapper">
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" class="fuel-graph"
+                  (mousemove)="onDigitalGraphMouseMove($event, 'pit')" (mouseleave)="onGraphMouseLeave()">
+                  <line x1="0" y1="0" x2="0" y2="150" class="axis" />
+                  <line x1="0" y1="150" x2="400" y2="150" class="axis" />
+                  <line *ngFor="let h of [37.5, 75, 112.5]" x1="0" [attr.y1]="h" x2="400" [attr.y2]="h" class="grid" />
+                  <line *ngFor="let v of [100, 200, 300]" [attr.x1]="v" y1="0" [attr.x2]="v" y2="150" class="grid" />
+                  <path [attr.d]="getDigitalPitPath()" class="usage-path" />
+                  <g *ngIf="hoveredPoint && hoveredPoint.type === 'digital_pit'">
+                    <circle [attr.cx]="hoveredPoint.svgX" [attr.cy]="hoveredPoint.svgY" r="6" class="hover-point" />
+                  </g>
+                </svg>
+                <!-- Tooltip for Digital Pit Graph -->
+                <div *ngIf="hoveredPoint && hoveredPoint.type === 'digital_pit'" class="graph-tooltip"
+                  [style.left.px]="hoveredPoint.screenX + 35" [style.top.px]="hoveredPoint.screenY">
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_DIGITAL_FUEL_THROTTLE' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.time | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">{{ 'RE_DIGITAL_FUEL_PIT_IN' | translate }}:</span>
+                    <span class="tooltip-value">{{ hoveredPoint.value | number:'1.1-1' }}s</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="x-axis-labels">
+              <span *ngFor="let label of getDigitalPitXLabels()">{{ label }}</span>
+            </div>
+            <div class="graph-footer">
+              <span class="x-axis-label">{{ 'RE_DIGITAL_FUEL_TIME_TO_EMPTY' | translate }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

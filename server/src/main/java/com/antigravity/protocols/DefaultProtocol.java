@@ -35,6 +35,11 @@ public abstract class DefaultProtocol implements IProtocol {
   }
 
   @Override
+  public boolean hasDigitalFuel() {
+    return false;
+  }
+
+  @Override
   public void setMainPower(boolean on) {
   }
 

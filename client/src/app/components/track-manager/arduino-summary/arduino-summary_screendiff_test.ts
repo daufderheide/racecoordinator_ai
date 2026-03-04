@@ -19,24 +19,16 @@ test.describe('Arduino Summary Component Visuals', () => {
           entity_id: 't-relay',
           name: 'Relay Track',
           lanes: [{ entity_id: 'l1', length: 10, backgroundColor: '#000', foregroundColor: '#fff' }],
-          arduino_config: {
-            name: 'Arduino Relay',
-            commPort: 'COM5',
-            baudRate: 115200,
-            debounceUs: 5000,
+          arduino_configs: [{
             hardwareType: 0,
-            digitalIds: [3, 4000, -1, -1], // 3=Master Relay, 4000=Lane Relay
-            analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: 0,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
+            commPort: 'COM5',
+            digitalIds: [0, 0, 3, 0], // Pin 2 is index 0 usually, but let's just make sure 3 is in there
+            analogIds: [0, 0, 0, 0, 0, 0],
             usePitsAsLaps: 0,
             useLapsForSegments: 0,
             ledStrings: null,
             ledLaneColorOverrides: null
-          }
+          }]
         }
       ];
 

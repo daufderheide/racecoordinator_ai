@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Race } from 'src/app/models/race';
@@ -23,6 +23,7 @@ type Participant = Driver | Team;
 })
 export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   @Output() requestServerConfig = new EventEmitter<void>();
+  @ViewChild('scrollContainer') scrollContainer?: ElementRef;
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -290,6 +291,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   private updateListWithRefresh(action: () => void) {
+    // Capture scroll position
+    const scrollTop = this.scrollContainer?.nativeElement?.scrollTop || 0;
+
     this.clearSelectionAndBlur();
 
     // TODO(aufderheide): Look into proper fix for this hack
@@ -307,6 +311,11 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       this.isRefreshingList = false;
       this.clearSelectionAsync();
       this.cdr.detectChanges();
+
+      // Restore scroll position after DOM is re-rendered
+      if (this.scrollContainer) {
+        this.scrollContainer.nativeElement.scrollTop = scrollTop;
+      }
     }, 0);
   }
 

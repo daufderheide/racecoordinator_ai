@@ -1,6 +1,6 @@
 package com.antigravity.protocols.arduino;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,9 +49,11 @@ public class ArduinoProtocolTest {
     @Override
     public void writeData(byte[] data) throws IOException {
       lastWrittenData = data;
+      allWrittenData.add(data);
     }
 
     public byte[] lastWrittenData;
+    public java.util.List<byte[]> allWrittenData = new java.util.ArrayList<>();
 
     public void injectData(byte[] data) {
       if (listener != null) {
@@ -72,6 +74,7 @@ public class ArduinoProtocolTest {
 
     int callButtonCount = 0;
     int segmentCount = 0;
+    public com.antigravity.proto.InterfaceEvent lastEvent;
 
     @Override
     public void onLap(int lane, double lapTime, int interfaceId) {
@@ -101,6 +104,11 @@ public class ArduinoProtocolTest {
         pitStateChanges++;
         lastLocation = carData.getLocation();
       }
+    }
+
+    @Override
+    public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+      lastEvent = event;
     }
   }
 
@@ -574,5 +582,220 @@ public class ArduinoProtocolTest {
     // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
     serialConnection.injectData(segmentHigh);
     assertEquals(1, listener.segmentCount);
+  }
+
+  @Test
+  public void testSendPinModeAnalogRead() {
+    // Configure A1 as Voltage Level for Lane 0 (Base + 0)
+    config.analogIds = new ArrayList<>(
+        Collections.nCopies(6, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.analogIds.set(1, com.antigravity.proto.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() + 0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Trigger Version to send pin modes
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // After version, sendPinModeAnalogRead should be called
+    // Opcode 0x70
+    // Binary format: P opcode totalPins (Type Pin)* Terminator
+    // totalPins = 1
+    // Type = ANALOG (1)
+    // PinIndex = 1 (A1)
+    // Expected: 0x70 0x01 0x41 0x01 0x3B
+    byte[] expected = { 0x70, 0x01, 0x41, 0x01, 0x3B };
+
+    boolean found = false;
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (java.util.Arrays.equals(expected, data)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Should have sent PIN_MODE READ_ANALOG command", found);
+  }
+
+  @Test
+  public void testOnAnalogData() {
+    protocol.open();
+
+    // Send version first to verify protocol
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Opcode 0x41 (A), Count 1, Pin 1, Value 1023 (0x3FF)
+    // Value is 4 bytes: 0, 0, 3, 255
+    byte[] msg = { 0x41, 0x01, 0x01, 0x00, 0x00, 0x03, (byte) 0xFF, 0x3B };
+    serialConnection.injectData(msg);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasAnalogData());
+    assertEquals(1, listener.lastEvent.getAnalogData().getPin());
+    assertEquals(1023, listener.lastEvent.getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_ZeroValue() {
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Pin 0, Value 0
+    byte[] msg = { 0x41, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(msg);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasAnalogData());
+    assertEquals(0, listener.lastEvent.getAnalogData().getPin());
+    assertEquals(0, listener.lastEvent.getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_MaxValue() {
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Pin 2, Value 1023 (max 10-bit ADC reading)
+    byte[] msg = { 0x41, 0x01, 0x02, 0x00, 0x00, 0x03, (byte) 0xFF, 0x3B };
+    serialConnection.injectData(msg);
+
+    assertNotNull("Event should not be null", listener.lastEvent);
+    assertTrue(listener.lastEvent.hasAnalogData());
+    assertEquals(2, listener.lastEvent.getAnalogData().getPin());
+    assertEquals(1023, listener.lastEvent.getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_MidRangeValue() {
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Pin 3, Value 512 = 0x00000200
+    byte[] msg = { 0x41, 0x01, 0x03, 0x00, 0x00, 0x02, 0x00, 0x3B };
+    serialConnection.injectData(msg);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasAnalogData());
+    assertEquals(3, listener.lastEvent.getAnalogData().getPin());
+    assertEquals(512, listener.lastEvent.getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_MultiPin_ThreePins() {
+    // Track all fired events
+    ArrayList<com.antigravity.proto.InterfaceEvent> events = new ArrayList<>();
+    TestListener multiListener = new TestListener() {
+      @Override
+      public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+        super.onInterfaceEvent(event);
+        events.add(event);
+      }
+    };
+    protocol.setListener(multiListener);
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Count = 3
+    // Pin 0, Value 100 = 0x00000064
+    // Pin 1, Value 512 = 0x00000200
+    // Pin 2, Value 1023 = 0x000003FF
+    // Message: 0x41, 0x03,
+    // 0x00, 0x00, 0x00, 0x00, 0x64, -- pin 0, value 100
+    // 0x01, 0x00, 0x00, 0x02, 0x00, -- pin 1, value 512
+    // 0x02, 0x00, 0x00, 0x03, 0xFF, -- pin 2, value 1023
+    // 0x3B
+    byte[] msg = {
+        0x41, 0x03,
+        0x00, 0x00, 0x00, 0x00, 0x64,
+        0x01, 0x00, 0x00, 0x02, 0x00,
+        0x02, 0x00, 0x00, 0x03, (byte) 0xFF,
+        0x3B
+    };
+    serialConnection.injectData(msg);
+
+    assertEquals("Should fire one event per pin", 3, events.size());
+
+    assertEquals(0, events.get(0).getAnalogData().getPin());
+    assertEquals(100, events.get(0).getAnalogData().getValue());
+
+    assertEquals(1, events.get(1).getAnalogData().getPin());
+    assertEquals(512, events.get(1).getAnalogData().getValue());
+
+    assertEquals(2, events.get(2).getAnalogData().getPin());
+    assertEquals(1023, events.get(2).getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_TwoConsecutiveMessages() {
+    ArrayList<com.antigravity.proto.InterfaceEvent> events = new ArrayList<>();
+    TestListener multiListener = new TestListener() {
+      @Override
+      public void onInterfaceEvent(com.antigravity.proto.InterfaceEvent event) {
+        super.onInterfaceEvent(event);
+        events.add(event);
+      }
+    };
+    protocol.setListener(multiListener);
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // First message: Pin 0, Value 200
+    byte[] msg1 = { 0x41, 0x01, 0x00, 0x00, 0x00, 0x00, (byte) 0xC8, 0x3B };
+    // Second message: Pin 1, Value 800 = 0x00000320
+    byte[] msg2 = { 0x41, 0x01, 0x01, 0x00, 0x00, 0x03, 0x20, 0x3B };
+
+    serialConnection.injectData(msg1);
+    serialConnection.injectData(msg2);
+
+    assertEquals("Should fire event for each message", 2, events.size());
+    assertEquals(0, events.get(0).getAnalogData().getPin());
+    assertEquals(200, events.get(0).getAnalogData().getValue());
+    assertEquals(1, events.get(1).getAnalogData().getPin());
+    assertEquals(800, events.get(1).getAnalogData().getValue());
+  }
+
+  @Test
+  public void testOnAnalogData_PartialMessageDoesNotFire() {
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Inject only the opcode and count (not the full message body)
+    byte[] partial = { 0x41, 0x01 };
+    serialConnection.injectData(partial);
+
+    // No analog event should have fired yet
+    assertNull("Partial message should not produce an event",
+        listener.lastEvent == null || !listener.lastEvent.hasAnalogData() ? null : "has event");
+  }
+
+  @Test
+  public void testOnAnalogData_HighPinIndex() {
+    protocol.open();
+
+    byte[] versionMsg = { 0x56, 0x01, 0x00, 0x00, 0x00, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Pin 15 (last analog pin on Mega A15), Value 750 = 0x000002EE
+    byte[] msg = { 0x41, 0x01, 0x0F, 0x00, 0x00, 0x02, (byte) 0xEE, 0x3B };
+    serialConnection.injectData(msg);
+
+    assertNotNull(listener.lastEvent);
+    assertTrue(listener.lastEvent.hasAnalogData());
+    assertEquals(15, listener.lastEvent.getAnalogData().getPin());
+    assertEquals(750, listener.lastEvent.getAnalogData().getValue());
   }
 }
