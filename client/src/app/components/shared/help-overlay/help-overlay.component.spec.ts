@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HelpOverlayComponent } from './help-overlay.component';
 import { HelpService, GuideStep } from '../../../services/help.service';
+import { TranslationService } from '../../../services/translation.service';
+import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
 
@@ -8,6 +10,7 @@ describe('HelpOverlayComponent', () => {
   let component: HelpOverlayComponent;
   let fixture: ComponentFixture<HelpOverlayComponent>;
   let helpServiceMock: any;
+  let translationServiceMock: any;
   let isVisibleSubject: BehaviorSubject<boolean>;
   let currentStepSubject: BehaviorSubject<GuideStep | null>;
   let hasNextSubject: BehaviorSubject<boolean>;
@@ -31,10 +34,15 @@ describe('HelpOverlayComponent', () => {
       endGuide: jasmine.createSpy('endGuide')
     };
 
+    translationServiceMock = {
+      translate: jasmine.createSpy('translate').and.callFake((key: string) => key)
+    };
+
     await TestBed.configureTestingModule({
-      declarations: [HelpOverlayComponent],
+      declarations: [HelpOverlayComponent, TranslatePipe],
       providers: [
         { provide: HelpService, useValue: helpServiceMock },
+        { provide: TranslationService, useValue: translationServiceMock },
         ChangeDetectorRef
       ]
     }).compileComponents();
