@@ -63,6 +63,8 @@ export class RacedaySetupComponent implements OnInit {
   tempServerIp = 'localhost';
   tempServerPort = 7070;
   serverVersion: string = '';
+  clientVersion: string = '0.0.1';
+  showAboutDialog = false;
 
   scale: number = 1;
 
@@ -92,7 +94,6 @@ export class RacedaySetupComponent implements OnInit {
       this.quoteKeys.push(`RDS_QUOTE_${i}`);
     }
   }
-
 
   @HostListener('window:resize')
   onResize() {
@@ -349,6 +350,10 @@ export class RacedaySetupComponent implements OnInit {
       this.showServerConfig = true;
       this.cdr.detectChanges();
     });
+    componentRef.instance.requestAbout.subscribe(() => {
+      this.showAboutDialog = true;
+      this.cdr.detectChanges();
+    });
   }
 
   async loadCustomComponent() {
@@ -386,6 +391,10 @@ export class RacedaySetupComponent implements OnInit {
           this.showServerConfig = true;
           this.cdr.detectChanges();
         });
+        componentRef.instance.requestAbout.subscribe(() => {
+          this.showAboutDialog = true;
+          this.cdr.detectChanges();
+        });
       } else {
         // Fallback for dynamic types where instanceof might fail or if structure is different
         // We know it extends CustomUiBaseComponent extends DefaultRacedaySetupComponent
@@ -393,6 +402,12 @@ export class RacedaySetupComponent implements OnInit {
         if (instance.requestServerConfig) {
           instance.requestServerConfig.subscribe(() => {
             this.showServerConfig = true;
+            this.cdr.detectChanges();
+          });
+        }
+        if (instance.requestAbout) {
+          instance.requestAbout.subscribe(() => {
+            this.showAboutDialog = true;
             this.cdr.detectChanges();
           });
         }

@@ -1,8 +1,13 @@
 import { Page, expect } from '@playwright/test';
 import { com } from '../proto/message';
 
+export interface SetupOptions {
+  skipIntro?: boolean;
+  walkthroughSeen?: boolean;
+}
+
 export class TestSetupHelper {
-  static async setupStandardMocks(page: Page) {
+  static async setupStandardMocks(page: Page, options: SetupOptions = {}) {
     // Listen for console logs from the browser and prefix them for visibility
     page.on('console', msg => {
       const type = msg.type();
@@ -104,6 +109,7 @@ export class TestSetupHelper {
 
     // Mock Settings using localStorage (since no component actually calls /api/settings)
     await this.setupSettings(page, {
+      racedaySetupWalkthroughSeen: options.walkthroughSeen ?? false,
       racedayColumns: ['driver.name', 'lapCount'],
       columnLayouts: {
         'driver.name': { 'CenterCenter': 'driver.name' },
@@ -119,6 +125,13 @@ export class TestSetupHelper {
       },
       columnVisibility: {}
     });
+
+    // Handle skip intro
+    if (options.skipIntro) {
+      await page.addInitScript(() => {
+        window.sessionStorage.setItem('skipIntro', 'true');
+      });
+    }
   }
 
   static async setupTeamMocks(page: Page) {
@@ -410,6 +423,17 @@ export class TestSetupHelper {
   }
 
   static async setupAssetMocks(page: Page) {
+    // Return a 1x1 transparent PNG for any requested images
+    await page.route('**/assets/images/**/*.png', async (route) => {
+      // 1x1 base64 transparent PNG
+      const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: transparentPng
+      });
+    });
+
     await page.route('**/api/assets/list', async (route) => {
       const assets = [
         {

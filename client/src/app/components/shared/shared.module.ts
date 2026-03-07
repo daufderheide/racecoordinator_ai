@@ -17,6 +17,7 @@ import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
 import { ImageSelectorComponent } from './image-selector/image-selector.component';
 import { ReorderDialogComponent } from '../ui-editor/reorder-dialog/reorder-dialog.component';
 import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-preview.component';
+import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,8 @@ import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-previ
     HelpOverlayComponent,
     ImageSelectorComponent,
     ReorderDialogComponent,
-    ColumnPreviewComponent
+    ColumnPreviewComponent,
+    AboutDialogComponent
   ],
   imports: [
     CommonModule,
@@ -59,7 +61,8 @@ import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-previ
     HelpOverlayComponent,
     ImageSelectorComponent,
     ReorderDialogComponent,
-    ColumnPreviewComponent
+    ColumnPreviewComponent,
+    AboutDialogComponent
   ]
 })
 export class SharedModule { }

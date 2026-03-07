@@ -45,7 +45,7 @@ esac
 
 # Protoc binary name (matches maven protobuf plugin layout)
 PROTOC_BIN="protoc-${PROTOC_VERSION}-${PROTOC_OS}-${PROTOC_ARCH}.exe"
-M2_REPO="${HOME}/.m2/repository"
+M2_REPO="${REAL_HOME:-$HOME}/.m2/repository"
 PROTOC_M2="$M2_REPO/com/google/protobuf/protoc/${PROTOC_VERSION}/${PROTOC_BIN}"
 
 # Allow overriding the destination directory

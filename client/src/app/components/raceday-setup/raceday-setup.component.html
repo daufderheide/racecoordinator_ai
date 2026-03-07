@@ -16,7 +16,11 @@
                 <div class="progress-bar-fill"></div>
             </div>
 
-            <div class="server-version" *ngIf="serverVersion">{{ serverVersion }}</div>
+            <div class="version-container">
+                <div class="client-version">{{ 'RDS_ABOUT_CLIENT_VERSION' | translate:{version: clientVersion} }}</div>
+                <div class="server-version" *ngIf="serverVersion">{{ 'RDS_ABOUT_SERVER_VERSION' | translate:{version:
+                    serverVersion} }}</div>
+            </div>
         </div>
     </div>
 
@@ -51,4 +55,8 @@
         <div class="spinner"></div>
         <div class="connection-lost-text">{{ 'RDS_LOST_CONNECTION' | translate }}</div>
     </div>
+
+    <!-- About Dialog -->
+    <app-about-dialog [visible]="showAboutDialog" [clientVersion]="clientVersion" [serverVersion]="serverVersion"
+        (close)="showAboutDialog = false"></app-about-dialog>
 </div>

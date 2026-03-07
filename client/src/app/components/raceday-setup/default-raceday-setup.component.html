@@ -6,7 +6,8 @@
     <div class="menu-item-wrapper" *ngFor="let item of menuItems"
       [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
       [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
-      [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'">
+      [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'"
+      [class.help-menu-container]="item.label === 'RDS_MENU_HELP'">
       <div class="menu-item" (click)="item.action($event)">{{ item.label | translate }}</div>
 
       <!-- Config Dropdown -->
@@ -45,6 +46,13 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Help Dropdown -->
+      <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_HELP' && isHelpDropdownOpen">
+        <div class="menu-dropdown-item" (click)="startHelp()">{{ 'RDS_MENU_TUTORIAL' | translate }}</div>
+        <hr class="menu-dropdown-divider">
+        <div class="menu-dropdown-item" (click)="openAbout()">{{ 'RDS_HEADER_ABOUT' | translate }}</div>
       </div>
     </div>
   </div>

@@ -338,4 +338,19 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.isRefreshingList).toBeFalse();
     expect(mockElement.scrollTop).toBe(150);
   }));
+
+  it('should toggle help dropdown', () => {
+    component.toggleHelpDropdown(new MouseEvent('click'));
+    expect(component.isHelpDropdownOpen).toBeTrue();
+
+    component.toggleHelpDropdown(new MouseEvent('click'));
+    expect(component.isHelpDropdownOpen).toBeFalse();
+  });
+
+  it('should emit requestAbout when openAbout is called', () => {
+    spyOn(component.requestAbout, 'emit');
+    component.openAbout();
+    expect(component.requestAbout.emit).toHaveBeenCalled();
+    expect(component.isHelpDropdownOpen).toBeFalse();
+  });
 });

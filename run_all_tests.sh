@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Source environment
 source "$(dirname "$0")/scripts/test_env.sh"

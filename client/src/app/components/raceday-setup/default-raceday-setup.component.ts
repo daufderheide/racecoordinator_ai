@@ -60,6 +60,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isRefreshingList: boolean = false;
   isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
+  isHelpDropdownOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
 
   supportedLanguages: { code: string, nameKey: string }[] = [];
@@ -69,7 +70,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
     { label: 'RDS_MENU_CONFIG', action: (event: MouseEvent) => this.toggleConfigDropdown(event) },
     { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
-    { label: 'RDS_MENU_HELP', action: () => this.startHelp() }
+    { label: 'RDS_MENU_HELP', action: (event: MouseEvent) => this.toggleHelpDropdown(event) }
   ];
 
   constructor(
@@ -197,6 +198,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     }
     if (!target.closest('.config-menu-container')) {
       this.closeConfigDropdown();
+    }
+    if (!target.closest('.help-menu-container')) {
+      this.closeHelpDropdown();
     }
   }
 
@@ -611,6 +615,36 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   closeConfigDropdown() {
     this.isConfigDropdownOpen = false;
   }
+
+  toggleHelpDropdown(event: Event) {
+    event.stopPropagation();
+    const newState = !this.isHelpDropdownOpen;
+    if (newState) {
+      this.isFileDropdownOpen = false;
+      this.isConfigDropdownOpen = false;
+      this.isOptionsDropdownOpen = false;
+      this.isDropdownOpen = false;
+      this.isLocalizationDropdownOpen = false;
+    }
+    this.isHelpDropdownOpen = newState;
+    this.cdr.detectChanges();
+  }
+
+  closeHelpDropdown() {
+    this.isHelpDropdownOpen = false;
+  }
+
+  openAbout() {
+    this.closeHelpDropdown();
+    // Communicate with parent RacedaySetupComponent
+    // We can use the parent reference or just emit an event.
+    // Looking at RacedaySetupComponent, it holds the state.
+    // DefaultRacedaySetupComponent is created via ViewContainerRef.
+    // Let's add an Output.
+    this.requestAbout.emit();
+  }
+
+  @Output() requestAbout = new EventEmitter<void>();
 
   openDatabaseManager() {
     this.closeFileDropdown();
