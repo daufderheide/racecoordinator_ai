@@ -22,8 +22,7 @@
               <div class="board-controls">
                 <div class="control-group">
                   <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
-                  <select [ngModel]="config.hardwareType.toString()"
-                    (ngModelChange)="config.hardwareType = +$event; updateArduinoConfig()">
+                  <select [ngModel]="config.hardwareType.toString()" (ngModelChange)="onHardwareTypeChange(+$event)">
                     <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
                     <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
                   </select>

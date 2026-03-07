@@ -161,6 +161,25 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     });
   }
 
+  onHardwareTypeChange(newType: number) {
+    if (!this.config) return;
+
+    this.config.hardwareType = newType;
+
+    if (newType === 0) { // Uno
+      // Reset digital pins D14-D59 (Uno only has 14 digital pins, 0-13)
+      for (let i = 14; i < MAX_DIGITAL_PINS; i++) {
+        this.config.digitalIds[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      }
+      // Reset analog pins A6-A15 (Uno only has 6 analog pins, 0-5)
+      for (let i = 6; i < MAX_ANALOG_PINS; i++) {
+        this.config.analogIds[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      }
+    }
+
+    this.updateArduinoConfig();
+  }
+
   updateArduinoConfig() {
     this.configChange.emit();
 

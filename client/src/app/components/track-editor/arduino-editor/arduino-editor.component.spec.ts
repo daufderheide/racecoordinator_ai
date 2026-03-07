@@ -9,6 +9,7 @@ import { ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../../model
 import { Lane } from '../../../models/lane';
 import { DataService } from '../../../data.service';
 import { of, Subject } from 'rxjs';
+import { com } from '../../../proto/message';
 
 // BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
 const VOLTAGE_BASE = 7000;
@@ -317,5 +318,24 @@ describe('ArduinoEditorComponent', () => {
     // All lanes should get the highest global max (950)
     expect(component.getVoltageMax(0)).toBe(950);
     expect(component.getVoltageMax(1)).toBe(950);
+  });
+
+  it('should clear out-of-range pins when switching from Mega to Uno', () => {
+    // 1. Setup as Mega (1) with high pin assignments
+    component.config!.hardwareType = 1;
+    component.config!.digitalIds[10] = 1000; // D10 (within Uno range)
+    component.config!.digitalIds[50] = 1001; // D50 (outside Uno range)
+    component.config!.analogIds[2] = VOLTAGE_BASE; // A2 (within Uno range)
+    component.config!.analogIds[10] = VOLTAGE_BASE + 1; // A10 (outside Uno range)
+
+    // 2. Switch to Uno (0)
+    component.onHardwareTypeChange(0);
+
+    // 3. Verify
+    expect(component.config!.hardwareType).toBe(0);
+    expect(component.config!.digitalIds[10]).toBe(1000); // Should remain
+    expect(component.config!.digitalIds[50]).toBe(0);    // Should be BEHAVIOR_UNUSED (0)
+    expect(component.config!.analogIds[2]).toBe(7000);  // Should remain
+    expect(component.config!.analogIds[10]).toBe(0);     // Should be BEHAVIOR_UNUSED (0)
   });
 });

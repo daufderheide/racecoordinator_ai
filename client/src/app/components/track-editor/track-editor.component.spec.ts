@@ -7,6 +7,8 @@ import { of, throwError } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
+import { Lane } from '../../models/lane';
+import { com } from '../../proto/message';
 
 // TODO(aufderheide): Move MockDataService to a shared test file and 
 // allow users of it to customize it beyond the simple defaults.
@@ -198,5 +200,63 @@ describe('TrackEditorComponent', () => {
     component.trackName = 'Changed';
     component.onInputChange();
     expect(component.isDirty).toBeTrue();
+  });
+
+  it('should shift Arduino pin assignments when a lane is deleted', () => {
+    // 1. Setup track with 4 lanes
+    component.lanes = [
+      new Lane('l1', '#ff0000', 'black', 100),
+      new Lane('l2', '#00ff00', 'black', 100),
+      new Lane('l3', '#0000ff', 'black', 100),
+      new Lane('l4', '#ffffff', 'black', 100)
+    ];
+
+    // 2. Add Arduino config with lane-specific behaviors
+    component.addArduinoConfig();
+    const config = component.arduinoConfigs[0];
+    // Lane 1 (index 0) behaviors
+    config.digitalIds[2] = 1000; // Lap Lane 1
+    // Lane 2 (index 1) behaviors
+    config.digitalIds[3] = 1001; // Lap Lane 2
+    config.digitalIds[4] = 3001; // Call Lane 2
+    // Lane 3 (index 2) behaviors
+    config.digitalIds[5] = 1002; // Lap Lane 3
+    config.digitalIds[6] = 4002; // Relay Lane 3
+    // Lane 4 (index 3) behaviors
+    config.digitalIds[7] = 1003; // Lap Lane 4
+
+    // Analog behaviors
+    config.analogIds[0] = 7001; // Voltage Lane 2
+    config.analogIds[1] = 7002; // Voltage Lane 3
+
+    // voltageConfigs
+    config.voltageConfigs = {
+      1: 500, // Lane 2
+      2: 600  // Lane 3
+    };
+
+    // 3. Remove Lane 2 (index 1)
+    component.removeLane(1);
+
+    // 4. Verify results
+    expect(component.lanes.length).toBe(3);
+    expect(component.lanes[1].entity_id).toBe('l3'); // Lane 3 is now index 1
+
+    const updatedConfig = component.arduinoConfigs[0];
+    expect(updatedConfig.digitalIds[2]).toBe(1000); // Lane 1 unchanged
+    expect(updatedConfig.digitalIds[3]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
+    expect(updatedConfig.digitalIds[4]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
+
+    expect(updatedConfig.digitalIds[5]).toBe(1001); // Lane 3 (index 2) shifted to index 1
+    expect(updatedConfig.digitalIds[6]).toBe(4001); // Lane 3 (index 2) shifted to index 1
+
+    expect(updatedConfig.digitalIds[7]).toBe(1002); // Lane 4 (index 3) shifted to index 2
+
+    expect(updatedConfig.analogIds[0]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
+    expect(updatedConfig.analogIds[1]).toBe(7001); // Lane 3 (index 2) shifted to index 1
+
+    expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Old Lane 3 (2) value shifted to index 1
+    expect(updatedConfig.voltageConfigs?.[0]).toBeUndefined(); // Old Lane 2 (1) removed
+    expect(updatedConfig.voltageConfigs?.[2]).toBeUndefined(); // Shifted
   });
 });

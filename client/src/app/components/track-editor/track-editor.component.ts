@@ -325,7 +325,73 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   removeLane(index: number) {
     this.lanes.splice(index, 1);
+    this.updateArduinoConfigsOnLaneDeletion(index);
     this.captureState();
+  }
+
+  private updateArduinoConfigsOnLaneDeletion(deletedLaneIndex: number) {
+    this.arduinoConfigs.forEach(config => {
+      // Helper to update pin IDs
+      const updatePinIds = (ids: number[]) => {
+        if (!ids) return;
+        for (let i = 0; i < ids.length; i++) {
+          const val = ids[i];
+          if (val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
+            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY) {
+            continue;
+          }
+
+          let base = -1;
+          if (val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE;
+          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE;
+          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
+          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE;
+          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000) {
+            base = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+          }
+
+          if (base !== -1) {
+            const lane = val - base;
+            if (lane === deletedLaneIndex) {
+              ids[i] = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+            } else if (lane > deletedLaneIndex) {
+              ids[i] = val - 1;
+            }
+          }
+        }
+      };
+
+      updatePinIds(config.digitalIds);
+      updatePinIds(config.analogIds);
+
+      // Shift voltageConfigs
+      if (config.voltageConfigs) {
+        const newVoltageConfigs: { [lane: number]: number } = {};
+        Object.entries(config.voltageConfigs).forEach(([laneStr, value]) => {
+          const lane = parseInt(laneStr, 10);
+          if (lane < deletedLaneIndex) {
+            newVoltageConfigs[lane] = value;
+          } else if (lane > deletedLaneIndex) {
+            newVoltageConfigs[lane - 1] = value;
+          }
+          // if lane === deletedLaneIndex, it's just omitted
+        });
+        config.voltageConfigs = newVoltageConfigs;
+      }
+
+      // Shift ledLaneColorOverrides
+      if (config.ledLaneColorOverrides && config.ledLaneColorOverrides.length > deletedLaneIndex) {
+        config.ledLaneColorOverrides.splice(deletedLaneIndex, 1);
+      }
+    });
+
+    this.arduinoConfigs = [...this.arduinoConfigs]; // Trigger change detection
   }
 
   private colorDebounceTimer: any = null;
