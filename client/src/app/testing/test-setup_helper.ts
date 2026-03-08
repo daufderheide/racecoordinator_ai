@@ -325,13 +325,13 @@ export class TestSetupHelper {
             hardwareType: 1, // Mega
             digitalIds: [1001, 1002, -1, -1],
             analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: 0,
+            globalInvertLanes: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
-            usePitsAsLaps: 0,
-            useLapsForSegments: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
             ledStrings: null,
             ledLaneColorOverrides: null
           }]
@@ -353,13 +353,13 @@ export class TestSetupHelper {
             hardwareType: 0, // Uno
             digitalIds: [1001, 1002, 1003, 1004],
             analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: 0,
+            globalInvertLanes: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
-            usePitsAsLaps: 0,
-            useLapsForSegments: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
             ledStrings: null,
             ledLaneColorOverrides: null
           }]
@@ -401,13 +401,13 @@ export class TestSetupHelper {
             digitalIds: [1001],
             analogIds: [-1],
             voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
-            globalInvertLanes: 0,
+            globalInvertLanes: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
-            usePitsAsLaps: 0,
-            useLapsForSegments: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
             ledStrings: null,
             ledLaneColorOverrides: null
           }]

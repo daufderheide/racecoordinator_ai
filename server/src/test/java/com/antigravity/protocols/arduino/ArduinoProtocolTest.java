@@ -532,7 +532,7 @@ public class ArduinoProtocolTest {
 
     // Enable inversion - Call button should STILL trigger on 0 (high-to-low
     // transition)
-    config.globalInvertLanes = 1;
+    config.globalInvertLanes = true;
     protocol.updateConfig(config);
 
     listener.callButtonCount = 0;
@@ -572,7 +572,7 @@ public class ArduinoProtocolTest {
     assertEquals(1, listener.segmentCount);
 
     // Inverted: Trigger D3 LOW (state 0) -> Segment should trigger
-    config.globalInvertLanes = 1;
+    config.globalInvertLanes = true;
     protocol.updateConfig(config);
 
     listener.segmentCount = 0;
@@ -582,6 +582,70 @@ public class ArduinoProtocolTest {
     // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
     serialConnection.injectData(segmentHigh);
     assertEquals(1, listener.segmentCount);
+  }
+
+  @Test
+  public void testSegmentHandling_LapsAsSegments() {
+    // Configure D2 as Lap (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+    config.useLapsForSegments = true;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Trigger D2 HIGH (state 1) -> Should trigger BOTH Lap and Segment
+    byte[] lapHigh = { 0x49, 0x44, 0x02, 0x01, 0x3B };
+    serialConnection.injectData(lapHigh);
+
+    assertEquals("Should have received 1 lap", 1, listener.lapCount);
+    assertEquals("Should have received 1 segment", 1, listener.segmentCount);
+
+    // Disable Laps as Segments
+    config.useLapsForSegments = false;
+    protocol.updateConfig(config);
+
+    listener.lapCount = 0;
+    listener.segmentCount = 0;
+
+    // Trigger D2 HIGH again
+    serialConnection.injectData(lapHigh);
+
+    assertEquals("Should have received 1 lap", 1, listener.lapCount);
+    assertEquals("Should NOT have received segment", 0, listener.segmentCount);
+  }
+
+  @Test
+  public void testSegmentHandling_InvertedSegment() {
+    // Configure D3 as Segment Counter (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + 0);
+    config.globalInvertLanes = true;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Inverted: Trigger D3 LOW (state 0) -> Segment should trigger
+    byte[] segmentLow = { 0x49, 0x44, 0x03, 0x00, 0x3B };
+    serialConnection.injectData(segmentLow);
+    assertEquals("Should have received 1 segment on LOW trigger (inverted)", 1, listener.segmentCount);
+
+    // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
+    byte[] segmentHigh = { 0x49, 0x44, 0x03, 0x01, 0x3B };
+    serialConnection.injectData(segmentHigh);
+    assertEquals("Should still have 1 segment on HIGH trigger (inverted)", 1, listener.segmentCount);
   }
 
   @Test

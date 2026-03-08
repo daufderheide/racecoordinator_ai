@@ -282,18 +282,10 @@ public class Racing implements IRaceState {
     throw new IllegalStateException("Cannot defer heat from state: " + this.getClass().getSimpleName());
   }
 
-  @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
-    System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
-
+  private com.antigravity.race.DriverHeatData validateInput(int lane) {
     if (finishedLanes.contains(lane)) {
-      System.out.println("Race: Ignored onLap - Driver on lane " + lane + " already finished");
-      return;
-    }
-
-    if (!this.race.isRacing()) {
-      System.out.println("Race: Ignored onLap - Race not in progress");
-      return;
+      System.out.println("Race: Ignored onLap/onSegment - Driver on lane " + lane + " already finished");
+      return null;
     }
 
     com.antigravity.models.AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
@@ -302,28 +294,39 @@ public class Racing implements IRaceState {
       if (heat != null && lane >= 0 && lane < heat.getDrivers().size()) {
         com.antigravity.race.DriverHeatData driverData = heat.getDrivers().get(lane);
         if (driverData.getDriver().getFuelLevel() <= 0) {
-          System.out.println("Race: Ignored onLap - Driver on lane " + lane + " is out of fuel");
-          return;
+          System.out.println("Race: Ignored onLap/onSegment - Driver on lane " + lane + " is out of fuel");
+          return null;
         }
       }
     }
 
     com.antigravity.race.Heat currentHeat = this.race.getCurrentHeat();
     if (currentHeat == null) {
-      System.out.println("Race: Ignored onLap - No current heat");
-      return;
+      System.out.println("Race: Ignored onLap/onSegment - No current heat");
+      return null;
     }
 
     java.util.List<com.antigravity.race.DriverHeatData> drivers = currentHeat.getDrivers();
     if (lane < 0 || lane >= drivers.size()) {
-      System.out.println("Race: Ignored onLap - Invalid lane " + lane);
-      return;
+      System.out.println("Race: Ignored onLap/onSegment - Invalid lane " + lane);
+      return null;
     }
 
     com.antigravity.race.DriverHeatData driverData = drivers.get(lane);
     if (driverData == null || driverData.getDriver() == null || driverData.getDriver().getDriver() == null
         || driverData.getDriver().getDriver().getEntityId() == null) {
-      System.out.println("Race: Ignored onLap - Invalid driver/entity");
+      System.out.println("Race: Ignored onLap/onSegment - Invalid driver/entity");
+      return null;
+    }
+    return driverData;
+  }
+
+  @Override
+  public void onLap(int lane, double lapTime, int interfaceId) {
+    System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
+
+    com.antigravity.race.DriverHeatData driverData = validateInput(lane);
+    if (driverData == null) {
       return;
     }
 
@@ -644,6 +647,36 @@ public class Racing implements IRaceState {
       System.out.println("Race: Lane " + lane + " (digital) out of fuel. Turning off power.");
       this.race.setLanePower(false, lane);
     }
+  }
+
+  @Override
+  public void onSegment(int lane, double segmentTime, int interfaceId) {
+    System.out.println("Race: Received onSegment for lane " + lane + " time " + segmentTime);
+
+    com.antigravity.race.DriverHeatData driverData = validateInput(lane);
+    if (driverData == null) {
+      return;
+    }
+
+    if (driverData.getReactionTime() == 0.0f) {
+      System.out.println("Race: Ignored onSegment - Driver on lane " + lane + " has not set reaction time");
+      return;
+    }
+
+    driverData.addSegment(segmentTime);
+
+    com.antigravity.proto.Segment segmentMsg = com.antigravity.proto.Segment.newBuilder()
+        .setObjectId(driverData.getObjectId())
+        .setSegmentTime(segmentTime)
+        .setSegmentNumber(driverData.getSegments().size())
+        .setInterfaceId(interfaceId)
+        .build();
+
+    com.antigravity.proto.RaceData segmentDataMsg = com.antigravity.proto.RaceData.newBuilder()
+        .setSegment(segmentMsg)
+        .build();
+
+    this.race.broadcast(segmentDataMsg);
   }
 
   @Override

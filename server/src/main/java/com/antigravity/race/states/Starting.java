@@ -94,8 +94,12 @@ public class Starting implements IRaceState {
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
-    // TODO(aufderheide): Handle false start
-    System.out.println("Starting: Ignored onLap - Race not in progress");
+    // Not while starting
+  }
+
+  @Override
+  public void onSegment(int lane, double segmentTime, int interfaceId) {
+    // Not while starting
   }
 
   @Override

@@ -58,14 +58,14 @@ export interface ArduinoConfig {
   debounceUs: number;
   hardwareType: number;
 
-  globalInvertLanes: number;
+  globalInvertLanes: boolean;
   normallyClosedRelays: boolean;
   globalInvertLights: number;
 
   useLapsForPits: number;
   useLapsForPitEnd: number;
-  usePitsAsLaps: number;
-  useLapsForSegments: number;
+  usePitsAsLaps: boolean;
+  useLapsForSegments: boolean;
 
   // Arrays of mapped behaviors (codes)
   digitalIds: number[];

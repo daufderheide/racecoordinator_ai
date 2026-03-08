@@ -642,56 +642,74 @@ public class ArduinoProtocol extends DefaultProtocol {
   private void onLapCounter(int laneIndex, int state, int interfaceId) {
     logger.debug("[{}] Received Lap Counter - Lane: {}, State: {}", getLogTime(), laneIndex, state);
 
-    if (laneIndex < hwLapTime.length) {
-      byte wantState = 1;
-      if (config.globalInvertLanes != 0) {
-        wantState = 0;
-      }
+    if (laneIndex >= hwLapTime.length) {
+      logger.warn("[{}] Bad lane for lap data: {}", getLogTime(), (laneIndex + 1));
+      return;
+    }
 
-      if (state == wantState) {
-        // Lap
-        double time = hwLapTime[laneIndex].Time();
+    byte wantState = 1;
+    if (config.globalInvertLanes) {
+      wantState = 0;
+    }
 
-        // Subtract the hw debounce time from our time
-        time -= (config.debounceUs / (1000.0 * 1000.0));
+    if (state == wantState) {
+      // Lap
+      double time = hwLapTime[laneIndex].Time();
 
-        logger.info("[{}] Handling Lap - Lane: {}, Time: {}", getLogTime(), laneIndex, time);
-        if (listener != null) {
-          listener.onLap(laneIndex, time, interfaceId);
+      // Subtract the hw debounce time from our time
+      time -= (config.debounceUs / (1000.0 * 1000.0));
 
-          if (config.lapPinPitBehavior != ArduinoConfig.LapPinPitBehavior.NONE) {
-            if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
-              onPitIn(laneIndex, state);
-            } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-              onPitOut(laneIndex, state);
-            }
-          }
+      logger.info("[{}] Handling Lap - Lane: {}, Time: {}", getLogTime(), laneIndex, time);
+      if (listener != null) {
+        // Important, send the segment time first so that if this lap finishes the
+        // drivers race the segment is still counted.
+        if (config.useLapsForSegments) {
+          onSegmentCounter(laneIndex, state, interfaceId);
         }
-      } else {
+
+        listener.onLap(laneIndex, time, interfaceId);
+
         if (config.lapPinPitBehavior != ArduinoConfig.LapPinPitBehavior.NONE) {
           if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
-            onPitIn(laneIndex, 0);
+            onPitIn(laneIndex, state);
           } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-            onPitOut(laneIndex, 0);
+            onPitOut(laneIndex, state);
           }
         }
       }
     } else {
-      logger.warn("[{}] Bad lane for lap data: {}", getLogTime(), (laneIndex + 1));
+      if (config.lapPinPitBehavior != ArduinoConfig.LapPinPitBehavior.NONE) {
+        if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
+          onPitIn(laneIndex, 0);
+        } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
+          onPitOut(laneIndex, 0);
+        }
+      }
     }
   }
 
   private void onSegmentCounter(int laneIndex, int state, int interfaceId) {
     logger.info("[{}] Received Segment Counter - Lane: {}, State: {}", getLogTime(), laneIndex, state);
 
+    if (laneIndex >= hwSegmentTime.length) {
+      logger.warn("[{}] Bad lane for segment data: {}", getLogTime(), (laneIndex + 1));
+      return;
+    }
+
     int wantState = 1;
-    if (config.globalInvertLanes != 0) {
+    if (config.globalInvertLanes) {
       wantState = 0;
     }
 
     if (state == wantState) {
+      double time = hwSegmentTime[laneIndex].Time();
+
+      // Subtract the hw debounce time from our time
+      time -= (config.debounceUs / (1000.0 * 1000.0));
+
+      logger.info("[{}] Handling Segment - Lane: {}, Time: {}", getLogTime(), laneIndex, time);
       if (listener != null) {
-        listener.onSegment(laneIndex, 0.0, interfaceId);
+        listener.onSegment(laneIndex, time, interfaceId);
       }
     }
   }
@@ -728,7 +746,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     int wantState = 1;
-    if (config.globalInvertLanes != 0) {
+    if (config.globalInvertLanes) {
       wantState = 0;
     }
 
@@ -743,7 +761,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     int wantState = 1;
-    if (config.globalInvertLanes != 0) {
+    if (config.globalInvertLanes) {
       wantState = 0;
     }
 

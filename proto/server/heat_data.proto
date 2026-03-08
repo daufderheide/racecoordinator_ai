@@ -15,5 +15,6 @@ message DriverHeatData {
   DriverModel actual_driver = 4;
   double gap_leader = 5;
   double gap_position = 6;
+  repeated double segments = 7;
 }
 

@@ -17,6 +17,7 @@ public class DriverHeatData extends ServerToClientObject {
   private double initialFuelLevel = 0.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
+  private ArrayList<Double> segments = new ArrayList<>();
 
   private static void logToFile(String message) {
     try {
@@ -74,6 +75,15 @@ public class DriverHeatData extends ServerToClientObject {
     if (bestLapTime == 0.0f || lapTime < bestLapTime) {
       bestLapTime = lapTime;
     }
+    segments.clear();
+  }
+
+  public void addSegment(double segmentTime) {
+    segments.add(segmentTime);
+  }
+
+  public java.util.List<Double> getSegments() {
+    return java.util.Collections.unmodifiableList(segments);
   }
 
   public int getLapCount() {
@@ -140,6 +150,7 @@ public class DriverHeatData extends ServerToClientObject {
 
   public void reset() {
     laps.clear();
+    segments.clear();
     bestLapTime = 0.0f;
     reactionTime = 0.0f;
     pendingLapTime = 0.0f;

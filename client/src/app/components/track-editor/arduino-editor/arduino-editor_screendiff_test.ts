@@ -60,13 +60,13 @@ test.describe('Arduino Editor Component Visuals', () => {
             hardwareType: 0, // Uno
             digitalIds: [0, 1, 2, 3], // Unused, Reserved, Call Button (Master), Relay (Master)
             analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: 0,
+            globalInvertLanes: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
             useLapsForPitEnd: 0,
-            usePitsAsLaps: 0,
-            useLapsForSegments: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
             ledStrings: null,
             ledLaneColorOverrides: null
           }]
@@ -142,13 +142,13 @@ test.describe('Arduino Editor Voltage Divider Config Visuals', () => {
         VOLTAGE_BASE + 2,
         -1, -1, -1
       ],
-      globalInvertLanes: 0,
+      globalInvertLanes: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,
       useLapsForPits: 0,
       useLapsForPitEnd: 0,
-      usePitsAsLaps: 0,
-      useLapsForSegments: 0,
+      usePitsAsLaps: false,
+      useLapsForSegments: true,
       ledStrings: null,
       ledLaneColorOverrides: null,
       voltageConfigs: { 0: 900, 1: 1023, 2: 1023 }

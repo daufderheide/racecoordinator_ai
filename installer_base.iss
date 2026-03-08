@@ -2,7 +2,7 @@
 ; This file is included by installer_offline.iss and installer_min.iss
 
 #define MyAppName "Race Coordinator AI"
-#define MyAppVersion "0.0.3"
+#define MyAppVersion "0.0.0.4"
 #define MyAppPublisher "Antigravity"
 #define MyAppURL "http://localhost:7070"
 #define MyAppExeName "RaceCoordinator.jar"

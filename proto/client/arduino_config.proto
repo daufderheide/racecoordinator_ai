@@ -37,11 +37,11 @@ message ArduinoConfig {
   string comm_port = 2;
   int32 baud_rate = 3;
   int32 debounce_us = 4;
-  int32 global_invert_lanes = 5;
+  bool global_invert_lanes = 5;
   bool normally_closed_relays = 6;
   int32 global_invert_lights = 7;
-  int32 use_pits_as_laps = 10;
-  int32 use_laps_for_segments = 11;
+  bool use_pits_as_laps = 10;
+  bool use_laps_for_segments = 11;
   int32 hardware_type = 12;
   repeated int32 digital_ids = 13;
   repeated int32 analog_ids = 14;

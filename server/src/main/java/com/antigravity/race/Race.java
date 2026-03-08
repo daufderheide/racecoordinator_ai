@@ -302,10 +302,6 @@ public class Race implements ProtocolListener {
     broadcast(raceData);
   }
 
-  public boolean isRacing() {
-    return state instanceof com.antigravity.race.states.Racing;
-  }
-
   public boolean isActive() {
     return !(state instanceof com.antigravity.race.states.RaceOver);
   }
@@ -317,8 +313,7 @@ public class Race implements ProtocolListener {
 
   @Override
   public void onSegment(int lane, double segmentTime, int interfaceId) {
-    // TODO(aufderheide): Implement this once one of the
-    // protocols supports it.
+    state.onSegment(lane, segmentTime, interfaceId);
   }
 
   @Override

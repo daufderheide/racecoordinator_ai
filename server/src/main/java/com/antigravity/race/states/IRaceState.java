@@ -23,6 +23,8 @@ public interface IRaceState {
 	// From the protocol listener
 	void onLap(int lane, double lapTime, int interfaceId);
 
+	void onSegment(int lane, double segmentTime, int interfaceId);
+
 	void onCarData(CarData carData);
 
 	void onCallbutton(Race race, int lane);

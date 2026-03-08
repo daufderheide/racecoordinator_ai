@@ -66,13 +66,11 @@ public class ArduinoConfig {
   public int baudRate;
   public int debounceUs;
 
-  public int globalInvertLanes;
+  public boolean globalInvertLanes;
   public boolean normallyClosedRelays;
   public int globalInvertLights;
-  public int usePitsAsLaps;
-  public int useLapsForSegments;
-  public int useLapsForPits;
-  public int useLapsForPitEnd;
+  public boolean usePitsAsLaps;
+  public boolean useLapsForSegments;
   public LapPinPitBehavior lapPinPitBehavior;
 
   public int hardwareType;
@@ -104,13 +102,11 @@ public class ArduinoConfig {
     // None of this is supported yet
     this.debounceUs = 200;
     this.hardwareType = 1;
-    this.globalInvertLanes = 0;
+    this.globalInvertLanes = false;
     this.normallyClosedRelays = true;
     this.globalInvertLights = 0;
-    this.usePitsAsLaps = 0;
-    this.useLapsForSegments = 0;
-    this.useLapsForPits = 0;
-    this.useLapsForPitEnd = 0;
+    this.usePitsAsLaps = false;
+    this.useLapsForSegments = true;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_OUT;
   }
 
@@ -119,11 +115,11 @@ public class ArduinoConfig {
       int baudRate,
       int debounceUs,
       int hardwareType,
-      int globalInvertLanes,
+      boolean globalInvertLanes,
       boolean normallyClosedRelays,
       int globalInvertLights,
-      int usePitsAsLaps,
-      int useLapsForSegments,
+      boolean usePitsAsLaps,
+      boolean useLapsForSegments,
       LapPinPitBehavior lapPinPitBehavior,
       List<Integer> digitalIds,
       List<Integer> analogIds,

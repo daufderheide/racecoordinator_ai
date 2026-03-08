@@ -44,7 +44,10 @@ public class RaceOver implements IRaceState {
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
-    System.out.println("RaceOver: Ignored onLap - Race is over");
+  }
+
+  @Override
+  public void onSegment(int lane, double segmentTime, int interfaceId) {
   }
 
   @Override
