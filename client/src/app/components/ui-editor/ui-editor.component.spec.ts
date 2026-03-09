@@ -244,4 +244,17 @@ describe('UIEditorComponent', () => {
     expect(slots.length).toBe(1);
     expect(slots[0].label).toBe('RD_COL_AVATAR');
   });
+
+  it('should include velocity columns in availableColumns', () => {
+    const mph = component.availableColumns.find(c => c.key === 'mph');
+    const kph = component.availableColumns.find(c => c.key === 'kph');
+    const fph = component.availableColumns.find(c => c.key === 'fph');
+
+    expect(mph).toBeTruthy();
+    expect(mph?.label).toBe('RD_COL_MPH');
+    expect(kph).toBeTruthy();
+    expect(kph?.label).toBe('RD_COL_KPH');
+    expect(fph).toBeTruthy();
+    expect(fph?.label).toBe('RD_COL_FPH');
+  });
 });

@@ -1195,6 +1195,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'seed': 180,
       'rankHeat': 180,
       'rankOverall': 180,
+      'mph': 275,
+      'kph': 275,
+      'fph': 275,
       'segmentTime': 275,
       'imageset': 180
     };
@@ -1428,6 +1431,22 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         // Fallback to "most recent" for single-segment columns or base property
         return hd.lastSegmentTime > 0 ? hd.lastSegmentTime.toFixed(3) : '--.---';
       }
+    } else if (baseKey === 'mph' || baseKey === 'kph' || baseKey === 'fph') {
+      const lastLapTime = hd.lastLapTime;
+      const lane = this.track?.lanes?.[hd.laneIndex];
+      const length = lane?.length;
+
+      if (lastLapTime > 0 && length !== undefined && length > 0) {
+        const fph = (length / lastLapTime) * 3600;
+        if (baseKey === 'fph') return fph.toFixed(0);
+
+        const mph = fph / 5280;
+        if (baseKey === 'mph') return mph.toFixed(2);
+
+        const kph = mph * 1.609344;
+        if (baseKey === 'kph') return kph.toFixed(2);
+      }
+      return '--.--';
     }
     return value?.toString() ?? '';
   }
@@ -1459,6 +1478,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       'seed': 'RD_COL_SEED',
       'rankHeat': 'RD_COL_RANK_HEAT',
       'rankOverall': 'RD_COL_RANK_OVERALL',
+      'mph': 'RD_COL_MPH',
+      'kph': 'RD_COL_KPH',
+      'fph': 'RD_COL_FPH',
       'segmentTime': 'RD_COL_SEGMENT_TIME',
       'driver.avatarUrl': 'RD_COL_AVATAR'
     };

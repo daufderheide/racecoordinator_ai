@@ -680,6 +680,64 @@ describe('DefaultRacedayComponent', () => {
     });
   });
 
+  describe('Velocity Columns', () => {
+    beforeEach(() => {
+      const mockTrack = {
+        lanes: [
+          { length: 60 } // 60 feet
+        ]
+      };
+      component['track'] = mockTrack as any;
+    });
+
+    it('should calculate FPH correctly', () => {
+      const mockHd = { laneIndex: 0, lastLapTime: 10.0 };
+      // FPH = (60 / 10) * 3600 = 6 * 3600 = 21600
+      const result = component.formatValue('fph', null, mockHd as any);
+      expect(result).toBe('21600');
+    });
+
+    it('should calculate MPH correctly', () => {
+      const mockHd = { laneIndex: 0, lastLapTime: 10.0 };
+      // MPH = 21600 / 5280 = 4.0909...
+      const result = component.formatValue('mph', null, mockHd as any);
+      expect(result).toBe('4.09');
+    });
+
+    it('should calculate KPH correctly', () => {
+      const mockHd = { laneIndex: 0, lastLapTime: 10.0 };
+      // KPH = 4.0909... * 1.609344 = 6.5836...
+      const result = component.formatValue('kph', null, mockHd as any);
+      expect(result).toBe('6.58');
+    });
+
+    it('should return default placeholder if lastLapTime is 0 or missing', () => {
+      const mockHd = { laneIndex: 0, lastLapTime: 0 };
+      expect(component.formatValue('fph', null, mockHd as any)).toBe('--.--');
+      expect(component.formatValue('mph', null, { ...mockHd, lastLapTime: undefined } as any)).toBe('--.--');
+    });
+
+    it('should return correct label keys for velocity columns', () => {
+      expect((component as any).getLabelKeyForColumn('mph')).toBe('RD_COL_MPH');
+      expect((component as any).getLabelKeyForColumn('kph')).toBe('RD_COL_KPH');
+      expect((component as any).getLabelKeyForColumn('fph')).toBe('RD_COL_FPH');
+    });
+
+    it('should have correct default fixed widths for velocity columns', () => {
+      // Include a name column so it becomes the resizing column, leaving others as fixed
+      mockSettings.racedayColumns = ['driver.name', 'mph', 'kph', 'fph'];
+      (component as any).loadColumns();
+
+      const mphLoaded = component['columns'].find(c => c.propertyName === 'mph');
+      const kphLoaded = component['columns'].find(c => c.propertyName === 'kph');
+      const fphLoaded = component['columns'].find(c => c.propertyName === 'fph');
+
+      expect(mphLoaded?.width).toBe(275);
+      expect(kphLoaded?.width).toBe(275);
+      expect(fphLoaded?.width).toBe(275);
+    });
+  });
+
   describe('Lap Highlighting', () => {
     let lapsSubject: Subject<com.antigravity.ILap>;
 
