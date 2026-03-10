@@ -46,6 +46,9 @@ public class Racing implements IRaceState {
       accumulatedRefuelTime[i] = 0.0;
     }
 
+    System.out.println("Racing: Digital fuel enabled: " + isDigitalFuelEnabled());
+    System.out.println("Racing: Analog fuel enabled: " + isAnalogFuelEnabled());
+
     race.startProtocols();
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {
@@ -166,18 +169,23 @@ public class Racing implements IRaceState {
       com.antigravity.race.DriverHeatData driverData = drivers.get(i);
       com.antigravity.race.RaceParticipant participant = driverData.getDriver();
 
-      if (refuelDelayRemaining[i] > 0) {
+      if (refuelDelayRemaining[i] >= 0) {
         accumulatedRefuelTime[i] += delta;
-        refuelDelayRemaining[i] -= delta;
-        if (refuelDelayRemaining[i] <= 0) {
-          refuelDelayRemaining[i] = 0;
-          isRefueling[i] = true;
-          System.out.println("Racing: Lane " + i + " starting to refuel after delay.");
+        if (refuelDelayRemaining[i] > 0) {
+          refuelDelayRemaining[i] -= delta;
+          if (refuelDelayRemaining[i] <= 0) {
+            refuelDelayRemaining[i] = 0;
+            isRefueling[i] = true;
+          }
+        } else if (!isRefueling[i]) {
+          // Already waited the delay. Restart if fuel dropped below capacity.
+          if (participant.getFuelLevel() < fuelOptions.getCapacity()) {
+            isRefueling[i] = true;
+          }
         }
       }
 
       if (isRefueling[i]) {
-        accumulatedRefuelTime[i] += delta;
         double currentFuel = participant.getFuelLevel();
         double capacity = fuelOptions.getCapacity();
 
@@ -200,7 +208,6 @@ public class Racing implements IRaceState {
 
           if (newFuel >= capacity) {
             isRefueling[i] = false;
-            System.out.println("Racing: Lane " + i + " reached full fuel capacity.");
           }
         } else {
           isRefueling[i] = false;
@@ -226,13 +233,11 @@ public class Racing implements IRaceState {
 
   private boolean isDigitalFuelEnabled() {
     if (race.getTrack() == null || !race.getTrack().hasDigitalFuel()) {
-      // No track or the track does not use digital fuel.
       return false;
     }
 
     com.antigravity.models.DigitalFuelOptions fuelOptions = this.race.getRaceModel().getDigitalFuelOptions();
     if (fuelOptions == null || !fuelOptions.isEnabled()) {
-      // Digital fuel is not enabled.
       return false;
     }
 
@@ -527,7 +532,9 @@ public class Racing implements IRaceState {
     }
 
     handlePitDetection(carData);
-    handleDigitalFuelCarData(carData);
+    if (isDigitalFuelEnabled()) {
+      handleDigitalFuelCarData(carData);
+    }
 
     int lane = carData.getLane();
     // Broadcast the CarData to clients
@@ -555,7 +562,8 @@ public class Racing implements IRaceState {
 
     race.broadcast(raceDataMsg);
 
-    System.out.println("Race: Received onCarData for lane " + carData.getLane() + " time " + carData.getTime());
+    // System.out.println("Race: Received onCarData for lane " + carData.getLane() +
+    // " time " + carData.getTime());
   }
 
   private void handlePitDetection(com.antigravity.protocols.CarData carData) {
@@ -604,10 +612,6 @@ public class Racing implements IRaceState {
   }
 
   private void handleDigitalFuelCarData(com.antigravity.protocols.CarData carData) {
-    if (!isDigitalFuelEnabled()) {
-      return;
-    }
-
     int lane = carData.getLane();
     if (lane < 0 || lane >= race.getCurrentHeat().getDrivers().size()) {
       return;
@@ -623,6 +627,7 @@ public class Racing implements IRaceState {
     double throttle = carData.getCarThrottlePCT() * 100.0;
     double tRatio = throttle / 100.0;
     double usageRate = fuelOptions.getUsageRate();
+
     double val = usageRate * tRatio;
 
     switch (fuelOptions.getUsageType()) {
@@ -642,6 +647,11 @@ public class Racing implements IRaceState {
     double currentFuel = driverData.getDriver().getFuelLevel();
     double newFuel = Math.max(0.0, currentFuel - consumed);
     driverData.getDriver().setFuelLevel(newFuel);
+
+    if (consumed > 0) {
+      System.out.println("Racing: Lane " + lane + " (digital) consumed " + consumed + " fuel. Throttle: " + throttle
+          + " UsageRate: " + usageRate + " New level: " + newFuel);
+    }
 
     if (newFuel <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
       System.out.println("Race: Lane " + lane + " (digital) out of fuel. Turning off power.");

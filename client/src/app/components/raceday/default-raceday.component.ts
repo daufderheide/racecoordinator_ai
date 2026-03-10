@@ -587,6 +587,27 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return this.getColumnX(columnIndex) + (this.columns[columnIndex].width / 2);
   }
 
+  getRowHeight(): number {
+    return 560 / (this.track?.lanes?.length || 1);
+  }
+
+  getImageMetrics(colIndex: number) {
+    const rowHeight = this.getRowHeight();
+    const column = this.columns ? this.columns[colIndex] : undefined;
+    const colWidth = column ? column.width : 100;
+
+    // Scale to fit both row height (80%) and column width (90%)
+    // Added 0.9 multiplier for column width to give some breathing room
+    const targetSize = Math.min(rowHeight * 0.8, colWidth * 0.9);
+
+    return {
+      width: targetSize,
+      height: targetSize,
+      x: this.getColumnCenterX(colIndex) - (targetSize / 2),
+      y: (rowHeight - targetSize) / 2
+    };
+  }
+
   // Helper method to get column text X position
   getColumnTextX(columnIndex: number, anchor?: any): number {
 

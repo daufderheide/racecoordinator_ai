@@ -37,13 +37,13 @@ describe('ArduinoSummaryComponent', () => {
     });
 
     it('should return AS_BOARD_MEGA for hardware type 1', () => {
-      const config: Partial<ArduinoConfig> = { hardwareType: 1 };
+      const config: Partial<ArduinoConfig> = { hardwareType: 1, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getBoardName()).toBe('AS_BOARD_MEGA');
     });
 
     it('should return AS_BOARD_UNO for hardware type 0', () => {
-      const config: Partial<ArduinoConfig> = { hardwareType: 0 };
+      const config: Partial<ArduinoConfig> = { hardwareType: 0, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getBoardName()).toBe('AS_BOARD_UNO');
     });
@@ -68,7 +68,7 @@ describe('ArduinoSummaryComponent', () => {
         2000 // Counted
       ];
 
-      const config: Partial<ArduinoConfig> = { digitalIds, analogIds };
+      const config: Partial<ArduinoConfig> = { digitalIds, analogIds, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.getConfiguredPinCount()).toBe(3);
     });
@@ -77,21 +77,21 @@ describe('ArduinoSummaryComponent', () => {
   describe('hasBehavior', () => {
     it('should detect laps', () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE]; // 1000
-      const config: Partial<ArduinoConfig> = { digitalIds };
+      const config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('lap')).toBeTrue();
     });
 
     it('should detect segments', () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE]; // 2000
-      const config: Partial<ArduinoConfig> = { digitalIds };
+      const config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('segment')).toBeTrue();
     });
 
     it('should detect call buttons', () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON]; // 2
-      let config: Partial<ArduinoConfig> = { digitalIds };
+      let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('call')).toBeTrue();
 
@@ -103,7 +103,7 @@ describe('ArduinoSummaryComponent', () => {
 
     it('should detect relays', () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY]; // 3
-      let config: Partial<ArduinoConfig> = { digitalIds };
+      let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('relay')).toBeTrue();
 
@@ -114,7 +114,7 @@ describe('ArduinoSummaryComponent', () => {
     });
 
     it('should return false if behavior absent', () => {
-      const config: Partial<ArduinoConfig> = { digitalIds: [], analogIds: [] };
+      const config: Partial<ArduinoConfig> = { digitalIds: [], analogIds: [], lapPinPitBehavior: 3 };
       component.track = new Track('t1', 'Track 1', [], false, [config as ArduinoConfig]);
       expect(component.hasBehavior('lap')).toBeFalse();
       expect(component.hasBehavior('segment')).toBeFalse();

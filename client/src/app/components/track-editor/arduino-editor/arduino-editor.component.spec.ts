@@ -49,7 +49,7 @@ describe('ArduinoEditorComponent', () => {
       hardwareType: 0,
       digitalIds: new Array(MAX_DIGITAL_PINS).fill(-1),
       analogIds: analogIds ?? new Array(MAX_ANALOG_PINS).fill(-1),
-      globalInvertLanes: false,
+      normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,
       useLapsForPits: 0,
@@ -58,7 +58,8 @@ describe('ArduinoEditorComponent', () => {
       useLapsForSegments: true,
       ledStrings: null,
       ledLaneColorOverrides: null,
-      voltageConfigs: {}
+      voltageConfigs: {},
+      lapPinPitBehavior: 3
     };
   }
 

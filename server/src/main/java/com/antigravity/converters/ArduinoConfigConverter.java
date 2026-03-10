@@ -2,12 +2,12 @@ package com.antigravity.converters;
 
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ArduinoConfigConverter {
   public static ArduinoConfig fromProto(com.antigravity.proto.ArduinoConfig proto) {
-    Map<String, Integer> voltageConfigs = new HashMap<>();
+    java.util.Map<String, Integer> voltageConfigs = new java.util.HashMap<>();
     for (com.antigravity.proto.VoltageConfig vc : proto.getVoltageConfigsList()) {
       voltageConfigs.put(String.valueOf(vc.getLane()), vc.getMaxVoltage());
     }
@@ -18,12 +18,12 @@ public class ArduinoConfigConverter {
         proto.getBaudRate(),
         proto.getDebounceUs(),
         proto.getHardwareType(),
-        proto.getGlobalInvertLanes(),
+        proto.getNormallyClosedLaneSensors(),
         proto.getNormallyClosedRelays(),
         proto.getGlobalInvertLights(),
         proto.getUsePitsAsLaps(),
         proto.getUseLapsForSegments(),
-        ArduinoConfig.LapPinPitBehavior.values()[proto.getLapPinPitBehaviorValue()],
+        ArduinoConfig.LapPinPitBehavior.fromValue(proto.getLapPinPitBehaviorValue()),
         new ArrayList<>(proto.getDigitalIdsList()),
         new ArrayList<>(proto.getAnalogIdsList()),
         null, // ledStrings - excluded as per request
@@ -41,7 +41,7 @@ public class ArduinoConfigConverter {
         .setCommPort(config.commPort != null ? config.commPort : "")
         .setBaudRate(config.baudRate)
         .setDebounceUs(config.debounceUs)
-        .setGlobalInvertLanes(config.globalInvertLanes)
+        .setNormallyClosedLaneSensors(config.normallyClosedLaneSensors)
         .setNormallyClosedRelays(config.normallyClosedRelays)
         .setGlobalInvertLights(config.globalInvertLights)
         .setUsePitsAsLaps(config.usePitsAsLaps)
@@ -62,7 +62,7 @@ public class ArduinoConfigConverter {
     }
 
     if (config.voltageConfigs != null) {
-      for (Map.Entry<String, Integer> entry : config.voltageConfigs.entrySet()) {
+      for (java.util.Map.Entry<String, Integer> entry : config.voltageConfigs.entrySet()) {
         try {
           int lane = Integer.parseInt(entry.getKey());
           builder.addVoltageConfigs(com.antigravity.proto.VoltageConfig.newBuilder()

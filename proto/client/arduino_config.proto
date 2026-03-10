@@ -37,7 +37,7 @@ message ArduinoConfig {
   string comm_port = 2;
   int32 baud_rate = 3;
   int32 debounce_us = 4;
-  bool global_invert_lanes = 5;
+  bool normally_closed_lane_sensors = 5;
   bool normally_closed_relays = 6;
   int32 global_invert_lights = 7;
   bool use_pits_as_laps = 10;

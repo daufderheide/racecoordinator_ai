@@ -109,7 +109,6 @@ public class NotStarted implements IRaceState {
 
 	@Override
 	public void onCarData(com.antigravity.protocols.CarData carData) {
-		System.out.println("NotStarted: Ignored onCarData - Race not in progress");
 	}
 
 	@Override

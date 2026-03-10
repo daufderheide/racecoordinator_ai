@@ -54,6 +54,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   @HostListener('window:resize')
+  @HostListener('window:scroll')
   onResize() {
     if (this.isVisible) {
       this.updatePosition();

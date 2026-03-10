@@ -1661,8 +1661,8 @@ export namespace com {
             /** ArduinoConfig debounceUs */
             debounceUs?: (number|null);
 
-            /** ArduinoConfig globalInvertLanes */
-            globalInvertLanes?: (boolean|null);
+            /** ArduinoConfig normallyClosedLaneSensors */
+            normallyClosedLaneSensors?: (boolean|null);
 
             /** ArduinoConfig normallyClosedRelays */
             normallyClosedRelays?: (boolean|null);
@@ -1716,8 +1716,8 @@ export namespace com {
             /** ArduinoConfig debounceUs. */
             public debounceUs: number;
 
-            /** ArduinoConfig globalInvertLanes. */
-            public globalInvertLanes: boolean;
+            /** ArduinoConfig normallyClosedLaneSensors. */
+            public normallyClosedLaneSensors: boolean;
 
             /** ArduinoConfig normallyClosedRelays. */
             public normallyClosedRelays: boolean;

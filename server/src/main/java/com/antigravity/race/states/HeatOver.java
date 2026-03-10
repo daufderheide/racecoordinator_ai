@@ -52,7 +52,6 @@ public class HeatOver implements IRaceState {
 
   @Override
   public void onCarData(com.antigravity.protocols.CarData carData) {
-    System.out.println("HeatOver: Ignored onCarData - Heat is over");
   }
 
   @Override

@@ -3882,7 +3882,7 @@ export const com = $root.com = (() => {
              * @property {string|null} [commPort] ArduinoConfig commPort
              * @property {number|null} [baudRate] ArduinoConfig baudRate
              * @property {number|null} [debounceUs] ArduinoConfig debounceUs
-             * @property {boolean|null} [globalInvertLanes] ArduinoConfig globalInvertLanes
+             * @property {boolean|null} [normallyClosedLaneSensors] ArduinoConfig normallyClosedLaneSensors
              * @property {boolean|null} [normallyClosedRelays] ArduinoConfig normallyClosedRelays
              * @property {number|null} [globalInvertLights] ArduinoConfig globalInvertLights
              * @property {boolean|null} [usePitsAsLaps] ArduinoConfig usePitsAsLaps
@@ -3947,12 +3947,12 @@ export const com = $root.com = (() => {
             ArduinoConfig.prototype.debounceUs = 0;
 
             /**
-             * ArduinoConfig globalInvertLanes.
-             * @member {boolean} globalInvertLanes
+             * ArduinoConfig normallyClosedLaneSensors.
+             * @member {boolean} normallyClosedLaneSensors
              * @memberof com.antigravity.ArduinoConfig
              * @instance
              */
-            ArduinoConfig.prototype.globalInvertLanes = false;
+            ArduinoConfig.prototype.normallyClosedLaneSensors = false;
 
             /**
              * ArduinoConfig normallyClosedRelays.
@@ -4066,8 +4066,8 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.baudRate);
                 if (message.debounceUs != null && Object.hasOwnProperty.call(message, "debounceUs"))
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.debounceUs);
-                if (message.globalInvertLanes != null && Object.hasOwnProperty.call(message, "globalInvertLanes"))
-                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.globalInvertLanes);
+                if (message.normallyClosedLaneSensors != null && Object.hasOwnProperty.call(message, "normallyClosedLaneSensors"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.normallyClosedLaneSensors);
                 if (message.normallyClosedRelays != null && Object.hasOwnProperty.call(message, "normallyClosedRelays"))
                     writer.uint32(/* id 6, wireType 0 =*/48).bool(message.normallyClosedRelays);
                 if (message.globalInvertLights != null && Object.hasOwnProperty.call(message, "globalInvertLights"))
@@ -4151,7 +4151,7 @@ export const com = $root.com = (() => {
                             break;
                         }
                     case 5: {
-                            message.globalInvertLanes = reader.bool();
+                            message.normallyClosedLaneSensors = reader.bool();
                             break;
                         }
                     case 6: {
@@ -4259,9 +4259,9 @@ export const com = $root.com = (() => {
                 if (message.debounceUs != null && message.hasOwnProperty("debounceUs"))
                     if (!$util.isInteger(message.debounceUs))
                         return "debounceUs: integer expected";
-                if (message.globalInvertLanes != null && message.hasOwnProperty("globalInvertLanes"))
-                    if (typeof message.globalInvertLanes !== "boolean")
-                        return "globalInvertLanes: boolean expected";
+                if (message.normallyClosedLaneSensors != null && message.hasOwnProperty("normallyClosedLaneSensors"))
+                    if (typeof message.normallyClosedLaneSensors !== "boolean")
+                        return "normallyClosedLaneSensors: boolean expected";
                 if (message.normallyClosedRelays != null && message.hasOwnProperty("normallyClosedRelays"))
                     if (typeof message.normallyClosedRelays !== "boolean")
                         return "normallyClosedRelays: boolean expected";
@@ -4339,8 +4339,8 @@ export const com = $root.com = (() => {
                     message.baudRate = object.baudRate | 0;
                 if (object.debounceUs != null)
                     message.debounceUs = object.debounceUs | 0;
-                if (object.globalInvertLanes != null)
-                    message.globalInvertLanes = Boolean(object.globalInvertLanes);
+                if (object.normallyClosedLaneSensors != null)
+                    message.normallyClosedLaneSensors = Boolean(object.normallyClosedLaneSensors);
                 if (object.normallyClosedRelays != null)
                     message.normallyClosedRelays = Boolean(object.normallyClosedRelays);
                 if (object.globalInvertLights != null)
@@ -4429,7 +4429,7 @@ export const com = $root.com = (() => {
                     object.commPort = "";
                     object.baudRate = 0;
                     object.debounceUs = 0;
-                    object.globalInvertLanes = false;
+                    object.normallyClosedLaneSensors = false;
                     object.normallyClosedRelays = false;
                     object.globalInvertLights = 0;
                     object.usePitsAsLaps = false;
@@ -4445,8 +4445,8 @@ export const com = $root.com = (() => {
                     object.baudRate = message.baudRate;
                 if (message.debounceUs != null && message.hasOwnProperty("debounceUs"))
                     object.debounceUs = message.debounceUs;
-                if (message.globalInvertLanes != null && message.hasOwnProperty("globalInvertLanes"))
-                    object.globalInvertLanes = message.globalInvertLanes;
+                if (message.normallyClosedLaneSensors != null && message.hasOwnProperty("normallyClosedLaneSensors"))
+                    object.normallyClosedLaneSensors = message.normallyClosedLaneSensors;
                 if (message.normallyClosedRelays != null && message.hasOwnProperty("normallyClosedRelays"))
                     object.normallyClosedRelays = message.normallyClosedRelays;
                 if (message.globalInvertLights != null && message.hasOwnProperty("globalInvertLights"))

@@ -96,7 +96,6 @@ public class Paused implements IRaceState {
 
   @Override
   public void onCarData(com.antigravity.protocols.CarData carData) {
-    System.out.println("Paused: Ignored onCarData - Race not in progress");
   }
 
   @Override

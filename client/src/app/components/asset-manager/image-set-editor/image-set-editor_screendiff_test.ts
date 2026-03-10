@@ -31,8 +31,8 @@ test.describe('Image Set Editor Visuals', () => {
   test('should display image set editor with entries', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
 
-    // Wait for assets to load (Custom Dash, Test Image 1, Test Sound 1)
-    await expect(page.locator('.asset-card')).toHaveCount(3);
+    // Wait for assets to load (Custom Dash, Test Image 1, Test Sound 1, Fuel Gauge)
+    await expect(page.locator('.asset-card')).toHaveCount(4);
 
     // Click edit on the 'Custom Dash' image set card
     await page.locator('.asset-card', { hasText: 'Custom Dash' }).locator('.action-icon[title="Edit"]').click();

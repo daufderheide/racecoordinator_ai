@@ -134,6 +134,10 @@ public class ArduinoProtocolTest {
     void simulateHeartbeat() {
       lastHeartbeatTimeMs = now();
     }
+
+    void simulatePitEntry(int laneIndex) {
+      updatePitState(laneIndex, true);
+    }
   }
 
   @Before
@@ -143,6 +147,8 @@ public class ArduinoProtocolTest {
     config = new ArduinoConfig();
     config.commPort = "COM1";
     config.baudRate = 9600;
+    config.normallyClosedLaneSensors = false;
+    config.normallyClosedRelays = false;
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     listener = new TestListener();
@@ -227,9 +233,9 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D2 input (Digital=0x44, Pin=2, State=1)
-    // I D2 1 ; -> 49 44 02 01 3B
-    byte[] inputLap = { 0x49, 0x44, 0x02, 0x01, 0x3B };
+    // Trigger D2 input (Digital=0x44, Pin=2, State=0 - NO means 0 triggers)
+    // I D2 0 ; -> 49 44 02 00 3B
+    byte[] inputLap = { 0x49, 0x44, 0x02, 0x00, 0x3B };
     serialConnection.injectData(inputLap);
 
     assertEquals("Should have received 1 lap", 1, listener.lapCount);
@@ -239,6 +245,7 @@ public class ArduinoProtocolTest {
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
     newConfig.baudRate = 9600;
+    newConfig.normallyClosedLaneSensors = false;
     newConfig.digitalIds = new ArrayList<>(
         Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
     newConfig.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE.getNumber() + 0);
@@ -384,15 +391,15 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D4 high -> In pits
-    byte[] pitOutHigh = { 0x49, 0x44, 0x04, 0x01, 0x3B };
-    serialConnection.injectData(pitOutHigh);
+    // Trigger D4 low (0 - NO means 0 triggers) -> In pits
+    byte[] pitOutLowTrigger = { 0x49, 0x44, 0x04, 0x00, 0x3B };
+    serialConnection.injectData(pitOutLowTrigger);
     assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
     assertEquals(1, listener.pitStateChanges);
 
-    // Trigger D4 low -> Out of pits
-    byte[] pitOutLow = { 0x49, 0x44, 0x04, 0x00, 0x3B };
-    serialConnection.injectData(pitOutLow);
+    // Trigger D4 high (1) -> Out of pits
+    byte[] pitOutHighRelease = { 0x49, 0x44, 0x04, 0x01, 0x3B };
+    serialConnection.injectData(pitOutHighRelease);
     assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
     assertEquals(2, listener.pitStateChanges);
   }
@@ -414,14 +421,14 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D4 high (Pit In) -> In pits
-    byte[] pitInHigh = { 0x49, 0x44, 0x04, 0x01, 0x3B };
-    serialConnection.injectData(pitInHigh);
+    // Trigger D4 low (Pit In - NO means 0 triggers) -> In pits
+    byte[] pitInLow = { 0x49, 0x44, 0x04, 0x00, 0x3B };
+    serialConnection.injectData(pitInLow);
     assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
 
-    // Trigger D5 high (Pit Out) -> Out of pits
-    byte[] pitOutHigh = { 0x49, 0x44, 0x05, 0x01, 0x3B };
-    serialConnection.injectData(pitOutHigh);
+    // Trigger D5 low (Pit Out - NO means 0 triggers) -> Out of pits
+    byte[] pitOutLowTrigger = { 0x49, 0x44, 0x05, 0x00, 0x3B };
+    serialConnection.injectData(pitOutLowTrigger);
     assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
   }
 
@@ -441,15 +448,53 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D2 high (Lap/Pit Out) -> In pits (since no Pit In configured)
-    byte[] lapHigh = { 0x49, 0x44, 0x02, 0x01, 0x3B };
-    serialConnection.injectData(lapHigh);
+    // Initial state: Main
+    assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
+
+    // Trigger D2 high (Lap/Pit Out) -> Should stay in Main or Exit Pits if it was
+    // in
+    // them.
+    // However, the current code just calls updatePitState(laneIndex, false).
+    // Let's first put it in pits via a mock helper if possible, or just verify it
+    // doesn't enter.
+
+    // Force it into pits first
+    protocol.simulatePitEntry(0);
     assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
 
-    // Trigger D2 low -> Out of pits
     byte[] lapLow = { 0x49, 0x44, 0x02, 0x00, 0x3B };
     serialConnection.injectData(lapLow);
-    assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
+    assertEquals("Should have exited pits on Lap trigger (PIT_OUT)", com.antigravity.protocols.CarLocation.Main,
+        listener.lastLocation);
+  }
+
+  @Test
+  public void testPitDetection_LapPinBehavior_PitInOut() {
+    // Configure D2 as Lap (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+    config.lapPinPitBehavior = ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Trigger D2 low (Lap/Pit In - NO means 0 triggers) -> In pits
+    byte[] lapLow = { 0x49, 0x44, 0x02, 0x00, 0x3B };
+    serialConnection.injectData(lapLow);
+    assertEquals("Should be in pits while over sensor", com.antigravity.protocols.CarLocation.PitRow,
+        listener.lastLocation);
+
+    // Trigger D2 high (Clear sensor) -> Out of pits
+    byte[] lapHigh = { 0x49, 0x44, 0x02, 0x01, 0x3B };
+    serialConnection.injectData(lapHigh);
+    assertEquals("Should be out of pits after clearing sensor", com.antigravity.protocols.CarLocation.Main,
+        listener.lastLocation);
   }
 
   @Test
@@ -467,10 +512,10 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Enter pit via Pit In (D4 HIGH)
-    byte[] pitInHigh = { 0x49, 0x44, 0x04, 0x01, 0x3B };
+    // Enter pit via Pit In (D4 LOW - NO means 0 triggers)
+    byte[] pitInLow = { 0x49, 0x44, 0x04, 0x00, 0x3B };
     protocol.advanceTime(1000);
-    serialConnection.injectData(pitInHigh);
+    serialConnection.injectData(pitInLow);
 
     org.junit.Assert.assertNotNull(listener.lastCarData);
     assertEquals("First report should have delta 0 and true canRefuel", 0.0, listener.lastCarData.getTime(), 0.001);
@@ -489,10 +534,10 @@ public class ArduinoProtocolTest {
 
     assertEquals("Next refuel scheduler report should have elapsed time", 0.1, listener.lastCarData.getTime(), 0.001);
 
-    // Leave the pit via Pit Out (D5 HIGH)
-    byte[] pitOutHigh = { 0x49, 0x44, 0x05, 0x01, 0x3B };
+    // Leave the pit via Pit Out (D5 LOW - NO means 0 triggers)
+    byte[] pitOutLowTrigger = { 0x49, 0x44, 0x05, 0x00, 0x3B };
     protocol.advanceTime(200);
-    serialConnection.injectData(pitOutHigh);
+    serialConnection.injectData(pitOutLowTrigger);
 
     assertEquals("Exit report should have delta 0", 0.0, listener.lastCarData.getTime(), 0.001);
     assertEquals("Cannot refuel on pit exit", false, listener.lastCarData.getCanRefuel());
@@ -534,7 +579,7 @@ public class ArduinoProtocolTest {
 
     // Enable inversion - Call button should STILL trigger on 0 (high-to-low
     // transition)
-    config.globalInvertLanes = true;
+    config.normallyClosedLaneSensors = true;
     protocol.updateConfig(config);
 
     listener.callButtonCount = 0;
@@ -563,26 +608,26 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Normal: Trigger D3 HIGH (state 1) -> Segment should trigger
-    byte[] segmentHigh = { 0x49, 0x44, 0x03, 0x01, 0x3B };
-    serialConnection.injectData(segmentHigh);
-    assertEquals(1, listener.segmentCount);
-
-    // Normal: Trigger D3 LOW (state 0) -> Segment should NOT trigger again
+    // Normal (NO): Trigger D2 LOW (state 0) -> Segment should trigger
     byte[] segmentLow = { 0x49, 0x44, 0x03, 0x00, 0x3B };
     serialConnection.injectData(segmentLow);
     assertEquals(1, listener.segmentCount);
 
-    // Inverted: Trigger D3 LOW (state 0) -> Segment should trigger
-    config.globalInvertLanes = true;
+    // Normal (NO): Trigger D3 HIGH (state 1) -> Segment should NOT trigger again
+    byte[] segmentHigh = { 0x49, 0x44, 0x03, 0x01, 0x3B };
+    serialConnection.injectData(segmentHigh);
+    assertEquals(1, listener.segmentCount);
+
+    // Inverted (NC): Trigger D3 HIGH (state 1) -> Segment should trigger
+    config.normallyClosedLaneSensors = true;
     protocol.updateConfig(config);
 
     listener.segmentCount = 0;
-    serialConnection.injectData(segmentLow);
+    serialConnection.injectData(segmentHigh);
     assertEquals(1, listener.segmentCount);
 
-    // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
-    serialConnection.injectData(segmentHigh);
+    // Inverted (NC): Trigger D3 LOW (state 0) -> Segment should NOT trigger
+    serialConnection.injectData(segmentLow);
     assertEquals(1, listener.segmentCount);
   }
 
@@ -602,9 +647,9 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D2 HIGH (state 1) -> Should trigger BOTH Lap and Segment
-    byte[] lapHigh = { 0x49, 0x44, 0x02, 0x01, 0x3B };
-    serialConnection.injectData(lapHigh);
+    // Trigger D2 LOW (state 0) -> Should trigger BOTH Lap and Segment
+    byte[] lapLow = { 0x49, 0x44, 0x02, 0x00, 0x3B };
+    serialConnection.injectData(lapLow);
 
     assertEquals("Should have received 1 lap", 1, listener.lapCount);
     assertEquals("Should have received 1 segment", 1, listener.segmentCount);
@@ -616,8 +661,8 @@ public class ArduinoProtocolTest {
     listener.lapCount = 0;
     listener.segmentCount = 0;
 
-    // Trigger D2 HIGH again
-    serialConnection.injectData(lapHigh);
+    // Trigger D2 LOW again
+    serialConnection.injectData(lapLow);
 
     assertEquals("Should have received 1 lap", 1, listener.lapCount);
     assertEquals("Should NOT have received segment", 0, listener.segmentCount);
@@ -629,7 +674,7 @@ public class ArduinoProtocolTest {
     config.digitalIds = new ArrayList<>(
         Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
     config.digitalIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + 0);
-    config.globalInvertLanes = true;
+    config.normallyClosedLaneSensors = true;
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
     protocol.setListener(listener);
@@ -639,15 +684,15 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Inverted: Trigger D3 LOW (state 0) -> Segment should trigger
-    byte[] segmentLow = { 0x49, 0x44, 0x03, 0x00, 0x3B };
-    serialConnection.injectData(segmentLow);
-    assertEquals("Should have received 1 segment on LOW trigger (inverted)", 1, listener.segmentCount);
-
-    // Inverted: Trigger D3 HIGH (state 1) -> Segment should NOT trigger
+    // Inverted: Trigger D3 HIGH (state 1) -> Segment should trigger
     byte[] segmentHigh = { 0x49, 0x44, 0x03, 0x01, 0x3B };
     serialConnection.injectData(segmentHigh);
-    assertEquals("Should still have 1 segment on HIGH trigger (inverted)", 1, listener.segmentCount);
+    assertEquals("Should have received 1 segment on HIGH trigger (inverted)", 1, listener.segmentCount);
+
+    // Inverted: Trigger D3 LOW (state 0) -> Segment should NOT trigger
+    byte[] segmentLow = { 0x49, 0x44, 0x03, 0x00, 0x3B };
+    serialConnection.injectData(segmentLow);
+    assertEquals("Should still have 1 segment on LOW trigger (inverted)", 1, listener.segmentCount);
   }
 
   @Test
@@ -869,6 +914,7 @@ public class ArduinoProtocolTest {
   public void testOnSegmentCounter() {
     ArduinoConfig config = new ArduinoConfig();
     config.commPort = "COM1";
+    config.normallyClosedLaneSensors = false;
     config.digitalIds = new ArrayList<>();
     // Fill with reserved to reach pin 4
     for (int i = 0; i < 4; i++)
@@ -884,8 +930,9 @@ public class ArduinoProtocolTest {
 
     protocol.simulateHeartbeat();
 
-    // OPCODE_INPUT (I), DIGITAL (D), Pin (4), State (1), Terminator (;)
-    byte[] message = { 0x49, 0x44, 4, 1, 0x3B };
+    // OPCODE_INPUT (I), DIGITAL (D), Pin (4), State (0 - NO trigger), Terminator
+    // (;)
+    byte[] message = { 0x49, 0x44, 4, 0, 0x3B };
     serialConnection.injectData(message);
 
     assertEquals(1, listener.segmentCount);
@@ -895,6 +942,7 @@ public class ArduinoProtocolTest {
   public void testUseLapsForSegments() {
     ArduinoConfig config = new ArduinoConfig();
     config.commPort = "COM1";
+    config.normallyClosedLaneSensors = false;
     config.digitalIds = new ArrayList<>();
     config.digitalIds.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE); // Pin 0 = Lane 0 Lap
     config.useLapsForSegments = true;
@@ -908,8 +956,9 @@ public class ArduinoProtocolTest {
 
     protocol.simulateHeartbeat();
 
-    // OPCODE_INPUT (I), DIGITAL (D), Pin (0), State (1), Terminator (;)
-    byte[] message = { 0x49, 0x44, 0, 1, 0x3B };
+    // OPCODE_INPUT (I), DIGITAL (D), Pin (0), State (0 - NO trigger), Terminator
+    // (;)
+    byte[] message = { 0x49, 0x44, 0, 0, 0x3B };
     serialConnection.injectData(message);
 
     assertEquals(1, listener.lapCount);

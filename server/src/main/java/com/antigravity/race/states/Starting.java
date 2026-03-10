@@ -105,7 +105,6 @@ public class Starting implements IRaceState {
   @Override
   public void onCarData(com.antigravity.protocols.CarData carData) {
     // TODO(aufderheide): Handle false start
-    System.out.println("Starting: Ignored onCarData - Race not in progress");
   }
 
   @Override

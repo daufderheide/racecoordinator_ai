@@ -17,30 +17,45 @@ test.describe('Help Overlay Visuals', () => {
 
   async function waitForPopoverStable(page, overlay) {
     const popover = overlay.locator('.help-popover');
+    const mask = overlay.locator('.highlight-mask');
     await expect(popover).toBeVisible();
 
-    // Wait for the popover to stop moving/resizing
-    // We check every 50ms for 3 consecutive stable readings
-    let lastBox = await popover.boundingBox();
+    // Wait for the popover and mask to stop moving/resizing
+    // We check every 50ms for 5 consecutive stable readings
+    let lastPopoverBox = await popover.boundingBox();
+    let lastMaskBox = await mask.count() > 0 ? await mask.boundingBox() : null;
     let stableCount = 0;
 
-    for (let i = 0; i < 20; i++) { // Max 1s
+    for (let i = 0; i < 40; i++) { // Max 2s
       await page.waitForTimeout(50);
-      const currentBox = await popover.boundingBox();
+      const currentPopoverBox = await popover.boundingBox();
+      const currentMaskBox = await mask.count() > 0 ? await mask.boundingBox() : null;
 
-      if (currentBox && lastBox &&
-        currentBox.x === lastBox.x &&
-        currentBox.y === lastBox.y &&
-        currentBox.width === lastBox.width &&
-        currentBox.height === lastBox.height) {
+      const popoverStable = currentPopoverBox && lastPopoverBox &&
+        currentPopoverBox.x === lastPopoverBox.x &&
+        currentPopoverBox.y === lastPopoverBox.y &&
+        currentPopoverBox.width === lastPopoverBox.width &&
+        currentPopoverBox.height === lastPopoverBox.height;
+
+      const maskStable = (!currentMaskBox && !lastMaskBox) || (currentMaskBox && lastMaskBox &&
+        currentMaskBox.x === lastMaskBox.x &&
+        currentMaskBox.y === lastMaskBox.y &&
+        currentMaskBox.width === lastMaskBox.width &&
+        currentMaskBox.height === lastMaskBox.height);
+
+      if (popoverStable && maskStable) {
         stableCount++;
       } else {
         stableCount = 0;
       }
 
-      if (stableCount >= 3) break;
-      lastBox = currentBox;
+      if (stableCount >= 5) break;
+      lastPopoverBox = currentPopoverBox;
+      lastMaskBox = currentMaskBox;
     }
+
+    // Safety margin
+    await page.waitForTimeout(100);
   }
 
   test('should display help guide and navigate correctly', async ({ page }) => {
@@ -71,8 +86,8 @@ test.describe('Help Overlay Visuals', () => {
 
     // Wait for transition/position update
     // The highlight mask should appear around the help icon
-    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Walkthrough');
+    await waitForPopoverStable(page, overlay);
     await expect(overlay.locator('.highlight-mask')).toBeVisible();
 
     // Capture Step 2
@@ -80,8 +95,8 @@ test.describe('Help Overlay Visuals', () => {
 
     // 5. Click Next -> Step 3 (Driver Selection - targets driver panel)
     await nextBtn.click();
-    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Driver Selection');
+    await waitForPopoverStable(page, overlay);
     // Capture Step 3
     await expect(page).toHaveScreenshot('help-step-3-driver-panel.png');
 
@@ -90,8 +105,8 @@ test.describe('Help Overlay Visuals', () => {
     await prevBtn.click();
 
     // Should be back at Step 2
-    await waitForPopoverStable(page, overlay);
     await expect(popover).toContainText('Walkthrough');
+    await waitForPopoverStable(page, overlay);
     // Verify visual match with previous capture (optional, but good for logic check)
     // We'll just capture to ensure consistency
     await expect(page).toHaveScreenshot('help-step-2-icon-target.png');

@@ -441,7 +441,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       commPort: '',
       baudRate: 9600,
       debounceUs: 200,
-      globalInvertLanes: false,
+      normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
       globalInvertLights: 0,
       useLapsForPits: 0,
@@ -452,7 +452,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       analogIds: new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       ledStrings: null,
-      ledLaneColorOverrides: null
+      ledLaneColorOverrides: null,
+      lapPinPitBehavior: 3
     });
     this.arduinoConfigs = [...this.arduinoConfigs]; // Ensure reference change for Angular change detection
     this.captureState();

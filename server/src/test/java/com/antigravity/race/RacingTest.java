@@ -420,6 +420,46 @@ public class RacingTest {
     assertEquals(0, driverData.getSegments().size());
   }
 
+  @Test
+  public void testDigitalFuelConsumption() {
+    com.antigravity.models.DigitalFuelOptions fuelOptions = new com.antigravity.models.DigitalFuelOptions(
+        true, false, false, 100.0, com.antigravity.models.FuelOptions.FuelUsageType.LINEAR, 10.0, 100.0, 10.0, 5.0);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
+        new OverallScoring(), 0.0, null, fuelOptions, "race1", new ObjectId());
+
+    // Mock track with digital fuel
+    Track mockTrack = mock(Track.class);
+    when(mockTrack.hasDigitalFuel()).thenReturn(true);
+    when(mockTrack.getLanes()).thenReturn(track.getLanes());
+
+    Race raceWithFuel = new Race(raceModel, participants, mockTrack, true);
+    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    Racing racing = new Racing();
+    raceWithFuel.changeState(racing);
+
+    // Initial fuel level: 100
+    // Throttle 1.0 (100%), Time 1.0s, UsageRate 10.0 -> Consumed 10.0
+    com.antigravity.protocols.CarData carData = new com.antigravity.protocols.CarData(
+        0, 1.0, 1.0, 1.0, false, com.antigravity.protocols.CarLocation.Main,
+        com.antigravity.protocols.CarLocation.Main, -1);
+
+    racing.onCarData(carData);
+
+    assertEquals(90.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+
+    // Throttle 0.5 (50%), Time 2.0s, UsageRate 10.0 -> Consumed 10.0
+    carData = new com.antigravity.protocols.CarData(
+        0, 2.0, 0.5, 0.5, false, com.antigravity.protocols.CarLocation.Main,
+        com.antigravity.protocols.CarLocation.Main, -1);
+
+    racing.onCarData(carData);
+
+    assertEquals(80.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
   private void assertEquals(long expected, long actual) {
     if (expected != actual) {
       throw new AssertionError("Expected " + expected + " but got " + actual);

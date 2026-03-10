@@ -162,10 +162,10 @@ export class TestSetupHelper {
     const path = require('path');
 
     // Try to locate the assets folder relative to CWD
-    console.log('DEBUG: CWD:', process.cwd());
     const i18nPath = path.resolve(process.cwd(), 'client/src/assets/i18n');
     const altPath = path.resolve(process.cwd(), 'src/assets/i18n');
     const rootPath = path.resolve(process.cwd(), 'assets/i18n');
+    const relativePath = path.resolve(__dirname, '../../assets/i18n');
 
     let finalPath = i18nPath;
     if (!fs.existsSync(finalPath)) {
@@ -173,21 +173,19 @@ export class TestSetupHelper {
         finalPath = altPath;
       } else if (fs.existsSync(rootPath)) {
         finalPath = rootPath;
+      } else if (fs.existsSync(relativePath)) {
+        finalPath = relativePath;
       }
     }
-    console.log('DEBUG: Using i18nPath:', finalPath);
 
     // Use Regex to match the path regardless of query params (e.g. ?t=...)
     await page.route(/\/assets\/i18n\/.*\.json/, async (route) => {
       const url = route.request().url();
-      console.log('DEBUG: I18N Route hit for:', url);
       const match = url.match(/\/assets\/i18n\/([a-z]{2,3})\.json/);
       const lang = match ? match[1] : 'en';
-
       try {
         const filePath = path.join(finalPath, `${lang}.json`);
         if (fs.existsSync(filePath)) {
-          console.log(`DEBUG: Serving ${lang} from ${filePath}`);
           const content = fs.readFileSync(filePath, 'utf8');
           await route.fulfill({
             status: 200,
@@ -195,11 +193,9 @@ export class TestSetupHelper {
             body: content
           });
           return;
-        } else {
-          console.error(`DEBUG: I18N File not found: ${filePath}`);
         }
       } catch (e) {
-        console.warn(`Failed to mock localization for ${lang}`, e);
+        // Silent fail
       }
 
       await route.continue();
@@ -236,7 +232,6 @@ export class TestSetupHelper {
       }
 
       if (filePath) {
-        console.log(`DEBUG: Serving image from disk: ${filePath}`);
         const content = fs.readFileSync(filePath);
         await route.fulfill({
           status: 200,
@@ -244,68 +239,49 @@ export class TestSetupHelper {
           body: content
         });
         return;
-      } else {
-        console.warn(`DEBUG: Image NOT FOUND on disk. Searched in: ${potentialPaths.join(', ')} for ${relativePath}`);
       }
       await route.continue();
     });
   }
 
-  /**
-   * Waits for the translation file to be fetched and the UI to be stable.
-   */
   static async waitForLocalization(page: Page, lang: string = 'en', action?: Promise<any>) {
-    console.log(`DEBUG: Waiting for localization: ${lang}`);
-
-    // Start listening for the response before performing the action
-    const responsePromise = page.waitForResponse(response =>
-      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200,
-      { timeout: 15000 }
-    ).catch(() => {
-      console.warn(`DEBUG: Did not see network request for ${lang}.json - it might be cached.`);
-      return null;
-    });
-
-    // Perform the action (e.g., page.goto) if provided
-    if (action) {
-      await action;
-    }
-
-    // Wait for the translation request to complete
-    await responsePromise;
-
-    // Wait for the Angular application to bootstrap and the first translation to be applied
-    // We look for a few common keys that represent a translated state
-    // 'BACK' -> 'Zurück' (de), 'Atrás' (es), 'Retour' (fr), etc.
     const backTranslations: Record<string, string> = {
-      'en': 'BACK',
-      'de': 'ZURÜCK',
-      'es': 'ATRÁS',
-      'fr': 'RETOUR',
-      'it': 'INDIETRO',
-      'pt': 'VOLTAR',
-      'nl': 'TERUG'
+      'en': 'BACK', 'de': 'ZURÜCK', 'es': 'ATRÁS', 'fr': 'RETOUR', 'it': 'INDIETRO', 'pt': 'VOLTAR', 'nl': 'TERUG'
     };
-
     const expectedText = backTranslations[lang] || backTranslations['en'];
 
-    console.log(`DEBUG: Waiting for representative text "${expectedText}" for locale "${lang}"`);
+    // 1. Setup response promise BEFORE action
+    const responsePromise = page.waitForResponse(response =>
+      response.url().includes(`/assets/i18n/${lang}.json`) && response.status() === 200,
+      { timeout: 5000 }
+    ).catch(() => null);
 
-    try {
-      // Use a broader search to find the text anywhere in the body
-      await page.waitForFunction((text) => {
-        return document.body.innerText.toUpperCase().includes(text);
-      }, expectedText, { timeout: 15000 });
-      console.log(`DEBUG: Localization confirmed for ${lang}`);
-    } catch (e) {
-      console.warn(`DEBUG: Timed out waiting for localization text "${expectedText}". Continuing anyway.`);
+    // 2. Perform the action
+    if (action) await action;
+
+    // 3. If text is already there, we can skip waiting for the response (it was fast/cached)
+    const isAlreadyLocalized = await page.evaluate((text) => {
+      return document.body.innerText.toUpperCase().includes(text);
+    }, expectedText);
+
+    if (isAlreadyLocalized) {
+      await page.evaluate(() => document.fonts.ready);
+      return;
     }
 
-    // Ensure fonts are ready
-    await page.evaluate(() => document.fonts.ready);
+    // 4. Wait for response and text
+    await responsePromise;
 
-    // Final stability wait for any Angular animations/layout to settle
-    await page.waitForTimeout(500);
+    try {
+      await page.waitForFunction((text) => {
+        return document.body.innerText.toUpperCase().includes(text);
+      }, expectedText, { timeout: 5000 });
+    } catch (e) {
+      // Continue anyway
+    }
+
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(100);
   }
 
   /**
@@ -334,7 +310,7 @@ export class TestSetupHelper {
             hardwareType: 1, // Mega
             digitalIds: [1001, 1002, -1, -1],
             analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: false,
+            normallyClosedLaneSensors: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
@@ -342,7 +318,8 @@ export class TestSetupHelper {
             usePitsAsLaps: false,
             useLapsForSegments: true,
             ledStrings: null,
-            ledLaneColorOverrides: null
+            ledLaneColorOverrides: null,
+            lapPinPitBehavior: 3
           }]
         },
         {
@@ -362,7 +339,7 @@ export class TestSetupHelper {
             hardwareType: 0, // Uno
             digitalIds: [1001, 1002, 1003, 1004],
             analogIds: [-1, -1, -1, -1],
-            globalInvertLanes: false,
+            normallyClosedLaneSensors: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
@@ -370,7 +347,8 @@ export class TestSetupHelper {
             usePitsAsLaps: false,
             useLapsForSegments: true,
             ledStrings: null,
-            ledLaneColorOverrides: null
+            ledLaneColorOverrides: null,
+            lapPinPitBehavior: 3
           }]
         }
       ];
@@ -410,7 +388,7 @@ export class TestSetupHelper {
             digitalIds: [1001],
             analogIds: [-1],
             voltageConfigs: { 1: 12.0 }, // This also indicates digital fuel
-            globalInvertLanes: false,
+            normallyClosedLaneSensors: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
             useLapsForPits: 0,
@@ -418,7 +396,8 @@ export class TestSetupHelper {
             usePitsAsLaps: false,
             useLapsForSegments: true,
             ledStrings: null,
-            ledLaneColorOverrides: null
+            ledLaneColorOverrides: null,
+            lapPinPitBehavior: 3
           }]
         }
       ];
@@ -471,6 +450,19 @@ export class TestSetupHelper {
           images: [
             { percentage: 30, url: '/api/assets/download?filename=img1.png', name: 'img1.png' },
             { percentage: 70, url: '/api/assets/download?filename=img2.png', name: 'img2.png' }
+          ]
+        },
+        {
+          model: { entityId: 'fuel-gauge-builtin' },
+          name: 'Fuel Gauge',
+          type: 'image_set',
+          size: '1.2 MB',
+          url: '/api/assets/download?filename=fuel-gauge.json',
+          filename: 'fuel-gauge.json',
+          images: [
+            { percentage: 0, url: '/api/assets/download?filename=fuel-0.png', name: 'fuel-0.png' },
+            { percentage: 50, url: '/api/assets/download?filename=fuel-50.png', name: 'fuel-50.png' },
+            { percentage: 100, url: '/api/assets/download?filename=fuel-100.png', name: 'fuel-100.png' }
           ]
         }
       ];

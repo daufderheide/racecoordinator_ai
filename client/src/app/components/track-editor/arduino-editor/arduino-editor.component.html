@@ -57,6 +57,22 @@
 
               <div class="right-controls">
                 <div class="control-group">
+                  <label>{{ 'AE_LAP_PIN_PIT_BEHAVIOR' | translate }}</label>
+                  <select [(ngModel)]="config.lapPinPitBehavior" (change)="updateArduinoConfig()">
+                    <option [value]="0">{{ 'AE_LAP_PIN_PIT_NONE' | translate }}</option>
+                    <option [value]="1">{{ 'AE_LAP_PIN_PIT_IN' | translate }}</option>
+                    <option [value]="2">{{ 'AE_LAP_PIN_PIT_OUT' | translate }}</option>
+                    <option [value]="3">{{ 'AE_LAP_PIN_PIT_IN_OUT' | translate }}</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" [ngModel]="config.normallyClosedLaneSensors"
+                      (ngModelChange)="config.normallyClosedLaneSensors = $event; updateArduinoConfig()">
+                    {{ 'AE_NORMALLY_CLOSED_SENSORS' | translate }}
+                  </label>
+                </div>
+                <div class="control-group">
                   <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                     <input type="checkbox" [ngModel]="config.normallyClosedRelays"
                       (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">

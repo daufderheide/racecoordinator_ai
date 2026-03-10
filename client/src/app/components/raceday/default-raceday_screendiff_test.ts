@@ -218,7 +218,7 @@ test.describe('Raceday Visuals for Fuel', () => {
     await expect(page).toHaveScreenshot('raceday-driver-avatars.png', { maxDiffPixelRatio: 0.1 });
   });
 
-  test('should display digital fuel levels for digital race', async ({ page }) => {
+  test('should display fuel levels for digital race', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
     // Emit a mock digital race update
@@ -282,5 +282,154 @@ test.describe('Raceday Visuals for Fuel', () => {
     await expect(page.locator('text=50%')).toBeVisible({ timeout: 10000 });
 
     await expect(page).toHaveScreenshot('raceday-digital-fuel-levels.png', { maxDiffPixelRatio: 0.1 });
+  });
+
+  test('should scale fuel gauge correctly on 1-lane track', async ({ page }) => {
+    // Columns: Avatar, nickname, lap count, fuel guage, lap time
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: ['driver.avatarUrl', 'driver.nickname', 'lapCount', 'imageset_fuel-gauge-builtin', 'lastLapTime'],
+      columnLayouts: {
+        'driver.avatarUrl': { 'CenterCenter': 'driver.avatarUrl' },
+        'driver.nickname': { 'CenterCenter': 'driver.nickname' },
+        'lapCount': { 'CenterCenter': 'lapCount' },
+        'imageset_fuel-gauge-builtin': { 'CenterCenter': 'imageset_fuel-gauge-builtin' },
+        'lastLapTime': { 'CenterCenter': 'lastLapTime' }
+      },
+      columnAnchors: {
+        'driver.avatarUrl': 'Center',
+        'driver.nickname': 'Center',
+        'lapCount': 'Center',
+        'imageset_fuel-gauge-builtin': 'Center',
+        'lastLapTime': 'Center'
+      },
+      columnWidths: {
+        'driver.avatarUrl': 100,
+        'driver.nickname': 200,
+        'lapCount': 100,
+        'imageset_fuel-gauge-builtin': 180,
+        'lastLapTime': 275
+      }
+    });
+
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
+
+    await page.evaluate(() => {
+      if ((window as any).mockRaceData) {
+        (window as any).mockRaceData({
+          race: {
+            race: {
+              model: { entityId: 'r1' },
+              name: '1-Lane Scaling Race',
+              fuelOptions: { enabled: true, capacity: 100 },
+              track: {
+                model: { entityId: 't1' },
+                name: '1-Lane Track',
+                lanes: [{ objectId: 'l1', length: 10, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }]
+              }
+            },
+            drivers: [{
+              objectId: 'p1',
+              fuelLevel: 50,
+              driver: { name: 'Swamper', nickname: 'Swamper G', avatarUrl: '/api/assets/download?filename=img1.png' }
+            }],
+            heats: [{ heatNumber: 1 }],
+            currentHeat: {
+              objectId: 'h1',
+              heatNumber: 1,
+              heatDrivers: [{
+                objectId: 'hd1',
+                laneIndex: 0,
+                lapCount: 4,
+                lastLapTime: 12.345,
+                driver: {
+                  objectId: 'p1',
+                  fuelLevel: 50,
+                  driver: { name: 'Swamper', nickname: 'Swamper G', avatarUrl: '/api/assets/download?filename=img1.png' }
+                }
+              }]
+            }
+          }
+        });
+      }
+    });
+
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('raceday-1-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
+  });
+
+  test('should scale fuel gauge correctly on 8-lane track', async ({ page }) => {
+    // Columns: Avatar, nickname, lap count, fuel guage, lap time
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: ['driver.avatarUrl', 'driver.nickname', 'lapCount', 'imageset_fuel-gauge-builtin', 'lastLapTime'],
+      columnLayouts: {
+        'driver.avatarUrl': { 'CenterCenter': 'driver.avatarUrl' },
+        'driver.nickname': { 'CenterCenter': 'driver.nickname' },
+        'lapCount': { 'CenterCenter': 'lapCount' },
+        'imageset_fuel-gauge-builtin': { 'CenterCenter': 'imageset_fuel-gauge-builtin' },
+        'lastLapTime': { 'CenterCenter': 'lastLapTime' }
+      },
+      columnAnchors: {
+        'driver.avatarUrl': 'Center',
+        'driver.nickname': 'Center',
+        'lapCount': 'Center',
+        'imageset_fuel-gauge-builtin': 'Center',
+        'lastLapTime': 'Center'
+      },
+      columnWidths: {
+        'driver.avatarUrl': 100,
+        'driver.nickname': 200,
+        'lapCount': 100,
+        'imageset_fuel-gauge-builtin': 180,
+        'lastLapTime': 275
+      }
+    });
+
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
+
+    await page.evaluate(() => {
+      if ((window as any).mockRaceData) {
+        const lanes = Array.from({ length: 8 }, (_, i) => ({
+          objectId: `l${i + 1}`,
+          length: 10,
+          backgroundColor: i % 2 === 0 ? '#333333' : '#555555',
+          foregroundColor: '#ffffff'
+        }));
+
+        const heatDrivers = lanes.map((_, i) => ({
+          objectId: `hd${i + 1}`,
+          laneIndex: i,
+          lapCount: i + 1,
+          lastLapTime: 10 + i,
+          driver: {
+            objectId: `p${i + 1}`,
+            fuelLevel: 100 - (i * 10),
+            driver: { name: `Driver ${i + 1}`, nickname: `Nick ${i + 1}`, avatarUrl: '/api/assets/download?filename=img1.png' }
+          }
+        }));
+
+        (window as any).mockRaceData({
+          race: {
+            race: {
+              model: { entityId: 'r8' },
+              name: '8-Lane Scaling Race',
+              fuelOptions: { enabled: true, capacity: 100 },
+              track: {
+                model: { entityId: 't8' },
+                name: '8-Lane Track',
+                lanes: lanes
+              }
+            },
+            currentHeat: {
+              objectId: 'h1',
+              heatNumber: 1,
+              heatDrivers: heatDrivers
+            }
+          }
+        });
+      }
+    });
+
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('raceday-8-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
   });
 });

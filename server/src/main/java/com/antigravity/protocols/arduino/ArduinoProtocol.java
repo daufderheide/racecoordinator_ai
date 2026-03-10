@@ -609,6 +609,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
       // Handle CarData if this is a voltage level pin
       PinConfig pinConfig = pinLookup.get("A" + pin);
+
       if (pinConfig != null && pinConfig.behavior == InputBehavior.VOLTAGE_LEVEL) {
         int laneIndex = pinConfig.laneIndex;
         if (laneIndex >= 0 && laneIndex < numLanes) {
@@ -620,20 +621,19 @@ public class ArduinoProtocol extends DefaultProtocol {
           lastAnalogTimeMs[laneIndex] = currentTime;
 
           // Calculate throttle percentages
-          // Key for voltageConfigs is 1-based lane number string
-          String key = String.valueOf(laneIndex + 1);
-          Integer maxVoltage = config.voltageConfigs != null ? config.voltageConfigs.get(key) : null;
+          // Key for voltageConfigs is 0-based lane number string
+          String key = String.valueOf(laneIndex);
+          Map<String, Integer> voltageConfigsMap = config.getVoltageConfigsMap();
+          Integer maxVoltage = (voltageConfigsMap != null) ? voltageConfigsMap.get(key) : null;
+
           double pct = 0.0;
           if (maxVoltage != null && maxVoltage > 0) {
             pct = Math.min(1.0, Math.max(0.0, (double) value / maxVoltage));
           }
 
           CarLocation location = laneInPits[laneIndex] ? CarLocation.PitRow : CarLocation.Main;
-          // For now, simplify and set lastLocation same as current, as Racing.java tracks
-          // it separately
-          // canRefuel is true if in pits
-          listener.onCarData(new CarData(laneIndex, deltaTimeSeconds, pct, pct, laneInPits[laneIndex],
-              location, location, -1));
+          listener.onCarData(
+              new CarData(laneIndex, deltaTimeSeconds, pct, pct, laneInPits[laneIndex], location, location, -1));
         }
       }
     }
@@ -647,9 +647,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
-    byte wantState = 1;
-    if (config.globalInvertLanes) {
-      wantState = 0;
+    int wantState = 0;
+    if (config.normallyClosedLaneSensors) {
+      wantState = 1;
     }
 
     if (state == wantState) {
@@ -669,21 +669,17 @@ public class ArduinoProtocol extends DefaultProtocol {
 
         listener.onLap(laneIndex, time, interfaceId);
 
-        if (config.lapPinPitBehavior != ArduinoConfig.LapPinPitBehavior.NONE) {
-          if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
-            onPitIn(laneIndex, state);
-          } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-            onPitOut(laneIndex, state);
-          }
+        if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN
+            || config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
+          updatePitState(laneIndex, true);
+        } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
+          updatePitState(laneIndex, false);
         }
       }
     } else {
-      if (config.lapPinPitBehavior != ArduinoConfig.LapPinPitBehavior.NONE) {
-        if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
-          onPitIn(laneIndex, 0);
-        } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-          onPitOut(laneIndex, 0);
-        }
+      // Not in "want" state (car has cleared the sensor)
+      if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
+        updatePitState(laneIndex, false);
       }
     }
   }
@@ -696,9 +692,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
-    int wantState = 1;
-    if (config.globalInvertLanes) {
-      wantState = 0;
+    int wantState = 0;
+    if (config.normallyClosedLaneSensors) {
+      wantState = 1;
     }
 
     if (state == wantState) {
@@ -745,9 +741,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
-    int wantState = 1;
-    if (config.globalInvertLanes) {
-      wantState = 0;
+    int wantState = 0;
+    if (config.normallyClosedLaneSensors) {
+      wantState = 1;
     }
 
     if (state == wantState) {
@@ -760,9 +756,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
-    int wantState = 1;
-    if (config.globalInvertLanes) {
-      wantState = 0;
+    int wantState = 0;
+    if (config.normallyClosedLaneSensors) {
+      wantState = 1;
     }
 
     if (hasPitInConfigured(laneIndex)) {
@@ -774,8 +770,10 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
   }
 
-  private void updatePitState(int laneIndex, boolean inPits) {
+  protected void updatePitState(int laneIndex, boolean inPits) {
     if (laneInPits[laneIndex] != inPits) {
+      logger.info("[{}] updatePitState: Lane {} transition to {}", getLogTime(), laneIndex,
+          inPits ? "IN_PITS" : "OUT_PITS");
       laneInPits[laneIndex] = inPits;
       logger.info("[{}] Lane {} {} pits", getLogTime(), laneIndex, inPits ? "entered" : "exited");
 

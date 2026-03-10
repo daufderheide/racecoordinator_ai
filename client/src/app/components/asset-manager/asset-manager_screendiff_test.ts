@@ -25,8 +25,8 @@ test.describe('Asset Manager Visuals', () => {
     // Ensure loading is finished
     await expect(page.locator('.loading-overlay')).not.toBeVisible();
 
-    // Wait for items to be rendered (we expect 3 items from mock: image, sound, image_set)
-    await expect(page.locator('.asset-card')).toHaveCount(3);
+    // Wait for items to be rendered (we expect 4 items from mock: image, sound, 2x image_set)
+    await expect(page.locator('.asset-card')).toHaveCount(4);
 
     // Expect to see our mocked items
     await expect(page.locator('.asset-card').first()).toContainText('Test Image 1');

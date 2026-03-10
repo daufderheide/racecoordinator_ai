@@ -60,7 +60,7 @@ public class ArduinoConfigTest {
         ArduinoConfig.LapPinPitBehavior.NONE,
         null, null, null, null, null);
 
-    assertTrue(config1.globalInvertLanes);
+    assertTrue(config1.normallyClosedLaneSensors);
     assertFalse(config1.normallyClosedRelays);
     assertTrue(config1.usePitsAsLaps);
     assertFalse(config1.useLapsForSegments);

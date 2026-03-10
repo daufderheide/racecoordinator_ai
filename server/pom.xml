@@ -12,7 +12,7 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <build.dist.dir>target_test</build.dist.dir>
-    <generated.sources.dir>${project.build.directory}/generated-sources/protobuf/java</generated.sources.dir>
+    <generated.sources.dir>${build.dist.dir}/generated-sources/protobuf/java</generated.sources.dir>
     <protobuf.java.version>3.25.1</protobuf.java.version>
   </properties>
   <dependencies>
@@ -101,6 +101,7 @@
         <configuration>
           <protocArtifact>com.google.protobuf:protoc:${protobuf.java.version}:exe:${os.detected.classifier}</protocArtifact>
           <protoSourceRoot>${project.basedir}/../proto</protoSourceRoot>
+          <outputDirectory>${generated.sources.dir}</outputDirectory>
           <skip>${skipProtobuf}</skip>
         </configuration>
         <executions>

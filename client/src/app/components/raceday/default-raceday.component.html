@@ -153,9 +153,9 @@
 
         <!-- Rows -->
         <g *ngFor="let hd of sortedHeatDrivers; let i = index; trackBy: trackByDriverId" class="driver-row"
-          [attr.transform]="'translate(0, ' + (310 + i * (560 / track.lanes.length)) + ')'">
+          [attr.transform]="'translate(0, ' + (310 + i * getRowHeight()) + ')'">
           <g class="row-scaler" [class.highlighted]="highlightedDrivers.has(hd.objectId)">
-            <rect x="0" y="0" width="1600" [attr.height]="560 / track.lanes.length"
+            <rect x="0" y="0" width="1600" [attr.height]="getRowHeight()"
               [attr.fill]="track.lanes[hd.laneIndex].background_color" rx="4" />
 
             <!-- Columns -->
@@ -164,9 +164,8 @@
               <ng-container *ngFor="let entry of column.layout | keyvalue">
                 <image
                   *ngIf="entry.value?.toString()?.includes('avatarUrl') || entry.value?.toString()?.startsWith('imageset_')"
-                  [attr.x]="getColumnCenterX(colIndex) - ((560 / track.lanes.length) * 0.4)"
-                  [attr.y]="(560 / track.lanes.length) * 0.1" [attr.width]="(560 / track.lanes.length) * 0.8"
-                  [attr.height]="(560 / track.lanes.length) * 0.8"
+                  [attr.x]="getImageMetrics(colIndex).x" [attr.y]="getImageMetrics(colIndex).y"
+                  [attr.width]="getImageMetrics(colIndex).width" [attr.height]="getImageMetrics(colIndex).height"
                   [attr.href]="formatColumnValue(hd, column, entry.value?.toString() || '')"
                   preserveAspectRatio="xMidYMid slice" />
 
@@ -183,7 +182,7 @@
 
             <!-- Vertical Lines between columns -->
             <line *ngFor="let column of columns; let colIndex = index" [attr.x1]="getColumnX(colIndex) + column.width"
-              y1="0" [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="560 / track.lanes.length" stroke="black"
+              y1="0" [attr.x2]="getColumnX(colIndex) + column.width" [attr.y2]="getRowHeight()" stroke="black"
               stroke-width="2" stroke-opacity="0.15" />
           </g>
         </g>
