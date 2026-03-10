@@ -117,15 +117,7 @@ export class RacedaySetupComponent implements OnInit {
     this.isLoading = true;
     this.container.clear();
 
-    this.dataService.getServerVersion().subscribe({
-      next: (version) => {
-        this.serverVersion = version;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.warn('Failed to fetch server version', err);
-      }
-    });
+    this.refreshServerVersion();
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing
@@ -165,6 +157,7 @@ export class RacedaySetupComponent implements OnInit {
       // Wait for connection service
       await this.connectionMonitor.waitForConnection();
       this.connectionVerified = true;
+      this.refreshServerVersion();
 
       // Wait for the remainder of the 5s (if any)
       await minTimePromise;
@@ -228,6 +221,7 @@ export class RacedaySetupComponent implements OnInit {
   handleConnectionRestored() {
     console.log('Connection restored!');
     this.isConnectionLost = false;
+    this.refreshServerVersion();
     this.cdr.detectChanges();
   }
 
@@ -259,7 +253,20 @@ export class RacedaySetupComponent implements OnInit {
     this.connectionMonitor.waitForConnection().then(() => {
       this.showSplash = false;
       this.stopQuoteRotation();
+      this.refreshServerVersion();
       this.cdr.detectChanges();
+    });
+  }
+
+  private refreshServerVersion() {
+    this.dataService.getServerVersion().subscribe({
+      next: (version) => {
+        this.serverVersion = version;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.warn('Failed to fetch server version', err);
+      }
     });
   }
 
