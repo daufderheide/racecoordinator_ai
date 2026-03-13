@@ -14,8 +14,8 @@ export class UndoManager<T> {
   private _snapshot: T | null = null;
   private snapshotGetter: () => T | undefined;
 
-  // Debounce
   private textChange$ = new Subject<void>();
+  public stateCommitted$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -68,6 +68,7 @@ export class UndoManager<T> {
     if (previousState) {
       this.config.applier(this.config.clonner(previousState));
       this._snapshot = this.config.clonner(previousState);
+      this.stateCommitted$.next();
     }
   }
 
@@ -84,6 +85,7 @@ export class UndoManager<T> {
     if (nextState) {
       this.config.applier(this.config.clonner(nextState));
       this._snapshot = this.config.clonner(nextState);
+      this.stateCommitted$.next();
     }
   }
 
@@ -160,6 +162,15 @@ export class UndoManager<T> {
 
     this.undoStack.push(state);
     this.redoStack = [];
+    this.stateCommitted$.next();
+  }
+
+  // Transform all items in history and the current snapshot/initial state
+  public updateHistory(mapper: (item: T) => T) {
+    this.undoStack = this.undoStack.map(mapper);
+    this.redoStack = this.redoStack.map(mapper);
+    if (this.initialState) this.initialState = mapper(this.initialState);
+    if (this._snapshot) this._snapshot = mapper(this._snapshot);
   }
 
   // Expose stacks for debugging/testing if needed, or stick to public API

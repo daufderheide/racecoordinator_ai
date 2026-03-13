@@ -105,6 +105,7 @@ for (const lang of languages) {
     test('Searching and adding drivers', async ({ page }) => {
       // Use fill then wait to ensure change detection settled
       await page.fill('input.driver-search', 'Charlie');
+      await page.waitForTimeout(500);
 
       // Wait for the filtered list to show driver
       const unselectedDrivers = page.locator('.driver-item:not(.selected)');

@@ -176,36 +176,40 @@
   border-color: #38bdf8;
 }
 
-/* COM Port specific layout */
 .com-port-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   position: relative;
-  overflow: visible;
-}
-
-.com-port-row select {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
 }
 
 .status-badge {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  transition: background-color 0.3s;
+  cursor: help;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.status-dot {
+  display: block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background-color: #475569;
-  box-shadow: none;
-  transition: background-color 0.3s;
-  position: absolute;
-  right: -22px;
-  top: 50%;
-  transform: translateY(-50%);
+  transition: all 0.3s;
 }
 
-.status-badge.connected {
+.status-badge.connected .status-dot {
   background-color: #22c55e;
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }

@@ -11,10 +11,10 @@ test.describe('Track Editor Confirmation Dialog', () => {
     // 1. Navigate to an existing track
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
 
-    // 2. Make a change to trigger dirty state (change track name)
+    // 2. Make a change to trigger dirty state (empty name, which is invalid and won't auto-save)
     const nameInput = page.locator('input[name="trackNameInput"]');
     await expect(nameInput).toBeVisible();
-    await nameInput.fill('Modified Track Name');
+    await nameInput.fill('');
     await nameInput.blur();
 
     // 3. Click the back button

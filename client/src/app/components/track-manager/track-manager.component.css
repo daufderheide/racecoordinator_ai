@@ -50,6 +50,11 @@
   gap: 20px;
 }
 
+.header-right {
+  margin-top: 10px;
+  margin-right: 40px;
+}
+
 .page-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -86,7 +91,8 @@
   margin-left: 90px;
   margin-top: 40px;
   width: 320px;
-  height: 100%;
+  margin-bottom: 20px;
+  height: calc(100% - 40px - 20px);
   display: flex;
   flex-direction: column;
   background-color: transparent;
@@ -101,6 +107,27 @@
 .list-container {
   flex: 1;
   overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* Custom Scrollbar for List Container */
+.list-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list-container::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 10px;
+}
+
+.list-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.3);
+}
+
+.list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
 }
 
 .list-item {
@@ -128,6 +155,9 @@
   font-size: 1.5rem;
   line-height: 24px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
@@ -137,11 +167,17 @@
   border-top: 1px solid rgba(148, 163, 184, 0.2);
   display: flex;
   justify-content: center;
+  background-color: transparent;
+}
+
+.action-btn.full-width {
+  width: 100%;
 }
 
 /* Detail Panel */
 .detail-panel {
   flex: 1;
+  min-width: 0;
   border: none;
   border-radius: 0;
   margin-left: 160px;
@@ -159,7 +195,6 @@
 
 .detail-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid rgba(56, 189, 248, 0.5);
   padding-bottom: 10px;
@@ -171,6 +206,12 @@
   font-size: 3rem;
   color: #f8fafc;
   margin: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  padding-right: 20px;
 }
 
 .header-actions {
@@ -270,13 +311,26 @@
 
 .action-btn.ghost {
   background: transparent;
-  color: #38bdf8;
+  color: #ffffff;
   box-shadow: none;
 }
 
 .action-btn.ghost:hover {
-  background: rgba(56, 189, 248, 0.2);
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
+}
+
+.action-btn.help {
+  background: transparent;
+  color: #e0e0e0;
+  box-shadow: none;
+}
+
+.action-btn.help:hover {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  transform: translateY(-2px);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
 }
 
 .action-btn.danger {

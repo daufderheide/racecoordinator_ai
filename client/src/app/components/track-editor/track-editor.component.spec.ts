@@ -1,11 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TrackEditorComponent } from './track-editor.component';
 import { DataService } from '../../data.service';
 import { TranslationService } from '../../services/translation.service';
 import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { TranslatePipe } from '../../pipes/translate.pipe';
+import { HelpService } from '../../services/help.service';
 import { FormsModule } from '@angular/forms';
+import { SettingsService } from '../../services/settings.service';
+import { Settings } from '../../models/settings';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { Lane } from '../../models/lane';
 import { com } from '../../proto/message';
@@ -25,6 +28,12 @@ class MockDataService {
           analogIds: new Array(16).fill(-1),
           hardwareType: 0
         }]
+      },
+      {
+        entity_id: 't2',
+        name: 'Existing Track',
+        lanes: [],
+        arduino_configs: []
       }
     ]);
   }
@@ -36,6 +45,15 @@ class MockDataService {
   }
   createTrack(track: any) {
     return of({ ...track, entity_id: 't-new-id' });
+  }
+  getTrackFactorySettings() {
+    return of({
+      lanes: [
+        { background_color: '#ef4444', foreground_color: 'black', length: 100 },
+        { background_color: '#ffffff', foreground_color: 'black', length: 100 }
+      ],
+      arduino_configs: []
+    });
   }
   connectToInterfaceDataSocket() { }
   disconnectFromInterfaceDataSocket() { }
@@ -56,6 +74,11 @@ class MockDataService {
   }
 }
 
+// Mock HelpService
+class MockHelpService {
+  startGuide = jasmine.createSpy('startGuide');
+}
+
 // Mock TranslationService
 class MockTranslationService {
   translate(key: string) {
@@ -70,10 +93,32 @@ class MockRouter {
 
 // Mock ActivatedRoute
 class MockActivatedRoute {
+  private queryParamMapSubject = new BehaviorSubject(convertToParamMap({ id: 't1' }));
+  private queryParamsSubject = new BehaviorSubject({ help: 'false' });
+
   snapshot = {
-    queryParamMap: convertToParamMap({ id: 't1' })
+    get queryParamMap() { return this._parent.queryParamMapSubject.value; },
+    get queryParams() { return this._parent.queryParamsSubject.value; },
+    _parent: this
   };
-  queryParamMap = of(this.snapshot.queryParamMap);
+
+  queryParamMap = this.queryParamMapSubject.asObservable();
+  queryParams = this.queryParamsSubject.asObservable();
+
+  // Helper to trigger changes in tests
+  setQueryParams(params: any) {
+    const map = convertToParamMap(params);
+    this.queryParamMapSubject.next(map);
+    this.queryParamsSubject.next(params);
+    // Also update snapshot manually if needed, but getters handle it via _parent
+  }
+}
+
+// Mock SettingsService
+class MockSettingsService {
+  settings = new Settings();
+  getSettings() { return this.settings; }
+  saveSettings(settings: Settings) { this.settings = settings; }
 }
 
 @Component({
@@ -114,7 +159,9 @@ describe('TrackEditorComponent', () => {
         { provide: DataService, useClass: MockDataService },
         { provide: TranslationService, useClass: MockTranslationService },
         { provide: Router, useClass: MockRouter },
-        { provide: ActivatedRoute, useClass: MockActivatedRoute }
+        { provide: ActivatedRoute, useClass: MockActivatedRoute },
+        { provide: HelpService, useClass: MockHelpService },
+        { provide: SettingsService, useClass: MockSettingsService }
       ]
     })
       .compileComponents();
@@ -135,6 +182,23 @@ describe('TrackEditorComponent', () => {
     expect(component.lanes.length).toBe(1);
     expect(component.editingTrack?.entity_id).toBe('t1');
   });
+
+  it('should load factory settings for a new track', fakeAsync(() => {
+    // Setup for 'new' ID
+    const route = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
+    route.setQueryParams({ id: 'new' });
+    spyOn(dataService, 'getTrackFactorySettings').and.callThrough();
+
+    // Re-run ngOnInit logic
+    component.ngOnInit();
+    tick();
+    fixture.detectChanges();
+
+    expect(dataService.getTrackFactorySettings).toHaveBeenCalled();
+    expect(component.trackName).toBe('TM_DEFAULT_TRACK_NAME');
+    expect(component.lanes.length).toBe(2);
+    expect(component.editingTrack?.entity_id).toBe('new');
+  }));
 
   it('should handle lane management', () => {
     component.addLane();
@@ -258,5 +322,144 @@ describe('TrackEditorComponent', () => {
     expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Old Lane 3 (2) value shifted to index 1
     expect(updatedConfig.voltageConfigs?.[0]).toBeUndefined(); // Old Lane 2 (1) removed
     expect(updatedConfig.voltageConfigs?.[2]).toBeUndefined(); // Shifted
+  });
+
+  describe('Auto-save and Duplicate', () => {
+    it('should auto-save on valid name change after debounce', fakeAsync(() => {
+      spyOn(dataService, 'updateTrack').and.callThrough();
+      component.trackName = 'Valid New Name';
+      component.onInputChange(); // Triggers debounce in UndoManager
+
+      tick(600); // Wait for debounce (500ms) + small buffer
+      fixture.detectChanges();
+
+      expect(dataService.updateTrack).toHaveBeenCalled();
+      expect(component.isDirty).toBeFalse();
+    }));
+
+    it('should NOT auto-save if the name is a duplicate', fakeAsync(() => {
+      spyOn(dataService, 'updateTrack').and.callThrough();
+      // 'Existing Track' already exists in MockDataService (t2)
+      component.trackName = 'Existing Track';
+      component.onInputChange();
+
+      tick(600);
+      fixture.detectChanges();
+
+      expect(dataService.updateTrack).not.toHaveBeenCalled();
+      expect(component.isNameInvalid).toBeTrue();
+    }));
+
+    it('should remain dirty after an auto-save fails due to duplicate name (server error 409)', fakeAsync(() => {
+      spyOn(dataService, 'updateTrack').and.returnValue(throwError(() => ({ status: 409 })));
+      component.trackName = 'Conflict Name';
+      component.onInputChange();
+
+      tick(600);
+      fixture.detectChanges();
+
+      expect(dataService.updateTrack).toHaveBeenCalled();
+      expect(component.isDirty).toBeTrue();
+    }));
+
+    it('should preserve undo/redo history and rebase it after Duplicate', () => {
+      // 1. Make some changes to build history
+      component.trackName = 'Initial Name';
+      component.onInputChange();
+      // Manually call commitState to simulate a commit immediately for testing
+      component.undoManager.commitState(); 
+      
+      const firstStackCount = component.undoManager.undoStackCount;
+      expect(firstStackCount).toBeGreaterThan(0);
+
+      // 2. Perform Duplicate
+      spyOn(dataService, 'createTrack').and.returnValue(of({
+        entity_id: 'new-id-123',
+        name: 'Initial Name_1',
+        lanes: component.lanes,
+        arduino_configs: component.arduinoConfigs
+      }));
+      
+      component.saveAsNew();
+
+      // 3. Verify history preserved and rebased
+      expect(component.undoManager.undoStackCount).toBe(firstStackCount);
+      const lastUndoItem = component.undoManager.undoStackItems[component.undoManager.undoStackCount - 1] as any;
+      expect(lastUndoItem.entity_id).toBe('new-id-123');
+      expect(lastUndoItem.name).toBe('Initial Name_1');
+    });
+
+    it('should highlight the name field in red when invalid', () => {
+      component.isLoading = false; // Ensure validation is active
+      component.trackName = ''; // Invalid: empty
+      expect(component.isNameInvalid).toBeTrue();
+      
+      component.trackName = 'Existing Track'; // Invalid: duplicate (from MockDataService)
+      expect(component.isNameInvalid).toBeTrue();
+
+      component.trackName = 'Unique Name';
+      expect(component.isNameInvalid).toBeFalse();
+    });
+  });
+
+  describe('Guided Help', () => {
+    let helpService: HelpService;
+    let settingsService: SettingsService;
+    let mockSettingsService: MockSettingsService;
+ 
+    beforeEach(() => {
+      helpService = TestBed.inject(HelpService);
+      settingsService = TestBed.inject(SettingsService);
+      mockSettingsService = settingsService as any as MockSettingsService;
+      mockSettingsService.settings = new Settings();
+    });
+
+    it('should trigger help automatically on first visit', fakeAsync(() => {
+      spyOn(component, 'startHelp').and.callThrough();
+       
+      component.ngOnInit();
+      tick(1100);
+       
+      expect(component.startHelp).toHaveBeenCalled();
+      expect(helpService.startGuide).toHaveBeenCalled();
+      expect(mockSettingsService.settings.trackEditorHelpShown).toBeTrue();
+    }));
+
+    it('should trigger help if help=true query param is present even if already shown', fakeAsync(() => {
+      mockSettingsService.settings.trackEditorHelpShown = true;
+      const activatedRoute = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
+      activatedRoute.setQueryParams({ help: 'true' });
+      spyOn(component, 'startHelp').and.callThrough();
+       
+      component.ngOnInit();
+      tick(1100);
+       
+      expect(component.startHelp).toHaveBeenCalled();
+    }));
+
+    it('should NOT trigger help automatically if already shown and no query param', fakeAsync(() => {
+      mockSettingsService.settings.trackEditorHelpShown = true;
+      spyOn(component, 'startHelp').and.callThrough();
+       
+      component.ngOnInit();
+      tick(1100);
+       
+      expect(component.startHelp).not.toHaveBeenCalled();
+      expect(helpService.startGuide).not.toHaveBeenCalled();
+    }));
+
+    it('should trigger help when startHelp is called manually', () => {
+      component.startHelp();
+      expect(helpService.startGuide).toHaveBeenCalled();
+    });
+
+    it('should expand lanes section if collapsed during help', () => {
+      component.sectionsExpanded.lanes = false;
+      component.lanes = [new Lane('l1', 'white', 'black', 100)];
+      
+      component.startHelp();
+      
+      expect(component.sectionsExpanded.lanes).toBeTrue();
+    });
   });
 });

@@ -7,23 +7,25 @@
       <h1 class="page-title">{{ 'TE_TITLE' | translate }}</h1>
     </div>
     <div class="header-right">
-      <app-undo-redo-controls [manager]="undoManager"></app-undo-redo-controls>
+      <app-toolbar [showUndo]="true" [showRedo]="true" [showHelp]="true" [undoManager]="undoManager"
+        (help)="startHelp()">
+      </app-toolbar>
     </div>
   </div>
 
   <div class="content-split">
     <!-- Editor Panel -->
     <div class="editor-panel">
-      <div class="editor-section fixed-header">
+      <div id="track-name-section" class="editor-section fixed-header" [class.invalid]="isNameInvalid">
         <label class="track-name-label">{{ 'TE_TRACK_NAME' | translate }}</label>
-        <input type="text" [(ngModel)]="trackName" (focus)="onInputFocus()" (blur)="onInputBlur()"
+        <input id="track-name-input" type="text" [(ngModel)]="trackName" (focus)="onInputFocus()" (blur)="onInputBlur()"
           (ngModelChange)="onInputChange()" autocomplete="off" data-lpignore="true" data-form-type="other"
           name="trackNameInput">
       </div>
 
       <div class="sections-wrapper">
 
-        <div class="config-section">
+        <div id="lane-editor-section" class="config-section">
           <div class="section-header" (click)="toggleSection('lanes')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.lanes">▼</span>
             <h1>{{ 'TE_LANE_EDITOR' | translate }}</h1>
@@ -37,28 +39,28 @@
                 <div class="lane-preview-badge" [style.background-color]="lane.background_color"
                   [style.color]="lane.foreground_color">
                   <span class="preview-number">#{{ i + 1 }}</span>
-                  <input type="number" class="preview-length-input" [ngModel]="lane.length"
+                  <input [id]="'lane-length-' + i" type="number" class="preview-length-input" [ngModel]="lane.length"
                     (change)="updateLaneLength(i, $any($event.target).value)" (focus)="onInputFocus()"
                     (blur)="onInputBlur()">
                 </div>
 
                 <div class="lane-controls">
                   <div class="control-group">
-                    <input type="color" [ngModel]="lane.background_color"
+                    <input [id]="'lane-bg-' + i" type="color" [ngModel]="lane.background_color"
                       (ngModelChange)="updateLaneBackgroundColor(i, $event)" (focus)="onInputFocus()"
                       (blur)="onInputBlur()">
                     <label>{{ 'TE_BACKGROUND_COLOR' | translate }}</label>
                   </div>
 
                   <div class="control-group">
-                    <input type="color" [ngModel]="lane.foreground_color"
+                    <input [id]="'lane-fg-' + i" type="color" [ngModel]="lane.foreground_color"
                       (ngModelChange)="updateLaneForegroundColor(i, $event)" (focus)="onInputFocus()"
                       (blur)="onInputBlur()">
                     <label>{{ 'TE_FOREGROUND_COLOR' | translate }}</label>
                   </div>
                 </div>
 
-                <button class="action-btn danger small" (click)="removeLane(i)">X</button>
+                <button [id]="'lane-delete-' + i" class="action-btn danger small" (click)="removeLane(i)">X</button>
               </div>
             </div>
           </div>
@@ -77,7 +79,7 @@
                 <span
                   style="font-size: 1.1rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">Arduino</span>
                 <div class="spacer"></div>
-                <button class="action-btn small add-list-btn"
+                <button id="add-interface-btn" class="action-btn small add-list-btn"
                   (click)="addArduinoConfig(); $event.stopPropagation()">+</button>
               </div>
             </div>
@@ -87,14 +89,8 @@
 
       <div class="editor-actions">
         <div class="spacer"></div>
-        <button class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || !isNameUnique(false)"
-          [title]="(!isNameUnique(false)) ? ('TE_ERROR_NAME_EXISTS' | translate) : ''">
-          {{ 'TE_SAVE_AS_NEW' | translate }}
-        </button>
-        <button class="action-btn primary" (click)="updateTrack()"
-          [disabled]="isSaving || !hasChanges() || !isNameUnique(true)"
-          [title]="(hasChanges() && !isNameUnique(true)) ? ('TE_ERROR_NAME_EXISTS' | translate) : ''">
-          {{ 'TE_UPDATE' | translate }}
+        <button id="track-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || isDirty">
+          {{ 'TE_DUPLICATE' | translate }}
         </button>
       </div>
     </div>
@@ -115,3 +111,4 @@
     </div>
   </div>
 </div>
+<app-help-overlay></app-help-overlay>

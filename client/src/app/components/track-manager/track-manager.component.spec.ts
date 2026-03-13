@@ -4,19 +4,34 @@ import { DataService } from '../../data.service';
 import { TranslationService } from '../../services/translation.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { SettingsService } from '../../services/settings.service';
+import { Settings } from '../../models/settings';
 import { TranslatePipe } from '../../pipes/translate.pipe';
 import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
+import { Track } from '../../models/track';
 
 // Mock DataService
 class MockDataService {
   getTracks() {
     return of([
-      { entity_id: 't1', name: 'Track 1', lanes: [{ objectId: 'l1', length: 10 }] },
-      { entity_id: 't2', name: 'Track 2', lanes: [{ objectId: 'l2', length: 12 }] }
+      new Track('t1', 'Track 1', [{ objectId: 'l1', length: 10 } as any], false, []),
+      new Track('t2', 'Track 2', [{ objectId: 'l2', length: 12 } as any], false, [])
     ]);
   }
   deleteTrack(id: string) {
     return of(true);
+  }
+  createTrack(track: any) {
+    return of({ ...track, entity_id: 't-new-id' });
+  }
+  getTrackFactorySettings() {
+    return of({
+      lanes: [
+        { background_color: '#ef4444', foreground_color: 'black', length: 0 },
+        { background_color: '#ffffff', foreground_color: 'black', length: 0 }
+      ],
+      arduino_configs: [{}]
+    });
   }
   connectToInterfaceDataSocket() { }
   disconnectFromInterfaceDataSocket() { }
@@ -51,6 +66,13 @@ class MockActivatedRoute {
     }
   };
   queryParamMap = of(this.snapshot.queryParamMap);
+  queryParams = of({});
+}
+
+// Mock SettingsService
+class MockSettingsService {
+  getSettings() { return new Settings(); }
+  saveSettings(settings: Settings) { }
 }
 
 @Component({
@@ -81,7 +103,8 @@ describe('TrackManagerComponent', () => {
         { provide: DataService, useClass: MockDataService },
         { provide: TranslationService, useClass: MockTranslationService },
         { provide: Router, useClass: MockRouter },
-        { provide: ActivatedRoute, useClass: MockActivatedRoute }
+        { provide: ActivatedRoute, useClass: MockActivatedRoute },
+        { provide: SettingsService, useClass: MockSettingsService }
       ]
     })
       .compileComponents();
@@ -112,9 +135,30 @@ describe('TrackManagerComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 't1' } });
   });
 
-  it('should navigate to editor for new track', () => {
+  it('should create a new track with unique name and navigate', () => {
+    spyOn(dataService, 'getTrackFactorySettings').and.callThrough();
+    spyOn(dataService, 'createTrack').and.callThrough();
+    spyOn(component.translationService, 'translate').and.returnValue('New Track');
+
     component.createNewTrack();
-    expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 'new' } });
+
+    expect(dataService.getTrackFactorySettings).toHaveBeenCalled();
+    expect(dataService.createTrack).toHaveBeenCalledWith(jasmine.objectContaining({
+      name: 'New Track',
+      entity_id: 'new'
+    }));
+    expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 't-new-id' } });
+  });
+
+  it('should generate a unique name if default name exists', () => {
+    spyOn(dataService, 'createTrack').and.callThrough();
+    spyOn(component.translationService, 'translate').and.returnValue('Track 1'); // Exists in MockDataService
+
+    component.createNewTrack();
+
+    expect(dataService.createTrack).toHaveBeenCalledWith(jasmine.objectContaining({
+      name: 'Track 1_1'
+    }));
   });
 
   it('should show delete confirmation modal on deleteTrack', () => {
@@ -141,5 +185,16 @@ describe('TrackManagerComponent', () => {
 
     expect(component.showDeleteConfirm).toBeFalse();
     expect(dataService.deleteTrack).not.toHaveBeenCalled();
+  });
+
+  it('should handle extremely long track names without logic errors', () => {
+    const longName = 'A'.repeat(500);
+    const mockTrack = new Track('t-long', longName, [], false, []);
+    
+    component.tracks = [mockTrack];
+    component.selectTrack(mockTrack);
+    
+    expect(component.selectedTrack?.name).toBe(longName);
+    // Logic should remain sound even if CSS truncates it visually
   });
 });

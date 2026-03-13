@@ -53,6 +53,9 @@
 .header-right {
   margin-right: 60px;
   margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 /* Ensure the back button in the header is white */
@@ -136,6 +139,22 @@
   border-color: #38bdf8;
   outline: none;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+/* Validation Highlights */
+.editor-section.invalid .track-name-label {
+  color: #ef4444 !important;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.editor-section.invalid input[type="text"] {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.editor-section.invalid input[type="text"]:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
 .editor-panel .track-name-label {
@@ -285,6 +304,10 @@
   transform: translateY(-1px);
   box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
 }
+
+
+
+
 
 .action-btn.secondary {
   background: transparent;

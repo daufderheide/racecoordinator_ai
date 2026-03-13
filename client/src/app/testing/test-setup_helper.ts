@@ -4,6 +4,8 @@ import { com } from '../proto/message';
 export interface SetupOptions {
   skipIntro?: boolean;
   walkthroughSeen?: boolean;
+  trackManagerHelpShown?: boolean;
+  trackEditorHelpShown?: boolean;
 }
 
 export class TestSetupHelper {
@@ -119,6 +121,8 @@ export class TestSetupHelper {
     // Mock Settings using localStorage (since no component actually calls /api/settings)
     await this.setupSettings(page, {
       racedaySetupWalkthroughSeen: options.walkthroughSeen ?? false,
+      trackManagerHelpShown: options.trackManagerHelpShown ?? true,
+      trackEditorHelpShown: options.trackEditorHelpShown ?? true,
       racedayColumns: ['driver.name', 'lapCount'],
       columnLayouts: {
         'driver.name': { 'CenterCenter': 'driver.name' },
@@ -294,6 +298,7 @@ export class TestSetupHelper {
 
   static async setupTrackMocks(page: Page) {
     await page.route('**/api/tracks', async (route) => {
+      const method = route.request().method();
       const tracks = [
         {
           entity_id: 't1',
@@ -308,8 +313,8 @@ export class TestSetupHelper {
             baudRate: 115200,
             debounceUs: 5000,
             hardwareType: 1, // Mega
-            digitalIds: [1001, 1002, -1, -1],
-            analogIds: [-1, -1, -1, -1],
+            digitalIds: new Array(60).fill(0),
+            analogIds: new Array(16).fill(0),
             normallyClosedLaneSensors: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
@@ -337,8 +342,8 @@ export class TestSetupHelper {
             baudRate: 115200,
             debounceUs: 5000,
             hardwareType: 0, // Uno
-            digitalIds: [1001, 1002, 1003, 1004],
-            analogIds: [-1, -1, -1, -1],
+            digitalIds: new Array(60).fill(0),
+            analogIds: new Array(16).fill(0),
             normallyClosedLaneSensors: false,
             normallyClosedRelays: true,
             globalInvertLights: 0,
@@ -353,11 +358,54 @@ export class TestSetupHelper {
         }
       ];
 
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(tracks),
-      });
+      if (method === 'POST') {
+        const postData = route.request().postDataJSON();
+        const newTrack = { ...postData, entity_id: 't-new-id' };
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(newTrack),
+        });
+      } else {
+        // Include t-new-id if it's "created" (flexible for tests)
+        const extendedTracks = [...tracks, {
+          entity_id: 't-new-id',
+          name: 'New Track',
+          lanes: [
+            { entity_id: 'l1', length: 10, backgroundColor: '#ef4444', foregroundColor: 'black' },
+            { entity_id: 'l2', length: 10, backgroundColor: '#ffffff', foregroundColor: 'black' },
+            { entity_id: 'l3', length: 10, backgroundColor: '#3b82f6', foregroundColor: 'black' },
+            { entity_id: 'l4', length: 10, backgroundColor: '#fbbf24', foregroundColor: 'black' }
+          ],
+          arduino_configs: []
+        }];
+
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(extendedTracks),
+        });
+      }
+    });
+
+    await page.route('**/api/tracks/*', async (route) => {
+      const method = route.request().method();
+      if (method === 'PUT') {
+        const postData = route.request().postDataJSON();
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(postData),
+        });
+      } else if (method === 'DELETE') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true }),
+        });
+      } else {
+        await route.continue();
+      }
     });
 
     await page.route('**/api/serial-ports', async (route) => {
@@ -365,6 +413,58 @@ export class TestSetupHelper {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(['COM1', 'COM2', 'COM3', 'COM4']),
+      });
+    });
+
+    await page.route('**/api/tracks/factory-settings', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          lanes: [
+            { background_color: '#ef4444', foreground_color: 'black', length: 10 },
+            { background_color: '#ffffff', foreground_color: 'black', length: 10 },
+            { background_color: '#3b82f6', foreground_color: 'black', length: 10 },
+            { background_color: '#fbbf24', foreground_color: 'black', length: 10 }
+          ],
+          arduino_configs: [{
+            name: 'Arduino 1',
+            commPort: '',
+            baudRate: 115200,
+            debounceUs: 5000,
+            hardwareType: 0,
+            digitalIds: new Array(60).fill(0),
+            analogIds: new Array(16).fill(0),
+            normallyClosedLaneSensors: false,
+            normallyClosedRelays: true,
+            globalInvertLights: 0,
+            useLapsForPits: 0,
+            useLapsForPitEnd: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
+            ledStrings: null,
+            ledLaneColorOverrides: null,
+            lapPinPitBehavior: 3,
+            voltageConfigs: {}
+          }]
+        }),
+      });
+    });
+
+    // Mock interface initialization and updates to avoid browser errors
+    await page.route('**/api/initialize-interface', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.route('**/api/update-interface-config', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
       });
     });
   }
@@ -831,5 +931,50 @@ export class TestSetupHelper {
 
     // Apply immediately to current execution context to be safe
     await page.addStyleTag({ content: css }).catch(() => {});
+  }
+
+  static async setupManyTracksMock(page: Page) {
+    await page.route('**/api/tracks', async (route) => {
+      const tracks = [];
+      for (let i = 1; i <= 20; i++) {
+        let name = `Track ${i}`;
+        if (i === 5) {
+          name = 'Extremely Long Track Name That Should Definitely Be Truncated In Both The Sidebar And The Summary Title To Prevent Layout Issues';
+        }
+        tracks.push({
+          entity_id: `t${i}`,
+          name: name,
+          lanes: [
+            { entity_id: `l${i}_1`, length: 10, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
+            { entity_id: `l${i}_2`, length: 10, backgroundColor: '#0000ff', foregroundColor: '#ffffff' }
+          ],
+          arduino_configs: [{
+            name: `Arduino ${i}`,
+            commPort: `COM${i}`,
+            baudRate: 115200,
+            debounceUs: 5000,
+            hardwareType: 1,
+            digitalIds: [1001, 1002],
+            analogIds: [-1, -1],
+            normallyClosedLaneSensors: false,
+            normallyClosedRelays: true,
+            globalInvertLights: 0,
+            useLapsForPits: 0,
+            useLapsForPitEnd: 0,
+            usePitsAsLaps: false,
+            useLapsForSegments: true,
+            ledStrings: null,
+            ledLaneColorOverrides: null,
+            lapPinPitBehavior: 3
+          }]
+        });
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(tracks),
+      });
+    });
   }
 }

@@ -8,7 +8,11 @@
       <h1 class="page-title">{{ 'TM_TITLE' | translate }}</h1>
     </div>
     <div class="header-right">
-      <!-- Placeholders for status icons if needed -->
+      <div class="header-actions" *ngIf="selectedTrack">
+        <app-toolbar [showEdit]="true" [showHelp]="true" [showDelete]="true" [isSaving]="isSaving"
+          (edit)="editTrack()" (help)="startHelp()" (delete)="deleteTrack()">
+        </app-toolbar>
+      </div>
     </div>
   </div>
 
@@ -22,23 +26,15 @@
         </div>
       </div>
       <div class="list-actions">
-        <!-- New Track button removed as per request -->
+        <button id="create-track-btn" class="action-btn primary full-width" (click)="createNewTrack()">
+          {{ 'TM_CREATE_NEW' | translate }}
+        </button>
       </div>
     </div>
 
     <div class="detail-panel" *ngIf="selectedTrack">
       <div class="detail-header">
         <h2>{{ selectedTrack.name }}</h2>
-        <div class="header-actions">
-          <button class="action-btn ghost small icon-only" (click)="editTrack()" [disabled]="isSaving"
-            [title]="'TM_EDIT' | translate">
-            <span class="material-icons" style="font-size: 1.4rem;">edit</span>
-          </button>
-          <button class="action-btn danger small icon-only" (click)="deleteTrack()" [disabled]="isSaving"
-            [title]="'TM_DELETE' | translate">
-            <span style="font-family: sans-serif; font-weight: bold;">X</span>
-          </button>
-        </div>
       </div>
       <div class="detail-content">
         <div class="arduino-summary-container" *ngIf="selectedTrack.arduino_configs && selectedTrack.arduino_configs.length > 0" style="padding: 0; border: none; display: flex; flex-direction: column; gap: 15px;">
@@ -71,3 +67,4 @@
     </div>
   </div>
 </div>
+<app-help-overlay></app-help-overlay>

@@ -17,6 +17,8 @@ export class Settings {
   serverPort: number = 7070;
   language: string = '';
   racedaySetupWalkthroughSeen: boolean = false;
+  trackManagerHelpShown: boolean = false;
+  trackEditorHelpShown: boolean = false;
 
   flagGreen?: string;
   flagYellow?: string;

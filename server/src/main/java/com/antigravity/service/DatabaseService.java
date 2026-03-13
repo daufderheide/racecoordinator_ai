@@ -7,7 +7,6 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
-import com.antigravity.proto.AssetMessage;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -41,17 +40,17 @@ public class DatabaseService {
     // Fetch assets
     AssetService assetService = new AssetService(database,
         context.getDataRoot() + database.getName() + "/assets");
-    List<AssetMessage> allAssets = assetService.getAllAssets();
+    List<com.antigravity.proto.AssetMessage> allAssets = assetService.getAllAssets();
 
-    List<AssetMessage> helmetAssets = allAssets.stream()
+    List<com.antigravity.proto.AssetMessage> helmetAssets = allAssets.stream()
         .filter(a -> a.getName().toLowerCase().contains("helmet"))
         .collect(Collectors.toList());
 
-    AssetMessage beepSound = allAssets.stream()
-        .filter(a -> a.getName().equals("Lap Beep"))
+    com.antigravity.proto.AssetMessage beepSound = allAssets.stream()
+        .filter(a -> a.getName().toLowerCase().contains("beep"))
         .findFirst().orElse(null);
 
-    AssetMessage drivebySound = allAssets.stream()
+    com.antigravity.proto.AssetMessage drivebySound = allAssets.stream()
         .filter(a -> a.getName().equals("Lap Driveby"))
         .findFirst().orElse(null);
 
@@ -82,7 +81,7 @@ public class DatabaseService {
     System.out.println("Drivers reset.");
   }
 
-  private Driver createDriver(String name, String nickname, List<AssetMessage> helmetAssets, int index,
+  private Driver createDriver(String name, String nickname, List<com.antigravity.proto.AssetMessage> helmetAssets, int index,
       Driver.AudioConfig lapAudio, Driver.AudioConfig bestLapAudio, String sequenceId) {
     String avatarUrl = null;
     if (!helmetAssets.isEmpty()) {
@@ -194,8 +193,8 @@ public class DatabaseService {
     // Fetch assets
     AssetService assetService = new AssetService(database,
         context.getDataRoot() + database.getName() + "/assets");
-    List<AssetMessage> allAssets = assetService.getAllAssets();
-    List<AssetMessage> helmetAssets = allAssets.stream()
+    List<com.antigravity.proto.AssetMessage> allAssets = assetService.getAllAssets();
+    List<com.antigravity.proto.AssetMessage> helmetAssets = allAssets.stream()
         .filter(a -> a.getName().toLowerCase().contains("helmet"))
         .collect(Collectors.toList());
 
@@ -275,5 +274,18 @@ public class DatabaseService {
     List<com.antigravity.models.Team> teams = new java.util.ArrayList<>();
     teamCollection.find().into(teams);
     return teams;
+  }
+
+  public Track getFactoryTrack() {
+    List<Lane> lanes = new ArrayList<>();
+    lanes.add(new Lane("#ef4444", "black", 0));
+    lanes.add(new Lane("#ffffff", "black", 0));
+    lanes.add(new Lane("#3b82f6", "black", 0));
+    lanes.add(new Lane("#fbbf24", "black", 0));
+
+    com.antigravity.protocols.arduino.ArduinoConfig config = new com.antigravity.protocols.arduino.ArduinoConfig();
+    List<com.antigravity.protocols.arduino.ArduinoConfig> configs = new ArrayList<>();
+    configs.add(config);
+    return new Track("New Track", lanes, configs, null, null);
   }
 }

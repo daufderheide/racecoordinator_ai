@@ -1,4 +1,4 @@
-<div *ngIf="config" class="arduino-config-container">
+<div *ngIf="config" class="arduino-config-container" [id]="'arduino-editor-' + index">
 
   <div class="config-section">
     <div class="section-header" (click)="toggleSection('arduino')">
@@ -22,7 +22,8 @@
               <div class="board-controls">
                 <div class="control-group">
                   <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
-                  <select [ngModel]="config.hardwareType.toString()" (ngModelChange)="onHardwareTypeChange(+$event)">
+                  <select [id]="'arduino-board-type-' + index" [ngModel]="config.hardwareType.toString()"
+                    (ngModelChange)="onHardwareTypeChange(+$event)">
                     <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
                     <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
                   </select>
@@ -31,19 +32,21 @@
                 <div class="control-group">
                   <label>{{ 'AE_COM_PORT' | translate }}</label>
                   <div class="com-port-row">
-                    <select [(ngModel)]="config.commPort" (change)="updateArduinoConfig()">
+                    <select [id]="'arduino-com-port-' + index" [(ngModel)]="config.commPort"
+                      (change)="updateArduinoConfig()">
                       <option value="" disabled>{{ 'AE_SELECT_PORT' | translate }}</option>
                       <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
                     </select>
-                    <span class="status-badge" [class.connected]="interfaceStatus === 0"
+                    <button type="button" [id]="'arduino-status-badge-' + index" class="status-badge"
+                      [class.connected]="interfaceStatus === 0"
                       [title]="interfaceStatus === 0 ? 'Connected' : 'Disconnected'">
-                      <span class="status-dot"></span>
-                    </span>
+                      <div class="status-dot"></div>
+                    </button>
                   </div>
                 </div>
                 <div class="control-group">
                   <label>{{ 'AE_DEBOUNCE_TIME' | translate }} <span class="unit-lowercase">(µs)</span></label>
-                  <input type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
+                  <input [id]="'arduino-debounce-' + index" type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
                     step="100">
                 </div>
               </div>
@@ -58,7 +61,7 @@
               <div class="right-controls">
                 <div class="control-group">
                   <label>{{ 'AE_LAP_PIN_PIT_BEHAVIOR' | translate }}</label>
-                  <select [(ngModel)]="config.lapPinPitBehavior" (change)="updateArduinoConfig()">
+                  <select [id]="'arduino-pit-behavior-' + index" [(ngModel)]="config.lapPinPitBehavior" (change)="updateArduinoConfig()">
                     <option [value]="0">{{ 'AE_LAP_PIN_PIT_NONE' | translate }}</option>
                     <option [value]="1">{{ 'AE_LAP_PIN_PIT_IN' | translate }}</option>
                     <option [value]="2">{{ 'AE_LAP_PIN_PIT_OUT' | translate }}</option>
@@ -67,14 +70,14 @@
                 </div>
                 <div class="control-group">
                   <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" [ngModel]="config.normallyClosedLaneSensors"
+                    <input [id]="'arduino-nc-sensors-' + index" type="checkbox" [ngModel]="config.normallyClosedLaneSensors"
                       (ngModelChange)="config.normallyClosedLaneSensors = $event; updateArduinoConfig()">
                     {{ 'AE_NORMALLY_CLOSED_SENSORS' | translate }}
                   </label>
                 </div>
                 <div class="control-group">
                   <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" [ngModel]="config.normallyClosedRelays"
+                    <input [id]="'arduino-nc-relays-' + index" type="checkbox" [ngModel]="config.normallyClosedRelays"
                       (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
                     {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
                   </label>
@@ -99,10 +102,10 @@
                   <div *ngFor="let pin of availablePins" class="pin-item">
                     <div class="pin-header">
                       <label>D{{pin}}</label>
-                      <span class="status-badge small" [class.connected]="isPinActive(true, pin)"
+                      <span [id]="'arduino-digital-status-' + pin" class="status-badge small" [class.connected]="isPinActive(true, pin)"
                         (click)="togglePinState(true, pin)" style="cursor: pointer;"></span>
                     </div>
-                    <select [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
+                    <select [id]="'arduino-digital-selector-' + pin" [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
                       <option *ngFor="let action of digitalPinActions" [value]="action.value">{{ action.label }}
                       </option>
                     </select>
@@ -123,10 +126,10 @@
                   <div *ngFor="let pin of availableAnalogPins" class="pin-item">
                     <div class="pin-header">
                       <label>A{{pin}}</label>
-                      <span class="status-badge small" [class.connected]="isPinActive(false, pin)"
+                      <span [id]="'arduino-analog-status-' + pin" class="status-badge small" [class.connected]="isPinActive(false, pin)"
                         (click)="togglePinState(false, pin)" style="cursor: pointer;"></span>
                     </div>
-                    <select [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
+                    <select [id]="'arduino-analog-selector-' + pin" [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
                       <option *ngFor="let action of analogPinActions" [value]="action.value">{{ action.label }}</option>
                     </select>
                   </div>
@@ -134,8 +137,7 @@
               </div>
             </div>
 
-            <!-- Voltage Configuration Section inside scrollable pins-config -->
-            <div *ngIf="getVoltageLanes().length > 0" class="config-section voltage-config-section">
+            <div *ngIf="getVoltageLanes().length > 0" class="config-section voltage-config-section" [id]="'arduino-voltage-section-' + index">
               <div class="section-header" (click)="toggleSection('voltage')">
                 <span class="expander-icon" [class.collapsed]="!sectionsExpanded.voltage">▼</span>
                 <h4>{{ 'AE_VOLTAGE_CONFIG_HEADER' | translate }}</h4>
@@ -145,7 +147,7 @@
 
                 <div
                   style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 12px;">
-                  <button class="link-toggle-btn" (click)="resetMaxSeenAll()"
+                  <button [id]="'arduino-voltage-reset-' + index" class="link-toggle-btn" (click)="resetMaxSeenAll()"
                     title="Reset all tracked max voltage values">
                     <span class="material-icons" style="font-size: 1.2rem;">undo</span>
                     <span>{{ 'AE_RESET_MAX_SEEN' | translate }}</span>
@@ -156,7 +158,7 @@
                   <div *ngFor="let lane of getVoltageLanes()" class="pin-item voltage-pin-item">
                     <div class="voltage-lane-header">
                       <label>{{ 'AE_PIN_VOLTAGE_LANE' | translate:{lane: lane + 1} }}</label>
-                      <span class="material-icons clickable-link-icon" [class.linked]="isVoltageLinked"
+                      <span [id]="'arduino-voltage-link-' + index + '-' + lane" class="material-icons clickable-link-icon" [class.linked]="isVoltageLinked"
                         (click)="isVoltageLinked = !isVoltageLinked"
                         [title]="isVoltageLinked ? ('AE_LANES_LINKED' | translate) : ('AE_LANES_INDEPENDENT' | translate)">
                         {{ isVoltageLinked ? 'link' : 'link_off' }}
@@ -164,15 +166,15 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
                       <span class="unit-lowercase" style="color: #94a3b8;">{{ 'AE_VOLTAGE_MAX_VAL' | translate }}</span>
-                      <input type="number" [ngModel]="getVoltageMax(lane)" (ngModelChange)="setVoltageMax(lane, $event)"
+                      <input [id]="'arduino-voltage-max-' + index + '-' + lane" type="number" [ngModel]="getVoltageMax(lane)" (ngModelChange)="setVoltageMax(lane, $event)"
                         min="0" max="1023"
                         style="width: 80px; background: rgba(15, 23, 42, 0.8); border: none; color: #cbd5e1; border-radius: 4px; text-align: right;">
                     </div>
                     <div class="live-voltage-container">
                       <span class="live-label">{{ 'AE_LIVE_VOLTAGE_LABEL' | translate }}:</span>
-                      <span class="live-value">{{ getLiveVoltageForLane(lane) }}</span>
+                      <span [id]="'arduino-voltage-live-' + index + '-' + lane" class="live-value">{{ getLiveVoltageForLane(lane) }}</span>
                     </div>
-                    <button class="set-max-btn" (click)="setMaxToSeen(lane)"
+                    <button [id]="'arduino-voltage-set-max-' + index + '-' + lane" class="set-max-btn" (click)="setMaxToSeen(lane)"
                       [disabled]="(maxVoltagesSeen[lane] ?? 0) === 0">
                       <span class="material-icons" style="color: #4ade80; font-size: 1.2rem;">arrow_circle_up</span>
                       Set Max to: {{

@@ -13,7 +13,9 @@ mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory
 echo "Syncing source to $ISOLATED_DIR..."
-cp -R src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
+# Remove existing directories to ensure clean sync and avoid attribute/permission issues when overwriting
+rm -rf "$ISOLATED_DIR/src"
+cp -Rf src karma.conf.js package.json angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json package-lock.json "$ISOLATED_DIR/"
 
 cd "$ISOLATED_DIR" || exit
 

@@ -591,6 +591,127 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
   }
 
+  getHelpSteps(): any[] {
+    const steps: any[] = [
+      {
+        selector: `#arduino-editor-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: `#arduino-com-port-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_COM_PORT_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_COM_PORT_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-status-badge-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_STATUS_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_STATUS_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: `#arduino-board-type-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_BOARD_TYPE_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_BOARD_TYPE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-debounce-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_DEBOUNCE_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_DEBOUNCE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-pit-behavior-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_PIT_BEHAVIOR_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_PIT_BEHAVIOR_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-nc-sensors-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_NC_SENSORS_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_NC_SENSORS_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-nc-relays-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_NC_RELAYS_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_NC_RELAYS_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-digital-selector-4`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_PIN_SELECTOR_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_PIN_SELECTOR_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-digital-status-4`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_PIN_STATUS_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_PIN_STATUS_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-analog-selector-2`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_SELECTOR_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_SELECTOR_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: `#arduino-analog-status-2`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_STATUS_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_STATUS_CONTENT'),
+        position: 'bottom'
+      }
+    ];
+
+    const voltageLanes = this.getVoltageLanes();
+    if (voltageLanes.length > 0) {
+      // For lane-specific steps, we target the first lane (index 0) in the list
+      steps.push({
+        selector: `#arduino-voltage-section-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_CONTENT'),
+        position: 'top'
+      });
+      const firstLane = voltageLanes[0];
+      steps.push({
+        selector: `#arduino-voltage-max-${this.index}-${firstLane}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT'),
+        position: 'bottom'
+      });
+      steps.push({
+        selector: `#arduino-voltage-link-${this.index}-${firstLane}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT'),
+        position: 'bottom'
+      });
+      steps.push({
+        selector: `#arduino-voltage-live-${this.index}-${firstLane}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT'),
+        position: 'bottom'
+      });
+      steps.push({
+        selector: `#arduino-voltage-set-max-${this.index}-${firstLane}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT'),
+        position: 'bottom'
+      });
+      steps.push({
+        selector: `#arduino-voltage-reset-${this.index}`,
+        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE'),
+        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT'),
+        position: 'bottom'
+      });
+    }
+
+    return steps;
+  }
+
   removeInterface(event: Event) {
     event.stopPropagation();
     this.remove.emit();

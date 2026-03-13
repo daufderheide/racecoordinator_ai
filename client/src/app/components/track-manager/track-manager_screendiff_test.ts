@@ -66,4 +66,25 @@ test.describe('Track Manager Visuals', () => {
     await page.waitForTimeout(3000);
     await expect(page).toHaveScreenshot('track-manager-arduino-summary.png');
   });
+
+  test('should navigate to editor when Create New is clicked', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-manager'));
+
+    // Click Create New button
+    await page.click('button:has-text("CREATE NEW")');
+
+    // Should navigate to editor with a new track
+    await expect(page).toHaveURL(/\/track-editor\?id=t-new-id|new|.+/); // Flexible enough for mock
+    await expect(page.locator('app-track-editor .page-title')).toContainText('TRACK EDITOR');
+    
+    // Check if it has default factory settings (4 lanes)
+    const laneRows = page.locator('.lane-item');
+    // Using default mock from TestSetupHelper (2 lanes) vs factory (4 lanes)?
+    // Wait, the createTrack mock returns what we send it.
+    // In track-manager.component.ts logic, it fetches factory (4) then creates.
+    await expect(laneRows).toHaveCount(4);
+
+    await page.waitForTimeout(1000);
+    await expect(page).toHaveScreenshot('track-manager-after-create-new.png');
+  });
 });

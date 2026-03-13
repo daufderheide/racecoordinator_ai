@@ -92,6 +92,9 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (el) {
+      // Ensure element is visible
+      el.scrollIntoView({ behavior: 'auto', block: 'center' });
+      
       const rect = el.getBoundingClientRect();
 
       this.highlightStyle = {

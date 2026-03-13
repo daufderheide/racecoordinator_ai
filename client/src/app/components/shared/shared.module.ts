@@ -11,6 +11,7 @@ import { BackButtonComponent } from './back-button/back-button.component';
 import { AudioSelectorComponent } from './audio-selector/audio-selector.component';
 import { ItemSelectorComponent } from './item-selector/item-selector.component';
 import { UndoRedoControlsComponent } from './undo-redo-controls/undo-redo-controls.component';
+import { ToolbarComponent } from './toolbar/toolbar.component';
 import { HeatListComponent } from './heat-list/heat-list.component';
 import { AvatarUrlPipe } from '../../pipes/avatar-url.pipe';
 import { HelpOverlayComponent } from './help-overlay/help-overlay.component';
@@ -35,7 +36,8 @@ import { AboutDialogComponent } from './about-dialog/about-dialog.component';
     ImageSelectorComponent,
     ReorderDialogComponent,
     ColumnPreviewComponent,
-    AboutDialogComponent
+    AboutDialogComponent,
+    ToolbarComponent
   ],
   imports: [
     CommonModule,
@@ -62,7 +64,8 @@ import { AboutDialogComponent } from './about-dialog/about-dialog.component';
     ImageSelectorComponent,
     ReorderDialogComponent,
     ColumnPreviewComponent,
-    AboutDialogComponent
+    AboutDialogComponent,
+    ToolbarComponent
   ]
 })
 export class SharedModule { }

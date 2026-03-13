@@ -1,0 +1,84 @@
+.toolbar-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.toolbar-btn {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+}
+
+.toolbar-btn .material-icons {
+  font-size: 1.4rem;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Specific button styles to match track manager */
+.toolbar-btn.ghost {
+  color: #ffffff;
+}
+
+.toolbar-btn.help {
+  color: #e0e0e0;
+}
+
+.toolbar-btn.help:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.1);
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.8);
+}
+
+.toolbar-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.toolbar-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.delete-x {
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Undo/Redo specific */
+.toolbar-btn.undo, .toolbar-btn.redo {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toolbar-btn.undo:hover:not(:disabled), .toolbar-btn.redo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.help-svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}

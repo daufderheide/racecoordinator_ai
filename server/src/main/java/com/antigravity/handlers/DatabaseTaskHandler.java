@@ -29,6 +29,8 @@ public class DatabaseTaskHandler {
         app.put("/api/teams/{id}", this::updateTeam);
         app.delete("/api/teams/{id}", this::deleteTeam);
 
+        app.get("/api/tracks/factory-settings", this::getFactoryTrack);
+
         app.post("/api/tracks", this::createTrack);
         app.put("/api/tracks/{id}", this::updateTrack);
         app.delete("/api/tracks/{id}", this::deleteTrack);
@@ -630,6 +632,10 @@ public class DatabaseTaskHandler {
         List<com.antigravity.models.Track> tracks = new ArrayList<>();
         getTrackCollection().find().forEach(tracks::add);
         ctx.json(tracks);
+    }
+
+    private void getFactoryTrack(Context ctx) {
+        ctx.json(new com.antigravity.service.DatabaseService().getFactoryTrack());
     }
 
     public void getRaces(Context ctx) {

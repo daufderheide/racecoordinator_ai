@@ -43,11 +43,11 @@ test.describe('Track Editor Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=new'));
 
     await expect(page.locator('.page-title')).toContainText('TRACK EDITOR');
-    await expect(page.locator('input[name="trackNameInput"]')).toHaveValue('');
+    await expect(page.locator('input[name="trackNameInput"]')).toHaveValue('New Track');
 
     // Default lanes for new track
     const laneRows = page.locator('.lane-item');
-    await expect(laneRows).toHaveCount(2);
+    await expect(laneRows).toHaveCount(4);
 
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-new.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
@@ -83,5 +83,23 @@ test.describe('Track Editor Visuals', () => {
 
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-pins-grid.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+  });
+
+  test('should highlight track name in red when duplicate', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
+
+    // 'Speedway' (t2) is another mocked track name
+    await page.fill('input[name="trackNameInput"]', 'Speedway');
+    
+    // Wait for validation to kick in
+    const nameSection = page.locator('.editor-section.invalid');
+    await expect(nameSection).toBeVisible();
+    
+    // Verify the label and input are red via CSS (optional but good for confidence)
+    const labelColor = await page.locator('.track-name-label').evaluate(el => getComputedStyle(el).color);
+    expect(labelColor).toBe('rgb(239, 68, 68)'); // #ef4444
+
+    await page.waitForTimeout(1000);
+    await expect(page).toHaveScreenshot('track-editor-duplicate-name-error.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
   });
 });

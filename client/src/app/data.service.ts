@@ -111,6 +111,10 @@ export class DataService {
     return this.http.get<any[]>(this.tracksUrl);
   }
 
+  getTrackFactorySettings(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/tracks/factory-settings`);
+  }
+
   createTrack(track: any): Observable<any> {
     return this.http.post<any>(this.tracksUrl, track);
   }
