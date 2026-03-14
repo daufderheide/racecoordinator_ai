@@ -75,11 +75,22 @@ test.describe('Acknowledgement Modal Visuals', () => {
     // Priming CONNECTED pulse to reset ngOnInit timers
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
-    // Simulate DISCONNECTED
-    await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
-
     const modalHost = page.locator('app-acknowledgement-modal');
     const harness = new AcknowledgementModalHarnessE2e(modalHost);
+
+    // Initial page load watchdog will have fired and shown Disconnected modal, 
+    // and sending CONNECTED turns it to "Interface Connected" modal. 
+    // We must acknowledge (hide) it first to make sure we have a clean background state.
+    await harness.waitForVisible(10000);
+    await harness.clickAcknowledge();
+
+    // Verify it becomes invisible so we know it will be re-triggered clearly
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(false);
+    }).toPass();
+
+    // Simulate DISCONNECTED
+    await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
     // waitForVisible leverages Playwright's native auto-waiting
     await harness.waitForVisible(10000);
