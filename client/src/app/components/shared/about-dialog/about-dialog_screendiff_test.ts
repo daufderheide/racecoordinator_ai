@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { AboutDialogHarnessE2e } from './about-dialog.harness.e2e';
 
 test.describe('About Dialog', () => {
   test.beforeEach(async ({ page }) => {
@@ -39,11 +40,15 @@ test.describe('About Dialog', () => {
     await aboutItem.dispatchEvent('click');
 
     // 3. Verify dialog is visible (specifically the internal backdrop, not just the empty host element)
-    const dialog = page.locator('app-about-dialog');
-    await expect(dialog.locator('.modal-backdrop')).toBeVisible();
+    const dialogHost = page.locator('app-about-dialog');
+    const harness = new AboutDialogHarnessE2e(dialogHost);
+
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass();
 
     // 4. Verify versions
-    await expect(dialog).toContainText('0.0.0.1');
+    expect(await harness.getVersionInfoText()).toContain('0.0.0.1');
 
     // Wait a brief moment for rendering
     await page.waitForTimeout(500);
@@ -61,10 +66,10 @@ test.describe('About Dialog', () => {
     });
 
     // 6. Close dialog
-    const closeBtn = dialog.locator('button').filter({ hasText: 'Close' });
-    await expect(closeBtn).toBeVisible();
-    await closeBtn.dispatchEvent('click');
+    await harness.clickClose();
 
-    await expect(dialog.locator('.modal-backdrop')).not.toBeVisible();
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(false);
+    }).toPass();
   });
 });

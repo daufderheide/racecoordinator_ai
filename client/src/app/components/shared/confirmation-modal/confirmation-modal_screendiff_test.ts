@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { ConfirmationModalHarnessE2e } from './confirmation-modal.harness.e2e';
 
 test.describe('Confirmation Modal Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -30,10 +31,15 @@ test.describe('Confirmation Modal Visuals', () => {
     await fileDropdown.locator('.menu-item').first().click();
 
     // Wait for confirmation modal
-    const modal = page.locator('app-confirmation-modal .modal-content');
-    await expect(modal).toBeVisible();
+    const modal = page.locator('app-confirmation-modal');
+    const harness = new ConfirmationModalHarnessE2e(modal);
+    
+    // The visual test checks if modal is visible, we can just wait for modalContent via locator or harness
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
 
     // Screenshot the modal
-    await expect(modal).toHaveScreenshot('confirmation-modal.png');
+    await expect(modal.locator('.modal-content')).toHaveScreenshot('confirmation-modal.png');
   });
 });

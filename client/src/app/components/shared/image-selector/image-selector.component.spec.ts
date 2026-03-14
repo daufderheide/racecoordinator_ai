@@ -1,9 +1,10 @@
-
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ImageSelectorComponent } from './image-selector.component';
 import { DataService } from 'src/app/data.service';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
 import { of, throwError } from 'rxjs';
+import { ImageSelectorHarness } from './image-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
 class MockItemSelectorComponent {
@@ -30,6 +31,7 @@ class MockAvatarUrlPipe implements PipeTransform {
 describe('ImageSelectorComponent', () => {
   let component: ImageSelectorComponent;
   let fixture: ComponentFixture<ImageSelectorComponent>;
+  let harness: ImageSelectorHarness;
   let mockDataService: any;
 
   beforeEach(async () => {
@@ -49,9 +51,10 @@ describe('ImageSelectorComponent', () => {
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(ImageSelectorComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, ImageSelectorHarness);
     fixture.detectChanges();
   });
 
@@ -139,8 +142,8 @@ describe('ImageSelectorComponent', () => {
     expect(component.uploadFinished.emit).toHaveBeenCalled();
   }));
 
-  it('should open and close selector', () => {
-    component.openSelector();
+  it('should open and close selector', async () => {
+    await harness.clickPreviewToOpenSelector();
     expect(component.showSelector).toBeTrue();
     component.closeSelector();
     expect(component.showSelector).toBeFalse();

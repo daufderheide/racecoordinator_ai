@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { HeatListHarnessE2e } from './heat-list.harness.e2e';
 
 test.describe('Heat List Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -42,13 +43,17 @@ test.describe('Heat List Visuals', () => {
     await page.click('.race-table.body-only tbody tr:first-child');
 
     // Wait for Heat List to be visible
-    const heatList = page.locator('app-heat-list');
-    await expect(heatList).toBeVisible();
+    const heatListHost = page.locator('app-heat-list');
+    const harness = new HeatListHarnessE2e(heatListHost);
+
+    await expect(async () => {
+      expect(await harness.getHeatCount()).toBeGreaterThan(0);
+    }).toPass();
 
     // Disable animations for consistent screenshots
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the heat list
-    await expect(heatList).toHaveScreenshot('heat-list.png');
+    await expect(heatListHost).toHaveScreenshot('heat-list.png');
   });
 });

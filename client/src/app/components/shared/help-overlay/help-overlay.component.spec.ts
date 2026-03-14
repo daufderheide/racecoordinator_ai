@@ -1,14 +1,17 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HelpOverlayComponent } from './help-overlay.component';
 import { HelpService, GuideStep } from '../../../services/help.service';
 import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
+import { HelpOverlayHarness } from './help-overlay.harness';
 
 describe('HelpOverlayComponent', () => {
   let component: HelpOverlayComponent;
   let fixture: ComponentFixture<HelpOverlayComponent>;
+  let harness: HelpOverlayHarness;
   let helpServiceMock: any;
   let translationServiceMock: any;
   let isVisibleSubject: BehaviorSubject<boolean>;
@@ -49,6 +52,7 @@ describe('HelpOverlayComponent', () => {
 
     fixture = TestBed.createComponent(HelpOverlayComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, HelpOverlayHarness);
     fixture.detectChanges();
   });
 
@@ -56,18 +60,16 @@ describe('HelpOverlayComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not be visible initially', () => {
+  it('should not be visible initially', async () => {
     expect(component.isVisible).toBeFalse();
-    const overlayElement = fixture.nativeElement.querySelector('.help-overlay-container');
-    expect(overlayElement).toBeFalsy();
+    expect(await harness.isVisible()).toBeFalse();
   });
 
-  it('should become visible when service emits true', () => {
+  it('should become visible when service emits true', async () => {
     isVisibleSubject.next(true);
     fixture.detectChanges();
     expect(component.isVisible).toBeTrue();
-    const overlayElement = fixture.nativeElement.querySelector('.help-overlay-container');
-    expect(overlayElement).toBeTruthy();
+    expect(await harness.isVisible()).toBeTrue();
   });
 
   it('should display step title and content', fakeAsync(() => {
@@ -81,11 +83,16 @@ describe('HelpOverlayComponent', () => {
     tick(); // Wait for setTimeout in subscription and position update
     fixture.detectChanges();
 
-    const titleElement = fixture.nativeElement.querySelector('.popover-header h3');
-    const contentElement = fixture.nativeElement.querySelector('.popover-content p');
+    // The harness methods return promises, which we can await via fakeAsync tick loop or directly. 
+    // Given we are in fakeAsync, we can just resolve promises using tick().
+    let title = '';
+    let content = '';
+    harness.getTitle().then(t => title = t);
+    harness.getContent().then(c => content = c);
+    tick();
 
-    expect(titleElement.textContent).toContain('Test Title');
-    expect(contentElement.textContent).toContain('Test Content');
+    expect(title).toContain('Test Title');
+    expect(content).toContain('Test Content');
   }));
 
   it('should call nextStep on next button click', fakeAsync(() => {
@@ -95,8 +102,8 @@ describe('HelpOverlayComponent', () => {
     tick();
     fixture.detectChanges();
 
-    const nextBtn = fixture.nativeElement.querySelector('.btn-next');
-    nextBtn.click();
+    harness.clickNext();
+    tick();
     expect(helpServiceMock.nextStep).toHaveBeenCalled();
   }));
 
@@ -107,8 +114,8 @@ describe('HelpOverlayComponent', () => {
     tick();
     fixture.detectChanges();
 
-    const prevBtn = fixture.nativeElement.querySelector('.btn-prev');
-    prevBtn.click();
+    harness.clickPrevious();
+    tick();
     expect(helpServiceMock.previousStep).toHaveBeenCalled();
   }));
 
@@ -119,8 +126,8 @@ describe('HelpOverlayComponent', () => {
     tick();
     fixture.detectChanges();
 
-    const finishBtn = fixture.nativeElement.querySelector('.btn-finish');
-    finishBtn.click();
+    harness.clickFinish();
+    tick();
     expect(helpServiceMock.endGuide).toHaveBeenCalled();
   }));
 

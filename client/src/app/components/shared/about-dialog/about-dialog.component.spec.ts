@@ -1,12 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { AboutDialogComponent } from './about-dialog.component';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { TranslationService } from '../../../services/translation.service';
 import { of } from 'rxjs';
+import { AboutDialogHarness } from './about-dialog.harness';
 
 describe('AboutDialogComponent', () => {
   let component: AboutDialogComponent;
   let fixture: ComponentFixture<AboutDialogComponent>;
+  let harness: AboutDialogHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
 
   beforeEach(async () => {
@@ -26,6 +29,7 @@ describe('AboutDialogComponent', () => {
 
     fixture = TestBed.createComponent(AboutDialogComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, AboutDialogHarness);
     fixture.detectChanges();
   });
 
@@ -33,34 +37,31 @@ describe('AboutDialogComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display versions when visible', () => {
+  it('should display versions when visible', async () => {
     component.visible = true;
     component.clientVersion = '0.0.0.1';
     component.serverVersion = '1.2.3';
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.modal-backdrop')).toBeTruthy();
-    const versionInfo = compiled.querySelector('.version-info')?.textContent;
+    expect(await harness.isVisible()).toBeTrue();
+    const versionInfo = await harness.getVersionInfoText();
     expect(versionInfo).toContain('0.0.0.1');
     expect(versionInfo).toContain('1.2.3');
   });
 
-  it('should not be visible when visible is false', () => {
+  it('should not be visible when visible is false', async () => {
     component.visible = false;
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.modal-backdrop')).toBeFalsy();
+    expect(await harness.isVisible()).toBeFalse();
   });
 
-  it('should emit close event when close button is clicked', () => {
+  it('should emit close event when close button is clicked', async () => {
     spyOn(component.close, 'emit');
     component.visible = true;
     fixture.detectChanges();
 
-    const closeBtn = fixture.nativeElement.querySelector('.btn-confirm');
-    closeBtn.click();
+    await harness.clickClose();
 
     expect(component.close.emit).toHaveBeenCalled();
   });

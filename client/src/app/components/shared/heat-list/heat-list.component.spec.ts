@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HeatListComponent } from './heat-list.component';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { TranslationService } from '../../../services/translation.service';
+import { HeatListHarness } from './heat-list.harness';
 
 describe('HeatListComponent', () => {
   let component: HeatListComponent;
   let fixture: ComponentFixture<HeatListComponent>;
+  let harness: HeatListHarness;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
 
   beforeEach(async () => {
@@ -23,6 +26,7 @@ describe('HeatListComponent', () => {
 
     fixture = TestBed.createComponent(HeatListComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, HeatListHarness);
     fixture.detectChanges();
   });
 
@@ -30,14 +34,16 @@ describe('HeatListComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not display heat list when heats array is empty', () => {
+  it('should not display heat list when heats array is empty', async () => {
     component.heats = [];
     fixture.detectChanges();
-    const heatListElement = fixture.nativeElement.querySelector('.heat-list');
-    expect(heatListElement).toBeNull();
+    
+    // We expect an error if it doesn't exist, wait no, getHeatCount() returns 0.
+    // Let's assert heat count is 0
+    expect(await harness.getHeatCount()).toBe(0);
   });
 
-  it('should display heats when heats array has data', () => {
+  it('should display heats when heats array has data', async () => {
     component.heats = [
       {
         heatNumber: 1,
@@ -48,22 +54,22 @@ describe('HeatListComponent', () => {
       }
     ];
     fixture.detectChanges();
-    const heatListElement = fixture.nativeElement.querySelector('.heat-list');
-    expect(heatListElement).toBeTruthy();
+    expect(await harness.getHeatCount()).toBe(1);
+    expect(await harness.getHeatNumberLabel(0)).toContain('RM_LABEL_HEAT_NUMBER');
   });
 
-  it('should render correct number of heat items', () => {
+  it('should render correct number of heat items', async () => {
     component.heats = [
       { heatNumber: 1, lanes: [] },
       { heatNumber: 2, lanes: [] },
       { heatNumber: 3, lanes: [] }
     ];
     fixture.detectChanges();
-    const heatItems = fixture.nativeElement.querySelectorAll('.heat-item');
-    expect(heatItems.length).toBe(3);
+    const count = await harness.getHeatCount();
+    expect(count).toBe(3);
   });
 
-  it('should apply lane colors correctly', () => {
+  it('should apply lane colors correctly', async () => {
     component.heats = [
       {
         heatNumber: 1,
@@ -73,24 +79,23 @@ describe('HeatListComponent', () => {
       }
     ];
     fixture.detectChanges();
-    const laneItem = fixture.nativeElement.querySelector('.lane-item');
-    expect(laneItem.style.backgroundColor).toBe('rgb(255, 0, 0)');
-    expect(laneItem.style.color).toBe('rgb(255, 255, 255)');
+    const lanes = await harness.getLanesForHeat(0);
+    expect(lanes.length).toBe(1);
+    expect(lanes[0].bgColor).toBe('rgb(255, 0, 0)');
+    expect(lanes[0].fgColor).toBe('rgb(255, 255, 255)');
   });
 
-  it('should show header when showHeader is true', () => {
+  it('should show header when showHeader is true', async () => {
     component.heats = [{ heatNumber: 1, lanes: [] }];
     component.showHeader = true;
     fixture.detectChanges();
-    const header = fixture.nativeElement.querySelector('.heat-list-header');
-    expect(header).toBeTruthy();
+    expect(await harness.hasHeader()).toBeTrue();
   });
 
-  it('should hide header when showHeader is false', () => {
+  it('should hide header when showHeader is false', async () => {
     component.heats = [{ heatNumber: 1, lanes: [] }];
     component.showHeader = false;
     fixture.detectChanges();
-    const header = fixture.nativeElement.querySelector('.heat-list-header');
-    expect(header).toBeNull();
+    expect(await harness.hasHeader()).toBeFalse();
   });
 });

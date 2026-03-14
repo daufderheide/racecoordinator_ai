@@ -1,7 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { UndoRedoControlsComponent } from './undo-redo-controls.component';
 import { UndoManager } from './undo-manager';
 import { Pipe, PipeTransform } from '@angular/core';
+import { UndoRedoControlsHarness } from './undo-redo-controls.harness';
 
 @Pipe({
   name: 'translate',
@@ -16,6 +18,7 @@ class MockTranslatePipe implements PipeTransform {
 describe('UndoRedoControlsComponent', () => {
   let component: UndoRedoControlsComponent;
   let fixture: ComponentFixture<UndoRedoControlsComponent>;
+  let harness: UndoRedoControlsHarness;
   let mockManager: jasmine.SpyObj<UndoManager<any>>;
 
   beforeEach(async () => {
@@ -30,10 +33,11 @@ describe('UndoRedoControlsComponent', () => {
       .compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(UndoRedoControlsComponent);
     component = fixture.componentInstance;
     component.manager = mockManager;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, UndoRedoControlsHarness);
     fixture.detectChanges();
   });
 
@@ -41,24 +45,32 @@ describe('UndoRedoControlsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should delegate undo to manager', () => {
-    component.undo();
+  it('should delegate undo to manager', async () => {
+    Object.defineProperty(mockManager, 'undoStackCount', { get: () => 1, configurable: true });
+    fixture.detectChanges();
+
+    await harness.clickUndo();
     expect(mockManager.undo).toHaveBeenCalled();
   });
 
-  it('should delegate redo to manager', () => {
-    component.redo();
+  it('should delegate redo to manager', async () => {
+    Object.defineProperty(mockManager, 'redoStackCount', { get: () => 1, configurable: true });
+    fixture.detectChanges();
+
+    await harness.clickRedo();
     expect(mockManager.redo).toHaveBeenCalled();
   });
 
-  it('should expose canUndo state', () => {
-    mockManager.canUndo.and.returnValue(true);
-    expect(component.canUndo).toBeTrue();
+  it('should expose canUndo state', async () => {
+    Object.defineProperty(mockManager, 'undoStackCount', { get: () => 1, configurable: true });
+    fixture.detectChanges();
+    expect(await harness.isUndoDisabled()).toBeFalse();
   });
 
-  it('should expose canRedo state', () => {
-    mockManager.canRedo.and.returnValue(true);
-    expect(component.canRedo).toBeTrue();
+  it('should expose canRedo state', async () => {
+    Object.defineProperty(mockManager, 'redoStackCount', { get: () => 1, configurable: true });
+    fixture.detectChanges();
+    expect(await harness.isRedoDisabled()).toBeFalse();
   });
 
   it('should fail gracefully if manager is undefined', () => {

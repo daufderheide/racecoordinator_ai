@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -10,6 +11,7 @@ import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
 import { HelpOverlayComponent } from '../shared/help-overlay/help-overlay.component';
 import { of, BehaviorSubject } from 'rxjs';
+import { DefaultRacedaySetupHarness } from './default-raceday-setup.harness';
 
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -19,6 +21,7 @@ import { Settings } from 'src/app/models/settings';
 describe('DefaultRacedaySetupComponent', () => {
   let component: DefaultRacedaySetupComponent;
   let fixture: ComponentFixture<DefaultRacedaySetupComponent>;
+  let harness: DefaultRacedaySetupHarness;
   let mockDataService: jasmine.SpyObj<DataService>;
   let mockRaceService: jasmine.SpyObj<RaceService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
@@ -87,6 +90,10 @@ describe('DefaultRacedaySetupComponent', () => {
     fixture = TestBed.createComponent(DefaultRacedaySetupComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  beforeEach(async () => {
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, DefaultRacedaySetupHarness);
   });
 
   it('should create', () => {
@@ -299,17 +306,15 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(guideSteps[0].title).toBe('RDS_HELP_WELCOME_TITLE');
   });
 
-  it('should not toggle selection on single click in available list', () => {
+  it('should not toggle selection on single click in available list', async () => {
     spyOn(component, 'toggleParticipantSelection');
-    const driverItem = fixture.debugElement.nativeElement.querySelector('.driver-item');
-    driverItem.click();
+    await harness.clickDriverItem();
     expect(component.toggleParticipantSelection).not.toHaveBeenCalled();
   });
 
-  it('should toggle selection on double click in available list', () => {
+  it('should toggle selection on double click in available list', async () => {
     spyOn(component, 'toggleParticipantSelection');
-    const driverItem = fixture.debugElement.nativeElement.querySelector('.driver-item');
-    driverItem.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await harness.doubleClickDriverItem();
     expect(component.toggleParticipantSelection).toHaveBeenCalled();
   });
 

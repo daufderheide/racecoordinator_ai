@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { BackButtonHarnessE2e } from './back-button.harness.e2e';
 
 test.describe('Back Button Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -15,11 +16,13 @@ test.describe('Back Button Visuals', () => {
     await TestSetupHelper.waitForText(page, 'Back');
 
     // Verify Back Button is visible
-    const backButton = page.locator('app-back-button');
-    await expect(backButton).toBeVisible();
+    const backButtonHost = page.locator('app-back-button');
+    const harness = new BackButtonHarnessE2e(backButtonHost);
+    
+    expect(await harness.getLabel()).toBe('Back');
 
     // Screenshot the back button area
     // Just screenshot the button itself to be precise
-    await expect(backButton).toHaveScreenshot('back-button.png', { maxDiffPixelRatio: 0.05 });
+    await expect(backButtonHost).toHaveScreenshot('back-button.png', { maxDiffPixelRatio: 0.05 });
   });
 });

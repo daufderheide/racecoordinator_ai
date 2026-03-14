@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ToolbarComponent } from './toolbar.component';
 import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { UndoManager } from '../undo-redo-controls/undo-manager';
-import { By } from '@angular/platform-browser';
+import { ToolbarHarness } from './toolbar.harness';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;
   let fixture: ComponentFixture<ToolbarComponent>;
+  let harness: ToolbarHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
 
   beforeEach(async () => {
@@ -23,6 +25,7 @@ describe('ToolbarComponent', () => {
 
     fixture = TestBed.createComponent(ToolbarComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, ToolbarHarness);
     fixture.detectChanges();
   });
 
@@ -30,65 +33,50 @@ describe('ToolbarComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should show edit button when showEdit is true', () => {
+  it('should show edit button when showEdit is true', async () => {
     component.showEdit = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#edit-track-btn'));
-    expect(btn).toBeTruthy();
+    expect(await harness.isEditVisible()).toBeTrue();
   });
 
-  it('should emit edit event when edit button is clicked', () => {
+  it('should emit edit event when edit button is clicked', async () => {
     spyOn(component.edit, 'emit');
     component.showEdit = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#edit-track-btn'));
-    btn.nativeElement.click();
+    await harness.clickEdit();
     expect(component.edit.emit).toHaveBeenCalled();
   });
 
-  it('should show help button when showHelp is true', () => {
+  it('should show help button when showHelp is true', async () => {
     component.showHelp = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#help-track-btn'));
-    expect(btn).toBeTruthy();
+    expect(await harness.isHelpVisible()).toBeTrue();
   });
 
-  it('should emit help event when help button is clicked', () => {
+  it('should emit help event when help button is clicked', async () => {
     spyOn(component.help, 'emit');
     component.showHelp = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#help-track-btn'));
-    btn.nativeElement.click();
+    await harness.clickHelp();
     expect(component.help.emit).toHaveBeenCalled();
   });
 
-  it('should show delete button when showDelete is true', () => {
+  it('should show delete button when showDelete is true', async () => {
     component.showDelete = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#delete-track-btn'));
-    expect(btn).toBeTruthy();
+    expect(await harness.isDeleteVisible()).toBeTrue();
   });
 
-  it('should emit delete event when delete button is clicked', () => {
+  it('should emit delete event when delete button is clicked', async () => {
     spyOn(component.delete, 'emit');
     component.showDelete = true;
-    fixture.detectChanges();
-    const btn = fixture.debugElement.query(By.css('#delete-track-btn'));
-    btn.nativeElement.click();
+    await harness.clickDelete();
     expect(component.delete.emit).toHaveBeenCalled();
   });
 
-  it('should show undo/redo when showUndo/showRedo are true', () => {
+  it('should show undo/redo when showUndo/showRedo are true', async () => {
     component.showUndo = true;
     component.showRedo = true;
-    fixture.detectChanges();
-    const undoBtn = fixture.debugElement.query(By.css('.undo'));
-    const redoBtn = fixture.debugElement.query(By.css('.redo'));
-    expect(undoBtn).toBeTruthy();
-    expect(redoBtn).toBeTruthy();
+    expect(await harness.isUndoVisible()).toBeTrue();
+    expect(await harness.isRedoVisible()).toBeTrue();
   });
 
-  it('should call undoManager.undo() when undo button is clicked', () => {
+  it('should call undoManager.undo() when undo button is clicked', async () => {
     const config = {
       clonner: (item: any) => ({ ...item }),
       equalizer: (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b),
@@ -108,15 +96,12 @@ describe('ToolbarComponent', () => {
     state = { foo: 'baz' }; 
     manager.commitState(); 
     
-    fixture.detectChanges();
-
-    const undoBtn = fixture.debugElement.query(By.css('.undo'));
-    expect(undoBtn.nativeElement.disabled).toBeFalsy();
-    undoBtn.nativeElement.click();
+    expect(await harness.isUndoDisabled()).toBeFalse();
+    await harness.clickUndo();
     expect(manager.undo).toHaveBeenCalled();
   });
 
-  it('should call undoManager.redo() when redo button is clicked', () => {
+  it('should call undoManager.redo() when redo button is clicked', async () => {
     const config = {
       clonner: (item: any) => ({ ...item }),
       equalizer: (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b),
@@ -133,24 +118,18 @@ describe('ToolbarComponent', () => {
     state = { foo: 'baz' };
     manager.commitState();
     manager.undo(); // Now redoStackCount is 1
-    fixture.detectChanges();
 
-    const redoBtn = fixture.debugElement.query(By.css('.redo'));
-    expect(redoBtn.nativeElement.disabled).toBeFalsy();
-    redoBtn.nativeElement.click();
+    expect(await harness.isRedoDisabled()).toBeFalse();
+    await harness.clickRedo();
     expect(manager.redo).toHaveBeenCalled();
   });
 
-  it('should disable buttons when isSaving is true', () => {
+  it('should disable buttons when isSaving is true', async () => {
     component.showEdit = true;
     component.showDelete = true;
     component.isSaving = true;
-    fixture.detectChanges();
 
-    const editBtn = fixture.debugElement.query(By.css('#edit-track-btn'));
-    const deleteBtn = fixture.debugElement.query(By.css('#delete-track-btn'));
-    
-    expect(editBtn.nativeElement.disabled).toBeTruthy();
-    expect(deleteBtn.nativeElement.disabled).toBeTruthy();
+    expect(await harness.isEditDisabled()).toBeTrue();
+    expect(await harness.isDeleteDisabled()).toBeTrue();
   });
 });

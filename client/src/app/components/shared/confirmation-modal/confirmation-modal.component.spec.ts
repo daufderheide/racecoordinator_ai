@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ConfirmationModalComponent } from './confirmation-modal.component';
 import { Pipe, PipeTransform } from '@angular/core';
+import { ConfirmationModalHarness } from './confirmation-modal.harness';
 
 @Pipe({
   name: 'translate',
@@ -15,6 +17,7 @@ class MockTranslatePipe implements PipeTransform {
 describe('ConfirmationModalComponent', () => {
   let component: ConfirmationModalComponent;
   let fixture: ComponentFixture<ConfirmationModalComponent>;
+  let harness: ConfirmationModalHarness;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -23,9 +26,10 @@ describe('ConfirmationModalComponent', () => {
       .compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(ConfirmationModalComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, ConfirmationModalHarness);
     fixture.detectChanges();
   });
 
@@ -33,37 +37,30 @@ describe('ConfirmationModalComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not be visible by default', () => {
+  it('should not be visible by default', async () => {
     expect(component.visible).toBeFalse();
-    const modalContent = fixture.nativeElement.querySelector('.modal-content');
-    expect(modalContent).toBeNull();
+    expect(await harness.isVisible()).toBeFalse();
   });
 
-  it('should be visible when visible input is true', () => {
+  it('should be visible when visible input is true', async () => {
     component.visible = true;
-    fixture.detectChanges();
-    const modalContent = fixture.nativeElement.querySelector('.modal-content');
-    expect(modalContent).toBeTruthy();
+    expect(await harness.isVisible()).toBeTrue();
   });
 
-  it('should emit cancel event on cancel click', () => {
+  it('should emit cancel event on cancel click', async () => {
     spyOn(component.cancel, 'emit');
     component.visible = true;
-    fixture.detectChanges();
 
-    const cancelBtn = fixture.nativeElement.querySelector('.btn-cancel');
-    cancelBtn.click();
+    await harness.clickCancel();
 
     expect(component.cancel.emit).toHaveBeenCalled();
   });
 
-  it('should emit confirm event on confirm click', () => {
+  it('should emit confirm event on confirm click', async () => {
     spyOn(component.confirm, 'emit');
     component.visible = true;
-    fixture.detectChanges();
 
-    const confirmBtn = fixture.nativeElement.querySelector('.btn-confirm');
-    confirmBtn.click();
+    await harness.clickConfirm();
 
     expect(component.confirm.emit).toHaveBeenCalled();
   });

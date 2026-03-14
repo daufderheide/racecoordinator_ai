@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { AudioSelectorHarnessE2e } from './audio-selector.harness.e2e';
+import { ItemSelectorHarnessE2e } from '../item-selector/item-selector.harness.e2e';
 
 test.describe('Audio Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -32,20 +34,19 @@ test.describe('Audio Selector Visuals', () => {
     // Open the audio selector for one of the sounds
     // Driver Editor has multiple audio selectors, use .first() to target one specifically
     const audioSelector = page.locator('app-audio-selector').first();
-    const trigger = audioSelector.locator('.select-wrapper');
-    await trigger.click();
+    const harness = new AudioSelectorHarnessE2e(audioSelector);
+    await harness.clickSelectSound();
 
     // Wait for item selector to be visible
-    // We target the modal-content specifically as app-item-selector might already be in the DOM
     const itemSelector = audioSelector.locator('app-item-selector');
-    const modalContent = itemSelector.locator('.modal-content');
-    await expect(modalContent).toBeVisible();
+    const itemHarness = new ItemSelectorHarnessE2e(itemSelector);
+    expect(await itemHarness.isVisible()).toBe(true);
 
     // Ensure at least one sound item is visible with the play icon
-    const playButton = itemSelector.locator('.play-preview').first();
-    await expect(playButton).toBeVisible();
+    // The play icon count should be > 0 if items exist
+    expect(await itemHarness.getItemsCount()).toBeGreaterThan(0);
 
     // Take a screenshot of the entire modal to verify layout and play icon
-    await expect(modalContent).toHaveScreenshot('item-selector-with-play.png');
+    await expect(itemSelector.locator('.modal-content')).toHaveScreenshot('item-selector-with-play.png');
   });
 });

@@ -1,7 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { BackButtonComponent } from './back-button.component';
 import { Router } from '@angular/router';
 import { CUSTOM_ELEMENTS_SCHEMA, Pipe, PipeTransform } from '@angular/core';
+import { BackButtonHarness } from './back-button.harness';
 
 @Pipe({
   name: 'translate',
@@ -16,6 +18,7 @@ class MockTranslatePipe implements PipeTransform {
 describe('BackButtonComponent', () => {
   let component: BackButtonComponent;
   let fixture: ComponentFixture<BackButtonComponent>;
+  let harness: BackButtonHarness;
   let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
@@ -31,9 +34,10 @@ describe('BackButtonComponent', () => {
       .compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(BackButtonComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, BackButtonHarness);
     fixture.detectChanges();
   });
 
@@ -47,19 +51,23 @@ describe('BackButtonComponent', () => {
     expect(component.queryParams).toEqual({});
   });
 
-  it('should set sessionStorage and navigate on back', () => {
+  it('should set sessionStorage and navigate on back', async () => {
     component.route = '/test-route';
     component.queryParams = { foo: 'bar' };
+    fixture.detectChanges();
 
-    component.onBack();
+    await harness.click();
 
     expect(sessionStorage.getItem('skipIntro')).toBe('true');
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/test-route'], { queryParams: { foo: 'bar' } });
   });
 
-  it('should show modal if confirm is true', () => {
+  it('should show modal if confirm is true', async () => {
     component.confirm = true;
-    component.onBack();
+    fixture.detectChanges();
+    
+    await harness.click();
+    
     expect(component.showModal).toBeTrue();
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });

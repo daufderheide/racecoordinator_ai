@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { ImageSelectorHarnessE2e } from './image-selector.harness.e2e';
 
 test.describe('Image Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -26,12 +27,12 @@ test.describe('Image Selector Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
 
     const imageSelector = page.locator('app-image-selector').first();
-    const dropZone = imageSelector.locator('.image-preview');
+    const harness = new ImageSelectorHarnessE2e(imageSelector);
 
     // Trigger dragover to show dragging state
-    await dropZone.dispatchEvent('dragover');
+    await harness.simulateDragOver();
 
-    await expect(dropZone).toHaveClass(/dragging/);
+    expect(await harness.hasDraggingState()).toBe(true);
     await expect(imageSelector).toHaveScreenshot('image-selector-dragging.png');
   });
 });
