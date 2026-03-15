@@ -2,19 +2,15 @@
   [message]="'TM_CONFIRM_DELETE' | translate" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
 </app-confirmation-modal>
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <div class="header">
-    <div class="header-left">
-      <app-back-button targetUrl="/raceday-setup"></app-back-button>
-      <h1 class="page-title">{{ 'TM_TITLE' | translate }}</h1>
-    </div>
-    <div class="header-right">
-      <div class="header-actions" *ngIf="selectedTrack">
-        <app-toolbar [showEdit]="true" [showHelp]="true" [showDelete]="true" [isSaving]="isSaving"
-          (edit)="editTrack()" (help)="startHelp()" (delete)="deleteTrack()">
-        </app-toolbar>
-      </div>
-    </div>
-  </div>
+  <app-manager-header 
+    [title]="'TM_TITLE'" 
+    [showActions]="selectedTrack != null" 
+    [isSaving]="isSaving" 
+    (edit)="editTrack()" 
+    (help)="startHelp()" 
+    (delete)="deleteTrack()">
+  </app-manager-header>
+
 
   <div class="content-area">
     <div class="sidebar-list">

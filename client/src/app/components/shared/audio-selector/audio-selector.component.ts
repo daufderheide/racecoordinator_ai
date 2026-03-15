@@ -12,6 +12,8 @@ import { playSound, mockTTSContext } from 'src/app/utils/audio';
 export class AudioSelectorComponent {
   @Input() label: string = 'Audio';
   @Input() type: 'preset' | 'tts' | undefined = 'preset';
+  @Input() readonly: boolean = false;
+
   @Output() typeChange = new EventEmitter<'preset' | 'tts'>();
 
   @Input() url?: string;

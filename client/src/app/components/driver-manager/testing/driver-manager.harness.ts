@@ -1,5 +1,7 @@
 import { ComponentHarness } from '@angular/cdk/testing';
 import { DriverManagerHarnessBase } from './driver-manager.harness.base';
+import { ManagerHeaderHarness } from '../../shared/manager-header/testing/manager-header.harness';
+
 
 export class DriverManagerHarness extends ComponentHarness implements DriverManagerHarnessBase {
   static hostSelector = DriverManagerHarnessBase.hostSelector;
@@ -7,8 +9,7 @@ export class DriverManagerHarness extends ComponentHarness implements DriverMana
   protected getSearchInput = this.locatorFor(DriverManagerHarnessBase.selectors.searchInput);
   protected getDriverRows = this.locatorForAll(DriverManagerHarnessBase.selectors.driverRow);
   protected getConfigNameInput = this.locatorFor(DriverManagerHarnessBase.selectors.configNameInput);
-  protected getEditBtn = this.locatorFor(DriverManagerHarnessBase.selectors.editBtn);
-  protected getDeleteBtn = this.locatorFor(DriverManagerHarnessBase.selectors.deleteBtn);
+
 
   async getDriverCount(): Promise<number> {
     return (await this.getDriverRows()).length;
@@ -51,12 +52,15 @@ export class DriverManagerHarness extends ComponentHarness implements DriverMana
   }
 
   async clickEdit(): Promise<void> {
-    const btn = await this.getEditBtn();
-    await btn.click();
+    const header = await this.locatorFor(ManagerHeaderHarness)();
+    const toolbar = await header.getToolbar();
+    await toolbar.clickEdit();
   }
 
   async clickDelete(): Promise<void> {
-    const btn = await this.getDeleteBtn();
-    await btn.click();
+    const header = await this.locatorFor(ManagerHeaderHarness)();
+    const toolbar = await header.getToolbar();
+    await toolbar.clickDelete();
   }
+
 }

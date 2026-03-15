@@ -28,7 +28,8 @@ describe('DriverManagerComponent', () => {
   ];
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'deleteDriver']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'deleteDriver', 'listAssets']);
+
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring']);
@@ -40,10 +41,13 @@ describe('DriverManagerComponent', () => {
         queryParamMap: {
           get: jasmine.createSpy('get').and.returnValue(null)
         }
-      }
+      },
+      queryParams: of({})
     };
 
+
     mockDataService.getDrivers.and.returnValue(of(mockDrivers));
+    mockDataService.listAssets.and.returnValue(of([]));
     mockTranslationService.translate.and.callFake((key) => key);
 
     await TestBed.configureTestingModule({

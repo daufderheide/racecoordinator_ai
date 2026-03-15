@@ -1,0 +1,51 @@
+.header {
+  height: 60px;
+  min-height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
+  margin: 60px 55px 40px 90px;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-right {
+  margin-top: 10px;
+  margin-right: 40px;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+::ng-deep .header-left app-back-button .back-btn {
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+::ng-deep .header-left app-back-button .back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+

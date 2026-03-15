@@ -1,0 +1,20 @@
+<div class="header">
+  <div class="header-left">
+    <app-back-button [route]="backTargetUrl"></app-back-button>
+
+    <h1 class="page-title">{{ title | translate }}</h1>
+  </div>
+  <div class="header-right">
+    <div class="header-actions" *ngIf="showActions">
+      <app-toolbar 
+        [showEdit]="showEdit" 
+        [showHelp]="showHelp" 
+        [showDelete]="showDelete" 
+        [isSaving]="isSaving"
+        (edit)="onEdit()" 
+        (help)="onHelp()" 
+        (delete)="onDelete()">
+      </app-toolbar>
+    </div>
+  </div>
+</div>

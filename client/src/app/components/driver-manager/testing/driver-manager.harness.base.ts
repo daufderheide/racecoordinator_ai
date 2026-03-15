@@ -3,12 +3,10 @@ export abstract class DriverManagerHarnessBase {
 
   static readonly selectors = {
     searchInput: '.search-input',
-    driverRow: '.driver-table.body-only tbody tr',
+    driverRow: '.list-item',
     configNameInput: '.config-panel input',
-    editBtn: '.btn-edit',
-    deleteBtn: '.btn-delete',
-    nameCell: '.name-cell',
-    nicknameCell: '.nickname-cell'
+    nameCell: '.name',
+    nicknameCell: '.nickname'
   };
 
   abstract getDriverCount(): Promise<number>;

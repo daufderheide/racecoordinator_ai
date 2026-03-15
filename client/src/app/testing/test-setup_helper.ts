@@ -6,7 +6,9 @@ export interface SetupOptions {
   walkthroughSeen?: boolean;
   trackManagerHelpShown?: boolean;
   trackEditorHelpShown?: boolean;
+  driverManagerHelpShown?: boolean;
 }
+
 
 export class TestSetupHelper {
   static async setupStandardMocks(page: Page, options: SetupOptions = {}) {
@@ -123,6 +125,8 @@ export class TestSetupHelper {
       racedaySetupWalkthroughSeen: options.walkthroughSeen ?? false,
       trackManagerHelpShown: options.trackManagerHelpShown ?? true,
       trackEditorHelpShown: options.trackEditorHelpShown ?? true,
+      driverManagerHelpShown: options.driverManagerHelpShown ?? true,
+
       racedayColumns: ['driver.name', 'lapCount'],
       columnLayouts: {
         'driver.name': { 'CenterCenter': 'driver.name' },

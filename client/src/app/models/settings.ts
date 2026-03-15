@@ -19,6 +19,8 @@ export class Settings {
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;
   trackEditorHelpShown: boolean = false;
+  driverManagerHelpShown: boolean = false;
+
 
   flagGreen?: string;
   flagYellow?: string;

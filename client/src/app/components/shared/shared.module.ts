@@ -19,6 +19,8 @@ import { ImageSelectorComponent } from './image-selector/image-selector.componen
 import { ReorderDialogComponent } from '../ui-editor/reorder-dialog/reorder-dialog.component';
 import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-preview.component';
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
+import { ManagerHeaderComponent } from './manager-header/manager-header.component';
+
 
 @NgModule({
   declarations: [
@@ -37,8 +39,10 @@ import { AboutDialogComponent } from './about-dialog/about-dialog.component';
     ReorderDialogComponent,
     ColumnPreviewComponent,
     AboutDialogComponent,
-    ToolbarComponent
+    ToolbarComponent,
+    ManagerHeaderComponent
   ],
+
   imports: [
     CommonModule,
     FormsModule,
@@ -65,8 +69,10 @@ import { AboutDialogComponent } from './about-dialog/about-dialog.component';
     ReorderDialogComponent,
     ColumnPreviewComponent,
     AboutDialogComponent,
-    ToolbarComponent
+    ToolbarComponent,
+    ManagerHeaderComponent
   ]
+
 })
 export class SharedModule { }
 

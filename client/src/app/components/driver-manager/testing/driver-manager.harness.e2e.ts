@@ -1,5 +1,8 @@
 import { Locator } from '@playwright/test';
 import { DriverManagerHarnessBase } from './driver-manager.harness.base';
+import { ManagerHeaderHarnessE2e } from '../../shared/manager-header/testing/manager-header.harness.e2e';
+import { ManagerHeaderHarnessBase } from '../../shared/manager-header/testing/manager-header.harness.base';
+
 
 export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   constructor(private locator: Locator) {}
@@ -9,8 +12,7 @@ export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   private get searchInput() { return this.locator.locator(this.base.selectors.searchInput); }
   private get driverRows() { return this.locator.locator(this.base.selectors.driverRow); }
   private get configNameInput() { return this.locator.locator(this.base.selectors.configNameInput).first(); }
-  private get editBtn() { return this.locator.locator(this.base.selectors.editBtn); }
-  private get deleteBtn() { return this.locator.locator(this.base.selectors.deleteBtn); }
+
 
   async getDriverCount(): Promise<number> {
     return await this.driverRows.count();
@@ -39,10 +41,13 @@ export class DriverManagerHarnessE2e implements DriverManagerHarnessBase {
   }
 
   async clickEdit(): Promise<void> {
-    await this.editBtn.click();
+    const header = new ManagerHeaderHarnessE2e(this.locator.locator(ManagerHeaderHarnessBase.hostSelector));
+    await header.getToolbar().clickEdit();
   }
 
   async clickDelete(): Promise<void> {
-    await this.deleteBtn.click();
+    const header = new ManagerHeaderHarnessE2e(this.locator.locator(ManagerHeaderHarnessBase.hostSelector));
+    await header.getToolbar().clickDelete();
   }
+
 }

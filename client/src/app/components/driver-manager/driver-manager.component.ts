@@ -6,6 +6,9 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { HelpService, GuideStep } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
+
 
 @Component({
   selector: 'app-driver-manager',
@@ -17,7 +20,9 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
   drivers: Driver[] = [];
   selectedDriver?: Driver;
   editingDriver?: Driver;
+  soundAssets: any[] = [];
   isLoading: boolean = true;
+
   isSaving: boolean = false;
   scale: number = 1;
   searchQuery: string = '';
@@ -44,15 +49,34 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private router: Router,
     private route: ActivatedRoute,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private helpService: HelpService,
+    private settingsService: SettingsService
   ) { }
+
 
   ngOnInit() {
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+
+    // Trigger help automatically on first visit or if requested via query param
+    this.route.queryParams.subscribe(params => {
+      const forceHelp = params['help'] === 'true';
+      const settings = this.settingsService.getSettings();
+      if (forceHelp || !settings.driverManagerHelpShown) {
+        setTimeout(() => {
+          this.startHelp();
+          if (!forceHelp) {
+            settings.driverManagerHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 1000); // Wait for data to load
+      }
+    });
   }
+
 
   ngOnDestroy() {
     if (this.connectionSubscription) {
@@ -79,9 +103,14 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
 
   loadData() {
     this.isLoading = true;
-    this.dataService.getDrivers().subscribe({
-      next: (drivers) => {
-        this.drivers = drivers.map((d: any) => new Driver(
+    forkJoin({
+      drivers: this.dataService.getDrivers(),
+      assets: this.dataService.listAssets()
+    }).subscribe({
+      next: (result: any) => {
+        this.soundAssets = (result.assets || []).filter((a: any) => a.type === 'sound');
+        
+        this.drivers = (result.drivers || []).map((d: any) => new Driver(
           d.entity_id,
           d.name,
           d.nickname || '',
@@ -111,6 +140,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
         this.cdr.detectChanges();
+
       },
       error: (err) => {
         console.error('Failed to load drivers', err);
@@ -183,4 +213,75 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
   trackByDriver(index: number, driver: Driver): string {
     return driver.entity_id;
   }
+
+  createNewDriver() {
+    if (this.isSaving) return;
+    this.isSaving = true;
+
+    const baseName = this.translationService.translate('DM_DEFAULT_DRIVER_NAME');
+    const baseNickname = this.translationService.translate('DM_DEFAULT_DRIVER_NICKNAME');
+    
+    const uniqueName = this.generateUniqueDriverName(baseName);
+    const uniqueNickname = this.generateUniqueDriverNickname(baseNickname);
+
+    const newDriver = {
+      name: uniqueName,
+      nickname: uniqueNickname,
+      lapAudio: { type: 'preset' },
+      bestLapAudio: { type: 'preset' }
+    };
+
+    this.dataService.createDriver(newDriver).subscribe({
+      next: (createdDriver: any) => {
+        this.isSaving = false;
+        this.router.navigate(['/driver-editor'], { queryParams: { id: createdDriver.entity_id } });
+      },
+      error: (err) => {
+        console.error('Failed to create new driver', err);
+        this.isSaving = false;
+      }
+    });
+  }
+
+  private generateUniqueDriverName(baseName: string): string {
+    let name = baseName;
+    if (!this.drivers.some(d => d.name.toLowerCase() === name.toLowerCase())) {
+      return name;
+    }
+    let counter = 1;
+    while (true) {
+      const candidate = `${baseName}_${counter}`;
+      if (!this.drivers.some(d => d.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  private generateUniqueDriverNickname(baseNickname: string): string {
+    let nickname = baseNickname;
+    if (!this.drivers.some(d => d.nickname.toLowerCase() === nickname.toLowerCase())) {
+      return nickname;
+    }
+    let counter = 1;
+    while (true) {
+      const candidate = `${baseNickname}_${counter}`;
+      if (!this.drivers.some(d => d.nickname.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate('DM_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('DM_HELP_WELCOME_CONTENT'),
+        position: 'center'
+      }
+    ];
+    this.helpService.startGuide(steps);
+  }
 }
+
