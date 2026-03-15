@@ -1,84 +1,84 @@
 
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { UIEditorHarnessE2e } from './testing/ui-editor.harness.e2e';
 
 test.describe('UI Editor Visuals', () => {
   test.beforeEach(async ({ page }) => {
-    // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
-    // Mock settings with some flag values
     await TestSetupHelper.setupLocalStorage(page, {
       flagGreen: 'img1.png',
       flagRed: 'img1.png'
     });
 
-    // Mock File System with a directory
     await TestSetupHelper.setupFileSystemMock(page, {});
-
     await TestSetupHelper.disableAnimations(page);
   });
 
   test('should display UI editor page correctly', async ({ page }) => {
-    // Navigate to UI Editor
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
     await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
 
-    // Wait for data to load (panel headers should be visible)
+    const editor = page.locator('.ue-container');
+    const harness = new UIEditorHarnessE2e(editor);
+
     await expect(page.locator('.panel-header').first()).toBeVisible();
 
-    // Screenshot the entire page
-    await expect(page).toHaveScreenshot('ui-editor-page.png', { fullPage: true, maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    await expect(page).toHaveScreenshot('ui-editor-page.png', { fullPage: true });
   });
 
   test('should show image selector modal when clicking a flag', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
     await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
 
-    // Click on the first image selector (Green Flag)
-    await page.locator('app-image-selector .image-preview').first().click();
+    const editor = page.locator('.ue-container');
+    const harness = new UIEditorHarnessE2e(editor);
 
-    // Modal should be visible
+    await harness.clickImageSelector(0); // Green Flag
+
     const modal = page.locator('app-image-selector').first().locator('app-item-selector .modal-backdrop');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.modal-title')).toContainText('SELECT IMAGE');
 
-    // Screenshot the modal overlay
     const itemSelector = page.locator('app-item-selector .modal-content').last();
-    await expect(itemSelector).toHaveScreenshot('ui-editor-image-selector-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    await expect(itemSelector).toHaveScreenshot('ui-editor-image-selector-modal.png');
   });
 
   test('should show column config dialog when clicking configure columns', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
     await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
 
-    // Click "CONFIGURE COLUMNS" button
-    await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
+    const editor = page.locator('.ue-container');
+    const harness = new UIEditorHarnessE2e(editor);
 
-    // Modal should be visible
-    const modal = page.locator('.reorder-modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.locator('.title')).toContainText('CONFIGURE COLUMNS');
+    await harness.clickReorderColumns();
 
-    // Screenshot the reorder modal
-    await expect(modal).toHaveScreenshot('ui-editor-reorder-modal.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    const dialog = await harness.getReorderDialogHarness();
+    expect(await dialog.isVisible()).toBe(true);
+    expect(await dialog.getTitle()).toContain('CONFIGURE COLUMNS');
+
+    await expect(page.locator('.reorder-modal')).toHaveScreenshot('ui-editor-reorder-modal.png');
   });
 
   test('should show avatar and image set columns in reorder dialog', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
 
-    // Click "CONFIGURE COLUMNS" button
-    await page.getByRole('button', { name: 'CONFIGURE COLUMNS' }).click();
+    const editor = page.locator('.ue-container');
+    const harness = new UIEditorHarnessE2e(editor);
 
-    // Verify Avatar column is in the list
-    const modal = page.locator('.reorder-modal');
-    await expect(modal.locator('.value-pool')).toContainText('AVATAR');
+    await harness.clickReorderColumns();
 
-    // Verify our mocked image set is in the list
-    await expect(modal.locator('.value-pool')).toContainText('Custom Dash');
+    const dialog = await harness.getReorderDialogHarness();
+    expect(await dialog.isVisible()).toBe(true);
 
-    await expect(modal).toHaveScreenshot('ui-editor-columns-list.png', { maxDiffPixelRatio: 0.05, threshold: 0.2 });
+    const values = await dialog.getAvailableValues();
+    expect(values).toContain('AVATAR');
+    expect(values).toContain('Custom Dash');
+
+    await expect(page.locator('.reorder-modal')).toHaveScreenshot('ui-editor-columns-list.png');
   });
 });
+

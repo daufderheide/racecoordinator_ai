@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { FormsModule } from '@angular/forms';
 import { ItemSelectorComponent } from './item-selector.component';
 import { Pipe, PipeTransform } from '@angular/core';
-import { ItemSelectorHarness } from './item-selector.harness';
+import { ItemSelectorHarness } from './testing/item-selector.harness';
 
 @Pipe({
   name: 'avatarUrl',

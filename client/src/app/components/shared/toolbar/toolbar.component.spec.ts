@@ -4,7 +4,7 @@ import { ToolbarComponent } from './toolbar.component';
 import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { UndoManager } from '../undo-redo-controls/undo-manager';
-import { ToolbarHarness } from './toolbar.harness';
+import { ToolbarHarness } from './testing/toolbar.harness';
 
 describe('ToolbarComponent', () => {
   let component: ToolbarComponent;

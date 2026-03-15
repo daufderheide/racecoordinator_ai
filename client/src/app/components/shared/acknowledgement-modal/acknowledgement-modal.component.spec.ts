@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { AcknowledgementModalComponent } from './acknowledgement-modal.component';
 import { Pipe, PipeTransform } from '@angular/core';
-import { AcknowledgementModalHarness } from './acknowledgement-modal.harness';
+import { AcknowledgementModalHarness } from './testing/acknowledgement-modal.harness';
 
 @Pipe({
   name: 'translate',

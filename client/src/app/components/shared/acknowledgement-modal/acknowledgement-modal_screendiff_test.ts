@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { AcknowledgementModalHarnessE2e } from './acknowledgement-modal.harness.e2e';
+import { AcknowledgementModalHarnessE2e } from './testing/acknowledgement-modal.harness.e2e';
 import { com } from '../../../proto/message';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 

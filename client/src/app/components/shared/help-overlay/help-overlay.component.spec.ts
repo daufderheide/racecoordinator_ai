@@ -6,7 +6,7 @@ import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { ChangeDetectorRef } from '@angular/core';
-import { HelpOverlayHarness } from './help-overlay.harness';
+import { HelpOverlayHarness } from './testing/help-overlay.harness';
 
 describe('HelpOverlayComponent', () => {
   let component: HelpOverlayComponent;

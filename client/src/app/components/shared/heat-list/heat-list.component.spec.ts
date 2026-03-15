@@ -4,7 +4,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { HeatListComponent } from './heat-list.component';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { TranslationService } from '../../../services/translation.service';
-import { HeatListHarness } from './heat-list.harness';
+import { HeatListHarness } from './testing/heat-list.harness';
 
 describe('HeatListComponent', () => {
   let component: HeatListComponent;

@@ -7,7 +7,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { of } from 'rxjs';
-import { AudioSelectorHarness } from './audio-selector.harness';
+import { AudioSelectorHarness } from './testing/audio-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
 class MockItemSelectorComponent {

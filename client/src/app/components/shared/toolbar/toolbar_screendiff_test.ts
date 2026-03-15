@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { ToolbarHarnessE2e } from './toolbar.harness.e2e';
+import { ToolbarHarnessE2e } from './testing/toolbar.harness.e2e';
 
 test.describe('Toolbar Component Visuals', () => {
   test.beforeEach(async ({ page }) => {

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { ItemSelectorHarnessE2e } from './item-selector.harness.e2e';
+import { ItemSelectorHarnessE2e } from './testing/item-selector.harness.e2e';
 
 test.describe('Item Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {

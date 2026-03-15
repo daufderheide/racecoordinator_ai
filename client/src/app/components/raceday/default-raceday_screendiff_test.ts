@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
 
 test.describe('Raceday Visuals for Fuel', () => {
   test.beforeEach(async ({ page }) => {
-    // Listen for console logs from the browser
     page.on('console', msg => console.log(`BROWSER [${msg.type()}]: ${msg.text()}`));
     page.on('pageerror', err => console.error(`BROWSER ERROR: ${err.message}`));
 
-    // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
@@ -15,7 +14,6 @@ test.describe('Raceday Visuals for Fuel', () => {
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.waitForLoadState('networkidle');
 
-    // Override settings to use fuel columns via localStorage
     await TestSetupHelper.setupSettings(page, {
       racedayColumns: ['driver.name_driver.nickname', 'lapCount', 'participant.fuelLevel', 'fuelCapacity', 'fuelPercentage'],
       columnLayouts: {
@@ -46,10 +44,11 @@ test.describe('Raceday Visuals for Fuel', () => {
   test('should display fuel levels correctly', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    // Wait for the scalable content to be visible
+    const container = page.locator('.dashboard-wrapper');
+    const harness = new DefaultRacedayHarnessE2e(container);
+
     await expect(page.locator('.scalable-content')).toBeVisible();
 
-    // Explicitly inject race data to ensure fuel options are enabled and columns are visible
     await page.evaluate(() => {
       const raceData = {
         race: {
@@ -126,17 +125,14 @@ test.describe('Raceday Visuals for Fuel', () => {
       window.mockRaceData(raceData);
     });
 
-    // Wait for the component to process the update
     await page.waitForTimeout(500);
 
-    // Verify presence of fuel-related columns
-    await expect(page.locator('.table-headers text', { hasText: 'FUEL' }).first()).toBeVisible({ timeout: 10000 });
+    expect(await harness.isHeaderColumnVisible('FUEL')).toBe(true);
 
     await expect(page).toHaveScreenshot('raceday-fuel-levels.png', { maxDiffPixelRatio: 0.1 });
   });
 
   test('should display driver avatars when column is configured', async ({ page }) => {
-    // Override settings for this specific test to include avatar column via localStorage
     await TestSetupHelper.setupSettings(page, {
       racedayColumns: ['driver.avatarUrl', 'driver.name'],
       columnLayouts: {
@@ -156,7 +152,9 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    // Emit a mock race update event with driver data and avatar
+    const container = page.locator('.dashboard-wrapper');
+    const harness = new DefaultRacedayHarnessE2e(container);
+
     await page.evaluate(() => {
       if ((window as any).mockRaceData) {
         const driverModel = {
@@ -186,7 +184,7 @@ test.describe('Raceday Visuals for Fuel', () => {
                   { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
                   { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
                 ]
-              }
+               }
             },
             drivers: [participant],
             currentHeat: {
@@ -206,14 +204,10 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     });
 
-    // Wait for the component to process the update
     await page.waitForTimeout(500);
 
-    // Wait for the avatar to be visible
-    // The avatar is rendered as an SVG image tag
-    const avatar = page.locator('.driver-row image').first();
-    await expect(avatar).toBeVisible({ timeout: 15000 });
-    await expect(avatar).toHaveAttribute('href', /img1.png/);
+    const avatarHref = await harness.getDriverAvatarHref(0);
+    expect(avatarHref).toContain('img1.png');
 
     await expect(page).toHaveScreenshot('raceday-driver-avatars.png', { maxDiffPixelRatio: 0.1 });
   });
@@ -221,7 +215,9 @@ test.describe('Raceday Visuals for Fuel', () => {
   test('should display fuel levels for digital race', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    // Emit a mock digital race update
+    const container = page.locator('.dashboard-wrapper');
+    const harness = new DefaultRacedayHarnessE2e(container);
+
     await page.evaluate(() => {
       if ((window as any).mockRaceData) {
         (window as any).mockRaceData({
@@ -243,7 +239,7 @@ test.describe('Raceday Visuals for Fuel', () => {
                 lanes: [
                   { objectId: 'l1', length: 15, backgroundColor: '#ffff00', foregroundColor: '#000000' }
                 ]
-              }
+               }
             },
             drivers: [
               {
@@ -272,20 +268,15 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     });
 
-    // Wait for the component to process
     await page.waitForTimeout(500);
 
-    // Verify presence of fuel-related columns
-    await expect(page.locator('.table-headers text', { hasText: 'FUEL' }).first()).toBeVisible({ timeout: 10000 });
-
-    // Verify 50% fuel level (25/50)
+    expect(await harness.isHeaderColumnVisible('FUEL')).toBe(true);
     await expect(page.locator('text=50%')).toBeVisible({ timeout: 10000 });
 
     await expect(page).toHaveScreenshot('raceday-digital-fuel-levels.png', { maxDiffPixelRatio: 0.1 });
   });
 
   test('should scale fuel gauge correctly on 1-lane track', async ({ page }) => {
-    // Columns: Avatar, nickname, lap count, fuel guage, lap time
     await TestSetupHelper.setupSettings(page, {
       racedayColumns: ['driver.avatarUrl', 'driver.nickname', 'lapCount', 'imageset_fuel-gauge-builtin', 'lastLapTime'],
       columnLayouts: {
@@ -358,7 +349,6 @@ test.describe('Raceday Visuals for Fuel', () => {
   });
 
   test('should scale fuel gauge correctly on 8-lane track', async ({ page }) => {
-    // Columns: Avatar, nickname, lap count, fuel guage, lap time
     await TestSetupHelper.setupSettings(page, {
       racedayColumns: ['driver.avatarUrl', 'driver.nickname', 'lapCount', 'imageset_fuel-gauge-builtin', 'lastLapTime'],
       columnLayouts: {
@@ -433,3 +423,4 @@ test.describe('Raceday Visuals for Fuel', () => {
     await expect(page).toHaveScreenshot('raceday-8-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
   });
 });
+

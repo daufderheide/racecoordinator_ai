@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { ImageSelectorHarnessE2e } from './image-selector.harness.e2e';
+import { ImageSelectorHarnessE2e } from './testing/image-selector.harness.e2e';
 
 test.describe('Image Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {

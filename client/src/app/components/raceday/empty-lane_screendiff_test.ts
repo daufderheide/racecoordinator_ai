@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
 
 test.describe('Raceday Visuals for Empty Lanes', () => {
   test.beforeEach(async ({ page }) => {
-    // Listen for console logs from the browser
     page.on('console', msg => console.log(`BROWSER [${msg.type()}]: ${msg.text()}`));
     page.on('pageerror', err => console.error(`BROWSER ERROR: ${err.message}`));
 
-    // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
@@ -15,7 +14,6 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.waitForLoadState('networkidle');
 
-    // Setup settings with many columns to verify they all hide for empty lanes
     await TestSetupHelper.setupSettings(page, {
       racedayColumns: ['driver.name', 'driver.nickname', 'seed', 'rankHeat', 'rankOverall', 'lapCount', 'participant.fuelLevel'],
       columnLayouts: {
@@ -52,10 +50,11 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
   test('should hide specific column values for empty lanes', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
 
-    // Wait for the scalable content to be visible
+    const container = page.locator('.dashboard-wrapper');
+    const harness = new DefaultRacedayHarnessE2e(container);
+
     await expect(page.locator('.scalable-content')).toBeVisible();
 
-    // Inject race data with one real driver and one empty driver
     await page.evaluate(() => {
       const raceData = {
         race: {
@@ -84,9 +83,9 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
             },
             {
               objectId: 'rp_empty',
-              seed: 0, // Should be ignored/hidden
+              seed: 0,
               driver: {
-                model: { entityId: '' }, // Empty entityId indicates empty driver
+                model: { entityId: '' },
                 name: 'Empty',
                 nickname: 'Empty'
               }
@@ -122,17 +121,14 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
       window.mockRaceData(raceData);
     });
 
-    // Wait for the component to process the update
     await page.waitForTimeout(1000);
 
-    // Verify "Real Driver" shows seed (5)
-    await expect(page.locator('text=(5)')).toBeVisible({ timeout: 10000 });
+    const row0Text = await harness.getDriverRowText(0);
+    expect(row0Text).toContain('(5)');
 
-    // Verify "Empty Lane" text is present (localized)
-    // Note: English localized RD_EMPTY_LANE is "Empty Lane"
     await expect(page.locator('text=Empty Lane').first()).toBeVisible({ timeout: 10000 });
 
-    // Take screenshot to verify seed and other columns are empty for the empty lane
     await expect(page).toHaveScreenshot('raceday-empty-lanes.png', { maxDiffPixelRatio: 0.1 });
   });
 });
+

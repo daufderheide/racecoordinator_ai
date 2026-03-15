@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { ConfirmationModalHarnessE2e } from './confirmation-modal.harness.e2e';
+import { ConfirmationModalHarnessE2e } from './testing/confirmation-modal.harness.e2e';
 
 test.describe('Confirmation Modal Visuals', () => {
   test.beforeEach(async ({ page }) => {

@@ -1,13 +1,12 @@
 
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { RacedaySetupHarnessE2e } from './testing/raceday-setup.harness.e2e';
 
 test.describe('Connection Loss Visuals', () => {
   test('should display transparent overlay when connection is lost', async ({ page }) => {
-    // 1. Install fake clock to control timing and prevent race conditions
     await page.clock.install();
 
-    // 2. Mock the API to simulate a successful connection initially
     let connectionSucceeds = true;
     await page.route('**/api/drivers', async route => {
       if (connectionSucceeds) {
@@ -24,7 +23,6 @@ test.describe('Connection Loss Visuals', () => {
       }
     });
 
-    // Also mock races to avoid errors if the app requests them
     await page.route('**/api/races', async route => {
       if (connectionSucceeds) {
         await route.fulfill({
@@ -48,7 +46,6 @@ test.describe('Connection Loss Visuals', () => {
       }
     });
 
-    // Mock teams to avoid hanging forkJoin in DefaultRacedaySetupComponent
     await page.route('**/api/teams', async route => {
       if (connectionSucceeds) {
         await route.fulfill({
@@ -63,50 +60,34 @@ test.describe('Connection Loss Visuals', () => {
       }
     });
 
-    // 3. Setup standard mocks for localization and assets
     await TestSetupHelper.setupLocalizationMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
-    // 4. Setup LocalStorage to disable walkthrough
     await TestSetupHelper.setupLocalStorage(page, {
       racedaySetupWalkthroughSeen: true
     });
 
-    // 5. Load the app
     await page.goto('/');
-
-    // Disable animations for stability - Must be called after goto() as navigation clears styles
     await TestSetupHelper.disableAnimations(page);
 
-    // 6. Advance past splash screen (5s min time)
-    // The splash screen waits for connection (mocked success) AND 5 seconds.
+    const container = page.locator('.shell-container');
+    const harness = new RacedaySetupHarnessE2e(container);
+
     await page.clock.fastForward(5500);
 
-    // Wait for splash screen to be gone.
-    await expect(page.locator('.splash-screen')).not.toBeVisible();
+    expect(await harness.isSplashScreenVisible()).toBe(false);
 
-    // Verify we are on the main screen
     await expect(page.locator('.menu-bar')).toBeVisible();
 
-    // 5. Trigger connection loss
     connectionSucceeds = false;
 
-    // 6. Advance past connection monitor interval (5s) to trigger check
-    // This will cause the app to detect disconection and show the overlay.
     await page.clock.fastForward(5500);
 
-    // The overlay has class .connection-lost-overlay
-    const overlay = page.locator('.connection-lost-overlay');
-    await expect(overlay).toBeVisible();
+    expect(await harness.isConnectionLostOverlayVisible()).toBe(true);
 
-    // 7. Verify overlay content
-    await expect(overlay.locator('.connection-lost-text')).toHaveText(/Lost connection with server/i);
+    expect(await harness.getConnectionLostText()).toContain('Lost connection with server');
 
-    // 8. Verify transparency
-    // Since we used fake clock and stopped advancing, the app's internal "reset to splash" timer 
-    // (which triggers 5s after connection loss) will NOT fire. This stabilizes the screenshot state.
-    // We also mask the quote text, version, and spinner (animated)
-    await page.waitForTimeout(1000); // Longer settlement wait
+    await page.waitForTimeout(1000);
 
     await expect(page).toHaveScreenshot('connection-lost-overlay.png', {
       mask: [
@@ -120,3 +101,4 @@ test.describe('Connection Loss Visuals', () => {
     });
   });
 });
+

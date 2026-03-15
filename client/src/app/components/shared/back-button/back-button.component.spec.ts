@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { BackButtonComponent } from './back-button.component';
 import { Router } from '@angular/router';
 import { CUSTOM_ELEMENTS_SCHEMA, Pipe, PipeTransform } from '@angular/core';
-import { BackButtonHarness } from './back-button.harness';
+import { BackButtonHarness } from './testing/back-button.harness';
 
 @Pipe({
   name: 'translate',

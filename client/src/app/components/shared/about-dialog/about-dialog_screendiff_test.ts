@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
-import { AboutDialogHarnessE2e } from './about-dialog.harness.e2e';
+import { AboutDialogHarnessE2e } from './testing/about-dialog.harness.e2e';
 
 test.describe('About Dialog', () => {
   test.beforeEach(async ({ page }) => {

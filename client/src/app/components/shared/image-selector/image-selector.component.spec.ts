@@ -4,7 +4,7 @@ import { ImageSelectorComponent } from './image-selector.component';
 import { DataService } from 'src/app/data.service';
 import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { ImageSelectorHarness } from './image-selector.harness';
+import { ImageSelectorHarness } from './testing/image-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
 class MockItemSelectorComponent {

@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { UndoRedoControlsComponent } from './undo-redo-controls.component';
 import { UndoManager } from './undo-manager';
 import { Pipe, PipeTransform } from '@angular/core';
-import { UndoRedoControlsHarness } from './undo-redo-controls.harness';
+import { UndoRedoControlsHarness } from './testing/undo-redo-controls.harness';
 
 @Pipe({
   name: 'translate',

@@ -4,7 +4,7 @@ import { AboutDialogComponent } from './about-dialog.component';
 import { TranslatePipe } from '../../../pipes/translate.pipe';
 import { TranslationService } from '../../../services/translation.service';
 import { of } from 'rxjs';
-import { AboutDialogHarness } from './about-dialog.harness';
+import { AboutDialogHarness } from './testing/about-dialog.harness';
 
 describe('AboutDialogComponent', () => {
   let component: AboutDialogComponent;

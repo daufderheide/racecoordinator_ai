@@ -11,7 +11,7 @@ import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
 import { HelpOverlayComponent } from '../shared/help-overlay/help-overlay.component';
 import { of, BehaviorSubject } from 'rxjs';
-import { DefaultRacedaySetupHarness } from './default-raceday-setup.harness';
+import { DefaultRacedaySetupHarness } from './testing/default-raceday-setup.harness';
 
 import { FormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';

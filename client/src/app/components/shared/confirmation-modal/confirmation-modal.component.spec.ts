@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ConfirmationModalComponent } from './confirmation-modal.component';
 import { Pipe, PipeTransform } from '@angular/core';
-import { ConfirmationModalHarness } from './confirmation-modal.harness';
+import { ConfirmationModalHarness } from './testing/confirmation-modal.harness';
 
 @Pipe({
   name: 'translate',
