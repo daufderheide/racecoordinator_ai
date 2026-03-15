@@ -308,12 +308,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(this.dataService.getInterfaceEvents().subscribe(event => {
       if (event.status) {
-        this.resetWatchdog();
-
         const status = event.status.status;
         if (status === this.lastInterfaceStatus) {
+          // KICK WATCHDOG FOR LIVE PULSES, BUT NOT FOR TIMED STATES LIKE DISCONNECTED AS IT OVERRIDES THEM
+          if (status !== InterfaceStatus.DISCONNECTED && status !== InterfaceStatus.NO_DATA) {
+            this.resetWatchdog();
+          }
           return;
         }
+        
+        this.resetWatchdog();
         this.lastInterfaceStatus = status ?? -1;
 
         this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;

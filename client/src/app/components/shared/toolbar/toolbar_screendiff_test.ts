@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { ToolbarHarnessE2e } from './testing/toolbar.harness.e2e';
 
 test.describe('Toolbar Component Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -31,17 +32,18 @@ test.describe('Toolbar Component Visuals', () => {
   test('should show hover states', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-manager'));
     
-    const helpBtn = page.locator('#help-track-btn');
-    await helpBtn.hover();
+    const toolbar = page.locator('app-toolbar');
+    const harness = new ToolbarHarnessE2e(toolbar);
+
+    await harness.hoverHelp();
     await page.waitForTimeout(200); // Wait for hover transition
     
-    await expect(page.locator('app-toolbar')).toHaveScreenshot('toolbar-help-hover.png');
+    await expect(toolbar).toHaveScreenshot('toolbar-help-hover.png');
     
-    const deleteBtn = page.locator('#delete-track-btn');
-    await deleteBtn.hover();
+    await harness.hoverDelete();
     await page.waitForTimeout(200);
     
-    await expect(page.locator('app-toolbar')).toHaveScreenshot('toolbar-delete-hover.png');
+    await expect(toolbar).toHaveScreenshot('toolbar-delete-hover.png');
   });
 
   test('should show disabled states', async ({ page }) => {

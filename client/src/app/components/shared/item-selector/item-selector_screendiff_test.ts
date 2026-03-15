@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { ItemSelectorHarnessE2e } from './testing/item-selector.harness.e2e';
 
 test.describe('Item Selector Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -22,10 +23,14 @@ test.describe('Item Selector Visuals', () => {
     await avatarPreview.click();
 
     // Wait for item selector to appear
-    const selector = page.locator('app-item-selector .modal-content');
-    await expect(selector).toBeVisible();
+    const selector = page.locator('app-item-selector');
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
 
     // Screenshot the selector
-    await expect(selector).toHaveScreenshot('item-selector.png');
+    // We target the internal modal to match original behavior, or we can just screenshot the host. The original took a screenshot of `.modal-content`
+    await expect(selector.locator('.modal-content')).toHaveScreenshot('item-selector.png');
   });
 });

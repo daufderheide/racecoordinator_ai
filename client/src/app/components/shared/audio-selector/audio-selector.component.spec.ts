@@ -1,11 +1,13 @@
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { AudioSelectorComponent } from './audio-selector.component';
 import { DataService } from 'src/app/data.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { FormsModule } from '@angular/forms';
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { of } from 'rxjs';
+import { AudioSelectorHarness } from './testing/audio-selector.harness';
 
 @Component({ selector: 'app-item-selector', template: '', standalone: false })
 class MockItemSelectorComponent {
@@ -27,6 +29,7 @@ class MockTranslatePipe implements PipeTransform {
 describe('AudioSelectorComponent', () => {
   let component: AudioSelectorComponent;
   let fixture: ComponentFixture<AudioSelectorComponent>;
+  let harness: AudioSelectorHarness;
   let mockDataService: any;
   let mockTranslationService: any;
 
@@ -45,9 +48,10 @@ describe('AudioSelectorComponent', () => {
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(AudioSelectorComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, AudioSelectorHarness);
     fixture.detectChanges();
   });
 
@@ -76,8 +80,8 @@ describe('AudioSelectorComponent', () => {
     expect(component.textChange.emit).toHaveBeenCalledWith('hello');
   });
 
-  it('should open and close item selector', () => {
-    component.openItemSelector();
+  it('should open and close item selector', async () => {
+    await harness.clickSelectSound();
     expect(component.showItemSelector).toBeTrue();
 
     component.closeItemSelector();

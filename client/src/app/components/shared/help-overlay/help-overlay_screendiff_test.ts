@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { HelpOverlayHarnessE2e } from './testing/help-overlay.harness.e2e';
 
 test.describe('Help Overlay Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -15,47 +16,8 @@ test.describe('Help Overlay Visuals', () => {
     await TestSetupHelper.setupSessionStorage(page, { skipIntro: 'true' });
   });
 
-  async function waitForPopoverStable(page, overlay) {
-    const popover = overlay.locator('.help-popover');
-    const mask = overlay.locator('.highlight-mask');
-    await expect(popover).toBeVisible();
-
-    // Wait for the popover and mask to stop moving/resizing
-    // We check every 50ms for 5 consecutive stable readings
-    let lastPopoverBox = await popover.boundingBox();
-    let lastMaskBox = await mask.count() > 0 ? await mask.boundingBox() : null;
-    let stableCount = 0;
-
-    for (let i = 0; i < 40; i++) { // Max 2s
-      await page.waitForTimeout(50);
-      const currentPopoverBox = await popover.boundingBox();
-      const currentMaskBox = await mask.count() > 0 ? await mask.boundingBox() : null;
-
-      const popoverStable = currentPopoverBox && lastPopoverBox &&
-        currentPopoverBox.x === lastPopoverBox.x &&
-        currentPopoverBox.y === lastPopoverBox.y &&
-        currentPopoverBox.width === lastPopoverBox.width &&
-        currentPopoverBox.height === lastPopoverBox.height;
-
-      const maskStable = (!currentMaskBox && !lastMaskBox) || (currentMaskBox && lastMaskBox &&
-        currentMaskBox.x === lastMaskBox.x &&
-        currentMaskBox.y === lastMaskBox.y &&
-        currentMaskBox.width === lastMaskBox.width &&
-        currentMaskBox.height === lastMaskBox.height);
-
-      if (popoverStable && maskStable) {
-        stableCount++;
-      } else {
-        stableCount = 0;
-      }
-
-      if (stableCount >= 5) break;
-      lastPopoverBox = currentPopoverBox;
-      lastMaskBox = currentMaskBox;
-    }
-
-    // Safety margin
-    await page.waitForTimeout(100);
+  async function waitForPopoverStable(page, harness: HelpOverlayHarnessE2e) {
+    await harness.waitForStable();
   }
 
   test('should display help guide and navigate correctly', async ({ page }) => {
@@ -72,41 +34,49 @@ test.describe('Help Overlay Visuals', () => {
 
     // Wait for overlay to appear
     const overlay = page.locator('app-help-overlay');
-    const popover = overlay.locator('.help-popover');
-    await waitForPopoverStable(page, overlay);
+    const harness = new HelpOverlayHarnessE2e(overlay, page);
+    await waitForPopoverStable(page, harness);
 
     // 3. Verify Step 1 (Welcome - general modal, centered)
-    await expect(popover).toContainText('Welcome to Race Day Setup');
+    await expect(async () => {
+      expect(await harness.getContent()).toContain('configure and start your races');
+    }).toPass();
     // Capture Step 1
     await expect(page).toHaveScreenshot('help-step-1-welcome.png');
 
     // 4. Click Next -> Step 2 (Walkthrough - targets help icon)
-    const nextBtn = overlay.locator('.btn-next');
-    await nextBtn.click();
+    await harness.clickNext();
 
     // Wait for transition/position update
     // The highlight mask should appear around the help icon
-    await expect(popover).toContainText('Walkthrough');
-    await waitForPopoverStable(page, overlay);
-    await expect(overlay.locator('.highlight-mask')).toBeVisible();
+    await expect(async () => {
+      expect(await harness.getContent()).toContain('walkthrough');
+    }).toPass();
+    await waitForPopoverStable(page, harness);
+    await expect(async () => {
+      expect(await harness.hasHighlightMask()).toBe(true);
+    }).toPass();
 
     // Capture Step 2
     await expect(page).toHaveScreenshot('help-step-2-icon-target.png');
 
     // 5. Click Next -> Step 3 (Driver Selection - targets driver panel)
-    await nextBtn.click();
-    await expect(popover).toContainText('Driver Selection');
-    await waitForPopoverStable(page, overlay);
+    await harness.clickNext();
+    await expect(async () => {
+      expect(await harness.getContent()).toContain('select who will be racing');
+    }).toPass();
+    await waitForPopoverStable(page, harness);
     // Capture Step 3
     await expect(page).toHaveScreenshot('help-step-3-driver-panel.png');
 
     // 6. Test Previous Button
-    const prevBtn = overlay.locator('.btn-prev');
-    await prevBtn.click();
+    await harness.clickPrevious();
 
     // Should be back at Step 2
-    await expect(popover).toContainText('Walkthrough');
-    await waitForPopoverStable(page, overlay);
+    await expect(async () => {
+      expect(await harness.getContent()).toContain('walkthrough');
+    }).toPass();
+    await waitForPopoverStable(page, harness);
     // Verify visual match with previous capture (optional, but good for logic check)
     // We'll just capture to ensure consistency
     await expect(page).toHaveScreenshot('help-step-2-icon-target.png');
@@ -114,10 +84,13 @@ test.describe('Help Overlay Visuals', () => {
     // 7. End Guide
     // Determine if we can click Finish or Close. 
     // We are at step 2, not the end, so we should use the Close (x) button in header
-    const closeBtn = overlay.locator('.close-btn');
-    await closeBtn.click();
+    await harness.clickClose();
 
-    await expect(popover).not.toBeVisible();
-    await expect(overlay.locator('.highlight-mask')).not.toBeVisible();
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(false);
+    }).toPass();
+    await expect(async () => {
+      expect(await harness.hasHighlightMask()).toBe(false);
+    }).toPass();
   });
 });

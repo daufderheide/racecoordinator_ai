@@ -276,13 +276,6 @@ export class TestSetupHelper {
     // 4. Wait for response and text
     await responsePromise;
 
-    try {
-      await page.waitForFunction((text) => {
-        return document.body.innerText.toUpperCase().includes(text);
-      }, expectedText, { timeout: 5000 });
-    } catch (e) {
-      // Continue anyway
-    }
 
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(100);

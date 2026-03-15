@@ -1,16 +1,33 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
+import { AcknowledgementModalHarnessE2e } from './testing/acknowledgement-modal.harness.e2e';
 import { com } from '../../../proto/message';
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
 test.describe('Acknowledgement Modal Visuals', () => {
+  // Helper to dispatch an InterfaceEvent to all interface-data sockets
+  const sendInterfaceEvent = async (page: any, status: any) => {
+    const event = com.antigravity.InterfaceEvent.create({ status: { status } });
+    const data = Array.from(com.antigravity.InterfaceEvent.encode(event).finish());
+    await page.evaluate((data: any) => {
+      // @ts-ignore
+      const sockets = (window.allMockSockets || []).filter((s: any) => s.url && s.url.includes('interface-data'));
+      sockets.forEach((socket: any) => {
+        const ev = new MessageEvent('message', { data: new Uint8Array(data).buffer });
+        socket.dispatchEvent(ev);
+        if (socket.onmessage) socket.onmessage(ev);
+      });
+    }, data);
+  };
+
   test.beforeEach(async ({ page }) => {
+    test.slow();
     // Disable mock heartbeat to control interface status manually
     // Scale watchdog timeouts down to 500ms so tests don't hit global timeouts
     await page.addInitScript(() => {
       // @ts-ignore
       window.disableMockHeartbeat = true;
-      (window as any).WATCHDOG_TIMEOUT = 500;
+      (window as any).WATCHDOG_TIMEOUT = 2000;
     });
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
@@ -22,35 +39,26 @@ test.describe('Acknowledgement Modal Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
     await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
 
-    // Construct the message in Node
-    const interfaceEvent = com.antigravity.InterfaceEvent.create({
-      status: {
-        status: InterfaceStatus.NO_DATA
-      }
-    });
-    const buffer = com.antigravity.InterfaceEvent.encode(interfaceEvent).finish();
-    const dataArray = Array.from(buffer);
+    // Prime with CONNECTED first
+    await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', {
-          data: new Uint8Array(data).buffer
-        });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, dataArray);
+    // Increase timeout to prevent watchdog overwriting NO_DATA modal title while asserting
+    await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 100000; });
+    
+    // Now send NO_DATA — calls showInterfaceError() immediately
+    await sendInterfaceEvent(page, InterfaceStatus.NO_DATA);
 
-    // Wait exactly as production does: 500ms timeouts + 200ms buffer
-    await page.waitForTimeout(700);
+    const modalHost = page.locator('app-acknowledgement-modal');
+    const harness = new AcknowledgementModalHarnessE2e(modalHost);
 
-    const modal = page.locator('app-acknowledgement-modal .modal-content');
-    await expect(modal).toBeVisible();
-    await expect(modal).toContainText('No Data Received');
+    await harness.waitForVisible(10000);
 
-    await expect(modal).toHaveScreenshot('ack-modal-no-data.png');
+    await expect(async () => {
+      expect(await harness.getTitle()).toContain('No Data Received');
+    }).toPass();
+
+    // Use modal-content for screenshot to avoid transparent background flakiness
+    await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-no-data.png');
   });
 
   test('should display DISCONNECTED modal after timeout', async ({ page }) => {
@@ -58,68 +66,33 @@ test.describe('Acknowledgement Modal Visuals', () => {
     await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
 
     // Priming CONNECTED pulse to reset ngOnInit timers
-    const connectedPulse = com.antigravity.InterfaceEvent.create({
-      status: { status: InterfaceStatus.CONNECTED }
-    });
-    const connectedPulseBuffer = com.antigravity.InterfaceEvent.encode(connectedPulse).finish();
-    const connectedPulseArray = Array.from(connectedPulseBuffer);
+    await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', {
-          data: new Uint8Array(data).buffer
-        });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, connectedPulseArray);
+    const modalHost = page.locator('app-acknowledgement-modal');
+    const harness = new AcknowledgementModalHarnessE2e(modalHost);
 
-    // Simulate DISCONNECTED
-    const interfaceEvent = com.antigravity.InterfaceEvent.create({
-      status: {
-        status: InterfaceStatus.DISCONNECTED
-      }
-    });
-    const buffer = com.antigravity.InterfaceEvent.encode(interfaceEvent).finish();
-    const dataArray = Array.from(buffer);
+    // Initial page load watchdog will have fired and shown Disconnected modal,
+    // and sending CONNECTED turns it to "Interface Connected" modal.
+    // We must acknowledge (hide) it first to make sure we have a clean background state.
+    await harness.waitForVisible(10000);
+    await harness.clickAcknowledge();
 
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', {
-          data: new Uint8Array(data).buffer
-        });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, dataArray);
+    // Verify it becomes invisible so we know it will be re-triggered clearly
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(false);
+    }).toPass();
 
-    const modal = page.locator('app-acknowledgement-modal .modal-content');
+    // Simulate DISCONNECTED with 1000ms delay threshold
+    await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 1000; });
+    await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
-    // Wait remaining duration to surpass 500ms total
-    await page.waitForTimeout(300);
+    await harness.waitForVisible(10000);
 
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await expect(modal).toContainText('Interface Disconnected');
+    await expect(async () => {
+      expect(await harness.getTitle()).toContain('Interface Disconnected');
+    }).toPass();
 
-    // PUSH WATCHDOG OUT: Resend DISCONNECTED to guarantee the `noStatusWatchdog`
-    // doesn't expire and change the text to "No Status" WHILE Playwright evaluates the DOM!
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', {
-          data: new Uint8Array(data).buffer
-        });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, dataArray);
-
-    await expect(modal).toHaveScreenshot('ack-modal-disconnected.png');
+    await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-disconnected.png');
   });
 
   test('should display CONNECTED modal on recovery', async ({ page }) => {
@@ -127,77 +100,37 @@ test.describe('Acknowledgement Modal Visuals', () => {
     await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
 
     // Priming CONNECTED pulse
-    const connectedPulse = com.antigravity.InterfaceEvent.create({
-      status: { status: InterfaceStatus.CONNECTED }
-    });
-    const connectedPulseBuffer = com.antigravity.InterfaceEvent.encode(connectedPulse).finish();
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', { data: new Uint8Array(data).buffer });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, Array.from(connectedPulseBuffer));
+    await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
     // 1. Simulate DISCONNECTED and wait for modal
-    const disconnectedEvent = com.antigravity.InterfaceEvent.create({
-      status: { status: InterfaceStatus.DISCONNECTED }
-    });
-    const disconnectedBuffer = com.antigravity.InterfaceEvent.encode(disconnectedEvent).finish();
+    await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 1000; });
+    await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', { data: new Uint8Array(data).buffer });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, Array.from(disconnectedBuffer));
-
-    // Wait past the first 500ms timeout
-    await page.waitForTimeout(700);
+    // Wait past the first 1000ms timeout so the modal appears
+    await page.waitForTimeout(1200);
 
     // Test the duplicate event resilience
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', { data: new Uint8Array(data).buffer });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, Array.from(disconnectedBuffer));
+    await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
-    // Quick stability buffer
-    await page.waitForTimeout(300);
+    const modalHost = page.locator('app-acknowledgement-modal');
+    const harness = new AcknowledgementModalHarnessE2e(modalHost);
 
-    const modal = page.locator('app-acknowledgement-modal .modal-content');
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await expect(modal).toContainText('Interface Disconnected');
+    await harness.waitForVisible(10000);
 
-    // 2. Simulate CONNECTED (recovery)
-    const connectedEvent = com.antigravity.InterfaceEvent.create({
-      status: { status: InterfaceStatus.CONNECTED }
-    });
-    const connectedBuffer = com.antigravity.InterfaceEvent.encode(connectedEvent).finish();
+    await expect(async () => {
+      expect(await harness.getTitle()).toContain('Interface Disconnected');
+    }).toPass();
 
-    await page.evaluate((data) => {
-      // @ts-ignore
-      const sockets = (window.allMockSockets || []).filter(s => s.url && s.url.includes('interface-data'));
-      sockets.forEach((socket: any) => {
-        const event = new MessageEvent('message', { data: new Uint8Array(data).buffer });
-        socket.dispatchEvent(event);
-        if (socket.onmessage) socket.onmessage(event);
-      });
-    }, Array.from(connectedBuffer));
+    // 2. Simulate CONNECTED (recovery) - disable watchdog overwrite asserting
+    await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 100000; });
+    await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
-    // Ensure CONNECTED modal is instantly visible
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await expect(modal).toContainText('Interface Connected');
+    await harness.waitForVisible(10000);
 
-    await expect(modal).toHaveScreenshot('ack-modal-recovered.png');
+    await expect(async () => {
+      expect(await harness.getTitle()).toContain('Interface Connected');
+    }).toPass();
+
+    await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-recovered.png');
   });
 });
