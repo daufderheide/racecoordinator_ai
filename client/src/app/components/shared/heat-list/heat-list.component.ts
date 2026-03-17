@@ -9,6 +9,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 export class HeatListComponent implements OnChanges {
   @Input() heats: any[] = [];
   @Input() showHeader: boolean = true;
+  @Input() columns: number = 2;
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['heats']) {

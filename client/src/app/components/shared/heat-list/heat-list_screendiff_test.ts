@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
 import { HeatListHarnessE2e } from './testing/heat-list.harness.e2e';
+import { HeatListHarnessBase } from './testing/heat-list.harness.base';
 
 test.describe('Heat List Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -40,15 +41,13 @@ test.describe('Heat List Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-manager?driverCount=4'));
 
     // Select the first race to trigger heat generation
-    await page.click('.race-table.body-only tbody tr:first-child');
+    await page.click('.list-container .list-item:first-child');
 
     // Wait for Heat List to be visible
-    const heatListHost = page.locator('app-heat-list');
+    const heatListHost = page.locator(HeatListHarnessBase.hostSelector);
     const harness = new HeatListHarnessE2e(heatListHost);
 
-    await expect(async () => {
-      expect(await harness.getHeatCount()).toBeGreaterThan(0);
-    }).toPass();
+    await expect(heatListHost.locator(HeatListHarnessBase.selectors.heatItem).first()).toBeVisible();
 
     // Disable animations for consistent screenshots
     await TestSetupHelper.disableAnimations(page);

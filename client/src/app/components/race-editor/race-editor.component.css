@@ -22,6 +22,11 @@
   /* Start centered, JS handles scale */
   display: flex;
   flex-direction: column;
+  background-image: url('../../../assets/images/track_manager_bg.png');
+  background-size: 1600px 900px;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
 }
 
 /* Header */
@@ -64,17 +69,21 @@
   display: flex;
   height: calc(100% - 80px);
   /* Fill remaining */
+  margin: 0 55px 45px 55px;
+  gap: 20px;
+  overflow: hidden;
 }
 
 /* Editor Panel (Left) */
 .editor-panel {
-  width: 500px;
-  background: rgba(30, 41, 59, 0.6);
-  border-right: 1px solid rgba(148, 163, 184, 0.2);
-  padding: 30px;
-  display: flex;
+  margin-left: 90px;
+  width: 310px;
+  background: transparent;
   flex-direction: column;
-  overflow-y: auto;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  display: flex;
+  overflow: hidden;
 }
 
 .editor-row {
@@ -93,6 +102,11 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.editor-section.invalid input[type="text"] {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
 .editor-section label {
@@ -132,10 +146,31 @@
   overflow-y: auto;
 }
 
+/* Custom Scrollbar for Heat List Section */
+.heat-list-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.heat-list-section::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.heat-list-section::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.heat-list-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
 .heat-list-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
@@ -361,93 +396,141 @@
   flex: 1;
 }
 
-/* Config Panel (Right) */
-.config-panel {
+/* Preview Panel (Right) - Matching Track/Driver Editor */
+.preview-panel {
   flex: 1;
-  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%);
-  padding: 40px;
+  border: none;
+  margin-left: 160px;
+  margin-top: 50px;
+  margin-right: 120px; /* Slight bump to right margin buffer */
+  margin-bottom: 40px;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Changed from overflow-y: auto to let inner wrapper scroll */
+  position: relative;
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Custom Scrollbar for Preview Panel */
+.preview-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preview-panel::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.preview-panel::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.preview-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+.sections-wrapper {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Prevent horizontal scroll */
-  position: relative;
+  padding-right: 22px;
+  margin-right: 0; /* Removed negative margin hiding scrollbars */
 }
 
-/* Grid lines for futuristic effect */
-.config-panel::before {
-  content: '';
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  background-image:
-    linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-  transform: rotateX(60deg) translateY(-20%) translateZ(-100px);
-  pointer-events: none;
+.sections-wrapper::-webkit-scrollbar {
+  width: 8px;
 }
 
-.config-header {
-  font-size: 2rem;
-  color: #38bdf8;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin: 0 0 30px 0;
-  padding-bottom: 15px;
+.sections-wrapper::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 4px;
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 30px 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+  margin-right: -30px;
   border-bottom: 1px solid rgba(56, 189, 248, 0.3);
-  position: relative;
-  z-index: 1;
+  margin-bottom: 15px;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.section-content {
+  padding: 10px 0 20px 0;
 }
 
 .config-section {
-  margin-bottom: 25px;
+  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: relative;
-  z-index: 1;
 }
 
-.config-section label {
-  font-size: 1.2rem;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.config-section select,
-.config-section input[type="number"] {
-  background: rgba(15, 23, 42, 0.5);
+/* RHS Specific Pulldowns Override (matching Arduino Editor style) */
+.preview-panel select,
+.preview-panel input[type="number"] {
+  background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.3);
-  color: #f1f5f9;
-  padding: 12px;
-  font-size: 1.2rem;
-  border-radius: 4px;
-  font-family: inherit;
-}
-
-.config-section select:focus,
-.config-section input:focus {
-  border-color: #38bdf8;
+  color: #f8fafc;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 1.125rem;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
-}
-
-.config-section select {
+  transition: border-color 0.2s;
+  width: 100%;
   cursor: pointer;
 }
 
-.scoring-layout {
-  display: flex;
-  gap: 40px;
-  position: relative;
-  z-index: 1;
+.preview-panel select:focus {
+  border-color: #38bdf8;
 }
 
-.config-section-group {
-  margin-bottom: 40px;
-  position: relative;
-  z-index: 1;
+/* RHS Label Overrides (matching Arduino Editor style) */
+.preview-panel label {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .config-row {
@@ -455,8 +538,22 @@
   gap: 40px;
 }
 
+.config-row .editor-section {
+  flex: 1;
+}
+
+.config-row .editor-section.flex-2 {
+  flex: 2;
+}
+
+.scoring-layout {
+  display: flex;
+  gap: 40px;
+}
+
 .scoring-column {
   flex: 1;
+  min-width: 0;
 }
 
 /* Action Buttons */
@@ -549,7 +646,7 @@
 }
 
 /* For tooltips in the config panel (right side), keep them on top if they fit better */
-.config-panel .tooltip-icon::after {
+.preview-panel .tooltip-icon::after {
   bottom: 125%;
   top: auto;
   transform: translateX(-50%) translateY(10px);
@@ -561,7 +658,7 @@
   transform: translateX(-50%) translateY(0);
 }
 
-.config-panel .tooltip-icon:hover::after {
+.preview-panel .tooltip-icon:hover::after {
   transform: translateX(-50%) translateY(0);
 }
 

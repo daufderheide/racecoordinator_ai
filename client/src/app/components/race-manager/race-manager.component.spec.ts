@@ -19,7 +19,7 @@ describe('RaceManagerComponent', () => {
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getRaces', 'deleteRace', 'generateHeats', 'previewHeats']);
+    mockDataService = jasmine.createSpyObj('DataService', ['getRaces', 'getTracks', 'createRace', 'deleteRace', 'generateHeats', 'previewHeats']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
     mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring'], { connectionState$: of() });
@@ -47,6 +47,8 @@ describe('RaceManagerComponent', () => {
     const fixture = TestBed.createComponent(RaceManagerComponent);
     component = fixture.componentInstance;
     mockDataService.getRaces.and.returnValue(of([]));
+    mockDataService.getTracks.and.returnValue(of([]));
+    mockDataService.createRace.and.returnValue(of({ entity_id: 'new-race-id' }));
     mockDataService.generateHeats.and.returnValue(of({ heats: [] }));
     mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
     fixture.detectChanges();
@@ -129,5 +131,56 @@ describe('RaceManagerComponent', () => {
     component.showDeleteConfirmation = true;
     component.onCancelDelete();
     expect(component.showDeleteConfirmation).toBeFalse();
+  });
+
+  it('should load tracks on loadData', () => {
+    const mockTracks = [{ entity_id: 't1', name: 'Track 1' }];
+    mockDataService.getTracks.and.returnValue(of(mockTracks));
+
+    component.loadData();
+
+    expect(mockDataService.getTracks).toHaveBeenCalled();
+    expect(component.tracks).toEqual(mockTracks);
+  });
+
+  describe('createNewRace', () => {
+    it('should create race and navigate to race-editor', () => {
+      component.tracks = [];
+      const createdRace = { entity_id: '123' };
+      mockDataService.createRace.and.returnValue(of(createdRace));
+
+      component.createNewRace();
+
+      expect(mockDataService.createRace).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/race-editor'], {
+        queryParams: { id: '123', driverCount: component.driverCount }
+      });
+    });
+
+    it('should auto-assign track if exactly one track exists', () => {
+      component.tracks = [{ entity_id: 't1', name: 'Track 1' }];
+      const createdRace = { entity_id: '123' };
+      mockDataService.createRace.and.returnValue(of(createdRace));
+
+      component.createNewRace();
+
+      expect(mockDataService.createRace).toHaveBeenCalledWith(jasmine.objectContaining({
+        track_entity_id: 't1'
+      }));
+    });
+
+    it('should not auto-assign track if multiple tracks exist', () => {
+      component.tracks = [
+        { entity_id: 't1', name: 'Track 1' },
+        { entity_id: 't2', name: 'Track 2' }
+      ];
+      const createdRace = { entity_id: '123' };
+      mockDataService.createRace.and.returnValue(of(createdRace));
+
+      component.createNewRace();
+
+      const callArg = mockDataService.createRace.calls.mostRecent().args[0];
+      expect(callArg.track_entity_id).toBeUndefined();
+    });
   });
 });

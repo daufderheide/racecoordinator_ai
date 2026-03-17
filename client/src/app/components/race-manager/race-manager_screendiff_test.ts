@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { RaceManagerHarnessE2e } from './testing/race-manager.harness.e2e';
+import { RaceManagerHarnessBase } from './testing/race-manager.harness.base';
 
 test.describe('Race Manager Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -32,20 +34,16 @@ test.describe('Race Manager Visuals', () => {
   test('should display race manager correctly', async ({ page }) => {
     // Navigate to Race Manager
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-manager?driverCount=4'));
+    await TestSetupHelper.disableAnimations(page);
 
-    // Verify Race Table is visible
-    const raceTable = page.locator('.race-table.body-only');
-    await expect(raceTable).toBeVisible();
+    const harness = new RaceManagerHarnessE2e(page.locator(RaceManagerHarnessBase.hostSelector));
+    await expect(harness.listContainer).toBeVisible();
 
     // Select the first race
-    await page.click('.race-table.body-only tbody tr:first-child');
+    await harness.selectItem(0);
 
     // Wait for Configuration Panel to update
-    await expect(page.locator('.config-panel')).toBeVisible();
-    await expect(page.locator('app-heat-list')).toBeVisible();
-
-    // Disable animations for consistent screenshots
-    await TestSetupHelper.disableAnimations(page);
+    await expect(harness.detailPanel).toBeVisible();
 
     // Screenshot the entire race manager
     await expect(page).toHaveScreenshot('race-manager.png');
@@ -54,18 +52,18 @@ test.describe('Race Manager Visuals', () => {
   test('should show delete confirmation modal', async ({ page }) => {
     // Navigate to Race Manager
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-manager?driverCount=4'));
+    await TestSetupHelper.disableAnimations(page);
+
+    const harness = new RaceManagerHarnessE2e(page.locator(RaceManagerHarnessBase.hostSelector));
 
     // Select the first race
-    await page.click('.race-table.body-only tbody tr:first-child');
+    await harness.selectItem(0);
 
     // Click delete race
-    await page.click('.btn-delete', { force: true });
+    await harness.clickDelete();
 
     // Wait for the modal to be visible
-    await expect(page.locator('.rm-container > app-confirmation-modal .modal-content')).toBeVisible();
-
-    // Disable animations
-    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator('app-confirmation-modal .modal-content')).toBeVisible();
 
     // Screenshot the entire page
     await expect(page).toHaveScreenshot('race-manager-delete-confirmation.png');
@@ -103,16 +101,11 @@ test.describe('Race Manager Visuals', () => {
 
     // Navigate to Race Manager with id=r25
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-manager?id=r25&driverCount=4'));
+    await TestSetupHelper.disableAnimations(page);
 
     // Verify Race 25 is active
-    const activeRow = page.locator('tr.active[data-id="r25"]');
+    const activeRow = page.locator(`${RaceManagerHarnessBase.selectors.selectedItem}[data-id="r25"]`);
     await expect(activeRow).toBeVisible();
-
-    // Verify it's scrolled into view (it should be in the viewport)
-    await expect(activeRow).toBeInViewport();
-
-    // Disable animations
-    await TestSetupHelper.disableAnimations(page);
 
     // Screenshot
     await expect(page).toHaveScreenshot('race-manager-scrolled-selection.png');

@@ -5,6 +5,7 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { HelpService, GuideStep } from '../../services/help.service';
 
 @Component({
   selector: 'app-race-manager',
@@ -14,6 +15,7 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class RaceManagerComponent implements OnInit, OnDestroy {
   races: any[] = [];
+  tracks: any[] = [];
   selectedRace?: any;
   editingRace?: any;
   isLoading: boolean = true;
@@ -23,6 +25,18 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   driverCount: number = 10;
   generatedHeats: any[] = [];
   @ViewChildren('raceRow') raceRows!: QueryList<ElementRef>;
+  isSummaryExpanded: boolean = true;
+  isHeatListExpanded: boolean = true;
+
+  toggleSummary() {
+    this.isSummaryExpanded = !this.isSummaryExpanded;
+    this.cdr.detectChanges();
+  }
+
+  toggleHeatList() {
+    this.isHeatListExpanded = !this.isHeatListExpanded;
+    this.cdr.detectChanges();
+  }
 
   get filteredRaces(): any[] {
     let filtered = this.races;
@@ -47,7 +61,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private router: Router,
     private route: ActivatedRoute,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private helpService: HelpService
   ) { }
 
   ngOnInit() {
@@ -111,6 +126,16 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         console.error('Failed to load races', err);
         this.isLoading = false;
         this.cdr.detectChanges();
+      }
+    });
+
+    this.dataService.getTracks().subscribe({
+      next: (tracks) => {
+        this.tracks = tracks;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load tracks', err);
       }
     });
   }
@@ -204,5 +229,78 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     if (!type) return '';
     // Convert enum format to display format (e.g., "RoundRobin" -> "Round Robin")
     return type.replace(/([A-Z])/g, ' $1').trim();
+  }
+
+  createNewRace() {
+    if (this.isSaving) return;
+    this.isSaving = true;
+
+    const baseName = "New Race";
+    const uniqueName = this.generateUniqueRaceName(baseName);
+
+    const newRace: any = {
+      name: uniqueName,
+      heat_rotation_type: 'RoundRobin',
+      heat_scoring: {
+        finish_method: 'Timed',
+        finish_value: 15,
+        heat_ranking: 'LAP_COUNT',
+        heat_ranking_tiebreaker: 'FASTEST_LAP_TIME',
+        allow_finish: 'None'
+      },
+      overall_scoring: {
+        dropped_heats: 0,
+        ranking_method: 'LAP_COUNT',
+        tiebreaker: 'TOTAL_TIME'
+      }
+    };
+
+    if (this.tracks && this.tracks.length === 1) {
+      newRace.track_entity_id = this.tracks[0].entity_id;
+    }
+
+    this.dataService.createRace(newRace).subscribe({
+      next: (createdRace: any) => {
+        this.isSaving = false;
+        
+        // Navigate to Race Editor
+        this.router.navigate(['/race-editor'], { queryParams: { id: createdRace.entity_id, driverCount: this.driverCount } });
+      },
+      error: (err) => {
+        console.error('Failed to create new race', err);
+        this.isSaving = false;
+      }
+    });
+  }
+
+  private generateUniqueRaceName(baseName: string): string {
+    let name = baseName;
+    if (!this.races.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+      return name;
+    }
+    let counter = 1;
+    while (true) {
+      const candidate = `${baseName}_${counter}`;
+      if (!this.races.some(r => r.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  formatEnumDisplay(value: string | undefined): string {
+    if (!value) return '';
+    return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: "Welcome to Race Manager",
+        content: "Here you can manage your races. Select a race from the list to view its summary setup.",
+        position: 'center'
+      }
+    ];
+    this.helpService.startGuide(steps);
   }
 }

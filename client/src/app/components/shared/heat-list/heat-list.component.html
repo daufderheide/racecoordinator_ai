@@ -3,11 +3,13 @@
   <div class="heats-container">
     <div class="heat-item" *ngFor="let heat of heats; trackBy: trackByHeatNumber">
       <div class="heat-number">{{ 'RM_LABEL_HEAT_NUMBER' | translate:{number: heat.heatNumber} }}</div>
-      <div class="heat-lanes">
+      <div class="heat-lanes" [style.grid-template-columns]="'repeat(' + columns + ', 1fr)'">
         <div class="lane-item" *ngFor="let lane of heat.lanes; trackBy: trackByLaneNumber"
           [style.background-color]="lane.backgroundColor" [style.color]="lane.foregroundColor">
           <span class="lane-label">{{ 'RM_LABEL_LANE' | translate }} {{lane.laneNumber}}:</span>
-          <span class="driver-number">{{ 'RM_LABEL_DRIVER' | translate }} {{lane.driverNumber}}</span>
+          <span class="driver-number">
+            {{ !lane.driverNumber ? ('RD_EMPTY_LANE' | translate) : (('RM_LABEL_DRIVER' | translate) + ' ' + lane.driverNumber) }}
+          </span>
         </div>
       </div>
     </div>

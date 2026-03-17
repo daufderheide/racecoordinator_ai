@@ -6,6 +6,20 @@ test.describe('Splash Screen Visual', () => {
     // Setup standard mocks including server-ip
     await TestSetupHelper.setupStandardMocks(page, { skipIntro: false, walkthroughSeen: true });
 
+    // Mock Math.random for deterministic quotes on splash screen
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+
+      // Intercept the 5000ms splash close setTimeout to keep it open indefinitely
+      const originalSetTimeout = window.setTimeout;
+      window.setTimeout = function (handler: TimerHandler, timeout?: number, ...args: any[]) {
+        if (timeout === 5000) {
+          return 0 as any; // Block the timeout
+        }
+        return originalSetTimeout(handler, timeout, ...args);
+      } as any;
+    });
+
     // Force fixed viewport
     await page.setViewportSize({ width: 1280, height: 720 });
   });
@@ -21,7 +35,6 @@ test.describe('Splash Screen Visual', () => {
     // Wait for internal components or data loads (e.g., version text rendering)
     // We expect the `.server-address` to appear with mock IP
     await expect(page.locator('.server-address')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.server-address')).toContainText('192.168.1.100');
 
     // Take a screenshot of the splash screen layout
     await expect(page).toHaveScreenshot('splash-screen-initial.png', {

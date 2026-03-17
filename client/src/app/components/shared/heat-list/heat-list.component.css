@@ -2,8 +2,7 @@
 .heat-list {
   margin-top: 10px;
   margin-bottom: 10px;
-  max-height: 400px;
-  overflow-y: auto;
+  /* Removed max-height and overflow-y to let parent handle scrolling */
 }
 
 .heat-list::-webkit-scrollbar {

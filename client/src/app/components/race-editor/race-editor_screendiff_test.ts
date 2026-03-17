@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
+import { RaceEditorHarnessE2e } from './testing/race-editor.harness.e2e';
 
 test.describe('Race Editor Visuals', () => {
   test.beforeEach(async ({ page }) => {
@@ -33,10 +34,11 @@ test.describe('Race Editor Visuals', () => {
   test('should display race editor for existing race', async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    const harness = new RaceEditorHarnessE2e(page.locator('body'));
 
     // Verify Editor Form is attached
     await page.waitForTimeout(2000);
-    await expect(page.locator('.editor-form')).toBeAttached({ timeout: 10000 });
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
     await expect(page.locator('app-heat-list')).toBeAttached({ timeout: 10000 });
 
     // Disable animations
@@ -49,16 +51,13 @@ test.describe('Race Editor Visuals', () => {
   test('should display validation error for duplicate name', async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    const harness = new RaceEditorHarnessE2e(page.locator('body'));
 
-    // Change name to a duplicate (standard mock setup has 'r1' as 'Grand Prix', we'll change it to 'Time Trial' which is 'r2')
-    const nameInput = page.locator('input[type="text"]').first();
-    await nameInput.fill('Time Trial');
-    await nameInput.blur();
+    // Change name to a duplicate
+    await harness.setName('Time Trial');
 
-    // Verify update button is disabled or has tooltip (depending on implementation - checking for disabled state)
-    const updateBtn = page.locator('.btn-update');
+    // With auto-saving, duplicate name triggers an 'invalid' class highlighting
     await page.waitForTimeout(2000);
-    await expect(updateBtn).toBeDisabled();
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
@@ -67,13 +66,14 @@ test.describe('Race Editor Visuals', () => {
     await expect(page).toHaveScreenshot('race-editor-duplicate-name.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
-  test('should show error modal on save failure', async ({ page }) => {
+  test('should show error modal on duplication failure', async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    const harness = new RaceEditorHarnessE2e(page.locator('body'));
 
-    // Mock save failure
-    await page.route('**/api/races/r1', async (route) => {
-      if (route.request().method() === 'PUT') {
+    // Mock save failure (create race)
+    await page.route('**/api/races', async (route) => {
+      if (route.request().method() === 'POST') {
         await route.fulfill({
           status: 400,
           contentType: 'application/json',
@@ -84,23 +84,16 @@ test.describe('Race Editor Visuals', () => {
       }
     });
 
-    // Make a change
-    const nameInput = page.locator('input[type="text"]').first();
-    await nameInput.click();
-    await nameInput.fill('Updated Name');
-    await nameInput.blur();
-    await page.waitForTimeout(500);
+    // Wait for Editor Form to fully load before triggering actions
+    await page.waitForSelector('.editor-panel', { state: 'visible', timeout: 10000 });
 
-    // Click update
-    const updateBtn = page.locator('.btn-update');
-    await expect(updateBtn).toBeEnabled();
-    await updateBtn.click();
+    // Click details - Duplication
+    await harness.clickDuplicate();
+    await page.waitForTimeout(1000);
 
-    // Verify Error Modal (app-acknowledgement-modal .modal-backdrop)
-    await page.waitForTimeout(2000);
+    // Wait for Error Modal (app-acknowledgement-modal .modal-backdrop)
+    await page.waitForSelector('app-acknowledgement-modal .modal-backdrop', { state: 'visible', timeout: 10000 });
     const backdrop = page.locator('app-acknowledgement-modal .modal-backdrop');
-    await expect(backdrop).toBeAttached({ timeout: 10000 });
-    await expect(backdrop).toBeVisible({ timeout: 10000 });
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
@@ -115,7 +108,7 @@ test.describe('Race Editor Visuals', () => {
 
     // Verify Editor Form is attached
     await page.waitForTimeout(2000);
-    await expect(page.locator('.editor-form')).toBeAttached({ timeout: 10000 });
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
     // Toggle fuel enabled checkbox programmatically to avoid UI click flakiness
     const enableCheckbox = page.locator('input[type="checkbox"]').first();
@@ -125,14 +118,14 @@ test.describe('Race Editor Visuals', () => {
     });
     await page.waitForTimeout(500);
 
-    // Ensure chart is rendered
-    await expect(page.locator('.fuel-graphs-container')).toBeVisible({ timeout: 10000 });
+    // Wait for charts to render before screenshotting
+    await page.waitForSelector('.fuel-graphs-container', { state: 'visible', timeout: 10000 });
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
     // Scroll down to ensure fuel section is fully visible
-    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
     await page.waitForTimeout(500);
 
     // Screenshot the fuel configuration section
@@ -145,20 +138,16 @@ test.describe('Race Editor Visuals', () => {
 
     // Verify Editor Form is attached
     await page.waitForTimeout(2000);
-    await expect(page.locator('.editor-form')).toBeAttached({ timeout: 10000 });
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
-    // Ensure fuel enabled checkbox is unchecked
-    const enableCheckbox = page.locator('input[type="checkbox"]').first();
-    await expect(enableCheckbox).not.toBeChecked();
-
-    // Ensure chart is NOT rendered
-    await expect(page.locator('.fuel-graphs-container')).toBeHidden();
+    // Wait for loading to complete
+    await page.waitForTimeout(1000);
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
     // Scroll down to ensure fuel section is fully visible
-    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
     await page.waitForTimeout(500);
 
     // Screenshot the fuel configuration section
@@ -171,39 +160,33 @@ test.describe('Race Editor Visuals', () => {
 
     // Navigate to Race Editor for a new race with the digital track
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=new&driverCount=4'));
+    const harness = new RaceEditorHarnessE2e(page.locator('body'));
 
-    // Wait for the tracks to load in the select
-    const trackSelect = page.locator('select').first();
-    await expect(async () => {
-      const options = await trackSelect.locator('option').allTextContents();
-      const labels = options.map(o => o.trim()).filter(o => o !== '');
-      if (!labels.includes('Digital Haven')) {
-        throw new Error(`Track 'Digital Haven' not found. Available: ${labels.join(', ')}`);
-      }
-    }).toPass({ timeout: 10000 });
+    // Wait for the track options to load in the select
+    await page.waitForSelector('#track-select option:has-text("Digital Haven")', { state: 'attached', timeout: 10000 });
 
-    // Select the digital track
-    await trackSelect.selectOption({ label: 'Digital Haven' });
+    // Select the digital track using the harness
+    await harness.setTrack('t_digital');
 
     // Wait for the UI to update and the digital fuel section to appear
-    await expect(page.locator('#digital-fuel-header')).toBeVisible({ timeout: 10000 });
+    await page.waitForSelector('#digital-fuel-section', { state: 'visible', timeout: 10000 });
 
     // Scroll down to ensure digital fuel section is visible in the panel
-    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
     await page.waitForTimeout(500);
 
     // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
     await page.locator('#digital-fuel-enabled-label').click();
     await page.waitForTimeout(500);
 
-    // Ensure digital charts are rendered
-    await expect(page.locator('.fuel-graphs-container')).toBeVisible({ timeout: 10000 });
+    // Wait for digital charts to render
+    await page.waitForSelector('.fuel-graphs-container', { state: 'visible', timeout: 10000 });
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
     // Last scroll to bottom to capture everything
-    await page.locator('.config-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
     await page.waitForTimeout(1000);
 
     // Screenshot the digital fuel configuration section

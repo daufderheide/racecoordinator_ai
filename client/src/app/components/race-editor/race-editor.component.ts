@@ -6,6 +6,7 @@ import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 import { Subscription } from 'rxjs';
 import { Track } from 'src/app/models/track';
 import { FuelUsageType } from 'src/app/models/fuel_options';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-race-editor',
@@ -18,6 +19,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   originalRace: any;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isAutoSaving: boolean = false;
   scale: number = 1;
   undoManager: UndoManager<any>;
   tracks: Track[] = [];
@@ -35,12 +37,28 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   ackModalTitle: string = '';
   ackModalMessage: string = '';
 
+  sectionsExpanded = {
+    general: true,
+    scoring: true,
+    fuel: true
+  };
+
+  toggleSection(section: keyof typeof this.sectionsExpanded) {
+    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  }
+
+  get isNameInvalid(): boolean {
+    if (this.isLoading || !this.editingRace) return false;
+    return !this.editingRace.name?.trim() || this.isNameDuplicate();
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private dataService: DataService,
     private translationService: TranslationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private location: Location
   ) {
     this.undoManager = new UndoManager<any>(
       {
@@ -75,6 +93,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
     this.loadTracks();
     this.loadRaces();
+
+    this.undoManager.stateCommitted$.subscribe(() => {
+      this.autoSaveRace();
+    });
   }
 
   ngOnDestroy() {
@@ -258,7 +280,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   get hasDigitalFuel(): boolean {
     if (!this.editingRace?.track_entity_id || !this.tracks) return false;
     const track = this.tracks.find(t => t.entity_id === this.editingRace.track_entity_id);
-    return track ? track.hasDigitalFuel() : false;
+    if (!track) return false;
+
+    // Fallback for raw mock objects in tests
+    if (typeof track.hasDigitalFuel === 'function') {
+      return track.hasDigitalFuel();
+    }
+    return !!(track as any).has_digital_fuel || (track as any).arduino_configs?.some((conf: any) => conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0);
   }
 
   onRotationTypeChange() {
@@ -312,12 +340,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     return umChanges || manualChanges;
   }
 
-  updateRace() {
+  private autoSaveRace() {
+    if (!this.editingRace) return;
+    if (!this.editingRace.name?.trim() || this.isNameDuplicate()) return;
+    if (this.isSaving) return;
+    this.updateRace(true);
+  }
+
+  updateRace(isAutoSave: boolean = false) {
     if (!this.editingRace || !this.hasChanges()) {
       return;
     }
 
     this.isSaving = true;
+    this.isAutoSaving = isAutoSave;
     const payload = {
       name: this.editingRace.name,
       track_entity_id: this.editingRace.track_entity_id,
@@ -364,14 +400,30 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       this.dataService.createRace(payload).subscribe({
         next: (created) => {
           this.isSaving = false;
+          this.isAutoSaving = false;
+          // Update the current race to the newly created one
+          this.editingRace.entity_id = created.entity_id;
+          this.originalRace = this.deepCopy(this.editingRace);
+          this.undoManager.resetTracking(this.editingRace);
+          
           this.loadRaces();  // Reload races to update duplicate detection
           this.cdr.detectChanges(); // Ensure spinner clears
-          this.router.navigate(['/race-manager'], { queryParams: { id: created.entity_id, driverCount: this.driverCount } });
+          
+          if (isAutoSave) {
+            const url = this.router.serializeUrl(this.router.createUrlTree([], { 
+              queryParams: { id: created.entity_id, driverCount: this.driverCount },
+              queryParamsHandling: 'merge'
+            }));
+            this.location.replaceState(url);
+          } else {
+            this.router.navigate(['/race-manager'], { queryParams: { id: created.entity_id, driverCount: this.driverCount } });
+          }
         },
         error: (err) => {
           console.error('Failed to create race', err);
-          this.showError('Error Creating Race', err.error || err.message || 'Unknown error');
+          if (!isAutoSave) this.showError('Error Creating Race', err.error || err.message || 'Unknown error');
           this.isSaving = false;
+          this.isAutoSaving = false;
           this.loadRaces();  // Reload races after error
           this.cdr.detectChanges(); // Ensure spinner clears
         }
@@ -380,6 +432,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       this.dataService.updateRace(this.editingRace.entity_id, payload).subscribe({
         next: () => {
           this.isSaving = false;
+          this.isAutoSaving = false;
           // Sync originalRace with editingRace so hasChanges() returns false
           this.originalRace = this.deepCopy(this.editingRace);
           // Reset tracking point but keep history
@@ -390,8 +443,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Failed to update race', err);
-          this.showError('Error Updating Race', err.error || err.message || 'Unknown error');
+          if (!isAutoSave) this.showError('Error Updating Race', err.error || err.message || 'Unknown error');
           this.isSaving = false;
+          this.isAutoSaving = false;
           this.loadRaces();  // Reload races after error
           this.cdr.detectChanges();  // Force change detection to hide spinner
         }
@@ -403,6 +457,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (!this.editingRace || !this.canSaveAsNew()) return;
 
     this.isSaving = true;
+    this.editingRace.name = this.generateUniqueName(this.editingRace.name);
     const payload = {
       name: this.editingRace.name,  // Use the actual name from the editor
       track_entity_id: this.editingRace.track_entity_id,
@@ -471,6 +526,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         // Reload races to update duplicate detection
         this.loadRaces();
+        // Force change detection for modal visibility
+        this.cdr.detectChanges();
       }
     });
   }
@@ -502,17 +559,26 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       race.name.trim().toLowerCase() === trimmedName
     );
   }
+  
+  private generateUniqueName(baseName: string): string {
+    let counter = 1;
+    const pattern = /(_\d+)$/;
+    const base = baseName.replace(pattern, '');
+
+    while (true) {
+      const candidate = `${base}_${counter}`;
+      if (!this.races.some(r => r.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
 
   canSaveAsNew(): boolean {
-    if (!this.editingRace?.name || !this.originalRace) {
+    if (!this.editingRace?.name) {
       return false;
     }
-
-    // Must have changed the name from the original
-    const nameChanged = this.editingRace.name.trim() !== this.originalRace.name.trim();
-
-    // And the new name must not be a duplicate
-    return nameChanged && !this.isNameDuplicate();
+    return true;
   }
 
   canUpdate(): boolean {

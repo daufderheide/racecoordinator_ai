@@ -1,104 +1,101 @@
-<div class="rm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <div class="rm-header">
-    <app-back-button [label]="'RM_BTN_BACK' | translate"></app-back-button>
-  </div>
+<app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'RM_BTN_DELETE_RACE' | translate"
+  [message]="'RM_CONFIRM_DELETE' | translate" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
+</app-confirmation-modal>
 
-  <div class="main-content">
-    <!-- LEFT PANEL: RACES TABLE -->
-    <div class="panel list-panel">
-      <div class="panel-header">
-        <div class="panel-title">{{ 'RM_HEADER_RACES' | translate }}</div>
-        <div class="search-container">
-          <input type="text" [placeholder]="'RM_PLACEHOLDER_SEARCH' | translate" [(ngModel)]="searchQuery"
-            (ngModelChange)="onSearchChange()" class="search-input">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <app-manager-header 
+    [title]="'RM_TITLE'" 
+    [showActions]="selectedRace != null" 
+    [isSaving]="isSaving" 
+    (edit)="updateRace()" 
+    (help)="startHelp()" 
+    (delete)="deleteRace()">
+  </app-manager-header>
+
+  <div class="content-area" *ngIf="!isLoading">
+    <div class="sidebar-list">
+      <div class="list-container">
+        <div *ngFor="let race of filteredRaces; let i = index" class="list-item"
+          [attr.data-id]="race.entity_id"
+          [class.selected]="race.entity_id === selectedRace?.entity_id" (click)="selectRace(race)"
+          [class.odd]="i % 2 !== 0">
+          <div class="item-name">{{ race.name }}</div>
+          <div class="item-nickname">{{ race.track?.name || 'N/A' }}</div>
         </div>
       </div>
-      <div class="table-header-fixed">
-        <table class="race-table header-only">
-          <thead>
-            <tr>
-              <th class="col-name">{{ 'RM_COL_NAME' | translate }}</th>
-              <th class="col-track">{{ 'RM_COL_TRACK' | translate }}</th>
-              <th class="col-heat-rotation">{{ 'RM_COL_HEAT_ROTATION' | translate }}</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-      <div class="table-body-scroll">
-        <table class="race-table body-only">
-          <tbody>
-            <tr *ngFor="let race of filteredRaces; trackBy: trackByRace" #raceRow [attr.data-id]="race.entity_id"
-              [class.active]="selectedRace?.entity_id === race.entity_id" (click)="selectRace(race)">
-              <td class="name-cell col-name">{{ race.name }}</td>
-              <td class="track-cell col-track">{{ race.track?.name || 'N/A' }}</td>
-              <td class="heat-rotation-cell col-heat-rotation">{{ getHeatRotationTypeDisplay(race.heat_rotation_type) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="list-actions">
+        <button id="create-race-btn" class="action-btn primary full-width" (click)="createNewRace()">
+          {{ 'RM_CREATE_NEW' | translate }}
+        </button>
       </div>
     </div>
 
-    <!-- RIGHT PANEL: CONFIGURATION -->
-    <div class="panel config-panel">
-      <div class="config-header">{{ 'RM_HEADER_CONFIG' | translate }}</div>
+    <div class="detail-panel" *ngIf="selectedRace">
+      <div class="detail-header">
+        <h2>{{ selectedRace.name }}</h2>
+      </div>
+      <div class="detail-content">
+        <div class="section-header" (click)="toggleSummary()" style="cursor: pointer;">
+          <span class="expander-icon" [class.collapsed]="!isSummaryExpanded">▼</span>
+          <h1>{{ 'RM_HEADER_SUMMARY' | translate }}</h1>
+        </div>
+        <div class="summary-section" *ngIf="isSummaryExpanded">
+          <div class="summary-grid">
+              <!-- Row 1 -->
+              <div class="summary-item">
+                <span class="summary-label">Heat Ranking:</span>
+                <span class="summary-value">{{ formatEnumDisplay(selectedRace.heat_scoring?.heat_ranking) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Finish Method:</span>
+                <span class="summary-value">{{ formatEnumDisplay(selectedRace.heat_scoring?.finish_method) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">{{ 'RM_LABEL_FUEL_RACE' | translate }}:</span>
+                <span class="summary-value">{{ (selectedRace.fuel_options?.enabled || selectedRace.digital_fuel_options?.enabled) ? 'Yes' : 'No' }}</span>
+              </div>
 
-      <div class="config-form" *ngIf="editingRace">
-        <div class="scrollable-content">
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'RM_LABEL_NAME' | translate }}</label>
-              <input type="text" [(ngModel)]="editingRace.name" class="rm-input" readonly>
-            </div>
-
-            <div class="form-group">
-              <label>{{ 'RM_LABEL_TRACK' | translate }}</label>
-              <input type="text" [ngModel]="editingRace.track?.name || 'N/A'" class="rm-input" readonly>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'RM_LABEL_HEAT_ROTATION' | translate }}</label>
-              <input type="text" [ngModel]="getHeatRotationTypeDisplay(editingRace.heat_rotation_type)" class="rm-input"
-                readonly>
-            </div>
-
-            <div class="form-group checkbox-group">
-              <label>{{ 'RM_LABEL_FUEL_RACE' | translate }}</label>
-              <div class="checkbox-wrapper">
-                <input type="checkbox"
-                  [checked]="editingRace.fuel_options?.enabled || editingRace.digital_fuel_options?.enabled" disabled
-                  class="rm-checkbox">
-                <span class="checkbox-custom"></span>
+              <!-- Row 2 -->
+              <div class="summary-item">
+                <span class="summary-label">Overall Ranking:</span>
+                <span class="summary-value">{{ formatEnumDisplay(selectedRace.overall_scoring?.ranking_method) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Finish Value:</span>
+                <span class="summary-value">{{ selectedRace.heat_scoring?.finish_value }}</span>
               </div>
             </div>
-          </div>
-
-          <!-- Heat List -->
-          <app-heat-list [heats]="generatedHeats"></app-heat-list>
         </div>
 
-        <div class="action-buttons">
-          <button class="btn btn-edit" (click)="updateRace()">{{ 'RM_BTN_EDIT' | translate }}</button>
-          <button class="btn btn-delete" (click)="deleteRace()">{{ 'RM_BTN_DELETE_RACE' | translate }}</button>
+        <div class="heat-list-container">
+          <div class="section-header" (click)="toggleHeatList()" style="cursor: pointer;">
+            <span class="expander-icon" [class.collapsed]="!isHeatListExpanded">▼</span>
+            <h1>{{ 'RM_HEADER_HEAT_LIST' | translate }} ({{ getHeatRotationTypeDisplay(selectedRace.heat_rotation_type) }})</h1>
+          </div>
+          <div class="section-content" *ngIf="isHeatListExpanded" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+<!-- Heat Rotation combined with header -->
+            <div class="scrollable-heat-list">
+              <app-heat-list [heats]="generatedHeats" [columns]="4" [showHeader]="false"></app-heat-list>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Connection Lost Overlay -->
-  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">{{ 'RM_LOST_CONNECTION' | translate }}</div>
+    <div class="detail-panel empty-state" *ngIf="!selectedRace && !isLoading">
+      <p>{{ 'RM_NO_RACE_SELECTED' | translate }}</p> 
+    </div>
   </div>
-
-  <!-- Loading Overlay -->
-  <div class="loader-overlay" *ngIf="isLoading || isSaving">
-    <div class="spinner"></div>
-  </div>
-
-  <app-confirmation-modal [visible]="showDeleteConfirmation" [title]="'RM_BTN_DELETE_RACE'"
-    [message]="'RM_CONFIRM_DELETE'" (confirm)="onConfirmDelete()" (cancel)="onCancelDelete()">
-  </app-confirmation-modal>
 </div>
+
+<!-- Connection Lost Overlay -->
+<div class="connection-lost-overlay" *ngIf="isConnectionLost">
+  <div class="connection-spinner"></div>
+  <div class="connection-lost-text">{{ 'RM_LOST_CONNECTION' | translate }}</div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loader-overlay" *ngIf="isLoading || isSaving">
+  <div class="spinner"></div>
+</div>
+<app-help-overlay></app-help-overlay>
