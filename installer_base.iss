@@ -38,15 +38,27 @@ Source: "release\RaceCoordinator\web\*"; DestDir: "{app}\server\web"; Flags: ign
 Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-; Headless Server Shortcut
-; Unified shortcut - assumes appropriate JRE is installed to {app}\jre
+; Desktop Icons
 Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{app}\jre\bin\java.exe"; \
     Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless"; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
-; Client Shortcut (opens browser)
 Name: "{autodesktop}\Race Coordinator Client"; Filename: "cmd.exe"; \
     Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
+
+; Start Menu Icons
+Name: "{group}\Race Coordinator Server"; Filename: "{app}\jre\bin\java.exe"; \
+    Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"""; \
+    IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+
+Name: "{group}\Race Coordinator Server (Headless)"; Filename: "{app}\jre\bin\java.exe"; \
+    Parameters: "-Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless"; \
+    IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+
+Name: "{group}\Race Coordinator Client"; Filename: "cmd.exe"; \
+    Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
+
+Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Dirs]
 ; Writable data directory in ProgramData
