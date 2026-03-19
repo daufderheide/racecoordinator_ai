@@ -6,7 +6,7 @@ echo "Building Race Coordinator Release..."
 # 1. Clean and Build Client
 echo "Building Client..."
 cd client
-npm install
+NPM_CONFIG_CACHE="$(pwd)/.npm_cache" npm install
 npm run build
 cd ..
 
@@ -21,7 +21,7 @@ cd ..
 
 # 3. Download Dependencies for Offline Installer
 echo "Downloading Dependencies for Offline Installer..."
-mkdir -p build_cache
+mkdir build_cache 2>/dev/null || true
 
 # Java 8 (x86/32-bit for XP/7 Compatibility)
 if [ ! -s build_cache/java8.zip ]; then
@@ -101,16 +101,44 @@ create_scripts() {
     local DEST_DIR=$1
     
     # Mac Launch Script
-    cat > "$DEST_DIR/start_mac.command" << 'EOF'
+cat > "$DEST_DIR/start_mac.command" << 'EOF'
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR"
-if type -p java > /dev/null; then
-    echo "Starting Race Coordinator..."
-    java -jar RaceCoordinator.jar "$@"
-else
-    osascript -e 'display alert "Java Required" message "Java is not installed. Please install Java 8 or newer."'
+
+# Check if running from read-only volume (e.g. DMG mount)
+if [ ! -w . ]; then
+    osascript -e 'display alert "Read-Only Volume" message "Please drag or copy the Race Coordinator folder to your Applications or Desktop folder before running it." as critical' > /dev/null 2>&1
+    exit 1
 fi
+
+echo "Checking Java..."
+# 1. Check Local JRE (Downloaded via script)
+if [ -x "jre/bin/java" ]; then
+    echo "Using local Java..."
+    JAVA_CMD="jre/bin/java"
+# 2. Check System Java
+elif type -p java > /dev/null; then
+    echo "Using system Java..."
+    JAVA_CMD="java"
+else
+    echo "Java not found."
+    osascript -e 'display dialog "Java is not installed. Do you want to download dependencies now?" buttons {"Yes", "No"} default button "Yes" with title "Race Coordinator Setup"' > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        if [ -f "install_dependencies_mac.sh" ]; then
+            chmod +x install_dependencies_mac.sh
+            # Run downloader in a visible terminal window
+            osascript -e 'tell application "Terminal" to do script "cd \"'"$DIR"'\" && ./install_dependencies_mac.sh && exit"'
+            exit 0
+        else
+            osascript -e 'display alert "Error" message "install_dependencies_mac.sh not found."'
+        fi
+    fi
+    exit 1
+fi
+
+echo "Starting Race Coordinator..."
+"$JAVA_CMD" -jar RaceCoordinator.jar "$@"
 EOF
     chmod +x "$DEST_DIR/start_mac.command"
 
@@ -315,9 +343,32 @@ cd ..
 
 # DMG for Mac (if on Mac)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Creating Mac DMG..."
+    echo "Creating Mac Online DMG..."
     mkdir -p release/dmg_content
-    cp -r release/RaceCoordinator/* release/dmg_content/
+    mkdir -p release/dmg_content/web
+    
+    echo "Copying core application files..."
+    cp server/target_dist/server-1.0-SNAPSHOT.jar release/dmg_content/RaceCoordinator.jar
+    cp -r client/dist/client/* release/dmg_content/web/
+    if [ -d "server/src/main/resources/arduino" ]; then
+        cp -r server/src/main/resources/arduino release/dmg_content/
+    fi
+    
+    echo "Bundling Mac-specific scripts..."
+    cp release/RaceCoordinator/start_mac.command release/dmg_content/
+    if [ -f "scripts/install_dependencies_mac.sh" ]; then
+        cp scripts/install_dependencies_mac.sh release/dmg_content/
+    fi
+    cp release/RaceCoordinator/README.txt release/dmg_content/
+    
+    # Update README inside DMG if needed
+    cat >> release/dmg_content/README.txt << 'EOF'
+
+Mac User Note:
+--------------
+If Java is not installed, running start_mac.command will offer to automatically download and install dependencies for you.
+EOF
+
     hdiutil create -volname "RaceCoordinator" -srcfolder release/dmg_content -ov -format UDZO release/RaceCoordinator_Mac.dmg || echo "Warning: Mac DMG creation failed, but continuing..."
     rm -rf release/dmg_content
 fi
