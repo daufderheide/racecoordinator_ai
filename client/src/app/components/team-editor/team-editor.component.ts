@@ -7,6 +7,10 @@ import { TranslationService } from 'src/app/services/translation.service';
 import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
+import { HelpService, GuideStep } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-team-editor',
@@ -21,8 +25,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   editingTeam?: Team;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isAutoSaving: boolean = false;
   isUploading: boolean = false;
   scale: number = 1;
+  private navigateBackOnSave = false;
 
   // Undo Manager
   undoManager!: UndoManager<Team>;
@@ -37,6 +43,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   // Connection Monitoring
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private dataService: DataService,
@@ -44,7 +51,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private router: Router,
     private route: ActivatedRoute,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
+    private location: Location,
+    private helpService: HelpService,
+    private settingsService: SettingsService
   ) {
     this.undoManager = new UndoManager<Team>(
       {
@@ -67,6 +77,22 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+
+    if (this.undoManager) {
+      this.subscriptions.push(this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveTeam();
+      }));
+    }
+
+    // Trigger help automatically on first visit
+    setTimeout(() => {
+      const settings = this.settingsService.getSettings();
+      if (!settings.teamEditorHelpShown) {
+        this.startHelp();
+        settings.teamEditorHelpShown = true;
+        this.settingsService.saveSettings(settings);
+      }
+    }, 800);
   }
 
   ngOnDestroy() {
@@ -77,6 +103,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
+    this.subscriptions.forEach(s => s.unsubscribe());
     this.undoManager.destroy();
   }
 
@@ -171,10 +198,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     if (a.name !== b.name) return false;
     if (a.avatarUrl !== b.avatarUrl) return false;
     if (a.driverIds.length !== b.driverIds.length) return false;
-    // Order matters? For now, assume yes or sort
-    const aSorted = [...a.driverIds].sort();
-    const bSorted = [...b.driverIds].sort();
-    return aSorted.every((id, i) => id === bSorted[i]);
+    return a.driverIds.every((id, i) => id === b.driverIds[i]);
+  }
+
+  get isNameInvalid(): boolean {
+    if (this.isLoading || !this.editingTeam) return false;
+    return !this.editingTeam.name.trim() || !this.isNameUnique(true);
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
@@ -244,18 +273,44 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   onInputBlur() { this.undoManager.onInputBlur(); }
   captureState() { this.undoManager.captureState(); }
 
-  updateTeam(isSaveAsNew: boolean = false) {
+  private autoSaveTeam() {
+    console.log('autoSaveTeam triggered');
+    if (!this.editingTeam) { console.log('autoSaveTeam: no editingTeam'); return; }
+    if (this.isNameInvalid) { console.log('autoSaveTeam: name invalid'); return; }
+    if (this.isSaving) { console.log('autoSaveTeam: isSaving is true'); return; }
+    console.log('autoSaveTeam Triggering updateTeam');
+    this.updateTeam(false, true);
+  }
+
+  onBackClicked() {
+    if (this.hasChanges()) {
+      if (!this.isNameInvalid) {
+        // Valid changes. Trigger save and navigate on success.
+        this.navigateBackOnSave = true;
+        this.updateTeam();
+      } else {
+        // Invalid changes (e.g. duplicate name). BackConfirm dialog handled it.
+        // User confirmed discard, so navigate immediately.
+        this.router.navigate(['/team-manager']);
+      }
+    } else {
+      this.router.navigate(['/team-manager']);
+    }
+  }
+
+  updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingTeam) return;
     if (!isSaveAsNew && !this.hasChanges()) return;
 
     this.isSaving = true;
-    this.saveTeamData(isSaveAsNew);
+    this.isAutoSaving = isAutoSave;
+    this.saveTeamData(isSaveAsNew, isAutoSave);
   }
 
-  private saveTeamData(isSaveAsNew: boolean = false) {
+  private saveTeamData(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingTeam) return;
 
-    const teamToSend = { ...this.editingTeam };
+    const teamToSend = this.cloneTeam(this.editingTeam);
     const wasNew = isSaveAsNew || teamToSend.entity_id === 'new';
 
     if (wasNew) {
@@ -269,20 +324,40 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     obs.subscribe({
       next: (result) => {
         this.isSaving = false;
+        this.isAutoSaving = false;
         if (this.editingTeam) {
           this.editingTeam.entity_id = result.entity_id;
-          this.undoManager.resetTracking(this.editingTeam);
+          const savedTeam = this.cloneTeam(teamToSend);
+          savedTeam.entity_id = result.entity_id;
+          this.undoManager.resetTracking(savedTeam);
         }
         if (wasNew) {
-          this.router.navigate(['/team-editor'], { queryParams: { id: result.entity_id } });
+          if (isAutoSave) {
+            const url = this.router.serializeUrl(this.router.createUrlTree(['/team-editor'], { queryParams: { id: result.entity_id } }));
+            this.location.replaceState(url);
+          } else {
+            this.router.navigate(['/team-editor'], { queryParams: { id: result.entity_id } });
+          }
         }
-        // Refresh valid names list
         this.refreshTeamList();
+
+        if (this.navigateBackOnSave) {
+          this.navigateBackOnSave = false; // Reset flag
+          this.router.navigate(['/team-manager']);
+        }
+
+        // Trigger auto-save again if concurrent edits occurred while saving
+        if (this.hasChanges()) {
+          this.autoSaveTeam();
+        }
       },
       error: (err) => {
         console.error('Failed to save team', err);
-        alert(this.translationService.translate('TM_ERROR_SAVE_FAILED') + (err.error || err.message));
+        if (!isAutoSave) {
+          alert(this.translationService.translate('TM_ERROR_SAVE_FAILED') + (err.error || err.message));
+        }
         this.isSaving = false;
+        this.isAutoSaving = false;
         this.cdr.detectChanges();
       }
     });
@@ -302,23 +377,108 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   // Driver Membership Logic
+  get assignedDrivers(): Driver[] {
+    if (!this.editingTeam) return [];
+    return this.editingTeam.driverIds
+      .map(id => this.allDrivers.find(d => d.entity_id === id))
+      .filter(d => !!d) as Driver[];
+  }
+
+  get availableDrivers(): Driver[] {
+    if (!this.allDrivers) return [];
+    return this.allDrivers.filter(d => !this.isDriverInTeam(d));
+  }
+
   isDriverInTeam(driver: Driver): boolean {
     if (!this.editingTeam) return false;
     return this.editingTeam.driverIds.includes(driver.entity_id);
   }
 
-  toggleDriver(driver: Driver) {
+  addDriver(driver: Driver) {
     if (!this.editingTeam) return;
-    if (this.isDriverInTeam(driver)) {
-      this.editingTeam.driverIds = this.editingTeam.driverIds.filter(id => id !== driver.entity_id);
-    } else {
+    if (!this.isDriverInTeam(driver)) {
       this.editingTeam.driverIds.push(driver.entity_id);
+      this.captureState();
     }
+  }
+
+  removeDriver(driver: Driver) {
+    if (!this.editingTeam) return;
+    this.editingTeam.driverIds = this.editingTeam.driverIds.filter(id => id !== driver.entity_id);
+    this.captureState();
+  }
+
+  onDriverDrop(event: CdkDragDrop<Driver[]>) {
+    if (!this.editingTeam) return;
+    moveItemInArray(this.editingTeam.driverIds, event.previousIndex, event.currentIndex);
     this.captureState();
   }
 
   saveAsNew() {
     if (!this.editingTeam) return;
+    this.editingTeam.name = this.generateUniqueName(this.editingTeam.name);
     this.updateTeam(true);
+  }
+
+  private generateUniqueName(baseName: string): string {
+    let counter = 1;
+    const pattern = /(_\d+)$/;
+    const base = baseName.replace(pattern, '').trim();
+
+    while (true) {
+      const candidate = `${base}_${counter}`;
+      if (!this.allTeams.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+        return candidate;
+      }
+      counter++;
+    }
+  }
+
+  getAvatarUrl(url?: string): string {
+    if (!url) return 'assets/images/default_avatar.svg';
+    if (url.startsWith('/')) return `http://localhost:7070${url}`;
+    return url;
+  }
+
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate('TEM_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('TEM_HELP_WELCOME_CONTENT'),
+        position: 'center'
+      },
+      {
+        selector: '#avatar-selector',
+        title: this.translationService.translate('TEM_HELP_AVATAR_TITLE'),
+        content: this.translationService.translate('TEM_HELP_AVATAR_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: '#team-name-input',
+        title: this.translationService.translate('TEM_HELP_NAME_TITLE'),
+        content: this.translationService.translate('TEM_HELP_NAME_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#assigned-drivers-list',
+        title: this.translationService.translate('TEM_HELP_ASSIGNED_TITLE'),
+        content: this.translationService.translate('TEM_HELP_ASSIGNED_CONTENT'),
+        position: 'left'
+      },
+      {
+        selector: '#available-drivers-list',
+        title: this.translationService.translate('TEM_HELP_AVAILABLE_TITLE'),
+        content: this.translationService.translate('TEM_HELP_AVAILABLE_CONTENT'),
+        position: 'left'
+      },
+      {
+        selector: '#team-duplicate-btn',
+        title: this.translationService.translate('TEM_HELP_DUPLICATE_TITLE'),
+        content: this.translationService.translate('TEM_HELP_DUPLICATE_CONTENT'),
+        position: 'top'
+      }
+    ];
+
+    this.helpService.startGuide(steps);
   }
 }

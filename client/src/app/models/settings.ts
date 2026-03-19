@@ -22,8 +22,7 @@ export class Settings {
   driverEditorHelpShown: boolean = false;
   driverManagerHelpShown: boolean = false;
   teamManagerHelpShown: boolean = false;
-
-
+  teamEditorHelpShown: boolean = false;
 
   flagGreen?: string;
   flagYellow?: string;

@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { UndoManager } from '../undo-redo-controls/undo-manager';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-editor-title',
@@ -20,8 +21,19 @@ export class EditorTitleComponent {
   @Input() showHelp: boolean = true;
 
   @Output() help = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
+
+  constructor(private router: Router) {}
 
   onHelp() {
     this.help.emit();
+  }
+
+  onBack() {
+    if (this.back.observed) {
+      this.back.emit();
+    } else {
+      this.router.navigate([this.backRoute], { queryParams: this.backQueryParams });
+    }
   }
 }

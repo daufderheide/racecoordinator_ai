@@ -20,12 +20,20 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private subscriptions: Subscription = new Subscription();
 
+  private scrollListener = () => {
+    if (this.isVisible) {
+      this.updatePosition();
+    }
+  };
+
   constructor(
     public helpService: HelpService,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
+    document.addEventListener('scroll', this.scrollListener, true);
+
     this.subscriptions.add(this.helpService.isVisible$.subscribe(visible => {
       this.isVisible = visible;
       this.updatePosition();
@@ -50,6 +58,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
+    document.removeEventListener('scroll', this.scrollListener, true);
     this.subscriptions.unsubscribe();
   }
 
@@ -95,117 +104,120 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       // Ensure element is visible
       el.scrollIntoView({ behavior: 'auto', block: 'center' });
       
-      const rect = el.getBoundingClientRect();
+      setTimeout(() => {
+        if (!this.isVisible || !this.currentStep || !el) return;
 
-      this.highlightStyle = {
-        top: rect.top + 'px',
-        left: rect.left + 'px',
-        width: rect.width + 'px',
-        height: rect.height + 'px',
-        position: 'fixed',
-        zIndex: 10001, // Above overlay
-        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)', // The 'hole' effect
-        pointerEvents: 'none' // Allow clicks through if needed
-      };
+        const rect = el.getBoundingClientRect();
 
-      // Get actual popover dimensions
-      let popoverHeight = 200; // Default fallback
-      let popoverWidth = 300; // Default width
+        this.highlightStyle = {
+          top: rect.top + 'px',
+          left: rect.left + 'px',
+          width: rect.width + 'px',
+          height: rect.height + 'px',
+          position: 'fixed',
+          zIndex: 10001, // Above overlay
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)', // The 'hole' effect
+          pointerEvents: 'none' // Allow clicks through if needed
+        };
 
-      if (this.popoverRef && this.popoverRef.nativeElement) {
-        popoverHeight = this.popoverRef.nativeElement.offsetHeight;
-        popoverWidth = this.popoverRef.nativeElement.offsetWidth;
-      }
+        // Get actual popover dimensions
+        let popoverHeight = 200; // Default fallback
+        let popoverWidth = 300; // Default width
 
-      // Position popover relative to target
-      let top = 0;
-      let left = 0;
-      const margin = 15;
+        if (this.popoverRef && this.popoverRef.nativeElement) {
+          popoverHeight = this.popoverRef.nativeElement.offsetHeight;
+          popoverWidth = this.popoverRef.nativeElement.offsetWidth;
+        }
 
-      // Default to bottom if not specified
-      const position = this.currentStep.position || "bottom";
+        // Position popover relative to target
+        let top = 0;
+        let left = 0;
+        const margin = 15;
 
-      switch (position) {
-        case "right":
-          top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+        // Default to bottom if not specified
+        const position = this.currentStep!.position || "bottom";
+
+        switch (position) {
+          case "right":
+            top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+            left = rect.right + margin;
+            break;
+          case "left":
+            top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+            left = rect.left - popoverWidth - margin;
+            break;
+          case "top":
+            top = rect.top - popoverHeight - margin;
+            left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+            break;
+          case "bottom":
+          default:
+            top = rect.bottom + margin;
+            left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+            break;
+        }
+
+        // Basic boundary checks
+        if (left < 10) left = 10;
+        if (top < 10) top = 10;
+
+        // If positioned right, ensure it doesn't overlap
+        if (position === "right" && left < rect.right + margin) {
           left = rect.right + margin;
-          break;
-        case "left":
-          top = rect.top + (rect.height / 2) - (popoverHeight / 2);
-          left = rect.left - popoverWidth - margin;
-          break;
-        case "top":
-          top = rect.top - popoverHeight - margin;
-          left = rect.left + (rect.width / 2) - (popoverWidth / 2);
-          break;
-        case "bottom":
-        default:
-          top = rect.bottom + margin;
-          left = rect.left + (rect.width / 2) - (popoverWidth / 2);
-          break;
-      }
+        }
 
-      // Basic boundary checks
-      if (left < 10) left = 10;
-      if (top < 10) top = 10;
+        // --- Boundary Check & Flip Logic ---
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const estimatedHeight = popoverHeight;
 
-      // If positioned right, ensure it doesn't overlap
-      if (position === "right" && left < rect.right + margin) {
-        left = rect.right + margin;
-      }
-
-      // --- Boundary Check & Flip Logic ---
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const estimatedHeight = popoverHeight;
-
-      // Check Bottom edge
-      if (top + estimatedHeight > windowHeight) {
-        // If it was bottom or default, try top
-        if (position === 'bottom' || position === 'right' || position === 'left') {
-          // Flip to top if there is space
-          if (rect.top - estimatedHeight - margin > 0) {
-            top = rect.top - estimatedHeight - margin;
-            // Re-adjust left for top position if we flipped from bottom
-            if (position === 'bottom') {
-              // Left stays same
+        // Check Bottom edge
+        if (top + estimatedHeight > windowHeight) {
+          if (position === 'bottom' || position === 'right' || position === 'left') {
+            if (rect.top - estimatedHeight - margin > 0) {
+              top = rect.top - estimatedHeight - margin;
+            } else {
+              top = windowHeight - estimatedHeight - 10;
             }
           } else {
-            // Clamp to bottom edge
             top = windowHeight - estimatedHeight - 10;
           }
-        } else {
-          // Just clamp
-          top = windowHeight - estimatedHeight - 10;
         }
-      }
 
-      // Check Top edge
-      if (top < 10) top = 10;
+        // Check Top edge
+        if (top < 10) top = 10;
 
-      // Check Right edge
-      if (left + popoverWidth > windowWidth) {
-        // If it was right, try left
-        if (position === 'right') {
-          if (rect.left - popoverWidth - margin > 0) {
-            left = rect.left - popoverWidth - margin;
+        // Check Right edge
+        if (left + popoverWidth > windowWidth) {
+          if (position === 'right') {
+            if (rect.left - popoverWidth - margin > 0) {
+              left = rect.left - popoverWidth - margin;
+            } else {
+              left = windowWidth - popoverWidth - 10;
+            }
           } else {
             left = windowWidth - popoverWidth - 10;
           }
-        } else {
-          left = windowWidth - popoverWidth - 10;
         }
-      }
 
-      // Check Left edge
-      if (left < 10) left = 10;
+        // Check Left edge
+        if (left < 10) left = 10;
 
+        let arrowClass = "";
+        if (left >= rect.right) arrowClass = "arrow-left";
+        else if (left + popoverWidth <= rect.left) arrowClass = "arrow-right";
+        else if (top >= rect.bottom) arrowClass = "arrow-top";
+        else if (top + estimatedHeight <= rect.top) arrowClass = "arrow-bottom";
+        this.popoverClass = arrowClass;
 
-      let arrowClass = ""; if (left >= rect.right) arrowClass = "arrow-left"; else if (left + popoverWidth <= rect.left) arrowClass = "arrow-right"; else if (top >= rect.bottom) arrowClass = "arrow-top"; else if (top + estimatedHeight <= rect.top) arrowClass = "arrow-bottom"; this.popoverClass = arrowClass; this.popoverStyle = {
-        top: top + "px",
-        left: left + "px",
-        position: "fixed"
-      };
+        this.popoverStyle = {
+          top: top + "px",
+          left: left + "px",
+          position: "fixed"
+        };
+        
+        this.cdr.detectChanges();
+      }, 50);
     } else {
       // Target not found, fallback to center
       this.centerPopover();

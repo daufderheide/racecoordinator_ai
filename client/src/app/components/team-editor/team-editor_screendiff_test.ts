@@ -11,7 +11,7 @@ test.describe('Team Editor Visuals', () => {
   test('should display team editor', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-editor?id=t1'));
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamEditorHarnessE2e(container);
 
     await expect(page.locator('.loader-overlay')).not.toBeVisible();
@@ -24,7 +24,7 @@ test.describe('Team Editor Visuals', () => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-editor?id=t1'));
     await expect(page.locator('.loader-overlay')).not.toBeVisible();
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamEditorHarnessE2e(container);
 
     await harness.setName('New Team Name');
@@ -37,7 +37,7 @@ test.describe('Team Editor Visuals', () => {
   test('should open avatar selector', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-editor?id=t1'));
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamEditorHarnessE2e(container);
 
     await expect(page.locator('.loader-overlay')).not.toBeVisible();
@@ -54,35 +54,27 @@ test.describe('Team Editor Visuals', () => {
   test('should allow adding/removing drivers', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-editor?id=t1'));
 
-    const container = page.locator('.dm-container');
+    const container = page.locator('.page-container');
     const harness = new TeamEditorHarnessE2e(container);
 
     await expect(page.locator('.loader-overlay')).not.toBeVisible();
-    // Driver count checked visually
 
-    // Initial selected count
-    let selectedCount = 0;
-    const count = await harness.getDriverCount();
-    for (let i = 0; i < count; i++) {
-        if (await harness.isDriverSelected(i)) selectedCount++;
-    }
-    // Selected count checked visually
+    // Click on the first available driver to assign them
+    const availableDriver = page.locator('.driver-grid .driver-item').first();
+    await availableDriver.click();
 
-    // Toggle Alice (assuming d1)
-    // Find index of Alice
-    let aliceIndex = -1;
-    for (let i = 0; i < count; i++) {
-        if ((await harness.getDriverName(i)).includes('Alice')) {
-            aliceIndex = i;
-            break;
-        }
-    }
-    expect(aliceIndex).toBeGreaterThan(-1);
-    await harness.toggleDriver(aliceIndex);
+    await expect(page).toHaveScreenshot('team-editor-driver-added.png');
+  });
 
-    // Selection state checked visually
+  test('should show guided help on first visit', async ({ page }) => {
+    // We navigate to existing team so the help overlay tries to point at real elements
+    await TestSetupHelper.setupStandardMocks(page, { teamEditorHelpShown: false });
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/team-editor?id=t1'));
 
-    await expect(page).toHaveScreenshot('team-editor-driver-removed.png');
+    const overlay = page.locator('app-help-overlay');
+    await overlay.waitFor({ state: 'attached' });
+    
+    await expect(page).toHaveScreenshot('team-editor-guided-help.png');
   });
 });
 

@@ -10,6 +10,11 @@ import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@an
 import { Team } from 'src/app/models/team';
 import { Driver } from 'src/app/models/driver';
 
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { Location } from '@angular/common';
+import { HelpService } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
+
 // Mock Child Components
 @Component({ selector: 'app-back-button', template: '', standalone: false })
 class MockBackButtonComponent {
@@ -45,6 +50,19 @@ class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
+@Component({ selector: 'app-editor-title', template: '', standalone: false })
+class MockEditorTitleComponent {
+  @Input() titleKey: string = '';
+  @Input() backRoute: string = '';
+  @Input() backConfirm: boolean = false;
+  @Input() backConfirmTitle: string = '';
+  @Input() backConfirmMessage: string = '';
+  @Input() undoManager: any;
+}
+
+@Component({ selector: 'app-help-overlay', template: '', standalone: false })
+class MockHelpOverlayComponent {}
+
 @Pipe({ name: 'translate', standalone: false })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string { return value; }
@@ -63,6 +81,9 @@ describe('TeamEditorComponent', () => {
   let mockConnectionMonitor: any;
   let mockRouter: any;
   let mockActivatedRoute: any;
+  let mockLocation: any;
+  let mockHelpService: any;
+  let mockSettingsService: any;
 
   const mockDrivers = [
     new Driver('d1', 'Alice', 'Rocket', 'assets/images/default_avatar.svg'),
@@ -80,7 +101,9 @@ describe('TeamEditorComponent', () => {
       connectionState$: new BehaviorSubject('CONNECTED'),
       startMonitoring: jasmine.createSpy('startMonitoring')
     };
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockRouter = jasmine.createSpyObj('Router', ['navigate'], ['serializeUrl', 'createUrlTree']);
+    mockRouter.serializeUrl = (tree: any) => 'mock-url';
+    mockRouter.createUrlTree = () => ({});
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
@@ -88,10 +111,18 @@ describe('TeamEditorComponent', () => {
         }
       }
     };
+    mockLocation = jasmine.createSpyObj('Location', ['replaceState']);
+    mockHelpService = jasmine.createSpyObj('HelpService', ['startGuide']);
+    mockSettingsService = {
+      getSettings: jasmine.createSpy('getSettings').and.returnValue({ teamEditorHelpShown: false }),
+      saveSettings: jasmine.createSpy('saveSettings')
+    };
 
     mockDataService.getDrivers.and.returnValue(of(mockDrivers));
     mockDataService.getTeams.and.returnValue(of(mockTeams));
     mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.createTeam.and.returnValue(of({ entity_id: 'new-id' }));
+    mockDataService.updateTeam.and.returnValue(of({ entity_id: 't1' }));
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -101,16 +132,21 @@ describe('TeamEditorComponent', () => {
         MockItemSelectorComponent,
         MockImageSelectorComponent,
         MockUndoRedoControlsComponent,
+        MockEditorTitleComponent,
+        MockHelpOverlayComponent,
         MockTranslatePipe,
         MockAvatarUrlPipe
       ],
-      imports: [FormsModule],
+      imports: [FormsModule, DragDropModule],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: Location, useValue: mockLocation },
+        { provide: HelpService, useValue: mockHelpService },
+        { provide: SettingsService, useValue: mockSettingsService }
       ]
     }).compileComponents();
   });
@@ -147,11 +183,11 @@ describe('TeamEditorComponent', () => {
     const driver2 = mockDrivers[1];
     expect(component.isDriverInTeam(driver2)).toBeFalse();
 
-    component.toggleDriver(driver2);
+    component.addDriver(driver2);
     expect(component.isDriverInTeam(driver2)).toBeTrue();
-    expect(component.hasChanges()).toBeTrue();
+    expect(component.hasChanges()).toBeFalse(); // Instant auto-save with synchronous mocks
 
-    component.toggleDriver(driver2);
+    component.removeDriver(driver2);
     expect(component.isDriverInTeam(driver2)).toBeFalse();
   });
 
@@ -194,5 +230,48 @@ describe('TeamEditorComponent', () => {
     expect(component.editingTeam!.name).toBe('Team Alpha');
     component.redo();
     expect(component.editingTeam!.name).toBe('Changed');
+  });
+
+  it('should identify name as invalid if it already exists', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+    component.loadData();
+    
+    component.allTeams = [
+      ...mockTeams,
+      new Team('t2', 'Team Beta', '', [])
+    ];
+    
+    component.editingTeam!.name = 'Team Beta'; // Duplicate
+    expect(component.isNameInvalid).toBeTrue();
+  });
+
+  it('should navigate back directly on back fallback if name IS invalid', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+    component.loadData();
+    
+    component.allTeams = [
+      ...mockTeams,
+      new Team('t2', 'Team Beta', '', [])
+    ];
+    component.editingTeam!.name = 'Team Beta';
+    
+    component.onBackClicked();
+    
+    expect(mockDataService.updateTeam).not.toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager']);
+  });
+
+  it('should save and set flag onBackClicked if name IS valid', () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+    component.loadData();
+    
+    component.onInputFocus();
+    component.editingTeam!.name = 'Unique Cool Name';
+    component.onInputBlur();
+    
+    component.onBackClicked();
+    
+    expect(mockDataService.updateTeam).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager']);
   });
 });

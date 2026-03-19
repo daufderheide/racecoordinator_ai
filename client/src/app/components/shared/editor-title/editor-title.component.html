@@ -2,7 +2,7 @@
   <div class="header-left">
     <app-back-button [route]="backRoute" [confirm]="backConfirm"
       [queryParams]="backQueryParams" [confirmTitle]="backConfirmTitle"
-      [confirmMessage]="backConfirmMessage"></app-back-button>
+      [confirmMessage]="backConfirmMessage" (back)="onBack()"></app-back-button>
     <h1 class="page-title">{{ titleKey | translate }}</h1>
   </div>
   <div class="header-right">

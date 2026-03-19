@@ -487,6 +487,30 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         title: this.translationService.translate('DE_HELP_WELCOME_TITLE'),
         content: this.translationService.translate('DE_HELP_WELCOME_CONTENT'),
         position: 'center'
+      },
+      {
+        selector: '#driver-avatar-section',
+        title: this.translationService.translate('DE_HELP_AVATAR_TITLE'),
+        content: this.translationService.translate('DE_HELP_AVATAR_CONTENT'),
+        position: 'right'
+      },
+      {
+        selector: '#driver-name-section',
+        title: this.translationService.translate('DE_HELP_NAME_TITLE'),
+        content: this.translationService.translate('DE_HELP_NAME_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#driver-nickname-section',
+        title: this.translationService.translate('DE_HELP_NICKNAME_TITLE'),
+        content: this.translationService.translate('DE_HELP_NICKNAME_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#driver-duplicate-btn',
+        title: this.translationService.translate('DE_HELP_DUPLICATE_TITLE'),
+        content: this.translationService.translate('DE_HELP_DUPLICATE_CONTENT'),
+        position: 'top'
       }
     ];
 

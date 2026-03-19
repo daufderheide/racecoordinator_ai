@@ -79,5 +79,14 @@ test.describe('Track Manager Visuals', () => {
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-manager-after-create-new.png');
   });
-});
 
+  test('should show guided help on first visit', async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page, { trackManagerHelpShown: false });
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-manager'));
+
+    const overlay = page.locator('app-help-overlay');
+    await overlay.waitFor({ state: 'attached' });
+    
+    await expect(page).toHaveScreenshot('track-manager-guided-help.png');
+  });
+});

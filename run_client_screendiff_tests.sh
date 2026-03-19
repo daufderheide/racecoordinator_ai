@@ -8,7 +8,7 @@ echo "--- 🔹 Running Client Visual Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
 
 # Ensure isolated directory exists and is prepared
-ISOLATED_DIR="/tmp/racecoordinator-client"
+ISOLATED_DIR="/private/tmp/racecoordinator-client"
 mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory

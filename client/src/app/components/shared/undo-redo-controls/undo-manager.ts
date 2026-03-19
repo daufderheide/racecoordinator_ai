@@ -124,7 +124,9 @@ export class UndoManager<T> {
   public captureState() {
     const currentState = this.snapshotGetter();
     if (currentState && this._snapshot) {
-      if (!this.config.equalizer(currentState, this._snapshot)) {
+      const equal = this.config.equalizer(currentState, this._snapshot);
+      console.log('UndoManager: captureState equal =', equal);
+      if (!equal) {
         this.pushToUndo(this.config.clonner(this._snapshot));
         this._snapshot = this.config.clonner(currentState);
       }
@@ -141,6 +143,7 @@ export class UndoManager<T> {
 
   // Call on text input change (debounced)
   public onInputChange() {
+    console.log('UndoManager: onInputChange triggered');
     this.textChange$.next();
   }
 
@@ -150,6 +153,7 @@ export class UndoManager<T> {
   }
 
   private commitChange() {
+    console.log('UndoManager: commitChange triggered');
     this.commitState();
   }
 

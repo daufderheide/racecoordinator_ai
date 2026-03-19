@@ -2,11 +2,11 @@ export abstract class TeamEditorHarnessBase {
   static readonly hostSelector = 'app-team-editor';
 
   static readonly selectors = {
-    nameInput: 'input.dm-input',
-    saveBtn: '.btn-save',
-    saveAsNewBtn: '.btn-save-new',
+    nameInput: '#team-name-input',
+    saveBtn: '#team-duplicate-btn',
+    saveAsNewBtn: '#team-duplicate-btn',
     driverItem: '.driver-item',
-    avatarSelector: 'app-image-selector .image-preview',
+    avatarSelector: '#avatar-selector',
     driverName: '.driver-name'
   };
 

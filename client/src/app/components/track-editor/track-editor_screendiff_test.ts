@@ -110,5 +110,15 @@ test.describe('Track Editor Visuals', () => {
     await page.waitForTimeout(1000);
     await expect(page).toHaveScreenshot('track-editor-duplicate-name-error.png');
   });
-});
 
+  test('should show guided help on first visit', async ({ page }) => {
+    // We navigate to existing track so the help overlay tries to point at real elements
+    await TestSetupHelper.setupStandardMocks(page, { trackEditorHelpShown: false });
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
+
+    const overlay = page.locator('app-help-overlay');
+    await overlay.waitFor({ state: 'attached' });
+    
+    await expect(page).toHaveScreenshot('track-editor-guided-help.png');
+  });
+});

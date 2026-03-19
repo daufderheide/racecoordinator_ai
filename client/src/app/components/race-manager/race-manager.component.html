@@ -20,7 +20,7 @@
           [class.selected]="race.entity_id === selectedRace?.entity_id" (click)="selectRace(race)"
           [class.odd]="i % 2 !== 0">
           <div class="item-name">{{ race.name }}</div>
-          <div class="item-nickname">{{ race.track?.name || 'N/A' }}</div>
+          <div class="item-nickname">{{ race.track?.name || ('GEN_NA' | translate) }}</div>
         </div>
       </div>
       <div class="list-actions">
@@ -43,25 +43,25 @@
           <div class="summary-grid">
               <!-- Row 1 -->
               <div class="summary-item">
-                <span class="summary-label">Heat Ranking:</span>
+                <span class="summary-label">{{ 'RM_LABEL_HEAT_RANKING' | translate }}:</span>
                 <span class="summary-value">{{ formatEnumDisplay(selectedRace.heat_scoring?.heat_ranking) }}</span>
               </div>
               <div class="summary-item">
-                <span class="summary-label">Finish Method:</span>
+                <span class="summary-label">{{ 'RM_LABEL_FINISH_METHOD' | translate }}:</span>
                 <span class="summary-value">{{ formatEnumDisplay(selectedRace.heat_scoring?.finish_method) }}</span>
               </div>
               <div class="summary-item">
                 <span class="summary-label">{{ 'RM_LABEL_FUEL_RACE' | translate }}:</span>
-                <span class="summary-value">{{ (selectedRace.fuel_options?.enabled || selectedRace.digital_fuel_options?.enabled) ? 'Yes' : 'No' }}</span>
+                <span class="summary-value">{{ (selectedRace.fuel_options?.enabled || selectedRace.digital_fuel_options?.enabled) ? ('GEN_YES' | translate) : ('GEN_NO' | translate) }}</span>
               </div>
 
               <!-- Row 2 -->
               <div class="summary-item">
-                <span class="summary-label">Overall Ranking:</span>
+                <span class="summary-label">{{ 'RM_LABEL_OVERALL_RANKING' | translate }}:</span>
                 <span class="summary-value">{{ formatEnumDisplay(selectedRace.overall_scoring?.ranking_method) }}</span>
               </div>
               <div class="summary-item">
-                <span class="summary-label">Finish Value:</span>
+                <span class="summary-label">{{ 'RM_LABEL_FINISH_VALUE' | translate }}:</span>
                 <span class="summary-value">{{ selectedRace.heat_scoring?.finish_value }}</span>
               </div>
             </div>

@@ -1,73 +1,106 @@
-<div class="dm-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
-  <div class="dm-header">
-    <app-back-button [label]="'TEM_BTN_BACK' | translate" route="/team-manager"></app-back-button>
-  </div>
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+  <app-editor-title
+    titleKey="TEM_TITLE"
+    backRoute="/team-manager"
+    [backConfirm]="hasChanges() && isNameInvalid"
+    backConfirmTitle="TEM_CONFIRM_DISCARD_TITLE"
+    backConfirmMessage="TEM_CONFIRM_DISCARD_MESSAGE"
+    [undoManager]="undoManager"
+    (help)="startHelp()"
+    (back)="onBackClicked()">
+  </app-editor-title>
 
-  <div class="main-content" *ngIf="editingTeam">
+  <div class="content-split" *ngIf="editingTeam">
     <!-- LEFT PANEL: TEAM CONFIGURATION -->
-    <div class="panel config-panel">
-      <div class="panel-header">{{ 'TEM_HEADER_CONFIG' | translate }}</div>
+    <div class="editor-panel">
+      <div class="editor-section fixed-header">
+        <h1>{{ 'TEM_HEADER_CONFIG' | translate }}</h1>
+      </div>
 
-      <div class="config-form">
-        <!-- AVATAR SECTION -->
-        <div class="avatar-column">
-          <app-image-selector [(imageUrl)]="editingTeam.avatarUrl" (imageUrlChange)="captureState()"
-            [assets]="avatarAssets">
-          </app-image-selector>
-        </div>
+      <div class="sections-wrapper">
+        <div class="config-section">
+          <div class="config-form">
+            <!-- AVATAR SECTION -->
+            <div id="avatar-selector" class="avatar-column">
+              <app-image-selector [(imageUrl)]="editingTeam.avatarUrl" (imageUrlChange)="captureState()"
+                [assets]="avatarAssets">
+              </app-image-selector>
+            </div>
 
-        <!-- NAME INPUT -->
-        <div class="form-group">
-          <label>{{ 'TEM_LABEL_NAME' | translate }}</label>
-          <input type="text" [(ngModel)]="editingTeam.name" class="dm-input" (focus)="onInputFocus()"
-            (change)="onInputChange()" (blur)="onInputBlur()">
+            <!-- NAME INPUT -->
+            <div class="editor-section" [class.invalid]="isNameInvalid">
+              <label class="track-name-label">{{ 'TEM_LABEL_NAME' | translate }}</label>
+              <input id="team-name-input" type="text" [(ngModel)]="editingTeam.name" (ngModelChange)="onInputChange()" class="dm-input" (focus)="onInputFocus()" (blur)="onInputBlur()">
+            </div>
+          </div>
         </div>
+      </div>
 
-        <!-- SAVE BUTTONS -->
-        <div class="action-buttons">
-          <button class="btn btn-save" [disabled]="!hasChanges() || !editingTeam.name || isSaving"
-            (click)="updateTeam(false)">
-            {{ isSaving ? ('TEM_BTN_SAVING' | translate) : ('TEM_BTN_SAVE' | translate) }}
-          </button>
-          <button class="btn btn-save-new" [disabled]="!isNameUnique() || !editingTeam.name || isSaving"
-            (click)="saveAsNew()">
-            {{ 'TEM_BTN_SAVE_AS_NEW' | translate }}
-          </button>
-        </div>
+      <div class="editor-actions">
+        <div class="spacer"></div>
+        <button id="team-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || hasChanges() || !editingTeam.name">
+          {{ 'TEM_BTN_SAVE_AS_NEW' | translate }}
+        </button>
       </div>
     </div>
 
     <!-- RIGHT PANEL: DRIVER SELECTION -->
-    <div class="panel driver-selection-panel" *ngIf="editingTeam">
-      <div class="panel-header">{{ 'TEM_HEADER_MEMBERS' | translate }}</div>
-      <div class="driver-list-container">
-        <div class="driver-item" *ngFor="let driver of allDrivers" [class.selected]="isDriverInTeam(driver)"
-          (click)="toggleDriver(driver)">
-
-          <div class="checkbox">
-            <div class="checkbox-icon" *ngIf="isDriverInTeam(driver)">✓</div>
+    <div class="preview-panel">
+      <!-- ASSIGNED DRIVERS (Drag & Drop) -->
+      <div id="assigned-drivers-section" class="config-section">
+        <div class="section-header">
+          <h1>{{ 'TEM_HEADER_MEMBERS' | translate }} ({{ assignedDrivers.length }})</h1>
+        </div>
+        <div class="section-content">
+          <div id="assigned-drivers-list" class="driver-list assigned-list" cdkDropList (cdkDropListDropped)="onDriverDrop($any($event))">
+            <div *ngIf="assignedDrivers.length === 0" class="empty-list-hint">
+              Drag drivers here or click below to assign
+            </div>
+            <div class="driver-item draggable" *ngFor="let driver of assignedDrivers" cdkDrag>
+              <div class="drag-handle">☰</div>
+              <div class="driver-avatar-mini">
+                <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar">
+              </div>
+              <div class="driver-name">
+                {{ driver.name }}
+                <span class="driver-nickname" *ngIf="driver.nickname" style="color: #94a3b8; font-size: 0.85em; margin-left: 5px;">({{ driver.nickname }})</span>
+              </div>
+              <div class="spacer"></div>
+              <button class="action-btn danger small" (click)="removeDriver(driver)">X</button>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div class="driver-avatar-mini">
-            <img [src]="driver.avatarUrl | avatarUrl" alt="Avatar">
+      <!-- AVAILABLE DRIVERS -->
+      <div id="available-drivers-section" class="config-section" style="margin-top: 20px;">
+        <div class="section-header">
+          <h1>Available Drivers</h1>
+        </div>
+        <div class="section-content">
+          <div id="available-drivers-list" class="driver-grid">
+            <div class="driver-item click-assign" *ngFor="let driver of availableDrivers" (click)="addDriver(driver)">
+              <div class="driver-avatar-mini">
+                <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar">
+              </div>
+              <div class="driver-name">
+                {{ driver.name }}
+                <span class="driver-nickname" *ngIf="driver.nickname" style="color: #94a3b8; font-size: 0.85em; margin-left: 5px;">({{ driver.nickname }})</span>
+              </div>
+              <div class="spacer"></div>
+              <button class="action-btn small add-list-btn">+</button>
+            </div>
           </div>
-
-          <div class="driver-name">{{ driver.name }}</div>
         </div>
       </div>
     </div>
   </div>
 
+</div>
 
+<app-help-overlay></app-help-overlay>
 
-  <!-- Connection Lost Overlay -->
-  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">{{ 'TMM_LOST_CONNECTION' | translate }}</div>
-  </div>
-
-  <!-- Loading Overlay -->
-  <div class="loader-overlay" *ngIf="isLoading || isSaving">
-    <div class="spinner"></div>
-  </div>
+<!-- Loading Overlay -->
+<div class="loader-overlay" *ngIf="isLoading || (isSaving && !isAutoSaving)">
+  <div class="spinner"></div>
 </div>

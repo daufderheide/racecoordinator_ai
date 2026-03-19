@@ -77,7 +77,7 @@ describe('HelpOverlayComponent', () => {
     const step: GuideStep = {
       title: 'Test Title',
       content: 'Test Content',
-      targetId: 'test-target'
+      selector: '#test-target'
     };
     currentStepSubject.next(step);
     tick(); // Wait for setTimeout in subscription and position update
@@ -146,14 +146,14 @@ describe('HelpOverlayComponent', () => {
     const step: GuideStep = {
       title: 'Targeted Step',
       content: 'Check Position',
-      targetId: 'test-target',
+      selector: '#test-target',
       position: 'bottom'
     };
     currentStepSubject.next(step);
 
     // Trigger change detection and wait for async updates 
     fixture.detectChanges();
-    tick();
+    tick(50);
     fixture.detectChanges();
 
     expect(component.highlightStyle).toBeTruthy();
@@ -176,10 +176,10 @@ describe('HelpOverlayComponent', () => {
     const step: GuideStep = {
       title: 'No Target Step',
       content: 'Center Me',
-      targetId: 'non-existent-id'
+      selector: '#non-existent-id'
     };
     currentStepSubject.next(step);
-    tick();
+    tick(50);
     fixture.detectChanges();
 
     expect(component.highlightStyle).toBeNull();

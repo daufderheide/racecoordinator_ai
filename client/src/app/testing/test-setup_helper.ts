@@ -9,6 +9,7 @@ export interface SetupOptions {
   driverManagerHelpShown?: boolean;
   driverEditorHelpShown?: boolean;
   teamManagerHelpShown?: boolean;
+  teamEditorHelpShown?: boolean;
 }
 
 
@@ -140,6 +141,7 @@ export class TestSetupHelper {
       driverManagerHelpShown: options.driverManagerHelpShown ?? true,
       driverEditorHelpShown: options.driverEditorHelpShown ?? true,
       teamManagerHelpShown: options.teamManagerHelpShown ?? true,
+      teamEditorHelpShown: options.teamEditorHelpShown ?? true,
 
       racedayColumns: ['driver.name', 'lapCount'],
 

@@ -235,7 +235,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     if (this.isSaving) return;
     this.isSaving = true;
 
-    const baseName = "New Race";
+    const baseName = this.translationService.translate('RM_DEFAULT_RACE_NAME') || "New Race";
     const uniqueName = this.generateUniqueRaceName(baseName);
 
     const newRace: any = {
@@ -296,8 +296,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: "Welcome to Race Manager",
-        content: "Here you can manage your races. Select a race from the list to view its summary setup.",
+        title: this.translationService.translate('RM_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('RM_HELP_WELCOME_CONTENT'),
         position: 'center'
       }
     ];
