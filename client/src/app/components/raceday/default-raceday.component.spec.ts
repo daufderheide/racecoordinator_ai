@@ -419,6 +419,9 @@ describe('DefaultRacedayComponent', () => {
       mockHd = {
         participant: {
           fuelLevel: 55.5
+        },
+        driver: {
+          name: 'Test Driver'
         }
       };
 

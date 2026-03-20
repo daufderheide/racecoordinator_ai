@@ -143,5 +143,76 @@ test.describe('Raceday Visuals for Empty Lanes', () => {
 
     await expect(page).toHaveScreenshot('raceday-empty-lanes.png', { maxDiffPixelRatio: 0.1 });
   });
+
+  test('should display Empty Lane translation for unassigned lanes with blank names', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
+    await page.evaluate(() => {
+      const style = document.createElement('style');
+      style.textContent = 'app-acknowledgement-modal { display: none !important; }';
+      document.head.appendChild(style);
+    });
+
+    const container = page.locator('.dashboard-wrapper');
+    const harness = new DefaultRacedayHarnessE2e(container);
+
+    await expect(page.locator('.scalable-content')).toBeVisible();
+
+    await page.evaluate(() => {
+      const raceData = {
+        race: {
+          race: {
+            model: { entityId: 'r1' },
+            name: 'Empty Lane Test GP - Blank Name',
+            track: {
+              model: { entityId: 't1' },
+              name: 'Test Track',
+              lanes: [
+                { objectId: 'l1', length: 10, backgroundColor: '#550000', foregroundColor: '#ffffff' },
+                { objectId: 'l2', length: 10, backgroundColor: '#005500', foregroundColor: '#ffffff' }
+              ]
+            }
+          },
+          drivers: [
+            {
+              objectId: 'rp1',
+              seed: 5,
+              rank: 10,
+              driver: { model: { entityId: 'd1' }, name: 'Real Driver', nickname: 'Speedy' }
+            },
+            {
+              objectId: 'rp_empty',
+              seed: 0,
+              driver: { model: { entityId: '' }, name: '', nickname: '' }
+            }
+          ],
+          currentHeat: {
+            objectId: 'h1',
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: 'hd1',
+                laneIndex: 0,
+                driver: { objectId: 'rp1', seed: 5, driver: { model: { entityId: 'd1' }, name: 'Real Driver', nickname: 'Speedy' } }
+              },
+              {
+                objectId: 'hd2',
+                laneIndex: 1,
+                driver: { objectId: 'rp_empty', seed: 0, driver: { model: { entityId: '' }, name: '', nickname: '' } }
+              }
+            ]
+          }
+        }
+      };
+      // @ts-ignore
+      window.mockRaceData(raceData);
+    });
+
+    await page.waitForTimeout(1000);
+
+    const rowText = await harness.getDriverRowText(1);
+    expect(rowText).toContain('Empty Lane');
+
+    await expect(page).toHaveScreenshot('raceday-empty-lanes-blank-name.png', { maxDiffPixelRatio: 0.1 });
+  });
 });
 

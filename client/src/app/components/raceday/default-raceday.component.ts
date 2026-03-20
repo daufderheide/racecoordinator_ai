@@ -316,7 +316,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
           }
           return;
         }
-        
+
         this.resetWatchdog();
         this.lastInterfaceStatus = status ?? -1;
 
@@ -1379,8 +1379,15 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   private isEmptyDriver(hd: DriverHeatData): boolean {
     if (!hd) return true;
+    // TODO(aufderheide): An empty driver should be signified by a specific entity_id like
+    // undefined or 0.  We shouldn't be looking at the name to figure out if it's a valid
+    // driver or not.
     const name = hd.actualDriver?.name || hd.driver?.name;
     const entityId = hd.actualDriver?.entity_id ?? hd.participant?.driver?.entity_id;
+
+    if (!name || name.trim() === '') {
+      return true;
+    }
 
     // A driver is empty IF it has the literal name "Empty" AND either an empty/missing entityId.
     // This avoids false positives on minimal mocks in unit/screendiff tests that omit IDs.
