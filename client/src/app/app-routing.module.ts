@@ -16,7 +16,9 @@ import { RaceEditorComponent } from './components/race-editor/race-editor.compon
 import { TeamManagerComponent } from './components/team-manager/team-manager.component';
 import { TeamEditorComponent } from './components/team-editor/team-editor.component';
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
+import { DriverStationComponent } from './components/driver-station/driver-station.component';
 import { DirtyCheckGuard } from './guards/dirty-check.guard';
+
 
 const routes: Routes = [
     { path: '', redirectTo: 'raceday-setup', pathMatch: 'full' },
@@ -35,7 +37,9 @@ const routes: Routes = [
     { path: 'race-manager', component: RaceManagerComponent, data: { animation: 'RaceManagerPage' } },
     { path: 'race-editor', component: RaceEditorComponent, data: { animation: 'RaceEditorPage' } },
     { path: 'ui-editor', component: UIEditorComponent, canDeactivate: [DirtyCheckGuard], data: { animation: 'UIEditorPage' } },
+    { path: 'driver-station/:lane', component: DriverStationComponent, data: { animation: 'DriverStationPage' } },
     { path: '**', redirectTo: '' }
+
 ];
 
 @NgModule({

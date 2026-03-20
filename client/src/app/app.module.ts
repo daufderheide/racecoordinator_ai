@@ -28,6 +28,8 @@ import { RaceEditorComponent } from './components/race-editor/race-editor.compon
 import { TeamManagerComponent } from './components/team-manager/team-manager.component';
 import { TeamEditorComponent } from './components/team-editor/team-editor.component';
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
+import { DriverStationComponent } from './components/driver-station/driver-station.component';
+
 
 @NgModule({
   declarations: [
@@ -51,7 +53,8 @@ import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
     DatabaseManagerComponent,
     RaceManagerComponent,
     RaceEditorComponent,
-    UIEditorComponent
+    UIEditorComponent,
+    DriverStationComponent
   ],
   imports: [
     BrowserModule,

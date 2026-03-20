@@ -1,0 +1,50 @@
+<div class="driver-station-container" [class.fuel-race]="isFuelRace" [style.background-color]="backgroundColor" [style.color]="foregroundColor">
+
+  
+  <!-- Column 1: Thermometer (Time/Laps Left) -->
+  <div class="column thermometer-column">
+    <div class="thermometer-container">
+      <div class="thermometer-fill" [style.height.%]="progressPercentage" [style.background-color]="foregroundColor"></div>
+    </div>
+    <div class="thermometer-label">
+      <span *ngIf="finishMethod === 'Timed'">{{ (finishValue - time) | number:'1.0-0' }}s</span>
+      <span *ngIf="finishMethod === 'Lap'">{{ (finishValue - (driverData?.lapCount || 0)) }}</span>
+    </div>
+  </div>
+
+  <!-- Column 2: Data Rows -->
+  <div class="column data-column" [class.span-all]="!isFuelRace">
+    <div class="data-row">
+      <span class="label">{{ 'RD_COL_NICKNAME' | translate }} / {{ 'RD_COL_RANK_HEAT' | translate }}</span>
+      <span class="value">{{ driverData?.driver?.nickname }} (#{{ standingsPosition }})</span>
+    </div>
+    <div class="data-row">
+      <span class="label">{{ 'RD_COL_LAP' | translate }}</span>
+      <span class="value">{{ driverData?.lapCount || 0 }}</span>
+    </div>
+    <div class="data-row">
+      <span class="label">{{ 'RD_COL_LAP_TIME' | translate }}</span>
+      <span class="value">{{ driverData?.lastLapTime | number:'1.2-2' }}s</span>
+    </div>
+    <div class="data-row">
+      <span class="label">{{ 'RD_COL_GAP_LEADER' | translate }}</span>
+      <span class="value">{{ driverData?.gapLeader | number:'1.2-2' }}s</span>
+    </div>
+    <div class="data-row">
+      <span class="label">{{ 'RD_COL_BEST_LAP' | translate }}</span>
+      <span class="value">{{ driverData?.bestLapTime | number:'1.2-2' }}s</span>
+    </div>
+  </div>
+
+
+  <!-- Column 3: Fuel Thermometer (Conditional) -->
+  <div class="column thermometer-column fuel-column" *ngIf="isFuelRace">
+    <div class="thermometer-container">
+      <div class="thermometer-fill" [style.height.%]="fuelPercentage" [style.background-color]="foregroundColor"></div>
+    </div>
+    <div class="thermometer-label">
+      <span>{{ fuelPercentage }}%</span>
+    </div>
+  </div>
+
+</div>
