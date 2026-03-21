@@ -6496,6 +6496,9 @@ export namespace com {
 
             /** DriverHeatData segments */
             segments?: (number[]|null);
+
+            /** DriverHeatData laps */
+            laps?: (number[]|null);
         }
 
         /** Represents a DriverHeatData. */
@@ -6527,6 +6530,9 @@ export namespace com {
 
             /** DriverHeatData segments. */
             public segments: number[];
+
+            /** DriverHeatData laps. */
+            public laps: number[];
 
             /**
              * Creates a new DriverHeatData instance using the specified properties.

@@ -228,6 +228,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
 
   private leaderBoardWindow: Window | null = null;
+  private heatResultsWindow: Window | null = null;
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -239,6 +240,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (this.leaderBoardWindow) {
       this.leaderBoardWindow.close();
       this.leaderBoardWindow = null;
+    }
+    if (this.heatResultsWindow) {
+      this.heatResultsWindow.close();
+      this.heatResultsWindow = null;
     }
   }
 
@@ -649,6 +654,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       this.leaderBoardWindow.close();
       this.leaderBoardWindow = null;
     }
+    if (this.heatResultsWindow) {
+      this.heatResultsWindow.close();
+      this.heatResultsWindow = null;
+    }
   }
 
   onFileMenuSelect(action: string) {
@@ -674,6 +683,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         this.router.createUrlTree(['/leaderboard'])
       );
       this.leaderBoardWindow = window.open(url, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+    } else if (action === 'HEAT_RESULTS') {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/heat-results'])
+      );
+      this.heatResultsWindow = window.open(url, '_blank', 'width=1600,height=900,menubar=no,toolbar=no,location=no,status=no');
     }
   }
 

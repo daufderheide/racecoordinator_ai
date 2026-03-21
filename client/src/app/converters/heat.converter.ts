@@ -50,6 +50,14 @@ export class HeatConverter {
                             const hd = new DriverHeatData(heatDriverId || '', participant, index, actualDriver);
                             hd.gapLeader = dProto.gapLeader || 0;
                             hd.gapPosition = dProto.gapPosition || 0;
+
+                            if (dProto.laps) {
+                                dProto.laps.forEach((lapTime, i) => {
+                                    // best/avg/median are useful for UI details but 0 is safe for live curves
+                                    hd.addLapTime(i + 1, lapTime, 0, 0, 0);
+                                });
+                            }
+
                             return hd;
                         }
                         return null;

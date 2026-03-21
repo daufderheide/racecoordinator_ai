@@ -107,6 +107,10 @@ export class DriverHeatData {
         return this.laps.reduce((acc, curr) => acc + curr, 0);
     }
 
+    get lapTimes(): number[] {
+        return [...this.laps];
+    }
+
     get gapLeader(): number {
         return this._gapLeader;
     }

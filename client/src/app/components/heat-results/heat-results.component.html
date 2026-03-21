@@ -1,0 +1,94 @@
+<div class="container">
+  <svg [attr.width]="width" [attr.height]="height" [attr.viewBox]="'0 0 ' + width + ' ' + height">
+    
+    <!-- Background Gradient -->
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#16213e;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bg)" />
+
+    <!-- LEFT GRAPH: DRIVER RANKINGS -->
+    <g class="rankings-graph">
+      <!-- Grid Ticks X -->
+      <g *ngFor="let tick of xTicks">
+        <line [attr.x1]="scaleXLeft(tick)" [attr.y1]="padding.top" [attr.x2]="scaleXLeft(tick)" [attr.y2]="height - padding.bottom" stroke="#334155" stroke-dasharray="2" />
+        <text [attr.x]="scaleXLeft(tick)" [attr.y]="height - padding.bottom + 25" fill="#94a3b8" text-anchor="middle" font-size="12">{{ tick | number:'1.0-0' }}s</text>
+      </g>
+      
+      <!-- Grid Ticks Y (Rankings) -->
+      <g *ngFor="let tick of yTicksLeft">
+        <line [attr.x1]="scaleXLeft(0)" [attr.y1]="scaleYLeft(tick)" [attr.x2]="scaleXLeft(maxX)" [attr.y2]="scaleYLeft(tick)" stroke="#334155" stroke-dasharray="2" />
+        <text [attr.x]="scaleXLeft(0) - 15" [attr.y]="scaleYLeft(tick) + 5" fill="#f1f5f9" text-anchor="end" font-size="14" font-weight="bold">#{{ tick }}</text>
+      </g>
+
+      <!-- Solid Axis Lines -->
+      <line [attr.x1]="scaleXLeft(0)" [attr.y1]="height - padding.bottom" [attr.x2]="scaleXLeft(maxX)" [attr.y2]="height - padding.bottom" stroke="#94a3b8" stroke-width="2" />
+      <line [attr.x1]="scaleXLeft(0)" [attr.y1]="padding.top" [attr.x2]="scaleXLeft(0)" [attr.y2]="height - padding.bottom" stroke="#94a3b8" stroke-width="2" />
+
+      <!-- Titles -->
+      <text [attr.x]="scaleXLeft(maxX / 2)" [attr.y]="height - padding.bottom + 55" fill="#94a3b8" text-anchor="middle" font-size="14" font-weight="600">{{ 'HR_X_AXIS' | translate }}</text>
+      <text [attr.x]="scaleXLeft(0) - 80" [attr.y]="height / 2" fill="#94a3b8" text-anchor="middle" font-size="14" font-weight="600" [attr.transform]="'rotate(-90, ' + (scaleXLeft(0) - 80) + ', ' + (height / 2) + ')'">{{ 'HR_HEAT_POSITION' | translate }}</text>
+      
+      <!-- Header -->
+      <text [attr.x]="scaleXLeft(maxX / 2)" [attr.y]="padding.top - 20" fill="#38bdf8" text-anchor="middle" font-size="18" font-weight="bold">{{ 'HR_RANKINGS_HEADER' | translate }}</text>
+
+      <!-- Lines -->
+      <g *ngFor="let line of driverLines">
+        <path [attr.d]="line.rankPathData" [attr.stroke]="line.backgroundColor" stroke-width="4" fill="none" />
+        <g *ngFor="let p of line.rankPoints">
+          <circle [attr.cx]="scaleXLeft(p.x)" [attr.cy]="scaleYLeft(p.y)" r="5" [attr.fill]="line.backgroundColor" [attr.stroke]="line.color" stroke-width="2" />
+        </g>
+      </g>
+    </g>
+
+    <!-- RIGHT GRAPH: LAP TIMES -->
+    <g class="laptimes-graph">
+      <!-- Grid Ticks X -->
+      <g *ngFor="let tick of xTicks">
+        <line [attr.x1]="scaleXRight(tick)" [attr.y1]="padding.top" [attr.x2]="scaleXRight(tick)" [attr.y2]="height - padding.bottom" stroke="#334155" stroke-dasharray="2" />
+        <text [attr.x]="scaleXRight(tick)" [attr.y]="height - padding.bottom + 25" fill="#94a3b8" text-anchor="middle" font-size="12">{{ tick | number:'1.0-0' }}s</text>
+      </g>
+
+      <!-- Grid Ticks Y (Lap Times) -->
+      <g *ngFor="let tick of yTicks">
+        <line [attr.x1]="scaleXRight(0)" [attr.y1]="scaleY(tick)" [attr.x2]="scaleXRight(maxX)" [attr.y2]="scaleY(tick)" stroke="#334155" stroke-dasharray="2" />
+        <text [attr.x]="scaleXRight(0) - 15" [attr.y]="scaleY(tick) + 5" fill="#94a3b8" text-anchor="end" font-size="12">{{ tick | number:'1.2-2' }}s</text>
+      </g>
+
+      <!-- Solid Axis Lines -->
+      <line [attr.x1]="scaleXRight(0)" [attr.y1]="height - padding.bottom" [attr.x2]="scaleXRight(maxX)" [attr.y2]="height - padding.bottom" stroke="#94a3b8" stroke-width="2" />
+      <line [attr.x1]="scaleXRight(0)" [attr.y1]="padding.top" [attr.x2]="scaleXRight(0)" [attr.y2]="height - padding.bottom" stroke="#94a3b8" stroke-width="2" />
+
+      <!-- Titles -->
+      <text [attr.x]="scaleXRight(maxX / 2)" [attr.y]="height - padding.bottom + 55" fill="#94a3b8" text-anchor="middle" font-size="14" font-weight="600">{{ 'HR_X_AXIS' | translate }}</text>
+      <text [attr.x]="scaleXRight(0) - 80" [attr.y]="height / 2" fill="#94a3b8" text-anchor="middle" font-size="14" font-weight="600" [attr.transform]="'rotate(-90, ' + (scaleXRight(0) - 80) + ', ' + (height / 2) + ')'">{{ 'HR_Y_AXIS' | translate }}</text>
+
+      <!-- Header -->
+      <text [attr.x]="scaleXRight(maxX / 2)" [attr.y]="padding.top - 20" fill="#38bdf8" text-anchor="middle" font-size="18" font-weight="bold">{{ 'HR_LAP_TIMES_HEADER' | translate }}</text>
+
+      <!-- Lines -->
+      <g *ngFor="let line of driverLines">
+        <path [attr.d]="line.pathData" [attr.stroke]="line.backgroundColor" stroke-width="4" fill="none" />
+        <g *ngFor="let p of line.points">
+          <circle [attr.cx]="scaleXRight(p.x)" [attr.cy]="scaleY(p.y)" r="5" [attr.fill]="line.backgroundColor" [attr.stroke]="line.color" stroke-width="2" />
+        </g>
+      </g>
+    </g>
+
+    <!-- Shared Legend Overlay -->
+    <g class="legend" [attr.transform]="'translate(' + (width - padding.right - 220) + ', ' + (padding.top + 20) + ')'">
+      <rect width="200" [attr.height]="driverLines.length * 30 + 20" fill="#1e293b" fill-opacity="0.85" rx="8" stroke="#334155" />
+      <g *ngFor="let line of driverLines; let i = index" [attr.transform]="'translate(15, ' + (25 + i * 30) + ')'">
+        <rect width="18" height="18" [attr.fill]="line.backgroundColor" [attr.stroke]="line.color" stroke-width="2" rx="4" />
+        <text x="30" y="14" fill="#f1f5f9" font-size="14" font-weight="600">{{ line.driverName }}</text>
+      </g>
+    </g>
+
+    <!-- Header / Title -->
+    <text x="50%" y="40" fill="#f8fafc" text-anchor="middle" font-size="28" font-weight="800">{{ 'HR_TITLE' | translate }}</text>
+
+  </svg>
+</div>

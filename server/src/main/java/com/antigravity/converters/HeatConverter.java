@@ -66,6 +66,7 @@ public class HeatConverter {
           .setGapLeader(data.getGapLeader())
           .setGapPosition(data.getGapPosition())
           .addAllSegments(data.getSegments())
+          .addAllLaps(data.getLaps())
           .build();
     }
   }

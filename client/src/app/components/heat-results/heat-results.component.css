@@ -1,0 +1,37 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #0f172a; /* Slate 900 fallback */
+  overflow: hidden;
+}
+
+.container {
+  width: 1600px;
+  height: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+svg {
+  display: block;
+}
+
+.line-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.grid text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.legend text {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none;
+}
+
+.legend rect {
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+}

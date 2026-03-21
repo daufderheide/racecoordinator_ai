@@ -18,6 +18,7 @@ import { TeamEditorComponent } from './components/team-editor/team-editor.compon
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 import { DriverStationComponent } from './components/driver-station/driver-station.component';
 import { DirtyCheckGuard } from './guards/dirty-check.guard';
+import { HeatResultsComponent } from './components/heat-results/heat-results.component';
 
 
 const routes: Routes = [
@@ -38,6 +39,7 @@ const routes: Routes = [
     { path: 'race-editor', component: RaceEditorComponent, data: { animation: 'RaceEditorPage' } },
     { path: 'ui-editor', component: UIEditorComponent, canDeactivate: [DirtyCheckGuard], data: { animation: 'UIEditorPage' } },
     { path: 'driver-station/:lane', component: DriverStationComponent, data: { animation: 'DriverStationPage' } },
+    { path: 'heat-results', component: HeatResultsComponent, data: { animation: 'HeatResultsPage' } },
     { path: '**', redirectTo: '' }
 
 ];

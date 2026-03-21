@@ -15910,6 +15910,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [gapLeader] DriverHeatData gapLeader
              * @property {number|null} [gapPosition] DriverHeatData gapPosition
              * @property {Array.<number>|null} [segments] DriverHeatData segments
+             * @property {Array.<number>|null} [laps] DriverHeatData laps
              */
 
             /**
@@ -15922,6 +15923,7 @@ export const com = $root.com = (() => {
              */
             function DriverHeatData(properties) {
                 this.segments = [];
+                this.laps = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -15985,6 +15987,14 @@ export const com = $root.com = (() => {
             DriverHeatData.prototype.segments = $util.emptyArray;
 
             /**
+             * DriverHeatData laps.
+             * @member {Array.<number>} laps
+             * @memberof com.antigravity.DriverHeatData
+             * @instance
+             */
+            DriverHeatData.prototype.laps = $util.emptyArray;
+
+            /**
              * Creates a new DriverHeatData instance using the specified properties.
              * @function create
              * @memberof com.antigravity.DriverHeatData
@@ -16024,6 +16034,12 @@ export const com = $root.com = (() => {
                     writer.uint32(/* id 7, wireType 2 =*/58).fork();
                     for (let i = 0; i < message.segments.length; ++i)
                         writer.double(message.segments[i]);
+                    writer.ldelim();
+                }
+                if (message.laps != null && message.laps.length) {
+                    writer.uint32(/* id 8, wireType 2 =*/66).fork();
+                    for (let i = 0; i < message.laps.length; ++i)
+                        writer.double(message.laps[i]);
                     writer.ldelim();
                 }
                 return writer;
@@ -16097,6 +16113,17 @@ export const com = $root.com = (() => {
                                 message.segments.push(reader.double());
                             break;
                         }
+                    case 8: {
+                            if (!(message.laps && message.laps.length))
+                                message.laps = [];
+                            if ((tag & 7) === 2) {
+                                let end2 = reader.uint32() + reader.pos;
+                                while (reader.pos < end2)
+                                    message.laps.push(reader.double());
+                            } else
+                                message.laps.push(reader.double());
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -16161,6 +16188,13 @@ export const com = $root.com = (() => {
                         if (typeof message.segments[i] !== "number")
                             return "segments: number[] expected";
                 }
+                if (message.laps != null && message.hasOwnProperty("laps")) {
+                    if (!Array.isArray(message.laps))
+                        return "laps: array expected";
+                    for (let i = 0; i < message.laps.length; ++i)
+                        if (typeof message.laps[i] !== "number")
+                            return "laps: number[] expected";
+                }
                 return null;
             };
 
@@ -16201,6 +16235,13 @@ export const com = $root.com = (() => {
                     for (let i = 0; i < object.segments.length; ++i)
                         message.segments[i] = Number(object.segments[i]);
                 }
+                if (object.laps) {
+                    if (!Array.isArray(object.laps))
+                        throw TypeError(".com.antigravity.DriverHeatData.laps: array expected");
+                    message.laps = [];
+                    for (let i = 0; i < object.laps.length; ++i)
+                        message.laps[i] = Number(object.laps[i]);
+                }
                 return message;
             };
 
@@ -16217,8 +16258,10 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.arrays || options.defaults)
+                if (options.arrays || options.defaults) {
                     object.segments = [];
+                    object.laps = [];
+                }
                 if (options.defaults) {
                     object.driver = null;
                     object.objectId = "";
@@ -16243,6 +16286,11 @@ export const com = $root.com = (() => {
                     object.segments = [];
                     for (let j = 0; j < message.segments.length; ++j)
                         object.segments[j] = options.json && !isFinite(message.segments[j]) ? String(message.segments[j]) : message.segments[j];
+                }
+                if (message.laps && message.laps.length) {
+                    object.laps = [];
+                    for (let j = 0; j < message.laps.length; ++j)
+                        object.laps[j] = options.json && !isFinite(message.laps[j]) ? String(message.laps[j]) : message.laps[j];
                 }
                 return object;
             };
