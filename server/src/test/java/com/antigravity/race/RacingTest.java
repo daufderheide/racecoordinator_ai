@@ -11,6 +11,7 @@ import java.util.List;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.After;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
@@ -63,6 +64,17 @@ public class RacingTest {
         new ObjectId());
 
     race = new Race(raceModel, participants, track, true);
+  }
+
+  @After
+  public void tearDown() {
+    if (race != null && race.getState() != null) {
+      try {
+        race.getState().exit(race);
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
   }
 
   @Test
@@ -274,13 +286,13 @@ public class RacingTest {
         "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
         new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
 
-    Race raceWithFuel = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true);
 
     // Set initial fuel level
-    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     Racing racing = new Racing();
-    raceWithFuel.changeState(racing);
+    race.changeState(racing);
 
     // Reaction
     racing.onLap(0, 1.0, 1);
@@ -289,7 +301,7 @@ public class RacingTest {
     // usageRate (4.0)
     racing.onLap(0, 5.0, 1);
 
-    assertEquals(96.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+    assertEquals(96.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }
 
   @Test
@@ -302,13 +314,13 @@ public class RacingTest {
         "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
         new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
 
-    Race raceWithFuel = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true);
 
     // Set initial fuel level
-    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     Racing racing = new Racing();
-    raceWithFuel.changeState(racing);
+    race.changeState(racing);
 
     // Reaction
     racing.onLap(0, 1.0, 1);
@@ -317,7 +329,7 @@ public class RacingTest {
     // * 25 / 6.25 = 16.0 fuel used.
     racing.onLap(0, 2.5, 1);
 
-    assertEquals(100.0 - 16.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+    assertEquals(100.0 - 16.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }
 
   @Test
@@ -330,13 +342,13 @@ public class RacingTest {
         "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
         new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
 
-    Race raceWithFuel = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true);
 
     // Set initial fuel level
-    raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     Racing racing = new Racing();
-    raceWithFuel.changeState(racing);
+    race.changeState(racing);
 
     // Reaction
     racing.onLap(0, 1.0, 1);
@@ -345,7 +357,7 @@ public class RacingTest {
     // = 4.0 * 125 / 1000 = 0.5 fuel used.
     racing.onLap(0, 10.0, 1);
 
-    assertEquals(100.0 - 0.5, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+    assertEquals(100.0 - 0.5, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
   }
 
   @Test
