@@ -196,6 +196,13 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.raceConnectionService.standingsUpdate$.subscribe(update => {
+      if (update && update.updates) {
+        update.updates.forEach(u => {
+          if (u.objectId) {
+            this.driverRankings.set(u.objectId, u.rank || 0);
+          }
+        });
+      }
       this.sortHeatDrivers();
     }));
 
@@ -676,6 +683,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   onWindowMenuSelect(action: string) {
+    if (action !== 'LEADER_BOARD' && action !== 'HEAT_RESULTS') {
+      return;
+    }
     console.log('Window menu action:', action);
     this.isWindowsMenuOpen = false;
     if (action === 'LEADER_BOARD') {
@@ -1200,6 +1210,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       // Hide some columns for empty lanes.  All others not in this list should show the default formatting for the colunn.
       if (baseKey === 'seed' || baseKey === 'rankHeat' || baseKey === 'rankOverall') {
         return '';
+      }
+      if (baseKey === 'gapLeader' || baseKey === 'gapPosition') {
+        return '--.---';
       }
     }
 

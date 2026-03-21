@@ -67,24 +67,24 @@
         <div *ngIf="isWindowsMenuOpen" class="menu-dropdown top-dropdown">
           <div class="menu-item" (click)="onWindowMenuSelect('LEADER_BOARD')">{{ 'RD_WIN_LEADER_BOARD' | translate }}
           </div>
-          <div class="menu-item" (click)="onWindowMenuSelect('TOP_5')">{{ 'RD_WIN_TOP_5' | translate }}</div>
-          <div class="menu-item" (click)="onWindowMenuSelect('GROUP_LEADER_BOARD')">{{ 'RD_WIN_GROUP_LEADER_BOARD' |
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('TOP_5')">{{ 'RD_WIN_TOP_5' | translate }}</div>
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('GROUP_LEADER_BOARD')">{{ 'RD_WIN_GROUP_LEADER_BOARD' |
             translate }}</div>
           <div class="menu-item" (click)="onWindowMenuSelect('HEAT_RESULTS')">{{ 'RD_WIN_HEAT_RESULTS' | translate }}
           </div>
-          <div class="menu-item" (click)="onWindowMenuSelect('RACE_RESULTS')">{{ 'RD_WIN_RACE_RESULTS' | translate }}
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('RACE_RESULTS')">{{ 'RD_WIN_RACE_RESULTS' | translate }}
           </div>
-          <div class="menu-item" (click)="onWindowMenuSelect('SEGMENT_TIMES')">{{ 'RD_WIN_SEGMENT_TIMES' | translate }}
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('SEGMENT_TIMES')">{{ 'RD_WIN_SEGMENT_TIMES' | translate }}
           </div>
           <div class="menu-separator"></div>
-          <div class="menu-item" (click)="onWindowMenuSelect('SEASON_RACE_LEADER_BOARD')">{{
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('SEASON_RACE_LEADER_BOARD')">{{
             'RD_WIN_SEASON_RACE_LEADER_BOARD' | translate }}</div>
-          <div class="menu-item" (click)="onWindowMenuSelect('SEASON_LEADER_BOARD')">{{ 'RD_WIN_SEASON_LEADER_BOARD' |
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('SEASON_LEADER_BOARD')">{{ 'RD_WIN_SEASON_LEADER_BOARD' |
             translate }}</div>
           <div class="menu-separator"></div>
-          <div class="menu-item" (click)="onWindowMenuSelect('ON_DECK')">{{ 'RD_WIN_ON_DECK' | translate }}</div>
-          <div class="menu-item" (click)="onWindowMenuSelect('HEAT_LIST')">{{ 'RD_WIN_HEAT_LIST' | translate }}</div>
-          <div class="menu-item" (click)="onWindowMenuSelect('NEXT_HEAT')">{{ 'RD_WIN_NEXT_HEAT' | translate }}</div>
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('ON_DECK')">{{ 'RD_WIN_ON_DECK' | translate }}</div>
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('HEAT_LIST')">{{ 'RD_WIN_HEAT_LIST' | translate }}</div>
+          <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('NEXT_HEAT')">{{ 'RD_WIN_NEXT_HEAT' | translate }}</div>
         </div>
       </div>
     </div>

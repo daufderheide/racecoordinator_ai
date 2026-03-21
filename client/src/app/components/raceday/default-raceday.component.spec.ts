@@ -72,6 +72,7 @@ describe('DefaultRacedayComponent', () => {
   let raceTimeSubject: Subject<number>;
   let lapsSubject: Subject<com.antigravity.ILap>;
   let raceStateSubject: Subject<com.antigravity.RaceState>;
+  let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
 
 
   beforeEach(async () => {
@@ -80,6 +81,7 @@ describe('DefaultRacedayComponent', () => {
     raceTimeSubject = new Subject<number>();
     lapsSubject = new Subject<com.antigravity.ILap>();
     raceStateSubject = new Subject<com.antigravity.RaceState>();
+    standingsUpdateSubject = new Subject<com.antigravity.IStandingsUpdate>();
 
     mockDataService = jasmine.createSpyObj('DataService', [
       'updateRaceSubscription', 'getRaceUpdate', 'getRaceTime', 'getLaps',
@@ -99,7 +101,7 @@ describe('DefaultRacedayComponent', () => {
     mockRaceConnectionService.carData$ = of({});
     mockRaceConnectionService.segments$ = of(null);
     mockRaceConnectionService.reactionTimes$ = of(null);
-    mockRaceConnectionService.standingsUpdate$ = of({});
+    mockRaceConnectionService.standingsUpdate$ = standingsUpdateSubject.asObservable();
     mockRaceConnectionService.raceState$ = raceStateSubject.asObservable();
     mockRaceConnectionService.isInterfaceConnected = false;
 
@@ -110,7 +112,7 @@ describe('DefaultRacedayComponent', () => {
     };
 
     mockRaceService = jasmine.createSpyObj('RaceService', [
-      'setRace', 'setParticipants', 'setHeats', 'setCurrentHeat', 'getRace', 'getHeats'
+      'setRace', 'setParticipants', 'setHeats', 'setCurrentHeat', 'getRace', 'getHeats', 'getCurrentHeat'
     ]);
     mockRaceService.currentHeat$ = of({});
     mockRaceService.race$ = of({});
@@ -707,6 +709,76 @@ describe('DefaultRacedayComponent', () => {
       fixture.detectChanges();
 
       expect(component['highlightedDrivers'].has('driver1')).toBeFalse();
+    }));
+  });
+
+  describe('Lane Sorting', () => {
+    let mockHd1: any;
+    let mockHd2: any;
+
+    beforeEach(() => {
+      mockHd1 = { objectId: 'hd1', laneIndex: 0, driver: { name: 'Driver 1' }, addLapTime: () => {} };
+      mockHd2 = { objectId: 'hd2', laneIndex: 1, driver: { name: 'Driver 2' }, addLapTime: () => {} };
+      const mockHeat = { heatDrivers: [mockHd1, mockHd2], heatNumber: 1, standings: [] };
+      component['heat'] = mockHeat as any;
+
+      // Setup track and race for rendering safety in template
+      component['track'] = { name: 'Test Track', lanes: [{ foreground_color: 'white' }, { foreground_color: 'white' }] } as any;
+      component['race'] = { name: 'Test Race' } as any;
+
+      // Mock getRace to provide lanes to prevent template override crashes during detectChanges
+      mockRaceService.getRace.and.returnValue({
+        name: 'Test Race',
+        track: { name: 'Test Track', lanes: [{ foreground_color: 'white' }, { foreground_color: 'white' }] },
+        fuel_options: { enabled: false }
+      });
+
+      // Mock getCurrentHeat to return our mock heat and prevent overrides during detectChanges
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      mockRaceService.getHeats.and.returnValue([mockHeat]);
+    });
+
+    it('should sort by lane index when sortByStandings is false', () => {
+      mockSettings.sortByStandings = false;
+      
+      // Disrupt order first to verify sort forces it back
+      component['sortedHeatDrivers'] = [mockHd2, mockHd1];
+      
+      (component as any).sortHeatDrivers();
+      
+      expect(component['sortedHeatDrivers'][0].objectId).toBe('hd1');
+      expect(component['sortedHeatDrivers'][1].objectId).toBe('hd2');
+    });
+
+    it('should sort by standings when sortByStandings is true', () => {
+      mockSettings.sortByStandings = true;
+      component['driverRankings'].set('hd1', 2);
+      component['driverRankings'].set('hd2', 1);
+
+      (component as any).sortHeatDrivers();
+
+      expect(component['sortedHeatDrivers'][0].objectId).toBe('hd2'); // Rank 1
+      expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1'); // Rank 2
+    });
+
+    it('should update rankings and sort on standingsUpdate$ event', fakeAsync(() => {
+      mockSettings.sortByStandings = true;
+      component['driverRankings'].set('hd1', 1);
+      component['driverRankings'].set('hd2', 2);
+      
+      fixture.detectChanges(); // Trigger ngOnInit setup
+      flush(); // Flush any timers
+
+      standingsUpdateSubject.next({
+        updates: [
+          { objectId: 'hd1', rank: 2 },
+          { objectId: 'hd2', rank: 1 }
+        ]
+      });
+      tick(); // Let async subscription execute
+
+      expect(component['sortedHeatDrivers'][0].objectId).toBe('hd2');
+      expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1');
     }));
   });
 });
