@@ -475,6 +475,53 @@
           </div>
         </div>
 
+        <!-- Team Options Section -->
+        <div class="config-section">
+          <div class="section-header" (click)="toggleSection('team')">
+            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.team">▼</span>
+            <h1>Team Options</h1>
+          </div>
+
+          <div class="section-content" *ngIf="sectionsExpanded.team">
+            <div class="scoring-layout">
+              <div class="scoring-column">
+                <div class="config-section checkbox-section" style="margin-bottom: 15px;">
+                  <label class="checkbox-container">
+                    <input type="checkbox" [(ngModel)]="editingRace.team_options.require_pit_stop_change_driver"
+                      (ngModelChange)="captureState()">
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">Require Pit Stop to Change Driver</span>
+                  </label>
+                </div>
+
+                <div class="config-row">
+                  <div class="editor-section">
+                    <label>Heat Lap Limit</label>
+                    <input type="number" [(ngModel)]="editingRace.team_options.heat_lap_limit" (ngModelChange)="captureState()" min="0" placeholder="0">
+                  </div>
+
+                  <div class="editor-section">
+                    <label>Heat Time Limit (seconds)</label>
+                    <input type="number" [(ngModel)]="editingRace.team_options.heat_time_limit" (ngModelChange)="captureState()" min="0" placeholder="0">
+                  </div>
+                </div>
+
+                <div class="config-row">
+                  <div class="editor-section">
+                    <label>Overall Lap Limit</label>
+                    <input type="number" [(ngModel)]="editingRace.team_options.overall_lap_limit" (ngModelChange)="captureState()" min="0" placeholder="0">
+                  </div>
+
+                  <div class="editor-section">
+                    <label>Overall Time Limit (seconds)</label>
+                    <input type="number" [(ngModel)]="editingRace.team_options.overall_time_limit" (ngModelChange)="captureState()" min="0" placeholder="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../testing/test-setup_helper';
 import { DefaultRacedayHarnessE2e } from './testing/default-raceday.harness.e2e';
+import { com } from '../../proto/message';
 
 test.describe('Raceday Visuals for Fuel', () => {
   test.beforeEach(async ({ page }) => {
@@ -406,6 +407,141 @@ test.describe('Raceday Visuals for Fuel', () => {
 
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('raceday-8-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
+  });
+
+  test('should show team driver selection pulldown with stats', async ({ page }) => {
+    // Setup column layouts for driver nickname row
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: ['driver.name_driver.nickname'],
+      columnLayouts: {
+        'driver.name_driver.nickname': { 'TopCenter': 'driver.name', 'BottomCenter': 'driver.nickname' }
+      },
+      columnAnchors: { 'driver.name_driver.nickname': 'Center' },
+      columnWidths: { 'driver.name_driver.nickname': 250 },
+      columnVisibility: {}
+    });
+
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/default-raceday'));
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: 'r_team' },
+          name: 'Team Stats Match',
+          teamOptions: {
+            heat_lap_limit: 5,
+            overall_lap_limit: 10
+          },
+          track: {
+            model: { entityId: 't1' },
+            name: 'Test Track',
+            lanes: [{ objectId: 'l1', length: 12.5, backgroundColor: '#550000', foregroundColor: '#ffffff' }]
+          }
+        },
+        drivers: [
+          {
+            objectId: 'rp1',
+            team: { model: { entityId: 't1' }, name: 'Team Alpha', driverIds: ['d1', 'd2'] },
+            driver: { model: { entityId: 'd1' }, name: 'Alice', nickname: 'The Rocket' }
+          }
+        ],
+        heats: [
+          {
+            heatNumber: 1,
+            heatDrivers: [{
+              objectId: 'hd_prev1',
+              laneIndex: 0,
+              laps: [
+                { lapTime: 12.5, driverId: 'd1' },
+                { lapTime: 12.4, driverId: 'd1' },
+                { lapTime: 12.8, driverId: 'd2' }
+              ]
+            }]
+          }
+        ],
+        currentHeat: {
+          objectId: 'h2',
+          heatNumber: 2,
+          heatDrivers: [{
+            objectId: 'hd1',
+            laneIndex: 0,
+            driver: {
+              objectId: 'rp1',
+              team: { model: { entityId: 't1' }, name: 'Team Alpha', driverIds: ['d1', 'd2'] },
+              driver: { model: { entityId: 'd2' }, name: 'Bob', nickname: 'Drift King' }
+            },
+            actualDriver: { model: { entityId: 'd2' }, name: 'Bob', nickname: 'Drift King' },
+            laps: [
+              { lapTime: 11.8, driverId: 'd2' },
+              { lapTime: 11.9, driverId: 'd2' }
+            ]
+          }]
+        }
+      }
+    };
+
+    // Inject allDrivers mock with multiple drivers setup so getTeammates returns something listable!
+    const buffer = com.antigravity.RaceData.encode(raceData as any).finish();
+    const dataArray = Array.from(buffer);
+    await page.addInitScript((data) => {
+      // @ts-ignore
+      window.mockRaceDataBuffer = new Uint8Array(data).buffer;
+    }, dataArray);
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    const select = page.locator('.scalable-content select').first();
+
+    // Wait until options are rendered async to avoid timing flakes (check options of the first select specifically)
+    await expect(select.locator('option')).toHaveCount(2, { timeout: 5000 });
+
+    // To guarantee visibility in headless screenshots, extract options and render a floating debug overlay list
+    await select.evaluate((node) => {
+      const ul = document.createElement('ul');
+      ul.id = 'debug-overlay-options';
+      ul.style.position = 'fixed';
+      ul.style.top = '120px';
+      ul.style.left = '120px';
+      ul.style.background = '#ffffff';
+      ul.style.color = '#111111';
+      ul.style.border = '3px solid #ef4444';
+      ul.style.padding = '20px';
+      ul.style.borderRadius = '10px';
+      ul.style.zIndex = '999999';
+      ul.style.fontSize = '20px';
+      ul.style.fontFamily = 'monospace';
+      ul.style.listStyle = 'none';
+
+      const title = document.createElement('li');
+      title.innerText = 'DRIVER OPTIONS VERIFICATION:';
+      title.style.fontWeight = '800';
+      title.style.marginBottom = '12px';
+      title.style.borderBottom = '1px solid #ddd';
+      ul.appendChild(title);
+
+      const options = node.querySelectorAll('option');
+      let count = 0;
+      options.forEach(opt => {
+         const text = (opt as HTMLOptionElement).innerText.trim();
+         if (text) {
+             const li = document.createElement('li');
+             li.innerText = `• ${text}`;
+             li.style.padding = '4px 0';
+             ul.appendChild(li);
+             count++;
+         }
+      });
+
+      if (count === 0) {
+         const li = document.createElement('li');
+         li.innerText = '(EMPTY DROPDOWN)';
+         ul.appendChild(li);
+      }
+
+      document.body.appendChild(ul);
+    });
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot('raceday-team-driver-stats-dropdown.png', { maxDiffPixelRatio: 0.1 });
   });
 });
 

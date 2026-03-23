@@ -59,6 +59,14 @@ message OverallScoring {
   OverallRankingTiebreaker tiebreaker = 3;
 }
 
+message TeamOptions {
+  int32 heat_lap_limit = 1;
+  double heat_time_limit = 2;
+  int32 overall_lap_limit = 3;
+  double overall_time_limit = 4;
+  bool require_pit_stop_change_driver = 5;
+}
+
 message RaceModel {
   Model model = 1;
   string name = 2;
@@ -68,6 +76,7 @@ message RaceModel {
   double min_lap_time = 6;
   AnalogFuelOptions fuel_options = 7;
   DigitalFuelOptions digital_fuel_options = 8;
+  TeamOptions team_options = 9;
 }
 
 enum FuelUsageType {

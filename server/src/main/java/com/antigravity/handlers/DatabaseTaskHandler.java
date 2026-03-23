@@ -532,6 +532,7 @@ public class DatabaseTaskHandler {
                     race.getMinLapTime(),
                     race.getFuelOptions(),
                     race.getDigitalFuelOptions(),
+                    race.getTeamOptions(),
                     nextId,
                     null);
         }
@@ -580,6 +581,7 @@ public class DatabaseTaskHandler {
                 race.getMinLapTime(),
                 race.getFuelOptions(),
                 race.getDigitalFuelOptions(),
+                race.getTeamOptions(),
                 id,
                 race.getId());
 
@@ -657,6 +659,7 @@ public class DatabaseTaskHandler {
             raceMap.put("min_lap_time", race.getMinLapTime());
             raceMap.put("fuel_options", race.getFuelOptions());
             raceMap.put("digital_fuel_options", race.getDigitalFuelOptions());
+            raceMap.put("team_options", race.getTeamOptions());
             response.add(raceMap);
         }
         ctx.json(response);

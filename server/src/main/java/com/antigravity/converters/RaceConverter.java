@@ -90,6 +90,16 @@ public class RaceConverter {
                         .setPitStopDelay(fuel.getPitStopDelay())
                         .build());
             }
+            if (race.getTeamOptions() != null) {
+                com.antigravity.models.TeamOptions options = race.getTeamOptions();
+                builder.setTeamOptions(com.antigravity.proto.TeamOptions.newBuilder()
+                        .setHeatLapLimit(options.getHeatLapLimit())
+                        .setHeatTimeLimit(options.getHeatTimeLimit())
+                        .setOverallLapLimit(options.getOverallLapLimit())
+                        .setOverallTimeLimit(options.getOverallTimeLimit())
+                        .setRequirePitStopChangeDriver(options.isRequirePitStopChangeDriver())
+                        .build());
+            }
             return builder.build();
         }
     }

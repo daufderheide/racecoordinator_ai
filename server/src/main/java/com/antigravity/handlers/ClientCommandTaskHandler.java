@@ -33,6 +33,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/initialize-interface", this::initializeInterface);
     app.post("/api/set-interface-pin-state", this::setInterfacePinState);
     app.post("/api/close-interface", this::closeInterface);
+    app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
     app.get("/api/serial-ports", this::getSerialPorts);
   }
 
@@ -472,6 +473,51 @@ public class ClientCommandTaskHandler {
     } catch (Exception e) {
       System.err.println("Error closing interface: " + e.getMessage());
       ctx.status(500).result("Error closing interface: " + e.getMessage());
+    }
+  }
+
+  private void changeActualDriver(io.javalin.http.Context ctx) {
+    try {
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      java.util.Map<String, String> body = ctx.bodyAsClass(java.util.Map.class);
+      String driverId = body.get("driverId");
+
+      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      java.util.List<com.antigravity.race.DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      if (lane >= 0 && lane < drivers.size()) {
+        com.antigravity.race.DriverHeatData dhd = drivers.get(lane);
+        com.antigravity.service.DatabaseService dbService = new com.antigravity.service.DatabaseService();
+        java.util.List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(), java.util.Collections.singletonList(driverId));
+        com.antigravity.models.Driver driver = driversList.isEmpty() ? null : driversList.get(0);
+        
+        if (driver != null) {
+          com.antigravity.models.TeamOptions options = race.getRaceModel().getTeamOptions();
+          if (options != null && options.isRequirePitStopChangeDriver() && race.getState() instanceof com.antigravity.race.states.Racing) {
+            com.antigravity.protocols.CarLocation loc = dhd.getCurrentLocation();
+            boolean inPit = loc == com.antigravity.protocols.CarLocation.PitRow
+                || (loc != null && loc.getValue() >= com.antigravity.protocols.CarLocation.PitBayBase.getValue()
+                    && loc.getValue() < com.antigravity.protocols.CarLocation.PitBayBase.getValue() + race.getTrack().getLanes().size());
+            if (!inPit) {
+              ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
+              return;
+            }
+          }
+          dhd.setActualDriver(driver);
+          race.broadcast(race.createSnapshot());
+          ctx.status(200).result("Driver updated");
+        } else {
+          ctx.status(404).result("RD_ERR_DRIVER_NOT_FOUND");
+        }
+      } else {
+        ctx.status(400).result("Invalid lane index: " + lane);
+      }
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
     }
   }
 }

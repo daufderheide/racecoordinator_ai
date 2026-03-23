@@ -35,6 +35,7 @@ test.describe('Splash Screen Visual', () => {
     // Wait for internal components or data loads (e.g., version text rendering)
     // We expect the `.server-address` to appear with mock IP
     await expect(page.locator('.server-address')).toBeVisible({ timeout: 5000 });
+    await page.waitForTimeout(1000);
 
     // Take a screenshot of the splash screen layout
     await expect(page).toHaveScreenshot('splash-screen-initial.png', {

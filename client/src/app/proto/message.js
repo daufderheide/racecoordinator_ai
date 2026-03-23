@@ -11262,6 +11262,304 @@ export const com = $root.com = (() => {
             return OverallScoring;
         })();
 
+        antigravity.TeamOptions = (function() {
+
+            /**
+             * Properties of a TeamOptions.
+             * @memberof com.antigravity
+             * @interface ITeamOptions
+             * @property {number|null} [heatLapLimit] TeamOptions heatLapLimit
+             * @property {number|null} [heatTimeLimit] TeamOptions heatTimeLimit
+             * @property {number|null} [overallLapLimit] TeamOptions overallLapLimit
+             * @property {number|null} [overallTimeLimit] TeamOptions overallTimeLimit
+             * @property {boolean|null} [requirePitStopChangeDriver] TeamOptions requirePitStopChangeDriver
+             */
+
+            /**
+             * Constructs a new TeamOptions.
+             * @memberof com.antigravity
+             * @classdesc Represents a TeamOptions.
+             * @implements ITeamOptions
+             * @constructor
+             * @param {com.antigravity.ITeamOptions=} [properties] Properties to set
+             */
+            function TeamOptions(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * TeamOptions heatLapLimit.
+             * @member {number} heatLapLimit
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             */
+            TeamOptions.prototype.heatLapLimit = 0;
+
+            /**
+             * TeamOptions heatTimeLimit.
+             * @member {number} heatTimeLimit
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             */
+            TeamOptions.prototype.heatTimeLimit = 0;
+
+            /**
+             * TeamOptions overallLapLimit.
+             * @member {number} overallLapLimit
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             */
+            TeamOptions.prototype.overallLapLimit = 0;
+
+            /**
+             * TeamOptions overallTimeLimit.
+             * @member {number} overallTimeLimit
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             */
+            TeamOptions.prototype.overallTimeLimit = 0;
+
+            /**
+             * TeamOptions requirePitStopChangeDriver.
+             * @member {boolean} requirePitStopChangeDriver
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             */
+            TeamOptions.prototype.requirePitStopChangeDriver = false;
+
+            /**
+             * Creates a new TeamOptions instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {com.antigravity.ITeamOptions=} [properties] Properties to set
+             * @returns {com.antigravity.TeamOptions} TeamOptions instance
+             */
+            TeamOptions.create = function create(properties) {
+                return new TeamOptions(properties);
+            };
+
+            /**
+             * Encodes the specified TeamOptions message. Does not implicitly {@link com.antigravity.TeamOptions.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {com.antigravity.ITeamOptions} message TeamOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TeamOptions.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.heatLapLimit != null && Object.hasOwnProperty.call(message, "heatLapLimit"))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.heatLapLimit);
+                if (message.heatTimeLimit != null && Object.hasOwnProperty.call(message, "heatTimeLimit"))
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.heatTimeLimit);
+                if (message.overallLapLimit != null && Object.hasOwnProperty.call(message, "overallLapLimit"))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.overallLapLimit);
+                if (message.overallTimeLimit != null && Object.hasOwnProperty.call(message, "overallTimeLimit"))
+                    writer.uint32(/* id 4, wireType 1 =*/33).double(message.overallTimeLimit);
+                if (message.requirePitStopChangeDriver != null && Object.hasOwnProperty.call(message, "requirePitStopChangeDriver"))
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.requirePitStopChangeDriver);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified TeamOptions message, length delimited. Does not implicitly {@link com.antigravity.TeamOptions.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {com.antigravity.ITeamOptions} message TeamOptions message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            TeamOptions.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a TeamOptions message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.TeamOptions} TeamOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TeamOptions.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.TeamOptions();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.heatLapLimit = reader.int32();
+                            break;
+                        }
+                    case 2: {
+                            message.heatTimeLimit = reader.double();
+                            break;
+                        }
+                    case 3: {
+                            message.overallLapLimit = reader.int32();
+                            break;
+                        }
+                    case 4: {
+                            message.overallTimeLimit = reader.double();
+                            break;
+                        }
+                    case 5: {
+                            message.requirePitStopChangeDriver = reader.bool();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a TeamOptions message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.TeamOptions} TeamOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            TeamOptions.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a TeamOptions message.
+             * @function verify
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            TeamOptions.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.heatLapLimit != null && message.hasOwnProperty("heatLapLimit"))
+                    if (!$util.isInteger(message.heatLapLimit))
+                        return "heatLapLimit: integer expected";
+                if (message.heatTimeLimit != null && message.hasOwnProperty("heatTimeLimit"))
+                    if (typeof message.heatTimeLimit !== "number")
+                        return "heatTimeLimit: number expected";
+                if (message.overallLapLimit != null && message.hasOwnProperty("overallLapLimit"))
+                    if (!$util.isInteger(message.overallLapLimit))
+                        return "overallLapLimit: integer expected";
+                if (message.overallTimeLimit != null && message.hasOwnProperty("overallTimeLimit"))
+                    if (typeof message.overallTimeLimit !== "number")
+                        return "overallTimeLimit: number expected";
+                if (message.requirePitStopChangeDriver != null && message.hasOwnProperty("requirePitStopChangeDriver"))
+                    if (typeof message.requirePitStopChangeDriver !== "boolean")
+                        return "requirePitStopChangeDriver: boolean expected";
+                return null;
+            };
+
+            /**
+             * Creates a TeamOptions message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.TeamOptions} TeamOptions
+             */
+            TeamOptions.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.TeamOptions)
+                    return object;
+                let message = new $root.com.antigravity.TeamOptions();
+                if (object.heatLapLimit != null)
+                    message.heatLapLimit = object.heatLapLimit | 0;
+                if (object.heatTimeLimit != null)
+                    message.heatTimeLimit = Number(object.heatTimeLimit);
+                if (object.overallLapLimit != null)
+                    message.overallLapLimit = object.overallLapLimit | 0;
+                if (object.overallTimeLimit != null)
+                    message.overallTimeLimit = Number(object.overallTimeLimit);
+                if (object.requirePitStopChangeDriver != null)
+                    message.requirePitStopChangeDriver = Boolean(object.requirePitStopChangeDriver);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a TeamOptions message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {com.antigravity.TeamOptions} message TeamOptions
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            TeamOptions.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.heatLapLimit = 0;
+                    object.heatTimeLimit = 0;
+                    object.overallLapLimit = 0;
+                    object.overallTimeLimit = 0;
+                    object.requirePitStopChangeDriver = false;
+                }
+                if (message.heatLapLimit != null && message.hasOwnProperty("heatLapLimit"))
+                    object.heatLapLimit = message.heatLapLimit;
+                if (message.heatTimeLimit != null && message.hasOwnProperty("heatTimeLimit"))
+                    object.heatTimeLimit = options.json && !isFinite(message.heatTimeLimit) ? String(message.heatTimeLimit) : message.heatTimeLimit;
+                if (message.overallLapLimit != null && message.hasOwnProperty("overallLapLimit"))
+                    object.overallLapLimit = message.overallLapLimit;
+                if (message.overallTimeLimit != null && message.hasOwnProperty("overallTimeLimit"))
+                    object.overallTimeLimit = options.json && !isFinite(message.overallTimeLimit) ? String(message.overallTimeLimit) : message.overallTimeLimit;
+                if (message.requirePitStopChangeDriver != null && message.hasOwnProperty("requirePitStopChangeDriver"))
+                    object.requirePitStopChangeDriver = message.requirePitStopChangeDriver;
+                return object;
+            };
+
+            /**
+             * Converts this TeamOptions to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.TeamOptions
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            TeamOptions.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for TeamOptions
+             * @function getTypeUrl
+             * @memberof com.antigravity.TeamOptions
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            TeamOptions.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.TeamOptions";
+            };
+
+            return TeamOptions;
+        })();
+
         antigravity.RaceModel = (function() {
 
             /**
@@ -11276,6 +11574,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [minLapTime] RaceModel minLapTime
              * @property {com.antigravity.IAnalogFuelOptions|null} [fuelOptions] RaceModel fuelOptions
              * @property {com.antigravity.IDigitalFuelOptions|null} [digitalFuelOptions] RaceModel digitalFuelOptions
+             * @property {com.antigravity.ITeamOptions|null} [teamOptions] RaceModel teamOptions
              */
 
             /**
@@ -11358,6 +11657,14 @@ export const com = $root.com = (() => {
             RaceModel.prototype.digitalFuelOptions = null;
 
             /**
+             * RaceModel teamOptions.
+             * @member {com.antigravity.ITeamOptions|null|undefined} teamOptions
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.teamOptions = null;
+
+            /**
              * Creates a new RaceModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceModel
@@ -11397,6 +11704,8 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.AnalogFuelOptions.encode(message.fuelOptions, writer.uint32(/* id 7, wireType 2 =*/58).fork()).ldelim();
                 if (message.digitalFuelOptions != null && Object.hasOwnProperty.call(message, "digitalFuelOptions"))
                     $root.com.antigravity.DigitalFuelOptions.encode(message.digitalFuelOptions, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+                if (message.teamOptions != null && Object.hasOwnProperty.call(message, "teamOptions"))
+                    $root.com.antigravity.TeamOptions.encode(message.teamOptions, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
                 return writer;
             };
 
@@ -11463,6 +11772,10 @@ export const com = $root.com = (() => {
                         }
                     case 8: {
                             message.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 9: {
+                            message.teamOptions = $root.com.antigravity.TeamOptions.decode(reader, reader.uint32());
                             break;
                         }
                     default:
@@ -11536,6 +11849,11 @@ export const com = $root.com = (() => {
                     if (error)
                         return "digitalFuelOptions." + error;
                 }
+                if (message.teamOptions != null && message.hasOwnProperty("teamOptions")) {
+                    let error = $root.com.antigravity.TeamOptions.verify(message.teamOptions);
+                    if (error)
+                        return "teamOptions." + error;
+                }
                 return null;
             };
 
@@ -11585,6 +11903,11 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceModel.digitalFuelOptions: object expected");
                     message.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.fromObject(object.digitalFuelOptions);
                 }
+                if (object.teamOptions != null) {
+                    if (typeof object.teamOptions !== "object")
+                        throw TypeError(".com.antigravity.RaceModel.teamOptions: object expected");
+                    message.teamOptions = $root.com.antigravity.TeamOptions.fromObject(object.teamOptions);
+                }
                 return message;
             };
 
@@ -11610,6 +11933,7 @@ export const com = $root.com = (() => {
                     object.minLapTime = 0;
                     object.fuelOptions = null;
                     object.digitalFuelOptions = null;
+                    object.teamOptions = null;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -11627,6 +11951,8 @@ export const com = $root.com = (() => {
                     object.fuelOptions = $root.com.antigravity.AnalogFuelOptions.toObject(message.fuelOptions, options);
                 if (message.digitalFuelOptions != null && message.hasOwnProperty("digitalFuelOptions"))
                     object.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.toObject(message.digitalFuelOptions, options);
+                if (message.teamOptions != null && message.hasOwnProperty("teamOptions"))
+                    object.teamOptions = $root.com.antigravity.TeamOptions.toObject(message.teamOptions, options);
                 return object;
             };
 
@@ -15897,6 +16223,235 @@ export const com = $root.com = (() => {
             return Heat;
         })();
 
+        antigravity.LapData = (function() {
+
+            /**
+             * Properties of a LapData.
+             * @memberof com.antigravity
+             * @interface ILapData
+             * @property {number|null} [lapTime] LapData lapTime
+             * @property {string|null} [driverId] LapData driverId
+             */
+
+            /**
+             * Constructs a new LapData.
+             * @memberof com.antigravity
+             * @classdesc Represents a LapData.
+             * @implements ILapData
+             * @constructor
+             * @param {com.antigravity.ILapData=} [properties] Properties to set
+             */
+            function LapData(properties) {
+                if (properties)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null)
+                            this[keys[i]] = properties[keys[i]];
+            }
+
+            /**
+             * LapData lapTime.
+             * @member {number} lapTime
+             * @memberof com.antigravity.LapData
+             * @instance
+             */
+            LapData.prototype.lapTime = 0;
+
+            /**
+             * LapData driverId.
+             * @member {string} driverId
+             * @memberof com.antigravity.LapData
+             * @instance
+             */
+            LapData.prototype.driverId = "";
+
+            /**
+             * Creates a new LapData instance using the specified properties.
+             * @function create
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {com.antigravity.ILapData=} [properties] Properties to set
+             * @returns {com.antigravity.LapData} LapData instance
+             */
+            LapData.create = function create(properties) {
+                return new LapData(properties);
+            };
+
+            /**
+             * Encodes the specified LapData message. Does not implicitly {@link com.antigravity.LapData.verify|verify} messages.
+             * @function encode
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {com.antigravity.ILapData} message LapData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LapData.encode = function encode(message, writer) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (message.lapTime != null && Object.hasOwnProperty.call(message, "lapTime"))
+                    writer.uint32(/* id 1, wireType 1 =*/9).double(message.lapTime);
+                if (message.driverId != null && Object.hasOwnProperty.call(message, "driverId"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.driverId);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified LapData message, length delimited. Does not implicitly {@link com.antigravity.LapData.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {com.antigravity.ILapData} message LapData message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            LapData.encodeDelimited = function encodeDelimited(message, writer) {
+                return this.encode(message, writer).ldelim();
+            };
+
+            /**
+             * Decodes a LapData message from the specified reader or buffer.
+             * @function decode
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {com.antigravity.LapData} LapData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LapData.decode = function decode(reader, length, error) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.com.antigravity.LapData();
+                while (reader.pos < end) {
+                    let tag = reader.uint32();
+                    if (tag === error)
+                        break;
+                    switch (tag >>> 3) {
+                    case 1: {
+                            message.lapTime = reader.double();
+                            break;
+                        }
+                    case 2: {
+                            message.driverId = reader.string();
+                            break;
+                        }
+                    default:
+                        reader.skipType(tag & 7);
+                        break;
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Decodes a LapData message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {com.antigravity.LapData} LapData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            LapData.decodeDelimited = function decodeDelimited(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a LapData message.
+             * @function verify
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            LapData.verify = function verify(message) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    if (typeof message.lapTime !== "number")
+                        return "lapTime: number expected";
+                if (message.driverId != null && message.hasOwnProperty("driverId"))
+                    if (!$util.isString(message.driverId))
+                        return "driverId: string expected";
+                return null;
+            };
+
+            /**
+             * Creates a LapData message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {com.antigravity.LapData} LapData
+             */
+            LapData.fromObject = function fromObject(object) {
+                if (object instanceof $root.com.antigravity.LapData)
+                    return object;
+                let message = new $root.com.antigravity.LapData();
+                if (object.lapTime != null)
+                    message.lapTime = Number(object.lapTime);
+                if (object.driverId != null)
+                    message.driverId = String(object.driverId);
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a LapData message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {com.antigravity.LapData} message LapData
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            LapData.toObject = function toObject(message, options) {
+                if (!options)
+                    options = {};
+                let object = {};
+                if (options.defaults) {
+                    object.lapTime = 0;
+                    object.driverId = "";
+                }
+                if (message.lapTime != null && message.hasOwnProperty("lapTime"))
+                    object.lapTime = options.json && !isFinite(message.lapTime) ? String(message.lapTime) : message.lapTime;
+                if (message.driverId != null && message.hasOwnProperty("driverId"))
+                    object.driverId = message.driverId;
+                return object;
+            };
+
+            /**
+             * Converts this LapData to JSON.
+             * @function toJSON
+             * @memberof com.antigravity.LapData
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            LapData.prototype.toJSON = function toJSON() {
+                return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the default type url for LapData
+             * @function getTypeUrl
+             * @memberof com.antigravity.LapData
+             * @static
+             * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns {string} The default type url
+             */
+            LapData.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+                if (typeUrlPrefix === undefined) {
+                    typeUrlPrefix = "type.googleapis.com";
+                }
+                return typeUrlPrefix + "/com.antigravity.LapData";
+            };
+
+            return LapData;
+        })();
+
         antigravity.DriverHeatData = (function() {
 
             /**
@@ -15910,7 +16465,7 @@ export const com = $root.com = (() => {
              * @property {number|null} [gapLeader] DriverHeatData gapLeader
              * @property {number|null} [gapPosition] DriverHeatData gapPosition
              * @property {Array.<number>|null} [segments] DriverHeatData segments
-             * @property {Array.<number>|null} [laps] DriverHeatData laps
+             * @property {Array.<com.antigravity.ILapData>|null} [laps] DriverHeatData laps
              */
 
             /**
@@ -15988,7 +16543,7 @@ export const com = $root.com = (() => {
 
             /**
              * DriverHeatData laps.
-             * @member {Array.<number>} laps
+             * @member {Array.<com.antigravity.ILapData>} laps
              * @memberof com.antigravity.DriverHeatData
              * @instance
              */
@@ -16036,12 +16591,9 @@ export const com = $root.com = (() => {
                         writer.double(message.segments[i]);
                     writer.ldelim();
                 }
-                if (message.laps != null && message.laps.length) {
-                    writer.uint32(/* id 8, wireType 2 =*/66).fork();
+                if (message.laps != null && message.laps.length)
                     for (let i = 0; i < message.laps.length; ++i)
-                        writer.double(message.laps[i]);
-                    writer.ldelim();
-                }
+                        $root.com.antigravity.LapData.encode(message.laps[i], writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
                 return writer;
             };
 
@@ -16116,12 +16668,7 @@ export const com = $root.com = (() => {
                     case 8: {
                             if (!(message.laps && message.laps.length))
                                 message.laps = [];
-                            if ((tag & 7) === 2) {
-                                let end2 = reader.uint32() + reader.pos;
-                                while (reader.pos < end2)
-                                    message.laps.push(reader.double());
-                            } else
-                                message.laps.push(reader.double());
+                            message.laps.push($root.com.antigravity.LapData.decode(reader, reader.uint32()));
                             break;
                         }
                     default:
@@ -16191,9 +16738,11 @@ export const com = $root.com = (() => {
                 if (message.laps != null && message.hasOwnProperty("laps")) {
                     if (!Array.isArray(message.laps))
                         return "laps: array expected";
-                    for (let i = 0; i < message.laps.length; ++i)
-                        if (typeof message.laps[i] !== "number")
-                            return "laps: number[] expected";
+                    for (let i = 0; i < message.laps.length; ++i) {
+                        let error = $root.com.antigravity.LapData.verify(message.laps[i]);
+                        if (error)
+                            return "laps." + error;
+                    }
                 }
                 return null;
             };
@@ -16239,8 +16788,11 @@ export const com = $root.com = (() => {
                     if (!Array.isArray(object.laps))
                         throw TypeError(".com.antigravity.DriverHeatData.laps: array expected");
                     message.laps = [];
-                    for (let i = 0; i < object.laps.length; ++i)
-                        message.laps[i] = Number(object.laps[i]);
+                    for (let i = 0; i < object.laps.length; ++i) {
+                        if (typeof object.laps[i] !== "object")
+                            throw TypeError(".com.antigravity.DriverHeatData.laps: object expected");
+                        message.laps[i] = $root.com.antigravity.LapData.fromObject(object.laps[i]);
+                    }
                 }
                 return message;
             };
@@ -16290,7 +16842,7 @@ export const com = $root.com = (() => {
                 if (message.laps && message.laps.length) {
                     object.laps = [];
                     for (let j = 0; j < message.laps.length; ++j)
-                        object.laps[j] = options.json && !isFinite(message.laps[j]) ? String(message.laps[j]) : message.laps[j];
+                        object.laps[j] = $root.com.antigravity.LapData.toObject(message.laps[j], options);
                 }
                 return object;
             };

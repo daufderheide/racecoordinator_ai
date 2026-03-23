@@ -4,6 +4,7 @@ import { HeatScoring } from "./heat_scoring";
 import { OverallScoring } from "./overall_scoring";
 import { AnalogFuelOptions } from "./analog_fuel_options";
 import { DigitalFuelOptions } from "./digital_fuel_options";
+import { TeamOptions } from "./team_options";
 
 export class Race implements Model {
   readonly entity_id: string;
@@ -13,6 +14,7 @@ export class Race implements Model {
   readonly overall_scoring: OverallScoring;
   readonly fuel_options: AnalogFuelOptions;
   readonly digital_fuel_options: DigitalFuelOptions;
+  readonly team_options: TeamOptions;
 
   constructor(
     entity_id: string,
@@ -21,7 +23,8 @@ export class Race implements Model {
     heat_scoring: HeatScoring = new HeatScoring(),
     overall_scoring: OverallScoring = new OverallScoring(),
     fuel_options: AnalogFuelOptions = new AnalogFuelOptions(),
-    digital_fuel_options: DigitalFuelOptions = new DigitalFuelOptions()
+    digital_fuel_options: DigitalFuelOptions = new DigitalFuelOptions(),
+    team_options: TeamOptions = new TeamOptions()
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -30,6 +33,7 @@ export class Race implements Model {
     this.overall_scoring = overall_scoring;
     this.fuel_options = fuel_options;
     this.digital_fuel_options = digital_fuel_options;
+    this.team_options = team_options;
   }
 
   get objectId(): string {

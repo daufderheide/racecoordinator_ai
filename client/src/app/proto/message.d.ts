@@ -4758,6 +4758,127 @@ export namespace com {
             }
         }
 
+        /** Properties of a TeamOptions. */
+        interface ITeamOptions {
+
+            /** TeamOptions heatLapLimit */
+            heatLapLimit?: (number|null);
+
+            /** TeamOptions heatTimeLimit */
+            heatTimeLimit?: (number|null);
+
+            /** TeamOptions overallLapLimit */
+            overallLapLimit?: (number|null);
+
+            /** TeamOptions overallTimeLimit */
+            overallTimeLimit?: (number|null);
+
+            /** TeamOptions requirePitStopChangeDriver */
+            requirePitStopChangeDriver?: (boolean|null);
+        }
+
+        /** Represents a TeamOptions. */
+        class TeamOptions implements ITeamOptions {
+
+            /**
+             * Constructs a new TeamOptions.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ITeamOptions);
+
+            /** TeamOptions heatLapLimit. */
+            public heatLapLimit: number;
+
+            /** TeamOptions heatTimeLimit. */
+            public heatTimeLimit: number;
+
+            /** TeamOptions overallLapLimit. */
+            public overallLapLimit: number;
+
+            /** TeamOptions overallTimeLimit. */
+            public overallTimeLimit: number;
+
+            /** TeamOptions requirePitStopChangeDriver. */
+            public requirePitStopChangeDriver: boolean;
+
+            /**
+             * Creates a new TeamOptions instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns TeamOptions instance
+             */
+            public static create(properties?: com.antigravity.ITeamOptions): com.antigravity.TeamOptions;
+
+            /**
+             * Encodes the specified TeamOptions message. Does not implicitly {@link com.antigravity.TeamOptions.verify|verify} messages.
+             * @param message TeamOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ITeamOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified TeamOptions message, length delimited. Does not implicitly {@link com.antigravity.TeamOptions.verify|verify} messages.
+             * @param message TeamOptions message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ITeamOptions, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a TeamOptions message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns TeamOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.TeamOptions;
+
+            /**
+             * Decodes a TeamOptions message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns TeamOptions
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.TeamOptions;
+
+            /**
+             * Verifies a TeamOptions message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a TeamOptions message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns TeamOptions
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.TeamOptions;
+
+            /**
+             * Creates a plain object from a TeamOptions message. Also converts values to other types if specified.
+             * @param message TeamOptions
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.TeamOptions, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this TeamOptions to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for TeamOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a RaceModel. */
         interface IRaceModel {
 
@@ -4784,6 +4905,9 @@ export namespace com {
 
             /** RaceModel digitalFuelOptions */
             digitalFuelOptions?: (com.antigravity.IDigitalFuelOptions|null);
+
+            /** RaceModel teamOptions */
+            teamOptions?: (com.antigravity.ITeamOptions|null);
         }
 
         /** Represents a RaceModel. */
@@ -4818,6 +4942,9 @@ export namespace com {
 
             /** RaceModel digitalFuelOptions. */
             public digitalFuelOptions?: (com.antigravity.IDigitalFuelOptions|null);
+
+            /** RaceModel teamOptions. */
+            public teamOptions?: (com.antigravity.ITeamOptions|null);
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -6473,6 +6600,109 @@ export namespace com {
             public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
+        /** Properties of a LapData. */
+        interface ILapData {
+
+            /** LapData lapTime */
+            lapTime?: (number|null);
+
+            /** LapData driverId */
+            driverId?: (string|null);
+        }
+
+        /** Represents a LapData. */
+        class LapData implements ILapData {
+
+            /**
+             * Constructs a new LapData.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ILapData);
+
+            /** LapData lapTime. */
+            public lapTime: number;
+
+            /** LapData driverId. */
+            public driverId: string;
+
+            /**
+             * Creates a new LapData instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns LapData instance
+             */
+            public static create(properties?: com.antigravity.ILapData): com.antigravity.LapData;
+
+            /**
+             * Encodes the specified LapData message. Does not implicitly {@link com.antigravity.LapData.verify|verify} messages.
+             * @param message LapData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ILapData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified LapData message, length delimited. Does not implicitly {@link com.antigravity.LapData.verify|verify} messages.
+             * @param message LapData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ILapData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a LapData message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns LapData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.LapData;
+
+            /**
+             * Decodes a LapData message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns LapData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.LapData;
+
+            /**
+             * Verifies a LapData message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a LapData message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns LapData
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.LapData;
+
+            /**
+             * Creates a plain object from a LapData message. Also converts values to other types if specified.
+             * @param message LapData
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.LapData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this LapData to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for LapData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of a DriverHeatData. */
         interface IDriverHeatData {
 
@@ -6498,7 +6728,7 @@ export namespace com {
             segments?: (number[]|null);
 
             /** DriverHeatData laps */
-            laps?: (number[]|null);
+            laps?: (com.antigravity.ILapData[]|null);
         }
 
         /** Represents a DriverHeatData. */
@@ -6532,7 +6762,7 @@ export namespace com {
             public segments: number[];
 
             /** DriverHeatData laps. */
-            public laps: number[];
+            public laps: com.antigravity.ILapData[];
 
             /**
              * Creates a new DriverHeatData instance using the specified properties.

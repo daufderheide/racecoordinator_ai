@@ -96,4 +96,35 @@ public class TeamRacingTest {
 
     assertNotNull(race.getCurrentHeat().getDrivers().get(0).getLaps());
   }
+
+  @Test
+  public void testTeamDriverRotation_CreditsCorrectDriver() {
+    com.antigravity.race.states.Racing racing = new com.antigravity.race.states.Racing();
+    race.changeState(racing);
+
+    DriverHeatData teamHeatData = race.getCurrentHeat().getDrivers().get(0);
+
+    // 0. Reaction time (first trigger)
+    racing.onLap(0, 1.0, 1);
+
+    // 1. Set Actual Driver to Driver 1
+    Driver driver1 = new Driver("Driver 1", "D1", "d1", new ObjectId());
+    teamHeatData.setActualDriver(driver1);
+
+    // Simulate lap 1
+    racing.onLap(0, 5.0, 1); 
+
+    // 2. Set Actual Driver to Driver 2
+    Driver driver2 = new Driver("Driver 2", "D2", "d2", new ObjectId());
+    teamHeatData.setActualDriver(driver2);
+
+    // Simulate lap 2
+    racing.onLap(0, 6.0, 1);
+
+    // 3. Verify
+    List<DriverHeatData.LapData> laps = teamHeatData.getLaps();
+    org.junit.Assert.assertEquals("Should record 2 laps total", 2, laps.size());
+    org.junit.Assert.assertEquals("Lap 1 should credit driver 1", "d1", laps.get(0).getDriverId());
+    org.junit.Assert.assertEquals("Lap 2 should credit driver 2", "d2", laps.get(1).getDriverId());
+  }
 }

@@ -49,7 +49,9 @@ public class OverallStandings {
         if (dhd.getBestLapTime() > 0 && (bestLap == 0 || dhd.getBestLapTime() < bestLap)) {
           bestLap = dhd.getBestLapTime();
         }
-        allScoringLaps.addAll(dhd.getLaps());
+        for (DriverHeatData.LapData lap : dhd.getLaps()) {
+          allScoringLaps.add(lap.getLapTime());
+        }
       }
 
       // Updating driver stats

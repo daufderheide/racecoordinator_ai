@@ -584,6 +584,37 @@ describe('RaceEditorComponent', () => {
     expect(mockDataService.updateRace).toHaveBeenCalled();
     expect(component.isSaving).toBeFalse();
   }));
+  
+  it('should include team options in updateRace payload', fakeAsync(() => {
+    component.editingRace = {
+      entity_id: '1',
+      name: 'Updated Name',
+      track_entity_id: 'track1',
+      heat_rotation_type: 'RoundRobin',
+      heat_scoring: { finish_method: 'Lap' },
+      overall_scoring: { dropped_heats: 0 },
+      team_options: {
+        heat_lap_limit: 10,
+        heat_time_limit: 60,
+        overall_lap_limit: 100,
+        overall_time_limit: 600,
+        require_pit_stop_change_driver: true
+      }
+    } as any;
+
+    spyOn(component, 'hasChanges').and.returnValue(true);
+    mockDataService.updateRace.and.returnValue(of({}));
+    mockDataService.getRaces.and.returnValue(of([]));
+
+    component.updateRace();
+    tick();
+
+    expect(mockDataService.updateRace).toHaveBeenCalled();
+    const payload = mockDataService.updateRace.calls.mostRecent().args[1];
+    expect(payload.team_options).toBeDefined();
+    expect(payload.team_options.heat_lap_limit).toBe(10);
+    expect(payload.team_options.require_pit_stop_change_driver).toBeTrue();
+  }));
 
   it('should call createRace API when saving new', fakeAsync(() => {
     component.editingRace = {

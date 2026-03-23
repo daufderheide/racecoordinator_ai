@@ -52,9 +52,10 @@ export class HeatConverter {
                             hd.gapPosition = dProto.gapPosition || 0;
 
                             if (dProto.laps) {
-                                dProto.laps.forEach((lapTime, i) => {
-                                    // best/avg/median are useful for UI details but 0 is safe for live curves
-                                    hd.addLapTime(i + 1, lapTime, 0, 0, 0);
+                                dProto.laps.forEach((lap: any, i) => {
+                                    const time = (lap && typeof lap === 'object' && lap.lapTime !== undefined) ? lap.lapTime : lap;
+                                    const driverId = (lap && typeof lap === 'object') ? lap.driverId : '';
+                                    hd.addLapTime(i + 1, time, 0, 0, 0, driverId);
                                 });
                             }
 

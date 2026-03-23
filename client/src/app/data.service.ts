@@ -730,4 +730,9 @@ export class DataService {
   public getSegments(): Observable<com.antigravity.ISegment> {
     return this.segmentSubject.asObservable();
   }
+  public changeActualDriver(lane: number, driverId: string): Observable<string> {
+    return this.http.post(`${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`, {
+      driverId
+    }, { responseType: 'text' });
+  }
 }

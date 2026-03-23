@@ -24,26 +24,26 @@ test.describe('Heat Results Visuals', () => {
         },
         currentHeat: {
           heatNumber: 1,
-          heatDrivers: [
-            {
-              objectId: 'hd1',
-              driver: { objectId: 'rp1', driver: { name: 'Alice', nickname: 'Ally' } },
-              actualDriver: { name: 'Alice', nickname: 'Ally' },
-              laps: [10.5, 10.2, 10.4]
-            },
-            {
-              objectId: 'hd2',
-              driver: { objectId: 'rp2', driver: { name: 'Bob', nickname: 'Bobby' } },
-              actualDriver: { name: 'Bob', nickname: 'Bobby' },
-              laps: [11.1, 10.8, 10.7]
-            },
-            {
-              objectId: 'hd3',
-              driver: { objectId: 'rp3', driver: { name: 'Charlie', nickname: 'Chuck' } },
-              actualDriver: { name: 'Charlie', nickname: 'Chuck' },
-              laps: [12.0, 11.2, 11.5]
-            }
-          ]
+              heatDrivers: [
+                {
+                  objectId: 'hd1',
+                  driver: { objectId: 'rp1', driver: { name: 'Alice', nickname: 'Ally' } },
+                  actualDriver: { name: 'Alice', nickname: 'Ally' },
+                  laps: [{ lapTime: 10.5 }, { lapTime: 10.2 }, { lapTime: 10.4 }]
+                },
+                {
+                  objectId: 'hd2',
+                  driver: { objectId: 'rp2', driver: { name: 'Bob', nickname: 'Bobby' } },
+                  actualDriver: { name: 'Bob', nickname: 'Bobby' },
+                  laps: [{ lapTime: 11.1 }, { lapTime: 10.8 }, { lapTime: 10.7 }]
+                },
+                {
+                  objectId: 'hd3',
+                  driver: { objectId: 'rp3', driver: { name: 'Charlie', nickname: 'Chuck' } },
+                  actualDriver: { name: 'Charlie', nickname: 'Chuck' },
+                  laps: [{ lapTime: 12.0 }, { lapTime: 11.2 }, { lapTime: 11.5 }]
+                }
+              ]
         }
       }
     };

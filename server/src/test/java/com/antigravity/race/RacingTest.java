@@ -19,6 +19,8 @@ import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
+import com.antigravity.models.TeamOptions;
+import com.antigravity.models.Team;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.Racing;
@@ -224,12 +226,12 @@ public class RacingTest {
     racing.onLap(0, 7.0, 1);
     assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getLapCount());
     // The lap time should be 12.0s (1.0s reaction + 4.0s + 7.0s accumulated)
-    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(0), 0.001);
+    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(0).getLapTime(), 0.001);
 
     // Lap 3: 12.0s (accumulated: 12.0s) - above min 10.0s
     racing.onLap(0, 12.0, 1);
     assertEquals(2, race.getCurrentHeat().getDrivers().get(0).getLapCount());
-    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(1), 0.001);
+    assertEquals(12.0, race.getCurrentHeat().getDrivers().get(0).getLaps().get(1).getLapTime(), 0.001);
   }
 
   @Test
@@ -470,6 +472,121 @@ public class RacingTest {
     racing.onCarData(carData);
 
     assertEquals(80.0, raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
+  public void testTeamLimits_DriverSwitch() {
+    TeamOptions teamOptions = new TeamOptions(2, 0.0, 0, 0.0, false); 
+
+    com.antigravity.models.HeatScoring customScoring = new com.antigravity.models.HeatScoring(
+        com.antigravity.models.HeatScoring.FinishMethod.Lap,
+        10L, // 10 laps to prevent early finish
+        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        com.antigravity.models.HeatScoring.AllowFinish.None);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, customScoring, null,
+        new OverallScoring(), 0.0, null, null, teamOptions, "race1", new ObjectId());
+
+    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
+    participants.clear();
+    participants.add(teamParticipant);
+
+    race = new Race(raceModel, participants, track, true);
+
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+    Driver subDriver1 = new Driver("1A", "1A", "sd1", new ObjectId());
+    Driver subDriver2 = new Driver("1B", "1B", "sd2", new ObjectId());
+
+    // Set active sub-driver
+    driverData.setActualDriver(subDriver1);
+
+    // Initial state
+    assertEquals(0, driverData.getLapCount());
+
+    // Reaction
+    racing.onLap(0, 1.0, 1);
+
+    // subDriver1 completes 2 laps (reaches limit)
+    racing.onLap(0, 5.0, 1); 
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(2, driverData.getLapCount());
+
+    // 3rd lap should be rejected
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(2, driverData.getLapCount()); 
+
+    // SWITCH DRIVER
+    driverData.setActualDriver(subDriver2);
+
+    // subDriver2 should be able to complete 1st lap
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(3, driverData.getLapCount()); 
+
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(4, driverData.getLapCount());
+
+    // subDriver2 reaches limit (2 laps)
+    racing.onLap(0, 5.0, 1); // should be rejected
+    assertEquals(4, driverData.getLapCount()); 
+  }
+
+  @Test
+  public void testTeamLimits_FuelConsumptionOnRejectedLap() {
+    TeamOptions teamOptions = new TeamOptions(1, 0.0, 0, 0.0, false); // limit 1 lap
+    
+    com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
+        true, false, false, 100.0, com.antigravity.models.FuelOptions.FuelUsageType.LINEAR, 10.0, 100.0, 10.0, 1.0, 5.0);
+
+    com.antigravity.models.HeatScoring customScoring = new com.antigravity.models.HeatScoring(
+        com.antigravity.models.HeatScoring.FinishMethod.Lap,
+        10L, 
+        com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
+        com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+        com.antigravity.models.HeatScoring.AllowFinish.None);
+
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
+        "Test Race", "track1", HeatRotationType.RoundRobin, customScoring, null,
+        new OverallScoring(), 0.0, fuelOptions, null, teamOptions, "race1", new ObjectId());
+
+    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
+    participants.clear();
+    participants.add(teamParticipant);
+
+    race = new Race(raceModel, participants, track, true);
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    Racing racing = new Racing();
+    race.changeState(racing);
+
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+    Driver subDriver = new Driver("1A", "1A", "sd1", new ObjectId());
+    driverData.setActualDriver(subDriver);
+
+    // Initial state
+    assertEquals(0, driverData.getLapCount());
+    assertEquals(100.0, driverData.getDriver().getFuelLevel(), 0.001);
+
+    // Reaction
+    racing.onLap(0, 1.0, 1);
+
+    // lap 1 (accepted)
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(1, driverData.getLapCount());
+    double fuelAfterLap1 = driverData.getDriver().getFuelLevel();
+    assertTrue(fuelAfterLap1 < 100.0);
+
+    // lap 2 (rejected due to 1 lap team limit)
+    racing.onLap(0, 5.0, 1); 
+    assertEquals(1, driverData.getLapCount()); 
+    double fuelAfterLap2 = driverData.getDriver().getFuelLevel();
+    assertTrue("Fuel did not consume on rejected lap!", fuelAfterLap2 < fuelAfterLap1);
   }
 
   private void assertEquals(long expected, long actual) {

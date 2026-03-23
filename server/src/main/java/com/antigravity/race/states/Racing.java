@@ -326,12 +326,81 @@ public class Racing implements IRaceState {
     return driverData;
   }
 
+  private boolean checkTeamLimits(com.antigravity.race.DriverHeatData driverData, double lapTime) {
+    com.antigravity.models.TeamOptions options = race.getRaceModel().getTeamOptions();
+    if (options == null) return false;
+    
+    if (driverData.getDriver() != null && !driverData.getDriver().isTeamParticipant()) {
+      return false;
+    }
+
+    com.antigravity.models.Driver actualDriver = driverData.getActualDriver();
+    if (actualDriver == null) return false;
+
+    String driverId = actualDriver.getEntityId();
+
+    // Heat Limits
+    if (options.getHeatLapLimit() > 0 || options.getHeatTimeLimit() > 0) {
+      int heatLaps = 0;
+      double heatTime = 0;
+      for (com.antigravity.race.DriverHeatData.LapData lap : driverData.getLaps()) {
+        if (driverId.equals(lap.getDriverId())) {
+          heatLaps++;
+          heatTime += lap.getLapTime();
+        }
+      }
+
+      if (options.getHeatLapLimit() > 0 && heatLaps >= options.getHeatLapLimit()) {
+        System.out.println("Racing: Team limits - Heat Lap Limit reached for " + driverId);
+        return true;
+      }
+      if (options.getHeatTimeLimit() > 0 && (heatTime + lapTime) > options.getHeatTimeLimit()) {
+        System.out.println("Racing: Team limits - Heat Time Limit reached for " + driverId);
+        return true;
+      }
+    }
+
+    // Overall Limits
+    if (options.getOverallLapLimit() > 0 || options.getOverallTimeLimit() > 0) {
+      int overallLaps = 0;
+      double overallTime = 0;
+
+      for (com.antigravity.race.Heat heat : race.getHeats()) {
+        for (com.antigravity.race.DriverHeatData hd : heat.getDrivers()) {
+          for (com.antigravity.race.DriverHeatData.LapData lap : hd.getLaps()) {
+            if (driverId.equals(lap.getDriverId())) {
+              overallLaps++;
+              overallTime += lap.getLapTime();
+            }
+          }
+        }
+      }
+
+      if (options.getOverallLapLimit() > 0 && overallLaps >= options.getOverallLapLimit()) {
+        System.out.println("Racing: Team limits - Overall Lap Limit reached for " + driverId);
+        return true;
+      }
+      if (options.getOverallTimeLimit() > 0 && (overallTime + lapTime) > options.getOverallTimeLimit()) {
+        System.out.println("Racing: Team limits - Overall Time Limit reached for " + driverId);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @Override
   public void onLap(int lane, double lapTime, int interfaceId) {
     System.out.println("Race: Received onLap for lane " + lane + " time " + lapTime);
 
     com.antigravity.race.DriverHeatData driverData = validateInput(lane);
     if (driverData == null) {
+      return;
+    }
+
+    if (checkTeamLimits(driverData, lapTime)) {
+      System.out.println("Race: Lane " + lane + " lap rejected due to team limits");
+      handleAnalogFuelLapTime(driverData, lapTime - driverData.getReactionTime(), lane);
       return;
     }
 
@@ -549,8 +618,11 @@ public class Racing implements IRaceState {
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
       if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
         com.antigravity.race.DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
-        if (driverData != null && driverData.getDriver() != null) {
-          dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
+        if (driverData != null) {
+          driverData.setCurrentLocation(carData.getLocation());
+          if (driverData.getDriver() != null) {
+            dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
+          }
         }
       }
     }

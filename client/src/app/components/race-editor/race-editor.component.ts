@@ -40,7 +40,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   sectionsExpanded = {
     general: true,
     scoring: true,
-    fuel: true
+    fuel: true,
+    team: false
   };
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
@@ -155,6 +156,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               reference_time: 6.0
             };
           }
+          if (!this.editingRace.team_options) {
+            this.editingRace.team_options = {
+              heat_lap_limit: 0,
+              heat_time_limit: 0,
+              overall_lap_limit: 0,
+              overall_time_limit: 0,
+              require_pit_stop_change_driver: false
+            };
+          }
         } else {
           this.createNewRace();
         }
@@ -241,7 +251,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         refuel_rate: 10,
         pit_stop_delay: 2.0
       },
-      min_lap_time: 0
+      min_lap_time: 0,
+      team_options: {
+        heat_lap_limit: 0,
+        heat_time_limit: 0,
+        overall_lap_limit: 0,
+        overall_time_limit: 0,
+        require_pit_stop_change_driver: false
+      }
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -393,7 +410,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
         pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
       } : undefined,
-      min_lap_time: this.editingRace.min_lap_time
+      min_lap_time: this.editingRace.min_lap_time,
+      team_options: this.editingRace.team_options ? {
+        heat_lap_limit: this.editingRace.team_options.heat_lap_limit,
+        heat_time_limit: this.editingRace.team_options.heat_time_limit,
+        overall_lap_limit: this.editingRace.team_options.overall_lap_limit,
+        overall_time_limit: this.editingRace.team_options.overall_time_limit,
+        require_pit_stop_change_driver: this.editingRace.team_options.require_pit_stop_change_driver
+      } : undefined
     };
 
     if (this.editingRace.entity_id === 'new') {
@@ -496,7 +520,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         refuel_rate: this.editingRace.digital_fuel_options.refuel_rate,
         pit_stop_delay: this.editingRace.digital_fuel_options.pit_stop_delay
       } : undefined,
-      min_lap_time: this.editingRace.min_lap_time
+      min_lap_time: this.editingRace.min_lap_time,
+      team_options: this.editingRace.team_options ? {
+        heat_lap_limit: this.editingRace.team_options.heat_lap_limit,
+        heat_time_limit: this.editingRace.team_options.heat_time_limit,
+        overall_lap_limit: this.editingRace.team_options.overall_lap_limit,
+        overall_time_limit: this.editingRace.team_options.overall_time_limit,
+        require_pit_stop_change_driver: this.editingRace.team_options.require_pit_stop_change_driver
+      } : undefined
     };
 
     this.dataService.createRace(payload).subscribe({

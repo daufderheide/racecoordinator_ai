@@ -123,7 +123,7 @@ export class RaceConnectionService implements OnDestroy {
       if (heat && heat.heatDrivers && lap && lap.objectId) {
         const driverData = heat.heatDrivers.find(d => d.objectId === lap.objectId);
         if (driverData) {
-          driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!);
+          driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!, lap.driverId!);
           this.lapSubject.next(lap);
         }
       }

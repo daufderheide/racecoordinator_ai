@@ -91,6 +91,7 @@ describe('DefaultRacedayComponent', () => {
       'listAssets', 'getCarData', 'getSegments'
     ]);
     mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.serverUrl = 'http://localhost';
 
     mockRaceConnectionService = jasmine.createSpyObj('RaceConnectionService', ['connect', 'disconnect']);
@@ -717,8 +718,8 @@ describe('DefaultRacedayComponent', () => {
     let mockHd2: any;
 
     beforeEach(() => {
-      mockHd1 = { objectId: 'hd1', laneIndex: 0, driver: { name: 'Driver 1' }, addLapTime: () => {} };
-      mockHd2 = { objectId: 'hd2', laneIndex: 1, driver: { name: 'Driver 2' }, addLapTime: () => {} };
+      mockHd1 = { objectId: 'hd1', laneIndex: 0, driver: { name: 'Driver 1' }, participant: {}, addLapTime: () => {} };
+      mockHd2 = { objectId: 'hd2', laneIndex: 1, driver: { name: 'Driver 2' }, participant: {}, addLapTime: () => {} };
       const mockHeat = { heatDrivers: [mockHd1, mockHd2], heatNumber: 1, standings: [] };
       component['heat'] = mockHeat as any;
 

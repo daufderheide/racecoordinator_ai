@@ -192,4 +192,50 @@ test.describe('Race Editor Visuals', () => {
     // Screenshot the digital fuel configuration section
     await expect(page).toHaveScreenshot('race-editor-digital-fuel-options.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
+
+  test('should display Scoring section expanded', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
+
+    // Collapse General and Fuel to isolate Scoring
+    await page.locator('.section-header:has-text("General")').click();
+    await page.locator('.section-header', { hasText: /Fuel/i }).first().click();
+    await page.waitForTimeout(500);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page).toHaveScreenshot('race-editor-scoring-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+  });
+
+  test('should display Analog Fuel section expanded', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
+
+    // Collapse General and Scoring to isolate Fuel
+    await page.locator('.section-header:has-text("General")').click();
+    await page.locator('.section-header:has-text("Scoring")').click();
+    await page.waitForTimeout(500);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page).toHaveScreenshot('race-editor-fuel-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+  });
+
+  test('should display Team Options section expanded', async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
+
+    // Collapse General, Scoring, and Fuel
+    await page.locator('.section-header:has-text("General")').click();
+    await page.locator('.section-header:has-text("Scoring")').click();
+    await page.locator('.section-header', { hasText: /Fuel/i }).first().click();
+    
+    // Expand Team Options (closed by default)
+    await page.locator('.section-header:has-text("Team Options")').click();
+    await page.waitForTimeout(500);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page).toHaveScreenshot('race-editor-team-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+  });
 });

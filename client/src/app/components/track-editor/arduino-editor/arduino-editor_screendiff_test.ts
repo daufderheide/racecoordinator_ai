@@ -208,7 +208,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await harness.toggleSection('main');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(600);
     // Expansion state checked visually
 
     await expect(editor).toHaveScreenshot('arduino-editor-main-collapsed.png', { maxDiffPixelRatio: 0.05 });
@@ -219,7 +219,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await harness.toggleSection('digital');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(600);
     // Expansion state checked visually
 
     await expect(editor).toHaveScreenshot('arduino-editor-digital-collapsed.png', { maxDiffPixelRatio: 0.05 });
@@ -230,7 +230,7 @@ test.describe('Arduino Editor Section Expander States', () => {
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await harness.toggleSection('analog');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(600);
     // Expansion state checked visually
 
     await expect(editor).toHaveScreenshot('arduino-editor-analog-collapsed.png', { maxDiffPixelRatio: 0.05 });

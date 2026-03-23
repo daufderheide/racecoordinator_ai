@@ -52,7 +52,8 @@ public class DatabaseTaskHandlerTest {
 
   @Test
   public void testCreateRace_Success() {
-    Race raceRequest = new Race("New Race", "track-1", null, null, null, 2.5, "new", null);
+    com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(10, 60.0, 100, 600.0, true);
+    Race raceRequest = new Race("New Race", "track-1", null, null, null, 2.5, null, null, teamOptions, "new", null);
 
     // Mock uniqueness check - no existing race
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -68,6 +69,9 @@ public class DatabaseTaskHandlerTest {
     assertNotNull(created);
     assertEquals("100", created.getEntityId());
     assertEquals(2.5, created.getMinLapTime(), 0.001);
+    assertNotNull(created.getTeamOptions());
+    assertEquals(10, created.getTeamOptions().getHeatLapLimit());
+    assertEquals(true, created.getTeamOptions().isRequirePitStopChangeDriver());
     verify(raceCollection).insertOne(any(Race.class));
   }
 
@@ -90,7 +94,8 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testUpdateRace_Success() {
     String raceId = "race-123";
-    Race raceUpdate = new Race("Updated Name", "track-1", null, null, null, 3.5, raceId, null);
+    com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(20, 120.0, 200, 1200.0, false);
+    Race raceUpdate = new Race("Updated Name", "track-1", null, null, null, 3.5, null, null, teamOptions, raceId, null);
 
     // Mock uniqueness check - no OTHER race with same name
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -106,6 +111,9 @@ public class DatabaseTaskHandlerTest {
     assertNotNull(updated);
     assertEquals("Updated Name", updated.getName());
     assertEquals(3.5, updated.getMinLapTime(), 0.001);
+    assertNotNull(updated.getTeamOptions());
+    assertEquals(20, updated.getTeamOptions().getHeatLapLimit());
+    assertEquals(false, updated.getTeamOptions().isRequirePitStopChangeDriver());
     verify(raceCollection).replaceOne(any(Bson.class), any(Race.class));
   }
 

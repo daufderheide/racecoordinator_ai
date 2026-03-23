@@ -10,7 +10,21 @@ public class DriverHeatData extends ServerToClientObject {
   private RaceParticipant driver;
   private com.antigravity.models.Driver actualDriver;
 
-  private ArrayList<Double> laps = new ArrayList<>();
+  public static class LapData {
+    private double lapTime;
+    private String driverId;
+
+    @BsonCreator
+    public LapData(@BsonProperty("lapTime") double lapTime, @BsonProperty("driverId") String driverId) {
+      this.lapTime = lapTime;
+      this.driverId = driverId;
+    }
+
+    public double getLapTime() { return lapTime; }
+    public String getDriverId() { return driverId; }
+  }
+
+  private ArrayList<LapData> laps = new ArrayList<>();
   private double bestLapTime = 0.0f;
   private double reactionTime = 0.0f;
   private double pendingLapTime = 0.0f;
@@ -18,6 +32,7 @@ public class DriverHeatData extends ServerToClientObject {
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
   private ArrayList<Double> segments = new ArrayList<>();
+  private com.antigravity.protocols.CarLocation currentLocation;
 
   private static void logToFile(String message) {
     try {
@@ -71,7 +86,7 @@ public class DriverHeatData extends ServerToClientObject {
   }
 
   public void addLap(double lapTime) {
-    laps.add(lapTime);
+    laps.add(new LapData(lapTime, actualDriver != null ? actualDriver.getEntityId() : ""));
     if (bestLapTime == 0.0f || lapTime < bestLapTime) {
       bestLapTime = lapTime;
     }
@@ -90,7 +105,7 @@ public class DriverHeatData extends ServerToClientObject {
     return laps.size();
   }
 
-  public java.util.List<Double> getLaps() {
+  public java.util.List<LapData> getLaps() {
     return java.util.Collections.unmodifiableList(laps);
   }
 
@@ -98,7 +113,7 @@ public class DriverHeatData extends ServerToClientObject {
     if (laps.isEmpty()) {
       return 0.0f;
     }
-    return laps.get(laps.size() - 1);
+    return laps.get(laps.size() - 1).getLapTime();
   }
 
   public double getAverageLapTime() {
@@ -107,8 +122,8 @@ public class DriverHeatData extends ServerToClientObject {
       return 0.0f;
     }
     double sum = 0.0f;
-    for (double time : laps) {
-      sum += time;
+    for (LapData lap : laps) {
+      sum += lap.getLapTime();
     }
     return sum / laps.size();
   }
@@ -118,7 +133,10 @@ public class DriverHeatData extends ServerToClientObject {
     if (laps.isEmpty()) {
       return 0.0f;
     }
-    ArrayList<Double> sortedLaps = new ArrayList<>(laps);
+    ArrayList<Double> sortedLaps = new ArrayList<>();
+    for (LapData lap : laps) {
+      sortedLaps.add(lap.getLapTime());
+    }
     Collections.sort(sortedLaps);
     int middle = sortedLaps.size() / 2;
     if (sortedLaps.size() % 2 == 1) {
@@ -142,8 +160,8 @@ public class DriverHeatData extends ServerToClientObject {
 
   public double getTotalTime() {
     double sum = 0.0f;
-    for (double time : laps) {
-      sum += time;
+    for (LapData lap : laps) {
+      sum += lap.getLapTime();
     }
     return sum;
   }
@@ -192,5 +210,13 @@ public class DriverHeatData extends ServerToClientObject {
 
   public void setGapPosition(double gapPosition) {
     this.gapPosition = gapPosition;
+  }
+
+  public com.antigravity.protocols.CarLocation getCurrentLocation() {
+    return currentLocation;
+  }
+
+  public void setCurrentLocation(com.antigravity.protocols.CarLocation currentLocation) {
+    this.currentLocation = currentLocation;
   }
 }

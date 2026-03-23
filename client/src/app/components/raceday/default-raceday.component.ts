@@ -50,6 +50,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected time: number = 0;
   protected timeFormat: string = '1.0-0';
   protected sortedHeatDrivers: DriverHeatData[] = [];
+  protected allDrivers: any[] = [];
 
   private previousTime: number = 0;
 
@@ -88,6 +89,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected assets: any[] = [];
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
+  private carLocations = new Map<number, number>();
 
   private driversLoaded = false;
   private pendingUpdate: com.antigravity.IRace | null = null;
@@ -105,6 +107,13 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.subscriptions.push(this.dataService.listAssets().subscribe(assets => {
       this.assets = assets || [];
       this.loadColumns(); // Refresh column definitions to pick up asset names and update formatters
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
+
+    this.subscriptions.push(this.dataService.getDrivers().subscribe(drivers => {
+      this.allDrivers = drivers || [];
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }
@@ -178,7 +187,8 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }));
 
     this.subscriptions.push(this.raceConnectionService.carData$.subscribe(carData => {
-      if (!this.isDestroyed) {
+      if (!this.isDestroyed && carData && carData.lane !== null && carData.lane !== undefined && carData.location !== null && carData.location !== undefined) {
+        this.carLocations.set(carData.lane, carData.location);
         this.cdr.detectChanges();
       }
     }));
@@ -1367,5 +1377,102 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   protected trackByDriverId(index: number, hd: DriverHeatData): string {
     return hd.objectId;
+  }
+
+  getDropdownArrowBg(hd: DriverHeatData): string {
+    const color = this.track.lanes[hd.laneIndex]?.foreground_color || '#ffffff';
+    // Use an inline SVG with the correct fill color
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="${color}" d="M7 10l5 5 5-5z"/></svg>`;
+    return `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
+  }
+
+  getTeammates(hd: DriverHeatData): any[] {
+    console.log(`getTeammates called for ${hd.driver?.name}. Team:`, hd.participant?.team);
+    if (hd.participant && hd.participant.team) {
+      const team = hd.participant.team;
+      const teammates = this.allDrivers.filter(d => team.driverIds.includes(d.entity_id || d.id));
+      console.log(`Found ${teammates.length} teammates in allDrivers:`, teammates);
+      return teammates;
+    }
+    return [];
+  }
+
+  onTeammateChange(hd: DriverHeatData, event: any) {
+    const driverId = event.target.value;
+    const lane = hd.laneIndex;
+    this.dataService.changeActualDriver(lane, driverId).subscribe({
+      next: () => {
+        console.log(`Teammate changed for lane ${lane} to ${driverId}`);
+      },
+      error: (err) => {
+        console.error('Error changing teammate:', err);
+        this.ackModalTitle = 'RD_ERR_DRIVER_CHANGE_TITLE';
+        this.ackModalMessage = err.error || 'RD_ERR_DRIVER_CHANGE_MESSAGE';
+        this.showAckModal = true;
+        // Rollback select value
+        if (event.target) {
+          event.target.value = hd.actualDriver?.entity_id || hd.driver?.entity_id;
+        }
+      }
+    });
+  }
+
+  isDriverSwapDisabled(hd: any): boolean {
+    const race = this.raceService.getRace();
+    if (!race?.team_options?.require_pit_stop_change_driver) {
+      return false;
+    }
+    if (this.raceState !== com.antigravity.RaceState.RACING && this.raceState !== com.antigravity.RaceState.STARTING) {
+      return false;
+    }
+    const location = this.carLocations.get(hd.laneIndex);
+    if (location === undefined) return false;
+    const inPit = location === 1 || location >= 2000;
+    return !inPit;
+  }
+
+  getDriverStats(hd: any, driverId: string): string {
+    let heatLaps = 0;
+    let heatTime = 0;
+    let overallLaps = 0;
+    let overallTime = 0;
+
+    if (hd.lapsWithDrivers) {
+      hd.lapsWithDrivers.forEach((l: any) => {
+        if (l.driverId === driverId) {
+          heatLaps++;
+          heatTime += l.time;
+        }
+      });
+    }
+
+    const heats = this.raceService.getHeats();
+    if (heats) {
+      heats.forEach((h: any) => {
+        if (h.heatDrivers) {
+          h.heatDrivers.forEach((d_hd: any) => {
+            if (d_hd.lapsWithDrivers) {
+              d_hd.lapsWithDrivers.forEach((l: any) => {
+                if (l.driverId === driverId) {
+                  overallLaps++;
+                  overallTime += l.time;
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+
+    const formatTime = (t: number) => {
+      if (t >= 60) {
+        const m = Math.floor(t / 60);
+        const s = (t % 60).toFixed(1).padStart(4, '0');
+        return `${m}:${s}`;
+      }
+      return `${t.toFixed(1)}s`;
+    };
+
+    return `(H: ${heatLaps} L / ${formatTime(heatTime)}, T: ${overallLaps} L / ${formatTime(overallTime)})`;
   }
 }

@@ -12,6 +12,7 @@ export class DriverHeatData {
 
     private laps!: number[];
     private _currentLapSegments: number[] = [];
+    private _lapsWithDrivers: { time: number, driverId: string }[] = [];
 
     // These are all updated by the addLapTime method.
     private _bestLapTime!: number;
@@ -36,7 +37,8 @@ export class DriverHeatData {
 
     reset(): void {
         this.laps = [];
-
+        this._lapsWithDrivers = [];
+        
         this._bestLapTime = 0;
         this._lastLapTime = 0;
         this._averageLapTime = 0;
@@ -47,19 +49,22 @@ export class DriverHeatData {
         this._currentLapSegments = [];
     }
 
-    addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number): void {
+    addLapTime(lapNumber: number, lapTime: number, averageLapTime: number, medianLapTime: number, bestLapTime: number, driverId?: string): void {
         const lapIndex = lapNumber - 1;
 
         // Fill missing laps with 0
         while (this.laps.length < lapIndex) {
             this.laps.push(0);
+            this._lapsWithDrivers.push({ time: 0, driverId: '' });
         }
 
         // Store or update the lap time
         if (this.laps.length <= lapIndex) {
             this.laps.push(lapTime);
+            this._lapsWithDrivers.push({ time: lapTime, driverId: driverId || '' });
         } else {
             this.laps[lapIndex] = lapTime;
+            this._lapsWithDrivers[lapIndex] = { time: lapTime, driverId: driverId || '' };
         }
 
         // When a lap is handled, clear current segments for the next lap
@@ -109,6 +114,10 @@ export class DriverHeatData {
 
     get lapTimes(): number[] {
         return [...this.laps];
+    }
+
+    get lapsWithDrivers(): { time: number, driverId: string }[] {
+        return [...this._lapsWithDrivers];
     }
 
     get gapLeader(): number {

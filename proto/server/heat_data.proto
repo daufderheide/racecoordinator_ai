@@ -8,6 +8,11 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "DriverHeatDataProto";
 
+message LapData {
+  double lap_time = 1;
+  string driver_id = 2;
+}
+
 message DriverHeatData {
   RaceParticipant driver = 1;
   string object_id = 2;
@@ -16,6 +21,6 @@ message DriverHeatData {
   double gap_leader = 5;
   double gap_position = 6;
   repeated double segments = 7;
-  repeated double laps = 8;
+  repeated LapData laps = 8;
 }
 

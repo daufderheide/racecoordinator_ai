@@ -15,11 +15,14 @@ test.describe('Track Editor Guided Help Visuals', () => {
   }
 
   test('should walk through track editor help', async ({ page }) => {
+    // TODO(aufderheide): This is doing way too much in one test.
+    // We probably don't need screendiffs for every step of the guided help
+
     test.slow(); // This test captures 15+ screenshots; triple the timeout
+    test.setTimeout(120000); // 120s to allow heavy screenshot load safely
     // Navigate with help=true query param to test that entry path
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1&help=true'));
 
-    // TODO(aufderheide): Use harness
     const overlay = page.locator('app-help-overlay');
     const harness = new HelpOverlayHarnessE2e(overlay, page);
 
