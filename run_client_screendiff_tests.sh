@@ -3,6 +3,13 @@
 # Source environment
 source "$(dirname "$0")/scripts/test_env.sh"
 
+# If sync-only, run Node.js script to promote actual images to expected and exit
+if [[ "$*" == *"--sync-only"* ]]; then
+    echo "Syncing snapshots from last run's actual results..."
+    CLIENT_DIR="$CLIENT_DIR" node "$(dirname "$0")/scripts/sync_snapshots.js"
+    exit 0
+fi
+
 echo ""
 echo "--- 🔹 Running Client Visual Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
@@ -30,6 +37,8 @@ mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
 
 echo "Installing Playwright browsers..."
 npx -y playwright install chromium
+
+
 
 npx -y playwright test "$@"
 

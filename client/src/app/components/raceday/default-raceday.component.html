@@ -60,7 +60,18 @@
         </div>
       </div>
       <div class="menu-wrapper">
-        <button class="menu-button-top">{{ 'RD_MENU_TRACK_POWER' | translate }}</button>
+        <button class="menu-button-top" (click)="toggleLanesMenu()">{{ 'RD_MENU_LANES' | translate }}</button>
+        <div *ngIf="isLanesMenuOpen" class="menu-dropdown top-dropdown">
+          <div class="menu-item" (click)="onMenuSelect('TRACK_POWER')">{{ 'RD_MENU_TRACK_POWER' | translate }}</div>
+          <div class="menu-item submenu-trigger">
+            <span>{{ 'RD_MENU_DRIVERS_STATION' | translate }}</span>
+            <div class="submenu">
+              <div *ngFor="let lane of track.lanes; let i = index" class="menu-item" (click)="onLaneSelect(i)">
+                {{ 'RD_LANE' | translate }} {{ i + 1 }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="menu-wrapper">
         <button class="menu-button-top" (click)="toggleWindowsMenu()">{{ 'RD_MENU_WINDOWS' | translate }}</button>

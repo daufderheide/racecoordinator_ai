@@ -7,7 +7,7 @@
       <div class="thermometer-fill" [style.height.%]="progressPercentage" [style.background-color]="foregroundColor"></div>
     </div>
     <div class="thermometer-label">
-      <span *ngIf="finishMethod === 'Timed'">{{ (finishValue - time) | number:'1.0-0' }}s</span>
+      <span *ngIf="finishMethod === 'Timed'">{{ (finishValue - time) | number:'1.1-1' }}s</span>
       <span *ngIf="finishMethod === 'Lap'">{{ (finishValue - (driverData?.lapCount || 0)) }}</span>
     </div>
   </div>
@@ -43,7 +43,7 @@
       <div class="thermometer-fill" [style.height.%]="fuelPercentage" [style.background-color]="foregroundColor"></div>
     </div>
     <div class="thermometer-label">
-      <span>{{ fuelPercentage }}%</span>
+      <span>{{ fuelPercentage | number:'1.0-0' }}%</span>
     </div>
   </div>
 

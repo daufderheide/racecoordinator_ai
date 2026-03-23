@@ -561,6 +561,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.isMenuOpen = !this.isMenuOpen;
     this.isFileMenuOpen = false; // Close other menus
     this.isWindowsMenuOpen = false;
+    this.isLanesMenuOpen = false;
   }
 
   toggleFileMenu() {
@@ -568,14 +569,26 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.isFileMenuOpen = !this.isFileMenuOpen;
     this.isMenuOpen = false; // Close other menus
     this.isWindowsMenuOpen = false;
+    this.isLanesMenuOpen = false;
   }
 
   isWindowsMenuOpen = false;
+  isLanesMenuOpen = false;
+
   toggleWindowsMenu() {
     console.log('Toggling Windows menu. Current state:', this.isWindowsMenuOpen);
     this.isWindowsMenuOpen = !this.isWindowsMenuOpen;
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
+    this.isLanesMenuOpen = false;
+  }
+
+  toggleLanesMenu() {
+    console.log('Toggling Lanes menu. Current state:', this.isLanesMenuOpen);
+    this.isLanesMenuOpen = !this.isLanesMenuOpen;
+    this.isFileMenuOpen = false;
+    this.isMenuOpen = false;
+    this.isWindowsMenuOpen = false;
   }
 
   onMenuSelect(action: string) {
@@ -709,6 +722,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       );
       this.heatResultsWindow = window.open(url, '_blank', 'width=1600,height=900,menubar=no,toolbar=no,location=no,status=no');
     }
+  }
+
+  onLaneSelect(laneIndex: number) {
+    console.log('Lane selected for Driver Station:', laneIndex);
+    this.isLanesMenuOpen = false; // Close menu
+
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/driver-station', laneIndex])
+    );
+    window.open(url, '_blank', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no');
   }
 
   onExitConfirm() {
