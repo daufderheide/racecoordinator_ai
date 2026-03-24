@@ -572,7 +572,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Elimina Corsia",
   "TE_HELP_LANE_FG_CONTENT": "Seleziona questo pulsante per cambiare il colore di primo piano delle corsie",
   "TE_HELP_LANE_FG_TITLE": "Colore di Primo Piano",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Modifica questo valore per impostare la lunghezza della corsia della pista. Inserisci un valore in piedi. Questo valore verrà utilizzato per i calcoli della velocità in miglia orarie e chilometri orari.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Modifica questo valore per impostare la lunghezza delle corsie della pista. Inserisci un valore in piedi. Questo valore verrà utilizzato per i calcoli della velocità in miglia orarie e chilometri oraria. Nota: 1 metro = 3,28084 piedi, e 1 piede = 0,3048 metri.",
   "TE_HELP_LANE_LENGTH_TITLE": "Lunghezza Corsia",
   "TE_HELP_NAME_CONTENT": "Puoi cambiare il nome usando questa casella. Il nome deve essere univoco rispetto a tutte le altre piste che potresti aver creato, altrimenti la tua configurazione non sarà valida.",
   "TE_HELP_NAME_TITLE": "Nome della Pista",

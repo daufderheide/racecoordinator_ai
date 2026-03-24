@@ -572,7 +572,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Supprimer la Voie",
   "TE_HELP_LANE_FG_CONTENT": "Sélectionnez ce bouton pour changer la couleur de premier plan des voies",
   "TE_HELP_LANE_FG_TITLE": "Couleur de Premier Plan",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Modifiez cette valeur pour définir la longueur de la voie du circuit. Saisissez une valeur en pieds. Cette valeur sera utilisée pour les calculs de vitesse en miles par heure et en kilomètres par heure.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Modifiez cette valeur pour définir la longueur des voies de piste. Entrez une valeur en pieds. Cette valeur sera utilisée pour les calculs de vitesse en miles par heure et en kilomètres par heure. Remarque : 1 mètre = 3,28084 pieds, et 1 pied = 0,3048 mètres.",
   "TE_HELP_LANE_LENGTH_TITLE": "Longueur de la Voie",
   "TE_HELP_NAME_CONTENT": "Vous pouvez changer le nom à l'aide de cette case. Le nom doit être unique par rapport à toutes les autres pistes que vous avez créées, sinon votre configuration sera invalide.",
   "TE_HELP_NAME_TITLE": "Nom de la Piste",

@@ -572,7 +572,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Delete Lane",
   "TE_HELP_LANE_FG_CONTENT": "Select this button to change the lanes foreground color",
   "TE_HELP_LANE_FG_TITLE": "Foreground Color",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Edit this value to set the tracks lane length. Enter a value in feet. This value will be used for miles per hour and kilometers per hour speed calculations",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Edit this value to set the tracks lane length. Enter a value in feet. This value will be used for miles per hour and kilometers per hour speed calculations. Note: 1 meter = 3.28084 feet, and 1 foot = 0.3048 meters.",
   "TE_HELP_LANE_LENGTH_TITLE": "Lane Length",
   "TE_HELP_NAME_CONTENT": "You can change the name using this box. The name must be unique to all other tracks you may have created or your configuration is invalid.",
   "TE_HELP_NAME_TITLE": "Track Name",
