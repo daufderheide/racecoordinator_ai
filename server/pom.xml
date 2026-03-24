@@ -14,8 +14,7 @@
     <build.dist.dir>target_test</build.dist.dir>
     <generated.sources.dir>${build.dist.dir}/generated-sources/protobuf/java</generated.sources.dir>
     <protobuf.java.version>3.25.1</protobuf.java.version>
-    <os.detected.classifier>osx-x86_64</os.detected.classifier>
-  </properties>
+      </properties>
   <dependencies>
     <dependency>
       <groupId>io.javalin</groupId>
