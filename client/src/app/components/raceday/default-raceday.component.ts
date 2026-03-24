@@ -700,8 +700,42 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.isFileMenuOpen = false;
     if (action === 'EXIT') {
       this.showExitConfirmation = true;
+    } else if (action === 'EXPORT_CSV') {
+      this.exportToCsv();
     } else if (action === 'SAVE') {
       // Save logic here
+    }
+  }
+
+  async exportToCsv() {
+    try {
+      const suggestedName = `race_export_${this.race?.name || 'data'}.csv`;
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: suggestedName,
+        types: [{
+          description: 'CSV Files',
+          accept: { 'text/csv': ['.csv'] },
+        }],
+      });
+
+      this.dataService.exportRaceToCsv().subscribe({
+        next: async (csvData: string) => {
+          const writable = await handle.createWritable();
+          await writable.write(csvData);
+          await writable.close();
+          console.log('CSV Exported successfully');
+        },
+        error: (err: any) => {
+          console.error('Failed to export CSV', err);
+        }
+      });
+
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.log('User cancelled save');
+        return;
+      }
+      console.error('Save error', err);
     }
   }
 

@@ -15,8 +15,8 @@ cd "$(dirname "$0")/server"
 chmod +x generate_protos.sh
 
 # Use target_generated to avoid conflicts with locked target_dev
-export PROTO_DEST_DIR="$(pwd)/target_generated"
+export PROTO_DEST_DIR="$(pwd)/target_generated_3"
 mkdir -p "$PROTO_DEST_DIR"
 
 ./generate_protos.sh
-mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -Dapp.data.dir="$(pwd)/../data_v2"
+mvn -o compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp"

@@ -59,13 +59,15 @@ public class App {
     appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
     System.out.println("Using app data directory: " + appDataDir);
     String tmpDir = Paths.get(appDataDir, "server_temp").toString();
+    System.setProperty("de.flapdoodle.embed.io.tmpdir", tmpDir);
+    System.out.println("Set de.flapdoodle.embed.io.tmpdir to: " + tmpDir);
     try {
       java.nio.file.Path tmpPath = Paths.get(tmpDir);
       if (!Files.exists(tmpPath)) {
         Files.createDirectories(tmpPath);
       }
-      System.setProperty("java.io.tmpdir", tmpDir);
-      System.out.println("Set java.io.tmpdir to: " + tmpDir);
+//      System.setProperty("java.io.tmpdir", tmpDir);
+      System.out.println("Left java.io.tmpdir as default (commented out custom setter)");
     } catch (Exception e) {
       System.err.println("Failed to set java.io.tmpdir: " + e.getMessage());
     }
@@ -453,13 +455,15 @@ public class App {
 
       System.out.println("Bundled MongoDB not found. Starting embedded MongoDB via Flapdoodle...");
 
-      // Set temp directory for flapdoodle extraction
-      System.setProperty("de.flapdoodle.embed.io.tmpdir", appDataDir);
-      System.out.println("Using MongoDB data directory: " + dataDir);
+      String mongoTempDir = Paths.get(appDataDir, "mongo_temp").toString();
+      try {
+        java.nio.file.Files.createDirectories(Paths.get(mongoTempDir));
+      } catch (Exception e) {}
 
       de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
 
-      ImmutableMongod mongod = Mongod.instance();
+      ImmutableMongod mongod = Mongod.instance()
+          .withInitTempDirectory(de.flapdoodle.embed.process.transitions.InitTempDirectory.with(Paths.get(mongoTempDir)));
       if (osName != null) {
         System.out.println("Detected OS: " + osName + " (" + osArch + ")");
         String lowerArch = (osArch != null) ? osArch.toLowerCase() : "";

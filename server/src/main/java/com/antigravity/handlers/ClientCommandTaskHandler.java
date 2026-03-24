@@ -35,6 +35,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/close-interface", this::closeInterface);
     app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
     app.get("/api/serial-ports", this::getSerialPorts);
+    app.get("/api/races/current/export-csv", this::exportRaceCsv);
   }
 
   private void initializeRace(Context ctx) {
@@ -518,6 +519,33 @@ public class ClientCommandTaskHandler {
       }
     } catch (Exception e) {
       ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  private void exportRaceCsv(io.javalin.http.Context ctx) {
+    try {
+      com.antigravity.race.Race race = com.antigravity.race.ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      String csv;
+      synchronized (race) {
+        com.antigravity.race.OverallStandings standings = new com.antigravity.race.OverallStandings(
+            race.getRaceModel().getHeatScoring(),
+            race.getRaceModel().getOverallScoring());
+        standings.recalculate(race.getDrivers(), race.getHeats());
+        csv = com.antigravity.util.CsvExporter.export(race);
+      }
+
+      ctx.contentType("text/csv")
+          .header("Content-Disposition", "attachment; filename=\"race_export.csv\"")
+          .result(csv);
+    } catch (Exception e) {
+      System.err.println("Error exporting CSV: " + e.getMessage());
+      e.printStackTrace();
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }
 }

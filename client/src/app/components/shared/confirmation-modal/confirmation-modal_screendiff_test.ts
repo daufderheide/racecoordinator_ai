@@ -27,8 +27,8 @@ test.describe('Confirmation Modal Visuals', () => {
     const fileDropdown = page.locator('.menu-dropdown').first();
     await expect(fileDropdown).toBeVisible();
 
-    // Click Exit (first item in the dropdown)
-    await fileDropdown.locator('.menu-item').first().click();
+    // Click Exit (second item in the dropdown, after Export to CSV)
+    await fileDropdown.locator('.menu-item').nth(1).click();
 
     // Wait for confirmation modal
     const modal = page.locator('app-confirmation-modal');

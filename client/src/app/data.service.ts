@@ -97,7 +97,12 @@ export class DataService {
     return this.http.delete<any>(`${this.racesUrl}/${id}`);
   }
 
+  exportRaceToCsv(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, { responseType: 'text' });
+  }
+
   generateHeats(raceId: string, driverCount: number): Observable<any> {
+
     return this.http.post<any>(`http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`, {
       driverCount
     });
