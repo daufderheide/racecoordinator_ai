@@ -50,9 +50,10 @@ if ($null -eq $MvnCmd) {
 }
 
 if ($null -eq $MvnCmd) {
+    Write-Warning "mvn.cmd not found in PATH or common locations. Falling back to 'mvn'."
     $MvnExecutable = "mvn"
 } else {
-    $MvnExecutable = $MvnCmd.FullName
+    $MvnExecutable = "mvn.cmd"
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
