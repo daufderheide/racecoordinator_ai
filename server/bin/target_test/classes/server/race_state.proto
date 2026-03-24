@@ -1,0 +1,16 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RaceStateProto";
+
+enum RaceState {
+  UNKNOWN_STATE = 0;
+  NOT_STARTED = 1;
+  STARTING = 2;
+  RACING = 3;
+  PAUSED = 4;
+  HEAT_OVER = 5;
+  RACE_OVER = 6;
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package com.antigravity.proto;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+
+enum DemoPinId {
+  DEMO_PIN_ID_UNSPECIFIED = 0;
+  DEMO_PIN_ID_LANE_BASE_VALUE = 1;
+}

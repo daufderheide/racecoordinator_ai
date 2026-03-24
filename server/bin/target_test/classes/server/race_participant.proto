@@ -1,0 +1,24 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/driver_model.proto";
+import "client/team_model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RaceParticipantProto";
+
+message RaceParticipant {
+  string object_id = 1;
+  DriverModel driver = 2;
+  int32 rank = 3;
+  int32 total_laps = 4;
+  double total_time = 5;
+  double best_lap_time = 6;
+  double average_lap_time = 7;
+  double median_lap_time = 8;
+  double rank_value = 9;
+  int32 seed = 10;
+  TeamModel team = 11;
+  double fuel_level = 12;
+}

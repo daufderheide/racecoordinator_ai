@@ -1,0 +1,12 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "server/race_participant.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "OverallStandingsUpdateProto";
+
+message OverallStandingsUpdate {
+  repeated RaceParticipant participants = 1;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "SkipHeatProto";
+
+message SkipHeatRequest {
+  // Empty message to trigger skip heat
+}
+
+message SkipHeatResponse {
+  bool success = 1;
+  string message = 2;
+}

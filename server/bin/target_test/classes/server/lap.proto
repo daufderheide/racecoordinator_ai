@@ -1,0 +1,18 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "LapProto";
+
+message Lap {
+  string objectId = 1;
+  double lap_time = 2;
+  int32 lap_number = 3;
+  double average_lap_time = 4;
+  double median_lap_time = 5;
+  double best_lap_time = 6;
+  int32 interfaceId = 7;
+  string driver_id = 8;
+  double fuel_level = 9;
+}

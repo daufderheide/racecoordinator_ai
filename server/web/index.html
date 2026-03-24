@@ -2,9 +2,28 @@
 <html>
 <head>
     <title>Race Coordinator Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        .version { color: #666; font-size: 0.9em; margin-top: 20px; }
+        .placeholder { margin-top: 30px; color: #333; }
+    </style>
 </head>
 <body>
     <h1>Server is running!</h1>
-    <p>This is a placeholder page. The Angular client is not yet built or linked.</p>
+    <div class="version">Version: <span id="server-version">Loading...</span></div>
+    <p class="placeholder">This is a placeholder page. The Angular client is not yet built or linked.</p>
+    
+    <script>
+        // Fetch server version dynamically
+        fetch('/api/version')
+            .then(response => response.text())
+            .then(version => {
+                document.getElementById('server-version').textContent = version;
+            })
+            .catch(error => {
+                document.getElementById('server-version').textContent = 'Unknown';
+                console.error('Failed to fetch version:', error);
+            });
+    </script>
 </body>
 </html>

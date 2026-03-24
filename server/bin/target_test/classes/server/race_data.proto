@@ -1,0 +1,32 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "server/race_time.proto";
+import "server/lap.proto";
+import "server/race.proto";
+
+import "server/reaction_time.proto";
+import "server/standings_update.proto";
+import "server/overall_standings_update.proto";
+import "server/race_state.proto";
+
+import "server/car_data.proto";
+import "server/segment.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RaceDataProto";
+
+message RaceData {
+  oneof data {
+    RaceTime race_time = 1;
+    Lap lap = 2;
+    Race race = 3;
+    ReactionTime reaction_time = 4;
+    StandingsUpdate standings_update = 5;
+    OverallStandingsUpdate overall_standings_update = 6;
+     RaceState race_state = 7;
+     CarData car_data = 8;
+     Segment segment = 9;
+   }
+}

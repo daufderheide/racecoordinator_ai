@@ -1,0 +1,10 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ModelProto";
+
+message Model {
+  string entity_id = 1;
+}

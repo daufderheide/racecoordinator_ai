@@ -1,0 +1,5 @@
+syntax = "proto3";
+package com.antigravity;
+
+// This file is used as a placeholder or entry point.
+// All proto files in this directory are compiled individually by the server build.

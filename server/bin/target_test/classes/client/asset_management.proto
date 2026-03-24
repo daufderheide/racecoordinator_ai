@@ -1,0 +1,41 @@
+syntax = "proto3";
+package com.antigravity;
+
+// No imports needed
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "AssetManagementProto";
+
+message ListAssetsRequest {
+  // Empty request
+}
+
+message UploadAssetRequest {
+  string name = 1;
+  string type = 2; // "image" or "sound"
+  bytes data = 3;
+}
+
+message DeleteAssetRequest {
+  string id = 1;
+}
+
+message RenameAssetRequest {
+  string id = 1;
+  string new_name = 2;
+}
+
+message SaveImageSetRequest {
+  string id = 1; // Optional, for editing existing sets
+  string name = 2;
+  repeated SaveImageSetEntry entries = 3;
+}
+
+message SaveImageSetEntry {
+  string name = 1;
+  int32 percentage = 2;
+  string url = 3;   // Used if referencing an already uploaded image
+  bytes data = 4;  // Used if uploading a new image as part of the set
+}
+
