@@ -573,7 +573,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Excluir Pista",
   "TE_HELP_LANE_FG_CONTENT": "Selecione este botão para alterar a cor do primeiro plano das pistas",
   "TE_HELP_LANE_FG_TITLE": "Cor do Primeiro Plano",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Edite este valor para definir o comprimento da pista do circuito. Insira um valor em pés. Este valor será usado para os cálculos de velocidade em milhas por hora e quilômetros por hora.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Edite este valor para definir o comprimento das pistas da pista. Insira um valor em pés. Este valor será utilizado para os cálculos de velocidade em milhas por hora e quilômetros por hora. Nota: 1 metro = 3,28084 pés, e 1 pé = 0,3048 metros.",
   "TE_HELP_LANE_LENGTH_TITLE": "Comprimento da Pista",
   "TE_HELP_NAME_CONTENT": "Você pode alterar o nome usando esta caixa. O nome deve ser exclusivo em relação a todas as outras pistas que você possa ter criado, caso contrário, sua configuração será inválida.",
   "TE_HELP_NAME_TITLE": "Nome da Pista",

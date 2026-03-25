@@ -573,7 +573,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Baan verwijderen",
   "TE_HELP_LANE_FG_CONTENT": "Selecteer deze knop om de voorgrondkleur van de banen te wijzigen",
   "TE_HELP_LANE_FG_TITLE": "Voorgrondkleur",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Bewerk deze waarde om de baanlengte van het circuit in te stellen. Voer een waarde in in voet. Deze waarde wordt gebruikt voor snelheidsberekeningen in mijlen per uur en kilometers per uur.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Bewerk deze waarde om de baanlengte van het circuit in te stellen. Voer een waarde in voet in. Deze waarde zal worden gebruikt voor snelheidsberekeningen in mijlen per uur en kilometers per uur. Let op: 1 meter = 3,28084 voet, en 1 voet = 0,3048 meter.",
   "TE_HELP_LANE_LENGTH_TITLE": "Baanlengte",
   "TE_HELP_NAME_CONTENT": "U kunt de naam wijzigen via dit vak. De naam moet uniek zijn voor alle andere circuits die u heeft gemaakt, anders is uw configuratie ongeldig.",
   "TE_HELP_NAME_TITLE": "Circuitnaam",

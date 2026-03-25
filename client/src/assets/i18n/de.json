@@ -573,7 +573,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Spur löschen",
   "TE_HELP_LANE_FG_CONTENT": "Wählen Sie diese Schaltfläche, um die Vordergrundfarbe der Spuren zu ändern",
   "TE_HELP_LANE_FG_TITLE": "Vordergrundfarbe",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Bearbeiten Sie diesen Wert, um die Spurlänge der Strecke festzulegen. Geben Sie einen Wert in Fuß ein. Dieser Wert wird für Geschwindigkeitsberechnungen in Meilen pro Stunde und Kilometern pro Stunde verwendet.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Bearbeiten Sie diesen Wert, um die Spurlänge der Strecke festzulegen. Geben Sie einen Wert in Fuß ein. Dieser Wert wird für Geschwindigkeitsberechnungen in Meilen pro Stunde und Kilometern pro Stunde verwendet. Hinweis: 1 Meter = 3,28084 Fuß, und 1 Fuß = 0,3048 Meter.",
   "TE_HELP_LANE_LENGTH_TITLE": "Spurlänge",
   "TE_HELP_NAME_CONTENT": "Sie können den Namen über dieses Feld ändern. Der Name muss gegenüber allen anderen von Ihnen erstellten Strecken eindeutig sein, andernfalls ist Ihre Konfiguration ungültig.",
   "TE_HELP_NAME_TITLE": "Streckenname",

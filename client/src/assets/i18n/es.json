@@ -573,7 +573,7 @@
   "TE_HELP_LANE_DELETE_TITLE": "Eliminar Carril",
   "TE_HELP_LANE_FG_CONTENT": "Seleccione este botón para cambiar el color de primer plano de los carriles",
   "TE_HELP_LANE_FG_TITLE": "Color de Primer Plano",
-  "TE_HELP_LANE_LENGTH_CONTENT": "Edite este valor para establecer la longitud del carril de la pista. Introduzca un valor en pies. Este valor se utilizará para los cálculos de velocidad en millas por hora y kilómetros por hora.",
+  "TE_HELP_LANE_LENGTH_CONTENT": "Edite este valor para establecer la longitud de los carriles de la pista. Introduzca un valor en pies. Este valor se utilizará para los cálculos de velocidad en millas por hora y kilómetros por hora. Nota: 1 metro = 3,28084 pies, y 1 pie = 0,3048 metros.",
   "TE_HELP_LANE_LENGTH_TITLE": "Longitud del Carril",
   "TE_HELP_NAME_CONTENT": "Puede cambiar el nombre usando este cuadro. El nombre debe ser único para todas las demás pistas que haya creado o su configuración no será válida.",
   "TE_HELP_NAME_TITLE": "Nombre de la Pista",
