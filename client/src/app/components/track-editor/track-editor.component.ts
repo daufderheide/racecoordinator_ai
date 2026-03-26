@@ -657,9 +657,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
     const wasNew = isSaveAsNew || finalTrack.entity_id === 'new';
 
+    // Inject @id for Jackson identity resolution
+    const payload: any = {
+      ...finalTrack,
+      "@id": 1,
+      lanes: finalTrack.lanes.map((l, i) => ({
+        ...l,
+        "@id": i + 2
+      }))
+    };
+
     const obs = wasNew
-      ? this.dataService.createTrack({ ...finalTrack, entity_id: 'new' })
-      : this.dataService.updateTrack(finalTrack.entity_id, finalTrack);
+      ? this.dataService.createTrack({ ...payload, entity_id: 'new' })
+      : this.dataService.updateTrack(payload.entity_id, payload);
 
     this.subscriptions.push(obs.subscribe({
       next: (result) => {

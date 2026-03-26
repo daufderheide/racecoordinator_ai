@@ -49,6 +49,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   private boolean[] laneInPits;
   private long[] lastRefuelTimeMs;
   private long[] lastAnalogTimeMs;
+  private int[] lastPitOutState;
+  private int[] lastLapPinState;
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
 
   // Data sent from PC to Arduino
@@ -95,9 +97,13 @@ public class ArduinoProtocol extends DefaultProtocol {
     laneInPits = new boolean[numLanes];
     lastRefuelTimeMs = new long[numLanes];
     lastAnalogTimeMs = new long[numLanes];
+    lastPitOutState = new int[numLanes];
+    lastLapPinState = new int[numLanes];
     for (int i = 0; i < numLanes; i++) {
       lastRefuelTimeMs[i] = 0;
       lastAnalogTimeMs[i] = 0;
+      lastPitOutState[i] = -1;
+      lastLapPinState[i] = -1;
     }
   }
 
@@ -579,6 +585,9 @@ public class ArduinoProtocol extends DefaultProtocol {
         case PIT_OUT:
           onPitOut(pinConfig.laneIndex, state);
           break;
+        case PIT_IN_OUT:
+          onPitInOut(pinConfig.laneIndex, state);
+          break;
         case RESERVED:
           // Ignore
           break;
@@ -663,6 +672,8 @@ public class ArduinoProtocol extends DefaultProtocol {
       if (listener != null) {
         // Important, send the segment time first so that if this lap finishes the
         // drivers race the segment is still counted.
+        // Important, send the segment time first so that if this lap finishes the
+        // drivers race the segment is still counted.
         if (config.useLapsForSegments) {
           onSegmentCounter(laneIndex, state, interfaceId);
         }
@@ -671,17 +682,34 @@ public class ArduinoProtocol extends DefaultProtocol {
 
         if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN
             || config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
-          updatePitState(laneIndex, true);
+          if (state == wantState) {
+            updatePitState(laneIndex, true);
+          }
         } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-          updatePitState(laneIndex, false);
+          if (hasPitInConfigured(laneIndex)) {
+            // Exit on transition from want to !want
+            if (state != wantState && lastLapPinState[laneIndex] == wantState) {
+              updatePitState(laneIndex, false);
+            }
+          } else {
+            // Standard exit on want state
+            if (state == wantState) {
+              updatePitState(laneIndex, false);
+            }
+          }
         }
       }
     } else {
       // Not in "want" state (car has cleared the sensor)
       if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
         updatePitState(laneIndex, false);
+      } else if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
+        if (hasPitInConfigured(laneIndex) && lastLapPinState[laneIndex] == wantState) {
+          updatePitState(laneIndex, false);
+        }
       }
     }
+    lastLapPinState[laneIndex] = state;
   }
 
   private void onSegmentCounter(int laneIndex, int state, int interfaceId) {
@@ -736,6 +764,19 @@ public class ArduinoProtocol extends DefaultProtocol {
     return false;
   }
 
+  private boolean hasPitOutConfigured(int laneIndex) {
+    if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
+      return true;
+    }
+
+    for (PinConfig pc : pinLookup.values()) {
+      if (pc.behavior == InputBehavior.PIT_OUT && (pc.laneIndex == -1 || pc.laneIndex == laneIndex)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void onPitIn(int laneIndex, int state) {
     if (laneIndex < 0 || laneIndex >= numLanes) {
       return;
@@ -762,12 +803,29 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     if (hasPitInConfigured(laneIndex)) {
-      if (state == wantState) {
+      // Exit on transition from want state to !wantState
+      if (lastPitOutState[laneIndex] == wantState && state != wantState) {
         updatePitState(laneIndex, false);
       }
     } else {
+      // Pit Out Only: acts as a toggle (as long as sensor is triggered, car is in pits)
       updatePitState(laneIndex, state == wantState);
     }
+    lastPitOutState[laneIndex] = state;
+  }
+
+  private void onPitInOut(int laneIndex, int state) {
+    if (laneIndex < 0 || laneIndex >= numLanes) {
+      return;
+    }
+
+    int wantState = 0;
+    if (config.normallyClosedLaneSensors) {
+      wantState = 1;
+    }
+
+    // Refuel as long as car is over sensor
+    updatePitState(laneIndex, state == wantState);
   }
 
   protected void updatePitState(int laneIndex, boolean inPits) {
@@ -843,6 +901,10 @@ public class ArduinoProtocol extends DefaultProtocol {
           code < PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.PIT_OUT;
         laneIndex = code - PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber();
+      } else if (code >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE.getNumber() &&
+          code < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE.getNumber() + numLanes) {
+        behavior = InputBehavior.PIT_IN_OUT;
+        laneIndex = code - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE.getNumber();
       } else if (code >= PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() &&
           code < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() + numLanes) {
         behavior = InputBehavior.VOLTAGE_LEVEL;
@@ -863,6 +925,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     LANE_RELAY,
     PIT_IN,
     PIT_OUT,
+    PIT_IN_OUT,
     // TODO(aufderheide): Rename this to VOLTAGE_DIVIDER
     VOLTAGE_LEVEL,
     RESERVED

@@ -3823,6 +3823,7 @@ export const com = $root.com = (() => {
          * @property {number} BEHAVIOR_PIT_IN_BASE=5000 BEHAVIOR_PIT_IN_BASE value
          * @property {number} BEHAVIOR_PIT_OUT_BASE=6000 BEHAVIOR_PIT_OUT_BASE value
          * @property {number} BEHAVIOR_VOLTAGE_LEVEL_BASE=7000 BEHAVIOR_VOLTAGE_LEVEL_BASE value
+         * @property {number} BEHAVIOR_PIT_IN_OUT_BASE=8000 BEHAVIOR_PIT_IN_OUT_BASE value
          */
         antigravity.PinBehavior = (function() {
             const valuesById = {}, values = Object.create(valuesById);
@@ -3837,6 +3838,7 @@ export const com = $root.com = (() => {
             values[valuesById[5000] = "BEHAVIOR_PIT_IN_BASE"] = 5000;
             values[valuesById[6000] = "BEHAVIOR_PIT_OUT_BASE"] = 6000;
             values[valuesById[7000] = "BEHAVIOR_VOLTAGE_LEVEL_BASE"] = 7000;
+            values[valuesById[8000] = "BEHAVIOR_PIT_IN_OUT_BASE"] = 8000;
             return values;
         })();
 
@@ -3847,12 +3849,14 @@ export const com = $root.com = (() => {
          * @property {number} LAP_PIN_PIT_NONE=0 LAP_PIN_PIT_NONE value
          * @property {number} LAP_PIN_PIT_IN=1 LAP_PIN_PIT_IN value
          * @property {number} LAP_PIN_PIT_OUT=2 LAP_PIN_PIT_OUT value
+         * @property {number} LAP_PIN_PIT_IN_OUT=3 LAP_PIN_PIT_IN_OUT value
          */
         antigravity.LapPinPitBehavior = (function() {
             const valuesById = {}, values = Object.create(valuesById);
             values[valuesById[0] = "LAP_PIN_PIT_NONE"] = 0;
             values[valuesById[1] = "LAP_PIN_PIT_IN"] = 1;
             values[valuesById[2] = "LAP_PIN_PIT_OUT"] = 2;
+            values[valuesById[3] = "LAP_PIN_PIT_IN_OUT"] = 3;
             return values;
         })();
 
@@ -4305,6 +4309,7 @@ export const com = $root.com = (() => {
                     case 0:
                     case 1:
                     case 2:
+                    case 3:
                         break;
                     }
                 if (message.voltageConfigs != null && message.hasOwnProperty("voltageConfigs")) {
@@ -4390,6 +4395,10 @@ export const com = $root.com = (() => {
                 case "LAP_PIN_PIT_OUT":
                 case 2:
                     message.lapPinPitBehavior = 2;
+                    break;
+                case "LAP_PIN_PIT_IN_OUT":
+                case 3:
+                    message.lapPinPitBehavior = 3;
                     break;
                 }
                 if (object.voltageConfigs) {

@@ -1629,14 +1629,16 @@ export namespace com {
             BEHAVIOR_RELAY_BASE = 4000,
             BEHAVIOR_PIT_IN_BASE = 5000,
             BEHAVIOR_PIT_OUT_BASE = 6000,
-            BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
+            BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000,
+            BEHAVIOR_PIT_IN_OUT_BASE = 8000
         }
 
         /** LapPinPitBehavior enum. */
         enum LapPinPitBehavior {
             LAP_PIN_PIT_NONE = 0,
             LAP_PIN_PIT_IN = 1,
-            LAP_PIN_PIT_OUT = 2
+            LAP_PIN_PIT_OUT = 2,
+            LAP_PIN_PIT_IN_OUT = 3
         }
 
         /** PinId enum. */

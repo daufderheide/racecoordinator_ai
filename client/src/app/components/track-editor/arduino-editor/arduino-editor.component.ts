@@ -360,6 +360,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000)
       return `relay_${val - com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE}`;
 
+    if (val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE)
+      return `pitin_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE}`;
+
+    if (val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE)
+      return `pitout_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE}`;
+
+    if (val >= com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000)
+      return `pitinout_${val - com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE}`;
+
     if (val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED) return 'reserved';
 
     if (val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000)
@@ -391,6 +400,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     } else if (action.startsWith('voltage_')) {
       const laneIndex = parseInt(action.split('_')[1], 10);
       val = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + laneIndex;
+    } else if (action.startsWith('pitin_')) {
+      const laneIndex = parseInt(action.split('_')[1], 10);
+      val = com.antigravity.PinBehavior.BEHAVIOR_PIT_IN_BASE + laneIndex;
+    } else if (action.startsWith('pitout_')) {
+      const laneIndex = parseInt(action.split('_')[1], 10);
+      val = com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
+    } else if (action.startsWith('pitinout_')) {
+      const laneIndex = parseInt(action.split('_')[1], 10);
+      val = (com.antigravity.PinBehavior as any).BEHAVIOR_PIT_IN_OUT_BASE + laneIndex;
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
@@ -441,6 +459,21 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       otherActions.push({
         label: this.translationService.translate('AE_PIN_RELAY_LANE', { lane: i + 1 }),
         value: `relay_${i}`
+      });
+      // Pit In
+      otherActions.push({
+        label: this.translationService.translate('AE_PIN_PIT_IN_LANE', { lane: i + 1 }),
+        value: `pitin_${i}`
+      });
+      // Pit Out
+      otherActions.push({
+        label: this.translationService.translate('AE_PIN_PIT_OUT_LANE', { lane: i + 1 }),
+        value: `pitout_${i}`
+      });
+      // Pit In/Out
+      otherActions.push({
+        label: this.translationService.translate('AE_PIN_PIT_IN_OUT_LANE', { lane: i + 1 }),
+        value: `pitinout_${i}`
       });
     });
 

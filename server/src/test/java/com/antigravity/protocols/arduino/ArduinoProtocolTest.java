@@ -421,14 +421,70 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
     serialConnection.injectData(versionMsg);
 
-    // Trigger D4 low (Pit In - NO means 0 triggers) -> In pits
+    // Trigger D5 high (Pit Out - transition from 0 to 1 should trigger Main)
+    byte[] pitOutHigh = { 0x49, 0x44, 0x05, 0x01, 0x3B };
+    serialConnection.injectData(pitOutHigh);
+    assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
+  }
+
+  @Test
+  public void testPitDetection_PitInOutPin() {
+    // Configure D4 as Pit In/Out (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE.getNumber() + 0);
+    config.lapPinPitBehavior = ArduinoConfig.LapPinPitBehavior.NONE;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Trigger D4 low (Pit In/Out - wantState is 0) -> In pits
+    byte[] pitInOutLow = { 0x49, 0x44, 0x04, 0x00, 0x3B };
+    serialConnection.injectData(pitInOutLow);
+    assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
+
+    // Trigger D4 high (Pit In/Out - !wantState) -> Out of pits
+    byte[] pitInOutHigh = { 0x49, 0x44, 0x04, 0x01, 0x3B };
+    serialConnection.injectData(pitInOutHigh);
+    assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
+  }
+
+  @Test
+  public void testPitDetection_PitInAndOutTransition() {
+    // Configure D4 as Pit In (Base + 0), D5 as Pit Out (Base + 0)
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_IN_BASE.getNumber() + 0);
+    config.digitalIds.set(5, com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_OUT_BASE.getNumber() + 0);
+    config.lapPinPitBehavior = ArduinoConfig.LapPinPitBehavior.NONE;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject Version to verify
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Trigger D4 low (Pit In - wantState is 0) -> In pits
     byte[] pitInLow = { 0x49, 0x44, 0x04, 0x00, 0x3B };
     serialConnection.injectData(pitInLow);
     assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
 
-    // Trigger D5 low (Pit Out - NO means 0 triggers) -> Out of pits
-    byte[] pitOutLowTrigger = { 0x49, 0x44, 0x05, 0x00, 0x3B };
-    serialConnection.injectData(pitOutLowTrigger);
+    // Trigger D5 low (Pit Out - wantState is 0) -> STILL in pits (transition hasn't
+    // happened)
+    byte[] pitOutLow = { 0x49, 0x44, 0x05, 0x00, 0x3B };
+    serialConnection.injectData(pitOutLow);
+    assertEquals(com.antigravity.protocols.CarLocation.PitRow, listener.lastLocation);
+
+    // Trigger D5 high (Pit Out - transition 0 -> 1) -> Out of pits
+    byte[] pitOutHigh = { 0x49, 0x44, 0x05, 0x01, 0x3B };
+    serialConnection.injectData(pitOutHigh);
     assertEquals(com.antigravity.protocols.CarLocation.Main, listener.lastLocation);
   }
 
@@ -534,10 +590,13 @@ public class ArduinoProtocolTest {
 
     assertEquals("Next refuel scheduler report should have elapsed time", 0.1, listener.lastCarData.getTime(), 0.001);
 
-    // Leave the pit via Pit Out (D5 LOW - NO means 0 triggers)
-    byte[] pitOutLowTrigger = { 0x49, 0x44, 0x05, 0x00, 0x3B };
+    // Leave the pit via Pit Out transition (D5 LOW then HIGH)
+    byte[] pitOutLow = { 0x49, 0x44, 0x05, 0x00, 0x3B };
+    byte[] pitOutHigh = { 0x49, 0x44, 0x05, 0x01, 0x3B };
     protocol.advanceTime(200);
-    serialConnection.injectData(pitOutLowTrigger);
+    serialConnection.injectData(pitOutLow);
+    protocol.advanceTime(10);
+    serialConnection.injectData(pitOutHigh);
 
     assertEquals("Exit report should have delta 0", 0.0, listener.lastCarData.getTime(), 0.001);
     assertEquals("Cannot refuel on pit exit", false, listener.lastCarData.getCanRefuel());
