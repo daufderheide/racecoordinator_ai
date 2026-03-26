@@ -12,7 +12,6 @@ import org.junit.Test;
 import com.antigravity.mocks.MockScheduler;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
-import com.antigravity.proto.PinId;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.CarData;
@@ -343,6 +342,28 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testSetMainPower_NormallyClosed() {
+    // Configure Pin 4 as Main Relay
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY.getNumber());
+    config.normallyClosedRelays = true;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Turn ON (should be LOW)
+    protocol.setMainPower(true);
+    byte[] expectedOn = { 0x4F, 0x44, 0x04, 0x00, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedOn, serialConnection.lastWrittenData);
+
+    // Turn OFF (should be HIGH)
+    protocol.setMainPower(false);
+    byte[] expectedOff = { 0x4F, 0x44, 0x04, 0x01, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedOff, serialConnection.lastWrittenData);
+  }
+
+  @Test
   public void testSetLanePower() {
     // Configure Pin 5 as Relay for Lane 0 (Base + 0)
     // Configure Pin 6 as Relay for Lane 1 (Base + 1)
@@ -373,6 +394,29 @@ public class ArduinoProtocolTest {
     serialConnection.lastWrittenData = null;
     protocol.setLanePower(true, 2);
     org.junit.Assert.assertNull(serialConnection.lastWrittenData);
+  }
+
+  @Test
+  public void testSetLanePower_NormallyClosed() {
+    // Configure Pin 5 as Relay for Lane 0
+    config.digitalIds = new ArrayList<>(
+        Collections.nCopies(10, com.antigravity.proto.PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    int relayBase = com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE.getNumber();
+    config.digitalIds.set(5, relayBase + 0);
+    config.normallyClosedRelays = true;
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Turn Lane 0 ON (should be LOW)
+    protocol.setLanePower(true, 0);
+    byte[] expectedLane0On = { 0x4F, 0x44, 0x05, 0x00, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedLane0On, serialConnection.lastWrittenData);
+
+    // Turn Lane 0 OFF (should be HIGH)
+    protocol.setLanePower(false, 0);
+    byte[] expectedLane0Off = { 0x4F, 0x44, 0x05, 0x01, 0x3B };
+    org.junit.Assert.assertArrayEquals(expectedLane0Off, serialConnection.lastWrittenData);
   }
 
   @Test

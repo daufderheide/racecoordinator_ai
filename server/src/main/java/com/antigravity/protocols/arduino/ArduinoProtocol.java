@@ -989,9 +989,10 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
+    boolean isHigh = on != config.normallyClosedRelays;
     for (PinConfig pinConfig : pinLookup.values()) {
       if (pinConfig.behavior == InputBehavior.MAIN_RELAY) {
-        setPinState(pinConfig.isDigital, pinConfig.pin, on);
+        setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
     }
   }
@@ -1014,9 +1015,10 @@ public class ArduinoProtocol extends DefaultProtocol {
       return;
     }
 
+    boolean isHigh = on != config.normallyClosedRelays;
     for (PinConfig pinConfig : pinLookup.values()) {
       if (pinConfig.behavior == InputBehavior.LANE_RELAY && pinConfig.laneIndex == lane) {
-        setPinState(pinConfig.isDigital, pinConfig.pin, on);
+        setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
       }
     }
   }
