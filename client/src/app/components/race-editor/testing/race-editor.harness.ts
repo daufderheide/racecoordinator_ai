@@ -5,7 +5,7 @@ export class RaceEditorHarness extends ComponentHarness implements RaceEditorHar
   static hostSelector = RaceEditorHarnessBase.hostSelector;
 
   protected getNameEl = this.locatorFor(RaceEditorHarnessBase.selectors.nameInput);
-  protected getDuplicateBtn = this.locatorFor(RaceEditorHarnessBase.selectors.duplicateBtn);
+  protected getCopyBtn = this.locatorFor(RaceEditorHarnessBase.selectors.copyBtn);
   protected getDriverCountEl = this.locatorFor(RaceEditorHarnessBase.selectors.driverCountInput);
   protected getRotationSelectEl = this.locatorFor(RaceEditorHarnessBase.selectors.rotationSelect);
   protected getTrackSelectEl = this.locatorFor(RaceEditorHarnessBase.selectors.trackSelect);
@@ -21,8 +21,8 @@ export class RaceEditorHarness extends ComponentHarness implements RaceEditorHar
     await input.sendKeys(name);
   }
 
-  async clickDuplicate(): Promise<void> {
-    const btn = await this.getDuplicateBtn();
+  async clickCopy(): Promise<void> {
+    const btn = await this.getCopyBtn();
     await btn.click();
     // Duplication may trigger async creates loaded internally.
   }

@@ -168,9 +168,9 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         position: 'bottom'
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TMM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TMM_HELP_HELP_CONTENT'),
+        selector: '#add-item-btn',
+        title: this.translationService.translate('TMM_HELP_CREATE_TITLE'),
+        content: this.translationService.translate('TMM_HELP_CREATE_CONTENT'),
         position: 'bottom'
       },
       {
@@ -180,10 +180,10 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         position: 'bottom'
       },
       {
-        selector: '#create-team-btn',
-        title: this.translationService.translate('TMM_HELP_CREATE_TITLE'),
-        content: this.translationService.translate('TMM_HELP_CREATE_CONTENT'),
-        position: 'top'
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TMM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TMM_HELP_HELP_CONTENT'),
+        position: 'bottom'
       }
     ];
     this.helpService.startGuide(steps);

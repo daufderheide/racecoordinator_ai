@@ -299,6 +299,42 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         title: this.translationService.translate('RM_HELP_WELCOME_TITLE'),
         content: this.translationService.translate('RM_HELP_WELCOME_CONTENT'),
         position: 'center'
+      },
+      {
+        selector: '.sidebar-list',
+        title: this.translationService.translate('TM_HELP_SIDEBAR_TITLE'),
+        content: this.translationService.translate('RM_HELP_WELCOME_CONTENT'), // Reuse for now or add new keys if they exist
+        position: 'right'
+      },
+      {
+        selector: '.detail-panel',
+        title: this.translationService.translate('TM_HELP_DETAIL_TITLE'),
+        content: this.translationService.translate('RM_HELP_WELCOME_CONTENT'),
+        position: 'left'
+      },
+      {
+        selector: '#edit-track-btn',
+        title: this.translationService.translate('TM_HELP_EDIT_TITLE'),
+        content: this.translationService.translate('TM_HELP_EDIT_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#add-item-btn',
+        title: this.translationService.translate('RM_CREATE_NEW'),
+        content: this.translationService.translate('TM_HELP_CREATE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#delete-track-btn',
+        title: this.translationService.translate('RM_BTN_DELETE_RACE'),
+        content: this.translationService.translate('TM_HELP_DELETE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#help-track-btn',
+        title: this.translationService.translate('RDS_MENU_TUTORIAL'),
+        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        position: 'bottom'
       }
     ];
     this.helpService.startGuide(steps);

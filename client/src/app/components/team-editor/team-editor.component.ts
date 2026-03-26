@@ -299,7 +299,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTeam) return;
+    if (!this.editingTeam || this.isSaving) return;
     if (!isSaveAsNew && !this.hasChanges()) return;
 
     this.isSaving = true;
@@ -326,17 +326,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.isAutoSaving = false;
         if (this.editingTeam) {
-          this.editingTeam.entity_id = result.entity_id;
-          const savedTeam = this.cloneTeam(teamToSend);
-          savedTeam.entity_id = result.entity_id;
+          const newId = result.entity_id || result.entityId;
+          this.editingTeam.entity_id = newId;
+          const savedTeam = this.cloneTeam(this.editingTeam);
           this.undoManager.resetTracking(savedTeam);
         }
         if (wasNew) {
+          const newId = result.entity_id || result.entityId;
           if (isAutoSave) {
-            const url = this.router.serializeUrl(this.router.createUrlTree(['/team-editor'], { queryParams: { id: result.entity_id } }));
+            const url = this.router.serializeUrl(this.router.createUrlTree(['/team-editor'], { queryParams: { id: newId } }));
             this.location.replaceState(url);
           } else {
-            this.router.navigate(['/team-editor'], { queryParams: { id: result.entity_id } });
+            this.router.navigate(['/team-editor'], { queryParams: { id: newId } });
           }
         }
         this.refreshTeamList();
@@ -350,6 +351,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         if (this.hasChanges()) {
           this.autoSaveTeam();
         }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to save team', err);
@@ -415,8 +417,20 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   saveAsNew() {
-    if (!this.editingTeam) return;
+    if (!this.editingTeam || this.isSaving) return;
+    
+    this.isSaving = true; // Lock immediately to prevent auto-save from starting
     this.editingTeam.name = this.generateUniqueName(this.editingTeam.name);
+    
+    // Sync the UndoManager with the new name. 
+    // This will trigger stateCommitted$ but autoSaveTeam will exit because isSaving is true.
+    this.undoManager.commitState(); 
+    
+    // Proceed with the save as new. updateTeam(true) would return early now, 
+    // so we call saveTeamData directly or reset isSaving.
+    // Let's reset isSaving so updateTeam(true) can handle it normally, 
+    // but the gap is too small for autoSaveTeam to slip in.
+    this.isSaving = false;
     this.updateTeam(true);
   }
 
@@ -472,10 +486,16 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         position: 'left'
       },
       {
-        selector: '#team-duplicate-btn',
+        selector: '#copy-item-btn',
         title: this.translationService.translate('TEM_HELP_DUPLICATE_TITLE'),
         content: this.translationService.translate('TEM_HELP_DUPLICATE_CONTENT'),
-        position: 'top'
+        position: 'bottom'
+      },
+      {
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        position: 'bottom'
       }
     ];
 

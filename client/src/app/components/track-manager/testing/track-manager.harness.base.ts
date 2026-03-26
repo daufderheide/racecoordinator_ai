@@ -5,7 +5,7 @@ export abstract class TrackManagerHarnessBase {
 
   static readonly selectors = {
     trackItem: '.sidebar-list .list-item',
-    createButton: '#create-track-btn',
+    createButton: '#add-item-btn',
     detailHeader: '.detail-panel .detail-header h2',
     itemName: '.item-name',
     laneExpanderHeader: '.lane-viz-container .section-header',

@@ -5,7 +5,7 @@ export abstract class TeamManagerHarnessBase {
     teamRow: '.list-container .list-item',
     configNameInput: '.detail-header h2',
     memberCountDisplay: '.member-count-display',
-    newTeamBtn: '#create-team-btn',
+    newTeamBtn: '#add-item-btn',
     editBtn: '#edit-track-btn',
     deleteBtn: '#delete-track-btn',
     nameCell: '.item-name'

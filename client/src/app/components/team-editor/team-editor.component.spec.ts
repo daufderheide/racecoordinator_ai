@@ -58,6 +58,18 @@ class MockEditorTitleComponent {
   @Input() backConfirmTitle: string = '';
   @Input() backConfirmMessage: string = '';
   @Input() undoManager: any;
+  @Input() showUndo: boolean = true;
+  @Input() showRedo: boolean = true;
+  @Input() showHelp: boolean = true;
+  @Input() showCopy: boolean = false;
+  @Input() showAdd: boolean = false;
+  @Input() showDelete: boolean = false;
+  @Input() isSaving: boolean = false;
+  @Output() help = new EventEmitter<void>();
+  @Output() back = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<void>();
+  @Output() add = new EventEmitter<void>();
+  @Output() delete = new EventEmitter<void>();
 }
 
 @Component({ selector: 'app-help-overlay', template: '', standalone: false })

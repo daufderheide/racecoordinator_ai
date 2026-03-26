@@ -507,10 +507,16 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         position: 'bottom'
       },
       {
-        selector: '#driver-duplicate-btn',
+        selector: '#copy-item-btn',
         title: this.translationService.translate('DE_HELP_DUPLICATE_TITLE'),
         content: this.translationService.translate('DE_HELP_DUPLICATE_CONTENT'),
-        position: 'top'
+        position: 'bottom'
+      },
+      {
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        position: 'bottom'
       }
     ];
 

@@ -8,7 +8,7 @@ export abstract class RaceManagerHarnessBase {
     detailPanel: '.detail-panel',
     summarySection: '.summary-section',
     deleteButton: '#delete-track-btn',
-    createButton: '#create-race-btn',
+    createButton: '#add-item-btn',
     confirmationModal: 'app-confirmation-modal'
   };
 

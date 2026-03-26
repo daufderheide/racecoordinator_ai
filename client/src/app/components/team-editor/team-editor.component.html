@@ -6,7 +6,10 @@
     backConfirmTitle="TEM_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="TEM_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"
+    [showCopy]="true"
+    [isSaving]="isSaving"
     (help)="startHelp()"
+    (copy)="saveAsNew()"
     (back)="onBackClicked()">
   </app-editor-title>
 
@@ -38,9 +41,6 @@
 
       <div class="editor-actions">
         <div class="spacer"></div>
-        <button id="team-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || hasChanges() || !editingTeam.name">
-          {{ 'TEM_BTN_SAVE_AS_NEW' | translate }}
-        </button>
       </div>
     </div>
 

@@ -5,8 +5,11 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <app-manager-header 
     [title]="'TMM_HEADER_TEAMS'" 
-    [showActions]="selectedTeam != null" 
+    [showActions]="true" 
+    [showEdit]="selectedTeam != null"
+    [showDelete]="selectedTeam != null"
     [isSaving]="isSaving" 
+    (add)="createNewTeam()"
     (edit)="updateTeam()" 
     (help)="startHelp()" 
     (delete)="deleteTeam()">
@@ -20,11 +23,6 @@
           [class.odd]="i % 2 !== 0">
           <div class="item-name">{{ team.name }}</div>
         </div>
-      </div>
-      <div class="list-actions">
-        <button id="create-team-btn" class="action-btn primary full-width" (click)="createNewTeam()">
-          {{ 'TMM_BTN_NEW_TEAM' | translate }}
-        </button>
       </div>
     </div>
 

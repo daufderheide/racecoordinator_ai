@@ -6,8 +6,19 @@
     <h1 class="page-title">{{ titleKey | translate }}</h1>
   </div>
   <div class="header-right">
-    <app-toolbar [showUndo]="showUndo" [showRedo]="showRedo" [showHelp]="showHelp" [undoManager]="undoManager"
-      (help)="onHelp()">
+    <app-toolbar 
+      [showUndo]="showUndo" 
+      [showRedo]="showRedo" 
+      [showHelp]="showHelp" 
+      [showAdd]="showAdd"
+      [showDelete]="showDelete"
+      [showCopy]="showCopy"
+      [isSaving]="isSaving"
+      [undoManager]="undoManager"
+      (help)="onHelp()"
+      (copy)="onCopy()"
+      (add)="onAdd()"
+      (delete)="onDelete()">
     </app-toolbar>
   </div>
 </div>

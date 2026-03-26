@@ -693,7 +693,7 @@ describe('RaceEditorComponent', () => {
 
     mockDataService.createRace.and.returnValue(of({ ...component.editingRace, entity_id: '2', name: 'Grand Prix_1' }));
 
-    await harness.clickDuplicate();
+    component.saveAsNew();
     fixture.detectChanges();
     tick();
 

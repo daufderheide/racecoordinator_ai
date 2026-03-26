@@ -7,13 +7,17 @@
   <div class="header-right">
     <div class="header-actions" *ngIf="showActions">
       <app-toolbar 
+        [showAdd]="showAdd"
         [showEdit]="showEdit" 
         [showHelp]="showHelp" 
         [showDelete]="showDelete" 
+        [showCopy]="showCopy"
         [isSaving]="isSaving"
+        (add)="onAdd()"
         (edit)="onEdit()" 
         (help)="onHelp()" 
-        (delete)="onDelete()">
+        (delete)="onDelete()"
+        (copy)="onCopy()">
       </app-toolbar>
     </div>
   </div>

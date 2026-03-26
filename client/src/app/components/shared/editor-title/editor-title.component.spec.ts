@@ -21,8 +21,15 @@ class MockToolbarComponent {
   @Input() showUndo: boolean = true;
   @Input() showRedo: boolean = true;
   @Input() showHelp: boolean = true;
+  @Input() showAdd: boolean = false;
+  @Input() showDelete: boolean = false;
+  @Input() showCopy: boolean = false;
+  @Input() isSaving: boolean = false;
   @Input() undoManager: any;
   @Output() help = new EventEmitter<void>();
+  @Output() add = new EventEmitter<void>();
+  @Output() delete = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<void>();
 }
 
 import { Pipe, PipeTransform } from '@angular/core';

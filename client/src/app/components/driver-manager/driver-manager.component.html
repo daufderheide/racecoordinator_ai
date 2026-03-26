@@ -1,8 +1,11 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <app-manager-header 
     [title]="'DM_TITLE'" 
-    [showActions]="selectedDriver != null" 
+    [showActions]="true" 
+    [showEdit]="selectedDriver != null"
+    [showDelete]="selectedDriver != null"
     [isSaving]="isSaving" 
+    (add)="createNewDriver()"
     (edit)="updateDriver()" 
     (help)="startHelp()" 
     (delete)="deleteDriver()">
@@ -18,11 +21,6 @@
           <div class="item-name">{{ driver.name }}</div>
           <div class="item-nickname">{{ driver.nickname }}</div>
         </div>
-      </div>
-      <div class="list-actions">
-        <button id="create-driver-btn" class="action-btn primary full-width" (click)="createNewDriver()">
-          {{ 'DM_CREATE_NEW' | translate }}
-        </button>
       </div>
     </div>
 

@@ -31,6 +31,22 @@ test.describe('Race Editor Visuals', () => {
     });
   });
 
+  async function ensureSectionState(page: any, sectionText: string, expand: boolean) {
+    const header = page.locator(`.section-header:has-text("${sectionText}")`);
+    const icon = header.locator('.expander-icon');
+    const isCollapsed = await icon.evaluate((node: HTMLElement) => node.classList.contains('collapsed'));
+    
+    if (expand && isCollapsed) {
+      await header.scrollIntoViewIfNeeded();
+      await header.click();
+      await page.waitForTimeout(500);
+    } else if (!expand && !isCollapsed) {
+      await header.scrollIntoViewIfNeeded();
+      await header.click();
+      await page.waitForTimeout(500);
+    }
+  }
+
   test('should display race editor for existing race', async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/race-editor?id=r1&driverCount=4'));
@@ -88,7 +104,7 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForSelector('.editor-panel', { state: 'visible', timeout: 10000 });
 
     // Click details - Duplication
-    await harness.clickDuplicate();
+    await harness.clickCopy();
     await page.waitForTimeout(1000);
 
     // Wait for Error Modal (app-acknowledgement-modal .modal-backdrop)
@@ -110,26 +126,25 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(2000);
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
-    // Toggle fuel enabled checkbox programmatically to avoid UI click flakiness
-    const enableCheckbox = page.locator('input[type="checkbox"]').first();
-    await enableCheckbox.evaluate((node: HTMLInputElement) => {
-      node.checked = true;
-      node.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, 'Analog Fuel Configuration', true);
+
+    // Toggle fuel enabled checkbox by label for reliability
+    const fuelLabel = page.locator('.fuel-config-section label:has-text("Enable Analog Fuel")').first();
+    await fuelLabel.scrollIntoViewIfNeeded();
+    await fuelLabel.waitFor({ state: 'visible', timeout: 5000 });
+    await fuelLabel.click();
     await page.waitForTimeout(500);
 
     // Wait for charts to render before screenshotting
-    await page.waitForSelector('.fuel-graphs-container', { state: 'visible', timeout: 10000 });
+    const fuelContainer = page.locator('.fuel-graphs-container');
+    await fuelContainer.waitFor({ state: 'visible', timeout: 10000 });
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
-    // Scroll down to ensure fuel section is fully visible
-    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
-    await page.waitForTimeout(500);
-
     // Screenshot the fuel configuration section
-    await expect(page).toHaveScreenshot('race-editor-fuel-options.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('.fuel-config-section').first()).toHaveScreenshot('race-editor-fuel-options.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should hide fuel graphs when analog fuel is disabled', async ({ page }) => {
@@ -143,15 +158,14 @@ test.describe('Race Editor Visuals', () => {
     // Wait for loading to complete
     await page.waitForTimeout(1000);
 
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, 'Analog Fuel Configuration', true);
+
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
-    // Scroll down to ensure fuel section is fully visible
-    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
-    await page.waitForTimeout(500);
-
     // Screenshot the fuel configuration section
-    await expect(page).toHaveScreenshot('race-editor-fuel-options-disabled.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('.fuel-config-section').first()).toHaveScreenshot('race-editor-fuel-options-disabled.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display digital fuel options for digital track', async ({ page }) => {
@@ -168,11 +182,11 @@ test.describe('Race Editor Visuals', () => {
     // Select the digital track using the harness
     await harness.setTrack('t_digital');
 
-    // Wait for the UI to update and the digital fuel section to appear
-    await page.waitForSelector('#digital-fuel-section', { state: 'visible', timeout: 10000 });
+    // Ensure section is expanded
+    await ensureSectionState(page, 'Digital Fuel Configuration', true);
 
     // Scroll down to ensure digital fuel section is visible in the panel
-    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
+    await page.locator('.section-header:has-text("Digital Fuel Configuration")').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
 
     // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
@@ -180,17 +194,14 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     // Wait for digital charts to render
-    await page.waitForSelector('.fuel-graphs-container', { state: 'visible', timeout: 10000 });
+    const fuelContainer = page.locator('.fuel-graphs-container');
+    await fuelContainer.waitFor({ state: 'visible', timeout: 10000 });
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
-    // Last scroll to bottom to capture everything
-    await page.locator('.preview-panel').evaluate((node) => node.scrollTop = node.scrollHeight);
-    await page.waitForTimeout(1000);
-
     // Screenshot the digital fuel configuration section
-    await expect(page).toHaveScreenshot('race-editor-digital-fuel-options.png', { fullPage: true, timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('#digital-fuel-section')).toHaveScreenshot('race-editor-digital-fuel-options.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display Scoring section expanded', async ({ page }) => {
@@ -199,10 +210,10 @@ test.describe('Race Editor Visuals', () => {
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
     // Collapse sections to isolate Scoring
-    await page.locator('.section-header:has-text("General")').click();
-    await page.locator('.section-header:has-text("Analog Fuel Configuration")').click();
-    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
-    await page.locator('.section-header:has-text("Team Options")').click();
+    await ensureSectionState(page, 'General', false);
+    await ensureSectionState(page, 'Analog Fuel Configuration', false);
+    await ensureSectionState(page, 'Digital Fuel Configuration', false);
+    await ensureSectionState(page, 'Team Options', false);
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
@@ -215,10 +226,10 @@ test.describe('Race Editor Visuals', () => {
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
     // Collapse sections to isolate Analog Fuel
-    await page.locator('.section-header:has-text("General")').click();
-    await page.locator('.section-header:has-text("Scoring")').click();
-    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
-    await page.locator('.section-header:has-text("Team Options")').click();
+    await ensureSectionState(page, 'General', false);
+    await ensureSectionState(page, 'Scoring', false);
+    await ensureSectionState(page, 'Digital Fuel Configuration', false);
+    await ensureSectionState(page, 'Team Options', false);
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
@@ -231,10 +242,10 @@ test.describe('Race Editor Visuals', () => {
     await expect(page.locator('.editor-panel')).toBeAttached({ timeout: 10000 });
 
     // Collapse sections to isolate Team Options
-    await page.locator('.section-header:has-text("General")').click();
-    await page.locator('.section-header:has-text("Scoring")').click();
-    await page.locator('.section-header:has-text("Analog Fuel Configuration")').click();
-    await page.locator('.section-header:has-text("Digital Fuel Configuration")').click();
+    await ensureSectionState(page, 'General', false);
+    await ensureSectionState(page, 'Scoring', false);
+    await ensureSectionState(page, 'Analog Fuel Configuration', false);
+    await ensureSectionState(page, 'Digital Fuel Configuration', false);
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);

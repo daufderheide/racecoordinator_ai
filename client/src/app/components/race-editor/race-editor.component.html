@@ -9,7 +9,11 @@
     [backQueryParams]="{ id: editingRace?.entity_id, driverCount: driverCount }"
     backConfirmTitle="RE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="RE_CONFIRM_DISCARD_MESSAGE"
-    [undoManager]="undoManager">
+    [undoManager]="undoManager"
+    [showCopy]="true"
+    [isSaving]="isSaving"
+    (help)="startHelp()"
+    (copy)="saveAsNew()">
   </app-editor-title>
 
   <div class="content-split" *ngIf="!isLoading">
@@ -47,9 +51,6 @@
 
       <div class="editor-actions">
         <div class="spacer"></div>
-        <button id="race-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || isNameInvalid">
-          {{ 'RE_BTN_SAVE_AS_NEW' | translate }}
-        </button>
       </div>
     </div>
 

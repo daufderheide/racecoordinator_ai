@@ -7,7 +7,7 @@ export class RaceEditorHarnessE2e implements RaceEditorHarnessBase {
   private get base() { return RaceEditorHarnessBase; }
 
   private get nameInput() { return this.locator.locator(this.base.selectors.nameInput); }
-  private get duplicateBtn() { return this.locator.locator(this.base.selectors.duplicateBtn); }
+  private get copyBtn() { return this.locator.locator(this.base.selectors.copyBtn); }
   private get driverCountInput() { return this.locator.locator(this.base.selectors.driverCountInput); }
   private get rotationSelect() { return this.locator.locator(this.base.selectors.rotationSelect); }
   private get trackSelect() { return this.locator.locator(this.base.selectors.trackSelect); }
@@ -20,8 +20,8 @@ export class RaceEditorHarnessE2e implements RaceEditorHarnessBase {
     await this.nameInput.fill(name);
   }
 
-  async clickDuplicate(): Promise<void> {
-    await this.duplicateBtn.click();
+  async clickCopy(): Promise<void> {
+    await this.copyBtn.click();
   }
 
   async getDriverCount(): Promise<number> {

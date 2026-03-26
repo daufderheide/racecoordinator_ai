@@ -5,8 +5,11 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <app-manager-header 
     [title]="'RM_TITLE'" 
-    [showActions]="selectedRace != null" 
+    [showActions]="true" 
+    [showEdit]="selectedRace != null"
+    [showDelete]="selectedRace != null"
     [isSaving]="isSaving" 
+    (add)="createNewRace()"
     (edit)="updateRace()" 
     (help)="startHelp()" 
     (delete)="deleteRace()">
@@ -22,11 +25,6 @@
           <div class="item-name">{{ race.name }}</div>
           <div class="item-nickname">{{ race.track?.name || ('GEN_NA' | translate) }}</div>
         </div>
-      </div>
-      <div class="list-actions">
-        <button id="create-race-btn" class="action-btn primary full-width" (click)="createNewRace()">
-          {{ 'RM_CREATE_NEW' | translate }}
-        </button>
       </div>
     </div>
 

@@ -8,6 +8,7 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   protected getRedoButton = this.locatorForOptional(ToolbarHarnessBase.selectors.redo);
   protected getEditButton = this.locatorForOptional(ToolbarHarnessBase.selectors.edit);
   protected getHelpButton = this.locatorForOptional(ToolbarHarnessBase.selectors.help);
+  protected getAddButton = this.locatorForOptional(ToolbarHarnessBase.selectors.add);
   protected getDeleteButton = this.locatorForOptional(ToolbarHarnessBase.selectors.delete);
 
   async isUndoVisible(): Promise<boolean> {
@@ -21,6 +22,9 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   }
   async isHelpVisible(): Promise<boolean> {
     return (await this.getHelpButton()) !== null;
+  }
+  async isAddVisible(): Promise<boolean> {
+    return (await this.getAddButton()) !== null;
   }
   async isDeleteVisible(): Promise<boolean> {
     return (await this.getDeleteButton()) !== null;
@@ -36,6 +40,10 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   }
   async isEditDisabled(): Promise<boolean> {
     const btn = await this.getEditButton();
+    return btn ? await btn.getProperty('disabled') === true : false;
+  }
+  async isAddDisabled(): Promise<boolean> {
+    const btn = await this.getAddButton();
     return btn ? await btn.getProperty('disabled') === true : false;
   }
   async isDeleteDisabled(): Promise<boolean> {
@@ -57,6 +65,10 @@ export class ToolbarHarness extends ComponentHarness implements ToolbarHarnessBa
   }
   async clickHelp(): Promise<void> {
     const btn = await this.getHelpButton();
+    if (btn) await btn.click();
+  }
+  async clickAdd(): Promise<void> {
+    const btn = await this.getAddButton();
     if (btn) await btn.click();
   }
   async clickDelete(): Promise<void> {

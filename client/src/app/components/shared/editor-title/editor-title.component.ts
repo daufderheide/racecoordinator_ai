@@ -19,14 +19,33 @@ export class EditorTitleComponent {
   @Input() showUndo: boolean = true;
   @Input() showRedo: boolean = true;
   @Input() showHelp: boolean = true;
+  @Input() showCopy: boolean = false;
+  @Input() showAdd: boolean = false;
+  @Input() showDelete: boolean = false;
+  @Input() isSaving: boolean = false;
 
   @Output() help = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
+  @Output() copy = new EventEmitter<void>();
+  @Output() add = new EventEmitter<void>();
+  @Output() delete = new EventEmitter<void>();
 
   constructor(private router: Router) {}
 
   onHelp() {
     this.help.emit();
+  }
+
+  onCopy() {
+    this.copy.emit();
+  }
+
+  onAdd() {
+    this.add.emit();
+  }
+
+  onDelete() {
+    this.delete.emit();
   }
 
   onBack() {

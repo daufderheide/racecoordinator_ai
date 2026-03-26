@@ -7,7 +7,10 @@
     backConfirmTitle="DE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="DE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"
-    (help)="startHelp()">
+    [showCopy]="true"
+    [isSaving]="isSaving"
+    (help)="startHelp()"
+    (copy)="saveAsNew()">
   </app-editor-title>
 
   <div class="content-split" *ngIf="!isLoading && editingDriver">
@@ -38,9 +41,6 @@
 
       <div class="editor-actions">
         <div class="spacer"></div>
-        <button id="driver-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || hasChanges()">
-          {{ 'DE_BTN_SAVE_AS_NEW' | translate }}
-        </button>
       </div>
     </div>
 

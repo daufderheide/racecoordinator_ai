@@ -7,7 +7,10 @@
     backConfirmTitle="TE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="TE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"
-    (help)="startHelp()">
+    [showCopy]="true"
+    [isSaving]="isSaving"
+    (help)="startHelp()"
+    (copy)="saveAsNew()">
   </app-editor-title>
 
   <div class="content-split">
@@ -86,9 +89,6 @@
 
       <div class="editor-actions">
         <div class="spacer"></div>
-        <button id="track-duplicate-btn" class="action-btn" (click)="saveAsNew()" [disabled]="isSaving || isDirty">
-          {{ 'TE_DUPLICATE' | translate }}
-        </button>
       </div>
     </div>
 

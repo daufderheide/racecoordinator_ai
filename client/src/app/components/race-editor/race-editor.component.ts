@@ -7,6 +7,8 @@ import { Subscription } from 'rxjs';
 import { Track } from 'src/app/models/track';
 import { FuelUsageType } from 'src/app/models/fuel_options';
 import { Location } from '@angular/common';
+import { HelpService, GuideStep } from '../../services/help.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-race-editor',
@@ -82,7 +84,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
-    private location: Location
+    private location: Location,
+    private helpService: HelpService,
+    private settingsService: SettingsService
   ) {
     this.undoManager = new UndoManager<any>(
       {
@@ -1059,6 +1063,42 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         require_pit_stop_change_driver: race.team_options.require_pit_stop_change_driver
       } : undefined
     };
+  }
+
+  startHelp() {
+    const steps: GuideStep[] = [
+      {
+        title: this.translationService.translate('RE_HELP_WELCOME_TITLE'),
+        content: this.translationService.translate('RE_HELP_WELCOME_CONTENT'),
+        position: 'center'
+      },
+      {
+        selector: '#race-name-input',
+        title: this.translationService.translate('RM_LABEL_NAME'),
+        content: this.translationService.translate('RE_HELP_NAME_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#track-select',
+        title: this.translationService.translate('RM_LABEL_TRACK'),
+        content: this.translationService.translate('RE_HELP_TRACK_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#copy-item-btn',
+        title: this.translationService.translate('RE_HELP_DUPLICATE_TITLE'),
+        content: this.translationService.translate('RE_HELP_DUPLICATE_CONTENT'),
+        position: 'bottom'
+      },
+      {
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        position: 'bottom'
+      }
+    ];
+
+    this.helpService.startGuide(steps);
   }
 }
 

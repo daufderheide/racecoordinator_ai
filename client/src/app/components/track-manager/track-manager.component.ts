@@ -81,9 +81,9 @@ export class TrackManagerComponent implements OnInit {
         position: 'bottom'
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        selector: '#add-item-btn',
+        title: this.translationService.translate('TM_HELP_CREATE_TITLE'),
+        content: this.translationService.translate('TM_HELP_CREATE_CONTENT'),
         position: 'bottom'
       },
       {
@@ -93,10 +93,10 @@ export class TrackManagerComponent implements OnInit {
         position: 'bottom'
       },
       {
-        selector: '#create-track-btn',
-        title: this.translationService.translate('TM_HELP_CREATE_TITLE'),
-        content: this.translationService.translate('TM_HELP_CREATE_CONTENT'),
-        position: 'top'
+        selector: '#help-track-btn',
+        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
+        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        position: 'bottom'
       }
     ];
     this.helpService.startGuide(steps);

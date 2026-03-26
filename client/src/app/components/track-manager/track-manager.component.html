@@ -4,8 +4,11 @@
 <div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
   <app-manager-header 
     [title]="'TM_TITLE'" 
-    [showActions]="selectedTrack != null" 
+    [showActions]="true" 
+    [showEdit]="selectedTrack != null"
+    [showDelete]="selectedTrack != null"
     [isSaving]="isSaving" 
+    (add)="createNewTrack()"
     (edit)="editTrack()" 
     (help)="startHelp()" 
     (delete)="deleteTrack()">
@@ -20,11 +23,6 @@
           [class.odd]="i % 2 !== 0">
           <div class="item-name">{{ track.name }}</div>
         </div>
-      </div>
-      <div class="list-actions">
-        <button id="create-track-btn" class="action-btn primary full-width" (click)="createNewTrack()">
-          {{ 'TM_CREATE_NEW' | translate }}
-        </button>
       </div>
     </div>
 
