@@ -20,9 +20,9 @@
         {{ helpService.currentStepIndex + 1 }} / {{ helpService.steps.length }}
       </div>
       <div class="actions">
-        <button class="btn-prev" (click)="previous()" [disabled]="!hasPrevious">{{ 'GEN_BTN_BACK' | translate
+        <button class="btn-prev" (click)="previous()" [disabled]="!hasPrevious">{{ 'HELP_TUTORIAL_BACK' | translate
           }}</button>
-        <button class="btn-next" (click)="next()" *ngIf="hasNext">Next</button>
+        <button class="btn-next" (click)="next()" *ngIf="hasNext">{{ 'HELP_TUTORIAL_NEXT' | translate }}</button>
         <button class="btn-finish" (click)="end()" *ngIf="!hasNext">Finish</button>
       </div>
     </div>

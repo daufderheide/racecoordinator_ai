@@ -44,6 +44,8 @@
   "AE_VOLTAGE_CONFIG_HEADER": "Configurazione del partitore di tensione",
   "AE_VOLTAGE_MAX_VAL": "Tensione massima",
   "AM_ASSETS_TOTAL_COUNT": "{{count}} Asset Totali",
+  "HELP_TUTORIAL_BACK": "Indietro",
+  "HELP_TUTORIAL_NEXT": "Avanti",
   "AM_BTN_BACK": "Indietro",
   "AM_BTN_CANCEL": "ANNULLA",
   "AM_BTN_DELETE": "ELIMINA",

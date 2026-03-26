@@ -44,6 +44,8 @@
   "AE_VOLTAGE_CONFIG_HEADER": "Configuration du diviseur de tension",
   "AE_VOLTAGE_MAX_VAL": "Tension max",
   "AM_ASSETS_TOTAL_COUNT": "{{count}} Assets au Total",
+  "HELP_TUTORIAL_BACK": "Retour",
+  "HELP_TUTORIAL_NEXT": "Suivant",
   "AM_BTN_BACK": "Retour",
   "AM_BTN_CANCEL": "ANNULER",
   "AM_BTN_DELETE": "SUPPRIMER",

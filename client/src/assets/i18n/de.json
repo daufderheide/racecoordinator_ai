@@ -2,6 +2,8 @@
   "ACK_MODAL_BTN_OK": "OK",
   "ACK_MODAL_MSG_CONNECTED": "Verbindung zur Schnittstelle wurde wiederhergestellt.",
   "ACK_MODAL_MSG_DISCONNECTED": "Verbindung zur Schnittstelle wurde unterbrochen.",
+  "HELP_TUTORIAL_BACK": "Zurück",
+  "HELP_TUTORIAL_NEXT": "Weiter",
   "ACK_MODAL_MSG_NO_DATA": "Das System empfängt keine Daten von der Schnittstelle.",
   "ACK_MODAL_MSG_NO_STATUS": "Die Schnittstelle meldet ihren Status nicht.",
   "ACK_MODAL_TITLE_CONNECTED": "Schnittstelle verbunden",

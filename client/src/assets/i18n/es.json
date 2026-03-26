@@ -44,6 +44,8 @@
   "AE_VOLTAGE_CONFIG_HEADER": "Configuración del divisor de voltaje",
   "AE_VOLTAGE_MAX_VAL": "Voltaje máx.",
   "AM_ASSETS_TOTAL_COUNT": "{{count}} Activos Totales",
+  "HELP_TUTORIAL_BACK": "Atrás",
+  "HELP_TUTORIAL_NEXT": "Siguiente",
   "AM_BTN_BACK": "Atrás",
   "AM_BTN_CANCEL": "CANCELAR",
   "AM_BTN_DELETE": "ELIMINAR",
