@@ -13,10 +13,10 @@ test.describe('Back Button Visuals', () => {
   test('should display back button', async ({ page }) => {
     // Navigate to Asset Manager
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
-    await TestSetupHelper.waitForText(page, 'Back');
-
+    
     // Verify Back Button is visible
     const backButtonHost = page.locator('app-back-button');
+    await backButtonHost.waitFor({ state: 'visible' });
     const harness = new BackButtonHarnessE2e(backButtonHost);
     
     // Label text checked visually
