@@ -77,6 +77,8 @@ message RaceModel {
   AnalogFuelOptions fuel_options = 7;
   DigitalFuelOptions digital_fuel_options = 8;
   TeamOptions team_options = 9;
+  double auto_advance_time = 10;
+  double auto_start_time = 11;
 }
 
 enum FuelUsageType {

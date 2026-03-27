@@ -18,6 +18,8 @@ public class Common {
     if (currentIndex < heats.size() - 1) {
       race.setCurrentHeat(heats.get(currentIndex + 1));
       race.prepareHeat();
+      race.setAutoStartFired(false);
+      race.setAutoAdvanceFired(false);
       race.changeState(new NotStarted());
 
       // Optimized update: only send currentHeat

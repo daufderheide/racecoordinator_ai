@@ -217,7 +217,7 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
-    await expect(page).toHaveScreenshot('race-editor-scoring-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('#scoring-section')).toHaveScreenshot('race-editor-scoring-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display Analog Fuel section expanded', async ({ page }) => {
@@ -233,7 +233,7 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
-    await expect(page).toHaveScreenshot('race-editor-fuel-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('#analog-fuel-section')).toHaveScreenshot('race-editor-fuel-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 
   test('should display Team Options section expanded', async ({ page }) => {
@@ -249,6 +249,6 @@ test.describe('Race Editor Visuals', () => {
     await page.waitForTimeout(500);
 
     await TestSetupHelper.disableAnimations(page);
-    await expect(page).toHaveScreenshot('race-editor-team-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
+    await expect(page.locator('#team-options-section')).toHaveScreenshot('race-editor-team-expanded.png', { timeout: 15000, maxDiffPixelRatio: 0.05 });
   });
 });

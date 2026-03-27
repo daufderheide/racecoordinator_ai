@@ -12,6 +12,8 @@ public class RaceSaveData {
   private boolean hasRacedInCurrentHeat;
   private int currentHeatIndex;
   private boolean isDemoMode;
+  private boolean autoStartFired;
+  private boolean autoAdvanceFired;
 
   public RaceSaveData() {
   }
@@ -86,5 +88,21 @@ public class RaceSaveData {
 
   public void setDemoMode(boolean demoMode) {
     isDemoMode = demoMode;
+  }
+  
+  public boolean isAutoStartFired() {
+    return autoStartFired;
+  }
+
+  public void setAutoStartFired(boolean autoStartFired) {
+    this.autoStartFired = autoStartFired;
+  }
+
+  public boolean isAutoAdvanceFired() {
+    return autoAdvanceFired;
+  }
+
+  public void setAutoAdvanceFired(boolean autoAdvanceFired) {
+    this.autoAdvanceFired = autoAdvanceFired;
   }
 }

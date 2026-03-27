@@ -545,7 +545,7 @@ export class DataService {
 
   private raceDataSocket?: WebSocket;
   private interfaceDataSocket?: WebSocket;
-  private raceTimeSubject = new BehaviorSubject<number>(0);
+  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({ time: 0 });
   private lapSubject = new Subject<com.antigravity.ILap>();
   private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
   private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
@@ -611,7 +611,7 @@ export class DataService {
         const raceData = com.antigravity.RaceData.decode(new Uint8Array(arrayBuffer));
 
         if (raceData.raceTime) {
-          this.raceTimeSubject.next(raceData.raceTime.time!);
+          this.raceTimeSubject.next(raceData.raceTime);
         } else if (raceData.lap) {
           this.lapSubject.next(raceData.lap);
         } else if (raceData.reactionTime) {
@@ -696,7 +696,7 @@ export class DataService {
     }
   }
 
-  public getRaceTime(): Observable<number> {
+  public getRaceTime(): Observable<com.antigravity.IRaceTime> {
     return this.raceTimeSubject.asObservable();
   }
 

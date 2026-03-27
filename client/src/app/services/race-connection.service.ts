@@ -43,7 +43,7 @@ export class RaceConnectionService implements OnDestroy {
   private segmentSubject = new Subject<com.antigravity.ISegment>();
   segments$ = this.segmentSubject.asObservable();
 
-  private raceTimeSubject = new BehaviorSubject<number>(0);
+  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({ time: 0 });
   raceTime$ = this.raceTimeSubject.asObservable();
 
   private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
@@ -113,8 +113,8 @@ export class RaceConnectionService implements OnDestroy {
       }
     }));
 
-    this.subscriptions.push(this.dataService.getRaceTime().subscribe(time => {
-      this.raceTimeSubject.next(time);
+    this.subscriptions.push(this.dataService.getRaceTime().subscribe(raceTime => {
+      this.raceTimeSubject.next(raceTime);
     }));
 
     this.subscriptions.push(this.dataService.getLaps().subscribe(lap => {

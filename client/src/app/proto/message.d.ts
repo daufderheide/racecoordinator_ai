@@ -4910,6 +4910,12 @@ export namespace com {
 
             /** RaceModel teamOptions */
             teamOptions?: (com.antigravity.ITeamOptions|null);
+
+            /** RaceModel autoAdvanceTime */
+            autoAdvanceTime?: (number|null);
+
+            /** RaceModel autoStartTime */
+            autoStartTime?: (number|null);
         }
 
         /** Represents a RaceModel. */
@@ -4947,6 +4953,12 @@ export namespace com {
 
             /** RaceModel teamOptions. */
             public teamOptions?: (com.antigravity.ITeamOptions|null);
+
+            /** RaceModel autoAdvanceTime. */
+            public autoAdvanceTime: number;
+
+            /** RaceModel autoStartTime. */
+            public autoStartTime: number;
 
             /**
              * Creates a new RaceModel instance using the specified properties.
@@ -5981,6 +5993,12 @@ export namespace com {
 
             /** RaceTime time */
             time?: (number|null);
+
+            /** RaceTime autoStartRemaining */
+            autoStartRemaining?: (number|null);
+
+            /** RaceTime autoAdvanceRemaining */
+            autoAdvanceRemaining?: (number|null);
         }
 
         /** Represents a RaceTime. */
@@ -5994,6 +6012,12 @@ export namespace com {
 
             /** RaceTime time. */
             public time: number;
+
+            /** RaceTime autoStartRemaining. */
+            public autoStartRemaining: number;
+
+            /** RaceTime autoAdvanceRemaining. */
+            public autoAdvanceRemaining: number;
 
             /**
              * Creates a new RaceTime instance using the specified properties.

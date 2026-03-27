@@ -11584,6 +11584,8 @@ export const com = $root.com = (() => {
              * @property {com.antigravity.IAnalogFuelOptions|null} [fuelOptions] RaceModel fuelOptions
              * @property {com.antigravity.IDigitalFuelOptions|null} [digitalFuelOptions] RaceModel digitalFuelOptions
              * @property {com.antigravity.ITeamOptions|null} [teamOptions] RaceModel teamOptions
+             * @property {number|null} [autoAdvanceTime] RaceModel autoAdvanceTime
+             * @property {number|null} [autoStartTime] RaceModel autoStartTime
              */
 
             /**
@@ -11674,6 +11676,22 @@ export const com = $root.com = (() => {
             RaceModel.prototype.teamOptions = null;
 
             /**
+             * RaceModel autoAdvanceTime.
+             * @member {number} autoAdvanceTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.autoAdvanceTime = 0;
+
+            /**
+             * RaceModel autoStartTime.
+             * @member {number} autoStartTime
+             * @memberof com.antigravity.RaceModel
+             * @instance
+             */
+            RaceModel.prototype.autoStartTime = 0;
+
+            /**
              * Creates a new RaceModel instance using the specified properties.
              * @function create
              * @memberof com.antigravity.RaceModel
@@ -11715,6 +11733,10 @@ export const com = $root.com = (() => {
                     $root.com.antigravity.DigitalFuelOptions.encode(message.digitalFuelOptions, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
                 if (message.teamOptions != null && Object.hasOwnProperty.call(message, "teamOptions"))
                     $root.com.antigravity.TeamOptions.encode(message.teamOptions, writer.uint32(/* id 9, wireType 2 =*/74).fork()).ldelim();
+                if (message.autoAdvanceTime != null && Object.hasOwnProperty.call(message, "autoAdvanceTime"))
+                    writer.uint32(/* id 10, wireType 1 =*/81).double(message.autoAdvanceTime);
+                if (message.autoStartTime != null && Object.hasOwnProperty.call(message, "autoStartTime"))
+                    writer.uint32(/* id 11, wireType 1 =*/89).double(message.autoStartTime);
                 return writer;
             };
 
@@ -11785,6 +11807,14 @@ export const com = $root.com = (() => {
                         }
                     case 9: {
                             message.teamOptions = $root.com.antigravity.TeamOptions.decode(reader, reader.uint32());
+                            break;
+                        }
+                    case 10: {
+                            message.autoAdvanceTime = reader.double();
+                            break;
+                        }
+                    case 11: {
+                            message.autoStartTime = reader.double();
                             break;
                         }
                     default:
@@ -11863,6 +11893,12 @@ export const com = $root.com = (() => {
                     if (error)
                         return "teamOptions." + error;
                 }
+                if (message.autoAdvanceTime != null && message.hasOwnProperty("autoAdvanceTime"))
+                    if (typeof message.autoAdvanceTime !== "number")
+                        return "autoAdvanceTime: number expected";
+                if (message.autoStartTime != null && message.hasOwnProperty("autoStartTime"))
+                    if (typeof message.autoStartTime !== "number")
+                        return "autoStartTime: number expected";
                 return null;
             };
 
@@ -11917,6 +11953,10 @@ export const com = $root.com = (() => {
                         throw TypeError(".com.antigravity.RaceModel.teamOptions: object expected");
                     message.teamOptions = $root.com.antigravity.TeamOptions.fromObject(object.teamOptions);
                 }
+                if (object.autoAdvanceTime != null)
+                    message.autoAdvanceTime = Number(object.autoAdvanceTime);
+                if (object.autoStartTime != null)
+                    message.autoStartTime = Number(object.autoStartTime);
                 return message;
             };
 
@@ -11943,6 +11983,8 @@ export const com = $root.com = (() => {
                     object.fuelOptions = null;
                     object.digitalFuelOptions = null;
                     object.teamOptions = null;
+                    object.autoAdvanceTime = 0;
+                    object.autoStartTime = 0;
                 }
                 if (message.model != null && message.hasOwnProperty("model"))
                     object.model = $root.com.antigravity.Model.toObject(message.model, options);
@@ -11962,6 +12004,10 @@ export const com = $root.com = (() => {
                     object.digitalFuelOptions = $root.com.antigravity.DigitalFuelOptions.toObject(message.digitalFuelOptions, options);
                 if (message.teamOptions != null && message.hasOwnProperty("teamOptions"))
                     object.teamOptions = $root.com.antigravity.TeamOptions.toObject(message.teamOptions, options);
+                if (message.autoAdvanceTime != null && message.hasOwnProperty("autoAdvanceTime"))
+                    object.autoAdvanceTime = options.json && !isFinite(message.autoAdvanceTime) ? String(message.autoAdvanceTime) : message.autoAdvanceTime;
+                if (message.autoStartTime != null && message.hasOwnProperty("autoStartTime"))
+                    object.autoStartTime = options.json && !isFinite(message.autoStartTime) ? String(message.autoStartTime) : message.autoStartTime;
                 return object;
             };
 
@@ -14387,6 +14433,8 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IRaceTime
              * @property {number|null} [time] RaceTime time
+             * @property {number|null} [autoStartRemaining] RaceTime autoStartRemaining
+             * @property {number|null} [autoAdvanceRemaining] RaceTime autoAdvanceRemaining
              */
 
             /**
@@ -14411,6 +14459,22 @@ export const com = $root.com = (() => {
              * @instance
              */
             RaceTime.prototype.time = 0;
+
+            /**
+             * RaceTime autoStartRemaining.
+             * @member {number} autoStartRemaining
+             * @memberof com.antigravity.RaceTime
+             * @instance
+             */
+            RaceTime.prototype.autoStartRemaining = 0;
+
+            /**
+             * RaceTime autoAdvanceRemaining.
+             * @member {number} autoAdvanceRemaining
+             * @memberof com.antigravity.RaceTime
+             * @instance
+             */
+            RaceTime.prototype.autoAdvanceRemaining = 0;
 
             /**
              * Creates a new RaceTime instance using the specified properties.
@@ -14438,6 +14502,10 @@ export const com = $root.com = (() => {
                     writer = $Writer.create();
                 if (message.time != null && Object.hasOwnProperty.call(message, "time"))
                     writer.uint32(/* id 1, wireType 1 =*/9).double(message.time);
+                if (message.autoStartRemaining != null && Object.hasOwnProperty.call(message, "autoStartRemaining"))
+                    writer.uint32(/* id 2, wireType 1 =*/17).double(message.autoStartRemaining);
+                if (message.autoAdvanceRemaining != null && Object.hasOwnProperty.call(message, "autoAdvanceRemaining"))
+                    writer.uint32(/* id 3, wireType 1 =*/25).double(message.autoAdvanceRemaining);
                 return writer;
             };
 
@@ -14478,6 +14546,14 @@ export const com = $root.com = (() => {
                             message.time = reader.double();
                             break;
                         }
+                    case 2: {
+                            message.autoStartRemaining = reader.double();
+                            break;
+                        }
+                    case 3: {
+                            message.autoAdvanceRemaining = reader.double();
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -14516,6 +14592,12 @@ export const com = $root.com = (() => {
                 if (message.time != null && message.hasOwnProperty("time"))
                     if (typeof message.time !== "number")
                         return "time: number expected";
+                if (message.autoStartRemaining != null && message.hasOwnProperty("autoStartRemaining"))
+                    if (typeof message.autoStartRemaining !== "number")
+                        return "autoStartRemaining: number expected";
+                if (message.autoAdvanceRemaining != null && message.hasOwnProperty("autoAdvanceRemaining"))
+                    if (typeof message.autoAdvanceRemaining !== "number")
+                        return "autoAdvanceRemaining: number expected";
                 return null;
             };
 
@@ -14533,6 +14615,10 @@ export const com = $root.com = (() => {
                 let message = new $root.com.antigravity.RaceTime();
                 if (object.time != null)
                     message.time = Number(object.time);
+                if (object.autoStartRemaining != null)
+                    message.autoStartRemaining = Number(object.autoStartRemaining);
+                if (object.autoAdvanceRemaining != null)
+                    message.autoAdvanceRemaining = Number(object.autoAdvanceRemaining);
                 return message;
             };
 
@@ -14549,10 +14635,17 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.defaults)
+                if (options.defaults) {
                     object.time = 0;
+                    object.autoStartRemaining = 0;
+                    object.autoAdvanceRemaining = 0;
+                }
                 if (message.time != null && message.hasOwnProperty("time"))
                     object.time = options.json && !isFinite(message.time) ? String(message.time) : message.time;
+                if (message.autoStartRemaining != null && message.hasOwnProperty("autoStartRemaining"))
+                    object.autoStartRemaining = options.json && !isFinite(message.autoStartRemaining) ? String(message.autoStartRemaining) : message.autoStartRemaining;
+                if (message.autoAdvanceRemaining != null && message.hasOwnProperty("autoAdvanceRemaining"))
+                    object.autoAdvanceRemaining = options.json && !isFinite(message.autoAdvanceRemaining) ? String(message.autoAdvanceRemaining) : message.autoAdvanceRemaining;
                 return object;
             };
 

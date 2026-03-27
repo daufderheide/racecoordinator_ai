@@ -149,7 +149,12 @@
             }}</text>
           <text x="800" y="170" font-size="130" font-weight="900" fill="#4ade80" text-anchor="middle"
             filter="url(#timerGlow)" font-family="monospace">{{ time | number:timeFormat }}</text>
-          <text x="800" y="225" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat {{
+          
+          <text *ngIf="autoCountdownLabel" x="800" y="210" font-size="28" font-weight="700" fill="#f87171" text-anchor="middle" filter="url(#glow)">
+            {{ autoCountdownLabel }}
+          </text>
+
+          <text x="800" y="240" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">Heat {{
             heat.heatNumber
             }} of {{ totalHeats }}</text>
 

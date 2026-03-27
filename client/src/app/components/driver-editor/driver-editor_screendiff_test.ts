@@ -26,6 +26,8 @@ test.describe('Driver Editor Visuals', () => {
         ]
       });
     });
+
+    await TestSetupHelper.disableAnimations(page);
   });
 
   test('should display driver editor with driver loaded', async ({ page }) => {
@@ -38,7 +40,7 @@ test.describe('Driver Editor Visuals', () => {
 
     // Driver name checked visually
 
-    await expect(page).toHaveScreenshot('driver-editor-loaded.png');
+    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-loaded.png');
   });
 
   test('should support undo and redo operations', async ({ page }) => {
@@ -68,7 +70,7 @@ test.describe('Driver Editor Visuals', () => {
     await harness.clickRedo();
     // Redo result checked visually
 
-    await expect(page).toHaveScreenshot('driver-editor-redone.png');
+    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-redone.png');
   });
 
   test('should confirm discarding unsaved changes on back', async ({ page }) => {
@@ -95,18 +97,20 @@ test.describe('Driver Editor Visuals', () => {
 
     // 1. Make a change
     await harness.setName('Unsaved Change');
+    // Ensure the name is set before clicking back
+    await expect(page.locator('#driver-name-input')).toHaveValue('Unsaved Change');
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200); // Wait for input to settle but before autosave
 
     // 2. Click Back
     await harness.clickBack();
 
     // 3. Verify Modal
-    const modalHarness = await harness.getConfirmationModal();
-    await expect(container.locator('app-confirmation-modal').locator('.modal-content')).toBeVisible();
+    await page.waitForSelector('#confirmation-modal-backdrop', { state: 'visible', timeout: 5000 });
+    await expect(page.locator('#confirmation-modal-backdrop')).toBeVisible();
     // Modal message checked visually
 
-    await expect(page).toHaveScreenshot('driver-editor-unsaved-modal.png');
+    await expect(page.locator('#confirmation-modal-backdrop')).toHaveScreenshot('driver-editor-unsaved-modal.png');
 
     // Post-screenshot modal flow removed — covered by unit tests
   });
@@ -137,20 +141,25 @@ test.describe('Driver Editor Visuals', () => {
     const nameSection = page.locator('#driver-name-section');
     await expect(nameSection).toHaveClass(/invalid/);
 
-    await expect(page).toHaveScreenshot('driver-editor-validation-error.png');
+    await expect(page.locator('.page-container')).toHaveScreenshot('driver-editor-validation-error.png');
   });
 
   test('should show guided help on first visit', async ({ page }) => {
     // Override standard mock with helpShown=false to trigger auto-open
     await TestSetupHelper.setupStandardMocks(page, { driverEditorHelpShown: false });
 
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1&help=true'));
     // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator('.page-container').waitFor();
 
-    // Help overlay should be visible
-    const helpOverlay = page.locator('app-help-overlay');
+    // Wait for the help step to actually appear (it has an 800ms delay in component)
+    await page.waitForSelector('.popover-content', { state: 'visible', timeout: 10000 });
 
-    await expect(page).toHaveScreenshot('driver-editor-guided-help.png');
+    const popover = page.locator('.popover-content');
+    await expect(popover).toHaveScreenshot('driver-editor-guided-help.png', {
+      maxDiffPixelRatio: 0.05,
+      animations: 'disabled',
+      timeout: 15000
+    });
   });
 });

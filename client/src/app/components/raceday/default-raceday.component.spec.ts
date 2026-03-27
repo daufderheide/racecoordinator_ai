@@ -70,7 +70,7 @@ describe('DefaultRacedayComponent', () => {
   let mockRaceConnectionService: any;
   let interfaceEventsSubject: Subject<com.antigravity.IInterfaceEvent>;
   let interfaceAlertSubject: Subject<{titleKey: string, messageKey: string}>;
-  let raceTimeSubject: Subject<number>;
+  let raceTimeSubject: Subject<com.antigravity.IRaceTime>;
   let lapsSubject: Subject<com.antigravity.ILap>;
   let raceStateSubject: Subject<com.antigravity.RaceState>;
   let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
@@ -79,7 +79,7 @@ describe('DefaultRacedayComponent', () => {
   beforeEach(async () => {
     interfaceEventsSubject = new Subject<com.antigravity.IInterfaceEvent>();
     interfaceAlertSubject = new Subject<{titleKey: string, messageKey: string}>();
-    raceTimeSubject = new Subject<number>();
+    raceTimeSubject = new Subject<com.antigravity.IRaceTime>();
     lapsSubject = new Subject<com.antigravity.ILap>();
     raceStateSubject = new Subject<com.antigravity.RaceState>();
     standingsUpdateSubject = new Subject<com.antigravity.IStandingsUpdate>();
@@ -162,6 +162,30 @@ describe('DefaultRacedayComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  it('should update countdown timers when raceTime$ emits', () => {
+    fixture.detectChanges();
+    
+    raceTimeSubject.next({
+      time: 123.456,
+      autoStartRemaining: 5.4,
+      autoAdvanceRemaining: 0
+    });
+    
+    expect(component['time']).toBe(5.4);
+    expect(component['autoStartRemaining']).toBe(5.4);
+    expect(component['autoAdvanceRemaining']).toBe(0);
+
+    raceTimeSubject.next({
+      time: 0,
+      autoStartRemaining: 0,
+      autoAdvanceRemaining: 9.8
+    });
+
+    expect(component['time']).toBe(9.8);
+    expect(component['autoStartRemaining']).toBe(0);
+    expect(component['autoAdvanceRemaining']).toBe(9.8);
   });
 
   it('should update isInterfaceConnected when interface connects', () => {
@@ -279,6 +303,36 @@ describe('DefaultRacedayComponent', () => {
     });
   });
 
+  describe('isPauseDisabled', () => {
+    beforeEach(() => {
+      component['isInterfaceConnected'] = true;
+    });
+
+    it('should be enabled in NOT_STARTED if autoStartRemaining > 0', () => {
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+      component['autoStartRemaining'] = 5.0;
+      expect(component.isPauseDisabled).toBeFalse();
+    });
+
+    it('should be disabled in NOT_STARTED if autoStartRemaining <= 0', () => {
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+      component['autoStartRemaining'] = 0;
+      expect(component.isPauseDisabled).toBeTrue();
+    });
+
+    it('should be enabled in HEAT_OVER if autoAdvanceRemaining > 0', () => {
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+      component['autoAdvanceRemaining'] = 5.0;
+      expect(component.isPauseDisabled).toBeFalse();
+    });
+
+    it('should be disabled in HEAT_OVER if autoAdvanceRemaining <= 0', () => {
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+      component['autoAdvanceRemaining'] = 0;
+      expect(component.isPauseDisabled).toBeTrue();
+    });
+  });
+
   describe('handleKeyUpEvent (Spacebar)', () => {
     let mockEvent: KeyboardEvent;
 
@@ -334,6 +388,24 @@ describe('DefaultRacedayComponent', () => {
 
     it('should trigger PAUSE when state is RACING', () => {
       component['raceState'] = com.antigravity.RaceState.RACING;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('PAUSE');
+    });
+
+    it('should trigger PAUSE when state is NOT_STARTED and autoStartRemaining > 0', () => {
+      component['raceState'] = com.antigravity.RaceState.NOT_STARTED;
+      component['autoStartRemaining'] = 5.0;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith('PAUSE');
+    });
+
+    it('should trigger PAUSE when state is HEAT_OVER and autoAdvanceRemaining > 0', () => {
+      component['raceState'] = com.antigravity.RaceState.HEAT_OVER;
+      component['autoAdvanceRemaining'] = 5.0;
 
       component.handleKeyUpEvent(mockEvent);
 

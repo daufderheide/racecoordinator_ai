@@ -51,8 +51,8 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }));
 
-    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(time => {
-      this.time = time;
+    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(raceTime => {
+      this.time = raceTime.time || 0;
       this.cdr.detectChanges();
     }));
 

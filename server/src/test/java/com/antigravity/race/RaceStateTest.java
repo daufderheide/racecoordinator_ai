@@ -63,21 +63,22 @@ public class RaceStateTest {
     when(mockOverallScoring.getTiebreaker())
         .thenReturn(com.antigravity.models.OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race(
-        "Test Race",
-        "track1",
-        HeatRotationType.RoundRobin,
-        mockHeatScoring,
-        mockOverallScoring,
-        "race1",
-        new ObjectId());
+    com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(mockHeatScoring)
+        .withOverallScoring(mockOverallScoring)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
     Driver realDriver = new Driver("Test Driver", "D1", "driver1", new ObjectId());
     RaceParticipant participant = new RaceParticipant(realDriver, "participant1");
     drivers.add(participant);
 
-    race = new Race(realRaceModel, drivers, realTrack, true); // true for DemoMode
+    race = new com.antigravity.race.Race((com.antigravity.models.Race) realRaceModel, (java.util.List<com.antigravity.race.RaceParticipant>) drivers, (com.antigravity.models.Track) realTrack, true, 0.0, 0.0); // true for DemoMode
     ClientSubscriptionManager.getInstance().setRace(race);
   }
 
@@ -138,12 +139,12 @@ public class RaceStateTest {
     // 2. Protocol countdown finishes -> Racing
     refreshSession();
     race.changeState(new Racing());
-    verifyBroadcast(RaceState.RACING);
+    verifyBroadcast(com.antigravity.proto.RaceState.RACING);
 
     // 3. Pause Race -> Paused
     refreshSession();
     race.pauseRace();
-    verifyBroadcast(RaceState.PAUSED);
+    verifyBroadcast(com.antigravity.proto.RaceState.PAUSED);
 
     // 4. Resume Race -> Racing
     refreshSession();
@@ -158,10 +159,10 @@ public class RaceStateTest {
     // 6. Next Heat or Race Over
     refreshSession();
     race.changeState(new RaceOver());
-    verifyBroadcast(RaceState.RACE_OVER);
+    verifyBroadcast(com.antigravity.proto.RaceState.RACE_OVER);
   }
 
-  private void verifyBroadcast(RaceState expectedState) {
+  private void verifyBroadcast(com.antigravity.proto.RaceState expectedState) {
     try {
       java.lang.reflect.Field sessionField = WsContext.class.getDeclaredField("session");
       sessionField.setAccessible(true);
@@ -282,5 +283,38 @@ public class RaceStateTest {
     // Callbutton in RaceOver does nothing (ignored)
     race.onCallbutton(0);
     assertTrue(race.getState() instanceof com.antigravity.race.states.RaceOver);
+  }
+
+  @Test
+  public void testPauseDuringAutoStartCancelsTimer() throws Exception {
+    // 1. Setup Race with Auto-Start
+    race.setAutoStartRemaining(10.0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    // 2. Pause
+    refreshSession();
+    race.pauseRace();
+
+    // 3. Verify
+    assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.NotStarted);
+    // Note: We don't call verifyBroadcast(RaceState.PAUSED) because state doesn't change.
+    // Instead, Race.clearAutoTimers() broadcasts the reset timer.
+  }
+
+  @Test
+  public void testPauseDuringAutoAdvanceCancelsTimer() throws Exception {
+    // 1. Setup Race in HeatOver with Auto-Advance
+    race.changeState(new HeatOver());
+    race.setAutoAdvanceRemaining(10.0);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.HeatOver);
+
+    // 2. Pause
+    refreshSession();
+    race.pauseRace();
+
+    // 3. Verify
+    assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
+    assertTrue(race.getState() instanceof com.antigravity.race.states.HeatOver);
   }
 }

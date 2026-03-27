@@ -21,7 +21,7 @@ export class UndoManager<T> {
   constructor(
     private config: UndoConfig<T>,
     snapshotGetter: () => T | undefined, // Function to get current state from consumer
-    debounceMs: number = 500
+    debounceMs: number = 100
   ) {
     this.snapshotGetter = snapshotGetter;
 

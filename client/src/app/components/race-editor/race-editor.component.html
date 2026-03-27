@@ -59,7 +59,7 @@
       <div class="sections-wrapper">
 
         <!-- General Section -->
-        <div class="config-section">
+        <div id="general-section" class="config-section">
           <div class="section-header" (click)="toggleSection('general')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.general">▼</span>
             <h1>{{ 'RE_GENERAL_HEADER' | translate }}</h1>
@@ -88,7 +88,7 @@
         </div>
 
         <!-- Scoring Section -->
-        <div class="config-section">
+        <div id="scoring-section" class="config-section">
           <div class="section-header" (click)="toggleSection('scoring')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.scoring">▼</span>
             <h1>Scoring</h1>
@@ -181,8 +181,31 @@
           </div>
         </div>
 
+        <!-- Heats Section -->
+        <div id="heats-section" class="config-section">
+          <div class="section-header" (click)="toggleSection('heats')">
+            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.heats">▼</span>
+            <h1>{{ 'RE_HEATS_HEADER' | translate }}</h1>
+          </div>
+
+          <div class="section-content" *ngIf="sectionsExpanded.heats">
+            <div class="config-row">
+              <div class="config-section">
+                <label>{{ 'RE_AUTO_ADVANCE_TIME' | translate }}</label>
+                <input type="number" [(ngModel)]="editingRace.auto_advance_time" (ngModelChange)="captureState()"
+                  min="0" step="1">
+              </div>
+              <div class="config-section">
+                <label>{{ 'RE_AUTO_START_TIME' | translate }}</label>
+                <input type="number" [(ngModel)]="editingRace.auto_start_time" (ngModelChange)="captureState()"
+                  min="0" step="1">
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Analog Fuel Section -->
-        <div class="config-section">
+        <div id="analog-fuel-section" class="config-section">
           <div class="section-header" (click)="toggleSection('fuel_analog')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.fuel_analog">▼</span>
             <h1>{{ 'RE_ANALOG_FUEL_HEADER' | translate }}</h1>
@@ -336,7 +359,7 @@
         </div>
 
         <!-- Digital Fuel Section -->
-        <div class="config-section">
+        <div id="digital-fuel-outer-section" class="config-section">
           <div class="section-header" (click)="toggleSection('fuel_digital')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.fuel_digital">▼</span>
             <h1>{{ 'RE_DIGITAL_FUEL_HEADER' | translate }}</h1>
@@ -488,7 +511,7 @@
         </div>
 
         <!-- Team Options Section -->
-        <div class="config-section">
+        <div id="team-options-section" class="config-section">
           <div class="section-header" (click)="toggleSection('team')">
             <span class="expander-icon" [class.collapsed]="!sectionsExpanded.team">▼</span>
             <h1>Team Options</h1>

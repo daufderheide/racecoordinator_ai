@@ -21,7 +21,11 @@ public class RaceConverterTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
-    Race race = new Race("Test Race", "track-id", null, heatScoring, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-id")
+        .withHeatScoring(heatScoring)
+        .build();
     Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
@@ -37,7 +41,11 @@ public class RaceConverterTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.Allow);
-    Race race = new Race("Test Race", "track-id", null, heatScoring, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-id")
+        .withHeatScoring(heatScoring)
+        .build();
     Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
@@ -53,7 +61,11 @@ public class RaceConverterTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.SingleLap);
-    Race race = new Race("Test Race", "track-id", null, heatScoring, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-id")
+        .withHeatScoring(heatScoring)
+        .build();
     Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
@@ -72,8 +84,14 @@ public class RaceConverterTest {
     com.antigravity.models.AnalogFuelOptions fuelOptions = new com.antigravity.models.AnalogFuelOptions(
         true, false, true, 120.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.LINEAR, 5.0, 100.0, 8.0, 3.0,
         5.0);
-    Race race = new Race("Test Race", "track-id", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring, null,
-        0.0, fuelOptions, null, null, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-id")
+        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .build();
     Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());

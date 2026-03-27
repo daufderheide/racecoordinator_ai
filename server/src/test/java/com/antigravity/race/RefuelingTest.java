@@ -54,9 +54,17 @@ public class RefuelingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     participants = new ArrayList<>();
     participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
@@ -65,7 +73,7 @@ public class RefuelingTest {
     lanes.add(new Lane("red", "black", 100));
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
-    race = spy(new Race(raceModel, participants, track, true));
+    race = spy(new com.antigravity.race.Race((com.antigravity.models.Race) raceModel, (java.util.List<com.antigravity.race.RaceParticipant>) participants, (com.antigravity.models.Track) track, true, 0.0, 0.0));
     racing = new Racing();
     race.changeState(racing);
 

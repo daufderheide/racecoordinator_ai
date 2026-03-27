@@ -50,9 +50,17 @@ public class FuelResetTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Fuel Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Fuel Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     participants = new ArrayList<>();
 

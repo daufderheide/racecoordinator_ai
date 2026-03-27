@@ -91,15 +91,22 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       }));
     }
 
-    // Trigger help automatically on first visit
-    setTimeout(() => {
+    // Trigger help automatically on first visit or if requested via query param
+    // TODO(aufderheide): I think the param query is just for tests and if so
+    // should be removed and the tests should fix flakiness issues some other way.
+    this.route.queryParams.subscribe(params => {
+      const forceHelp = params['help'] === 'true';
       const settings = this.settingsService.getSettings();
-      if (!settings.driverEditorHelpShown) {
-        this.startHelp();
-        settings.driverEditorHelpShown = true;
-        this.settingsService.saveSettings(settings);
+      if (forceHelp || !settings.driverEditorHelpShown) {
+        setTimeout(() => {
+          this.startHelp();
+          if (!forceHelp) {
+            settings.driverEditorHelpShown = true;
+            this.settingsService.saveSettings(settings);
+          }
+        }, 500);
       }
-    }, 800);
+    });
   }
 
   ngOnDestroy() {

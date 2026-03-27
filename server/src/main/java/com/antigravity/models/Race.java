@@ -42,6 +42,14 @@ public class Race extends Model {
 	@JsonProperty("team_options")
 	private final TeamOptions teamOptions;
 
+	@BsonProperty("auto_advance_time")
+	@JsonProperty("auto_advance_time")
+	private final double autoAdvanceTime;
+
+	@BsonProperty("auto_start_time")
+	@JsonProperty("auto_start_time")
+	private final double autoStartTime;
+
 	@BsonCreator
 	@JsonCreator
 	public Race(@BsonProperty("name") @JsonProperty("name") String name,
@@ -54,6 +62,8 @@ public class Race extends Model {
 			@BsonProperty("fuel_options") @JsonProperty("fuel_options") AnalogFuelOptions fuelOptions,
 			@BsonProperty("digital_fuel_options") @JsonProperty("digital_fuel_options") DigitalFuelOptions digitalFuelOptions,
 			@BsonProperty("team_options") @JsonProperty("team_options") TeamOptions teamOptions,
+			@BsonProperty("auto_advance_time") @JsonProperty("auto_advance_time") Double autoAdvanceTime,
+			@BsonProperty("auto_start_time") @JsonProperty("auto_start_time") Double autoStartTime,
 			@BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
 			@BsonId @JsonProperty("_id") ObjectId id) {
 		super(id, entityId);
@@ -67,48 +77,96 @@ public class Race extends Model {
 		this.fuelOptions = fuelOptions != null ? fuelOptions : new AnalogFuelOptions();
 		this.digitalFuelOptions = digitalFuelOptions != null ? digitalFuelOptions : new DigitalFuelOptions();
 		this.teamOptions = teamOptions != null ? teamOptions : new TeamOptions();
+		this.autoAdvanceTime = autoAdvanceTime != null ? autoAdvanceTime : 0.0;
+		this.autoStartTime = autoStartTime != null ? autoStartTime : 0.0;
 	}
 
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			HeatScoring oldHeatScoring, OverallScoring overallScoring, Double minLapTime, AnalogFuelOptions fuelOptions,
-			DigitalFuelOptions digitalFuelOptions, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, oldHeatScoring, overallScoring, minLapTime, fuelOptions,
-				digitalFuelOptions, null, entityId, id);
+	public static class Builder {
+		private String name;
+		private String trackEntityId;
+		private HeatRotationType heatRotationType = HeatRotationType.RoundRobin;
+		private HeatScoring heatScoring = new HeatScoring();
+		private OverallScoring overallScoring = new OverallScoring();
+		private double minLapTime = 0.0;
+		private AnalogFuelOptions fuelOptions = new AnalogFuelOptions();
+		private DigitalFuelOptions digitalFuelOptions = new DigitalFuelOptions();
+		private TeamOptions teamOptions = new TeamOptions();
+		private double autoAdvanceTime = 0.0;
+		private double autoStartTime = 0.0;
+		private String entityId;
+		private ObjectId id;
+
+		public Builder withName(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder withTrackEntityId(String trackEntityId) {
+			this.trackEntityId = trackEntityId;
+			return this;
+		}
+
+		public Builder withHeatRotationType(HeatRotationType heatRotationType) {
+			this.heatRotationType = heatRotationType;
+			return this;
+		}
+
+		public Builder withHeatScoring(HeatScoring heatScoring) {
+			this.heatScoring = heatScoring;
+			return this;
+		}
+
+		public Builder withOverallScoring(OverallScoring overallScoring) {
+			this.overallScoring = overallScoring;
+			return this;
+		}
+
+		public Builder withMinLapTime(double minLapTime) {
+			this.minLapTime = minLapTime;
+			return this;
+		}
+
+		public Builder withFuelOptions(AnalogFuelOptions fuelOptions) {
+			this.fuelOptions = fuelOptions;
+			return this;
+		}
+
+		public Builder withDigitalFuelOptions(DigitalFuelOptions digitalFuelOptions) {
+			this.digitalFuelOptions = digitalFuelOptions;
+			return this;
+		}
+
+		public Builder withTeamOptions(TeamOptions teamOptions) {
+			this.teamOptions = teamOptions;
+			return this;
+		}
+
+		public Builder withAutoAdvanceTime(double autoAdvanceTime) {
+			this.autoAdvanceTime = autoAdvanceTime;
+			return this;
+		}
+
+		public Builder withAutoStartTime(double autoStartTime) {
+			this.autoStartTime = autoStartTime;
+			return this;
+		}
+
+		public Builder withEntityId(String entityId) {
+			this.entityId = entityId;
+			return this;
+		}
+
+		public Builder withId(ObjectId id) {
+			this.id = id;
+			return this;
+		}
+
+		public Race build() {
+			return new Race(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime,
+					fuelOptions, digitalFuelOptions, teamOptions, autoAdvanceTime, autoStartTime, entityId, id);
+		}
 	}
 
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			OverallScoring overallScoring, Double minLapTime, AnalogFuelOptions fuelOptions,
-			DigitalFuelOptions digitalFuelOptions, TeamOptions teamOptions, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, fuelOptions,
-				digitalFuelOptions, teamOptions, entityId, id);
-	}
-
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			OverallScoring overallScoring, Double minLapTime, AnalogFuelOptions fuelOptions,
-			DigitalFuelOptions digitalFuelOptions, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, fuelOptions,
-				digitalFuelOptions, null, entityId, id);
-	}
-
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			OverallScoring overallScoring, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, null, null, null, entityId, id);
-	}
-
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			OverallScoring overallScoring, double minLapTime, String entityId, ObjectId id) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, minLapTime, null, null, null, entityId,
-				id);
-	}
-
-	public Race(String name, String trackEntityId) {
-		this(name, trackEntityId, HeatRotationType.RoundRobin, null, null, null, 0.0, null, null, null, null, null);
-	}
-
-	public Race(String name, String trackEntityId, HeatRotationType heatRotationType, HeatScoring heatScoring,
-			OverallScoring overallScoring) {
-		this(name, trackEntityId, heatRotationType, heatScoring, null, overallScoring, 0.0, null, null, null, null, null);
-	}
 
 	public double getMinLapTime() {
 		return minLapTime;
@@ -144,5 +202,13 @@ public class Race extends Model {
 
 	public TeamOptions getTeamOptions() {
 		return teamOptions;
+	}
+
+	public double getAutoAdvanceTime() {
+		return autoAdvanceTime;
+	}
+
+	public double getAutoStartTime() {
+		return autoStartTime;
 	}
 }

@@ -41,14 +41,15 @@ public class TeamRacingTest {
         OverallScoring.OverallRanking.LAP_COUNT,
         OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Team Test Race",
-        "track1",
-        HeatRotationType.RoundRobin,
-        heatScoring,
-        overallScoring,
-        "race1",
-        new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Team Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     participants = new ArrayList<>();
 

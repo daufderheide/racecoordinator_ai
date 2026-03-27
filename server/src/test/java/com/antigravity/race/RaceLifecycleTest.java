@@ -44,8 +44,15 @@ public class RaceLifecycleTest {
     when(mockOverallScoring.getTiebreaker())
         .thenReturn(com.antigravity.models.OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race("Test Race", "track1",
-        HeatRotationType.RoundRobin, mockHeatScoring, mockOverallScoring, "race1", new ObjectId());
+    com.antigravity.models.Race realRaceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(mockHeatScoring)
+        .withOverallScoring(mockOverallScoring)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
     drivers.add(new RaceParticipant(new com.antigravity.models.Driver("Test Driver", "D1", "driver1", new ObjectId()),

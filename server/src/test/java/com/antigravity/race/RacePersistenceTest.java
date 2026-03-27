@@ -2,17 +2,14 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.Test;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
-import com.antigravity.service.DatabaseService;
 // Mocking the DB context/service might be complex, so we'll test object serialization if possible, 
 // or test the logic flow without DB if we suspect logic. 
 // But issue is likely persistence.
@@ -48,9 +45,14 @@ public class RacePersistenceTest {
 
     com.antigravity.models.Track track = new com.antigravity.models.Track("Track", lanes, "track1", null);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race("Race", "track1",
-        com.antigravity.models.HeatRotationType.RoundRobin, new com.antigravity.models.HeatScoring(),
-        new com.antigravity.models.OverallScoring(), "race1", null);
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatScoring(new com.antigravity.models.HeatScoring())
+        .withOverallScoring(new com.antigravity.models.OverallScoring())
+        .withEntityId("race1")
+        .build();
     Race race = new Race(raceModel, drivers, track, true);
 
     // Execute

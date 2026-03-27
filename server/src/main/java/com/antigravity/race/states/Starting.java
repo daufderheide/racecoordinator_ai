@@ -12,6 +12,7 @@ public class Starting implements IRaceState {
     if (!race.hasRacedInCurrentHeat()) {
       race.prepareHeat();
     }
+    race.setAutoStartFired(true);
 
     scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
     final Runnable ticker = new Runnable() {

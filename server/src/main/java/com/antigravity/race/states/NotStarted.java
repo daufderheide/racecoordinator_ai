@@ -1,6 +1,8 @@
 package com.antigravity.race.states;
 
 public class NotStarted implements IRaceState {
+	private java.util.concurrent.ScheduledExecutorService scheduler;
+	private java.util.concurrent.ScheduledFuture<?> timerHandle;
 
 	@Override
 	public void enter(com.antigravity.race.Race race) {
@@ -8,21 +10,21 @@ public class NotStarted implements IRaceState {
 		race.setMainPower(false);
 		race.setLanePower(true, -1);
 		race.setHasRacedInCurrentHeat(false);
-		// Broadcast 0 time to reset client
-		com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
-				.setTime(0.0f)
-				.build();
 
-		com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
-				.setRaceTime(raceTimeMsg)
-				.build();
-
-		race.broadcast(raceDataMsg);
+		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		if (autoStartTime > 0 && !race.isAutoStartFired()) {
+			race.setAutoStartRemaining(autoStartTime);
+			startAutoStartTimer(race);
+		} else {
+			race.setAutoStartRemaining(0);
+			broadcastTime(race);
+		}
 	}
 
 	@Override
 	public void exit(com.antigravity.race.Race race) {
 		System.out.println("NotStarted state exited.");
+		stopTimer();
 	}
 
 	@Override
@@ -33,13 +35,17 @@ public class NotStarted implements IRaceState {
 	@Override
 	public void start(com.antigravity.race.Race race) {
 		System.out.println("NotStarted.start() called. Starting new race.");
+		stopTimer();
 		race.resetRaceTime();
 		race.changeState(new com.antigravity.race.states.Starting());
 	}
 
 	@Override
 	public void pause(com.antigravity.race.Race race) {
-		throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
+		System.out.println("NotStarted.pause() called. Terminating auto-start.");
+		stopTimer();
+		race.setAutoStartFired(true);
+		race.clearAutoTimers();
 	}
 
 	@Override
@@ -110,6 +116,55 @@ public class NotStarted implements IRaceState {
 
 	@Override
 	public void onCarData(com.antigravity.protocols.CarData carData) {
+	}
+
+	private void startAutoStartTimer(final com.antigravity.race.Race race) {
+		scheduler = java.util.concurrent.Executors.newScheduledThreadPool(1);
+		final Runnable ticker = new Runnable() {
+			long lastTime = 0;
+
+			public void run() {
+				try {
+					long now = System.nanoTime();
+					if (lastTime == 0) {
+						lastTime = now;
+						return;
+					}
+
+					double delta = (now - lastTime) / 1_000_000_000.0;
+					lastTime = now;
+
+					double remaining = race.getAutoStartRemaining() - delta;
+					if (remaining <= 0) {
+						remaining = 0;
+						race.setAutoStartRemaining(0);
+						broadcastTime(race);
+						stopTimer();
+						race.setAutoStartFired(true);
+						race.startRace();
+					} else {
+						race.setAutoStartRemaining(remaining);
+						broadcastTime(race);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, java.util.concurrent.TimeUnit.MILLISECONDS);
+	}
+
+	private void stopTimer() {
+		if (timerHandle != null) {
+			timerHandle.cancel(true);
+		}
+		if (scheduler != null) {
+			scheduler.shutdown();
+		}
+	}
+
+	private void broadcastTime(com.antigravity.race.Race race) {
+		race.broadcastTime();
 	}
 
 	@Override

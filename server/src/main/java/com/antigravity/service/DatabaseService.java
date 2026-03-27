@@ -143,8 +143,17 @@ public class DatabaseService {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
     OverallScoring overallScoring = new OverallScoring();
 
-    Race race = new Race("Time Based", track.getEntityId(), HeatRotationType.RoundRobin,
-        heatScoring, overallScoring, 3.0, getNextSequence(database, "races"), null);
+    Race race = new Race.Builder()
+        .withName("Time Based")
+        .withTrackEntityId(track.getEntityId())
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withMinLapTime(3.0)
+        .withAutoAdvanceTime(0.0)
+        .withAutoStartTime(0.0)
+        .withEntityId(getNextSequence(database, "races"))
+        .build();
 
     raceCollection.insertOne(race);
 
@@ -155,8 +164,17 @@ public class DatabaseService {
         com.antigravity.models.HeatScoring.HeatRanking.LAP_COUNT,
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
 
-    race = new Race("Lap Based", track.getEntityId(), HeatRotationType.FriendlyRoundRobin,
-        heatScoring, overallScoring, 3.0, getNextSequence(database, "races"), null);
+    race = new Race.Builder()
+        .withName("Lap Based")
+        .withTrackEntityId(track.getEntityId())
+        .withHeatRotationType(HeatRotationType.FriendlyRoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withMinLapTime(3.0)
+        .withAutoAdvanceTime(0.0)
+        .withAutoStartTime(0.0)
+        .withEntityId(getNextSequence(database, "races"))
+        .build();
 
     raceCollection.insertOne(race);
 

@@ -15,6 +15,8 @@ export class Race implements Model {
   readonly fuel_options: AnalogFuelOptions;
   readonly digital_fuel_options: DigitalFuelOptions;
   readonly team_options: TeamOptions;
+  readonly auto_advance_time: number;
+  readonly auto_start_time: number;
 
   constructor(
     entity_id: string,
@@ -24,7 +26,9 @@ export class Race implements Model {
     overall_scoring: OverallScoring = new OverallScoring(),
     fuel_options: AnalogFuelOptions = new AnalogFuelOptions(),
     digital_fuel_options: DigitalFuelOptions = new DigitalFuelOptions(),
-    team_options: TeamOptions = new TeamOptions()
+    team_options: TeamOptions = new TeamOptions(),
+    auto_advance_time: number = 0,
+    auto_start_time: number = 0
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -34,6 +38,8 @@ export class Race implements Model {
     this.fuel_options = fuel_options;
     this.digital_fuel_options = digital_fuel_options;
     this.team_options = team_options;
+    this.auto_advance_time = auto_advance_time;
+    this.auto_start_time = auto_start_time;
   }
 
   get objectId(): string {

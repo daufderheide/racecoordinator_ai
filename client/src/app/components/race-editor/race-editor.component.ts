@@ -42,6 +42,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   sectionsExpanded = {
     general: true,
     scoring: true,
+    heats: true,
     fuel_analog: true,
     fuel_digital: true,
     team: true
@@ -169,7 +170,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       next: (races) => {
         const race = races.find(r => r.entity_id === id);
         if (race) {
-          this.editingRace = this.deepCopy(race);
+          this.editingRace = {
+            ...this.deepCopy(race),
+            auto_advance_time: race.auto_advance_time || 0,
+            auto_start_time: race.auto_start_time || 0
+          };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
               enabled: false,
@@ -231,6 +236,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.dataService.getTracks().subscribe({
       next: (tracks) => {
         this.tracks = tracks.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.has_digital_fuel ?? false, t.arduino_configs));
+        this.enforceFuelRules();
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
@@ -258,6 +264,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         ranking_method: 'LAP_COUNT',
         tiebreaker: 'FASTEST_LAP_TIME'
       },
+      auto_advance_time: 0,
+      auto_start_time: 0,
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
@@ -333,7 +341,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (typeof track.hasDigitalFuel === 'function') {
       return track.hasDigitalFuel();
     }
-    return !!(track as any).has_digital_fuel || (track as any).arduino_configs?.some((conf: any) => conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0);
+    const hasDigital = !!(track as any).has_digital_fuel || (track as any).arduino_configs?.some((conf: any) => conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0);
+    return hasDigital;
   }
 
   onRotationTypeChange() {
@@ -1054,6 +1063,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         refuel_rate: race.digital_fuel_options.refuel_rate,
         pit_stop_delay: race.digital_fuel_options.pit_stop_delay
       } : undefined,
+      auto_advance_time: race.auto_advance_time,
+      auto_start_time: race.auto_start_time,
       min_lap_time: race.min_lap_time,
       team_options: race.team_options ? {
         heat_lap_limit: race.team_options.heat_lap_limit,

@@ -126,7 +126,8 @@ describe('DriverEditorComponent', () => {
         queryParamMap: {
           get: jasmine.createSpy('get').and.returnValue('new')
         }
-      }
+      },
+      queryParams: of({})
     };
 
     // Default mock returns
@@ -389,19 +390,19 @@ describe('DriverEditorComponent', () => {
     component.editingDriver!.name = 'A';
     component.onInputChange(); // Trigger debounce subject
 
-    // Should NOT have saved yet (debounce 500ms)
-    tick(200);
+    // Should NOT have saved yet (debounce 100ms)
+    tick(50);
     expect(component.undoManager.undoStackItems.length).toBe(0);
 
     // Type "AB" before debounce hits
     component.editingDriver!.name = 'AB';
     component.onInputChange(); // Reset debounce timer
 
-    tick(200);
+    tick(50);
     expect(component.undoManager.undoStackItems.length).toBe(0);
 
-    // Wait for full debounce (total > 500ms from last input)
-    tick(500);
+    // Wait for full debounce (total > 100ms from last input)
+    tick(100);
 
     // Should now have saved the SNAPSHOT state ('Start')
     expect(component.undoManager.undoStackItems.length).toBe(1);
@@ -412,7 +413,7 @@ describe('DriverEditorComponent', () => {
     // Trigger another change to see if it captures 'AB'
     component.editingDriver!.name = 'ABC';
     component.onInputChange();
-    tick(500);
+    tick(100);
     // Stack should now have 'AB'
     expect(component.undoManager.undoStackItems[1].name).toBe('AB');
 

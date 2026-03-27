@@ -92,8 +92,14 @@ public class ClientCommandTaskHandlerTest {
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
     com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
 
-    Race race = new Race("Test Race", "track-1", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring,
-        overallScoring, raceId, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-1")
+        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withEntityId(raceId)
+        .build();
     Driver driver = new Driver("Test Driver", "TD", driverId, null);
     Team team = new Team("Test Team", "url", Arrays.asList(driverId), teamId, null);
 
@@ -176,8 +182,14 @@ public class ClientCommandTaskHandlerTest {
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
     com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
 
-    Race race = new Race("Test Race", "track-1", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring,
-        overallScoring, raceId, null);
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-1")
+        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withEntityId(raceId)
+        .build();
     Driver driver = new Driver("Test Driver", "TD", driverId, null);
     Team team = new Team("Test Team", "url", Arrays.asList(driverId), teamId, null);
 
@@ -256,7 +268,14 @@ public class ClientCommandTaskHandlerTest {
     when(race.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
     com.antigravity.models.HeatScoring heatScoring = new com.antigravity.models.HeatScoring();
     com.antigravity.models.OverallScoring overallScoring = new com.antigravity.models.OverallScoring();
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race("MyTestRace", "track-1", com.antigravity.models.HeatRotationType.RoundRobin, heatScoring, overallScoring, "race-1", null);
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("MyTestRace")
+        .withTrackEntityId("track-1")
+        .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withEntityId("race-1")
+        .build();
     when(race.getRaceModel()).thenReturn(raceModel);
     when(race.getTrack()).thenReturn(new com.antigravity.models.Track("Track1", new java.util.ArrayList<>(), "track1", null));
     when(race.getDrivers()).thenReturn(new java.util.ArrayList<>());

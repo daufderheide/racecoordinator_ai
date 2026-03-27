@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.antigravity.protocols.demo.Demo;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
@@ -37,18 +38,24 @@ public class Race implements ProtocolListener {
   private IRaceState state;
   private float accumulatedRaceTime = 0.0f;
   private boolean hasRacedInCurrentHeat = false;
+  private boolean autoStartFired = false;
+  private boolean autoAdvanceFired = false;
+  private double autoStartRemaining = 0;
+  private double autoAdvanceRemaining = 0;
 
-  public Race(MongoDatabase database,
-      com.antigravity.models.Race model,
-      List<RaceParticipant> drivers,
+  public Race(com.antigravity.models.Race model,
+      List<com.antigravity.race.RaceParticipant> drivers,
+      com.antigravity.models.Track track,
       boolean isDemoMode) {
-    this(model, drivers, new DatabaseService().getTrack(database, model.getTrackEntityId()), isDemoMode);
+    this(model, drivers, track, isDemoMode, 0.0, 0.0);
   }
 
   public Race(com.antigravity.models.Race model,
-      List<RaceParticipant> drivers,
-      Track track,
-      boolean isDemoMode) {
+      List<com.antigravity.race.RaceParticipant> drivers,
+      com.antigravity.models.Track track,
+      boolean isDemoMode,
+      double autoAdvanceTime,
+      double autoStartTime) {
     this.model = model;
     this.drivers = drivers;
     for (int i = 0; i < this.drivers.size(); i++) {
@@ -56,7 +63,7 @@ public class Race implements ProtocolListener {
     }
 
     this.track = track;
-    
+
     // Fill with empty drivers if we have fewer drivers than lanes
     int numLanes = this.track.getLanes().size();
     while (this.drivers.size() < numLanes) {
@@ -73,6 +80,9 @@ public class Race implements ProtocolListener {
 
     this.createProtocols(isDemoMode);
 
+    this.autoAdvanceRemaining = 0;
+    this.autoStartRemaining = 0;
+
     this.state = new NotStarted();
     this.state.enter(this);
 
@@ -86,6 +96,8 @@ public class Race implements ProtocolListener {
       int currentHeatIndex,
       float accumulatedRaceTime,
       boolean hasRacedInCurrentHeat,
+      boolean autoStartFired,
+      boolean autoAdvanceFired,
       String stateClassName,
       boolean isDemoMode) {
     this.model = model;
@@ -99,6 +111,8 @@ public class Race implements ProtocolListener {
     }
     this.accumulatedRaceTime = accumulatedRaceTime;
     this.hasRacedInCurrentHeat = hasRacedInCurrentHeat;
+    this.autoStartFired = autoStartFired;
+    this.autoAdvanceFired = autoAdvanceFired;
 
     this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
     this.createProtocols(isDemoMode);
@@ -211,6 +225,73 @@ public class Race implements ProtocolListener {
     this.hasRacedInCurrentHeat = hasRaced;
   }
 
+  public void broadcastRaceTime(double autoAdvanceRemaining, double autoStartRemaining) {
+    float displayTime = Math.max(0, this.getRaceTime());
+    com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+        .setTime(displayTime)
+        .setAutoAdvanceRemaining(autoAdvanceRemaining)
+        .setAutoStartRemaining(autoStartRemaining)
+        .build();
+
+    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+        .setRaceTime(raceTimeMsg)
+        .build();
+
+    this.broadcast(raceDataMsg);
+  }
+
+  public boolean isAutoStartFired() {
+    return autoStartFired;
+  }
+
+  public void setAutoStartFired(boolean fired) {
+    this.autoStartFired = fired;
+  }
+
+  public boolean isAutoAdvanceFired() {
+    return autoAdvanceFired;
+  }
+
+  public void setAutoAdvanceFired(boolean fired) {
+    this.autoAdvanceFired = fired;
+  }
+
+  public double getAutoStartRemaining() {
+    return autoStartRemaining;
+  }
+
+  public void setAutoStartRemaining(double remaining) {
+    this.autoStartRemaining = remaining;
+  }
+
+  public double getAutoAdvanceRemaining() {
+    return autoAdvanceRemaining;
+  }
+
+  public void setAutoAdvanceRemaining(double remaining) {
+    this.autoAdvanceRemaining = remaining;
+  }
+
+  public void clearAutoTimers() {
+    this.autoStartRemaining = 0;
+    this.autoAdvanceRemaining = 0;
+    broadcastTime();
+  }
+
+  public void broadcastTime() {
+    com.antigravity.proto.RaceTime raceTimeMsg = com.antigravity.proto.RaceTime.newBuilder()
+        .setTime(this.getRaceTime())
+        .setAutoStartRemaining(this.getAutoStartRemaining())
+        .setAutoAdvanceRemaining(this.getAutoAdvanceRemaining())
+        .build();
+
+    com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+        .setRaceTime(raceTimeMsg)
+        .build();
+
+    this.broadcast(raceDataMsg);
+  }
+
   public void broadcast(com.google.protobuf.GeneratedMessageV3 message) {
     ClientSubscriptionManager.getInstance().broadcast(message);
   }
@@ -281,7 +362,7 @@ public class Race implements ProtocolListener {
     protocols.startTimer();
   }
 
-  public java.util.List<com.antigravity.protocols.PartialTime> stopProtocols() {
+  public List<com.antigravity.protocols.PartialTime> stopProtocols() {
     return protocols.stopTimer();
   }
 
@@ -336,8 +417,8 @@ public class Race implements ProtocolListener {
     overallStandings.recalculate(this.drivers, this.heats);
 
     // Broadcast updates
-    java.util.List<com.antigravity.proto.RaceParticipant> participants = new java.util.ArrayList<>();
-    java.util.Set<String> sentObjectIds = new java.util.HashSet<>();
+    List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>();
+    Set<String> sentObjectIds = new HashSet<>();
     for (RaceParticipant driver : this.drivers) {
       participants.add(com.antigravity.converters.RaceParticipantConverter.toProto(driver, sentObjectIds));
     }
@@ -412,9 +493,9 @@ public class Race implements ProtocolListener {
           .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));
     }
 
-    java.util.List<com.antigravity.proto.Heat> heatProtos = heats.stream()
+    List<com.antigravity.proto.Heat> heatProtos = heats.stream()
         .map(h -> com.antigravity.converters.HeatConverter.toProto(h, sentObjectIds))
-        .collect(java.util.stream.Collectors.toList());
+        .collect(Collectors.toList());
 
     com.antigravity.proto.Race raceUpdate = com.antigravity.proto.Race.newBuilder()
         .setRace(raceProto)
@@ -431,6 +512,10 @@ public class Race implements ProtocolListener {
   }
 
   public void moveToNextHeat() {
+    this.autoStartFired = false;
+    this.autoAdvanceFired = false;
+    this.autoStartRemaining = 0;
+    this.autoAdvanceRemaining = 0;
     state.nextHeat(this);
   }
 

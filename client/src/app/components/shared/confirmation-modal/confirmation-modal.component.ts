@@ -4,8 +4,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   selector: 'app-confirmation-modal',
   standalone: false,
   template: `
-    <div class="modal-backdrop" *ngIf="visible">
-      <div class="modal-content">
+    <div id="confirmation-modal-backdrop" class="modal-backdrop" *ngIf="visible">
+      <div id="confirmation-modal-content" class="modal-content">
         <h2 class="modal-title">{{ title | translate }}</h2>
         <p class="modal-message">{{ message | translate:messageParams }}</p>
         <div class="modal-actions">

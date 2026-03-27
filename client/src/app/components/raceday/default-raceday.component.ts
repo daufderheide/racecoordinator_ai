@@ -49,8 +49,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected deferHeatShortcut: string = 'Alt+F6';
   protected time: number = 0;
   protected timeFormat: string = '1.0-0';
+  protected autoStartRemaining: number = 0;
+  protected autoAdvanceRemaining: number = 0;
   protected sortedHeatDrivers: DriverHeatData[] = [];
   protected allDrivers: any[] = [];
+  protected get autoCountdownLabel(): string {
+    if (this.autoStartRemaining > 0) {
+      return this.translationService.translate('RD_AUTO_STARTING');
+    }
+    if (this.autoAdvanceRemaining > 0) {
+      return this.translationService.translate('RD_AUTO_ADVANCING');
+    }
+    return '';
+  }
 
   private previousTime: number = 0;
 
@@ -130,7 +141,17 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       this.updateScale();
     }));
 
-    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(time => {
+    this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(raceTime => {
+      this.autoStartRemaining = raceTime.autoStartRemaining || 0;
+      this.autoAdvanceRemaining = raceTime.autoAdvanceRemaining || 0;
+
+      let time = raceTime.time || 0;
+      if (this.autoStartRemaining > 0) {
+        time = this.autoStartRemaining;
+      } else if (this.autoAdvanceRemaining > 0) {
+        time = this.autoAdvanceRemaining;
+      }
+
       if (time > this.previousTime) {
         this.timeFormat = '1.0-0';
       } else if (time < this.previousTime) {
@@ -143,9 +164,9 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         if (time === 0) this.timeFormat = '1.0-0';
       }
 
-      const prev = this.previousTime;
       this.time = time;
       this.previousTime = time;
+
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }
@@ -807,6 +828,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       const s = this.raceState;
       const RS = com.antigravity.RaceState;
 
+      // If an auto-timer is active, space bar should pause/cancel it
+      if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
+        if (!this.isPauseDisabled) {
+          this.onMenuSelect('PAUSE');
+          return;
+        }
+      }
+
       if (s === RS.HEAT_OVER) {
         if (!this.isNextHeatDisabled) {
           this.onMenuSelect('NEXT_HEAT');
@@ -901,10 +930,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     // Enabled in RACING.
     const s = this.raceState; // Shortcut
     const RS = com.antigravity.RaceState;
+
+    // Allow pause if an auto-start or auto-advance timer is active
+    const isAutoTimerActive = this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0;
+
     return !this.isInterfaceConnected ||
-      s === RS.NOT_STARTED ||
+      (s === RS.NOT_STARTED && !isAutoTimerActive) ||
       s === RS.PAUSED ||
-      s === RS.HEAT_OVER ||
+      (s === RS.HEAT_OVER && !isAutoTimerActive) ||
       s === RS.RACE_OVER;
   }
 

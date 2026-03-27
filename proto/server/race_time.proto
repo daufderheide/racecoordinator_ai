@@ -7,4 +7,6 @@ option java_outer_classname = "RaceTimeProto";
 
 message RaceTime {
   double time = 1;
+  double auto_start_remaining = 2;
+  double auto_advance_remaining = 3;
 }

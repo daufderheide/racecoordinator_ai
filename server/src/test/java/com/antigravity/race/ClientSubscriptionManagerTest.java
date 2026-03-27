@@ -113,8 +113,7 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testAutoSaveCreatesFile() throws Exception {
     Race mockRace = mock(Race.class);
-    com.antigravity.models.Race realModel = new com.antigravity.models.Race("Race", "track1",
-        null, null, null, "testRaceId", null);
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder().withName("Race").withTrackEntityId("track1").withEntityId("testRaceId").build();
 
     when(mockRace.getRaceModel()).thenReturn(realModel);
     when(mockRace.getTrack())
@@ -159,8 +158,7 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testClientDisconnectDeletesAutoSave() throws Exception {
     Race mockRace = mock(Race.class);
-    com.antigravity.models.Race realModel = new com.antigravity.models.Race("Race", "track1",
-        null, null, null, "testRaceId", null);
+    com.antigravity.models.Race realModel = new com.antigravity.models.Race.Builder().withName("Race").withTrackEntityId("track1").withEntityId("testRaceId").build();
     when(mockRace.getRaceModel()).thenReturn(realModel);
     when(mockRace.createSnapshot()).thenReturn(com.antigravity.proto.RaceData.getDefaultInstance());
     when(mockRace.getHeats()).thenReturn(Collections.emptyList());

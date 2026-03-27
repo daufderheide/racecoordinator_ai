@@ -53,7 +53,13 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testCreateRace_Success() {
     com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(10, 60.0, 100, 600.0, true);
-    Race raceRequest = new Race("New Race", "track-1", null, null, null, 2.5, null, null, teamOptions, "new", null);
+    Race raceRequest = new Race.Builder()
+        .withName("New Race")
+        .withTrackEntityId("track-1")
+        .withMinLapTime(2.5)
+        .withTeamOptions(teamOptions)
+        .withEntityId("new")
+        .build();
 
     // Mock uniqueness check - no existing race
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -77,12 +83,20 @@ public class DatabaseTaskHandlerTest {
 
   @Test
   public void testCreateRace_DuplicateName() {
-    Race raceRequest = new Race("Duplicate Race", "track-1", null, null, null, "new", null);
+    Race raceRequest = new Race.Builder()
+        .withName("Duplicate Race")
+        .withTrackEntityId("track-1")
+        .withEntityId("new")
+        .build();
 
     // Mock uniqueness check - race exists
     FindIterable<Race> findIterable = mock(FindIterable.class);
     when(raceCollection.find(any(Bson.class))).thenReturn(findIterable);
-    when(findIterable.first()).thenReturn(new Race("Duplicate Race", "track-1", null, null, null, "existing-1", null));
+    when(findIterable.first()).thenReturn(new Race.Builder()
+        .withName("Duplicate Race")
+        .withTrackEntityId("track-1")
+        .withEntityId("existing-1")
+        .build());
 
     assertThrows(IllegalArgumentException.class, () -> {
       handler.createRace(raceRequest);
@@ -95,7 +109,13 @@ public class DatabaseTaskHandlerTest {
   public void testUpdateRace_Success() {
     String raceId = "race-123";
     com.antigravity.models.TeamOptions teamOptions = new com.antigravity.models.TeamOptions(20, 120.0, 200, 1200.0, false);
-    Race raceUpdate = new Race("Updated Name", "track-1", null, null, null, 3.5, null, null, teamOptions, raceId, null);
+    Race raceUpdate = new Race.Builder()
+        .withName("Updated Name")
+        .withTrackEntityId("track-1")
+        .withMinLapTime(3.5)
+        .withTeamOptions(teamOptions)
+        .withEntityId(raceId)
+        .build();
 
     // Mock uniqueness check - no OTHER race with same name
     FindIterable<Race> findIterable = mock(FindIterable.class);
@@ -120,7 +140,11 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testUpdateRace_NotFound() {
     String raceId = "non-existent-id";
-    Race raceUpdate = new Race("Name", "track-1", null, null, null, raceId, null);
+    Race raceUpdate = new Race.Builder()
+        .withName("Name")
+        .withTrackEntityId("track-1")
+        .withEntityId(raceId)
+        .build();
 
     // Mock uniqueness check - no other race with same name
     FindIterable<Race> findIterable = mock(FindIterable.class);

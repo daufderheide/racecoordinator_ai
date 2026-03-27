@@ -100,6 +100,8 @@ public class RaceConverter {
                         .setRequirePitStopChangeDriver(options.isRequirePitStopChangeDriver())
                         .build());
             }
+            builder.setAutoAdvanceTime(race.getAutoAdvanceTime());
+            builder.setAutoStartTime(race.getAutoStartTime());
             return builder.build();
         }
     }

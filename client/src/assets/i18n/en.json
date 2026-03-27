@@ -795,6 +795,12 @@
   "RD_MENU_TRACK_POWER": "Track Power",
 
   "RD_MENU_WINDOWS": "Windows",
+ 
+  "RD_AUTO_START_COUNTDOWN": "Auto-Start in: {{time}}",
+ 
+  "RD_AUTO_ADVANCE_COUNTDOWN": "Auto-Advance in: {{time}}",
+  "RD_AUTO_STARTING": "Auto-Starting",
+  "RD_AUTO_ADVANCING": "Auto-Advancing",
 
   "RD_WIN_GROUP_LEADER_BOARD": "Group Leader Board",
 
@@ -825,6 +831,10 @@
   "RE_AF_SINGLE_LAP": "Allow Finish (single lap)",
 
   "RE_ALLOW_FINISH": "Allow Finish",
+
+  "RE_AUTO_ADVANCE_TIME": "Auto-Advance Time (s)",
+
+  "RE_AUTO_START_TIME": "Auto-Start Time (s)",
 
   "RE_ANALOG_FUEL_HEADER": "Analog Fuel Configuration",
 
@@ -909,6 +919,8 @@
   "RE_GENERAL_HEADER": "General",
 
   "RE_HEADER_RACE_CONFIG": "RACE CONFIGURATION",
+
+  "RE_HEATS_HEADER": "Heat Configuration",
 
   "RE_HEAT_LIST_HEADER": "HEAT LIST",
 

@@ -27,7 +27,7 @@ describe('UndoManager', () => {
     manager = new UndoManager<TestItem>(
       config,
       () => currentItem, // snapshotGetter
-      500 // debounceMs
+      100 // debounceMs
     );
     manager.initialize(currentItem);
   });
@@ -98,17 +98,17 @@ describe('UndoManager', () => {
     // Type 'A'
     currentItem.name = 'A';
     manager.onInputChange();
-    tick(200);
+    tick(50); // Less than 100ms
     expect(manager.undoStackCount).toBe(0);
 
     // Type 'AB'
     currentItem.name = 'AB';
     manager.onInputChange(); // Reset timer
-    tick(200);
+    tick(50);
     expect(manager.undoStackCount).toBe(0);
 
-    // Wait full debounce
-    tick(500);
+    // Wait full debounce (total 100ms)
+    tick(50);
     expect(manager.undoStackCount).toBe(1);
     expect(manager.undoStackItems[0].name).toBe('Start');
     expect(currentItem.name).toBe('AB');
@@ -117,7 +117,7 @@ describe('UndoManager', () => {
   it('should not push to stack if state matches snapshot on commit', fakeAsync(() => {
     // Simulate user typing same value 'Start' -> 'Start' (e.g. paste same)
     manager.onInputChange();
-    tick(500);
+    tick(100);
 
     expect(manager.undoStackCount).toBe(0); // No change
   }));

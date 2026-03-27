@@ -48,14 +48,15 @@ public class RacingTest {
         OverallScoring.OverallRanking.LAP_COUNT,
         OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race",
-        "track1",
-        HeatRotationType.RoundRobin,
-        heatScoring,
-        overallScoring,
-        "race1",
-        new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     participants = new ArrayList<>();
     participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
@@ -67,7 +68,7 @@ public class RacingTest {
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1",
         new ObjectId());
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
   }
 
   @After
@@ -89,10 +90,16 @@ public class RacingTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(race.getRaceModel().getOverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build(),
+        participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -113,10 +120,16 @@ public class RacingTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.Allow);
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(race.getRaceModel().getOverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build(),
+        participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -144,10 +157,16 @@ public class RacingTest {
         HeatScoring.HeatRanking.LAP_COUNT,
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.SingleLap);
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(race.getRaceModel().getOverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build(),
+        participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -183,10 +202,16 @@ public class RacingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.SingleLap);
 
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track3", HeatRotationType.RoundRobin, heatScoring,
-        new OverallScoring(), "race1", new ObjectId()),
-        participants, threeLaneTrack, true);
+    race = new Race(new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track3")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build(),
+        participants, threeLaneTrack, true, 0.0, 0.0);
 
     // Verify setup
     assertEquals(3, race.getCurrentHeat().getDrivers().size());
@@ -217,10 +242,8 @@ public class RacingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder().withName("Test Race").withTrackEntityId("track1").withHeatRotationType(HeatRotationType.RoundRobin).withHeatScoring(heatScoring).withOverallScoring(race.getRaceModel().getOverallScoring()).withEntityId("race1").withId(new ObjectId()).build(),
+        participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -240,10 +263,8 @@ public class RacingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.Allow);
 
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder().withName("Test Race").withTrackEntityId("track1").withHeatRotationType(HeatRotationType.RoundRobin).withHeatScoring(heatScoring).withOverallScoring(race.getRaceModel().getOverallScoring()).withEntityId("race1").withId(new ObjectId()).build(),
+        participants, track, true, 0.0, 0.0);
 
     // Enter Racing state manually and start ticker
     Racing racing = new Racing();
@@ -275,10 +296,17 @@ public class RacingTest {
         HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         HeatScoring.AllowFinish.None);
 
-    race = new Race(new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring,
-        race.getRaceModel().getOverallScoring(), minLapTime, "race1", new ObjectId()),
-        participants, track, true);
+    race = new Race(new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(race.getRaceModel().getOverallScoring())
+        .withMinLapTime(minLapTime)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build(),
+        participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -356,11 +384,19 @@ public class RacingTest {
         true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.LINEAR, 4.0, 100.0, 10.0, 2.0,
         5.0);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
 
     // Set initial fuel level
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
@@ -384,11 +420,19 @@ public class RacingTest {
         true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.QUADRATIC, 4.0, 100.0, 10.0,
         2.0, 5.0);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
 
     // Set initial fuel level
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
@@ -412,11 +456,19 @@ public class RacingTest {
         true, false, false, 100.0, com.antigravity.models.AnalogFuelOptions.FuelUsageType.CUBIC, 4.0, 100.0, 10.0, 2.0,
         5.0);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
 
     // Set initial fuel level
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
@@ -511,16 +563,24 @@ public class RacingTest {
     com.antigravity.models.DigitalFuelOptions fuelOptions = new com.antigravity.models.DigitalFuelOptions(
         true, false, false, 100.0, com.antigravity.models.FuelOptions.FuelUsageType.LINEAR, 10.0, 100.0, 10.0, 5.0);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, heatScoring, null,
-        new OverallScoring(), 0.0, null, fuelOptions, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(new OverallScoring())
+        .withMinLapTime(0.0)
+        .withDigitalFuelOptions(fuelOptions)
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .build();
 
     // Mock track with digital fuel
     Track mockTrack = mock(Track.class);
     when(mockTrack.hasDigitalFuel()).thenReturn(true);
     when(mockTrack.getLanes()).thenReturn(track.getLanes());
 
-    Race raceWithFuel = new Race(raceModel, participants, mockTrack, true);
+    Race raceWithFuel = new Race(raceModel, participants, mockTrack, true, 0.0, 0.0);
     raceWithFuel.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     Racing racing = new Racing();
@@ -557,16 +617,23 @@ public class RacingTest {
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         com.antigravity.models.HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, customScoring, null,
-        new OverallScoring(), 0.0, null, null, teamOptions, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(customScoring)
+        .withOverallScoring(new OverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .withTeamOptions(teamOptions)
+        .build();
 
     Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
 
     Racing racing = new Racing();
     race.changeState(racing);
@@ -623,16 +690,24 @@ public class RacingTest {
         com.antigravity.models.HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
         com.antigravity.models.HeatScoring.AllowFinish.None);
 
-    com.antigravity.models.Race raceModel = new com.antigravity.models.Race(
-        "Test Race", "track1", HeatRotationType.RoundRobin, customScoring, null,
-        new OverallScoring(), 0.0, fuelOptions, null, teamOptions, "race1", new ObjectId());
+    com.antigravity.models.Race raceModel = new com.antigravity.models.Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track1")
+        .withHeatRotationType(HeatRotationType.RoundRobin)
+        .withHeatScoring(customScoring)
+        .withOverallScoring(new OverallScoring())
+        .withEntityId("race1")
+        .withId(new ObjectId())
+        .withFuelOptions(fuelOptions)
+        .withTeamOptions(teamOptions)
+        .build();
 
     Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
 
-    race = new Race(raceModel, participants, track, true);
+    race = new Race(raceModel, participants, track, true, 0.0, 0.0);
     race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
 
     Racing racing = new Racing();

@@ -177,10 +177,16 @@ public class ClientCommandTaskHandler {
         }
       }
     }
+    com.antigravity.models.Track raceTrack = new com.antigravity.service.DatabaseService()
+        .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
+
     com.antigravity.race.Race race = new com.antigravity.race.Race(
-        databaseContext.getDatabase(), raceModel,
+        raceModel,
         participants,
-        request.getIsDemoMode());
+        raceTrack,
+        request.getIsDemoMode(),
+        raceModel.getAutoAdvanceTime(),
+        raceModel.getAutoStartTime());
 
     try {
       ClientSubscriptionManager.getInstance().setRace(race);
@@ -704,6 +710,8 @@ public class ClientCommandTaskHandler {
           saveData.getCurrentHeatIndex(),
           saveData.getAccumulatedRaceTime(),
           saveData.isHasRacedInCurrentHeat(),
+          saveData.isAutoStartFired(),
+          saveData.isAutoAdvanceFired(),
           saveData.getStateClassName(),
           saveData.isDemoMode()
       );
