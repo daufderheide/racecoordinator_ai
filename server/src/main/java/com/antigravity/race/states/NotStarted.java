@@ -1,14 +1,18 @@
 package com.antigravity.race.states;
 
+import com.antigravity.race.HeatExecutionManager;
+
 public class NotStarted implements IRaceState {
 	private java.util.concurrent.ScheduledExecutorService scheduler;
 	private java.util.concurrent.ScheduledFuture<?> timerHandle;
 	private com.antigravity.race.Race race;
+	private HeatExecutionManager executionManager;
 
 	@Override
 	public void enter(com.antigravity.race.Race race) {
 		System.out.println("NotStarted state entered.");
 		this.race = race;
+		this.executionManager = race.getHeatExecutionManager();
 		race.setHasRacedInCurrentHeat(false);
 
 		double autoStartTime = race.getRaceModel().getAutoStartTime();
@@ -16,14 +20,14 @@ public class NotStarted implements IRaceState {
 
 		if (autoStartTime > 0 && !race.isAutoStartFired()) {
 			race.setAutoStartRemaining(autoStartTime);
-			
+
 			// Handle initial power state to avoid transient flicker
 			if (autoStartWarmupTime > 0) {
 				race.setMainPower(true);
 			} else {
 				race.setMainPower(false);
 			}
-			
+
 			race.setLanePower(true, -1);
 			startAutoStartTimer(race);
 		} else {
@@ -56,7 +60,7 @@ public class NotStarted implements IRaceState {
 	@Override
 	public void pause(com.antigravity.race.Race race) {
 		System.out.println("NotStarted.pause() called. Terminating auto-start.");
-		
+
 		double autoStartTime = race.getRaceModel().getAutoStartTime();
 		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
 		double elapsed = autoStartTime - race.getAutoStartRemaining();
@@ -133,72 +137,78 @@ public class NotStarted implements IRaceState {
 
 	@Override
 	public void onLap(int lane, double lapTime, int interfaceId) {
-		if (this.race == null) return;
+		if (this.race == null)
+			return;
 
 		double autoStartTime = race.getRaceModel().getAutoStartTime();
 		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
 		double elapsed = autoStartTime - race.getAutoStartRemaining();
 
 		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
-			System.out.println("NotStarted.onLap(): Recording warmup lap for lane " + lane);
-			// We handle this similarly to Racing state but without finish conditions
-			com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
-			if (currentHeat != null && lane >= 0 && lane < currentHeat.getDrivers().size()) {
-				com.antigravity.race.DriverHeatData driverData = currentHeat.getDrivers().get(lane);
-				if (driverData != null) {
-					// We'll just add the lap to the heat data directly
-					// The resetCurrentHeat() call later will clear these
-					driverData.addLap(lapTime);
-					
-					// Broadcast lap update
-					com.antigravity.proto.Lap lapMsg = com.antigravity.proto.Lap.newBuilder()
-						.setObjectId(driverData.getObjectId())
-						.setLapTime(lapTime)
-						.setLapNumber(driverData.getLapCount())
-						.setDriverId(driverData.getActualDriver() != null ? driverData.getActualDriver().getEntityId() : "")
-						.build();
-					
-					race.broadcast(com.antigravity.proto.RaceData.newBuilder()
-						.setLap(lapMsg)
-						.build());
-				}
-			}
+			System.out.println("NotStarted: Warmup lap detected, delegating to executor.");
+			executionManager.onLap(lane, lapTime, interfaceId, true, false); // ignoreTeamLimits = true, checkFinish = false
 		}
 	}
 
 	@Override
 	public void onSegment(int lane, double segmentTime, int interfaceId) {
-		if (this.race == null) return;
+		if (this.race == null)
+			return;
 
 		double autoStartTime = race.getRaceModel().getAutoStartTime();
 		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
 		double elapsed = autoStartTime - race.getAutoStartRemaining();
 
 		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
-			System.out.println("NotStarted.onSegment(): Recording warmup segment for lane " + lane);
-			com.antigravity.race.Heat currentHeat = race.getCurrentHeat();
-			if (currentHeat != null && lane >= 0 && lane < currentHeat.getDrivers().size()) {
-				com.antigravity.race.DriverHeatData driverData = currentHeat.getDrivers().get(lane);
-				if (driverData != null) {
-					driverData.addSegment(segmentTime);
-					
-					// Broadcast segment update
-					com.antigravity.proto.Segment segmentMsg = com.antigravity.proto.Segment.newBuilder()
-						.setObjectId(driverData.getObjectId())
-						.setSegmentTime(segmentTime)
-						.setSegmentNumber(driverData.getSegments().size())
-						.build();
-					
-					race.broadcast(com.antigravity.proto.RaceData.newBuilder()
-						.setSegment(segmentMsg)
-						.build());
-				}
-			}
+			System.out.println("NotStarted: Warmup segment detected, delegating to executor.");
+			executionManager.onSegment(lane, segmentTime, interfaceId);
 		}
 	}
 
 	@Override
 	public void onCarData(com.antigravity.protocols.CarData carData) {
+		if (this.race == null)
+			return;
+
+		double autoStartTime = race.getRaceModel().getAutoStartTime();
+		double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+		double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+		if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+			executionManager.handlePitDetection(carData);
+			if (executionManager.isDigitalFuelEnabled()) {
+				executionManager.handleDigitalFuelCarData(carData);
+			}
+
+			int lane = carData.getLane();
+			// Broadcast the CarData to clients
+			com.antigravity.proto.CarData.Builder dataBuilder = com.antigravity.proto.CarData.newBuilder()
+					.setLane(carData.getLane())
+					.setControllerThrottlePct(carData.getControllerThrottlePCT())
+					.setCarThrottlePct(carData.getCarThrottlePCT())
+					.setLocation(carData.getLocation().getValue())
+					.setLocationId(carData.getLocationId())
+					.setIsRefueling(executionManager.getIsRefueling()[lane]);
+
+			if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
+				if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
+					com.antigravity.race.DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
+					if (driverData != null) {
+						driverData.setCurrentLocation(carData.getLocation());
+						if (driverData.getDriver() != null) {
+							dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
+						}
+					}
+				}
+			}
+
+			com.antigravity.proto.CarData protoCarData = dataBuilder.build();
+			com.antigravity.proto.RaceData raceDataMsg = com.antigravity.proto.RaceData.newBuilder()
+					.setCarData(protoCarData)
+					.build();
+
+			race.broadcast(raceDataMsg);
+		}
 	}
 
 	private void startAutoStartTimer(final com.antigravity.race.Race race) {
@@ -218,6 +228,17 @@ public class NotStarted implements IRaceState {
 					lastTime = now;
 
 					double remaining = race.getAutoStartRemaining() - delta;
+
+					// Handle warmup time power logic and refueling
+					double autoStartTime = race.getRaceModel().getAutoStartTime();
+					double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+					double elapsed = autoStartTime - Math.max(0, remaining);
+
+					if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+						// During warmup, process refueling and fuel usage
+						executionManager.processTicker((float) delta);
+					}
+
 					if (remaining <= 0) {
 						remaining = 0;
 						race.setAutoStartRemaining(0);
@@ -227,12 +248,7 @@ public class NotStarted implements IRaceState {
 						race.startRace();
 					} else {
 						race.setAutoStartRemaining(remaining);
-						
-						// Handle warmup time power logic
-						double autoStartTime = race.getRaceModel().getAutoStartTime();
-						double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-						double elapsed = autoStartTime - remaining;
-						
+
 						if (autoStartWarmupTime > 0) {
 							if (elapsed <= autoStartWarmupTime) {
 								if (!race.isMainPower()) {
@@ -247,7 +263,7 @@ public class NotStarted implements IRaceState {
 								}
 							}
 						}
-						
+
 						broadcastTime(race);
 					}
 				} catch (Exception e) {

@@ -44,6 +44,9 @@ public class Race implements ProtocolListener {
   private double autoAdvanceRemaining = 0;
   private boolean mainPower = false;
 
+  // Heat execution state
+  private HeatExecutionManager executionManager;
+
   public Race(com.antigravity.models.Race model,
       List<com.antigravity.race.RaceParticipant> drivers,
       com.antigravity.models.Track track,
@@ -84,6 +87,9 @@ public class Race implements ProtocolListener {
     this.autoAdvanceRemaining = 0;
     this.autoStartRemaining = 0;
 
+    this.executionManager = new HeatExecutionManager(this);
+    initializeHeatExecutionState();
+
     this.state = new NotStarted();
     this.state.enter(this);
 
@@ -117,6 +123,9 @@ public class Race implements ProtocolListener {
 
     this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
     this.createProtocols(isDemoMode);
+
+    this.executionManager = new HeatExecutionManager(this);
+    initializeHeatExecutionState();
 
     try {
       Class<?> clazz = Class.forName(stateClassName);
@@ -375,7 +384,20 @@ public class Race implements ProtocolListener {
     return protocols.stopTimer();
   }
 
+  public void initializeHeatExecutionState() {
+    int laneCount = 0;
+    if (this.track != null && this.track.getLanes() != null) {
+      laneCount = this.track.getLanes().size();
+    }
+    this.executionManager.initialize(laneCount);
+  }
+
+  public HeatExecutionManager getHeatExecutionManager() {
+    return executionManager;
+  }
+
   public void prepareHeat() {
+    initializeHeatExecutionState();
     com.antigravity.models.FuelOptions fuelOptions = null;
     if (track != null && track.hasDigitalFuel()) {
       fuelOptions = model.getDigitalFuelOptions();
@@ -436,6 +458,8 @@ public class Race implements ProtocolListener {
 
       // Reset race time
       resetRaceTime();
+
+      initializeHeatExecutionState();
 
       restoreHeatFuel();
 

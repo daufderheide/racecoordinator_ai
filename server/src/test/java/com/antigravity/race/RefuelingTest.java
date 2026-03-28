@@ -74,6 +74,7 @@ public class RefuelingTest {
     track = new Track("Test Track", lanes, java.util.Collections.singletonList(mock(ArduinoConfig.class)), "track1", new ObjectId());
 
     race = spy(new com.antigravity.race.Race((com.antigravity.models.Race) raceModel, (java.util.List<com.antigravity.race.RaceParticipant>) participants, (com.antigravity.models.Track) track, true, 0.0, 0.0));
+    race.getHeatExecutionManager().setRace(race);
     racing = new Racing();
     race.changeState(racing);
 
