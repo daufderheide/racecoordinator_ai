@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';
 import { Router } from '@angular/router';
@@ -26,6 +26,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   scale: number = 1;
   searchQuery: string = '';
+  @ViewChildren('driverRow') driverRows!: QueryList<ElementRef>;
 
   get filteredDrivers(): Driver[] {
     let filtered = this.drivers;
@@ -138,6 +139,11 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
         } else if (this.drivers.length > 0 && !this.selectedDriver) {
           this.selectDriver(this.drivers[0]);
         }
+        
+        if (this.selectedDriver) {
+          this.scrollToSelected();
+        }
+        
         this.isLoading = false;
         this.cdr.detectChanges();
 
@@ -160,6 +166,18 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
       { ...driver.lapAudio },
       { ...driver.bestLapAudio }
     );
+    this.scrollToSelected();
+  }
+
+  private scrollToSelected() {
+    if (!this.selectedDriver) return;
+    const driverId = this.selectedDriver.entity_id;
+    setTimeout(() => {
+      const row = this.driverRows.find(r => r.nativeElement.getAttribute('data-id') === driverId);
+      if (row) {
+        row.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
   }
 
   monitorConnection() {

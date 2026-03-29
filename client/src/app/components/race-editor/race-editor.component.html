@@ -1,11 +1,11 @@
 <app-acknowledgement-modal [visible]="showAckModal" [title]="ackModalTitle" [message]="ackModalMessage"
   (acknowledge)="closeAckModal()">
 </app-acknowledgement-modal>
-<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'">
   <app-editor-title
     titleKey="RE_TITLE"
     backRoute="/race-manager"
-    [backConfirm]="hasChanges()"
+    [backConfirm]="!isConfigValid()"
     [backQueryParams]="{ id: editingRace?.entity_id, driverCount: driverCount }"
     backConfirmTitle="RE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="RE_CONFIRM_DISCARD_MESSAGE"

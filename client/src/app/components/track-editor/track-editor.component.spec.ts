@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { TrackEditorComponent } from './track-editor.component';
 import { DataService } from '../../data.service';
 import { TranslationService } from '../../services/translation.service';
@@ -289,10 +289,10 @@ describe('TrackEditorComponent', () => {
   });
 
   it('should check for unsaved changes (dirty state)', () => {
-    expect(component.isDirty).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
     component.trackName = 'Changed';
     component.onInputChange();
-    expect(component.isDirty).toBeTrue();
+    expect(component.isDirtyState()).toBeTrue();
   });
 
   it('should shift Arduino pin assignments when a lane is deleted', () => {
@@ -360,10 +360,11 @@ describe('TrackEditorComponent', () => {
       component.onInputChange(); // Triggers debounce in UndoManager
 
       tick(600); // Wait for debounce (500ms) + small buffer
+      flush(); // Ensure any internal observables/promises resolve
       fixture.detectChanges();
 
       expect(dataService.updateTrack).toHaveBeenCalled();
-      expect(component.isDirty).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
     }));
 
     it('should NOT auto-save if the name is a duplicate', fakeAsync(() => {
@@ -385,10 +386,11 @@ describe('TrackEditorComponent', () => {
       component.onInputChange();
 
       tick(600);
+      flush();
       fixture.detectChanges();
 
       expect(dataService.updateTrack).toHaveBeenCalled();
-      expect(component.isDirty).toBeTrue();
+      expect(component.isDirtyState()).toBeTrue();
     }));
 
     it('should preserve undo/redo history and rebase it after Duplicate', () => {

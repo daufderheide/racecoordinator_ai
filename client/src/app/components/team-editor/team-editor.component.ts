@@ -29,7 +29,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   isAutoSaving: boolean = false;
   isUploading: boolean = false;
   scale: number = 1;
-  private navigateBackOnSave = false;
+  public navigateBackOnSave = false;
 
   // Undo Manager
   undoManager!: UndoManager<Team>;
@@ -272,13 +272,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   // Undo/Redo Proxies
   undo() { this.undoManager.undo(); }
   redo() { this.undoManager.redo(); }
-  hasChanges() {
-    const umChanges = this.undoManager.hasChanges();
-    if (!this.editingTeam || !this.originalTeam) return umChanges;
-    
-    // Use manual dirty flag or undo manager status
-    return this.isDirty || umChanges;
-  }
   onInputFocus() { this.undoManager.onInputFocus(); }
   onInputChange() {
     this.isDirty = true;
@@ -304,24 +297,36 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   onBackClicked() {
-    if (this.hasChanges()) {
-      if (!this.isNameInvalid) {
-        // Valid changes. Trigger save and navigate on success.
+    if (this.isConfigValid()) {
+      if (this.isDirtyState()) {
         this.navigateBackOnSave = true;
         this.updateTeam();
       } else {
-        // Invalid changes (e.g. duplicate name). BackConfirm dialog handled it.
-        // User confirmed discard, so navigate immediately.
-        this.router.navigate(['/team-manager']);
+        this.onBack();
       }
     } else {
-      this.router.navigate(['/team-manager']);
+      this.onBack();
     }
+  }
+
+  isConfigValid(): boolean {
+    return !this.isNameInvalid;
+  }
+
+  isDirtyState(): boolean {
+    if (!this.undoManager) return false;
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingTeam || !this.originalTeam) return umChanges;
+    return this.isDirty || umChanges;
+  }
+
+  onBack() {
+    this.router.navigate(['/team-manager'], { queryParams: { id: this.editingTeam?.entity_id } });
   }
 
   updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingTeam || this.isSaving) return;
-    if (!isSaveAsNew && !this.hasChanges()) return;
+    if (!isSaveAsNew && !this.isDirtyState()) return;
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
@@ -365,11 +370,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
         if (this.navigateBackOnSave) {
           this.navigateBackOnSave = false; // Reset flag
-          this.router.navigate(['/team-manager']);
+          this.onBack();
         }
 
         // Trigger auto-save again if concurrent edits occurred while saving
-        if (this.hasChanges()) {
+        if (this.isDirtyState()) {
           this.autoSaveTeam();
         }
         this.cdr.detectChanges();

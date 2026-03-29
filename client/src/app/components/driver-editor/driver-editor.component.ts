@@ -29,6 +29,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   isDirty: boolean = false;
   isUploading: boolean = false;
   scale: number = 1;
+  public navigateBackOnSave = false;
 
   // Manual change tracking baseline
   originalDriver: Driver | null = null;
@@ -285,9 +286,32 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  onBackClicked() {
+    if (this.isConfigValid()) {
+      if (this.isDirtyState()) {
+        this.navigateBackOnSave = true;
+        this.updateDriver();
+      } else {
+        this.onBack();
+      }
+    } else {
+      this.onBack();
+    }
+  }
+
   onBack() {
-    sessionStorage.setItem('skipIntro', 'true');
-    this.router.navigate(['/raceday-setup']);
+    this.router.navigate(['/driver-manager'], { queryParams: { id: this.editingDriver?.entity_id } });
+  }
+
+  isConfigValid(): boolean {
+    return !this.isNameInvalid && !this.isNicknameInvalid;
+  }
+
+  isDirtyState(): boolean {
+    if (!this.undoManager) return false;
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingDriver || !this.originalDriver) return umChanges;
+    return this.isDirty || umChanges;
   }
 
   saveAsNew() {
@@ -336,7 +360,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
   updateDriver(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingDriver) return;
-    if (!isSaveAsNew && !this.hasChanges()) return;
+    if (!isSaveAsNew && !this.isDirtyState()) return;
 
     if (!isAutoSave) {
       this.isSaving = true;
@@ -392,14 +416,6 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   undo() { this.undoManager.undo(); }
   redo() { this.undoManager.redo(); }
 
-  hasChanges() {
-    if (!this.undoManager) return false;
-    const umChanges = this.undoManager.hasChanges();
-    if (!this.editingDriver || !this.originalDriver) return umChanges;
-    
-    // Explicit dirty flag or undo manager status
-    return this.isDirty || umChanges;
-  }
 
   onInputFocus() { this.undoManager.onInputFocus(); }
   onInputChange() {
@@ -462,6 +478,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           }
         }
 
+        if (this.navigateBackOnSave) {
+          this.onBack();
+        }
+
         this.refreshDriverList();
       },
       error: (err) => {
@@ -510,7 +530,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {
           this.isSaving = false;
-          this.router.navigate(['/driver-manager']);
+          this.onBack();
         },
         error: (err) => {
           console.error('Failed to delete driver', err);

@@ -1,8 +1,8 @@
-<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="hasChanges() ? 'true' : 'false'">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'">
   <app-editor-title
     titleKey="TE_TITLE"
     backRoute="/track-manager"
-    [backConfirm]="isDirty"
+    [backConfirm]="!isConfigValid() || isDirtyState()"
     [backQueryParams]="{ selectedId: editingTrack?.entity_id }"
     backConfirmTitle="TE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="TE_CONFIRM_DISCARD_MESSAGE"
@@ -10,7 +10,8 @@
     [showCopy]="true"
     [isSaving]="isSaving"
     (help)="startHelp()"
-    (copy)="saveAsNew()">
+    (copy)="saveAsNew()"
+    (back)="onBackClicked()">
   </app-editor-title>
 
   <div class="content-split">

@@ -177,7 +177,7 @@ describe('TeamEditorComponent', () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('new');
     component.loadData();
     expect(component.editingTeam?.entity_id).toBe('new');
-    expect(component.hasChanges()).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
   });
 
   it('should load team when valid ID is provided', () => {
@@ -185,7 +185,7 @@ describe('TeamEditorComponent', () => {
     component.loadData();
     expect(component.editingTeam?.entity_id).toBe('t1');
     expect(component.editingTeam?.name).toBe('Team Alpha');
-    expect(component.hasChanges()).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
   });
 
   it('should toggle driver membership', () => {
@@ -197,7 +197,7 @@ describe('TeamEditorComponent', () => {
 
     component.addDriver(driver2);
     expect(component.isDriverInTeam(driver2)).toBeTrue();
-    expect(component.hasChanges()).toBeFalse(); // Instant auto-save with synchronous mocks
+    expect(component.isDirtyState()).toBeFalse(); // Instant auto-save with synchronous mocks
 
     component.removeDriver(driver2);
     expect(component.isDriverInTeam(driver2)).toBeFalse();
@@ -270,20 +270,22 @@ describe('TeamEditorComponent', () => {
     component.onBackClicked();
     
     expect(mockDataService.updateTeam).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager'], { queryParams: { id: 't1' } });
   });
 
-  it('should save and set flag onBackClicked if name IS valid', () => {
+  it('should save and set flag onBackClicked if name IS valid', fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
     component.loadData();
+    tick(); // Handle loadData subscription
     
     component.onInputFocus();
     component.editingTeam!.name = 'Unique Cool Name';
     component.onInputBlur();
     
     component.onBackClicked();
+    tick(); // Handle updateTeam save subscription
     
     expect(mockDataService.updateTeam).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager']);
-  });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager'], { queryParams: { id: 't1' } });
+  }));
 });

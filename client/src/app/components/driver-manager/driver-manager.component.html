@@ -15,7 +15,7 @@
   <div class="content-area">
     <div class="sidebar-list">
       <div class="list-container">
-        <div *ngFor="let driver of filteredDrivers; let i = index" class="list-item"
+        <div *ngFor="let driver of filteredDrivers; let i = index" #driverRow [attr.data-id]="driver.entity_id" class="list-item"
           [class.selected]="driver.entity_id === selectedDriver?.entity_id" (click)="selectDriver(driver)"
           [class.odd]="i % 2 !== 0">
           <div class="item-name">{{ driver.name }}</div>

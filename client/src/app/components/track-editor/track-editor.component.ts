@@ -29,13 +29,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   scale: number = 1;
   isLoading: boolean = true;
   isSaving: boolean = false;
-  isDirty: boolean = false;
+  public navigateBackOnSave = false;
 
   undoManager!: UndoManager<Track>;
   allTracks: Track[] = [];
-
-  // Manual change tracking baseline
-  originalTrack: Track | null = null;
 
   @ViewChildren(ArduinoEditorComponent) arduinoEditors!: QueryList<ArduinoEditorComponent>;
 
@@ -229,15 +226,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         }
       } else {
         this.arduinoConfigs = [];
-        // Sync it back to the model object so undoManager sees it in initial snapshot
-        (this.editingTrack as any).arduino_configs = this.arduinoConfigs;
       }
 
       this.trackName = this.editingTrack.name;
       this.lanes = [...this.editingTrack.lanes];
 
-      this.originalTrack = this.cloneTrack(this.editingTrack);
       // Now initialize tracking with a fully populated model
+      this.undoManager.initialize(this.editingTrack);
+    } else {
+      this.editingTrack = new Track('new', '', [], false);
+      this.trackName = '';
+      this.lanes = [];
+      this.arduinoConfigs = [];
       this.undoManager.initialize(this.editingTrack);
     }
 
@@ -357,12 +357,25 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.colorDebounceTimer = null;
     this.undoManager.redo();
   }
-  hasChanges() {
-    const umChanges = this.undoManager.hasChanges();
-    if (!this.editingTrack || !this.originalTrack) return umChanges;
-    
-    // Check manual dirty flag or undo manager status
-    return this.isDirty || umChanges;
+  isConfigValid(): boolean {
+    return !this.isNameInvalid;
+  }
+
+  isDirtyState(): boolean {
+    return this.undoManager?.hasChanges() || false;
+  }
+
+  onBackClicked() {
+    if (this.isConfigValid()) {
+      if (this.isDirtyState()) {
+        this.navigateBackOnSave = true;
+        this.updateTrack();
+      } else {
+        this.onBack();
+      }
+    } else {
+      this.onBack();
+    }
   }
 
   startHelp() {
@@ -459,7 +472,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   onInputFocus() { this.undoManager.onInputFocus(); }
   onInputChange() {
-    this.isDirty = true;
+    this.cdr.detectChanges();
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
@@ -728,9 +741,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         }
 
           if (this.editingTrack) {
-            this.isDirty = false;
-            this.originalTrack = this.cloneTrack(this.editingTrack);
-            this.undoManager.resetTracking(this.editingTrack);
+            this.undoManager.resetTracking(this.createSnapshot());
           }
 
         // Force sync with UI and children (especially back-button confirm input)
@@ -738,13 +749,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }
 
-        if (wasNew) {
+        if (this.navigateBackOnSave) {
+          this.onBack();
+        } else if (wasNew) {
           if (isAutoSave) {
             const url = this.router.serializeUrl(this.router.createUrlTree(['/track-editor'], { queryParams: { id: result.entity_id } }));
             this.location.replaceState(url);
           } else {
             this.router.navigate(['/track-editor'], { queryParams: { id: result.entity_id } });
           }
+        } else {
+          // If not wasNew, we still check navigateBackOnSave (which we did above)
+          // The old code had no specific else for wasNew
         }
       },
       error: (err) => {
@@ -778,7 +794,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
-    this.router.navigate(['/track-manager']);
+    this.router.navigate(['/track-manager'], { queryParams: { id: this.editingTrack?.entity_id } });
   }
 
   trackByLane(index: number, lane: Lane): string {

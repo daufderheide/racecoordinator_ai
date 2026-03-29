@@ -23,6 +23,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   isAutoSaving: boolean = false;
   scale: number = 1;
+  public navigateBackOnSave = false;
   undoManager: UndoManager<any>;
   tracks: Track[] = [];
   races: any[] = [];
@@ -47,6 +48,33 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     fuel_digital: true,
     team: true
   };
+
+  isConfigValid(): boolean {
+    return !this.isNameInvalid && !!this.editingRace?.track_entity_id && !!this.editingRace?.heat_rotation_type;
+  }
+
+  isDirtyState(): boolean {
+    const umChanges = this.undoManager.hasChanges();
+    const manualChanges = JSON.stringify(this.editingRace) !== JSON.stringify(this.originalRace);
+    return umChanges || manualChanges;
+  }
+
+  onBackClicked() {
+    if (this.isConfigValid()) {
+      if (this.isDirtyState()) {
+        this.navigateBackOnSave = true;
+        this.updateRace();
+      } else {
+        this.onBack();
+      }
+    } else {
+      this.onBack();
+    }
+  }
+
+  onBack() {
+    this.router.navigate(['/race-manager'], { queryParams: { id: this.editingRace?.entity_id, driverCount: this.driverCount } });
+  }
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
@@ -407,11 +435,6 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     });
   }
 
-  hasChanges(): boolean {
-    const umChanges = this.undoManager.hasChanges();
-    const manualChanges = JSON.stringify(this.editingRace) !== JSON.stringify(this.originalRace);
-    return umChanges || manualChanges;
-  }
 
   private autoSaveRace() {
     if (!this.editingRace) return;
@@ -421,7 +444,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   updateRace(isAutoSave: boolean = false) {
-    if (!this.editingRace || !this.hasChanges()) {
+    if (!this.editingRace || !this.isDirtyState()) {
       return;
     }
 
@@ -438,18 +461,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           this.editingRace.entity_id = created.entity_id;
           this.originalRace = this.deepCopy(this.editingRace);
           this.undoManager.resetTracking(this.editingRace);
-          
-          this.loadRaces();  // Reload races to update duplicate detection
+          this.loadRaces(); // Reload races to update duplicate detection
           this.cdr.detectChanges(); // Ensure spinner clears
           
-          if (isAutoSave) {
+          if (this.navigateBackOnSave) {
+            this.onBack();
+          } else if (isAutoSave) {
             const url = this.router.serializeUrl(this.router.createUrlTree([], { 
               queryParams: { id: created.entity_id, driverCount: this.driverCount },
               queryParamsHandling: 'merge'
             }));
             this.location.replaceState(url);
           } else {
-            this.router.navigate(['/race-manager'], { queryParams: { id: created.entity_id, driverCount: this.driverCount } });
+            this.onBack();
           }
         },
         error: (err) => {
@@ -466,13 +490,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         next: () => {
           this.isSaving = false;
           this.isAutoSaving = false;
-          // Sync originalRace with editingRace so hasChanges() returns false
+          // Sync originalRace with editingRace so isDirtyState() returns false
           this.originalRace = this.deepCopy(this.editingRace);
           // Reset tracking point but keep history
           this.undoManager.resetTracking(this.editingRace);
           this.loadRaces();  // Reload races to update duplicate detection
           this.cdr.detectChanges();  // Force change detection to hide spinner
-          // Stay on the race editor page after updating
+          
+          if (this.navigateBackOnSave) {
+            this.onBack();
+          }
         },
         error: (err) => {
           console.error('Failed to update race', err);
@@ -577,7 +604,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   canUpdate(): boolean {
     // Must have changes
-    if (!this.hasChanges()) {
+    if (!this.isDirtyState()) {
       return false;
     }
 
@@ -586,7 +613,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   getUpdateTooltip(): string {
-    if (!this.hasChanges()) {
+    if (!this.isDirtyState()) {
       return 'RE_TOOLTIP_NO_CHANGES';
     }
     if (this.isNameDuplicate()) {

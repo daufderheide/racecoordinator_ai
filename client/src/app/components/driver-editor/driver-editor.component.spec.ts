@@ -189,7 +189,7 @@ describe('DriverEditorComponent', () => {
     expect(component.editingDriver?.entity_id).toBe('new');
     // element implicitly has 'any' type error on private access, so skipping explicit initialState check if not needed
     // verify hasChanges is false
-    expect(component.hasChanges()).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
   });
 
   it('should load driver when valid ID is provided', () => {
@@ -201,7 +201,7 @@ describe('DriverEditorComponent', () => {
 
     expect(component.editingDriver?.entity_id).toBe('d1');
     expect(component.editingDriver?.name).toBe('Test Driver');
-    expect(component.hasChanges()).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
   });
 
   it('should save new driver', () => {
@@ -260,7 +260,7 @@ describe('DriverEditorComponent', () => {
     component.deleteDriver();
 
     expect(mockDataService.deleteDriver).toHaveBeenCalledWith('d1');
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-manager']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-manager'], { queryParams: { id: 'd1' } });
   });
 
   it('should not delete if confirm is cancelled', () => {
@@ -345,7 +345,7 @@ describe('DriverEditorComponent', () => {
     expect(component.undoManager.undoStackItems[0].name).toBe('Start');
 
     // Verify hasChanges matches DB (Clean)
-    expect(component.hasChanges()).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
 
     // Undo
     component.undo();

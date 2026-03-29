@@ -194,7 +194,7 @@ describe('RaceEditorComponent', () => {
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
 
-  it(' should regenerate heats when driver count changes', fakeAsync(() => {
+  it('should regenerate heats when driver count changes', fakeAsync(() => {
     const mockRaces = [
       {
         entity_id: '1',
@@ -228,16 +228,19 @@ describe('RaceEditorComponent', () => {
     ];
     mockDataService.getRaces.and.returnValue(of(mockRaces));
     mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.generateHeats.and.returnValue(of({ heats: [] }));
+    mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
 
+    component.driverCount = 10;
     component.ngOnInit();
     tick();
-    const callsAfterInit = mockDataService.previewHeats.calls.count();
 
-    component.loadHeats();
+    expect(mockDataService.previewHeats).toHaveBeenCalledWith('track1', 'RoundRobin', 10);
+
+    component.driverCount = 12;
+    component.onDriverCountChange();
     tick();
 
-    expect(mockDataService.previewHeats.calls.count()).toBe(callsAfterInit + 1);
+    expect(mockDataService.previewHeats).toHaveBeenCalledWith('track1', 'RoundRobin', 12);
   }));
 
   it('should not load heats for new race', () => {
@@ -411,10 +414,10 @@ describe('RaceEditorComponent', () => {
         reference_time: 6.0
       }
     };
-    spyOn(component, 'hasChanges').and.returnValue(false);
+    spyOn(component, 'isDirtyState').and.returnValue(false);
     expect(component.canUpdate()).toBeFalse();
 
-    (component.hasChanges as jasmine.Spy).and.returnValue(true);
+    (component.isDirtyState as jasmine.Spy).and.returnValue(true);
     expect(component.canUpdate()).toBeTrue();
 
     spyOn(component, 'isNameDuplicate').and.returnValue(true);
@@ -445,6 +448,8 @@ describe('RaceEditorComponent', () => {
 
       component.ngOnInit();
       tick();
+      // Ensure original state is synchronized for dirty comparison
+      component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
 
       expect(component.editingRace.fuel_options).toBeDefined();
       expect(component.editingRace.fuel_options?.enabled).toBeFalse();
@@ -455,13 +460,13 @@ describe('RaceEditorComponent', () => {
 
     it('should detect changes when fuel settings modify', () => {
       component.editingRace.fuel_options!.enabled = true;
-      expect(component.hasChanges()).toBeTrue();
+      expect(component.isDirtyState()).toBeTrue();
 
       component.editingRace.fuel_options!.enabled = false;
-      expect(component.hasChanges()).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
 
       component.editingRace.fuel_options!.capacity = 200;
-      expect(component.hasChanges()).toBeTrue();
+      expect(component.isDirtyState()).toBeTrue();
     });
   });
 
@@ -574,7 +579,7 @@ describe('RaceEditorComponent', () => {
         reference_time: 6.0
       }
     };
-    spyOn(component, 'hasChanges').and.returnValue(true);
+    spyOn(component, 'isDirtyState').and.returnValue(true);
     mockDataService.updateRace.and.returnValue(of({}));
     mockDataService.getRaces.and.returnValue(of([]));
 
@@ -602,7 +607,7 @@ describe('RaceEditorComponent', () => {
       }
     } as any;
 
-    spyOn(component, 'hasChanges').and.returnValue(true);
+    spyOn(component, 'isDirtyState').and.returnValue(true);
     mockDataService.updateRace.and.returnValue(of({}));
     mockDataService.getRaces.and.returnValue(of([]));
 
@@ -646,6 +651,8 @@ describe('RaceEditorComponent', () => {
         reference_time: 6.0
       }
     };
+    component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.driverCount = 10;
     mockDataService.createRace.and.returnValue(of({
       entity_id: '2',
       name: 'New Race',
@@ -676,7 +683,7 @@ describe('RaceEditorComponent', () => {
       }
     }));
     mockDataService.getRaces.and.returnValue(of([]));
-    spyOn(component, 'hasChanges').and.returnValue(true);
+    spyOn(component, 'isDirtyState').and.returnValue(true);
 
     component.updateRace();
     tick(); // Handles setTimeout in loadRaces()

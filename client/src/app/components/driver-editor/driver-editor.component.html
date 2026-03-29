@@ -1,8 +1,8 @@
-<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="hasChanges() ? 'true' : 'false'">
+<div class="page-container" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'" [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'">
   <app-editor-title
     titleKey="DE_TITLE"
     backRoute="/driver-manager"
-    [backConfirm]="hasChanges()"
+    [backConfirm]="!isConfigValid() || isDirtyState()"
     [backQueryParams]="{ id: editingDriver?.entity_id }"
     backConfirmTitle="DE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="DE_CONFIRM_DISCARD_MESSAGE"

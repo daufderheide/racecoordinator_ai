@@ -52,6 +52,7 @@ build_cache/java17.zip
 # Playwright stuffs
 client/.browser-tmp/
 client/.npm-cache/
+client/.npm_cache/
 client/.playwright-browsers/
 client/.tmp/
 client/playwright-report/
@@ -73,11 +74,16 @@ server/target_exec/
 client/tmp-karma/
 server/generated-sources/
 server/target_generated/
+server/target_generated_3/
 server/protoc_local.exe
 server/target_test/
 client/.npmrc
 server/gen-proto/
 client/node_modules_backup/
+
+# database folders as they move arounds <sigh>
 data_v2
+data_v3
+
 client/package-lock.json
 build_cache
