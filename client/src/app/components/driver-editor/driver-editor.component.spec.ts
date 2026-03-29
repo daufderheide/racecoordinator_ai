@@ -426,5 +426,130 @@ describe('DriverEditorComponent', () => {
 
     discardPeriodicTasks();
   }));
-});
 
+  describe('Auto-save on name/nickname change', () => {
+    it('should auto-save when name changes to a valid unique value', fakeAsync(() => {
+      const driver = new Driver('d1', 'OriginalName', 'Nick');
+      setupDriver(driver);
+
+      // Simulate focus, type new name, and blur to trigger commit
+      component.onInputFocus();
+      component.editingDriver!.name = 'NewUniqueName';
+      component.onInputBlur();
+      tick(200); // Allow debounce to settle
+
+      expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it('should auto-save when nickname changes to a valid unique value', fakeAsync(() => {
+      const driver = new Driver('d1', 'SomeName', 'OrigNick');
+      setupDriver(driver);
+
+      component.onInputFocus();
+      component.editingDriver!.nickname = 'NewUniqueNick';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it('should not auto-save when name is set to a duplicate', fakeAsync(() => {
+      const driver = new Driver('d1', 'OriginalName', '');
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver('d1', 'OriginalName', ''),
+        new Driver('d2', 'TakenName', '')
+      ];
+
+      component.onInputFocus();
+      component.editingDriver!.name = 'TakenName';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(component.isNameInvalid).toBeTrue();
+    }));
+
+    it('should not auto-save when nickname is set to a duplicate', fakeAsync(() => {
+      const driver = new Driver('d1', 'Name', 'OrigNick');
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver('d1', 'Name', 'OrigNick'),
+        new Driver('d2', 'Other', 'TakenNick')
+      ];
+
+      component.onInputFocus();
+      component.editingDriver!.nickname = 'TakenNick';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(component.isNicknameInvalid).toBeTrue();
+    }));
+
+    it('should not auto-save when name is empty', fakeAsync(() => {
+      const driver = new Driver('d1', 'OriginalName', '');
+      setupDriver(driver);
+
+      component.onInputFocus();
+      component.editingDriver!.name = '';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(component.isNameInvalid).toBeTrue();
+    }));
+
+    it('should not show back confirmation when config is valid after name change', fakeAsync(() => {
+      const driver = new Driver('d1', 'OriginalName', '');
+      setupDriver(driver);
+
+      // Change name to valid unique value and allow auto-save to complete
+      component.onInputFocus();
+      component.editingDriver!.name = 'ValidNewName';
+      component.onInputBlur();
+      tick(200);
+
+      // Config is valid and dirty state should be cleared by auto-save
+      expect(component.isConfigValid()).toBeTrue();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it('should show back confirmation when name is invalid (empty)', () => {
+      const driver = new Driver('d1', '', '');
+      setupDriver(driver);
+      component.editingDriver!.name = '';
+
+      // Config is invalid because name is empty
+      expect(component.isConfigValid()).toBeFalse();
+    });
+
+    it('should show back confirmation when name is a duplicate', () => {
+      const driver = new Driver('d1', 'OrigName', '');
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver('d1', 'OrigName', ''),
+        new Driver('d2', 'Taken', '')
+      ];
+
+      component.editingDriver!.name = 'Taken';
+      expect(component.isConfigValid()).toBeFalse();
+    });
+
+    it('should show back confirmation when nickname is a duplicate', () => {
+      const driver = new Driver('d1', 'ValidName', 'OrigNick');
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver('d1', 'ValidName', 'OrigNick'),
+        new Driver('d2', 'Other', 'TakenNick')
+      ];
+
+      component.editingDriver!.nickname = 'TakenNick';
+      expect(component.isConfigValid()).toBeFalse();
+    });
+  });
+});

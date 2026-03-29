@@ -5,7 +5,7 @@
   <app-editor-title
     titleKey="RE_TITLE"
     backRoute="/race-manager"
-    [backConfirm]="!isConfigValid()"
+    [backConfirm]="!isConfigValid() || isDirtyState()"
     [backQueryParams]="{ id: editingRace?.entity_id, driverCount: driverCount }"
     backConfirmTitle="RE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="RE_CONFIRM_DISCARD_MESSAGE"
@@ -21,8 +21,8 @@
     <div class="editor-panel">
       <div id="race-name-section" class="editor-section fixed-header" [class.invalid]="isNameInvalid">
         <label class="section-label">{{ 'RM_LABEL_NAME' | translate }}</label>
-        <input id="race-name-input" type="text" [(ngModel)]="editingRace.name" (ngModelChange)="captureState()"
-          autocomplete="off" data-lpignore="true" data-form-type="other">
+        <input id="race-name-input" type="text" [(ngModel)]="editingRace.name" (ngModelChange)="onInputChange()"
+          (focus)="onInputFocus()" (blur)="onInputBlur()" autocomplete="off" data-lpignore="true" data-form-type="other">
       </div>
 
       <div class="editor-section">

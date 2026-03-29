@@ -773,4 +773,159 @@ describe('RaceEditorComponent', () => {
       expect(component.sectionsExpanded.fuel_digital).toBeFalse();
     });
   });
+
+  describe('Auto-save on name change', () => {
+    beforeEach(() => {
+      component.isLoading = false;
+      // Set up the stateCommitted$ subscription that would normally be done in ngOnInit
+      component.undoManager.stateCommitted$.subscribe(() => {
+        (component as any).autoSaveRace();
+      });
+    });
+
+    it('should auto-save when name changes to a valid unique value', fakeAsync(() => {
+      component.editingRace = {
+        entity_id: '1',
+        name: 'OriginalName',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+      component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+      component.undoManager.initialize(component.editingRace);
+      component.races = [{ entity_id: '1', name: 'OriginalName' }];
+      mockDataService.updateRace.and.returnValue(of({}));
+
+      // Simulate text input: focus, type, blur (matching template bindings)
+      component.onInputFocus();
+      component.editingRace.name = 'ValidNewName';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateRace).toHaveBeenCalledWith('1', jasmine.any(Object));
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it('should not auto-save when name is set to a duplicate', fakeAsync(() => {
+      component.editingRace = {
+        entity_id: '1',
+        name: 'OriginalName',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+      component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+      component.undoManager.initialize(component.editingRace);
+      component.races = [
+        { entity_id: '1', name: 'OriginalName' },
+        { entity_id: '2', name: 'TakenName' }
+      ];
+
+      component.onInputFocus();
+      component.editingRace.name = 'TakenName';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateRace).not.toHaveBeenCalled();
+      expect(component.isNameDuplicate()).toBeTrue();
+    }));
+
+    it('should not auto-save when name is empty', fakeAsync(() => {
+      component.editingRace = {
+        entity_id: '1',
+        name: 'OriginalName',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+      component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+      component.undoManager.initialize(component.editingRace);
+
+      component.onInputFocus();
+      component.editingRace.name = '';
+      component.onInputBlur();
+      tick(200);
+
+      expect(mockDataService.updateRace).not.toHaveBeenCalled();
+    }));
+
+    it('should not show back confirmation when name changes to a valid unique value', fakeAsync(() => {
+      component.editingRace = {
+        entity_id: '1',
+        name: 'OriginalName',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+      component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+      component.undoManager.initialize(component.editingRace);
+      component.races = [{ entity_id: '1', name: 'OriginalName' }];
+      mockDataService.updateRace.and.returnValue(of({}));
+
+      component.onInputFocus();
+      component.editingRace.name = 'ValidNewName';
+      component.onInputBlur();
+      tick(200);
+
+      // backConfirm is !isConfigValid() — config should be valid after name change + auto-save
+      expect(component.isConfigValid()).toBeTrue();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it('should show back confirmation when name is invalid (duplicate)', () => {
+      component.editingRace = {
+        entity_id: '1',
+        name: 'OriginalName',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+      component.races = [
+        { entity_id: '1', name: 'OriginalName' },
+        { entity_id: '2', name: 'TakenName' }
+      ];
+
+      component.editingRace.name = 'TakenName';
+
+      // Config is invalid because name is a duplicate
+      expect(component.isConfigValid()).toBeFalse();
+    });
+
+    it('should show back confirmation when name is empty', () => {
+      component.editingRace = {
+        entity_id: '1',
+        name: '',
+        track_entity_id: 'track1',
+        heat_rotation_type: 'RoundRobin',
+        heat_scoring: { finish_method: 'Lap', finish_value: 10, heat_ranking: 'LAP_COUNT', heat_ranking_tiebreaker: 'FASTEST_LAP_TIME' },
+        overall_scoring: { dropped_heats: 0, ranking_method: 'LAP_COUNT', tiebreaker: 'FASTEST_LAP_TIME' },
+        fuel_options: { enabled: false, reset_fuel_at_heat_start: false, end_heat_on_out_of_fuel: false, capacity: 100, usage_type: 'LINEAR', usage_rate: 4.0, start_level: 100, refuel_rate: 10, pit_stop_delay: 2.0, reference_time: 6.0 },
+        digital_fuel_options: { enabled: false },
+        team_options: { require_pit_stop_change_driver: false }
+      };
+
+      expect(component.isConfigValid()).toBeFalse();
+    });
+  });
 });

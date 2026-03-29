@@ -337,8 +337,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
+  onInputFocus() {
+    this.undoManager.onInputFocus();
+  }
+
   onInputChange() {
-    // Called when any input changes
+    this.undoManager.onInputChange();
+  }
+
+  onInputBlur() {
+    this.undoManager.onInputBlur();
   }
 
   captureState() {
