@@ -782,7 +782,7 @@
 
   "RD_MENU_PAUSE": "Pause Heat",
 
-  "RD_MENU_RACE_DIRECTOR": "Race Director",
+  "RD_MENU_EXTRA_SCREEN": "Extra Screen",
 
   "RD_MENU_RESTART": "Restart Heat",
 
@@ -816,6 +816,7 @@
   "RD_WIN_LEADER_BOARD": "Leader Board",
 
   "RD_WIN_NEXT_HEAT": "Next Heat",
+  "RD_WIN_EXTRA_SCREEN": "Extra Screen",
 
   "RD_WIN_ON_DECK": "On Deck",
 
@@ -1396,6 +1397,8 @@
   "UE_REORDER_HINT": "Drag values to column anchors to customize the layout. CenterCenter is the primary value.",
 
   "UE_TITLE": "CUSTOMIZE UI",
+  "UE_TITLE_RACE_SCREEN": "CUSTOMIZE RACE SCREEN UI",
+  "UE_TITLE_EXTRA_SCREEN": "CUSTOMIZE EXTRA SCREEN UI",
 
   "UE_TITLE_SELECT_IMAGE": "SELECT IMAGE",
 
@@ -1435,6 +1438,13 @@
 
   "RD_LOAD_SUCCESS": "Race loaded successfully",
 
-  "RD_LOAD_ERROR": "Failed to load race"
+  "RD_LOAD_ERROR": "Failed to load race",
+
+  "SS_SELECT_SCREEN_TITLE": "Select Screen to Customize",
+  "SS_SELECT_SCREEN_MESSAGE": "Choose which screen you want to customize",
+  "SS_RACE_SCREEN": "Race Screen",
+  "SS_EXTRA_SCREEN": "Extra Screen",
+  "SS_BTN_SELECT": "Select",
+  "SS_BTN_CANCEL": "Cancel"
 
 }

@@ -1,4 +1,4 @@
-<div class="lane-preview-container">
+<div class="lane-preview-container" [class.extra-screen]="screenType === 'extra-screen'">
   <div class="lane-visual">
     <div class="lane-column" *ngFor="let slot of columnSlots; trackBy: trackByKey"
       [class.resizing]="slot.key === resizingColumnKey">

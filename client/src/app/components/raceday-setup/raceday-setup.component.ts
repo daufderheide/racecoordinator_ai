@@ -153,7 +153,7 @@ export class RacedaySetupComponent implements OnInit {
       const minTimePromise = new Promise<void>(resolve => setTimeout(() => {
         this.minTimeElapsed = true;
         resolve();
-      }, 5000));
+      }, 500));
 
       // Wait for connection service
       await this.connectionMonitor.waitForConnection();

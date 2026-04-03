@@ -1,0 +1,84 @@
+<div class="dashboard-wrapper">
+  <div class="scalable-content" [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'">
+    <!-- Main SVG Dashboard -->
+    <svg width="1600" height="870" viewBox="0 0 1600 870" class="dashboard-svg">
+      <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a2a3a;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0d151e;stop-opacity:1" />
+        </linearGradient>
+        <filter id="timerGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="1600" height="870" fill="url(#bgGradient)" />
+
+      <!-- Header Section -->
+      <g class="header" *ngIf="race">
+        <!-- Timer & Info -->
+        <text x="800" y="60" font-size="36" font-weight="700" fill="#eab308" text-anchor="middle">{{ race?.name }}</text>
+        <text x="800" y="170" font-size="130" font-weight="900" fill="#eab308" text-anchor="middle"
+          filter="url(#timerGlow)" font-family="monospace">{{ time | number:timeFormat }}</text>
+        
+        <text x="800" y="240" font-size="24" font-weight="600" fill="#cbd5e1" text-anchor="middle">
+          Heat {{ heat?.heatNumber }} of {{ totalHeats }}
+        </text>
+
+        <!-- Flag -->
+        <rect x="1370" y="20" width="200" height="180" rx="10" 
+          [attr.fill]="getFlagColor()" opacity="0.8" />
+      </g>
+
+      <!-- Table Headers -->
+      <g class="table-headers" font-size="22" font-weight="700" fill="#94a3b8" *ngIf="columns.length > 0">
+        <text *ngFor="let column of columns; let colIndex = index" 
+          [attr.x]="getColumnTextX(colIndex)" y="280"
+          text-anchor="middle">
+          {{ getColumnLabel(column.labelKey) }}
+        </text>
+      </g>
+
+      <!-- Driver Rows -->
+      <g *ngFor="let hd of sortedHeatDrivers; let i = index" class="driver-row"
+        [attr.transform]="'translate(0, ' + (310 + i * getRowHeight()) + ')'">
+        <g class="row-scaler" [class.highlighted]="highlightedDrivers.has(hd.objectId)">
+          <!-- Background -->
+          <rect x="0" y="0" width="1600" [attr.height]="getRowHeight()"
+            [attr.fill]="track?.lanes?.[hd.laneIndex]?.background_color" rx="4" />
+
+          <!-- Columns -->
+          <ng-container *ngFor="let column of columns; let colIndex = index">
+            <!-- Iterate over all assigned anchors in the layout -->
+            <ng-container *ngFor="let entry of column.layout | keyvalue">
+              <text
+                *ngIf="!entry.value?.toString()?.includes('avatarUrl') && !entry.value?.toString()?.startsWith('imageset_')"
+                [attr.x]="getColumnTextX(colIndex, entry.key)" 
+                [attr.y]="getColumnTextY(colIndex, false, entry.key)"
+                [attr.font-size]="getAnchorFontSize(entry.key)" 
+                font-weight="800"
+                [attr.fill]="track?.lanes?.[hd.laneIndex]?.foreground_color"
+                [attr.text-anchor]="getColumnTextAnchor(colIndex, entry.key)" 
+                font-family="monospace">
+                {{ formatColumnValue(hd, column, entry.value) }}
+              </text>
+            </ng-container>
+          </ng-container>
+
+          <!-- Vertical Lines between columns -->
+          <line *ngFor="let column of columns; let colIndex = index" 
+            [attr.x1]="getColumnX(colIndex) + column.width"
+            y1="0" 
+            [attr.x2]="getColumnX(colIndex) + column.width" 
+            [attr.y2]="getRowHeight()" 
+            stroke="black" stroke-width="2" stroke-opacity="0.15" />
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>

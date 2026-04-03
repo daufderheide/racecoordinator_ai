@@ -1,0 +1,44 @@
+<div class="screen-selector-overlay" (click)="cancel()">
+  <div class="screen-selector-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ 'SS_SELECT_SCREEN_TITLE' | translate }}</h2>
+      <button class="close-btn" (click)="cancel()">×</button>
+    </div>
+    
+    <div class="modal-content">
+      <p>{{ 'SS_SELECT_SCREEN_MESSAGE' | translate }}</p>
+      
+      <div class="screen-options">
+        <div class="screen-option" (click)="selectScreen('race-screen')">
+          <div class="option-icon">
+            <span class="material-icons">monitor</span>
+          </div>
+          <div class="option-content">
+            <div class="menu-dropdown-item race-screen-menu" (click)="selectScreen('race-screen')">{{ 'SS_RACE_SCREEN' | translate }}</div>
+            <p>Customize the main race display screen</p>
+          </div>
+          <div class="option-action">
+            <button class="btn btn-primary">{{ 'SS_BTN_SELECT' | translate }}</button>
+          </div>
+        </div>
+        
+        <div class="screen-option" (click)="selectScreen('extra-screen')">
+          <div class="option-icon">
+            <span class="material-icons">dashboard</span>
+          </div>
+          <div class="option-content">
+            <h3>{{ 'SS_EXTRA_SCREEN' | translate }}</h3>
+            <p>Customize the extra screen</p>
+          </div>
+          <div class="option-action">
+            <button class="btn btn-primary">{{ 'SS_BTN_SELECT' | translate }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancel()">{{ 'SS_BTN_CANCEL' | translate }}</button>
+    </div>
+  </div>
+</div>

@@ -291,6 +291,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
+  private extraScreenWindow: Window | null = null;
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -306,6 +307,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     if (this.heatResultsWindow) {
       this.heatResultsWindow.close();
       this.heatResultsWindow = null;
+    }
+    if (this.extraScreenWindow) {
+      this.extraScreenWindow.close();
+      this.extraScreenWindow = null;
     }
   }
 
@@ -602,7 +607,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   toggleMenu() {
-    console.log('Toggling Race Director menu. Current state:', this.isMenuOpen);
+    console.log('Toggling Extra Screen menu. Current state:', this.isMenuOpen);
     this.isMenuOpen = !this.isMenuOpen;
     this.isFileMenuOpen = false; // Close other menus
     this.isWindowsMenuOpen = false;
@@ -733,6 +738,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       this.heatResultsWindow.close();
       this.heatResultsWindow = null;
     }
+    if (this.extraScreenWindow) {
+      this.extraScreenWindow.close();
+      this.extraScreenWindow = null;
+    }
   }
 
   onFileMenuSelect(action: string) {
@@ -804,7 +813,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   onWindowMenuSelect(action: string) {
-    if (action !== 'LEADER_BOARD' && action !== 'HEAT_RESULTS') {
+    if (action !== 'LEADER_BOARD' && action !== 'HEAT_RESULTS' && action !== 'EXTRA_SCREEN') {
       return;
     }
     console.log('Window menu action:', action);
@@ -819,6 +828,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
         this.router.createUrlTree(['/heat-results'])
       );
       this.heatResultsWindow = window.open(url, '_blank', 'width=1600,height=900,menubar=no,toolbar=no,location=no,status=no');
+    } else if (action === 'EXTRA_SCREEN') {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/extra-screen'])
+      );
+      this.extraScreenWindow = window.open(url, '_blank', 'width=1600,height=900,menubar=no,toolbar=no,location=no,status=no');
     }
   }
 
@@ -835,6 +849,19 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   onExitConfirm() {
     this.dataService.updateRaceSubscription(false);
     this.showExitConfirmation = false;
+    // Close all open windows
+    if (this.leaderBoardWindow) {
+      this.leaderBoardWindow.close();
+      this.leaderBoardWindow = null;
+    }
+    if (this.heatResultsWindow) {
+      this.heatResultsWindow.close();
+      this.heatResultsWindow = null;
+    }
+    if (this.extraScreenWindow) {
+      this.extraScreenWindow.close();
+      this.extraScreenWindow = null;
+    }
     this.router.navigate(['/raceday-setup']);
   }
   onExitCancel() {
@@ -1419,11 +1446,11 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     } else if (baseKey === 'rankHeat') {
       if (this.isEmptyDriver(hd)) return '';
       const rank = this.driverRankings.get(hd.objectId);
-      return rank ? `(${rank})` : '--';
+      return rank ? rank.toString() : '--';
     } else if (baseKey === 'rankOverall') {
       if (this.isEmptyDriver(hd)) return '';
       const rank = hd.participant?.rank;
-      return rank ? `(${rank})` : '--';
+      return rank ? rank.toString() : '--';
     } else if (baseKey === 'segmentTime') {
       const parts = propertyName.split('_');
       const index = parts.length > 1 ? parseInt(parts[1], 10) : 0;

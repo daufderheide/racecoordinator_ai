@@ -32,6 +32,8 @@ export class Settings {
   flagCheckered?: string;
   sortByStandings: boolean = true;
   highlightRowOnLap: boolean = true;
+  
+  // Race Screen Settings
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
@@ -58,6 +60,34 @@ export class Settings {
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {
     'imageset_fuel-gauge-builtin': ColumnVisibility.FuelRaceOnly
   };
+  
+  // Extra Screen Settings
+  extraScreenSortByStandings: boolean = true;
+  extraScreenHighlightRowOnLap: boolean = true;
+  extraScreenColumns: string[] = Settings.DEFAULT_EXTRA_SCREEN_COLUMNS;
+  extraScreenColumnAnchors: { [key: string]: AnchorPoint } = {};
+  extraScreenColumnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
+    'driver.nickname': {
+      [AnchorPoint.CenterCenter]: 'driver.nickname'
+    },
+    'imageset_fuel-gauge-builtin': {
+      [AnchorPoint.CenterCenter]: 'imageset_fuel-gauge-builtin'
+    },
+    'lapCount': {
+      [AnchorPoint.CenterCenter]: 'lapCount'
+    },
+    'lastLapTime': {
+      [AnchorPoint.CenterCenter]: 'lastLapTime'
+    },
+    'gapLeader': {
+      [AnchorPoint.CenterCenter]: 'gapLeader'
+    }
+  };
+  extraScreenColumnVisibility: { [columnKey: string]: ColumnVisibility } = {
+    'imageset_fuel-gauge-builtin': ColumnVisibility.FuelRaceOnly
+  };
+
+  static readonly DEFAULT_EXTRA_SCREEN_COLUMNS = ['driver.nickname', 'imageset_fuel-gauge-builtin', 'lapCount', 'lastLapTime', 'gapLeader'];
 }
 
 

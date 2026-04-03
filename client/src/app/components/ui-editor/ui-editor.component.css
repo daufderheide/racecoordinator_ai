@@ -37,6 +37,16 @@
   text-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
+.race-title-green {
+  color: #4ade80;
+  text-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
+}
+
+.extra-screen-title-yellow {
+  color: #eab308;
+  text-shadow: 0 0 15px rgba(234, 179, 8, 0.4);
+}
+
 .content-area {
   flex: 1;
   display: flex;
@@ -243,6 +253,7 @@
 
 .sorting-selector {
   /* No extra spacing needed when inside layout-controls */
+  display: contents;
 }
 
 .checkbox-container {

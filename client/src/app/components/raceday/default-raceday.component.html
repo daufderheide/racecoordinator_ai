@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="menu-wrapper">
-        <button class="menu-button-top" (click)="toggleMenu()">{{ 'RD_MENU_RACE_DIRECTOR' | translate
+        <button class="menu-button-top" (click)="toggleMenu()">{{ 'RD_MENU_EXTRA_SCREEN' | translate
           }}</button>
         <div *ngIf="isMenuOpen" class="menu-dropdown top-dropdown">
           <div class="menu-item" [class.disabled]="isStartResumeDisabled" (click)="onMenuSelect('START_RESUME')">
@@ -97,6 +97,7 @@
           <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('ON_DECK')">{{ 'RD_WIN_ON_DECK' | translate }}</div>
           <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('HEAT_LIST')">{{ 'RD_WIN_HEAT_LIST' | translate }}</div>
           <div class="menu-item" [class.disabled]="true" (click)="onWindowMenuSelect('NEXT_HEAT')">{{ 'RD_WIN_NEXT_HEAT' | translate }}</div>
+          <div class="menu-item" (click)="onWindowMenuSelect('EXTRA_SCREEN')">{{ 'RD_WIN_EXTRA_SCREEN' | translate }}</div>
         </div>
       </div>
     </div>

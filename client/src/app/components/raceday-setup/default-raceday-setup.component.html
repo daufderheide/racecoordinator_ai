@@ -32,8 +32,15 @@
 
       <!-- Options Dropdown -->
       <div class="menu-dropdown" *ngIf="item.label === 'RDS_MENU_OPTIONS' && isOptionsDropdownOpen">
-        <div class="menu-dropdown-item" (click)="configureCustomUI()">{{ 'RDS_MENU_CUSTOM_UI' | translate }}</div>
         <div class="menu-dropdown-item" (click)="openServerSettings()">{{ 'RDS_MENU_SERVER' | translate }}</div>
+        <div class="menu-dropdown-item has-submenu" (click)="toggleCustomUIDropdown($event)">
+          {{ 'RDS_MENU_CUSTOM_UI' | translate }}
+          <span class="submenu-arrow">▶</span>
+          <div class="menu-dropdown submenu" *ngIf="isCustomUIDropdownOpen">
+            <div class="menu-dropdown-item race-screen-menu" (click)="selectRaceScreen()">{{ 'SS_RACE_SCREEN' | translate }}</div>
+            <div class="menu-dropdown-item extra-screen-menu" (click)="selectExtraScreen()">{{ 'SS_EXTRA_SCREEN' | translate }}</div>
+          </div>
+        </div>
         <div class="menu-dropdown-item has-submenu" (click)="toggleLocalizationDropdown($event)">
           {{ 'RDS_MENU_LOCALIZATION' | translate }}
           <span class="submenu-arrow">▶</span>
@@ -307,3 +314,10 @@
   (confirm)="onConfirmAutoSave()"
   (cancel)="onCancelAutoSave()">
 </app-confirmation-modal>
+
+<!-- Screen Selector Modal -->
+<app-screen-selector
+  *ngIf="showScreenSelector"
+  (screenSelected)="onScreenSelected($event)"
+  (cancelled)="onScreenSelectorCancelled()">
+</app-screen-selector>

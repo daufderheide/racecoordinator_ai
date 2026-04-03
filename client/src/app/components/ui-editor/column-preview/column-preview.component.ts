@@ -1,6 +1,7 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { AnchorPoint } from '../../raceday/column_definition';
 import { ColumnVisibility } from '../../../models/settings';
+import { ScreenType } from '../../screen-selector/screen-selector.component';
 
 // TODO(aufderheide): This may be the third time this list appears in code
 const PREVIEW_LABELS: { [key: string]: string } = {
@@ -30,6 +31,7 @@ const PREVIEW_LABELS: { [key: string]: string } = {
 })
 export class ColumnPreviewComponent {
   @Input() resizingColumnKey: string | null = null;
+  @Input() screenType: ScreenType = 'race-screen';
 
   private columnSlotsMap = new Map<string, { key: string; label: string }>();
   private _columnSlots: { key: string; label: string }[] = [];

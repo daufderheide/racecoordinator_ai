@@ -143,6 +143,26 @@
   margin-right: 8px;
 }
 
+.menu-dropdown-item.race-screen-menu {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.menu-dropdown-item.race-screen-menu:hover {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.menu-dropdown-item.extra-screen-menu {
+  color: #eab308;
+  font-weight: 600;
+}
+
+.menu-dropdown-item.extra-screen-menu:hover {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+}
+
 /* --- Main Header --- */
 .main-header {
   padding: 10px 30px;

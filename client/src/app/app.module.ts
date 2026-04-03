@@ -30,6 +30,8 @@ import { TeamEditorComponent } from './components/team-editor/team-editor.compon
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 import { DriverStationComponent } from './components/driver-station/driver-station.component';
 import { HeatResultsComponent } from './components/heat-results/heat-results.component';
+import { ScreenSelectorComponent } from './components/screen-selector/screen-selector.component';
+import { ExtraScreenComponent } from './components/extra-screen/extra-screen.component';
 
 
 @NgModule({
@@ -56,7 +58,9 @@ import { HeatResultsComponent } from './components/heat-results/heat-results.com
     RaceEditorComponent,
     UIEditorComponent,
     DriverStationComponent,
-    HeatResultsComponent
+    HeatResultsComponent,
+    ScreenSelectorComponent,
+    ExtraScreenComponent,
   ],
   imports: [
     BrowserModule,

@@ -18,6 +18,7 @@ import { TeamEditorComponent } from './components/team-editor/team-editor.compon
 import { UIEditorComponent } from './components/ui-editor/ui-editor.component';
 import { DriverStationComponent } from './components/driver-station/driver-station.component';
 import { DirtyCheckGuard } from './guards/dirty-check.guard';
+import { ExtraScreenComponent } from './components/extra-screen/extra-screen.component';
 import { HeatResultsComponent } from './components/heat-results/heat-results.component';
 
 
@@ -40,6 +41,7 @@ const routes: Routes = [
     { path: 'ui-editor', component: UIEditorComponent, canDeactivate: [DirtyCheckGuard], data: { animation: 'UIEditorPage' } },
     { path: 'driver-station/:lane', component: DriverStationComponent, data: { animation: 'DriverStationPage' } },
     { path: 'heat-results', component: HeatResultsComponent, data: { animation: 'HeatResultsPage' } },
+    { path: 'extra-screen', component: ExtraScreenComponent, data: { animation: 'ExtraScreenPage' } },
     { path: '**', redirectTo: '' }
 
 ];

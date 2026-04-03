@@ -12,6 +12,7 @@ import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { HelpService } from 'src/app/services/help.service';
 import { Team } from 'src/app/models/team';
+import { ScreenSelectorComponent, ScreenType } from '../screen-selector/screen-selector.component';
 
 type Participant = Driver | Team;
 
@@ -68,6 +69,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isConfigDropdownOpen: boolean = false;
   isHelpDropdownOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
+  showScreenSelector: boolean = false;
+  isCustomUIDropdownOpen: boolean = false;
 
   supportedLanguages: { code: string, nameKey: string }[] = [];
   currentLanguage: string = '';
@@ -589,9 +592,28 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
+  toggleCustomUIDropdown(event: Event) {
+    event.stopPropagation();
+    this.isCustomUIDropdownOpen = !this.isCustomUIDropdownOpen;
+    this.cdr.detectChanges();
+  }
+
+  selectRaceScreen() {
+    this.isCustomUIDropdownOpen = false;
+    this.closeOptionsDropdown();
+    this.onScreenSelected('race-screen');
+  }
+
+  selectExtraScreen() {
+    this.isCustomUIDropdownOpen = false;
+    this.closeOptionsDropdown();
+    this.onScreenSelected('extra-screen');
+  }
+
   closeOptionsDropdown() {
     this.isOptionsDropdownOpen = false;
     this.isLocalizationDropdownOpen = false;
+    this.isCustomUIDropdownOpen = false;
   }
 
   selectLanguage(code: string) {
@@ -616,7 +638,17 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   configureCustomUI() {
     this.closeOptionsDropdown();
-    this.router.navigate(['/ui-editor']);
+    this.showScreenSelector = true;
+  }
+
+  onScreenSelected(screenType: ScreenType) {
+    this.showScreenSelector = false;
+    // Navigate to UI editor with screen type parameter
+    this.router.navigate(['/ui-editor'], { queryParams: { screen: screenType } });
+  }
+
+  onScreenSelectorCancelled() {
+    this.showScreenSelector = false;
   }
 
   openServerSettings() {

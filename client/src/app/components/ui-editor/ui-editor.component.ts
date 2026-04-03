@@ -4,12 +4,14 @@ import { Settings } from 'src/app/models/settings';
 import { FileSystemService } from 'src/app/services/file-system.service';
 import { DataService } from 'src/app/data.service';
 import { Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { UndoManager } from '../shared/undo-redo-controls/undo-manager';
 import { forkJoin, Subscription } from 'rxjs';
 import { DirtyComponent } from 'src/app/interfaces/dirty-component';
 import { AnchorPoint } from '../raceday/column_definition';
 import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from './reorder-dialog/reorder-dialog.component';
 import { ColumnVisibility } from 'src/app/models/settings';
+import { ScreenType } from '../screen-selector/screen-selector.component';
 
 
 @Component({
@@ -29,6 +31,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   assets: any[] = [];
   customDirectoryName: string | null = null;
   isNavigationApproved = false;
+  screenType: ScreenType = 'race-screen';
+  screenTitleKey: string = 'UE_TITLE';
 
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
@@ -61,7 +65,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private fileSystem: FileSystemService,
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.undoManager = new UndoManager<Settings>(
       {
@@ -77,7 +82,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   ngOnInit() {
     this.updateScale();
+    
+    // Read screen type from query parameters
+    this.route.queryParams.subscribe(params => {
+      this.screenType = params['screen'] as ScreenType || 'race-screen';
+      this.updateScreenTitle();
+    });
+    
     this.loadData();
+  }
+
+  private updateScreenTitle() {
+    if (this.screenType === 'extra-screen') {
+      this.screenTitleKey = 'UE_TITLE_EXTRA_SCREEN';
+    } else {
+      this.screenTitleKey = 'UE_TITLE_RACE_SCREEN';
+    }
   }
 
   ngOnDestroy() {
@@ -199,16 +219,37 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   get columnSlots() {
     if (!this.editingSettings) return [];
-    return this.editingSettings.racedayColumns.map(key => {
+    const columns = this.screenType === 'extra-screen' 
+      ? this.editingSettings.extraScreenColumns 
+      : this.editingSettings.racedayColumns;
+    return columns.map(key => {
       const col = this.availableColumns.find(c => c.key === key);
       return { key, label: col ? col.label : key };
     });
   }
 
+  get columnLayouts() {
+    if (!this.editingSettings) return {};
+    return this.screenType === 'extra-screen'
+      ? this.editingSettings.extraScreenColumnLayouts || {}
+      : this.editingSettings.columnLayouts || {};
+  }
+
+  get columnVisibility() {
+    if (!this.editingSettings) return {};
+    return this.screenType === 'extra-screen'
+      ? this.editingSettings.extraScreenColumnVisibility || {}
+      : this.editingSettings.columnVisibility || {};
+  }
+
   get resizingColumnKey(): string | null {
     if (!this.editingSettings) return null;
-    const columns = this.editingSettings.racedayColumns;
-    const layouts = this.editingSettings.columnLayouts || {};
+    const columns = this.screenType === 'extra-screen' 
+      ? this.editingSettings.extraScreenColumns 
+      : this.editingSettings.racedayColumns;
+    const layouts = this.screenType === 'extra-screen'
+      ? this.editingSettings.extraScreenColumnLayouts
+      : this.editingSettings.columnLayouts || {};
     const nameKeys = ['driver.name', 'driver.nickname'];
 
     for (const key of columns) {
@@ -220,19 +261,32 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   openReorderDialog() {
+    const layouts = this.screenType === 'extra-screen'
+      ? this.editingSettings.extraScreenColumnLayouts
+      : this.editingSettings.columnLayouts || {};
+    const visibility = this.screenType === 'extra-screen'
+      ? this.editingSettings.extraScreenColumnVisibility
+      : this.editingSettings.columnVisibility || {};
+      
     this.reorderModalData = {
       availableValues: this.availableColumns,
       columnSlots: this.columnSlots,
-      columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {})),
-      columnVisibility: JSON.parse(JSON.stringify(this.editingSettings.columnVisibility || {}))
+      columnLayouts: JSON.parse(JSON.stringify(layouts)),
+      columnVisibility: JSON.parse(JSON.stringify(visibility))
     };
     this.showReorderModal = true;
   }
 
   onReorderSave(result: ReorderDialogResult) {
-    this.editingSettings.racedayColumns = result.columns;
-    this.editingSettings.columnLayouts = result.columnLayouts;
-    this.editingSettings.columnVisibility = result.columnVisibility;
+    if (this.screenType === 'extra-screen') {
+      this.editingSettings.extraScreenColumns = result.columns;
+      this.editingSettings.extraScreenColumnLayouts = result.columnLayouts;
+      this.editingSettings.extraScreenColumnVisibility = result.columnVisibility;
+    } else {
+      this.editingSettings.racedayColumns = result.columns;
+      this.editingSettings.columnLayouts = result.columnLayouts;
+      this.editingSettings.columnVisibility = result.columnVisibility;
+    }
     this.showReorderModal = false;
     this.reorderModalData = null;
     this.captureState();
@@ -240,7 +294,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.cdr.detectChanges();
     }
   }
-
 
   onReorderCancel() {
     this.showReorderModal = false;
@@ -253,14 +306,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.recentRaceIds = [...(s.recentRaceIds || [])];
     clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
     clone.racedayColumns = [...(s.racedayColumns || [])];
+    clone.extraScreenColumns = [...(s.extraScreenColumns || Settings.DEFAULT_EXTRA_SCREEN_COLUMNS)];
     clone.columnAnchors = { ...(s.columnAnchors || {}) };
+    clone.extraScreenColumnAnchors = { ...(s.extraScreenColumnAnchors || {}) };
 
     // Safely clone layouts and visibility
     const layouts = s.columnLayouts || {};
     clone.columnLayouts = JSON.parse(JSON.stringify(layouts));
+    
+    const extraScreenLayouts = s.extraScreenColumnLayouts || {};
+    clone.extraScreenColumnLayouts = JSON.parse(JSON.stringify(extraScreenLayouts));
 
     const visibility = s.columnVisibility || {};
     clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
+    
+    const extraScreenVisibility = s.extraScreenColumnVisibility || {};
+    clone.extraScreenColumnVisibility = JSON.parse(JSON.stringify(extraScreenVisibility));
 
     clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
 
@@ -269,7 +330,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
 
   isColumnSelected(columnKey: string): boolean {
-    return this.editingSettings.racedayColumns.includes(columnKey);
+    const columns = this.screenType === 'extra-screen' 
+      ? this.editingSettings.extraScreenColumns 
+      : this.editingSettings.racedayColumns;
+    return columns.includes(columnKey);
   }
 
   private areSettingsEqual(a: Settings, b: Settings): boolean {
@@ -281,9 +345,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.flagCheckered === b.flagCheckered &&
       a.sortByStandings === b.sortByStandings &&
       a.highlightRowOnLap === b.highlightRowOnLap &&
+      a.extraScreenSortByStandings === b.extraScreenSortByStandings &&
+      a.extraScreenHighlightRowOnLap === b.extraScreenHighlightRowOnLap &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
+      JSON.stringify(a.extraScreenColumns) === JSON.stringify(b.extraScreenColumns) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
-      JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility);
+      JSON.stringify(a.extraScreenColumnLayouts) === JSON.stringify(b.extraScreenColumnLayouts) &&
+      JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility) &&
+      JSON.stringify(a.extraScreenColumnVisibility) === JSON.stringify(b.extraScreenColumnVisibility);
   }
 
   async selectDirectory() {

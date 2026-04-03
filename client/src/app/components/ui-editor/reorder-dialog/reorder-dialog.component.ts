@@ -3,6 +3,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AnchorPoint } from '../../raceday/column_definition';
 import { TranslationService } from '../../../services/translation.service';
 import { Settings, ColumnVisibility } from '../../../models/settings';
+import { ScreenType } from '../../screen-selector/screen-selector.component';
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -26,6 +27,7 @@ export interface ReorderDialogResult {
 })
 export class ReorderDialogComponent {
   @Input() visible = false;
+  @Input() screenType: ScreenType = 'race-screen';
   @Input() set data(value: ReorderDialogData | null) {
     if (value) {
       this.availableValues = value.availableValues.map(v => ({
