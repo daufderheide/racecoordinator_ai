@@ -79,6 +79,7 @@ export class RacedaySetupComponent implements OnInit {
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
   private retryStartTime: number = 0;
+  private retryTimeout: any;
 
   constructor(
     private fileSystem: FileSystemService,
@@ -197,6 +198,9 @@ export class RacedaySetupComponent implements OnInit {
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
+    }
   }
 
   // Wrappers to match previous API if needed, or we implement logic directly
@@ -231,11 +235,12 @@ export class RacedaySetupComponent implements OnInit {
     if (!this.isConnectionLost) return;
 
     // If we are still lost after 5 seconds, reset UI
-    setTimeout(() => {
+    this.retryTimeout = setTimeout(() => {
       if (this.isConnectionLost) {
         console.warn('Connection retry timed out. Resetting to splash screen.');
         this.resetToSplash();
       }
+      this.retryTimeout = null;
     }, 5000);
   }
 

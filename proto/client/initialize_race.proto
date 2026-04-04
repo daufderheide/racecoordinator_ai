@@ -15,4 +15,7 @@ message InitializeRaceRequest {
 
 message InitializeRaceResponse {
   bool success = 1;
+  string error_code = 2;
+  string driver_name = 3;
+  repeated string team_names = 4;
 }

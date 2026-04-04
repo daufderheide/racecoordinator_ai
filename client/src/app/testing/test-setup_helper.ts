@@ -305,13 +305,6 @@ export class TestSetupHelper {
     await page.waitForTimeout(500);
   }
 
-  /**
-   * Helper to wait for a specific text to appear, indicating that localization and rendering are complete.
-   */
-  static async waitForText(page: Page, text: string) {
-    // TODO(aufderheide): Look into why we need 10s here
-    await expect(page.locator('body')).toContainText(text, { timeout: 10000 });
-  }
 
   static async setupTrackMocks(page: Page) {
     await page.route('**/api/tracks', async (route) => {

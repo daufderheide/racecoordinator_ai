@@ -36,7 +36,9 @@ export function playSound(
       interpolatedText = interpolate(text, data);
     }
 
-    console.log('Playing TTS:', interpolatedText);
+    if (!(window as any).SUPPRESS_AUDIO_LOGS) {
+      console.log('Playing TTS:', interpolatedText);
+    }
     if (window.speechSynthesis) {
       // Cancel any current speech
       window.speechSynthesis.cancel();

@@ -5,6 +5,7 @@ import { Heat } from '../../race/heat';
 import { DriverHeatData } from '../../race/driver_heat_data';
 import { Track } from 'src/app/models/track';
 import { Race } from 'src/app/models/race';
+import { RaceParticipant } from 'src/app/models/race_participant';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
@@ -53,17 +54,106 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   protected autoAdvanceRemaining: number = 0;
   protected sortedHeatDrivers: DriverHeatData[] = [];
   protected allDrivers: any[] = [];
-  protected get autoCountdownLabel(): string {
-    if (this.isWarmup) {
-      return this.translationService.translate('RD_WARMUP');
-    }
+  protected participants: RaceParticipant[] = [];
+
+  // Static record values for now as requested
+  protected raceRecordLapNickname: string = 'Placeholder';
+  protected raceRecordLapTime: number = 10.456;
+  protected raceRecordScoreNickname: string = 'Placeholder';
+  protected raceRecordScore: number = 150.5;
+  protected currentRaceBestNickname: string = 'Placeholder';
+  protected currentRaceBestTime: number = 11.123;
+  protected heatBestNickname: string = 'Placeholder';
+  protected heatBestTime: number = 11.456;
+
+  protected get leaderboardEntries(): any[] {
+    return (this.participants || [])
+      .map(p => ({
+        name: p.team?.name || p.driver?.nickname || p.driver?.name || 'Unknown',
+        score: p.totalLaps || 0,
+        rank: p.rank || 0
+      }))
+      .sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  }
+
+  protected get autoStatusLabel(): string {
     if (this.autoStartRemaining > 0) {
-      return this.translationService.translate('RD_AUTO_STARTING');
+      return 'RD_AUTO_STARTING';
     }
     if (this.autoAdvanceRemaining > 0) {
-      return this.translationService.translate('RD_AUTO_ADVANCING');
+      return 'RD_AUTO_ADVANCING';
     }
     return '';
+  }
+
+  protected get formattedTime(): string {
+    const s = this.raceState;
+    if ((s === com.antigravity.RaceState.NOT_STARTED || s === com.antigravity.RaceState.UNKNOWN_STATE) && 
+        this.autoStartRemaining <= 0 && 
+        this.autoAdvanceRemaining <= 0) {
+      return '--';
+    }
+
+    const time = this.time || 0;
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = Math.floor(time % 60);
+
+    let base = '';
+    if (hours > 0) {
+      base = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else if (minutes > 0) {
+      base = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      base = `${seconds}`;
+    }
+
+    // High precision countdown logic (only for seconds < 10 and we have a decimal format)
+    if (hours === 0 && minutes === 0 && this.timeFormat.includes('.')) {
+      const parts = this.timeFormat.split('.');
+      const fractionDigits = parts[1].split('-')[1]; // e.g., '1.2-2' -> 2
+      const formatted = time.toFixed(Number(fractionDigits));
+      return formatted;
+    }
+
+    return base;
+  }
+
+  protected get gridTemplateColumns(): string {
+    if (!this.columns || this.columns.length === 0) return '1fr';
+    return this.columns.map(c => `${c.width}px`).join(' ');
+  }
+
+  protected getLayoutEntries(column: ColumnDefinition): { anchor: string, property: string }[] {
+    if (!column || !column.layout || Object.keys(column.layout).length === 0) {
+      if (column) {
+        return [{ anchor: column.anchor || AnchorPoint.CenterCenter, property: column.propertyName }];
+      }
+      return [];
+    }
+    return Object.entries(column.layout).map(([anchor, property]) => ({ anchor, property: property! }));
+  }
+
+  protected getAnchorClass(anchor: string): string {
+    return `anchor-${anchor.toLowerCase()}`;
+  }
+
+  protected isImageProperty(prop: string): boolean {
+    if (!prop) return false;
+    const base = prop.split('_')[0];
+    return base === 'driver.avatarUrl' || base.startsWith('imageset') || base === 'fuel-gauge-builtin';
+  }
+
+  public shouldShowLaneColor(col: ColumnDefinition): boolean {
+    if (!col) return false;
+    const nameKeys = ['driver.name', 'driver.nickname'];
+    // Check main property
+    if (nameKeys.includes(col.propertyName.split('_')[0])) return true;
+    // Check layout properties
+    if (col.layout) {
+      return Object.values(col.layout).some(v => v && nameKeys.includes(v.split('_')[0]));
+    }
+    return false;
   }
 
   protected get isWarmup(): boolean {
@@ -128,6 +218,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   private driversLoaded = false;
   private pendingUpdate: com.antigravity.IRace | null = null;
+  private dropdownIconCache = new Map<string, string>();
 
   ngOnInit() {
     this.loadColumns();
@@ -147,6 +238,13 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       }
     }));
 
+    this.subscriptions.push(this.raceService.participants$.subscribe(participants => {
+      this.participants = participants || [];
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }));
+
     this.subscriptions.push(this.dataService.getDrivers().subscribe(drivers => {
       this.allDrivers = drivers || [];
       if (!this.isDestroyed) {
@@ -161,8 +259,6 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
       this.loadRaceData();
-      this.cdr.detectChanges();
-      this.updateScale();
     }));
 
     this.subscriptions.push(this.raceConnectionService.raceTime$.subscribe(raceTime => {
@@ -220,12 +316,13 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
             if (!this.isDestroyed) {
               this.cdr.detectChanges();
             }
-            setTimeout(() => {
+            const timer = setTimeout(() => {
               this.highlightedDrivers.delete(lap.objectId!);
               if (!this.isDestroyed) {
                 this.cdr.detectChanges();
               }
             }, 400);
+            this.subscriptions.push(new Subscription(() => clearTimeout(timer)));
           }
         }
       }
@@ -444,7 +541,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   getRowHeight(): number {
-    return 560 / (this.track?.lanes?.length || 1);
+    return 672 / (this.track?.lanes?.length || 1);
   }
 
   getImageMetrics(colIndex: number) {
@@ -494,7 +591,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
 
   // Helper method to get column text Y position
   getColumnTextY(columnIndex: number, hasTeam: boolean = false, anchor?: any): number {
-    const rowHeight = 560 / (this.track?.lanes?.length || 8);
+    const rowHeight = 672 / (this.track?.lanes?.length || 8);
     const targetAnchor = anchor || AnchorPoint.CenterCenter;
 
     switch (targetAnchor) {
@@ -589,16 +686,30 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.updateScale();
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.menu-wrapper') && !target.closest('.teammate-select')) {
+      this.isMenuOpen = false;
+      this.isFileMenuOpen = false;
+      this.isWindowsMenuOpen = false;
+      this.isLanesMenuOpen = false;
+    }
+  }
+
   private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900; // 900 (Total SVG height including menu)
+    const targetWidth = 1920;
+    const targetHeight = 1080; // 1080 (Total SVG height including menu)
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
 
-    this.scale = Math.min(scaleX, scaleY);
+    const newScale = Math.min(scaleX, scaleY);
+    if (Math.abs(this.scale - newScale) > 0.001) {
+      this.scale = newScale;
+    }
   }
 
   toggleMenu() {
@@ -803,26 +914,30 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     }
   }
 
-  onWindowMenuSelect(action: string) {
-    if (action !== 'LEADER_BOARD' && action !== 'HEAT_RESULTS') {
-      return;
-    }
-    console.log('Window menu action:', action);
+  onWindowsMenuSelect(action: string) {
     this.isWindowsMenuOpen = false;
     if (action === 'LEADER_BOARD') {
-      const url = this.router.serializeUrl(
-        this.router.createUrlTree(['/leaderboard'])
-      );
+      const url = this.router.serializeUrl(this.router.createUrlTree(['/leaderboard']));
       this.leaderBoardWindow = window.open(url, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
     } else if (action === 'HEAT_RESULTS') {
-      const url = this.router.serializeUrl(
-        this.router.createUrlTree(['/heat-results'])
-      );
-      this.heatResultsWindow = window.open(url, '_blank', 'width=1600,height=900,menubar=no,toolbar=no,location=no,status=no');
+      const url = this.router.serializeUrl(this.router.createUrlTree(['/heat-results']));
+      this.heatResultsWindow = window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+    } else if (action === 'DRIVER_LIST') {
+      this.router.navigate(['/driver-setup']);
+    } else if (action === 'RACE_SETUP') {
+      this.router.navigate(['/race-setup']);
+    } else if (action === 'TRACK_SETUP') {
+      this.router.navigate(['/track-setup']);
+    } else if (action === 'SETTINGS') {
+      this.router.navigate(['/settings']);
+    } else if (action === 'STANDINGS') {
+      this.router.navigate(['/standings']);
+    } else if (action === 'STATISTICS') {
+      this.router.navigate(['/statistics']);
     }
   }
 
-  onLaneSelect(laneIndex: number) {
+  onLaneMenuSelect(laneIndex: number) {
     console.log('Lane selected for Driver Station:', laneIndex);
     this.isLanesMenuOpen = false; // Close menu
 
@@ -988,7 +1103,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     const scoring = race?.heat_scoring;
 
     let flagType: 'red' | 'green' | 'yellow' | 'white' | 'checkered' | 'green_yellow' = 'red';
-    
+
     if (this.isWarmup) {
       flagType = 'green_yellow';
     } else {
@@ -1167,32 +1282,32 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     // Specific widths as per requirements
     // Time fields: 275
     // Lap count: 180
-    // Name/Nickname: Remaining width (1600 - sum(other_widths))
+    // Name/Nickname: Remaining width (1920 - sum(other_widths))
 
     const fixedWidths: { [key: string]: number } = {
-      'lapCount': 180,
-      'reactionTime': 275,
-      'lastLapTime': 275,
-      'medianLapTime': 275,
-      'averageLapTime': 275,
-      'bestLapTime': 275,
-      'gapLeader': 275,
-      'gapPosition': 275,
-      'driver.name': 400,
-      'driver.nickname': 400,
-      'driver.avatarUrl': 100,
-      'participant.team.name': 275,
-      'participant.fuelLevel': 180,
-      'fuelCapacity': 180,
-      'fuelPercentage': 180,
-      'seed': 180,
-      'rankHeat': 180,
-      'rankOverall': 180,
-      'mph': 275,
-      'kph': 275,
-      'fph': 275,
-      'segmentTime': 275,
-      'imageset': 180
+      'lapCount': 216,
+      'reactionTime': 330,
+      'lastLapTime': 330,
+      'medianLapTime': 330,
+      'averageLapTime': 330,
+      'bestLapTime': 330,
+      'gapLeader': 330,
+      'gapPosition': 330,
+      'driver.name': 480,
+      'driver.nickname': 480,
+      'driver.avatarUrl': 120,
+      'participant.team.name': 330,
+      'participant.fuelLevel': 216,
+      'fuelCapacity': 216,
+      'fuelPercentage': 216,
+      'seed': 216,
+      'rankHeat': 216,
+      'rankOverall': 216,
+      'mph': 330,
+      'kph': 330,
+      'fph': 330,
+      'segmentTime': 330,
+      'imageset': 216
     };
 
     let totalFixedWithoutResizingColumn = 0;
@@ -1223,7 +1338,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       totalFixedWithoutResizingColumn += fixedWidths[baseKey] || 275;
     });
 
-    const remainingWidth = Math.max(300, 1600 - totalFixedWithoutResizingColumn);
+    const remainingWidth = Math.max(300, 1920 - totalFixedWithoutResizingColumn);
 
     this.columns = selectedColumns.map(key => {
       const layout = (settings.columnLayouts || {})[key] || { [AnchorPoint.CenterCenter]: key };
@@ -1528,11 +1643,37 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     return hd.objectId;
   }
 
+  protected trackByColumn(index: number, col: any): string {
+    return col.propertyName || col.id || col.label || index.toString();
+  }
+
+  protected trackByLayout(index: number, entry: any): string {
+    return `${entry.anchor}-${entry.property}`;
+  }
+
   getDropdownArrowBg(hd: DriverHeatData): string {
     const color = this.track.lanes[hd.laneIndex]?.foreground_color || '#ffffff';
+    return this.getDropdownIcon(color);
+  }
+
+  getDropdownIcon(color: string): string {
+    if (this.dropdownIconCache.has(color)) {
+      return this.dropdownIconCache.get(color)!;
+    }
     // Use an inline SVG with the correct fill color
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="${color}" d="M7 10l5 5 5-5z"/></svg>`;
-    return `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
+    const url = `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
+    this.dropdownIconCache.set(color, url);
+    return url;
+  }
+
+  isNameProperty(property: string): boolean {
+    const baseKey = property.split('_')[0];
+    return baseKey === 'driver.name' || baseKey === 'driver.nickname';
+  }
+
+  isTeam(hd: DriverHeatData): boolean {
+    return !!(hd?.participant?.team);
   }
 
   getTeammates(hd: DriverHeatData): any[] {
@@ -1566,6 +1707,10 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     });
   }
 
+  trackByLeaderboardEntry(index: number, entry: any) {
+    return entry.name;
+  }
+
   isDriverSwapDisabled(hd: any): boolean {
     const race = this.raceService.getRace();
     if (!race?.team_options?.require_pit_stop_change_driver) {
@@ -1581,10 +1726,16 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   getDriverStats(hd: any, driverId: string): string {
+    if (!hd || !driverId) return '';
     let heatLaps = 0;
     let heatTime = 0;
     let overallLaps = 0;
     let overallTime = 0;
+
+    const hLabel = this.translationService.translate('RD_STATS_HEAT_ABBR');
+    const lLabel = this.translationService.translate('RD_STATS_LAP_ABBR');
+    const tLabel = this.translationService.translate('RD_STATS_TOTAL_ABBR');
+
 
     if (hd.lapsWithDrivers) {
       hd.lapsWithDrivers.forEach((l: any) => {
@@ -1622,6 +1773,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
       return `${t.toFixed(1)}s`;
     };
 
-    return `(H: ${heatLaps} L / ${formatTime(heatTime)}, T: ${overallLaps} L / ${formatTime(overallTime)})`;
+    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
   }
+
 }

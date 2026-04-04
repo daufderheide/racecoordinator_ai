@@ -219,7 +219,7 @@ describe('ReorderDialogComponent', () => {
     // Verify layout reset (from new Settings())
     expect(component.columnLayouts['driver.nickname']).toEqual({
       [AnchorPoint.CenterCenter]: 'driver.nickname',
-      [AnchorPoint.BottomCenter]: 'participant.team.name'
+      [AnchorPoint.BottomRight]: 'participant.team.name'
     });
     expect(component.columnLayouts['custom_slot']).toBeUndefined();
 

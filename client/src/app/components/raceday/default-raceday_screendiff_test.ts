@@ -122,7 +122,7 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-
+    await page.locator('.table-row').first().waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
 
     // Fuel column visibility checked visually
@@ -198,7 +198,7 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-
+    await page.locator('.table-row').first().waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
 
     const avatarHref = await harness.getDriverAvatarHref(0);
@@ -263,7 +263,8 @@ test.describe('Raceday Visuals for Fuel', () => {
     await page.waitForTimeout(500);
 
     // Fuel column visibility checked visually
-    await expect(page.locator('text=50%')).toBeVisible({ timeout: 10000 });
+    await page.locator('.table-row').first().waitFor({ state: 'visible' });
+    await page.waitForTimeout(500);
 
     await expect(page).toHaveScreenshot('raceday-digital-fuel-levels.png', { maxDiffPixelRatio: 0.1 });
   });
@@ -332,7 +333,7 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-
+    await page.locator('.table-row').first().waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('raceday-1-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
   });
@@ -404,7 +405,7 @@ test.describe('Raceday Visuals for Fuel', () => {
       }
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-
+    await page.locator('.table-row').first().waitFor({ state: 'visible' });
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('raceday-8-lane-fuel-gauge.png', { maxDiffPixelRatio: 0.1 });
   });

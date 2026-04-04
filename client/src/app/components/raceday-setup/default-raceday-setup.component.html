@@ -305,3 +305,11 @@
   (confirm)="onConfirmAutoSave()"
   (cancel)="onCancelAutoSave()">
 </app-confirmation-modal>
+<app-acknowledgement-modal
+  [visible]="showErrorModal"
+  [title]="errorTitle"
+  [message]="errorMessage"
+  [messageParams]="errorMessageParams"
+  buttonText="GEN_OK"
+  (acknowledge)="showErrorModal = false">
+</app-acknowledgement-modal>

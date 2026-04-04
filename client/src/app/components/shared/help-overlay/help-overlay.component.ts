@@ -104,11 +104,15 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       // Ensure element is visible
       el.scrollIntoView({ behavior: 'auto', block: 'center' });
       
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const rect = el!.getBoundingClientRect();
         // Ensure we measure after the current layout cycle
         this.applyPosition(el!, rect);
+        if (this.isVisible) {
+          this.cdr.detectChanges();
+        }
       }, 0);
+      this.subscriptions.add(new Subscription(() => clearTimeout(timer)));
     } else {
       // Target not found, fallback to center
       this.centerPopover();

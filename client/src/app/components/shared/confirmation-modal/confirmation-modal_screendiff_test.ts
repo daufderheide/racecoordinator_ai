@@ -13,7 +13,7 @@ test.describe('Confirmation Modal Visuals', () => {
   test('should display confirmation modal', async ({ page }) => {
     // Navigate to Raceday
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
-    await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
+    await page.locator('.menu-bar').waitFor({ state: 'visible' });
 
     // Wait for the menu bar to ensure page loaded
     const menuBar = page.locator('.menu-bar');

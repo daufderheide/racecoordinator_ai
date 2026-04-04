@@ -13,7 +13,7 @@ test.describe('Reorder Dialog Visuals', () => {
 
   async function openDialog(page: any) {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
-    await TestSetupHelper.waitForText(page, 'CUSTOMIZE UI');
+    await page.locator('.ue-container').waitFor({ state: 'visible' });
 
     const editor = page.locator('.ue-container');
     const harness = new UIEditorHarnessE2e(editor);

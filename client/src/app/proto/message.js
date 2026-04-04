@@ -3147,6 +3147,9 @@ export const com = $root.com = (() => {
              * @memberof com.antigravity
              * @interface IInitializeRaceResponse
              * @property {boolean|null} [success] InitializeRaceResponse success
+             * @property {string|null} [errorCode] InitializeRaceResponse errorCode
+             * @property {string|null} [driverName] InitializeRaceResponse driverName
+             * @property {Array.<string>|null} [teamNames] InitializeRaceResponse teamNames
              */
 
             /**
@@ -3158,6 +3161,7 @@ export const com = $root.com = (() => {
              * @param {com.antigravity.IInitializeRaceResponse=} [properties] Properties to set
              */
             function InitializeRaceResponse(properties) {
+                this.teamNames = [];
                 if (properties)
                     for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
@@ -3171,6 +3175,30 @@ export const com = $root.com = (() => {
              * @instance
              */
             InitializeRaceResponse.prototype.success = false;
+
+            /**
+             * InitializeRaceResponse errorCode.
+             * @member {string} errorCode
+             * @memberof com.antigravity.InitializeRaceResponse
+             * @instance
+             */
+            InitializeRaceResponse.prototype.errorCode = "";
+
+            /**
+             * InitializeRaceResponse driverName.
+             * @member {string} driverName
+             * @memberof com.antigravity.InitializeRaceResponse
+             * @instance
+             */
+            InitializeRaceResponse.prototype.driverName = "";
+
+            /**
+             * InitializeRaceResponse teamNames.
+             * @member {Array.<string>} teamNames
+             * @memberof com.antigravity.InitializeRaceResponse
+             * @instance
+             */
+            InitializeRaceResponse.prototype.teamNames = $util.emptyArray;
 
             /**
              * Creates a new InitializeRaceResponse instance using the specified properties.
@@ -3198,6 +3226,13 @@ export const com = $root.com = (() => {
                     writer = $Writer.create();
                 if (message.success != null && Object.hasOwnProperty.call(message, "success"))
                     writer.uint32(/* id 1, wireType 0 =*/8).bool(message.success);
+                if (message.errorCode != null && Object.hasOwnProperty.call(message, "errorCode"))
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.errorCode);
+                if (message.driverName != null && Object.hasOwnProperty.call(message, "driverName"))
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.driverName);
+                if (message.teamNames != null && message.teamNames.length)
+                    for (let i = 0; i < message.teamNames.length; ++i)
+                        writer.uint32(/* id 4, wireType 2 =*/34).string(message.teamNames[i]);
                 return writer;
             };
 
@@ -3238,6 +3273,20 @@ export const com = $root.com = (() => {
                             message.success = reader.bool();
                             break;
                         }
+                    case 2: {
+                            message.errorCode = reader.string();
+                            break;
+                        }
+                    case 3: {
+                            message.driverName = reader.string();
+                            break;
+                        }
+                    case 4: {
+                            if (!(message.teamNames && message.teamNames.length))
+                                message.teamNames = [];
+                            message.teamNames.push(reader.string());
+                            break;
+                        }
                     default:
                         reader.skipType(tag & 7);
                         break;
@@ -3276,6 +3325,19 @@ export const com = $root.com = (() => {
                 if (message.success != null && message.hasOwnProperty("success"))
                     if (typeof message.success !== "boolean")
                         return "success: boolean expected";
+                if (message.errorCode != null && message.hasOwnProperty("errorCode"))
+                    if (!$util.isString(message.errorCode))
+                        return "errorCode: string expected";
+                if (message.driverName != null && message.hasOwnProperty("driverName"))
+                    if (!$util.isString(message.driverName))
+                        return "driverName: string expected";
+                if (message.teamNames != null && message.hasOwnProperty("teamNames")) {
+                    if (!Array.isArray(message.teamNames))
+                        return "teamNames: array expected";
+                    for (let i = 0; i < message.teamNames.length; ++i)
+                        if (!$util.isString(message.teamNames[i]))
+                            return "teamNames: string[] expected";
+                }
                 return null;
             };
 
@@ -3293,6 +3355,17 @@ export const com = $root.com = (() => {
                 let message = new $root.com.antigravity.InitializeRaceResponse();
                 if (object.success != null)
                     message.success = Boolean(object.success);
+                if (object.errorCode != null)
+                    message.errorCode = String(object.errorCode);
+                if (object.driverName != null)
+                    message.driverName = String(object.driverName);
+                if (object.teamNames) {
+                    if (!Array.isArray(object.teamNames))
+                        throw TypeError(".com.antigravity.InitializeRaceResponse.teamNames: array expected");
+                    message.teamNames = [];
+                    for (let i = 0; i < object.teamNames.length; ++i)
+                        message.teamNames[i] = String(object.teamNames[i]);
+                }
                 return message;
             };
 
@@ -3309,10 +3382,24 @@ export const com = $root.com = (() => {
                 if (!options)
                     options = {};
                 let object = {};
-                if (options.defaults)
+                if (options.arrays || options.defaults)
+                    object.teamNames = [];
+                if (options.defaults) {
                     object.success = false;
+                    object.errorCode = "";
+                    object.driverName = "";
+                }
                 if (message.success != null && message.hasOwnProperty("success"))
                     object.success = message.success;
+                if (message.errorCode != null && message.hasOwnProperty("errorCode"))
+                    object.errorCode = message.errorCode;
+                if (message.driverName != null && message.hasOwnProperty("driverName"))
+                    object.driverName = message.driverName;
+                if (message.teamNames && message.teamNames.length) {
+                    object.teamNames = [];
+                    for (let j = 0; j < message.teamNames.length; ++j)
+                        object.teamNames[j] = message.teamNames[j];
+                }
                 return object;
             };
 

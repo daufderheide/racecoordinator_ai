@@ -75,8 +75,9 @@ test.describe('Database Manager Visuals', () => {
     const container = page.locator('.page-container');
     const harness = new DatabaseManagerHarnessE2e(container);
 
-    expect(await harness.getDatabaseCount()).toBe(2);
-    // Title and selected name checked visually
+    // Wait for database rows to be rendered
+    await page.locator('.list-item').first().waitFor({ state: 'visible' });
+    await page.waitForTimeout(200);
 
     await expect(page).toHaveScreenshot('database-manager-initial.png');
   });

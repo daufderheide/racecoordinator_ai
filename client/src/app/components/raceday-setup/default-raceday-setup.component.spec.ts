@@ -36,6 +36,21 @@ describe('DefaultRacedaySetupComponent', () => {
     mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'getRaces', 'initializeRace', 'getSavedRaces', 'loadRace', 'deleteSavedRace', 'toggleServerAnalytics']);
     mockRaceService = jasmine.createSpyObj('RaceService', ['startRace']);
     mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate', 'setLanguage', 'getSupportedLanguages', 'getBrowserLanguage']);
+    mockTranslationService.translate.and.callFake((key: string, params?: any) => {
+      let result = key;
+      if (params) {
+        Object.keys(params).sort().forEach(k => {
+          const val = params[k];
+          if (val) {
+            result += ` ${val}`;
+          }
+        });
+      }
+      return result;
+    });
+    mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
+    mockTranslationService.getSupportedLanguages.and.returnValue([]);
+    mockTranslationService.getBrowserLanguage.and.returnValue('en');
     mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
     mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'clearCustomFolder']);
@@ -63,7 +78,7 @@ describe('DefaultRacedaySetupComponent', () => {
     mockDataService.deleteSavedRace.and.returnValue(of('OK'));
     mockDataService.toggleServerAnalytics.and.returnValue(of('OK'));
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
-    mockTranslationService.translate.and.callFake((key) => key);
+
     mockTranslationService.getBrowserLanguage.and.returnValue('en');
     mockTranslationService.getSupportedLanguages.and.returnValue([
       { code: 'en', nameKey: 'RDS_LANG_EN' },
@@ -437,4 +452,47 @@ describe('DefaultRacedaySetupComponent', () => {
     expect(component.savedRaces).not.toContain('race1.json');
     expect(component.selectedSavedRace).toBeNull();
   });
+
+  it('should show error modal when server returns DUPE_INDIVIDUAL_TEAM', fakeAsync(() => {
+    component.selectedRace = { entity_id: 'r1', name: 'Grand Prix' } as any;
+    component.selectedParticipants = [{ entity_id: 'd1', name: 'Driver 1' }] as any;
+    
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(of({
+      success: false,
+      errorCode: 'DUPE_INDIVIDUAL_TEAM',
+      driverName: 'Driver 1',
+      teamNames: ['Team A']
+    } as any));
+
+    component.startRace();
+    tick();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorTitle).toBe('RDS_ERR_VALIDATION_TITLE');
+    expect(component.errorMessage).toContain('Driver 1');
+    expect(component.errorMessage).toContain('Team A');
+  }));
+
+  it('should show error modal when server returns DUPE_MULTIPLE_TEAMS', fakeAsync(() => {
+    component.selectedRace = { entity_id: 'r1', name: 'Grand Prix' } as any;
+    component.selectedParticipants = [{ entity_id: 't1', name: 'Team A' }] as any;
+
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(of({
+      success: false,
+      errorCode: 'DUPE_MULTIPLE_TEAMS',
+      driverName: 'Driver 1',
+      teamNames: ['Team A', 'Team B']
+    } as any));
+
+    component.startRace();
+    tick();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorMessage).toContain('Driver 1');
+    expect(component.errorMessage).toContain('Team A');
+    expect(component.errorMessage).toContain('Team B');
+  }));
 });
+

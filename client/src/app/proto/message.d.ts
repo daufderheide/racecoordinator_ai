@@ -1319,6 +1319,15 @@ export namespace com {
 
             /** InitializeRaceResponse success */
             success?: (boolean|null);
+
+            /** InitializeRaceResponse errorCode */
+            errorCode?: (string|null);
+
+            /** InitializeRaceResponse driverName */
+            driverName?: (string|null);
+
+            /** InitializeRaceResponse teamNames */
+            teamNames?: (string[]|null);
         }
 
         /** Represents an InitializeRaceResponse. */
@@ -1332,6 +1341,15 @@ export namespace com {
 
             /** InitializeRaceResponse success. */
             public success: boolean;
+
+            /** InitializeRaceResponse errorCode. */
+            public errorCode: string;
+
+            /** InitializeRaceResponse driverName. */
+            public driverName: string;
+
+            /** InitializeRaceResponse teamNames. */
+            public teamNames: string[];
 
             /**
              * Creates a new InitializeRaceResponse instance using the specified properties.

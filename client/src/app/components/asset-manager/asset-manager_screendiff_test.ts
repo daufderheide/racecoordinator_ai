@@ -14,8 +14,7 @@ test.describe('Asset Manager Visuals', () => {
 
   test('should display asset manager with mocked assets', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
-    await TestSetupHelper.waitForText(page, 'DATABASE STATUS');
-    await TestSetupHelper.waitForText(page, 'Mock_Database.db');
+    await page.locator('.active-db-name').waitFor({ state: 'visible' });
 
     const container = page.locator('.am-container');
     const harness = new AssetManagerHarnessE2e(container);

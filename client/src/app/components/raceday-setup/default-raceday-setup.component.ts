@@ -66,6 +66,12 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   public isRefreshingList: boolean = false;
   public showWelcomeMessage: boolean = true;
 
+  // Conflict Error Modal
+  showErrorModal: boolean = false;
+  errorTitle: string = '';
+  errorMessage: string = '';
+  errorMessageParams: any = {};
+
   // Modals
   public isAboutModalVisible = false;
 
@@ -500,6 +506,42 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
       next: (response) => {
         if (response.success) {
           this.router.navigate(['/raceday']);
+        } else {
+          // Handle validation error
+          this.errorTitle = 'RDS_ERR_VALIDATION_TITLE';
+          const fixDescription = this.translationService.translate('RDS_ERR_START_RACE_FIX_DESCRIPTION');
+          
+          if (response.errorCode === 'DUPE_INDIVIDUAL_TEAM') {
+            this.errorMessage = 'RDS_ERR_DRIVER_DUPE_IND_TEAM';
+            this.errorMessageParams = {
+              driver: response.driverName,
+              team: response.teamNames.join(', ')
+            };
+          } else if (response.errorCode === 'DUPE_MULTIPLE_TEAMS') {
+            this.errorMessage = 'RDS_ERR_DRIVER_DUPE_TEAMS';
+            this.errorMessageParams = {
+              driver: response.driverName,
+              teams: response.teamNames.join(', ')
+            };
+          } else {
+            this.errorMessage = response.errorCode || 'Unknown error';
+            this.errorMessageParams = {};
+          }
+          
+          // Append fix description if it's a known error
+          if (response.errorCode) {
+            const translatedMessage = this.translationService.translate(this.errorMessage, this.errorMessageParams);
+            this.errorMessage = translatedMessage + '\n\n' + fixDescription;
+            // Clear messageParams since we've already done the translation for the main part
+            this.errorMessageParams = {};
+            // Set the message directly to the translated one
+            this.errorMessage = this.errorMessage; 
+            // Actually, cleaner to keep it as raw keys if possible, but the modal takes one message.
+            // I'll stick to a manual translated string for complexity.
+          }
+
+          this.showErrorModal = true;
+          this.cdr.detectChanges();
         }
       },
       error: (err) => console.error(err)

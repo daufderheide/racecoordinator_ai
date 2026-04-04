@@ -32,6 +32,9 @@ class MockDataService {
   closeInterface() {
     return of({ success: true });
   }
+  setInterfacePinState(pin: number, isDigital: boolean, state: boolean) {
+    return of({ success: true });
+  }
 }
 
 describe('ArduinoEditorComponent', () => {
@@ -47,8 +50,8 @@ describe('ArduinoEditorComponent', () => {
       baudRate: 9600,
       debounceUs: 1000,
       hardwareType: 0,
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(-1),
-      analogIds: analogIds ?? new Array(MAX_ANALOG_PINS).fill(-1),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
+      analogIds: analogIds ?? new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,

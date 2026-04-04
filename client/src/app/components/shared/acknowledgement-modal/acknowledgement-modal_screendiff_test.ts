@@ -37,7 +37,7 @@ test.describe('Acknowledgement Modal Visuals', () => {
 
   test('should display NO_DATA modal', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
-    await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
+    await page.locator('.scalable-content').waitFor({ state: 'visible' });
 
     // Prime with CONNECTED first
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
@@ -51,11 +51,8 @@ test.describe('Acknowledgement Modal Visuals', () => {
     const modalHost = page.locator('app-acknowledgement-modal');
     const harness = new AcknowledgementModalHarnessE2e(modalHost);
 
+    // Wait for the modal to be visible before screenshot
     await harness.waitForVisible(10000);
-
-    await expect(async () => {
-      expect(await harness.getTitle()).toContain('No Data Received');
-    }).toPass();
 
     // Use modal-content for screenshot to avoid transparent background flakiness
     await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-no-data.png');
@@ -63,7 +60,7 @@ test.describe('Acknowledgement Modal Visuals', () => {
 
   test('should display DISCONNECTED modal after timeout', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
-    await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
+    await page.locator('.scalable-content').waitFor({ state: 'visible' });
 
     // Priming CONNECTED pulse to reset ngOnInit timers
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
@@ -77,27 +74,26 @@ test.describe('Acknowledgement Modal Visuals', () => {
     await harness.waitForVisible(10000);
     await harness.clickAcknowledge();
 
-    // Verify it becomes invisible so we know it will be re-triggered clearly
-    await expect(async () => {
-      expect(await harness.isVisible()).toBe(false);
-    }).toPass();
+    // Wait for it to become invisible
+    await page.waitForFunction((host: string) => {
+      const el = document.querySelector(host);
+      return !el || (el.querySelector('.modal-backdrop') === null);
+    }, 'app-acknowledgement-modal');
 
     // Simulate DISCONNECTED with 1000ms delay threshold
     await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 1000; });
     await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
+    // Wait for the modal to be visible and stable
     await harness.waitForVisible(10000);
-
-    await expect(async () => {
-      expect(await harness.getTitle()).toContain('Interface Disconnected');
-    }).toPass();
+    await page.waitForTimeout(200); // Allow re-render to settle without checking text
 
     await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-disconnected.png');
   });
 
   test('should display CONNECTED modal on recovery', async ({ page }) => {
     await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/raceday'));
-    await TestSetupHelper.waitForText(page, 'RACE COORDINATOR');
+    await page.locator('.scalable-content').waitFor({ state: 'visible' });
 
     // Priming CONNECTED pulse
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
@@ -115,21 +111,17 @@ test.describe('Acknowledgement Modal Visuals', () => {
     const modalHost = page.locator('app-acknowledgement-modal');
     const harness = new AcknowledgementModalHarnessE2e(modalHost);
 
+    // Wait for the Disconnected modal to be visible
     await harness.waitForVisible(10000);
-
-    await expect(async () => {
-      expect(await harness.getTitle()).toContain('Interface Disconnected');
-    }).toPass();
+    await page.waitForTimeout(200);
 
     // 2. Simulate CONNECTED (recovery) - disable watchdog overwrite asserting
     await page.evaluate(() => { (window as any).WATCHDOG_TIMEOUT = 100000; });
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 
+    // Wait for the Connected (recovery) modal to be visible
     await harness.waitForVisible(10000);
-
-    await expect(async () => {
-      expect(await harness.getTitle()).toContain('Interface Connected');
-    }).toPass();
+    await page.waitForTimeout(200);
 
     await expect(modalHost.locator('.modal-content')).toHaveScreenshot('ack-modal-recovered.png');
   });

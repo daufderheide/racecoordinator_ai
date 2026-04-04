@@ -74,6 +74,7 @@ describe('DefaultRacedayComponent', () => {
   let lapsSubject: Subject<com.antigravity.ILap>;
   let raceStateSubject: Subject<com.antigravity.RaceState>;
   let standingsUpdateSubject: Subject<com.antigravity.IStandingsUpdate>;
+  let participantsSubject: Subject<any[]>;
 
 
   beforeEach(async () => {
@@ -83,6 +84,7 @@ describe('DefaultRacedayComponent', () => {
     lapsSubject = new Subject<com.antigravity.ILap>();
     raceStateSubject = new Subject<com.antigravity.RaceState>();
     standingsUpdateSubject = new Subject<com.antigravity.IStandingsUpdate>();
+    participantsSubject = new Subject<any[]>();
 
     mockDataService = jasmine.createSpyObj('DataService', [
       'updateRaceSubscription', 'getRaceUpdate', 'getRaceTime', 'getLaps',
@@ -118,6 +120,7 @@ describe('DefaultRacedayComponent', () => {
     ]);
     mockRaceService.currentHeat$ = of({});
     mockRaceService.race$ = of({});
+    mockRaceService.participants$ = participantsSubject.asObservable();
 
     mockRaceService.getRace.and.returnValue({ name: 'Some Race Name', track: { name: 'Bright Plume Raceway', lanes: [{ foreground_color: 'white', background_color: 'black' }, { foreground_color: 'white', background_color: 'black' }] }, fuel_options: { enabled: false } });
     mockRaceService.getHeats.and.returnValue([]);
@@ -156,6 +159,20 @@ describe('DefaultRacedayComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(DefaultRacedayComponent);
     component = fixture.componentInstance;
+    const mockTrack = { 
+      name: 'Test Track', 
+      lanes: [{ background_color: 'red' }, { background_color: 'green' }],
+      hasDigitalFuel: () => false
+    };
+    component['race'] = { name: 'Test Race', track: mockTrack } as any;
+    component['track'] = mockTrack as any;
+    component['heat'] = { 
+      heatNumber: 1, 
+      heatDrivers: [
+        { objectId: 'hd1', laneIndex: 0, driver: { name: 'Driver 1' } },
+        { objectId: 'hd2', laneIndex: 1, driver: { name: 'Driver 2' } }
+      ] 
+    } as any;
     // fixture.detectChanges(); // Removed to allow manual control in fakeAsync
   });
 
@@ -426,12 +443,15 @@ describe('DefaultRacedayComponent', () => {
         }
       };
 
+      const mockTrack = { hasDigitalFuel: () => false };
       const mockRace = {
+        track: mockTrack,
         fuel_options: {
           capacity: 100
         }
       };
       (component as any).raceService.getRace = jasmine.createSpy().and.returnValue(mockRace);
+      component['track'] = mockTrack as any;
     });
 
     it('should format participant.fuelLevel directly', () => {
@@ -607,11 +627,12 @@ describe('DefaultRacedayComponent', () => {
     component['heat'] = {} as any; // Header is inside *ngIf="heat"
 
     fixture.detectChanges();
-
+    
+    // Header sections with label-text/value-text or track-text
     const compiled = fixture.nativeElement as HTMLElement;
-    const trackText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === trackName);
+    const trackText = compiled.querySelector('.track-text');
     expect(trackText).toBeTruthy();
-    expect(trackText?.textContent).toBe(trackName);
+    expect(trackText?.textContent).toContain(trackName);
   });
 
   it('should render the dynamic race name in the header', () => {
@@ -626,15 +647,17 @@ describe('DefaultRacedayComponent', () => {
     mockRaceService.getRace.and.returnValue(mockRace);
     component['race'] = mockRace as any;
     component['track'] = mockRace['track'] as any;
-    component['heat'] = {} as any;
+    component['heat'] = { heatNumber: 1 } as any;
 
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const raceText = Array.from(compiled.querySelectorAll('text')).find(el => el.textContent === raceName);
-    expect(raceText).toBeTruthy();
-    expect(raceText?.textContent).toBe(raceName);
+    const raceValue = compiled.querySelector('.info-section .value-text');
+    expect(raceValue).toBeTruthy();
+    expect(raceValue?.textContent).toContain(raceName);
   });
+
+
 
   describe('Digital Fuel Support', () => {
     it('should include fuel columns for digital fuel races', () => {
@@ -736,9 +759,148 @@ describe('DefaultRacedayComponent', () => {
       const kphLoaded = component['columns'].find(c => c.propertyName === 'kph');
       const fphLoaded = component['columns'].find(c => c.propertyName === 'fph');
 
-      expect(mphLoaded?.width).toBe(275);
-      expect(kphLoaded?.width).toBe(275);
-      expect(fphLoaded?.width).toBe(275);
+      expect(mphLoaded?.width).toBe(330);
+      expect(kphLoaded?.width).toBe(330);
+      expect(fphLoaded?.width).toBe(330);
+    });
+  });
+
+  describe('Leaderboard', () => {
+    let mockDriver1: any;
+    let mockDriver2: any;
+    let mockTeam: any;
+
+    beforeEach(() => {
+      mockDriver1 = { name: 'Driver 1', nickname: 'D1' };
+      mockDriver2 = { name: 'Driver 2', nickname: 'D2' };
+      mockTeam = { name: 'Team X' };
+      
+      fixture.detectChanges();
+      participantsSubject.next([
+        { driver: mockDriver1, totalLaps: 10, rank: 2 } as any,
+        { driver: mockDriver2, team: mockTeam, totalLaps: 15, rank: 1 } as any
+      ]);
+      fixture.detectChanges();
+    });
+
+    it('should update and sort entries when participants$ emits', () => {
+      const entries = component['leaderboardEntries'];
+      expect(entries[0].name).toBe('Team X'); // Rank 1
+      expect(entries[1].name).toBe('D1'); // Rank 2
+    });
+
+    it('should prioritize team name over driver nickname', () => {
+      participantsSubject.next([
+        { driver: { name: 'D2', nickname: 'Nick2' }, team: { name: 'Team Elite' }, totalLaps: 5, rank: 1 } as any
+      ]);
+      fixture.detectChanges();
+      const entries = component['leaderboardEntries'];
+      expect(entries[0].name).toBe('Team Elite');
+    });
+
+    it('should update top style when ranks change (animation check)', () => {
+      // Initial state:
+      // Index 0: Team X (Rank 1) -> top: 0px
+      // Index 1: D1 (Rank 2) -> top: 24px
+      let rows = fixture.nativeElement.querySelectorAll('.leaderboard-item');
+      expect(rows[0].textContent).toContain('Team X');
+      expect(rows[0].style.top).toBe('0px');
+      expect(rows[1].textContent).toContain('D1');
+      expect(rows[1].style.top).toBe('24px');
+
+      // Swap ranks: D1 becomes Rank 1, Team X becomes Rank 2
+      participantsSubject.next([
+        { driver: mockDriver1, totalLaps: 20, rank: 1 } as any,
+        { driver: mockDriver2, team: mockTeam, totalLaps: 15, rank: 2 } as any
+      ]);
+      fixture.detectChanges();
+
+      rows = fixture.nativeElement.querySelectorAll('.leaderboard-item');
+      // Verify that after re-sorting, the element positions (top style) reflect the new indices
+      expect(rows[0].textContent).toContain('D1');
+      expect(rows[0].style.top).toBe('0px');
+      expect(rows[1].textContent).toContain('Team X');
+      expect(rows[1].style.top).toBe('24px');
+    });
+
+    it('should have correct height on scroll content wrapper', () => {
+      // 2 participants * 24px = 48px
+      fixture.detectChanges();
+      const scrollContent = fixture.nativeElement.querySelector('.leaderboard-scroll-content');
+      expect(scrollContent.style.height).toBe('48px');
+
+      // Add more participants
+      participantsSubject.next(new Array(10).fill(0).map((_, i) => ({
+        driver: { name: `D${i}` }, rank: i + 1, totalLaps: 0
+      })));
+      fixture.detectChanges();
+      expect(scrollContent.style.height).toBe('240px');
+    });
+
+    it('should be scrollable via overflow-y auto', () => {
+      const container = fixture.nativeElement.querySelector('.leaderboard-list');
+      // In Karma, styles are often applied via the component's encapsulation.
+      // We check class-derived styles by asserting on the element.
+      expect(window.getComputedStyle(container).overflowY).toBe('auto');
+    });
+
+    it('should calculate a scroll height exceeding typical container height when many items are present', () => {
+      // simulate 50 participants -> 1200px height.
+      // 1200px definitely exceeds the parent panel's typical height.
+      participantsSubject.next(new Array(50).fill(0).map((_, i) => ({
+        driver: { name: `D${i}` }, rank: i + 1, totalLaps: 0
+      })));
+      fixture.detectChanges();
+      const scrollContent = fixture.nativeElement.querySelector('.leaderboard-scroll-content');
+      expect(parseInt(scrollContent.style.height)).toBeGreaterThan(1000);
+    });
+  });
+
+  describe('Timer Formatting', () => {
+    beforeEach(() => {
+      component['raceState'] = com.antigravity.RaceState.RACING;
+    });
+
+    it('should format hours correctly (3665s -> 1:01:05)', () => {
+      component['time'] = 3665;
+      component['timeFormat'] = '1.0-0';
+      expect(component['formattedTime']).toBe('1:01:05');
+    });
+
+    it('should format minutes correctly (361s -> 6:01)', () => {
+      component['time'] = 361;
+      component['timeFormat'] = '1.0-0';
+      expect(component['formattedTime']).toBe('6:01');
+    });
+
+    it('should format minutes with padded seconds (65s -> 1:05)', () => {
+      component['time'] = 65;
+      component['timeFormat'] = '1.0-0';
+      expect(component['formattedTime']).toBe('1:05');
+    });
+
+    it('should format seconds only (45s -> 45)', () => {
+      component['time'] = 45;
+      component['timeFormat'] = '1.0-0';
+      expect(component['formattedTime']).toBe('45');
+    });
+
+    it('should show high-precision decimals for countdown < 10s (9.5s -> 9.50)', () => {
+      component['time'] = 9.5;
+      component['timeFormat'] = '1.2-2';
+      expect(component['formattedTime']).toBe('9.50');
+    });
+
+    it('should not show decimals for > 10s (61.5s -> 1:01)', () => {
+      component['time'] = 61.5;
+      component['timeFormat'] = '1.0-0'; // timeFormat is typically 1.0-0 for > 10s or increasing
+      expect(component['formattedTime']).toBe('1:01');
+    });
+    
+    it('should handle zero correctly', () => {
+      component['time'] = 0;
+      component['timeFormat'] = '1.0-0';
+      expect(component['formattedTime']).toBe('0');
     });
   });
 
@@ -835,6 +997,23 @@ describe('DefaultRacedayComponent', () => {
       expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1'); // Rank 2
     });
 
+    it('should have correct top style for animation when sorted', () => {
+      mockSettings.sortByStandings = true;
+      component['driverRankings'].set('hd1', 2);
+      component['driverRankings'].set('hd2', 1);
+
+      (component as any).sortHeatDrivers();
+      fixture.detectChanges();
+
+      const rows = fixture.nativeElement.querySelectorAll('.table-row');
+      const rowHeight = component.getRowHeight();
+      
+      // hd2 should be at index 0 (top: 0px)
+      // hd1 should be at index 1 (top: (rowHeight + 2)px)
+      expect(rows[0].style.top).toBe('0px');
+      expect(rows[1].style.top).toBe(`${rowHeight + 2}px`);
+    });
+
     it('should update rankings and sort on standingsUpdate$ event', fakeAsync(() => {
       mockSettings.sortByStandings = true;
       component['driverRankings'].set('hd1', 1);
@@ -853,6 +1032,56 @@ describe('DefaultRacedayComponent', () => {
 
       expect(component['sortedHeatDrivers'][0].objectId).toBe('hd2');
       expect(component['sortedHeatDrivers'][1].objectId).toBe('hd1');
+    }));
+  });
+
+  describe('Lap Highlighting', () => {
+    let mockHd1: any;
+    let mockHd2: any;
+
+    beforeEach(() => {
+      mockHd1 = { objectId: 'hd1', laneIndex: 0, driver: { name: 'Driver 1', lapAudio: {}, bestLapAudio: {} }, participant: {}, addLapTime: () => {} };
+      mockHd2 = { objectId: 'hd2', laneIndex: 1, driver: { name: 'Driver 2', lapAudio: {}, bestLapAudio: {} }, participant: {}, addLapTime: () => {} };
+      const mockHeat = { heatDrivers: [mockHd1, mockHd2], heatNumber: 1, standings: [] };
+      component['heat'] = mockHeat as any;
+      component['track'] = { name: 'Test Track', lanes: [{}, {}] } as any;
+      
+      mockRaceService.getRace.and.returnValue({
+        track: { lanes: [{}, {}] },
+        fuel_options: { enabled: false }
+      });
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      
+      // Manually trigger sortHeatDrivers to ensure .table-row elements are rendered
+      component['heat'] = mockHeat as any;
+      component['sortHeatDrivers']();
+      fixture.detectChanges();
+    });
+
+    it('should add highlight class when a lap occurs and highlightRowOnLap is true', fakeAsync(() => {
+      mockSettings.highlightRowOnLap = true;
+      
+      lapsSubject.next({ objectId: 'hd1', lapNumber: 1, lapTime: 10.5, bestLapTime: 10.5 });
+      tick();
+      fixture.detectChanges();
+      
+      const rows = fixture.nativeElement.querySelectorAll('.table-row');
+      expect(rows[0].classList.contains('highlight')).toBeTrue();
+      
+      tick(400);
+      fixture.detectChanges();
+      expect(rows[0].classList.contains('highlight')).toBeFalse();
+    }));
+
+    it('should NOT add highlight class when highlightRowOnLap is false', fakeAsync(() => {
+      mockSettings.highlightRowOnLap = false;
+      
+      lapsSubject.next({ objectId: 'hd1', lapNumber: 1, lapTime: 10.5, bestLapTime: 10.5 });
+      tick();
+      fixture.detectChanges();
+      
+      const rows = fixture.nativeElement.querySelectorAll('.table-row');
+      expect(rows[0].classList.contains('highlight')).toBeFalse();
     }));
   });
 

@@ -131,6 +131,63 @@ public class ClientCommandTaskHandler {
     List<RaceParticipant> participants = new java.util.ArrayList<>();
     java.util.List<com.antigravity.models.Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
 
+    // --- Validation Logic ---
+    java.util.Map<String, java.util.List<String>> driverToTeamNames = new java.util.HashMap<>();
+    java.util.Set<String> individualDriverIds = new java.util.HashSet<>();
+
+    for (String pid : participantIds) {
+      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
+      if (pid.startsWith("d_")) {
+        individualDriverIds.add(rawId);
+      } else if (pid.startsWith("t_")) {
+        com.antigravity.models.Team team = teams.stream()
+            .filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
+        if (team != null) {
+          for (String dId : team.getDriverIds()) {
+            driverToTeamNames.computeIfAbsent(dId, k -> new java.util.ArrayList<>()).add(team.getName());
+          }
+        }
+      }
+    }
+
+    // Rule 1: Individual vs Team
+    for (String dId : individualDriverIds) {
+      if (driverToTeamNames.containsKey(dId)) {
+        com.antigravity.models.Driver d = drivers.stream()
+            .filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
+        String dName = d != null ? d.getName() : dId;
+        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.newBuilder()
+            .setSuccess(false)
+            .setErrorCode("DUPE_INDIVIDUAL_TEAM")
+            .setDriverName(dName)
+            .addAllTeamNames(driverToTeamNames.get(dId))
+            .build();
+        return TaskResult.success(response.toByteArray());
+      }
+    }
+
+    // Rule 2: Multiple Teams
+    for (java.util.Map.Entry<String, java.util.List<String>> entry : driverToTeamNames.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        String dId = entry.getKey();
+        // Driver might not be in the explicit 'drivers' list if they were only in teams
+        com.antigravity.models.Driver d = drivers.stream()
+            .filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
+        if (d == null) {
+          d = dbService.getDriver(databaseContext.getDatabase(), dId);
+        }
+        String dName = d != null ? d.getName() : dId;
+        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.newBuilder()
+            .setSuccess(false)
+            .setErrorCode("DUPE_MULTIPLE_TEAMS")
+            .setDriverName(dName)
+            .addAllTeamNames(entry.getValue())
+            .build();
+        return TaskResult.success(response.toByteArray());
+      }
+    }
+    // --- End Validation ---
+
     for (String pid : participantIds) {
       String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
       boolean isExplicitDriver = pid.startsWith("d_");

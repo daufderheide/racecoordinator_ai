@@ -150,6 +150,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.interfaceEventsSubscription?.unsubscribe();
     this.portPollingSubscription?.unsubscribe();
+    Object.values(this.pinActivityTimers).forEach(timer => clearTimeout(timer));
     this.dataService.closeInterface().subscribe({
       next: () => console.log('Interface closed successfully'),
       error: (err) => console.error('Error closing interface', err)

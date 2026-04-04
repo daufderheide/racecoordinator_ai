@@ -397,8 +397,8 @@ public class ClientCommandTaskHandlerTest {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);
     
-    doReturn("192.168.1.50").when(spyHandler).getRemoteAddr(any());
-    doReturn("192.168.1.50").when(spyHandler).getRemoteHost(any());
+    doReturn("8.8.8.8").when(spyHandler).getRemoteAddr(any());
+    doReturn("8.8.8.8").when(spyHandler).getRemoteHost(any());
     
     doNothing().when(spyHandler).setStatus(any(), anyInt());
     doNothing().when(spyHandler).setResult(any(), anyString());
@@ -418,6 +418,122 @@ public class ClientCommandTaskHandlerTest {
     spyHandler.getAnalyticsConfig(mockCtx);
     
     verify(spyHandler).setJson(eq(mockCtx), any(java.util.Map.class));
+  }
+
+  @Test
+  public void testInitializeRace_DuplicateDriver_IndividualAndTeam_ShouldFail() throws Exception {
+    // 1. Setup Data
+    String raceId = "race-1";
+    String driverId = "driver-1";
+    String teamId = "team-1";
+
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-1")
+        .withEntityId(raceId)
+        .build();
+    Driver driver = new Driver("Dave", "D", driverId, null);
+    Team team = new Team("Team A", "url", Arrays.asList(driverId), teamId, null);
+
+    // 2. Mock Database interactions
+    FindIterable<Race> raceIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
+    when(raceIterable.first()).thenReturn(race);
+
+    // Drivers fetch (requested both as individual and then implicitly by validation)
+    FindIterable<Driver> driverIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
+    doAnswer(invocation -> {
+      List<Driver> list = invocation.getArgument(0);
+      list.add(driver);
+      return list;
+    }).when(driverIterable).into(any(List.class));
+
+    // Teams fetch (requested explicitly in the participantIds)
+    FindIterable<Team> teamIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
+    when(teamCollection.find()).thenReturn(teamIterable); // Also mock no-args find for getAllTeams()
+    doAnswer(invocation -> {
+      List<Team> list = invocation.getArgument(0);
+      list.add(team);
+      return list;
+    }).when(teamIterable).into(any(List.class));
+
+    // 3. Mock Request
+    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+        .setRaceId(raceId)
+        .addDriverIds("d_" + driverId) // Individual
+        .addDriverIds("t_" + teamId)   // Team containing same individual
+        .build();
+
+    // 4. Execute
+    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+
+    // 5. Verify
+    com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse("Validation should fail", response.getSuccess());
+    assertEquals("DUPE_INDIVIDUAL_TEAM", response.getErrorCode());
+    assertEquals("Dave", response.getDriverName());
+    assertEquals(1, response.getTeamNamesCount());
+    assertEquals("Team A", response.getTeamNames(0));
+  }
+
+  @Test
+  public void testInitializeRace_DuplicateDriver_MultipleTeams_ShouldFail() throws Exception {
+    // 1. Setup Data
+    String raceId = "race-1";
+    String driverId = "driver-1";
+    String teamAId = "team-A";
+    String teamBId = "team-B";
+
+    Race race = new Race.Builder()
+        .withName("Test Race")
+        .withTrackEntityId("track-1")
+        .withEntityId(raceId)
+        .build();
+    Driver driver = new Driver("Dave", "D", driverId, null);
+    Team teamA = new Team("Team A", "url", Arrays.asList(driverId), teamAId, null);
+    Team teamB = new Team("Team B", "url", Arrays.asList(driverId), teamBId, null);
+
+    // 2. Mock Database interactions
+    FindIterable<Race> raceIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
+    when(raceIterable.first()).thenReturn(race);
+
+    // Teams fetch
+    FindIterable<Team> teamIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
+    when(teamCollection.find()).thenReturn(teamIterable); // Also mock no-args find for getAllTeams()
+    doAnswer(invocation -> {
+      List<Team> list = invocation.getArgument(0);
+      list.add(teamA);
+      list.add(teamB);
+      return list;
+    }).when(teamIterable).into(any(List.class));
+
+    // Mock getDriver (used for Rule 2 error detail)
+    FindIterable<Driver> driverIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
+    when(driverIterable.first()).thenReturn(driver);
+
+    // 3. Mock Request
+    com.antigravity.proto.InitializeRaceRequest request = com.antigravity.proto.InitializeRaceRequest.newBuilder()
+        .setRaceId(raceId)
+        .addDriverIds("t_" + teamAId)
+        .addDriverIds("t_" + teamBId)
+        .build();
+
+    // 4. Execute
+    ClientCommandTaskHandler.TaskResult result = handler.handleInitializeRace(request);
+
+    // 5. Verify
+    com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse("Validation should fail", response.getSuccess());
+    assertEquals("DUPE_MULTIPLE_TEAMS", response.getErrorCode());
+    assertEquals("Dave", response.getDriverName());
+    assertEquals(2, response.getTeamNamesCount());
+    assertTrue(response.getTeamNamesList().contains("Team A"));
+    assertTrue(response.getTeamNamesList().contains("Team B"));
   }
 
   private void deleteDirectory(java.io.File directory) {
