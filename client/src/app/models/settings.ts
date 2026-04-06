@@ -41,10 +41,6 @@ export class Settings {
       [AnchorPoint.CenterCenter]: 'driver.nickname',
       [AnchorPoint.BottomRight]: 'participant.team.name'
     },
-    'driver.name': {
-      [AnchorPoint.CenterCenter]: 'driver.name',
-      [AnchorPoint.BottomRight]: 'participant.team.name'
-    },
 
     'imageset_fuel-gauge-builtin': {
       [AnchorPoint.CenterCenter]: 'imageset_fuel-gauge-builtin'

@@ -1,5 +1,6 @@
 import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { DataService } from '../../data.service';
+import { SettingsService } from '../../services/settings.service';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -37,6 +38,7 @@ export class DatabaseManagerComponent implements OnInit {
 
   constructor(
     private dataService: DataService,
+    private settingsService: SettingsService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) { }
@@ -244,6 +246,8 @@ export class DatabaseManagerComponent implements OnInit {
 
             this.dataService.resetDatabase().subscribe({
               next: (stats) => {
+                // Reset client-side settings to defaults
+                this.settingsService.resetToDefaults();
                 this.openAck('DBM_TITLE', 'DBM_SUCCESS_RESET', { name: stats.name });
                 this.loadDatabases(); // toggle loading off in here
               },

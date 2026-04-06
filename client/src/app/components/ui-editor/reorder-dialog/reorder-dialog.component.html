@@ -1,7 +1,13 @@
 <div class="modal-backdrop" *ngIf="visible">
   <div class="modal-content ue-container reorder-modal large-modal">
     <div class="modal-header">
-      <h2 class="title">{{ 'UE_REORDER_DIALOG_TITLE' | translate }}</h2>
+      <app-back-button [label]="'UE_BTN_BACK' | translate" 
+        (back)="onCancel()"></app-back-button>
+      <h2 class="title">{{ 'UE_REORDER_DIALOG_TITLE' | translate }} - <span class="screen-name">{{ screenName }}</span></h2>
+      <div class="header-buttons">
+        <button class="btn-icon" (click)="undo()" [disabled]="!canUndo()" title="Undo">↶</button>
+        <button class="btn-icon" (click)="redo()" [disabled]="!canRedo()" title="Redo">↷</button>
+      </div>
     </div>
 
     <div class="modal-body">
@@ -32,7 +38,7 @@
                 <div class="slot-title">{{ getColumnLabel(slot.key) | translate }}</div>
                 <div class="visibility-selector">
                   <select class="visibility-select" [(ngModel)]="columnVisibility[slot.key]"
-                    (change)="cdr.markForCheck()">
+                    (change)="markChanges()">
                     <option *ngFor="let opt of visibilityOptions" [value]="opt">{{ 'UE_VISIBILITY_' + opt | translate }}
                     </option>
                   </select>
@@ -42,7 +48,6 @@
                 </button>
               </div>
 
-
               <!-- 3x3 Anchor Grid -->
               <div class="anchor-grid-editor">
                 <div class="grid-row" *ngFor="let row of [0, 1, 2]; trackBy: trackByIndex">
@@ -50,7 +55,6 @@
                     [id]="'slot-' + slot.key + '-' + anchorOptions[row * 3 + col]"
                     [attr.data-anchor]="anchorOptions[row * 3 + col]" cdkDropList
                     (cdkDropListDropped)="onValueDrop(slot.key, anchorOptions[row * 3 + col], $event.item.data)">
-
 
                     <div class="cell-content" *ngIf="columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]">
                       <span class="cell-label">{{ getLabel(columnLayouts[slot.key][anchorOptions[row * 3 + col]]!) |
@@ -67,7 +71,15 @@
               </div>
             </div>
           </div>
+        </div>
 
+        <!-- Panel 3: Lane Preview -->
+        <div class="preview-panel">
+          <label class="section-label">{{ 'UE_REORDER_DIALOG_PREVIEW' | translate }}</label>
+          <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="columnLayouts"
+            [columnVisibility]="columnVisibility"></app-column-preview>
+          <p class="hint">{{ 'UE_REORDER_HINT' | translate }}</p>
+          <button class="btn btn-danger btn-reset-defaults" (click)="onReset()" [disabled]="isResetDisabled">{{ 'UE_BTN_RESET_DEFAULTS' | translate }}</button>
           <!-- Blank Slot for adding new columns -->
           <div id="slot-add-new" class="slot-add-blank" cdkDropList (cdkDropListDropped)="onAddColumnDrop($event)">
             <div class="add-placeholder">
@@ -76,24 +88,7 @@
             </div>
           </div>
         </div>
-
-
-        <!-- Panel 3: Lane Preview -->
-        <div class="preview-panel">
-          <label class="section-label">{{ 'UE_REORDER_DIALOG_PREVIEW' | translate }}</label>
-          <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="columnLayouts"
-            [columnVisibility]="columnVisibility"></app-column-preview>
-          <p class="hint">{{ 'UE_REORDER_HINT' | translate }}</p>
-        </div>
       </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-danger btn-reset-defaults" (click)="onReset()">{{ 'UE_BTN_RESET_DEFAULTS' | translate
-        }}</button>
-      <div class="spacer" style="flex: 1"></div>
-      <button class="btn btn-secondary" (click)="onCancel()">{{ 'UE_BTN_CANCEL' | translate }}</button>
-      <button class="btn btn-save" (click)="onSave()">{{ 'UE_BTN_SAVE' | translate }}</button>
     </div>
   </div>
 </div>

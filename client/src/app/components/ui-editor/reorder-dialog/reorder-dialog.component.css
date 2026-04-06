@@ -9,12 +9,14 @@
   z-index: 2000;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 20px;
 }
 
 .reorder-modal.large-modal {
-  width: 1600px;
-  max-width: 98vw;
+  position: relative;
+  width: 95vw;
+  max-width: 1600px;
   height: 90vh;
   background: #1a1c1e;
   border-radius: 16px;
@@ -27,12 +29,60 @@
 .modal-header {
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header .btn-secondary {
+  order: -1;
+  /* Ensure Cancel button is on the left */
 }
 
 .modal-header .title {
   margin: 0;
   color: #00d2ff;
   font-size: 1.5rem;
+}
+
+.modal-header .title .screen-name {
+  color: #fff;
+  font-weight: 600;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Icon buttons for undo/redo */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }
 
 .modal-body {
@@ -45,6 +95,7 @@
 
 .enhanced-dialog-layout {
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   width: 100%;
   height: 100%;
@@ -68,6 +119,7 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   overflow: hidden;
   min-height: 0;
+  max-height: calc(90vh - 200px);
 }
 
 .value-pool {
@@ -112,8 +164,8 @@
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.05);
   min-height: 0;
+  max-height: calc(90vh - 200px);
 }
-
 
 .slot-list {
   display: flex;
@@ -293,7 +345,7 @@
 }
 
 .preview-panel {
-  flex: 0 0 600px;
+  flex: 0 0 800px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -315,6 +367,7 @@
   transition: all 0.3s ease;
   min-height: 100px;
   margin-top: 15px;
+  width: 25%;
 }
 
 .slot-add-blank:hover {
@@ -337,7 +390,7 @@
 }
 
 .add-placeholder .material-icons {
-  font-size: 32px;
+  font-size: 20px;
 }
 
 .add-placeholder span {
@@ -353,12 +406,23 @@
   margin-top: 5px;
 }
 
+.btn-reset-defaults {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding: 10px 20px;
+  font-size: 14px;
+  align-self: flex-start;
+}
+
 .modal-footer {
   padding: 1.5rem 2rem;
   border-top: 1px solid #333;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .section-label {
@@ -398,4 +462,58 @@
 .material-icons {
   font-family: 'Material Icons';
   font-size: 20px;
+}
+
+/* Button styles matching UI Editor - using ::ng-deep to penetrate encapsulation */
+::ng-deep .btn {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+::ng-deep .btn-secondary {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+::ng-deep .btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+::ng-deep .btn-danger {
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
+::ng-deep .btn-danger:hover:not(:disabled) {
+  filter: brightness(1.2);
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+}
+
+::ng-deep .btn-save {
+  background: linear-gradient(to right, #27ae60, #1e8449);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+::ng-deep .btn-save:hover:not(:disabled) {
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px rgba(39, 174, 96, 0.5);
+  transform: translateY(-2px);
+}
+
+::ng-deep .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }

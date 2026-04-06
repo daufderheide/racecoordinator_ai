@@ -18,7 +18,8 @@ const PREVIEW_LABELS: { [key: string]: string } = {
   'driver.avatarUrl': 'RD_COL_AVATAR',
   'participant.fuelLevel': 'RD_COL_FUEL_LEVEL',
   'fuelCapacity': 'RD_COL_FUEL_CAPACITY',
-  'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE'
+  'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE',
+  'imageset': 'RD_COL_FUEL_GAUGE'
 };
 
 @Component({

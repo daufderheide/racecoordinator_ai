@@ -31,4 +31,8 @@ export class SettingsService {
             console.error('Error saving settings to localStorage', e);
         }
     }
+
+    resetToDefaults(): void {
+        localStorage.removeItem(this.STORAGE_KEY);
+    }
 }

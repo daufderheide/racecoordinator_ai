@@ -37,6 +37,19 @@
   text-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
 }
 
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .content-area {
   flex: 1;
   display: flex;
@@ -239,10 +252,6 @@
   100% {
     transform: rotate(360deg);
   }
-}
-
-.sorting-selector {
-  /* No extra spacing needed when inside layout-controls */
 }
 
 .checkbox-container {

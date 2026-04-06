@@ -25,6 +25,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   editingSettings!: Settings;
   isLoading = true;
   isSaving = false;
+  isAutoSaving = false;
   scale = 1;
   assets: any[] = [];
   customDirectoryName: string | null = null;
@@ -78,6 +79,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ngOnInit() {
     this.updateScale();
     this.loadData();
+
+    // Auto-save on changes (like Driver Editor)
+    if (this.undoManager) {
+      this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveSettings();
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -224,7 +232,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       availableValues: this.availableColumns,
       columnSlots: this.columnSlots,
       columnLayouts: JSON.parse(JSON.stringify(this.editingSettings.columnLayouts || {})),
-      columnVisibility: JSON.parse(JSON.stringify(this.editingSettings.columnVisibility || {}))
+      columnVisibility: JSON.parse(JSON.stringify(this.editingSettings.columnVisibility || {})),
+      screenName: 'Default'
     };
     this.showReorderModal = true;
   }
@@ -233,7 +242,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.editingSettings.racedayColumns = result.columns;
     this.editingSettings.columnLayouts = result.columnLayouts;
     this.editingSettings.columnVisibility = result.columnVisibility;
-    this.showReorderModal = false;
     this.reorderModalData = null;
     this.captureState();
     if (!this.isDestroyed) {
@@ -307,6 +315,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     setTimeout(() => {
       this.isSaving = false;
       this.undoManager.resetTracking(this.editingSettings);
+      if (!this.isDestroyed) {
+        this.cdr.detectChanges();
+      }
+    }, 500);
+  }
+
+  private autoSaveSettings() {
+    if (this.isLoading) return;
+    if (this.isSaving) return;
+    if (!this.hasChanges()) return;
+    
+    this.isAutoSaving = true;
+    this.isSaving = true;
+    this.settingsService.saveSettings(this.editingSettings);
+    this.undoManager.resetTracking(this.editingSettings);
+    
+    // Reset saving state after a brief delay
+    setTimeout(() => {
+      this.isAutoSaving = false;
+      this.isSaving = false;
       if (!this.isDestroyed) {
         this.cdr.detectChanges();
       }

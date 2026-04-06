@@ -1,14 +1,17 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AnchorPoint } from '../../raceday/column_definition';
 import { TranslationService } from '../../../services/translation.service';
 import { Settings, ColumnVisibility } from '../../../models/settings';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
   columnSlots: { key: string; label: string }[];
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } };
   columnVisibility: { [columnKey: string]: ColumnVisibility };
+  screenName: string;
 }
 
 export interface ReorderDialogResult {
@@ -24,27 +27,38 @@ export interface ReorderDialogResult {
   standalone: false,
   changeDetection: ChangeDetectionStrategy.Default
 })
-export class ReorderDialogComponent {
-  @Input() visible = false;
+export class ReorderDialogComponent implements OnInit, OnDestroy {
+  private _visible = false;
+  private autoSaveSubject = new Subject<void>();
+  private destroy$ = new Subject<void>();
+  
+  // Saving state (like Driver Editor)
+  isSaving: boolean = false;
+  isAutoSaving: boolean = false;
+  @Input() set visible(value: boolean) {
+    if (value && !this._visible) {
+      this.initialStateSet = false;
+    }
+    this._visible = value;
+  }
+  
+  get visible(): boolean {
+    return this._visible;
+  }
   @Input() set data(value: ReorderDialogData | null) {
     if (value) {
+      this.initialStateSet = false;
+      this.undoStack = [];
+      this.redoStack = [];
+      
+      // Store screen name
+      this.screenName = value.screenName || '';
+      
       this.availableValues = value.availableValues.map(v => ({
         ...v,
-        translatedLabel: this.translationService.translate(v.label).toUpperCase()
+        translatedLabel: this.translationService.translate(v.label)
       }));
-
-      // Alphabetize available values list by translated label, but keep image sets at the bottom
-      this.availableValues.sort((a, b) => {
-        const aIsImageSet = a.key.startsWith('imageset_');
-        const bIsImageSet = b.key.startsWith('imageset_');
-        if (aIsImageSet && !bIsImageSet) return 1;
-        if (!aIsImageSet && bIsImageSet) return -1;
-        return a.translatedLabel.localeCompare(b.translatedLabel);
-      });
-
-      // Build faster lookup map
-      this.availableValuesMap.clear();
-      this.availableValues.forEach(v => this.availableValuesMap.set(v.key, v));
+      this.availableValuesMap = new Map(this.availableValues.map(v => [v.key, v]));
 
       const newSlots = value.columnSlots.map(s => ({ ...s }));
       const newLayouts = JSON.parse(JSON.stringify(value.columnLayouts || {}));
@@ -52,9 +66,8 @@ export class ReorderDialogComponent {
 
       // Initialize items if missing or empty. Every slot MUST have at least one anchor filled.
       newSlots.forEach(slot => {
-        const layout = newLayouts[slot.key] || {};
-        // If the layout is completely empty, or specifically has no primary CenterCenter value
-        if (Object.keys(layout).length === 0 || !layout[AnchorPoint.CenterCenter]) {
+        if (!newLayouts[slot.key] || Object.keys(newLayouts[slot.key]).length === 0) {
+          const layout = newLayouts[slot.key] || {};
           newLayouts[slot.key] = { ...layout, [AnchorPoint.CenterCenter]: slot.key };
         }
         if (!newVisibility[slot.key]) {
@@ -65,18 +78,58 @@ export class ReorderDialogComponent {
       this.columnSlots = newSlots;
       this.columnLayouts = newLayouts;
       this.columnVisibility = newVisibility;
+      
+      // Store initial state for change detection (only once) - AFTER defaults applied
+      if (!this.initialStateSet) {
+        this.originalState = {
+          slots: this.columnSlots.map(s => s.key),
+          layouts: JSON.stringify(this.columnLayouts),
+          visibility: JSON.stringify(this.columnVisibility)
+        };
+        this.initialStateSet = true;
+      }
+      
+      this.hasUnsavedChanges = false;
 
-      this.reindexAllSegments();
       this.updateDropListIds();
       this.cdr.markForCheck();
-      this.cdr.detectChanges();
     }
   }
 
   constructor(
     public cdr: ChangeDetectorRef,
+    private appRef: ApplicationRef,
     private translationService: TranslationService
   ) { }
+
+  ngOnInit() {
+    // Auto-save on changes (debounced like Driver Editor)
+    this.autoSaveSubject.pipe(
+      debounceTime(300)
+    ).subscribe(() => {
+      this.triggerAutoSave();
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.autoSaveSubject.complete();
+  }
+
+  private triggerAutoSave() {
+    if (this.hasChanges()) {
+      this.isAutoSaving = true;
+      this.isSaving = true;
+      this.onSave();
+      // Reset saving state after a brief delay
+      setTimeout(() => {
+        this.isAutoSaving = false;
+        this.isSaving = false;
+        this.cdr.markForCheck();
+      }, 500);
+    }
+  }
 
   @Output() save = new EventEmitter<ReorderDialogResult>();
   @Output() cancel = new EventEmitter<void>();
@@ -89,6 +142,18 @@ export class ReorderDialogComponent {
   anchorOptions = Object.values(AnchorPoint);
   visibilityOptions = Object.values(ColumnVisibility);
   cachedDropListIds: string[] = [];
+  screenName: string = '';
+  
+  // Track initial state for change detection
+  private initialState: { slots: string[], layouts: string, visibility: string } | null = null;
+  private originalState: { slots: string[], layouts: string, visibility: string } | null = null;
+  private hasUnsavedChanges = false;
+  private initialStateSet = false;
+
+  // Undo/Redo state tracking
+  private undoStack: { slots: { key: string, label: string }[], layouts: { [key: string]: any }, visibility: { [key: string]: ColumnVisibility } }[] = [];
+  private redoStack: { slots: { key: string, label: string }[], layouts: { [key: string]: any }, visibility: { [key: string]: ColumnVisibility } }[] = [];
+  private maxUndoStackSize = 50;
 
   private updateDropListIds() {
     const ids: string[] = [];
@@ -111,11 +176,19 @@ export class ReorderDialogComponent {
     moveItemInArray(newSlots, event.previousIndex, event.currentIndex);
     this.columnSlots = newSlots;
     this.updateDropListIds();
+    
+    // Capture state before reindexing
+    this.markChanges();
+    
     this.reindexAllSegments();
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   onValueDrop(slotKey: string, anchor: AnchorPoint, propertyName: string) {
+    // Push current state to undo stack BEFORE modifying
+    this.markChanges();
+    
+    // Then modify the state
     const newLayouts = { ...this.columnLayouts };
     newLayouts[slotKey] = { ...(newLayouts[slotKey] || {}), [anchor]: propertyName };
     this.columnLayouts = newLayouts;
@@ -123,11 +196,15 @@ export class ReorderDialogComponent {
     if (propertyName.startsWith('segmentTime')) {
       this.reindexAllSegments();
     }
-    this.cdr.markForCheck();
+    
+    this.cdr.detectChanges();
   }
 
   clearAnchor(slotKey: string, anchor: AnchorPoint) {
     if (this.columnLayouts[slotKey]) {
+      // Push current state to undo stack BEFORE removing
+      this.markChanges();
+
       const newLayouts = { ...this.columnLayouts };
       const newSlotLayout = { ...newLayouts[slotKey] };
       const clearedProp = newSlotLayout[anchor];
@@ -138,11 +215,14 @@ export class ReorderDialogComponent {
       if (clearedProp?.startsWith('segmentTime')) {
         this.reindexAllSegments();
       }
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     }
   }
 
   removeColumn(slotKey: string) {
+    // Push current state to undo stack BEFORE removing
+    this.markChanges();
+
     const isSegment = slotKey.startsWith('segmentTime');
     this.columnSlots = this.columnSlots.filter(s => s.key !== slotKey);
 
@@ -203,6 +283,7 @@ export class ReorderDialogComponent {
     this.columnVisibility = newVisibility;
 
     this.reindexAllSegments();
+    this.markChanges();
   }
 
   private reindexAllSegments() {
@@ -239,6 +320,9 @@ export class ReorderDialogComponent {
     const propertyKey = event.item.data;
     if (!propertyKey) return;
 
+    // Push current state to undo stack BEFORE modifying
+    this.markChanges();
+
     // Create a unique key for the new slot
     let baseKey = propertyKey;
     let newKey = baseKey;
@@ -267,6 +351,11 @@ export class ReorderDialogComponent {
 
 
   getLabel(key: string): string {
+    // Special case for builtin imagesets
+    if (key === 'imageset_fuel-gauge-builtin') {
+      return 'RD_COL_FUEL_GAUGE';
+    }
+    
     const baseKey = key.split('_')[0];
     const val = this.availableValuesMap.get(baseKey);
     let label = val ? val.label : key;
@@ -300,21 +389,208 @@ export class ReorderDialogComponent {
       columnLayouts: this.columnLayouts,
       columnVisibility: this.columnVisibility
     });
-  }
-
-  onReset() {
-    this.columnSlots = Settings.DEFAULT_COLUMNS.map(key => ({
-      key,
-      label: this.getLabel(key)
-    }));
-    this.columnLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
-    this.columnVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
-    this.updateDropListIds();
+    // Reset change tracking after save
+    this.hasUnsavedChanges = false;
+    // Update originalState to match current saved state
+    // This ensures undo/redo properly track against the last saved state
+    this.originalState = {
+      slots: this.columnSlots.map(s => s.key),
+      layouts: JSON.stringify(this.columnLayouts),
+      visibility: JSON.stringify(this.columnVisibility)
+    };
+    // Force UI update
     this.cdr.markForCheck();
   }
 
+  hasChanges(): boolean {
+    if (!this.originalState) return false;
+    
+    const currentSlots = this.columnSlots.map(s => s.key);
+    const currentLayouts = JSON.stringify(this.columnLayouts);
+    const currentVisibility = JSON.stringify(this.columnVisibility);
+    
+    const slotsDiffer = JSON.stringify(currentSlots) !== JSON.stringify(this.originalState.slots);
+    const layoutsDiffer = currentLayouts !== this.originalState.layouts;
+    const visibilityDiffer = currentVisibility !== this.originalState.visibility;
+    
+    return slotsDiffer || layoutsDiffer || visibilityDiffer;
+  }
+
+  // Mark that changes have been made and trigger auto-save
+  markChanges() {
+    this.hasUnsavedChanges = true;
+    this.pushState();
+    // Trigger auto-save (like Driver Editor)
+    this.autoSaveSubject.next();
+  }
+
+  // Push current state to undo stack
+  private pushState() {
+    const state = {
+      slots: JSON.parse(JSON.stringify(this.columnSlots)),
+      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+    };
+    
+    this.undoStack.push(state);
+    
+    // Limit stack size
+    if (this.undoStack.length > this.maxUndoStackSize) {
+      this.undoStack.shift();
+    }
+    
+    // Clear redo stack on new change
+    this.redoStack = [];
+  }
+
+  // Undo last action
+  undo(): void {
+    if (this.undoStack.length === 0) return;
+    
+    // Save current state to redo stack
+    const currentState = {
+      slots: JSON.parse(JSON.stringify(this.columnSlots)),
+      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+    };
+    this.redoStack.push(currentState);
+    
+    // Restore previous state with new references
+    const previousState = this.undoStack.pop()!;
+    
+    // Create new array references to trigger change detection
+    this.columnSlots = [...previousState.slots];
+    this.columnLayouts = { ...previousState.layouts };
+    this.columnVisibility = { ...previousState.visibility };
+    
+    this.updateDropListIds();
+    
+    // Check if we're back to original state
+    this.hasUnsavedChanges = this.hasChanges();
+    
+    // Force full application change detection
+    this.appRef.tick();
+  }
+
+  // Redo last undone action
+  redo(): void {
+    if (this.redoStack.length === 0) return;
+    
+    // Save current state to undo stack
+    const currentState = {
+      slots: JSON.parse(JSON.stringify(this.columnSlots)),
+      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+    };
+    this.undoStack.push(currentState);
+    
+    // Restore next state
+    const nextState = this.redoStack.pop()!;
+    this.columnSlots = nextState.slots;
+    this.columnLayouts = nextState.layouts;
+    this.columnVisibility = nextState.visibility;
+    
+    this.updateDropListIds();
+    
+    // Check against current saved state
+    this.hasUnsavedChanges = this.hasChanges();
+    this.cdr.markForCheck();
+  }
+
+  // Check if current state differs from initial state
+  private checkStateDiffersFromInitial(): boolean {
+    if (!this.initialState) return false;
+    
+    const currentSlots = this.columnSlots.map(s => s.key);
+    const currentLayouts = JSON.stringify(this.columnLayouts);
+    const currentVisibility = JSON.stringify(this.columnVisibility);
+    
+    return JSON.stringify(currentSlots) !== JSON.stringify(this.initialState.slots) ||
+           currentLayouts !== this.initialState.layouts ||
+           currentVisibility !== this.initialState.visibility;
+  }
+
+  // Check if undo is available
+  canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+
+  // Check if redo is available
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
+  onReset() {
+    // Calculate what the reset state would be
+    const newSlots = Settings.DEFAULT_COLUMNS.map(key => ({
+      key,
+      label: this.getLabel(key)
+    }));
+    const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
+    const newVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
+
+    // Check if reset would actually change anything
+    const slotsSame = JSON.stringify(newSlots.map(s => s.key)) === JSON.stringify(this.columnSlots.map(s => s.key));
+
+    // For layouts, sort keys before comparing since object key order matters in JSON.stringify
+    const sortKeys = (obj: any) => {
+      const sorted: any = {};
+      Object.keys(obj).sort().forEach(k => {
+        sorted[k] = obj[k];
+      });
+      return sorted;
+    };
+    const layoutsSame = JSON.stringify(sortKeys(newLayouts)) === JSON.stringify(sortKeys(this.columnLayouts));
+
+    // For visibility, normalize both sides by adding default "Always" for missing keys
+    const normalizeVisibility = (vis: any, slots: any[]) => {
+      const normalized: any = {};
+      slots.forEach(s => {
+        normalized[s.key] = vis[s.key] || ColumnVisibility.Always;
+      });
+      return JSON.stringify(normalized);
+    };
+    const normalizedNewVis = normalizeVisibility(newVisibility, newSlots);
+    const normalizedCurrVis = normalizeVisibility(this.columnVisibility, this.columnSlots);
+    const visibilitySame = normalizedNewVis === normalizedCurrVis;
+
+    if (slotsSame && layoutsSame && visibilitySame) {
+      // No changes needed, don't modify state
+      return;
+    }
+
+    // Save current state to undo stack before resetting
+    const currentState = {
+      slots: JSON.parse(JSON.stringify(this.columnSlots)),
+      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+    };
+    this.undoStack.push(currentState);
+
+    // Clear redo stack
+    this.redoStack = [];
+
+    this.columnSlots = newSlots;
+    this.columnLayouts = newLayouts;
+    this.columnVisibility = newVisibility;
+    this.updateDropListIds();
+    
+    // Trigger auto-save
+    this.markChanges();
+  }
+
   onCancel() {
-    this.cancel.emit();
+    // Like Driver Editor's onBackClicked() - save if dirty before closing
+    if (this.hasChanges()) {
+      this.isSaving = true;
+      this.onSave();
+      // Give save a moment to process before closing
+      setTimeout(() => {
+        this.cancel.emit();
+      }, 100);
+    } else {
+      this.cancel.emit();
+    }
   }
 
   trackByKey(index: number, item: any): string {
@@ -323,6 +599,52 @@ export class ReorderDialogComponent {
 
   trackByAnchor(index: number, item: any): string {
     return item;
+  }
+
+  get isResetDisabled(): boolean {
+    // Calculate what the reset state would be
+    const newSlots = Settings.DEFAULT_COLUMNS.map(key => ({
+      key,
+      label: this.getLabel(key)
+    }));
+    const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
+    const newVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
+
+    // Check if reset would actually change anything
+    const slotsSame = JSON.stringify(newSlots.map(s => s.key)) === JSON.stringify(this.columnSlots.map(s => s.key));
+
+    // For layouts, sort keys before comparing since object key order matters in JSON.stringify
+    const sortKeys = (obj: any) => {
+      const sorted: any = {};
+      Object.keys(obj).sort().forEach(k => {
+        sorted[k] = obj[k];
+      });
+      return sorted;
+    };
+    const layoutsSame = JSON.stringify(sortKeys(newLayouts)) === JSON.stringify(sortKeys(this.columnLayouts));
+
+    // For visibility, normalize both sides by adding default "Always" for missing keys
+    const normalizeVisibility = (vis: any, slots: any[]) => {
+      const normalized: any = {};
+      slots.forEach(s => {
+        normalized[s.key] = vis[s.key] || ColumnVisibility.Always;
+      });
+      return JSON.stringify(normalized);
+    };
+    const normalizedNewVis = normalizeVisibility(newVisibility, newSlots);
+    const normalizedCurrVis = normalizeVisibility(this.columnVisibility, this.columnSlots);
+    const visibilitySame = normalizedNewVis === normalizedCurrVis;
+
+    return slotsSame && layoutsSame && visibilitySame;
+  }
+
+  onDone() {
+    // Like Driver Editor - save if dirty then close
+    if (this.hasChanges()) {
+      this.isSaving = true;
+      this.onSave();
+    }
+    this.cancel.emit();
   }
 
   trackByIndex(index: number): number {
