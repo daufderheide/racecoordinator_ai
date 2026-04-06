@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DataService } from 'src/app/data.service';
 import { RaceService } from 'src/app/services/race.service';
+import { RaceFlagService } from 'src/app/services/race-flag.service';
 import { DriverHeatData } from 'src/app/race/driver_heat_data';
 import { Race } from 'src/app/models/race';
 import { Track } from 'src/app/models/track';
@@ -29,18 +30,22 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   protected heat?: Heat;
   protected time: number = 0;
   protected standingsPosition: number = 0;
+  protected overallPosition: number = 0;
+  protected raceState: com.antigravity.RaceState = com.antigravity.RaceState.UNKNOWN_STATE;
+  protected hasRacedInCurrentHeat: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
     private dataService: DataService,
     private raceService: RaceService,
     private raceConnectionService: RaceConnectionService,
+    private raceFlagService: RaceFlagService,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      this.laneIndex = +params['lane'];
+      this.laneIndex = +params['lane'] - 1;
       this.loadRaceData();
     });
 
@@ -48,6 +53,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
       this.loadRaceData();
+      this.hasRacedInCurrentHeat = false;
       this.cdr.detectChanges();
     }));
 
@@ -74,6 +80,16 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }));
 
+    this.subscriptions.push(this.raceConnectionService.raceState$.subscribe(state => {
+      if (state) {
+        this.raceState = state;
+        if (state === com.antigravity.RaceState.RACING) {
+          this.hasRacedInCurrentHeat = true;
+        }
+        this.cdr.detectChanges();
+      }
+    }));
+
     this.subscriptions.push(this.raceConnectionService.carData$.subscribe(carData => {
       this.cdr.detectChanges();
     }));
@@ -85,6 +101,19 @@ export class DriverStationComponent implements OnInit, OnDestroy {
             this.standingsPosition = u.rank || 0;
           }
         });
+        this.cdr.detectChanges();
+      }
+    }));
+
+    this.subscriptions.push(this.raceService.participants$.subscribe(participants => {
+      if (participants && this.driverData) {
+        const driverEntityId = this.driverData.actualDriver?.entity_id;
+        const index = participants.findIndex(p => p && p.driver?.entity_id === driverEntityId);
+        if (index >= 0) {
+          this.overallPosition = index + 1;
+        } else {
+          this.overallPosition = 0;
+        }
         this.cdr.detectChanges();
       }
     }));
@@ -111,7 +140,24 @@ export class DriverStationComponent implements OnInit, OnDestroy {
             this.standingsPosition = index + 1;
           }
         }
+
+        // Calculate overall position immediately if participants available
+        this.calculateOverallPosition();
       }
+    }
+  }
+
+  private calculateOverallPosition(): void {
+    const participants = this.raceService.getParticipants();
+    if (participants && this.driverData) {
+      const driverEntityId = this.driverData.actualDriver?.entity_id;
+      const index = participants.findIndex((p: any) => p && p.driver?.entity_id === driverEntityId);
+      if (index >= 0) {
+        this.overallPosition = index + 1;
+      } else {
+        this.overallPosition = 0;
+      }
+      this.cdr.detectChanges();
     }
   }
 
@@ -131,23 +177,10 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     if (!this.finishValue) return 0;
 
     if (this.finishMethod === FinishMethod.Timed) {
-      // For Timed, how much time is left / total time
-      // Wait, prompt says "indicates how much time is left"
-      // Thermometer usually fills UP. Or shows remaining.
-      // If we want to show "how much time left", filled could mean MAX time left, and it empties.
-      // Or filled means time ELAPSED (like regular view).
-      // Prompt says "indicates how much time is left".
-      // Let's assume full = max time left, and it goes down, or empty to full to match other themes.
-      // Usually a progress bar for "time left" would be full at start and decrease, or filled for elapsed.
-      // Let's assume filled = percentage of completion (e.g. time elapsed).
-      // But prompt says "how much time is left".
-      // Let's look at how DefaultRacedayComponent does it or just make it intuitive.
-      // I will calculate percentage as: (current / max) for filling up.
-      // But if it's "how much time is left", maybe we show the value.
-      // I'll calculate `current / max` and we can style it.
+      // Show elapsed time - starts empty and fills up
       return Math.min(100, (this.time / this.finishValue) * 100);
     } else {
-      // Lap based
+      // Lap based - starts empty and fills up as laps complete
       const laps = this.driverData?.lapCount || 0;
       return Math.min(100, (laps / this.finishValue) * 100);
     }
@@ -163,6 +196,14 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
   get foregroundColor(): string {
     return this.lane?.foreground_color || '#000000';
+  }
+
+  get raceStateColor(): string {
+    return this.raceFlagService.getFlagColor(
+      this.raceState,
+      this.hasRacedInCurrentHeat,
+      this.heat
+    );
   }
 
   get backgroundColor(): string {

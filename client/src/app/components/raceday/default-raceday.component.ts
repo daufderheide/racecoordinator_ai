@@ -17,6 +17,7 @@ import { LaneConverter } from 'src/app/converters/lane.converter';
 import { playSound, createTTSContext } from 'src/app/utils/audio';
 import { com } from 'src/app/proto/message';
 import { SettingsService } from 'src/app/services/settings.service';
+import { RaceFlagService, FlagType } from 'src/app/services/race-flag.service';
 import { AnchorPoint } from './column_definition';
 import { Settings, ColumnVisibility } from 'src/app/models/settings';
 import { FinishMethod, AllowFinish, HeatScoring } from 'src/app/models/heat_scoring';
@@ -196,12 +197,14 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   constructor(
+    private el: ElementRef,
     private translationService: TranslationService,
     private dataService: DataService,
     private raceService: RaceService,
     private settingsService: SettingsService,
-    private raceConnectionService: RaceConnectionService,
+    private raceFlagService: RaceFlagService,
     private router: Router,
+    private raceConnectionService: RaceConnectionService,
     private cdr: ChangeDetectorRef
   ) {
     // Initial default columns, will be overwritten in ngOnInit
@@ -917,7 +920,7 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
     this.isDriversStationOpen = false;
 
     const url = this.router.serializeUrl(
-      this.router.createUrlTree(['/driver-station', laneIndex])
+      this.router.createUrlTree(['/driver-station', laneIndex + 1])
     );
     window.open(url, '_blank', 'width=1200,height=800,menubar=no,toolbar=no,location=no,status=no');
   }
@@ -1072,83 +1075,47 @@ export class DefaultRacedayComponent implements OnInit, OnDestroy {
   }
 
   getCurrentFlagUrl(): string {
-    const RS = com.antigravity.RaceState;
+    const flagType = this.raceFlagService.getFlagType(
+      this.raceState,
+      this.hasRacedInCurrentHeat,
+      this.isWarmup,
+      this.heat
+    );
+
     const settings = this.settingsService.getSettings();
-    const race = this.raceService.getRace();
-    const scoring = race?.heat_scoring;
 
-    let flagType: 'red' | 'green' | 'yellow' | 'white' | 'checkered' | 'green_yellow' = 'red';
-
-    if (this.isWarmup) {
-      flagType = 'green_yellow';
-    } else {
-      switch (this.raceState) {
-        case RS.NOT_STARTED:
-        case RS.HEAT_OVER:
-        case RS.RACE_OVER:
-          flagType = 'red';
-          break;
-        case RS.STARTING:
-          // Use yellow if heat is in progress (resuming), red if it hasn't started yet
-          flagType = this.hasRacedInCurrentHeat ? 'yellow' : 'red';
-          break;
-        case RS.RACING:
-          flagType = 'green';
-          // Check for White Flag (1 lap to go)
-          if (scoring?.finishMethod === FinishMethod.Lap && this.heat?.heatDrivers) {
-            const lapsToFinish = scoring.finishValue;
-            const anyDriverOneLapToGo = this.heat.heatDrivers.some(d => d.lapCount === lapsToFinish - 1);
-            if (anyDriverOneLapToGo) {
-              flagType = 'white';
-            }
-          }
-
-          // Feature: Checkered flag if any driver has finished (and race allows finishing)
-          if (scoring?.allowFinish !== AllowFinish.AF_NONE && this.heat?.heatDrivers) {
-            const atLeastOneFinished = this.heat.heatDrivers.some(d => this.isDriverFinished(d, scoring));
-            if (atLeastOneFinished) {
-              flagType = 'checkered';
-            }
-          }
-          break;
-        case RS.PAUSED:
-          flagType = 'yellow';
-          break;
-        default:
-          flagType = 'red';
-      }
-    }
-
-    // Check local settings first
     let url: string | undefined;
-    if (flagType === 'red') url = settings.flagRed;
     if (flagType === 'green') url = settings.flagGreen;
     if (flagType === 'yellow') url = settings.flagYellow;
+    if (flagType === 'red') url = settings.flagRed;
     if (flagType === 'white') url = settings.flagWhite;
     if (flagType === 'checkered') url = settings.flagCheckered;
+    if (flagType === 'green_yellow') url = settings.flagGreen; // Fallback to green
 
     if (url) {
       // Check if it's a dead asset reference (e.g. after a DB reset)
-      const isAssetUrl = url.startsWith('/assets/');
-      // Only consider it a dead reference if we've successfully loaded at least one asset
-      const assetExists = (isAssetUrl && this.assets.length > 0) ? this.assets.some(a => a.url === url) : true;
-
-      if (assetExists) {
-        const finalUrl = this.getFullUrl(url);
-        console.log(`Flag resolution for ${flagType}: Using custom URL: ${finalUrl}`);
-        return finalUrl;
-      } else {
-        console.log(`Flag resolution for ${flagType}: Custom URL ${url} is a dead asset reference, falling back to defaults.`);
+      if (url.startsWith('/api/') && !url.includes('filename=')) {
+        console.warn(`Flag URL appears to be a dead reference: ${url}`);
+        return url; // Still return it, let the backend handle it
       }
+      return url;
     }
 
-    // Fallback to default assets
-    const displayNames: { [key: string]: string } = {
+    // Return built-in flag URLs as fallback
+    const flagUrls: Record<FlagType, string> = {
+      'red': '/assets/flags/red.png',
+      'green': '/assets/flags/green.png',
+      'yellow': '/assets/flags/yellow.png',
+      'white': '/assets/flags/white.png',
+      'checkered': '/assets/flags/checkered.png',
+      'green_yellow': '/assets/flags/green.png'
+    };
+
+    const displayNames: Record<FlagType, string> = {
       'red': 'Red Flag',
       'green': 'Green Flag',
       'yellow': 'Yellow Flag',
       'white': 'White Flag',
-      'black': 'Black Flag',
       'checkered': 'Checkered Flag',
       'green_yellow': 'Yellow Green Flag'
     };

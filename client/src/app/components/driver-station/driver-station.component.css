@@ -9,9 +9,11 @@
 .driver-station-container {
   display: grid;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
+  width: 100dvw;
   grid-template-columns: 80px 1fr; /* Default non-fuel */
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   gap: 10px;
   padding: 15px;
   box-sizing: border-box;
@@ -31,7 +33,7 @@
 
 /* Thermometer Columns (Col 1 & Col 3) */
 .thermometer-column {
-  grid-row: 1 / span 5; /* Span all 5 rows */
+  grid-row: 1 / span 6; /* Span all 6 rows */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -77,6 +79,8 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   border: 2px solid rgba(0,0,0,0.1);
+  container-type: inline-size;
+  container-name: data-row;
 }
 
 .data-row .label {
@@ -87,8 +91,127 @@
 }
 
 .data-row .value {
-  font-size: 1.8rem;
+  font-size: 3.6rem;
   font-weight: bold;
+}
+
+/* Label with shrink */
+.data-row .label.shrink-value,
+.rank-col .label.shrink-value,
+.lap-col .label.shrink-value {
+  white-space: nowrap;
+  font-size: min(0.9rem, 6cqw);
+  max-width: 100%;
+  display: block;
+}
+
+/* Nickname/value scaling - shrink to fit */
+.data-row .value.nickname-value,
+.data-row .value.shrink-value,
+.rank-col .value.shrink-value,
+.lap-col .value.shrink-value {
+  white-space: nowrap;
+  font-size: min(3.6rem, 20cqw);
+  max-width: 100%;
+  display: block;
+}
+
+/* Rank row with 2 columns */
+.rank-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.rank-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.rank-col .label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.rank-col .value {
+  font-size: 3.6rem;
+  font-weight: bold;
+}
+
+/* Lap row with 2 columns */
+.lap-row {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.lap-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.lap-col .label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.lap-col .value {
+  font-size: 3.6rem;
+  font-weight: bold;
+}
+
+/* Race state row */
+.race-state-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.race-state-indicator {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: 3px solid rgba(0, 0, 0, 0.3);
+}
+
+/* Race state colors */
+.race-state-green {
+  background-color: #006400;
+  box-shadow: 0 0 20px rgba(0, 100, 0, 0.5);
+}
+
+.race-state-yellow {
+  background-color: #ffff00;
+  box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+}
+
+.race-state-red {
+  background-color: #ff0000;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.race-state-white {
+  background-color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+/* Checkered flag pattern */
+.race-state-checkered {
+  background-color: #000;
+  background-image: 
+    linear-gradient(45deg, #fff 25%, transparent 25%),
+    linear-gradient(-45deg, #fff 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #fff 75%),
+    linear-gradient(-45deg, transparent 75%, #fff 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 /* Specific styling for fuel column if exists */

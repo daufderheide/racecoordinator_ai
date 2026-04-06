@@ -10,7 +10,8 @@ import {
   ComponentRef,
   Type,
   Inject,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  ElementRef
 } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { SharedModule } from 'src/app/components/shared/shared.module';
@@ -23,21 +24,24 @@ import { Router } from '@angular/router';
 import { TranslationService } from 'src/app/services/translation.service';
 import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
 import { SettingsService } from 'src/app/services/settings.service';
+import { RaceFlagService } from 'src/app/services/race-flag.service';
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
 
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {
   constructor(
+    @Inject(ElementRef) el: ElementRef,
     @Inject(TranslationService) translationService: TranslationService,
     @Inject(DataService) dataService: DataService,
     @Inject(RaceService) raceService: RaceService,
     @Inject(SettingsService) settingsService: SettingsService,
-    @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
+    @Inject(RaceFlagService) raceFlagService: RaceFlagService,
     @Inject(Router) router: Router,
+    @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef
   ) {
-    super(translationService, dataService, raceService, settingsService, raceConnectionService, router, cdr);
+    super(el, translationService, dataService, raceService, settingsService, raceFlagService, router, raceConnectionService, cdr);
   }
 }
 
