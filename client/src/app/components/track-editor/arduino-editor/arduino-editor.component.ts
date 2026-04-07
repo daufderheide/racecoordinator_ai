@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../../models/track';
+import { ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../../models/track';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Lane } from '../../../models/lane';
 import { DataService } from '../../../data.service';
 import { TranslationService } from '../../../services/translation.service';
@@ -33,6 +34,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
   @Output() configChange = new EventEmitter<void>();
   @Output() remove = new EventEmitter<void>();
+  @Output() requestLedStringDialog = new EventEmitter<void>();
 
   availablePorts: string[] = [];
   interfaceStatus: number = 1; // 0=Connected, 1=Disconnected, 2=NoData
@@ -42,11 +44,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     main: true,
     digital: true,
     analog: true,
-    voltage: true
+    voltage: true,
+    leds: true
   };
+  ledBehaviors: PinAction[] = [];
   liveVoltages: { [key: number]: number | undefined } = {};
   maxVoltagesSeen: { [key: number]: number | undefined } = {};
   isVoltageLinked: boolean = false;
+  ledStringExpanded: boolean[] = [];
+  activeRgbLedStates: { [key: string]: boolean } = {};
 
   private interfaceEventsSubscription?: Subscription;
   private portPollingSubscription?: Subscription;
@@ -68,7 +74,40 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.portPollingSubscription = timer(5000, 5000).subscribe(() => {
       this.fetchPorts();
     });
+
+    // Load expanded state from localStorage
+    const savedSections = localStorage.getItem(`rc.arduino-editor.sections.${this.index}`);
+    if (savedSections) {
+      try {
+        const parsed = JSON.parse(savedSections);
+        this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
+      } catch (e) {
+        console.error('Failed to parse saved sections', e);
+      }
+    }
+
+    if (this.config && this.config.ledStrings) {
+      // Default to open (true)
+      this.ledStringExpanded = new Array(this.config.ledStrings.length).fill(true);
+      const savedLeds = localStorage.getItem(`rc.arduino-editor.led-strings.${this.index}`);
+      if (savedLeds) {
+        try {
+          const parsed = JSON.parse(savedLeds);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((val, i) => {
+              if (i < this.ledStringExpanded.length) {
+                this.ledStringExpanded[i] = val;
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Failed to parse saved led strings', e);
+        }
+      }
+    }
+
     this.updatePinActions();
+    this.updateLedBehaviors();
 
     // Subscribe to Interface Events for status and pin activity
     this.interfaceEventsSubscription = this.dataService.getInterfaceEvents().subscribe({
@@ -142,6 +181,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // Translate pin actions when language changes
     this.translationService.getCurrentLanguage().subscribe(() => {
       this.updatePinActions();
+      this.updateLedBehaviors();
     });
 
     this.updateArduinoConfig();
@@ -190,16 +230,16 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.configChange.emit();
 
     if (this.config) {
-      this.dataService.initializeInterface(this.config, this.lanes.length).subscribe({
+      this.dataService.updateInterfaceConfig(this.config, this.index).subscribe({
         next: (response) => {
           if (!response.success) {
-            console.warn(`Failed to initialize interface: ${response.message}`);
+            console.warn(`Failed to update interface config: ${response.message}`);
           } else {
-            console.log('Interface initialized successfully');
+            console.log('Interface config updated successfully');
           }
         },
         error: (err) => {
-          console.error('Error calling initializeInterface', err);
+          console.error('Error calling updateInterfaceConfig', err);
         }
       });
     }
@@ -247,7 +287,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
     if (changed) {
       this.configChange.emit();
-      this.dataService.updateInterfaceConfig(this.config).subscribe({
+      this.dataService.updateInterfaceConfig(this.config, this.index).subscribe({
         next: (response) => {
           if (!response.success) {
             console.warn(`Failed to update interface config: ${response.message}`);
@@ -260,6 +300,31 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   // Debounce Logic
   private debounceUpdateSubject = new Subject<number>();
+
+  isRgbLedActive(stringIndex: number, ledIndex: number): boolean {
+    return !!this.activeRgbLedStates[`${stringIndex}-${ledIndex}`];
+  }
+
+  toggleRgbLed(stringIndex: number, ledIndex: number) {
+    const key = `${stringIndex}-${ledIndex}`;
+    const isActive = !this.activeRgbLedStates[key];
+    this.activeRgbLedStates[key] = isActive;
+
+    const r = isActive ? 255 : 0;
+    const g = 0;
+    const b = 0;
+
+    this.dataService.setInterfaceRgbLedState(stringIndex, [
+      { index: ledIndex, r, g, b }
+    ], this.index).subscribe({
+      next: (resp) => {
+        if (!resp.success) {
+          console.error('Failed to set RGB LED state:', resp.message);
+        }
+      },
+      error: (err) => console.error('Error setting RGB LED state:', err)
+    });
+  }
 
   onDebounceChange(value: number) {
     this.debounceUpdateSubject.next(value);
@@ -320,7 +385,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       const newState = !currentState;
 
       this.pinState[key] = newState;
-      this.dataService.setInterfacePinState(pin, isDigital, newState).subscribe({
+      this.dataService.setInterfacePinState(pin, isDigital, newState, this.index).subscribe({
         next: (response) => {
           if (!response.success) {
             console.warn('Failed to set pin state', response.message);
@@ -413,6 +478,153 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
+  }
+
+  private updateLedBehaviors() {
+    const behaviors: PinAction[] = [];
+    
+    // Add Unused first
+    behaviors.push({
+      label: this.translationService.translate('AE_PIN_UNUSED'),
+      value: com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString()
+    });
+
+    const otherBehaviors: PinAction[] = [];
+    // Map all RgbLedBehavior except UNUSED
+    Object.keys(com.antigravity.RgbLedBehavior).forEach(key => {
+      const val = (com.antigravity.RgbLedBehavior as any)[key];
+      if (typeof val === 'number' && val !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
+        if (key === 'RGB_LED_BEHAVIOR_RACE_STATE_BASE') {
+          for (let i = 1; i <= 5; i++) {
+            otherBehaviors.push({
+              label: this.translationService.translate('AE_LED_BEHAVIOR_RACE_STATE', { index: i }),
+              value: (val + i - 1).toString()
+            });
+          }
+        } else if (key === 'RGB_LED_BEHAVIOR_COUNTDOWN_BASE') {
+          for (let i = 1; i <= 5; i++) {
+            otherBehaviors.push({
+              label: this.translationService.translate('AE_LED_BEHAVIOR_COUNTDOWN', { index: i }),
+              value: (val + i - 1).toString()
+            });
+          }
+        } else if (key.endsWith('_BASE')) {
+          const translationKey = this.getLedBaseTranslationKey(key);
+          this.lanes.forEach((_, i) => {
+            otherBehaviors.push({
+              label: this.translationService.translate(translationKey, { lane: i + 1 }),
+              value: (val + i).toString()
+            });
+          });
+        } else {
+          otherBehaviors.push({
+            label: this.translationService.translate(key),
+            value: val.toString()
+          });
+        }
+      }
+    });
+
+    // Sort alphabetically
+    otherBehaviors.sort((a, b) => a.label.localeCompare(b.label));
+    
+    this.ledBehaviors = [...behaviors, ...otherBehaviors];
+  }
+
+  private getLedBaseTranslationKey(behaviorKey: string): string {
+    switch (behaviorKey) {
+      case 'RGB_LED_BEHAVIOR_HEAT_LEADER_BASE': return 'AE_LED_BEHAVIOR_HEAT_LEADER_LANE';
+      case 'RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE': return 'AE_LED_BEHAVIOR_FUEL_LEVEL_LANE';
+      case 'RGB_LED_BEHAVIOR_REFUELING_BASE': return 'AE_LED_BEHAVIOR_REFUELING_LANE';
+      case 'RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE': return 'AE_LED_BEHAVIOR_LAP_INDICATOR_LANE';
+      case 'RGB_LED_BEHAVIOR_LAP_SENSOR_BASE': return 'AE_LED_BEHAVIOR_LAP_SENSOR_LANE';
+      default: return behaviorKey;
+    }
+  }
+
+  onCreateLedString() {
+    this.requestLedStringDialog.emit();
+  }
+
+  addLedString(numLeds: number) {
+    if (!this.config) return;
+    if (!this.config.ledStrings) this.config.ledStrings = [];
+
+    const n = Number(numLeds);
+    const newString: LedString = {
+      stringNum: this.config.ledStrings.length,
+      leds: new Array(n).fill(com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED),
+      numUsedLeds: 0,
+      addressableLeds: 0,
+      brightness: 255,
+      yellowFlagFlashRate: 5,
+      ledLaneColorOverrides: this.lanes.map(l => l.background_color || '#ffffff')
+    };
+
+    this.config.ledStrings.push(newString);
+    this.ledStringExpanded.push(true);
+    this.saveState();
+    this.updateArduinoConfig();
+  }
+
+  duplicateLedString(index: number, event: Event) {
+    event.stopPropagation();
+    if (!this.config || !this.config.ledStrings) return;
+    const original = this.config.ledStrings[index];
+    const duplicate: LedString = JSON.parse(JSON.stringify(original));
+    
+    // Insert after original
+    this.config.ledStrings.splice(index + 1, 0, duplicate);
+    this.ledStringExpanded.splice(index + 1, 0, this.ledStringExpanded[index]);
+    this.updateStringNums();
+    this.saveState();
+    this.updateArduinoConfig();
+  }
+
+  removeLedString(index: number, event: Event) {
+    event.stopPropagation();
+    if (!this.config || !this.config.ledStrings) return;
+    this.config.ledStrings.splice(index, 1);
+    this.ledStringExpanded.splice(index, 1);
+    this.updateStringNums();
+    this.saveState();
+    this.updateArduinoConfig();
+  }
+
+  onLedStringDropped(event: CdkDragDrop<LedString[]>) {
+    if (!this.config || !this.config.ledStrings) return;
+    moveItemInArray(this.config.ledStrings, event.previousIndex, event.currentIndex);
+    moveItemInArray(this.ledStringExpanded, event.previousIndex, event.currentIndex);
+    this.updateStringNums();
+    this.saveState();
+    this.updateArduinoConfig();
+  }
+
+  private updateStringNums() {
+    if (!this.config || !this.config.ledStrings) return;
+    this.config.ledStrings.forEach((s, i) => s.stringNum = i);
+  }
+
+  updateLedBehavior(stringIndex: number, ledIndex: number, behavior: any) {
+    if (!this.config || !this.config.ledStrings) return;
+    const ls = this.config.ledStrings[stringIndex];
+    ls.leds[ledIndex] = parseInt(behavior, 10);
+    
+    // Update derived fields
+    ls.numUsedLeds = 0;
+    ls.addressableLeds = 0;
+    ls.leds.forEach((b, i) => {
+      if (b !== com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED) {
+        ls.numUsedLeds++;
+        ls.addressableLeds = i + 1;
+      }
+    });
+
+    this.updateArduinoConfig();
+  }
+
+  updateLedString() {
+    this.updateArduinoConfig();
   }
 
   private updatePinActions() {
@@ -623,80 +835,91 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+    this.saveState();
+  }
+
+  toggleLedString(index: number) {
+    this.ledStringExpanded[index] = !this.ledStringExpanded[index];
+    this.saveState();
+  }
+
+  private saveState() {
+    localStorage.setItem(`rc.arduino-editor.sections.${this.index}`, JSON.stringify(this.sectionsExpanded));
+    localStorage.setItem(`rc.arduino-editor.led-strings.${this.index}`, JSON.stringify(this.ledStringExpanded));
   }
 
   getHelpSteps(): any[] {
     const steps: any[] = [
       {
         selector: `#arduino-editor-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_CONTENT'),
+        title: 'TE_HELP_ARDUINO_TITLE',
+        content: 'TE_HELP_ARDUINO_CONTENT',
         position: 'right'
       },
       {
         selector: `#arduino-com-port-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_COM_PORT_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_COM_PORT_CONTENT'),
+        title: 'TE_HELP_ARDUINO_COM_PORT_TITLE',
+        content: 'TE_HELP_ARDUINO_COM_PORT_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-status-badge-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_STATUS_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_STATUS_CONTENT'),
+        title: 'TE_HELP_ARDUINO_STATUS_TITLE',
+        content: 'TE_HELP_ARDUINO_STATUS_CONTENT',
         position: 'right'
       },
       {
         selector: `#arduino-board-type-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_BOARD_TYPE_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_BOARD_TYPE_CONTENT'),
+        title: 'TE_HELP_ARDUINO_BOARD_TYPE_TITLE',
+        content: 'TE_HELP_ARDUINO_BOARD_TYPE_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-debounce-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_DEBOUNCE_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_DEBOUNCE_CONTENT'),
+        title: 'TE_HELP_ARDUINO_DEBOUNCE_TITLE',
+        content: 'TE_HELP_ARDUINO_DEBOUNCE_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-pit-behavior-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_PIT_BEHAVIOR_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_PIT_BEHAVIOR_CONTENT'),
+        title: 'TE_HELP_ARDUINO_PIT_BEHAVIOR_TITLE',
+        content: 'TE_HELP_ARDUINO_PIT_BEHAVIOR_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-nc-sensors-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_NC_SENSORS_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_NC_SENSORS_CONTENT'),
+        title: 'TE_HELP_ARDUINO_NC_SENSORS_TITLE',
+        content: 'TE_HELP_ARDUINO_NC_SENSORS_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-nc-relays-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_NC_RELAYS_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_NC_RELAYS_CONTENT'),
+        title: 'TE_HELP_ARDUINO_NC_RELAYS_TITLE',
+        content: 'TE_HELP_ARDUINO_NC_RELAYS_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-digital-selector-4`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_PIN_SELECTOR_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_PIN_SELECTOR_CONTENT'),
+        title: 'TE_HELP_ARDUINO_PIN_SELECTOR_TITLE',
+        content: 'TE_HELP_ARDUINO_PIN_SELECTOR_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-digital-status-4`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_PIN_STATUS_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_PIN_STATUS_CONTENT'),
+        title: 'TE_HELP_ARDUINO_PIN_STATUS_TITLE',
+        content: 'TE_HELP_ARDUINO_PIN_STATUS_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-analog-selector-2`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_SELECTOR_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_SELECTOR_CONTENT'),
+        title: 'TE_HELP_ARDUINO_ANALOG_SELECTOR_TITLE',
+        content: 'TE_HELP_ARDUINO_ANALOG_SELECTOR_CONTENT',
         position: 'bottom'
       },
       {
         selector: `#arduino-analog-status-2`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_STATUS_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_ANALOG_STATUS_CONTENT'),
+        title: 'TE_HELP_ARDUINO_ANALOG_STATUS_TITLE',
+        content: 'TE_HELP_ARDUINO_ANALOG_STATUS_CONTENT',
         position: 'bottom'
       }
     ];
@@ -706,39 +929,39 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       // For lane-specific steps, we target the first lane (index 0) in the list
       steps.push({
         selector: `#arduino-voltage-section-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_CONTENT',
         position: 'top'
       });
       const firstLane = voltageLanes[0];
       steps.push({
         selector: `#arduino-voltage-max-${this.index}-${firstLane}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT',
         position: 'bottom'
       });
       steps.push({
         selector: `#arduino-voltage-link-${this.index}-${firstLane}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT',
         position: 'bottom'
       });
       steps.push({
         selector: `#arduino-voltage-live-${this.index}-${firstLane}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT',
         position: 'bottom'
       });
       steps.push({
         selector: `#arduino-voltage-set-max-${this.index}-${firstLane}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT',
         position: 'bottom'
       });
       steps.push({
         selector: `#arduino-voltage-reset-${this.index}`,
-        title: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE'),
-        content: this.translationService.translate('TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT'),
+        title: 'TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE',
+        content: 'TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT',
         position: 'bottom'
       });
     }

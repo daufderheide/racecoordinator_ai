@@ -487,7 +487,9 @@ public class Race implements ProtocolListener {
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>();
     Set<String> sentObjectIds = new HashSet<>();
     for (RaceParticipant driver : this.drivers) {
-      participants.add(com.antigravity.converters.RaceParticipantConverter.toProto(driver, sentObjectIds));
+      if (driver.getDriver() != com.antigravity.models.Driver.EMPTY_DRIVER) {
+        participants.add(com.antigravity.converters.RaceParticipantConverter.toProto(driver, sentObjectIds));
+      }
     }
 
     com.antigravity.proto.OverallStandingsUpdate update = com.antigravity.proto.OverallStandingsUpdate.newBuilder()
@@ -556,8 +558,10 @@ public class Race implements ProtocolListener {
 
     List<com.antigravity.proto.RaceParticipant> driverModels = new ArrayList<>();
     for (RaceParticipant participant : drivers) {
-      driverModels
-          .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));
+      if (participant.getDriver() != com.antigravity.models.Driver.EMPTY_DRIVER) {
+        driverModels
+            .add(com.antigravity.converters.RaceParticipantConverter.toProto(participant, sentObjectIds));
+      }
     }
 
     List<com.antigravity.proto.Heat> heatProtos = heats.stream()

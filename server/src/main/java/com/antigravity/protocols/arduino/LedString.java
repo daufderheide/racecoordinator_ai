@@ -1,51 +1,69 @@
 package com.antigravity.protocols.arduino;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LedString {
-  public byte stringNum_;
-  public int[] leds_;
-  public int numUsedLeds_;
-  public int addressableLeds_;
-  public int brightness_;
-  public double yellowFlagFlashRate_;
-
-  public static final int LED_UNUSED = 0;
-  public static final int LED_HEAT_LEADER = 1;
-  public static final int LED_HEAT_TIME = 2;
-  public static final int LED_RACE_STATE_BASE = 1000;
-  public static final int LED_RACE_STATE_MAX = 1999;
-  public static final int LED_HEAT_LEADER_BASE = 2000;
-  public static final int LED_HEAT_LEADER_MAX = 2999;
-  public static final int LED_COUNTDOWN_BASE = 3000;
-  public static final int LED_COUNTDOWN_MAX = 3999;
-  public static final int LED_FUEL_LEVEL_BASE = 4000;
-  public static final int LED_FUEL_LEVEL_MAX = 4999;
-  public static final int LED_REFUELING_BASE = 5000;
-  public static final int LED_REFUELING_MAX = 5999;
-  public static final int LED_LAP_INDICATOR_BASE = 6000;
-  public static final int LED_LAP_INDICATOR_MAX = 6999;
-  public static final int LED_LAP_SENSOR_BASE = 7000;
-  public static final int LED_LAP_SENSOR_MAX = 7999;
-
-  public byte stringNum;
-  public int[] leds;
+  public int stringNum;
+  public List<Integer> leds;
   public int numUsedLeds;
   public int addressableLeds;
   public int brightness;
   public double yellowFlagFlashRate;
+  public List<String> ledLaneColorOverrides;
 
-  public LedString(byte stringNum, int[] leds, int brightness, double yellowFlagFlashRate) {
+  public LedString() {
+    this.leds = new ArrayList<>();
+    this.ledLaneColorOverrides = new ArrayList<>();
+    this.brightness = 255;
+    this.yellowFlagFlashRate = 5.0;
+  }
+
+  @JsonCreator
+  public LedString(
+      @JsonProperty("stringNum") int stringNum,
+      @JsonProperty("leds") List<Integer> leds,
+      @JsonProperty("brightness") int brightness,
+      @JsonProperty("yellowFlagFlashRate") double yellowFlagFlashRate,
+      @JsonProperty("ledLaneColorOverrides") List<String> ledLaneColorOverrides) {
     this.stringNum = stringNum;
-    this.leds = leds;
+    this.leds = leds != null ? leds : new ArrayList<>();
     this.brightness = brightness;
     this.yellowFlagFlashRate = yellowFlagFlashRate;
+    this.ledLaneColorOverrides = ledLaneColorOverrides != null ? ledLaneColorOverrides : new ArrayList<>();
 
     this.numUsedLeds = 0;
     this.addressableLeds = 0;
-    for (int i = 0; i < this.leds.length; i++) {
-      if (this.leds[i] != LED_UNUSED) {
+    for (int i = 0; i < this.leds.size(); i++) {
+      Integer behavior = this.leds.get(i);
+      if (behavior != null && behavior != 0) { // 0 = RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED_VALUE
         this.numUsedLeds++;
         this.addressableLeds = (i + 1);
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    LedString that = (LedString) o;
+    return stringNum == that.stringNum &&
+        brightness == that.brightness &&
+        Double.compare(that.yellowFlagFlashRate, yellowFlagFlashRate) == 0 &&
+        Objects.equals(leds, that.leds) &&
+        Objects.equals(ledLaneColorOverrides, that.ledLaneColorOverrides);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stringNum, leds, brightness, yellowFlagFlashRate, ledLaneColorOverrides);
   }
 }

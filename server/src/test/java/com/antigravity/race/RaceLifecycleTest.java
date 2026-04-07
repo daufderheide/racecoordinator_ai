@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ public class RaceLifecycleTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
+    lanes.add(new Lane("blue", "white", 101));
 
     Track realTrack = new Track("Test Track", lanes, mockConfig, "track1", new ObjectId());
 
@@ -94,5 +96,19 @@ public class RaceLifecycleTest {
     // opened, it still calls close() on protocols
     race.stop();
     verify(mockProtocols).close();
+  }
+
+  @Test
+  public void testStandingsFilterOutEmptyDrivers() {
+    // Total lanes is 2, but only 1 real driver was added in setUp.
+    // The padding logic in Race constructor adds an EMPTY_DRIVER for the second
+    // lane.
+    // createSnapshot() should filter it out.
+
+    com.antigravity.proto.RaceData snapshot = race.createSnapshot();
+
+    // Verify only the real driver is in the overall drivers list
+    assertEquals(1, snapshot.getRace().getDriversCount());
+    assertEquals("Test Driver", snapshot.getRace().getDrivers(0).getDriver().getName());
   }
 }

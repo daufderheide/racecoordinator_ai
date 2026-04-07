@@ -101,18 +101,31 @@
     </div>
 
     <!-- Track Interface Visualization -->
-    <div class="preview-panel" [style.overflow-y]="arduinoConfigs.length > 0 ? 'auto' : 'hidden'">
-      <div *ngIf="arduinoConfigs.length === 0" class="empty-state">
-        <h3>{{ 'TE_NO_INTERFACES_ADDED' | translate }}</h3>
-        <p>{{ 'TE_NO_INTERFACES_DESC' | translate }}</p>
+    <div class="rhs-interface-wrapper">
+      <div class="preview-panel" [style.overflow-y]="arduinoConfigs.length > 0 ? 'auto' : 'hidden'">
+        <div *ngIf="arduinoConfigs.length === 0" class="empty-state">
+          <h3>{{ 'TE_NO_INTERFACES_ADDED' | translate }}</h3>
+          <p>{{ 'TE_NO_INTERFACES_DESC' | translate }}</p>
+        </div>
+
+        <div class="interface-container"
+          *ngFor="let config of arduinoConfigs; let i = index; trackBy: trackByArduinoConfig">
+          <app-arduino-editor [config]="config" [lanes]="lanes" (configChange)="captureState()" [index]="i"
+            [count]="arduinoConfigs.length" (remove)="removeArduinoConfig(i)" (requestLedStringDialog)="onRequestLedStringDialog(i)">
+          </app-arduino-editor>
+        </div>
       </div>
 
-      <div class="interface-container"
-        *ngFor="let config of arduinoConfigs; let i = index; trackBy: trackByArduinoConfig">
-        <app-arduino-editor [config]="config" [lanes]="lanes" (configChange)="captureState()" [index]="i"
-          [count]="arduinoConfigs.length" (remove)="removeArduinoConfig(i)">
-        </app-arduino-editor>
-      </div>
+      <app-input-dialog
+        [visible]="showLedStringDialog"
+        [title]="'AE_ADD_LED_STRING_TITLE'"
+        [message]="'AE_ADD_LED_STRING_MSG'"
+        [type]="'number'"
+        [min]="1"
+        [initialValue]="1"
+        (confirm)="onLedStringDialogConfirm($event)"
+        (cancel)="onLedStringDialogCancel()">
+      </app-input-dialog>
     </div>
   </div>
 </div>

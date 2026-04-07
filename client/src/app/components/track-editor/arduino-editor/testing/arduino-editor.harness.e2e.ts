@@ -29,40 +29,51 @@ export class ArduinoEditorHarnessE2e implements ArduinoEditorHarnessBase {
     });
   }
 
-  async toggleSection(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage'): Promise<void> {
+  async toggleSection(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage' | 'leds'): Promise<void> {
     const textMap = {
       arduino: 'Arduino Configuration',
       main: 'Main Configuration',
       digital: 'Digital Pins',
       analog: 'Analog Pins',
-      voltage: 'Voltage Divider'
+      voltage: 'Voltage Divider',
+      leds: 'RGB LED Configuration'
     };
     let section: Locator;
     if (name === 'arduino') {
       section = this.locator.locator('.arduino-config-container > ' + this.base.selectors.section).first();
+    } else if (name === 'leds') {
+      section = this.locator.locator(this.base.selectors.ledSection).first();
     } else {
       section = await this.getSectionByHeader(textMap[name]);
     }
     await section.locator(this.base.selectors.sectionHeader).first().click();
   }
 
-  async isSectionExpanded(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage'): Promise<boolean> {
+  async isSectionExpanded(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage' | 'leds'): Promise<boolean> {
     const textMap = {
       arduino: 'Arduino Configuration',
       main: 'Main Configuration',
       digital: 'Digital Pins',
       analog: 'Analog Pins',
-      voltage: 'Voltage Divider'
+      voltage: 'Voltage Divider',
+      leds: 'RGB LED Configuration'
     };
     let section: Locator;
     if (name === 'arduino') {
       section = this.locator.locator('.arduino-config-container > ' + this.base.selectors.section).first();
+    } else if (name === 'leds') {
+      section = this.locator.locator(this.base.selectors.ledSection).first();
     } else {
       section = await this.getSectionByHeader(textMap[name]);
     }
     const content = section.locator(':scope > ' + this.base.selectors.sectionContent).first();
     const count = await content.count();
     return count > 0 && await content.isVisible();
+  }
+
+  async clickAddLedString(): Promise<void> {
+    const section = this.locator.locator(this.base.selectors.ledSection).first();
+    await section.locator('button.primary').click();
   }
 
   async getBoardType(): Promise<string> {

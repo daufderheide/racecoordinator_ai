@@ -21,6 +21,7 @@ import { ColumnPreviewComponent } from '../ui-editor/column-preview/column-previ
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 import { ManagerHeaderComponent } from './manager-header/manager-header.component';
 import { EditorTitleComponent } from './editor-title/editor-title.component';
+import { InputDialogComponent } from './input-dialog/input-dialog.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { EditorTitleComponent } from './editor-title/editor-title.component';
     AboutDialogComponent,
     ToolbarComponent,
     ManagerHeaderComponent,
-    EditorTitleComponent
+    EditorTitleComponent,
+    InputDialogComponent
   ],
 
   imports: [
@@ -72,7 +74,8 @@ import { EditorTitleComponent } from './editor-title/editor-title.component';
     AboutDialogComponent,
     ToolbarComponent,
     ManagerHeaderComponent,
-    EditorTitleComponent
+    EditorTitleComponent,
+    InputDialogComponent
   ]
 
 })

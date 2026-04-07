@@ -9,11 +9,12 @@ export abstract class ArduinoEditorHarnessBase {
     sectionHeader: '.section-header',
     sectionContent: '.section-content',
     pinHeaderLabel: '.pin-header label',
-    linkIcon: '.clickable-link-icon'
+    linkIcon: '.clickable-link-icon',
+    ledSection: '.led-config-section'
   };
 
-  abstract toggleSection(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage'): Promise<void>;
-  abstract isSectionExpanded(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage'): Promise<boolean>;
+  abstract toggleSection(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage' | 'leds'): Promise<void>;
+  abstract isSectionExpanded(name: 'arduino' | 'main' | 'digital' | 'analog' | 'voltage' | 'leds'): Promise<boolean>;
   abstract getBoardType(): Promise<string>;
   abstract setBoardType(type: string): Promise<void>;
   abstract getSelectedPinAction(isDigital: boolean, pin: number): Promise<string>;

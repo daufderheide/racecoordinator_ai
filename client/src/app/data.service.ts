@@ -159,9 +159,9 @@ export class DataService {
     );
   }
 
-  initializeInterface(config: ArduinoConfig, laneCount: number): Observable<com.antigravity.InitializeInterfaceResponse> {
+  initializeInterface(configs: ArduinoConfig[], laneCount: number): Observable<com.antigravity.InitializeInterfaceResponse> {
     const request = com.antigravity.InitializeInterfaceRequest.create({
-      config: com.antigravity.ArduinoConfig.create({
+      configs: configs.map(config => com.antigravity.ArduinoConfig.create({
         name: config.name,
         commPort: config.commPort,
         baudRate: config.baudRate,
@@ -174,12 +174,18 @@ export class DataService {
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
         analogIds: config.analogIds,
-        ledLaneColorOverrides: config.ledLaneColorOverrides || [],
+        ledStrings: config.ledStrings?.map(ls => com.antigravity.LedString.create({
+          stringNum: ls.stringNum,
+          leds: ls.leds,
+          brightness: ls.brightness,
+          yellowFlagFlashRate: ls.yellowFlagFlashRate,
+          ledLaneColorOverrides: ls.ledLaneColorOverrides
+        })) || [],
         voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
           lane: parseInt(lane, 10),
           maxVoltage: maxVoltage as number
         }))
-      }),
+      })),
       laneCount
     });
     const buffer = com.antigravity.InitializeInterfaceRequest.encode(request).finish();
@@ -199,7 +205,7 @@ export class DataService {
     );
   }
 
-  updateInterfaceConfig(config: ArduinoConfig): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
+  updateInterfaceConfig(config: ArduinoConfig, interfaceIndex: number): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
     const request = com.antigravity.UpdateInterfaceConfigRequest.create({
       config: com.antigravity.ArduinoConfig.create({
         name: config.name,
@@ -214,12 +220,19 @@ export class DataService {
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
         analogIds: config.analogIds,
-        ledLaneColorOverrides: config.ledLaneColorOverrides || [],
+        ledStrings: config.ledStrings?.map(ls => com.antigravity.LedString.create({
+          stringNum: ls.stringNum,
+          leds: ls.leds,
+          brightness: ls.brightness,
+          yellowFlagFlashRate: ls.yellowFlagFlashRate,
+          ledLaneColorOverrides: ls.ledLaneColorOverrides
+        })) || [],
         voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
           lane: parseInt(lane, 10),
           maxVoltage: maxVoltage as number
         }))
-      })
+      }),
+      interfaceIndex
     });
     const buffer = com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();
 
@@ -238,11 +251,12 @@ export class DataService {
     );
   }
 
-  setInterfacePinState(pin: number, isDigital: boolean, isHigh: boolean): Observable<com.antigravity.SetInterfacePinStateResponse> {
+  setInterfacePinState(pin: number, isDigital: boolean, isHigh: boolean, interfaceIndex: number): Observable<com.antigravity.SetInterfacePinStateResponse> {
     const request = com.antigravity.SetInterfacePinStateRequest.create({
       pin,
       isDigital,
-      isHigh
+      isHigh,
+      interfaceIndex
     });
     const buffer = com.antigravity.SetInterfacePinStateRequest.encode(request).finish();
 
@@ -257,6 +271,29 @@ export class DataService {
     }).pipe(
       map(response => {
         return com.antigravity.SetInterfacePinStateResponse.decode(new Uint8Array(response as any));
+      })
+    );
+  }
+
+  setInterfaceRgbLedState(stringIndex: number, leds: com.antigravity.IRgbLedState[], interfaceIndex: number): Observable<com.antigravity.SetInterfaceRgbLedStateResponse> {
+    const request = com.antigravity.SetInterfaceRgbLedStateRequest.create({
+      stringIndex,
+      leds: leds.map(l => com.antigravity.RgbLedState.create(l)),
+      interfaceIndex
+    });
+    const buffer = com.antigravity.SetInterfaceRgbLedStateRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/octet-stream',
+      'Accept': 'application/octet-stream'
+    });
+
+    return this.http.post(`${this.baseUrl}/api/set-interface-rgb-led-state`, new Blob([buffer as any]), {
+      headers,
+      responseType: 'arraybuffer'
+    }).pipe(
+      map(response => {
+        return com.antigravity.SetInterfaceRgbLedStateResponse.decode(new Uint8Array(response as any));
       })
     );
   }

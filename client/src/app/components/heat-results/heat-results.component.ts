@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
 import { RaceService } from 'src/app/services/race.service';
+import { TranslationService } from 'src/app/services/translation.service';
 import { DriverHeatData } from 'src/app/race/driver_heat_data';
 import { Heat } from 'src/app/race/heat';
 import { Race } from 'src/app/models/race';
@@ -54,11 +55,17 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   constructor(
     private raceConnectionService: RaceConnectionService,
     private raceService: RaceService,
+    private translationService: TranslationService,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.raceConnectionService.connect();
+
+    this.subscriptions.push(this.translationService.getCurrentLanguage().subscribe(() => {
+      this.updateGraph();
+      this.cdr.detectChanges();
+    }));
 
     this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
       this.loadRaceData();

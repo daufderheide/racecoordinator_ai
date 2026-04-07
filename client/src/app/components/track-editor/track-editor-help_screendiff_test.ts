@@ -56,10 +56,10 @@ test.describe('Track Editor Guided Help Visuals', () => {
   }
 
   test('should show voltage divider help steps', async ({ page }) => {
-    // TODO(aufderheide): Implement this.  Probably need to set an analot pin to voltage divider
+    // TODO(aufderheide): Implement this.  Probably need to set an analog pin to voltage divider
     // so the voltage divider config is visible
 
-    // We need a track with a lane configured for Throttle (behavior 2)
+    // We need a track which lane is configured for Throttle (behavior 2)
     // Standard mocks don't have this, so we'll just verify the basic flow for now.
     // In a real environment, we'd mock the track response specifically for this test.
   });

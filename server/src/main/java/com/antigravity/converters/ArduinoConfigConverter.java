@@ -1,9 +1,12 @@
 package com.antigravity.converters;
 
 import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.antigravity.protocols.arduino.LedString;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ArduinoConfigConverter {
   public static ArduinoConfig fromProto(com.antigravity.proto.ArduinoConfig proto) {
@@ -11,6 +14,15 @@ public class ArduinoConfigConverter {
     for (com.antigravity.proto.VoltageConfig vc : proto.getVoltageConfigsList()) {
       voltageConfigs.put(String.valueOf(vc.getLane()), vc.getMaxVoltage());
     }
+
+    List<LedString> ledStrings = proto.getLedStringsList().stream()
+        .map(ls -> new LedString(
+            ls.getStringNum(),
+            new ArrayList<>(ls.getLedsList()),
+            ls.getBrightness(),
+            ls.getYellowFlagFlashRate(),
+            new ArrayList<>(ls.getLedLaneColorOverridesList())))
+        .collect(Collectors.toList());
 
     return new ArduinoConfig(
         proto.getName(),
@@ -26,8 +38,7 @@ public class ArduinoConfigConverter {
         ArduinoConfig.LapPinPitBehavior.fromValue(proto.getLapPinPitBehaviorValue()),
         new ArrayList<>(proto.getDigitalIdsList()),
         new ArrayList<>(proto.getAnalogIdsList()),
-        null, // ledStrings - excluded as per request
-        new ArrayList<>(proto.getLedLaneColorOverridesList()),
+        ledStrings,
         voltageConfigs);
   }
 
@@ -54,11 +65,27 @@ public class ArduinoConfigConverter {
     if (config.analogIds != null) {
       builder.addAllAnalogIds(config.analogIds);
     }
-    if (config.ledLaneColorOverrides != null) {
-      builder.addAllLedLaneColorOverrides(config.ledLaneColorOverrides);
-    }
     if (config.lapPinPitBehavior != null) {
       builder.setLapPinPitBehaviorValue(config.lapPinPitBehavior.getValue());
+    }
+
+    if (config.ledStrings != null) {
+      for (LedString ls : config.ledStrings) {
+        com.antigravity.proto.LedString.Builder lsBuilder = com.antigravity.proto.LedString.newBuilder()
+            .setStringNum(ls.stringNum)
+            .setNumUsedLeds(ls.numUsedLeds)
+            .setAddressableLeds(ls.addressableLeds)
+            .setBrightness(ls.brightness)
+            .setYellowFlagFlashRate(ls.yellowFlagFlashRate);
+
+        if (ls.leds != null) {
+          lsBuilder.addAllLeds(ls.leds);
+        }
+        if (ls.ledLaneColorOverrides != null) {
+          lsBuilder.addAllLedLaneColorOverrides(ls.ledLaneColorOverrides);
+        }
+        builder.addLedStrings(lsBuilder.build());
+      }
     }
 
     if (config.voltageConfigs != null) {

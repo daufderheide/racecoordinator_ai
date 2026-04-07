@@ -1067,4 +1067,69 @@ public class ArduinoProtocolTest {
     assertEquals(1, listener.lapCount);
     assertEquals(1, listener.segmentCount); // Should also fire segment
   }
+
+  @Test
+  public void testSendRgbLedMode() {
+    // Configure one LED string with 5 LEDs
+    java.util.List<Integer> leds = new ArrayList<>(Collections.nCopies(5, com.antigravity.proto.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED_VALUE));
+    leds.set(4, com.antigravity.proto.RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE_VALUE); // Max index 4, so count is 5
+    
+    LedString string0 = new LedString(0, leds, 150, 5.0, new ArrayList<>());
+    config.ledStrings = new ArrayList<>();
+    config.ledStrings.add(string0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Trigger Version to send RGB LED mode
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Opcode 0x6C (l)
+    // stringIndex = 0
+    // ledCount = 5
+    // brightness = 150 (hardcoded to 150 in ArduinoProtocol or from config)
+    // updateRate = 20 (hardcoded in ArduinoProtocol, 0x0014)
+    // Expected: 0x6C 0x00 0x05 0x96 0x14 0x00 0x3B
+    byte[] expected = { 0x6C, 0x00, 0x05, (byte) 150, 0x14, 0x00, 0x3B };
+
+    boolean found = false;
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (java.util.Arrays.equals(expected, data)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Should have sent sendRgbLedMode command", found);
+  }
+
+  @Test
+  public void testSetStringRgbLedValues() {
+    protocol.open();
+
+    // Trigger Version to verify protocol
+    byte[] versionMsg = { 0x56, 1, 0, 0, 0, 0x3B };
+    serialConnection.injectData(versionMsg);
+
+    // Set LED 2 to Red (255, 0, 0) on string 0
+    java.util.List<com.antigravity.proto.RgbLedState> leds = new ArrayList<>();
+    leds.add(com.antigravity.proto.RgbLedState.newBuilder()
+        .setIndex(2)
+        .setR(255)
+        .setG(0)
+        .setB(0)
+        .build());
+
+    protocol.setStringRgbLedValues(0, leds);
+
+    // Opcode 0x4C (L)
+    // stringIndex = 0
+    // numLeds = 1
+    // LedIndex = 2
+    // R = 255 (0xFF), G = 0, B = 0
+    // Expected: 0x4C 0x00 0x01 0x02 0xFF 0x00 0x00 0x3B
+    byte[] expected = { 0x4C, 0x00, 0x01, 0x02, (byte) 0xFF, 0x00, 0x00, 0x3B };
+
+    org.junit.Assert.assertArrayEquals(expected, serialConnection.lastWrittenData);
+  }
 }

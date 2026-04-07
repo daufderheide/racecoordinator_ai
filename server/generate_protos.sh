@@ -7,7 +7,7 @@ set -e
 # Absolute path to the server directory (where this script lives)
 SERVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(dirname "$SERVER_DIR")"
-PROTO_ROOT="$PROJECT_ROOT/proto"
+PROTO_ROOT="$SERVER_DIR/proto"
 
 # Detect OS and architecture
 UNAME_S="$(uname -s)"
@@ -104,3 +104,15 @@ fi
   "${PROTO_FILES[@]}"
 
 echo "Protobuf compilation successful."
+
+# Generate Client-side Protos (JavaScript/TypeScript)
+if [ -d "$PROJECT_ROOT/client" ]; then
+    echo "Generating client-side protobuf files..."
+    CLIENT_PROTO_OUT="$PROJECT_ROOT/client/src/app/proto"
+    mkdir -p "$CLIENT_PROTO_OUT"
+    pushd "$PROTO_ROOT" > /dev/null
+    npx -y -p protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT/message.js" client/*.proto server/*.proto message.proto
+    npx -y -p protobufjs-cli pbts -o "$CLIENT_PROTO_OUT/message.d.ts" "$CLIENT_PROTO_OUT/message.js"
+    popd > /dev/null
+    echo "Client-side protobuf generation successful."
+fi

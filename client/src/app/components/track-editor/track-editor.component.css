@@ -362,19 +362,28 @@
   box-shadow: none;
 }
 
-.preview-panel {
+.rhs-interface-wrapper {
   flex: 1;
-  border: none;
-  border-radius: 0;
   margin-left: 180px;
   margin-top: 50px;
   margin-right: 125px;
   margin-bottom: 40px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+}
+
+.preview-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: transparent;
   box-shadow: none;
   padding: 0;

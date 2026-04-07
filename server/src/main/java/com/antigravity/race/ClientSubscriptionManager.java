@@ -1,6 +1,6 @@
 package com.antigravity.race;
 
-import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import java.io.FileWriter;
 public class ClientSubscriptionManager {
   private static ClientSubscriptionManager instance;
   private Race currentRace;
-  private IProtocol currentProtocol;
+  private ProtocolDelegate currentProtocol;
   private DatabaseContext databaseContext;
   private volatile boolean isShuttingDown = false;
   private final Set<WsContext> sessions = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -62,7 +62,7 @@ public class ClientSubscriptionManager {
     return currentRace;
   }
 
-  public synchronized void setProtocol(IProtocol protocol) {
+  public synchronized void setProtocol(ProtocolDelegate protocol) {
     if (protocol != null && this.currentRace != null) {
       throw new IllegalStateException("Cannot set protocol while race is active");
     }
@@ -77,7 +77,7 @@ public class ClientSubscriptionManager {
     this.currentProtocol = protocol;
   }
 
-  public synchronized IProtocol getProtocol() {
+  public synchronized ProtocolDelegate getProtocol() {
     return currentProtocol;
   }
 
@@ -161,7 +161,8 @@ public class ClientSubscriptionManager {
   }
 
   public synchronized void autoSave(Race race) {
-    if (race == null || databaseContext == null) return;
+    if (race == null || databaseContext == null)
+      return;
     try {
       RaceSaveData saveData = new RaceSaveData();
       saveData.setModel(race.getRaceModel());
@@ -181,14 +182,14 @@ public class ClientSubscriptionManager {
       String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
       File dir = new File(saveDir);
       if (!dir.exists() && !dir.mkdirs()) {
-          System.err.println("Failed to create save directory for auto-save");
-          return;
+        System.err.println("Failed to create save directory for auto-save");
+        return;
       }
 
       String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
       File file = new File(dir, filename);
       try (FileWriter writer = new FileWriter(file)) {
-          writer.write(json);
+        writer.write(json);
       }
       System.out.println("Auto-saved race: " + filename);
     } catch (Exception e) {
@@ -197,7 +198,8 @@ public class ClientSubscriptionManager {
   }
 
   public synchronized void deleteAutoSave(String raceId) {
-    if (databaseContext == null || raceId == null) return;
+    if (databaseContext == null || raceId == null)
+      return;
     try {
       String dbName = databaseContext.getCurrentDatabaseName();
       String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
@@ -215,28 +217,32 @@ public class ClientSubscriptionManager {
     ObjectMapper mapper = new ObjectMapper();
     mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
     mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    
+
     com.fasterxml.jackson.databind.module.SimpleModule module = new com.fasterxml.jackson.databind.module.SimpleModule();
-    module.addSerializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
-      @Override
-      public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen, com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
-        gen.writeString(value.toHexString());
-      }
-    });
-    module.addDeserializer(org.bson.types.ObjectId.class, new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
-      @Override
-      public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p, com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
-        String value = p.getValueAsString();
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        try {
-            return new org.bson.types.ObjectId(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-      }
-    });
+    module.addSerializer(org.bson.types.ObjectId.class,
+        new com.fasterxml.jackson.databind.JsonSerializer<org.bson.types.ObjectId>() {
+          @Override
+          public void serialize(org.bson.types.ObjectId value, com.fasterxml.jackson.core.JsonGenerator gen,
+              com.fasterxml.jackson.databind.SerializerProvider serializers) throws java.io.IOException {
+            gen.writeString(value.toHexString());
+          }
+        });
+    module.addDeserializer(org.bson.types.ObjectId.class,
+        new com.fasterxml.jackson.databind.JsonDeserializer<org.bson.types.ObjectId>() {
+          @Override
+          public org.bson.types.ObjectId deserialize(com.fasterxml.jackson.core.JsonParser p,
+              com.fasterxml.jackson.databind.DeserializationContext ctxt) throws java.io.IOException {
+            String value = p.getValueAsString();
+            if (value == null || value.isEmpty()) {
+              return null;
+            }
+            try {
+              return new org.bson.types.ObjectId(value);
+            } catch (IllegalArgumentException e) {
+              return null;
+            }
+          }
+        });
     mapper.registerModule(module);
     return mapper;
   }

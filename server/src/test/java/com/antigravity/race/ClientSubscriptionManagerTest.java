@@ -15,7 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolDelegate;
 
 import io.javalin.websocket.WsContext;
 
@@ -52,7 +52,7 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testProtocolClosesOnLastInterfaceSubscriberExit() throws Exception {
     // 1. Setup Mock Protocol and Session
-    IProtocol mockProtocol = mock(IProtocol.class);
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
     WsContext mockContext = mock(WsContext.class);
 
     // 2. Set Protocol
@@ -73,7 +73,7 @@ public class ClientSubscriptionManagerTest {
   @Test
   public void testProtocolRemainsIfOtherSubscribersExist() throws Exception {
     // 1. Setup Mock Protocol and Sessions
-    IProtocol mockProtocol = mock(IProtocol.class);
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
     WsContext mockContext1 = mock(WsContext.class);
     WsContext mockContext2 = mock(WsContext.class);
 

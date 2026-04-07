@@ -1,9 +1,9 @@
 package com.antigravity.protocols.arduino;
 
-import java.util.List;
-
 import com.antigravity.proto.PinBehavior;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -92,9 +92,8 @@ public class ArduinoConfig {
   public List<Integer> digitalIds;
   public List<Integer> analogIds;
   public List<LedString> ledStrings;
-  public List<String> ledLaneColorOverrides;
   @com.fasterxml.jackson.annotation.JsonAlias({ "voltage_configs", "voltageConfigs" })
-  public Map<String, Integer> voltageConfigs = new java.util.HashMap<>();
+  public Map<String, Integer> voltageConfigs = new HashMap<>();
 
   @com.fasterxml.jackson.annotation.JsonIgnore
   public Map<String, Integer> getVoltageConfigsMap() {
@@ -105,17 +104,16 @@ public class ArduinoConfig {
   public static final int MAX_ANALOG_PINS = 16;
 
   public ArduinoConfig() {
-    this.digitalIds = new java.util.ArrayList<>();
+    this.digitalIds = new ArrayList<>();
     for (int i = 0; i < MAX_DIGITAL_PINS; i++) {
       this.digitalIds.add(PinBehavior.BEHAVIOR_UNUSED.getNumber());
     }
-    this.analogIds = new java.util.ArrayList<>();
+    this.analogIds = new ArrayList<>();
     for (int i = 0; i < MAX_ANALOG_PINS; i++) {
       this.analogIds.add(PinBehavior.BEHAVIOR_UNUSED.getNumber());
     }
-    this.ledStrings = new java.util.ArrayList<>();
-    this.ledLaneColorOverrides = new java.util.ArrayList<>();
-    this.voltageConfigs = new java.util.HashMap<>();
+    this.ledStrings = new ArrayList<>();
+    this.voltageConfigs = new HashMap<>();
 
     this.name = "Arduino";
     this.baudRate = 115200;
@@ -147,8 +145,7 @@ public class ArduinoConfig {
       @com.fasterxml.jackson.annotation.JsonProperty("digitalIds") List<Integer> digitalIds,
       @com.fasterxml.jackson.annotation.JsonProperty("analogIds") List<Integer> analogIds,
       @com.fasterxml.jackson.annotation.JsonProperty("ledStrings") List<LedString> ledStrings,
-      @com.fasterxml.jackson.annotation.JsonProperty("ledLaneColorOverrides") List<String> ledLaneColorOverrides,
-      @com.fasterxml.jackson.annotation.JsonProperty("voltageConfigs") @com.fasterxml.jackson.annotation.JsonAlias("voltage_configs") java.util.Map<String, Integer> voltageConfigs) {
+      @com.fasterxml.jackson.annotation.JsonProperty("voltageConfigs") @com.fasterxml.jackson.annotation.JsonAlias("voltage_configs") Map<String, Integer> voltageConfigs) {
     this.name = name;
     this.commPort = commPort;
     this.baudRate = baudRate;
@@ -163,7 +160,6 @@ public class ArduinoConfig {
     this.digitalIds = digitalIds;
     this.analogIds = analogIds;
     this.ledStrings = ledStrings;
-    this.ledLaneColorOverrides = ledLaneColorOverrides;
     this.voltageConfigs = voltageConfigs;
   }
 }

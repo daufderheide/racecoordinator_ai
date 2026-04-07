@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestSetupHelper } from '../../../testing/test-setup_helper';
 import { ArduinoEditorHarnessE2e } from './testing/arduino-editor.harness.e2e';
+import { InputDialogHarnessE2e } from '../../shared/input-dialog/testing/input-dialog.harness.e2e';
 
 async function waitForBoardImage(page: any, root: any) {
   const boardImg = root.locator('.board-image');
@@ -234,6 +235,82 @@ test.describe('Arduino Editor Section Expander States', () => {
     // Expansion state checked visually
 
     await expect(editor).toHaveScreenshot('arduino-editor-analog-collapsed.png', { maxDiffPixelRatio: 0.05 });
+  });
+});
+
+test.describe('Arduino Editor RGB LED Visuals', () => {
+  test.setTimeout(300000); // 300s for extra heavy interaction/rendering in this environment
+
+  test('should display RGB LED configuration with one LED string added', async ({ page }) => {
+    const ledTrack = {
+      entity_id: 't-leds',
+      name: 'LED Track',
+      lanes: [
+        { entity_id: 'l1', length: 10, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
+        { entity_id: 'l2', length: 10, backgroundColor: '#00ff00', foregroundColor: '#000000' }
+      ],
+      arduino_configs: [{
+        name: 'LED Arduino',
+        commPort: 'COM9',
+        baudRate: 115200,
+        debounceUs: 5000,
+        hardwareType: 0,
+        digitalIds: new Array(14).fill(-1),
+        analogIds: new Array(6).fill(-1),
+        normallyClosedLaneSensors: false,
+        normallyClosedRelays: true,
+        globalInvertLights: 0,
+        useLapsForPits: 0,
+        useLapsForPitEnd: 0,
+        usePitsAsLaps: false,
+        useLapsForSegments: true,
+        lapPinPitBehavior: 3,
+        ledStrings: [
+          {
+            stringNum: 0,
+            leds: new Array(10).fill(100), // 100 = some behavior code
+            numUsedLeds: 10,
+            addressableLeds: 10,
+            brightness: 255,
+            yellowFlagFlashRate: 5,
+            ledLaneColorOverrides: ['#ff0000', '#00ff00']
+          }
+        ]
+      }]
+    };
+
+    await TestSetupHelper.setupStandardMocks(page);
+    await page.route('**/api/tracks', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([ledTrack]),
+      });
+    });
+
+    await TestSetupHelper.disableAnimations(page);
+    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t-leds'));
+
+    const editor = page.locator('app-arduino-editor');
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await expect(editor).toBeVisible();
+
+    // Expand the LED Configuration section
+    if (!(await harness.isSectionExpanded('leds'))) {
+      await harness.toggleSection('leds');
+    }
+
+    const ledSection = editor.locator('.led-config-section');
+    const ledStringsList = ledSection.locator('.led-strings-list');
+    
+    // Ensure the string is rendered and shows 10 LED items
+    await expect(ledStringsList.locator('.led-string-item')).toBeVisible();
+    const ledsGrid = ledStringsList.locator('.leds-grid');
+    await expect(ledsGrid.locator('.led-item')).toHaveCount(10);
+
+    // Take screenshot of the LED section specifically
+    await expect(ledSection).toHaveScreenshot('arduino-editor-led-config-expanded.png');
   });
 });
 

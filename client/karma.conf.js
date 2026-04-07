@@ -22,7 +22,7 @@ module.exports = function (config) {
   process.env.XDG_CONFIG_HOME = path.join(tmpDir, 'config');
   process.env.XDG_CACHE_HOME = path.join(tmpDir, 'cache');
   process.env.XDG_RUNTIME_DIR = path.join(tmpDir, 'run');
-  process.env.TMPDIR = path.join(tmpDir, 't');
+  // process.env.TMPDIR = path.join(tmpDir, 't'); // Commenting out to avoid Mach port permission errors on macOS
 
   if (!fs.existsSync(process.env.XDG_CONFIG_HOME)) fs.mkdirSync(process.env.XDG_CONFIG_HOME, { recursive: true });
   if (!fs.existsSync(process.env.XDG_CACHE_HOME)) fs.mkdirSync(process.env.XDG_CACHE_HOME, { recursive: true });

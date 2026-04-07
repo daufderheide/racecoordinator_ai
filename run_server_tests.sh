@@ -12,6 +12,7 @@ cd "$SERVER_DIR" || exit
 SERVER_TMP="/tmp/racecoordinator"
 SERVER_BUILD_DIR="$SERVER_TMP/target_test"
 export PROTO_DEST_DIR="$SERVER_BUILD_DIR"
+export npm_config_cache="$SERVER_TMP/npm_cache"
 
 mkdir -p "$SERVER_TMP"
 # Pre-create all directories maven needs to avoid EPERM errors

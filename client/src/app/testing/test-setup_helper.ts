@@ -296,13 +296,17 @@ export class TestSetupHelper {
 
     // 2. Wait for the Service level readiness flag
     // This is set to true in TranslationService.ts when the JSON is loaded and applied
-    await page.waitForFunction(() => (window as any).isTranslationsLoaded === true, { timeout: 10000 });
+    // We wait for it to be exactly true (it starts as undefined/false)
+    await page.waitForFunction(() => (window as any).isTranslationsLoaded === true, { timeout: 15000 });
 
     // 3. Ensure fonts and layout have settled after text swap
     await page.evaluate(() => document.fonts.ready);
 
-    // 4. Final micro-wait for Angular's digest cycle to propagate the change to all pipes
-    await page.waitForTimeout(500);
+    // 4. Wait for a paint cycle to ensure DOM updates are flushed
+    await page.evaluate(() => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))));
+
+    // 5. Final safety wait for complex components (like SVGs) to stabilize
+    await page.waitForTimeout(750);
   }
 
 

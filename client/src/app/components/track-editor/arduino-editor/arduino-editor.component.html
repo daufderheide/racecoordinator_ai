@@ -185,9 +185,80 @@
                 </div>
               </div>
             </div>
+
+            <!-- RGB LED Configuration Section -->
+            <div class="config-section led-config-section">
+              <div class="section-header" (click)="toggleSection('leds')">
+                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.leds">▼</span>
+                <h4>{{ 'AE_RGB_LED_CONFIG' | translate }}</h4>
+                <div class="spacer"></div>
+                <button class="action-btn primary small" (click)="onCreateLedString(); $event.stopPropagation()">
+                  <span class="material-icons">add</span>
+                  {{ 'AE_ADD_LED_STRING' | translate }}
+                </button>
+              </div>
+
+              <div class="section-content" *ngIf="sectionsExpanded.leds">
+                <div cdkDropList [cdkDropListData]="config.ledStrings" (cdkDropListDropped)="onLedStringDropped($event)" class="led-strings-list">
+                  <div *ngFor="let ls of config.ledStrings; let i = index" cdkDrag class="led-string-item">
+                    <div class="led-string-header" (click)="toggleLedString(i)">
+                      <span class="material-icons drag-handle" cdkDragHandle>drag_indicator</span>
+                      <span class="expander-icon" [class.collapsed]="!ledStringExpanded[i]">▼</span>
+                      <span class="ls-label">{{ 'AE_LED_STRING' | translate }} #{{ i + 1 }}</span>
+                      <span class="ls-summary">({{ ls.numUsedLeds }} / {{ ls.leds.length }}) {{ 'AE_LEDS' | translate }}</span>
+                      <div class="spacer"></div>
+                      <div class="ls-actions">
+                        <button class="icon-button" (click)="duplicateLedString(i, $event)" [title]="'GEN_DUPLICATE' | translate">
+                          <span class="material-icons">content_copy</span>
+                        </button>
+                        <button class="icon-button delete" (click)="removeLedString(i, $event)" [title]="'GEN_DELETE' | translate">
+                          <span class="material-icons">close</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="led-string-details" *ngIf="ledStringExpanded[i]">
+                      <div class="ls-settings-row">
+                        <div class="control-group">
+                          <label>{{ 'AE_BRIGHTNESS' | translate }} [0-255]</label>
+                          <input type="number" [(ngModel)]="ls.brightness" min="0" max="255" (change)="updateLedString()">
+                        </div>
+                        <div class="control-group">
+                          <label>{{ 'AE_FLASH_RATE' | translate }} (rate/s)</label>
+                          <input type="number" [(ngModel)]="ls.yellowFlagFlashRate" min="0" step="0.1" (change)="updateLedString()">
+                        </div>
+                      </div>
+
+                      <div class="lane-colors-editor">
+                         <label>{{ 'AE_LANE_COLOR_OVERRIDES' | translate }}</label>
+                         <div class="lane-colors-grid">
+                            <div *ngFor="let lane of lanes; let laneIdx = index" class="lane-color-item">
+                               <div class="lane-tag" [style.background-color]="lane.background_color">L{{ laneIdx + 1 }}</div>
+                               <input type="color" [(ngModel)]="ls.ledLaneColorOverrides[laneIdx]" (change)="updateLedString()">
+                            </div>
+                         </div>
+                      </div>
+
+                      <div class="leds-grid">
+                        <div *ngFor="let led of ls.leds; let ledIdx = index" class="led-item">
+                          <div class="led-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <label>LED {{ ledIdx + 1 }}</label>
+                            <span class="status-badge small" [class.active]="isRgbLedActive(i, ledIdx)" (click)="toggleRgbLed(i, ledIdx)" style="cursor: pointer;"></span>
+                          </div>
+                          <select [ngModel]="ls.leds[ledIdx]?.toString()" (ngModelChange)="updateLedBehavior(i, ledIdx, $event)">
+                            <option *ngFor="let behavior of ledBehaviors" [value]="behavior.value">{{ behavior.label }}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+

@@ -51,6 +51,16 @@ export class Track implements Model {
   }
 }
 
+export interface LedString {
+  stringNum: number;
+  leds: number[];
+  numUsedLeds: number;
+  addressableLeds: number;
+  brightness: number;
+  yellowFlagFlashRate: number;
+  ledLaneColorOverrides: string[];
+}
+
 export interface ArduinoConfig {
   name: string;
   commPort: string;
@@ -72,7 +82,6 @@ export interface ArduinoConfig {
   digitalIds: number[];
   analogIds: number[];
 
-  ledStrings: any[] | null;
-  ledLaneColorOverrides: any[] | null;
+  ledStrings: LedString[];
   voltageConfigs?: { [lane: number]: number };
 }

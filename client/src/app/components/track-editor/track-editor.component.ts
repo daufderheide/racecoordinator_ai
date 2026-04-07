@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DataService } from '../../data.service';
-import { Track, ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../models/track';
+import { Track, ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from '../../models/track';
 import { Lane } from '../../models/lane';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslationService } from '../../services/translation.service';
@@ -36,15 +36,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   allTracks: Track[] = [];
 
   @ViewChildren(ArduinoEditorComponent) arduinoEditors!: QueryList<ArduinoEditorComponent>;
-
   sectionsExpanded = {
     general: true,
     interfaces: true,
     lanes: true
   };
 
+  showLedStringDialog = false;
+  requestingArduinoIndex = -1;
+
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+    localStorage.setItem('rc.track-editor.sections', JSON.stringify(this.sectionsExpanded));
   }
 
   constructor(
@@ -83,6 +86,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.updateScale();
+
+    // Load expanded state from localStorage
+    const saved = localStorage.getItem('rc.track-editor.sections');
+    if (saved) {
+      try {
+        const savedSections = JSON.parse(saved);
+        this.sectionsExpanded = { ...this.sectionsExpanded, ...savedSections };
+      } catch (e) {
+        console.error('Failed to parse saved sections', e);
+      }
+    }
 
     // Subscribe to query params to reload data when ID changes (e.g. after Save as New)
     this.subscriptions.push(this.route.queryParamMap.subscribe(() => {
@@ -155,6 +169,28 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  onRequestLedStringDialog(index: number) {
+    this.requestingArduinoIndex = index;
+    this.showLedStringDialog = true;
+  }
+
+  onLedStringDialogConfirm(numLeds: number) {
+    this.showLedStringDialog = false;
+    if (this.requestingArduinoIndex >= 0) {
+      const editors = this.arduinoEditors.toArray();
+      if (editors[this.requestingArduinoIndex]) {
+        editors[this.requestingArduinoIndex].addLedString(numLeds);
+        this.captureState();
+      }
+    }
+    this.requestingArduinoIndex = -1;
+  }
+
+  onLedStringDialogCancel() {
+    this.showLedStringDialog = false;
+    this.requestingArduinoIndex = -1;
+  }
+
   loadData() {
     const idParam = this.route.snapshot.queryParamMap.get('id');
     if (!idParam) {
@@ -224,6 +260,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         for (let config of this.arduinoConfigs) {
           if (!config.digitalIds) config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
           if (!config.analogIds) config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
+          if (!config.ledStrings) config.ledStrings = [];
+          if (!config.voltageConfigs) config.voltageConfigs = {};
+
+          // Ensure LedString sub-properties exist
+          for (let ls of config.ledStrings) {
+            if (!ls.leds) ls.leds = [];
+            if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
+          }
         }
       } else {
         this.arduinoConfigs = [];
@@ -245,6 +289,31 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.isLoading = false;
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
+    }
+
+    // Initialize all interfaces on the server
+    this.initializeInterfaces();
+  }
+
+  private initializeInterfaces() {
+    if (this.arduinoConfigs.length > 0) {
+      this.dataService.initializeInterface(this.arduinoConfigs, this.lanes.length).subscribe({
+        next: (response) => {
+          if (!response.success) {
+            console.warn(`Failed to initialize interfaces: ${response.message}`);
+          } else {
+            console.log('Interfaces initialized successfully');
+          }
+        },
+        error: (err) => {
+          console.error('Error calling initializeInterface', err);
+        }
+      });
+    } else {
+      this.dataService.closeInterface().subscribe({
+        next: () => console.log('Interface closed successfully'),
+        error: (err) => console.error('Error closing interface', err)
+      });
     }
   }
 
@@ -317,7 +386,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             return false;
           }
           for (let i = 0; i < v1.length; i++) {
-            if (v1[i] !== v2[i]) {
+            if (key === 'ledStrings') {
+              const ls1 = v1 as unknown as LedString[];
+              const ls2 = v2 as unknown as LedString[];
+              if (!this.isLedStringsEqual(ls1[i], ls2[i])) {
+                console.log(`Dirty Check Mismatch: Config ledStrings[${i}] differ`, ls1[i], ls2[i]);
+                return false;
+              }
+            } else if (v1[i] !== v2[i]) {
               console.log(`Dirty Check Mismatch: Config ${key}[${i}] differ`, v1[i], v2[i]);
               return false;
             }
@@ -341,6 +417,33 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           console.log(`Dirty Check Mismatch: Config ${key} differ`, v1, v2);
           return false;
         }
+      }
+    }
+
+    return true;
+  }
+
+  private isLedStringsEqual(s1: LedString, s2: LedString): boolean {
+    if (!s1 || !s2) return s1 === s2;
+    if (s1.stringNum !== s2.stringNum ||
+        s1.numUsedLeds !== s2.numUsedLeds ||
+        s1.addressableLeds !== s2.addressableLeds ||
+        s1.brightness !== s2.brightness ||
+        s1.yellowFlagFlashRate !== s2.yellowFlagFlashRate) {
+      return false;
+    }
+    
+    if (s1.leds?.length !== s2.leds?.length) return false;
+    if (s1.leds) {
+      for (let i = 0; i < s1.leds.length; i++) {
+        if (s1.leds[i] !== s2.leds[i]) return false;
+      }
+    }
+
+    if (s1.ledLaneColorOverrides?.length !== s2.ledLaneColorOverrides?.length) return false;
+    if (s1.ledLaneColorOverrides) {
+      for (let i = 0; i < s1.ledLaneColorOverrides.length; i++) {
+        if (s1.ledLaneColorOverrides[i] !== s2.ledLaneColorOverrides[i]) return false;
       }
     }
 
@@ -382,79 +485,79 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('TE_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('TE_HELP_WELCOME_CONTENT'),
+        title: 'TE_HELP_WELCOME_TITLE',
+        content: 'TE_HELP_WELCOME_CONTENT',
         position: 'center'
       },
       {
-        title: this.translationService.translate('TE_HELP_GENERAL_TITLE'),
-        content: this.translationService.translate('TE_HELP_GENERAL_CONTENT'),
+        title: 'TE_HELP_GENERAL_TITLE',
+        content: 'TE_HELP_GENERAL_CONTENT',
         position: 'center'
       },
       {
         selector: '#track-name-input',
-        title: this.translationService.translate('TE_HELP_NAME_TITLE'),
-        content: this.translationService.translate('TE_HELP_NAME_CONTENT'),
+        title: 'TE_HELP_NAME_TITLE',
+        content: 'TE_HELP_NAME_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#lane-editor-section',
-        title: this.translationService.translate('TE_HELP_LANES_TITLE'),
-        content: this.translationService.translate('TE_HELP_LANES_CONTENT'),
+        title: 'TE_HELP_LANES_TITLE',
+        content: 'TE_HELP_LANES_CONTENT',
         position: 'right'
       },
       {
         selector: '#lane-bg-0',
-        title: this.translationService.translate('TE_HELP_LANE_BG_TITLE'),
-        content: this.translationService.translate('TE_HELP_LANE_BG_CONTENT'),
+        title: 'TE_HELP_LANE_BG_TITLE',
+        content: 'TE_HELP_LANE_BG_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#lane-fg-0',
-        title: this.translationService.translate('TE_HELP_LANE_FG_TITLE'),
-        content: this.translationService.translate('TE_HELP_LANE_FG_CONTENT'),
+        title: 'TE_HELP_LANE_FG_TITLE',
+        content: 'TE_HELP_LANE_FG_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#lane-length-0',
-        title: this.translationService.translate('TE_HELP_LANE_LENGTH_TITLE'),
-        content: this.translationService.translate('TE_HELP_LANE_LENGTH_CONTENT'),
+        title: 'TE_HELP_LANE_LENGTH_TITLE',
+        content: 'TE_HELP_LANE_LENGTH_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#lane-drag-0',
-        title: this.translationService.translate('TE_HELP_LANE_DRAG_TITLE'),
-        content: this.translationService.translate('TE_HELP_LANE_DRAG_CONTENT'),
+        title: 'TE_HELP_LANE_DRAG_TITLE',
+        content: 'TE_HELP_LANE_DRAG_CONTENT',
         position: 'right'
       },
       {
         selector: '#lane-delete-0',
-        title: this.translationService.translate('TE_HELP_DELETE_LANE_TITLE'),
-        content: this.translationService.translate('TE_HELP_DELETE_LANE_CONTENT'),
+        title: 'TE_HELP_DELETE_LANE_TITLE',
+        content: 'TE_HELP_DELETE_LANE_CONTENT',
         position: 'right'
       },
       {
         selector: '#undo-btn',
-        title: this.translationService.translate('TE_HELP_UNDO_TITLE'),
-        content: this.translationService.translate('TE_HELP_UNDO_CONTENT'),
+        title: 'TE_HELP_UNDO_TITLE',
+        content: 'TE_HELP_UNDO_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#redo-btn',
-        title: this.translationService.translate('TE_HELP_REDO_TITLE'),
-        content: this.translationService.translate('TE_HELP_REDO_CONTENT'),
+        title: 'TE_HELP_REDO_TITLE',
+        content: 'TE_HELP_REDO_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#copy-item-btn',
-        title: this.translationService.translate('TE_HELP_DUPLICATE_TITLE'),
-        content: this.translationService.translate('TE_HELP_DUPLICATE_CONTENT'),
+        title: 'TE_HELP_DUPLICATE_TITLE',
+        content: 'TE_HELP_DUPLICATE_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#add-interface-btn',
-        title: this.translationService.translate('TE_HELP_ADD_INTERFACE_TITLE'),
-        content: this.translationService.translate('TE_HELP_ADD_INTERFACE_CONTENT'),
+        title: 'TE_HELP_ADD_INTERFACE_TITLE',
+        content: 'TE_HELP_ADD_INTERFACE_CONTENT',
         position: 'left'
       }
     ];
@@ -575,9 +678,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         config.voltageConfigs = newVoltageConfigs;
       }
 
-      // Shift ledLaneColorOverrides
-      if (config.ledLaneColorOverrides && config.ledLaneColorOverrides.length > deletedLaneIndex) {
-        config.ledLaneColorOverrides.splice(deletedLaneIndex, 1);
+      // Shift ledLaneColorOverrides for each LedString
+      if (config.ledStrings) {
+        config.ledStrings.forEach(ls => {
+          if (ls.ledLaneColorOverrides && ls.ledLaneColorOverrides.length > deletedLaneIndex) {
+            ls.ledLaneColorOverrides.splice(deletedLaneIndex, 1);
+          }
+        });
       }
     });
 
@@ -641,8 +748,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       hardwareType: 0, // 0 = Uno, 1 = Mega
       digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
       analogIds: new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
-      ledStrings: null,
-      ledLaneColorOverrides: null,
+      ledStrings: [],
       lapPinPitBehavior: 3
     });
     this.arduinoConfigs = [...this.arduinoConfigs]; // Ensure reference change for Angular change detection
@@ -650,6 +756,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
+    this.initializeInterfaces();
   }
 
   trackByArduinoConfig(index: number, config: any): number {
@@ -663,6 +770,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
+    this.initializeInterfaces();
   }
 
   saveAsNew() {

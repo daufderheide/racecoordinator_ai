@@ -58,7 +58,7 @@ public class ArduinoConfigTest {
         true,
         false,
         ArduinoConfig.LapPinPitBehavior.NONE,
-        null, null, null, null, null);
+        null, null, null, null);
 
     assertTrue(config1.normallyClosedLaneSensors);
     assertFalse(config1.normallyClosedRelays);

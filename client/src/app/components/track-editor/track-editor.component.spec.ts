@@ -27,14 +27,22 @@ class MockDataService {
         arduino_configs: [{
           digitalIds: new Array(60).fill(-1),
           analogIds: new Array(16).fill(-1),
-          hardwareType: 0
+          hardwareType: 0,
+          ledStrings: [],
+          voltageConfigs: {}
         }]
       },
       {
         entity_id: 't2',
         name: 'Existing Track',
         lanes: [],
-        arduino_configs: []
+        arduino_configs: [{
+          digitalIds: new Array(60).fill(-1),
+          analogIds: new Array(16).fill(-1),
+          hardwareType: 0,
+          ledStrings: [],
+          voltageConfigs: {}
+        }]
       }
     ]);
   }
@@ -53,7 +61,13 @@ class MockDataService {
         { background_color: '#ef4444', foreground_color: 'black', length: 100 },
         { background_color: '#ffffff', foreground_color: 'black', length: 100 }
       ],
-      arduino_configs: []
+      arduino_configs: [{
+        digitalIds: new Array(60).fill(-1),
+        analogIds: new Array(16).fill(-1),
+        hardwareType: 0,
+        ledStrings: [],
+        voltageConfigs: {}
+      }]
     });
   }
   connectToInterfaceDataSocket() { }

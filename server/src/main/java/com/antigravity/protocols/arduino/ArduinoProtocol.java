@@ -2,8 +2,11 @@ package com.antigravity.protocols.arduino;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class ArduinoProtocol extends DefaultProtocol {
@@ -41,8 +45,8 @@ public class ArduinoProtocol extends DefaultProtocol {
   private byte hwReset;
 
   private ScheduledExecutorService statusScheduler;
-  private java.util.concurrent.ScheduledFuture<?> statusFuture;
-  private java.util.concurrent.ScheduledFuture<?> refuelFuture;
+  private ScheduledFuture<?> statusFuture;
+  private ScheduledFuture<?> refuelFuture;
   protected long lastHeartbeatTimeMs = 0;
 
   // Lane specific
@@ -52,6 +56,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private int[] lastPitOutState;
   private int[] lastLapPinState;
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
+  private Map<Integer, Integer> lastAddressableLeds = new HashMap<>();
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = { 0x52, 0x45, 0x53, 0x45, 0x54, 0x3B };
@@ -269,6 +274,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     boolean debounceChanged = this.config.debounceUs != newConfig.debounceUs;
     boolean digitalPinsChanged = !this.config.digitalIds.equals(newConfig.digitalIds);
     boolean analogPinsChanged = !this.config.analogIds.equals(newConfig.analogIds);
+    boolean ledStringsChanged = !Objects.equals(this.config.ledStrings, newConfig.ledStrings);
 
     this.config = newConfig;
     buildPinLookup();
@@ -278,6 +284,9 @@ public class ArduinoProtocol extends DefaultProtocol {
         sendPinModeRead();
         sendPinModeWrite();
         sendPinModeAnalogRead();
+      }
+      if (ledStringsChanged) {
+        sendRgbLedMode();
       }
       if (debounceChanged) {
         sendDebounce();
@@ -442,6 +451,7 @@ public class ArduinoProtocol extends DefaultProtocol {
         sendPinModeAnalogRead();
         sendDebounce();
         sendTimeReset();
+        sendRgbLedMode();
       } else {
         logger.error("Invalid firmware version: {}.{}.{}", major, minor, patch);
       }
@@ -556,6 +566,100 @@ public class ArduinoProtocol extends DefaultProtocol {
       logger.info("[{}] Sent TIME_RESET", getLogTime());
     } catch (IOException e) {
       logger.error("Failed to send TIME_RESET", e);
+    }
+  }
+
+  private void sendRgbLedMode() {
+    if (!serialConnection.isOpen()) {
+      return;
+    }
+
+    // Track strings we updated/sent in this configuration
+    Set<Integer> updatedStrings = new HashSet<>();
+
+    if (config.ledStrings != null) {
+      for (LedString ledString : config.ledStrings) {
+        int stringNum = ledString.stringNum;
+        int currentMax = ledString.addressableLeds;
+        int previousMax = lastAddressableLeds.getOrDefault(stringNum, 0);
+        int ledCount = Math.max(currentMax, previousMax);
+
+        if (ledCount > 0) {
+          sendRgbLedModeMessage(stringNum, ledCount, ledString.brightness);
+        }
+
+        lastAddressableLeds.put(stringNum, currentMax);
+        updatedStrings.add(stringNum);
+      }
+    }
+
+    // Handle removed strings: send a clear command (0 brightness) for any string
+    // that existed previously but is not in the new config.
+    for (Integer stringNum : new java.util.ArrayList<>(lastAddressableLeds.keySet())) {
+      if (!updatedStrings.contains(stringNum)) {
+        int previousMax = lastAddressableLeds.get(stringNum);
+        if (previousMax > 0) {
+          sendRgbLedModeMessage(stringNum, previousMax, 0);
+        }
+        lastAddressableLeds.remove(stringNum);
+      }
+    }
+  }
+
+  private void sendRgbLedModeMessage(int stringNum, int ledCount, int brightness) {
+    // { 0x6C, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3B }
+    // opcode string# ledCount brightness updateRateLow updateRateHigh ;
+    byte[] message = new byte[7];
+    int updateRate = 20;
+
+    message[0] = 0x6C; // 'l'
+    message[1] = (byte) (stringNum & 0xFF);
+    message[2] = (byte) (ledCount & 0xFF);
+    message[3] = (byte) (brightness & 0xFF);
+    message[4] = (byte) (updateRate & 0xFF);
+    message[5] = (byte) ((updateRate >> 8) & 0xFF);
+    message[6] = TERMINATOR;
+
+    try {
+      serialConnection.writeData(message);
+      logger.info("[{}] Sent RGB_LED_MODE - String: {}, Count: {}, Brightness: {}, UpdateRate: {}",
+          getLogTime(), stringNum, ledCount, brightness, updateRate);
+    } catch (IOException e) {
+      logger.error("Failed to send RGB_LED_MODE message", e);
+    }
+  }
+
+  public void setStringRgbLedValues(int stringNumber,
+      List<com.antigravity.proto.RgbLedState> rgbLeds) {
+    if (!serialConnection.isOpen() || rgbLeds == null || rgbLeds.isEmpty()) {
+      return;
+    }
+
+    // { 0x4C, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x3B }
+    // opcode string# #leds [led# r g b ..] ;
+    int numLeds = rgbLeds.size();
+    int msgLen = 3 + (numLeds * 4) + 1;
+    byte[] message = new byte[msgLen];
+
+    message[0] = 0x4C; // 'L'
+    message[1] = (byte) (stringNumber & 0xFF);
+    message[2] = (byte) (numLeds & 0xFF);
+
+    int idx = 3;
+    for (com.antigravity.proto.RgbLedState led : rgbLeds) {
+      message[idx++] = (byte) (led.getIndex() & 0xFF);
+      message[idx++] = (byte) (led.getR() & 0xFF);
+      message[idx++] = (byte) (led.getG() & 0xFF);
+      message[idx++] = (byte) (led.getB() & 0xFF);
+    }
+
+    message[idx] = TERMINATOR;
+
+    try {
+      serialConnection.writeData(message);
+      logger.info("[{}] Sent SET_RGB_LED_VALUES - String: {}, Count: {}", getLogTime(), stringNumber, numLeds);
+    } catch (IOException e) {
+      logger.error("Failed to send SET_RGB_LED_VALUES message", e);
     }
   }
 
@@ -808,7 +912,8 @@ public class ArduinoProtocol extends DefaultProtocol {
         updatePitState(laneIndex, false);
       }
     } else {
-      // Pit Out Only: acts as a toggle (as long as sensor is triggered, car is in pits)
+      // Pit Out Only: acts as a toggle (as long as sensor is triggered, car is in
+      // pits)
       updatePitState(laneIndex, state == wantState);
     }
     lastPitOutState[laneIndex] = state;

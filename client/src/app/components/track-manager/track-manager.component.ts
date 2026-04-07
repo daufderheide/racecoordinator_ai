@@ -58,44 +58,44 @@ export class TrackManagerComponent implements OnInit {
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('TM_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('TM_HELP_WELCOME_CONTENT'),
+        title: 'TM_HELP_WELCOME_TITLE',
+        content: 'TM_HELP_WELCOME_CONTENT',
         position: 'center'
       },
       {
         selector: '.sidebar-list',
-        title: this.translationService.translate('TM_HELP_SIDEBAR_TITLE'),
-        content: this.translationService.translate('TM_HELP_SIDEBAR_CONTENT'),
+        title: 'TM_HELP_SIDEBAR_TITLE',
+        content: 'TM_HELP_SIDEBAR_CONTENT',
         position: 'right'
       },
       {
         selector: '.detail-content',
-        title: this.translationService.translate('TM_HELP_DETAIL_TITLE'),
-        content: this.translationService.translate('TM_HELP_DETAIL_CONTENT'),
+        title: 'TM_HELP_DETAIL_TITLE',
+        content: 'TM_HELP_DETAIL_CONTENT',
         position: 'left'
       },
       {
         selector: '#edit-track-btn',
-        title: this.translationService.translate('TM_HELP_EDIT_TITLE'),
-        content: this.translationService.translate('TM_HELP_EDIT_CONTENT'),
+        title: 'TM_HELP_EDIT_TITLE',
+        content: 'TM_HELP_EDIT_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#add-item-btn',
-        title: this.translationService.translate('TM_HELP_CREATE_TITLE'),
-        content: this.translationService.translate('TM_HELP_CREATE_CONTENT'),
+        title: 'TM_HELP_CREATE_TITLE',
+        content: 'TM_HELP_CREATE_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#delete-track-btn',
-        title: this.translationService.translate('TM_HELP_DELETE_TITLE'),
-        content: this.translationService.translate('TM_HELP_DELETE_CONTENT'),
+        title: 'TM_HELP_DELETE_TITLE',
+        content: 'TM_HELP_DELETE_CONTENT',
         position: 'bottom'
       },
       {
         selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
+        title: 'TM_HELP_HELP_TITLE',
+        content: 'TM_HELP_HELP_CONTENT',
         position: 'bottom'
       }
     ];

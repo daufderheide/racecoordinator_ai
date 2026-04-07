@@ -59,8 +59,7 @@ describe('ArduinoEditorComponent', () => {
       useLapsForPitEnd: 0,
       usePitsAsLaps: false,
       useLapsForSegments: true,
-      ledStrings: null,
-      ledLaneColorOverrides: null,
+      ledStrings: [],
       voltageConfigs: {},
       lapPinPitBehavior: 3
     };

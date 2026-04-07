@@ -10,15 +10,25 @@ import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.service.DatabaseService;
 import io.javalin.http.Context;
 import com.antigravity.protocols.IProtocol;
+import com.antigravity.protocols.ProtocolDelegate;
 
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.RaceParticipant;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.NetworkInterface;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.Heat;
@@ -39,6 +49,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/update-interface-config", this::updateInterfaceConfig);
     app.post("/api/initialize-interface", this::initializeInterface);
     app.post("/api/set-interface-pin-state", this::setInterfacePinState);
+    app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState);
     app.post("/api/close-interface", this::closeInterface);
     app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
     app.get("/api/serial-ports", this::getSerialPorts);
@@ -118,22 +129,22 @@ public class ClientCommandTaskHandler {
 
     // Create the runtime race instance
     List<String> participantIds = request.getDriverIdsList();
-    java.util.List<String> rawIds = participantIds.stream()
+    List<String> rawIds = participantIds.stream()
         .map(id -> id.startsWith("d_") || id.startsWith("t_") ? id.substring(2) : id)
-        .collect(java.util.stream.Collectors.toList());
+        .collect(Collectors.toList());
 
-    java.util.List<com.antigravity.models.Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
+    List<com.antigravity.models.Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(),
         rawIds);
-    java.util.List<com.antigravity.models.Team> teams = dbService.getTeams(databaseContext.getDatabase(),
+    List<com.antigravity.models.Team> teams = dbService.getTeams(databaseContext.getDatabase(),
         rawIds);
 
     // Map IDs back to objects maintaining order
-    List<RaceParticipant> participants = new java.util.ArrayList<>();
-    java.util.List<com.antigravity.models.Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
+    List<RaceParticipant> participants = new ArrayList<>();
+    List<com.antigravity.models.Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
 
     // --- Validation Logic ---
-    java.util.Map<String, java.util.List<String>> driverToTeamNames = new java.util.HashMap<>();
-    java.util.Set<String> individualDriverIds = new java.util.HashSet<>();
+    Map<String, List<String>> driverToTeamNames = new HashMap<>();
+    Set<String> individualDriverIds = new HashSet<>();
 
     for (String pid : participantIds) {
       String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
@@ -144,7 +155,7 @@ public class ClientCommandTaskHandler {
             .filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
         if (team != null) {
           for (String dId : team.getDriverIds()) {
-            driverToTeamNames.computeIfAbsent(dId, k -> new java.util.ArrayList<>()).add(team.getName());
+            driverToTeamNames.computeIfAbsent(dId, k -> new ArrayList<>()).add(team.getName());
           }
         }
       }
@@ -156,7 +167,8 @@ public class ClientCommandTaskHandler {
         com.antigravity.models.Driver d = drivers.stream()
             .filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
         String dName = d != null ? d.getName() : dId;
-        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.newBuilder()
+        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+            .newBuilder()
             .setSuccess(false)
             .setErrorCode("DUPE_INDIVIDUAL_TEAM")
             .setDriverName(dName)
@@ -167,7 +179,7 @@ public class ClientCommandTaskHandler {
     }
 
     // Rule 2: Multiple Teams
-    for (java.util.Map.Entry<String, java.util.List<String>> entry : driverToTeamNames.entrySet()) {
+    for (Map.Entry<String, List<String>> entry : driverToTeamNames.entrySet()) {
       if (entry.getValue().size() > 1) {
         String dId = entry.getKey();
         // Driver might not be in the explicit 'drivers' list if they were only in teams
@@ -177,7 +189,8 @@ public class ClientCommandTaskHandler {
           d = dbService.getDriver(databaseContext.getDatabase(), dId);
         }
         String dName = d != null ? d.getName() : dId;
-        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse.newBuilder()
+        com.antigravity.proto.InitializeRaceResponse response = com.antigravity.proto.InitializeRaceResponse
+            .newBuilder()
             .setSuccess(false)
             .setErrorCode("DUPE_MULTIPLE_TEAMS")
             .setDriverName(dName)
@@ -436,10 +449,23 @@ public class ClientCommandTaskHandler {
           .parseFrom(ctx.bodyAsBytes());
       com.antigravity.protocols.arduino.ArduinoConfig config = ArduinoConfigConverter
           .fromProto(request.getConfig());
+      int interfaceIndex = request.getInterfaceIndex();
 
-      IProtocol current = ClientSubscriptionManager.getInstance().getProtocol();
-      if (current instanceof ArduinoProtocol) {
-        ((ArduinoProtocol) current).updateConfig(config);
+      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
+      ArduinoProtocol target = null;
+
+      if (current != null) {
+        List<IProtocol> protocols = current.getProtocols();
+        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
+          IProtocol p = protocols.get(interfaceIndex);
+          if (p instanceof ArduinoProtocol) {
+            target = (ArduinoProtocol) p;
+          }
+        }
+      }
+
+      if (target != null) {
+        target.updateConfig(config);
 
         com.antigravity.proto.UpdateInterfaceConfigResponse response = com.antigravity.proto.UpdateInterfaceConfigResponse
             .newBuilder()
@@ -451,7 +477,7 @@ public class ClientCommandTaskHandler {
         com.antigravity.proto.UpdateInterfaceConfigResponse response = com.antigravity.proto.UpdateInterfaceConfigResponse
             .newBuilder()
             .setSuccess(false)
-            .setMessage("Current protocol is not ArduinoProtocol or not set")
+            .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
             .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
@@ -465,20 +491,29 @@ public class ClientCommandTaskHandler {
   private void initializeInterface(Context ctx) {
     try {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
-      com.antigravity.protocols.arduino.ArduinoConfig config = ArduinoConfigConverter
-          .fromProto(request.getConfig());
 
-      ArduinoProtocol protocol = new ArduinoProtocol(config, request.getLaneCount());
-      protocol.setListener(new TestInterfaceListener());
+      List<IProtocol> protocols = new ArrayList<>();
+      for (com.antigravity.proto.ArduinoConfig protoConfig : request.getConfigsList()) {
+        com.antigravity.protocols.arduino.ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
+        ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount());
+        arduino.setListener(new TestInterfaceListener());
+        protocols.add(arduino);
+      }
+
+      ProtocolDelegate finalProtocol;
+      if (protocols.size() >= 1) {
+        finalProtocol = new ProtocolDelegate(protocols);
+      } else {
+        throw new IllegalArgumentException("No configurations provided for initialization");
+      }
 
       // ClientSubscriptionManager handles mutual exclusion in setProtocol
-      com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(protocol);
+      com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
 
-      boolean success = protocol.open();
+      boolean success = finalProtocol.open();
       InitializeInterfaceResponse response = InitializeInterfaceResponse.newBuilder()
           .setSuccess(success)
-          .setMessage(success ? "Interface initialized successfully"
-              : "Failed to open serial connection on port: " + config.commPort)
+          .setMessage(success ? "Interfaces initialized successfully" : "Failed to open one or more interfaces")
           .build();
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (IllegalStateException e) {
@@ -494,7 +529,7 @@ public class ClientCommandTaskHandler {
 
   private void getSerialPorts(Context ctx) {
     try {
-      java.util.List<String> ports = com.antigravity.protocols.interfaces.SerialConnection
+      List<String> ports = com.antigravity.protocols.interfaces.SerialConnection
           .getAvailableSerialPorts();
       ctx.json(ports);
     } catch (Exception e) {
@@ -508,10 +543,23 @@ public class ClientCommandTaskHandler {
     try {
       com.antigravity.proto.SetInterfacePinStateRequest request = com.antigravity.proto.SetInterfacePinStateRequest
           .parseFrom(ctx.bodyAsBytes());
+      int interfaceIndex = request.getInterfaceIndex();
 
-      IProtocol current = ClientSubscriptionManager.getInstance().getProtocol();
-      if (current instanceof ArduinoProtocol) {
-        ((ArduinoProtocol) current).setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
+      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
+      ArduinoProtocol target = null;
+
+      if (current != null) {
+        List<IProtocol> protocols = current.getProtocols();
+        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
+          IProtocol p = protocols.get(interfaceIndex);
+          if (p instanceof ArduinoProtocol) {
+            target = (ArduinoProtocol) p;
+          }
+        }
+      }
+
+      if (target != null) {
+        target.setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
 
         com.antigravity.proto.SetInterfacePinStateResponse response = com.antigravity.proto.SetInterfacePinStateResponse
             .newBuilder()
@@ -523,12 +571,55 @@ public class ClientCommandTaskHandler {
         com.antigravity.proto.SetInterfacePinStateResponse response = com.antigravity.proto.SetInterfacePinStateResponse
             .newBuilder()
             .setSuccess(false)
-            .setMessage("Current protocol is not ArduinoProtocol or not set")
+            .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
             .build();
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       }
     } catch (Exception e) {
       System.err.println("Error setting interface pin state: " + e.getMessage());
+      e.printStackTrace();
+      ctx.status(500).result("Internal Server Error: " + e.toString());
+    }
+  }
+
+  private void setInterfaceRgbLedState(Context ctx) {
+    try {
+      com.antigravity.proto.SetInterfaceRgbLedStateRequest request = com.antigravity.proto.SetInterfaceRgbLedStateRequest
+          .parseFrom(ctx.bodyAsBytes());
+      int interfaceIndex = request.getInterfaceIndex();
+
+      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
+      ArduinoProtocol target = null;
+
+      if (current != null) {
+        List<IProtocol> protocols = current.getProtocols();
+        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
+          IProtocol p = protocols.get(interfaceIndex);
+          if (p instanceof ArduinoProtocol) {
+            target = (ArduinoProtocol) p;
+          }
+        }
+      }
+
+      if (target != null) {
+        target.setStringRgbLedValues(request.getStringIndex(), request.getLedsList());
+
+        com.antigravity.proto.SetInterfaceRgbLedStateResponse response = com.antigravity.proto.SetInterfaceRgbLedStateResponse
+            .newBuilder()
+            .setSuccess(true)
+            .setMessage("RGB LED state command sent")
+            .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+      } else {
+        com.antigravity.proto.SetInterfaceRgbLedStateResponse response = com.antigravity.proto.SetInterfaceRgbLedStateResponse
+            .newBuilder()
+            .setSuccess(false)
+            .setMessage("Target interface index " + interfaceIndex + " is invalid or not an ArduinoProtocol")
+            .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+      }
+    } catch (Exception e) {
+      System.err.println("Error setting interface RGB LED state: " + e.getMessage());
       e.printStackTrace();
       ctx.status(500).result("Internal Server Error: " + e.toString());
     }
@@ -556,10 +647,11 @@ public class ClientCommandTaskHandler {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private void changeActualDriver(io.javalin.http.Context ctx) {
     try {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
-      java.util.Map<String, String> body = ctx.bodyAsClass(java.util.Map.class);
+      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
       String driverId = body.get("driverId");
 
       com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
@@ -568,12 +660,12 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      java.util.List<com.antigravity.race.DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      List<com.antigravity.race.DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         com.antigravity.race.DriverHeatData dhd = drivers.get(lane);
         com.antigravity.service.DatabaseService dbService = new com.antigravity.service.DatabaseService();
-        java.util.List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(),
-            java.util.Collections.singletonList(driverId));
+        List<com.antigravity.models.Driver> driversList = dbService.getDrivers(databaseContext.getDatabase(),
+            Collections.singletonList(driverId));
         com.antigravity.models.Driver driver = driversList.isEmpty() ? null : driversList.get(0);
 
         if (driver != null) {
@@ -727,9 +819,10 @@ public class ClientCommandTaskHandler {
     }
   }
 
+  @SuppressWarnings("unchecked")
   private void loadRace(Context ctx) {
     try {
-      java.util.Map<String, String> body = ctx.bodyAsClass(java.util.Map.class);
+      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
       String filename = body.get("filename");
       if (filename == null) {
         ctx.status(400).result("Filename is required");
@@ -793,7 +886,7 @@ public class ClientCommandTaskHandler {
   }
 
   /* package */ void getAnalyticsConfig(Context ctx) {
-    java.util.Map<String, String> config = new java.util.HashMap<>();
+    Map<String, String> config = new HashMap<>();
     config.put("clientId", com.antigravity.service.AnalyticsService.getInstance().getClientId());
     config.put("measurementId", com.antigravity.service.AnalyticsService.getInstance().getMeasurementId());
     setJson(ctx, config);
@@ -813,7 +906,8 @@ public class ClientCommandTaskHandler {
 
     try {
       com.fasterxml.jackson.databind.ObjectMapper mapper = getObjectMapper();
-      com.antigravity.models.AnalyticsToggleRequest request = mapper.readValue(getBodyBytes(ctx), com.antigravity.models.AnalyticsToggleRequest.class);
+      com.antigravity.models.AnalyticsToggleRequest request = mapper.readValue(getBodyBytes(ctx),
+          com.antigravity.models.AnalyticsToggleRequest.class);
       if (request == null) {
         setStatus(ctx, 400);
         setResult(ctx, "Invalid request body. Expected JSON with 'enabled' field.");
@@ -877,10 +971,10 @@ public class ClientCommandTaskHandler {
 
       // Verify if the remote address matches any address on the local network
       // interfaces
-      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface
+      Enumeration<java.net.NetworkInterface> interfaces = NetworkInterface
           .getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {
-        java.util.Enumeration<java.net.InetAddress> addresses = interfaces.nextElement().getInetAddresses();
+        Enumeration<java.net.InetAddress> addresses = interfaces.nextElement().getInetAddresses();
         while (addresses.hasMoreElements()) {
           if (addresses.nextElement().getHostAddress().equals(remoteAddr)) {
             return true;

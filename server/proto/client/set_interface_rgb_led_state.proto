@@ -1,0 +1,24 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "SetInterfaceRgbLedStateProto";
+
+message RgbLedState {
+  int32 index = 1;
+  int32 r = 2;
+  int32 g = 3;
+  int32 b = 4;
+}
+
+message SetInterfaceRgbLedStateRequest {
+  int32 string_index = 1;
+  repeated RgbLedState leds = 2;
+  int32 interface_index = 3;
+}
+
+message SetInterfaceRgbLedStateResponse {
+  bool success = 1;
+  string message = 2;
+}

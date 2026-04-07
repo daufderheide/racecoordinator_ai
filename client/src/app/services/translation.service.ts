@@ -46,7 +46,10 @@ export class TranslationService {
                 this.currentLanguage.next(language);
                 this.translationsLoaded.next(true);
                 // TODO(aufderheide): This is not great, and it's just used screendiff tests
-                (window as any).isTranslationsLoaded = true;
+                // Delay setting the flag to ensure Angular has processed the first CD cycle
+                setTimeout(() => {
+                  (window as any).isTranslationsLoaded = true;
+                }, 100);
             },
             error: (error: any) => {
                 console.error(`Failed to load translations for language: ${language}`, error);

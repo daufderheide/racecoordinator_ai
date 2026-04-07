@@ -9,11 +9,11 @@
   <!-- The Popover -->
   <div class="help-popover" *ngIf="isVisible" #popoverRef [ngStyle]="popoverStyle" [ngClass]="popoverClass">
     <div class="popover-header">
-      <h3>{{ currentStep?.title }}</h3>
+      <h3>{{ (currentStep?.title || '') | translate }}</h3>
       <button class="close-btn" (click)="end()">×</button>
     </div>
     <div class="popover-content">
-      <p [innerHTML]="currentStep?.content"></p>
+      <p [innerHTML]="(currentStep?.content || '') | translate"></p>
     </div>
     <div class="popover-footer">
       <div class="step-counter" *ngIf="helpService.steps">
