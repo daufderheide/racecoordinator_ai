@@ -2,33 +2,33 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding-left: 20px;
 }
 
 .reorder-modal.large-modal {
-  position: relative;
-  width: 95vw;
-  max-width: 1600px;
-  height: 90vh;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   background: #1a1c1e;
   border-radius: 16px;
   border: 1px solid #333;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  overflow: auto;
 }
 
 .modal-header {
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #333;
+  display: block;
+  text-align: center;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -117,9 +117,9 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  overflow: hidden;
+  overflow-y: auto;
   min-height: 0;
-  max-height: calc(90vh - 200px);
+  max-height: 100%;
 }
 
 .value-pool {
@@ -134,7 +134,7 @@
 .value-chip {
   background: #25282b;
   border-radius: 6px;
-  padding: 10px 14px;
+  padding: 6px 10px;
   cursor: grab;
   font-size: 0.9em;
   border: 1px solid #333;
@@ -156,15 +156,14 @@
 
 /* Main Area: Column Slots */
 .slots-container {
-  flex: 1;
-  min-width: 600px;
+  flex: 0 0 400px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 12px;
   padding: 15px;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.05);
   min-height: 0;
-  max-height: calc(90vh - 200px);
+  max-height: 100%;
 }
 
 .slot-list {
@@ -276,9 +275,13 @@
   border-radius: 5px;
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   transition: all 0.2s;
+  overflow: hidden;
+  min-width: 0;
+  padding: 4px 0;
 }
 
 .grid-cell.cdk-drop-list-receiving {
@@ -295,9 +298,17 @@
   background: rgba(0, 255, 255, 0.05);
 }
 
+.cell-placeholder-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .cell-placeholder {
-  font-size: 0.65em;
-  color: rgba(255, 255, 255, 0.15);
+  font-size: 0.85em;
+  color: rgba(255, 255, 255, 0.4);
   text-transform: uppercase;
   pointer-events: none;
   font-family: monospace;
@@ -307,21 +318,28 @@
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
+  justify-content: center;
+  padding: 4px;
   background: rgba(59, 130, 246, 0.15);
   border: 1px solid #3b82f6;
   border-radius: 4px;
+  box-sizing: border-box;
+  gap: 2px;
 }
 
 .cell-label {
-  font-size: 0.8em;
+  font-size: min(0.8em, 4vw);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #fff;
   text-transform: uppercase;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-btn {
@@ -345,7 +363,8 @@
 }
 
 .preview-panel {
-  flex: 0 0 800px;
+  flex: 1;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -361,13 +380,15 @@
   border-radius: 12px;
   padding: 20px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   cursor: default;
   transition: all 0.3s ease;
   min-height: 100px;
   margin-top: 15px;
   width: 25%;
+  position: relative;
 }
 
 .slot-add-blank:hover {
@@ -378,6 +399,14 @@
   background: rgba(59, 130, 246, 0.2);
   border-color: #60a5fa;
   border-style: solid;
+}
+
+.add-placeholder-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .add-placeholder {
@@ -398,7 +427,6 @@
   font-weight: 600;
 }
 
-
 .hint {
   font-size: 0.85em;
   color: #8e9196;
@@ -407,11 +435,32 @@
 }
 
 .btn-reset-defaults {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
   margin-top: 15px;
   margin-bottom: 15px;
   padding: 10px 20px;
   font-size: 14px;
-  align-self: flex-start;
+  background: linear-gradient(to right, #a83232, #8b2626);
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(168, 50, 50, 0.3);
+}
+
+.btn-reset-defaults:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px rgba(168, 50, 50, 0.5);
+}
+
+.btn-reset-defaults:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
 }
 
 .modal-footer {

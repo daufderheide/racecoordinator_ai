@@ -1,5 +1,5 @@
 <div class="modal-backdrop" *ngIf="visible">
-  <div class="modal-content ue-container reorder-modal large-modal">
+  <div class="reorder-modal large-modal">
     <div class="modal-header">
       <app-back-button [label]="'UE_BTN_BACK' | translate" 
         (back)="onCancel()"></app-back-button>
@@ -63,8 +63,8 @@
                         <span class="material-icons">clear</span>
                       </button>
                     </div>
-                    <div class="cell-placeholder" *ngIf="!columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]">
-                      {{ anchorOptions[row * 3 + col] }}
+                    <div class="cell-placeholder-wrapper" *ngIf="!columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]">
+                      <div class="cell-placeholder">{{ anchorOptions[row * 3 + col] }}</div>
                     </div>
                   </div>
                 </div>
@@ -82,9 +82,11 @@
           <button class="btn btn-danger btn-reset-defaults" (click)="onReset()" [disabled]="isResetDisabled">{{ 'UE_BTN_RESET_DEFAULTS' | translate }}</button>
           <!-- Blank Slot for adding new columns -->
           <div id="slot-add-new" class="slot-add-blank" cdkDropList (cdkDropListDropped)="onAddColumnDrop($event)">
-            <div class="add-placeholder">
-              <span class="material-icons">add_circle_outline</span>
-              <span>{{ 'UE_HINT_DROP_TO_ADD_COLUMN' | translate }}</span>
+            <div class="add-placeholder-wrapper">
+              <div class="add-placeholder">
+                <span class="material-icons">add_circle_outline</span>
+                <span>{{ 'UE_HINT_DROP_TO_ADD_COLUMN' | translate }}</span>
+              </div>
             </div>
           </div>
         </div>

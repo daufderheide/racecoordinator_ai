@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AnchorPoint } from '../../raceday/column_definition';
 import { TranslationService } from '../../../services/translation.service';
@@ -25,7 +25,8 @@ export interface ReorderDialogResult {
   templateUrl: './reorder-dialog.component.html',
   styleUrls: ['./reorder-dialog.component.css'],
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Default
+  changeDetection: ChangeDetectionStrategy.Default,
+  encapsulation: ViewEncapsulation.None
 })
 export class ReorderDialogComponent implements OnInit, OnDestroy {
   private _visible = false;
@@ -573,6 +574,14 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     this.columnSlots = newSlots;
     this.columnLayouts = newLayouts;
     this.columnVisibility = newVisibility;
+    
+    // Add "Always" visibility for any slots not in default settings
+    newSlots.forEach(slot => {
+      if (!this.columnVisibility[slot.key]) {
+        this.columnVisibility[slot.key] = ColumnVisibility.Always;
+      }
+    });
+    
     this.updateDropListIds();
     
     // Trigger auto-save
