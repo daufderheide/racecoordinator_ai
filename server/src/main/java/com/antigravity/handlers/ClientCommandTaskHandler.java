@@ -8,6 +8,7 @@ import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.NetworkUtils;
 import io.javalin.http.Context;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
@@ -951,43 +952,15 @@ public class ClientCommandTaskHandler {
   }
 
   /* package */ boolean isLocalAddress(String remoteAddr, String remoteHost) {
-    try {
-      // Explicitly check for all common localhost IP and hostname variations
-      if ("127.0.0.1".equals(remoteAddr) ||
-          "0:0:0:0:0:0:0:1".equals(remoteAddr) ||
-          "::1".equals(remoteAddr) ||
-          "localhost".equals(remoteAddr) ||
-          "localhost".equals(remoteHost) ||
-          "127.0.0.1".equals(remoteHost) ||
-          "::1".equals(remoteHost) ||
-          "0:0:0:0:0:0:0:1".equals(remoteHost) ||
-          "::ffff:127.0.0.1".equals(remoteAddr) ||
-          "0.0.0.0".equals(remoteAddr)) {
-        return true;
-      }
+    return NetworkUtils.isLocalAddress(remoteAddr, remoteHost);
+  }
 
-      java.net.InetAddress addr = java.net.InetAddress.getByName(remoteAddr);
-      if (addr.isLoopbackAddress()) {
-        return true;
-      }
+  /* package */ boolean isLocalhost(String remoteAddr, String remoteHost) {
+    return NetworkUtils.isLocalhost(remoteAddr, remoteHost);
+  }
 
-      // Verify if the remote address matches any address on the local network
-      // interfaces
-      Enumeration<java.net.NetworkInterface> interfaces = NetworkInterface
-          .getNetworkInterfaces();
-      while (interfaces.hasMoreElements()) {
-        Enumeration<java.net.InetAddress> addresses = interfaces.nextElement().getInetAddresses();
-        while (addresses.hasMoreElements()) {
-          if (addresses.nextElement().getHostAddress().equals(remoteAddr)) {
-            return true;
-          }
-        }
-      }
-    } catch (Exception e) {
-      // If hostname resolution fails, fallback to simple string check
-    }
-
-    return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr) || "localhost".equals(remoteAddr);
+  /* package */ boolean isLocalNetwork(String remoteAddr) {
+    return NetworkUtils.isLocalNetwork(remoteAddr);
   }
 
   com.fasterxml.jackson.databind.ObjectMapper getObjectMapper() {

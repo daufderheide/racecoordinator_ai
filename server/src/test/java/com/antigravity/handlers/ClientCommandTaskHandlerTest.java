@@ -409,6 +409,72 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testToggleAnalytics_LAN_IPv4_PrivateNetwork_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    // Test 192.168.x.x (common home network range)
+    doReturn("192.168.1.100").when(spyHandler).getRemoteAddr(any());
+    doReturn("192.168.1.100").when(spyHandler).getRemoteHost(any());
+    
+    AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
+    requestData.setEnabled(true);
+    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    
+    doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(200));
+  }
+
+  @Test
+  public void testToggleAnalytics_LAN_IPv4_10x_PrivateNetwork_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    // Test 10.x.x.x (enterprise network range)
+    doReturn("10.0.0.50").when(spyHandler).getRemoteAddr(any());
+    doReturn("10.0.0.50").when(spyHandler).getRemoteHost(any());
+    
+    AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
+    requestData.setEnabled(false);
+    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    
+    doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(200));
+  }
+
+  @Test
+  public void testToggleAnalytics_LAN_IPv4_172x_PrivateNetwork_Success() throws Exception {
+    ClientCommandTaskHandler spyHandler = spy(handler);
+    Context mockCtx = mock(Context.class);
+    
+    // Test 172.16-31.x.x (another private range)
+    doReturn("172.20.5.100").when(spyHandler).getRemoteAddr(any());
+    doReturn("172.20.5.100").when(spyHandler).getRemoteHost(any());
+    
+    AnalyticsToggleRequest requestData = new AnalyticsToggleRequest();
+    requestData.setEnabled(true);
+    byte[] bodyBytes = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(requestData);
+    
+    doReturn(bodyBytes).when(spyHandler).getBodyBytes(any());
+    doNothing().when(spyHandler).setStatus(any(), anyInt());
+    doNothing().when(spyHandler).setResult(any(), anyString());
+    
+    spyHandler.toggleAnalytics(mockCtx);
+    
+    verify(spyHandler).setStatus(any(), eq(200));
+  }
+
+  @Test
   public void testGetAnalyticsConfig_Success() throws Exception {
     ClientCommandTaskHandler spyHandler = spy(handler);
     Context mockCtx = mock(Context.class);

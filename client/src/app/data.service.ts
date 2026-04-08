@@ -11,7 +11,7 @@ import { ArduinoConfig } from './models/track';
 })
 export class DataService {
   // Pointing to the Java server API
-  private serverIp = 'localhost';
+  private serverIp = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   private serverPort = 7070;
 
   private get baseUrl(): string {
@@ -39,8 +39,10 @@ export class DataService {
     private settingsService: SettingsService
   ) {
     const settings = this.settingsService.getSettings();
-    if (settings.serverIp && settings.serverPort) {
+    if (settings.serverIp) {
       this.serverIp = settings.serverIp;
+    }
+    if (settings.serverPort) {
       this.serverPort = settings.serverPort;
     }
   }

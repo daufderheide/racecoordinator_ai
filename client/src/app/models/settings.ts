@@ -13,7 +13,7 @@ export class Settings {
   selectedRaceId: string = '';
   selectedDriverIds: string[] = [];
 
-  serverIp: string = 'localhost';
+  serverIp: string = '';
   serverPort: number = 7070;
   language: string = '';
   shareAnalytics: boolean = true;
