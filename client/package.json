@@ -33,7 +33,7 @@
     "@angular-devkit/build-angular": "^21.0.5",
     "@angular/cli": "^18.0.0",
     "@angular/compiler-cli": "^21.0.8",
-    "@playwright/test": "^1.58.0",
+    "@playwright/test": "^1.59.1",
     "@types/jasmine": "~5.1.0",
     "@types/long": "^4.0.2",
     "@types/node": "^18.11.9",
