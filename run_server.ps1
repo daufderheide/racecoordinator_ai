@@ -5,34 +5,11 @@ $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 $SERVER_DIR = "$PSScriptRoot\server"
-$PROTO_ROOT = "$SERVER_DIR\proto"
-$JAVA_OUT = "$SERVER_DIR\target_dist\generated-sources\protobuf\java"
 
-# Ensure output directory exists
-if (-not (Test-Path $JAVA_OUT)) {
-    New-Item -ItemType Directory -Path $JAVA_OUT -Force | Out-Null
-}
-
-# Find protoc in .m2 repository
-$M2Repo = Join-Path $env:USERPROFILE ".m2\repository"
-$ProtocExe = Get-ChildItem -Path "$M2Repo\com\google\protobuf\protoc" -Recurse -Filter "protoc-*.exe" | Select-Object -First 1 -ExpandProperty FullName
-
-if ($null -eq $ProtocExe) {
-    Write-Host "Protoc not found in .m2. Attempting to download via maven..." -ForegroundColor Yellow
-    Set-Location $SERVER_DIR
-    mvn protobuf:compile
-    $ProtocExe = Get-ChildItem -Path "$M2Repo\com\google\protobuf\protoc" -Recurse -Filter "protoc-*.exe" | Select-Object -First 1 -ExpandProperty FullName
-}
-
-if ($null -eq $ProtocExe) {
-    throw "Protoc could not be found or downloaded."
-}
-
-Write-Host "Generating Protobuf files using $ProtocExe..." -ForegroundColor Cyan
-Push-Location $PROTO_ROOT
-$RelativeFiles = Get-ChildItem -Recurse -Filter "*.proto" | Resolve-Path -Relative
-& $ProtocExe --proto_path=. --java_out="$JAVA_OUT" $RelativeFiles
-Pop-Location
+# Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
+Write-Host "Generating Protobuf files..." -ForegroundColor Cyan
+Set-Location $SERVER_DIR
+& powershell -ExecutionPolicy Bypass -File generate_protos.ps1
 
 Write-Host "Starting Server..." -ForegroundColor Green
 Set-Location $SERVER_DIR
