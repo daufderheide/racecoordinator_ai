@@ -464,7 +464,7 @@ public class App {
       } catch (Exception e) {
       }
 
-      de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
+      de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V6_0;
 
       ImmutableMongod mongod = Mongod.instance()
           .withInitTempDirectory(

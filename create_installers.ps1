@@ -71,14 +71,14 @@ if (-not (Test-Path $Mongo32Zip) -or (Get-Item $Mongo32Zip).Length -eq 0) {
     }
 }
 
-# MongoDB 4.4 (64-bit for Modern Windows)
-$Mongo44Zip = "build_cache\mongodb44.zip"
-if (-not (Test-Path $Mongo44Zip) -or (Get-Item $Mongo44Zip).Length -eq 0) {
-    Write-Host "Downloading MongoDB 4.4 (64-bit)..."
+# MongoDB 6.0 (64-bit for Modern Windows)
+$Mongo60Zip = "build_cache\mongodb60.zip"
+if (-not (Test-Path $Mongo60Zip) -or (Get-Item $Mongo60Zip).Length -eq 0) {
+    Write-Host "Downloading MongoDB 6.0 (64-bit)..."
     try {
-        Invoke-WebRequest -Uri "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-4.4.26.zip" -OutFile $Mongo44Zip
+        Invoke-WebRequest -Uri "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -OutFile $Mongo60Zip
     } catch {
-        Write-Warning "MongoDB 4.4 download failed: $_"
+        Write-Warning "MongoDB 6.0 download failed: $_"
     }
 }
 
@@ -91,7 +91,7 @@ $ReleaseDirs = @(
     "release\RaceCoordinator\jre8",
     "release\RaceCoordinator\jre17",
     "release\RaceCoordinator\mongodb32",
-    "release\RaceCoordinator\mongodb44",
+    "release\RaceCoordinator\mongodb60",
     "release\RaceCoordinator_Offline\web"
 )
 
@@ -136,7 +136,7 @@ function Extract-To-Release {
 Extract-To-Release "java8.zip" "jre8" "bundled_jre8.zip"
 Extract-To-Release "java17.zip" "jre17" "bundled_jre17.zip"
 Extract-To-Release "mongodb32.zip" "mongodb32" $null
-Extract-To-Release "mongodb44.zip" "mongodb44" $null
+Extract-To-Release "mongodb60.zip" "mongodb60" $null
 
 # 5. Create Launch Scripts
 function Create-Scripts {

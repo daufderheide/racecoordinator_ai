@@ -33,9 +33,11 @@ esac
 case "$UNAME_M" in
   arm64|aarch64)
     PROTOC_ARCH="aarch64"
+    PROTOC_ARCH_ALT="aarch_64"
     ;;
   x86_64|amd64)
     PROTOC_ARCH="x86_64"
+    PROTOC_ARCH_ALT="x86_64"
     ;;
   *)
     echo "Unsupported architecture for protoc: $UNAME_M"
@@ -55,32 +57,52 @@ JAVA_OUT="$TARGET_DIR/generated-sources/protobuf/java"
 # Ensure output directory exists
 mkdir -p "$JAVA_OUT"
 
-# Priority: 1. protoc_local.exe in server dir, 2. PROTOC_M2
+# Priority: 1. protoc_local.exe in server dir, 2. PROTOC_M2, 3. system protoc
 if [ -f "$SERVER_DIR/protoc_local.exe" ]; then
   echo "Using local protoc found in server directory."
   PROTOC_LOCAL="$SERVER_DIR/protoc_local.exe"
 else
   # Ensure protoc exists in local maven repository (downloaded by maven plugin)
-  if [ ! -f "$PROTOC_M2" ]; then
+  PROTOC_M2_ALT="$M2_REPO/com/google/protobuf/protoc/${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTOC_OS}-${PROTOC_ARCH_ALT}.exe"
+  
+  if [ ! -f "$PROTOC_M2" ] && [ ! -f "$PROTOC_M2_ALT" ]; then
     echo "Protoc not found at:"
-    echo "  $PROTOC_M2"
+    echo "  $PROTOC_M2 (or alt: $PROTOC_M2_ALT)"
     echo "Attempting to download via 'mvn protobuf:compile'..."
-    mvn protobuf:compile > /dev/null 2>&1
+    # We MUST run this without -o if it's missing
+    mvn protobuf:compile > /dev/null 2>&1 || true
+  fi
+
+  # Prefer the one that exists in M2
+  ACTIVE_PROTOC_M2=""
+  if [ -f "$PROTOC_M2" ]; then
+    ACTIVE_PROTOC_M2="$PROTOC_M2"
+  elif [ -f "$PROTOC_M2_ALT" ]; then
+    ACTIVE_PROTOC_M2="$PROTOC_M2_ALT"
+  elif command -v protoc >/dev/null 2>&1; then
+    # Fallback to system if both Maven paths fail
+    echo "Using system protoc ($(command -v protoc)). WARNING: Version mismatch possible."
+    ACTIVE_PROTOC_M2="$(command -v protoc)"
   fi
 
   # Final verification
-  if [ ! -f "$PROTOC_M2" ]; then
+  if [ -z "$ACTIVE_PROTOC_M2" ] || [ ! -f "$ACTIVE_PROTOC_M2" ]; then
     echo "ERROR: Protoc still not found after maven download."
     exit 1
   fi
 
-  PROTOC_LOCAL="$TARGET_DIR/protoc-plugins/$PROTOC_BIN"
-  mkdir -p "$(dirname "$PROTOC_LOCAL")"
+  # If it's already a full path (like from command -v), just use it
+  if [[ "$ACTIVE_PROTOC_M2" == /opt/homebrew* ]] || [[ "$ACTIVE_PROTOC_M2" == /usr/local* ]]; then
+    PROTOC_LOCAL="$ACTIVE_PROTOC_M2"
+  else
+    PROTOC_LOCAL="$TARGET_DIR/protoc-plugins/$PROTOC_BIN"
+    mkdir -p "$(dirname "$PROTOC_LOCAL")"
 
-  # Only copy if needed
-  if [ ! -f "$PROTOC_LOCAL" ] || [ "$PROTOC_M2" -nt "$PROTOC_LOCAL" ]; then
-    cp "$PROTOC_M2" "$PROTOC_LOCAL"
-    chmod +x "$PROTOC_LOCAL"
+    # Only copy if needed
+    if [ ! -f "$PROTOC_LOCAL" ] || [ "$ACTIVE_PROTOC_M2" -nt "$PROTOC_LOCAL" ]; then
+      cp "$ACTIVE_PROTOC_M2" "$PROTOC_LOCAL"
+      chmod +x "$PROTOC_LOCAL"
+    fi
   fi
 fi
 

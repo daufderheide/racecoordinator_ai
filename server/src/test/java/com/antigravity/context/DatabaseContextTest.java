@@ -59,7 +59,7 @@ public class DatabaseContextTest {
     mongodProcess = Mongod.instance()
         .withDatabaseDir(Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(mongoDataDir.toPath())))
         .withNet(Start.to(Net.class).initializedWith(Net.of(bindIp, port, false)))
-        .start(Version.Main.V4_4);
+        .start(Version.Main.V6_0);
 
     CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
         fromProviders(PojoCodecProvider.builder().automatic(true).build()));

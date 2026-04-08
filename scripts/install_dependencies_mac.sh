@@ -14,7 +14,7 @@ echo "========================================="
 
 # Prompt user using osascript (GUI Prompt)
 # Since this runs in terminal, we can use osascript for a nice dialog
-osascript -e 'display dialog "Do you want to download Java 17 and MongoDB 4.4? This is required to run Race Coordinator on this Mac. This will require an internet connection." buttons {"Yes", "No"} default button "Yes" with title "Race Coordinator Setup"' > /dev/null 2>&1
+osascript -e 'display dialog "Do you want to download Java 17 and MongoDB 6.0? This is required to run Race Coordinator on this Mac. This will require an internet connection." buttons {"Yes", "No"} default button "Yes" with title "Race Coordinator Setup"' > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     echo "Setup cancelled by user."
@@ -71,12 +71,16 @@ else
     echo "✅ Java 17 is already installed in ./jre"
 fi
 
-# 2. Download MongoDB 4.4
+# 2. Download MongoDB 6.0
 if [ ! -s "mongodb/bin/mongod" ]; then
     echo "-----------------------------------------"
-    echo "Downloading MongoDB 4.4..."
-    # MongoDB 4.4 for macOS is x86_64, runs via Rosetta 2 on Apple Silicon
-    URL="https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-4.4.30.tgz"
+    echo "Downloading MongoDB 6.0..."
+    # MongoDB 6.0 has native ARM64 macOS builds
+    if [ "$ARCH" == "arm64" ]; then
+        URL="https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.21.tgz"
+    else
+        URL="https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-6.0.21.tgz"
+    fi
     
     rm -f mongo_temp.tgz
     curl -L "$URL" -o mongo_temp.tgz || DOWNLOAD_SUCCESS=false

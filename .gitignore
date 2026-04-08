@@ -67,6 +67,7 @@ client/.chrome-home/
 client/browsers/
 
 # I think this is generated code on the client/server
+server/.m2
 server/build_output/
 server/target_dist/
 server/target_dev/
