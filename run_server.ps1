@@ -5,8 +5,8 @@ $env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
 $SERVER_DIR = "$PSScriptRoot\server"
-$PROTO_ROOT = "$PSScriptRoot\proto"
-$JAVA_OUT = "$SERVER_DIR\target_test\generated-sources\protobuf\java"
+$PROTO_ROOT = "$SERVER_DIR\proto"
+$JAVA_OUT = "$SERVER_DIR\target_dist\generated-sources\protobuf\java"
 
 # Ensure output directory exists
 if (-not (Test-Path $JAVA_OUT)) {
@@ -57,5 +57,5 @@ if ($null -eq $MvnCmd) {
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
-$MvnArgs = @("clean", "compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR")
+$MvnArgs = @("clean", "compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=false")
 & $MvnExecutable @MvnArgs
