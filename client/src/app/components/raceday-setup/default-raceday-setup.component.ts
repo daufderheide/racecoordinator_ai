@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
@@ -21,6 +22,23 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+=======
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { DataService } from 'src/app/data.service';
+import { Driver } from 'src/app/models/driver';
+import { Race } from 'src/app/models/race';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { RaceService } from 'src/app/services/race.service';
+import { forkJoin } from 'rxjs';
+import { Router } from '@angular/router';
+import { TranslationService } from 'src/app/services/translation.service';
+import { SettingsService } from 'src/app/services/settings.service';
+import { Settings } from 'src/app/models/settings';
+import { FileSystemService } from 'src/app/services/file-system.service';
+import { HelpService } from 'src/app/services/help.service';
+import { Team } from 'src/app/models/team';
+import { naturalSortCompare } from '../../utils/sorting.utils';
+>>>>>>> 88bf7e8 (Refactor: Extract naturalSortCompare to shared utility with unit tests)
 
 type Participant = Driver | Team;
 
@@ -711,7 +729,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
   get filteredRaces(): Race[] {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
+<<<<<<< HEAD
     return this.races.filter((r) => r.name.toLowerCase().includes(q));
+=======
+    return this.races.filter(r => r.name.toLowerCase().includes(q));
+  }
+
+  private naturalSortParticipants(a: Participant, b: Participant): number {
+    return naturalSortCompare(a.name || '', b.name || '');
+>>>>>>> 88bf7e8 (Refactor: Extract naturalSortCompare to shared utility with unit tests)
   }
 
   // --- Options Menu Logic ---
