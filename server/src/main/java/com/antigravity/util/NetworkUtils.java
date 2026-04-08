@@ -19,8 +19,20 @@ public class NetworkUtils {
    * @return true if the address is considered local
    */
   public static boolean isLocalAddress(String remoteAddr, String remoteHost) {
+    return isLocalhost(remoteAddr, remoteHost) || isLocalNetwork(remoteAddr);
+  }
+
+  /**
+   * Checks if the given remote address is localhost (same PC).
+   * This includes loopback addresses (127.0.0.1, ::1) and localhost hostname.
+   *
+   * @param remoteAddr the remote IP address
+   * @param remoteHost the remote hostname
+   * @return true if the address is localhost (same machine)
+   */
+  public static boolean isLocalhost(String remoteAddr, String remoteHost) {
     try {
-      // Explicitly check for all common localhost IP and hostname variations
+      // Check for all common localhost IP and hostname variations
       if ("127.0.0.1".equals(remoteAddr) ||
           "0:0:0:0:0:0:0:1".equals(remoteAddr) ||
           "::1".equals(remoteAddr) ||
@@ -35,12 +47,32 @@ public class NetworkUtils {
       }
 
       InetAddress addr = InetAddress.getByName(remoteAddr);
-      if (addr.isLoopbackAddress()) {
-        return true;
+      return addr.isLoopbackAddress();
+    } catch (Exception e) {
+      // Fallback to simple string check
+    }
+
+    return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr) || "localhost".equals(remoteAddr);
+  }
+
+  /**
+   * Checks if the given remote address is on the local network (same LAN, different machine).
+   * This includes private network addresses (RFC 1918: 192.168.x.x, 10.x.x.x, 172.16-31.x.x).
+   * Excludes localhost/loopback addresses.
+   *
+   * @param remoteAddr the remote IP address
+   * @return true if the address is on the same LAN but not localhost
+   */
+  public static boolean isLocalNetwork(String remoteAddr) {
+    try {
+      // First check it's not localhost
+      if (isLocalhost(remoteAddr, null)) {
+        return false;
       }
 
+      InetAddress addr = InetAddress.getByName(remoteAddr);
+
       // Check if the address is a private/LAN address (RFC 1918)
-      // This allows mobile devices on the same network to be treated as local
       if (addr.isSiteLocalAddress()) {
         return true;
       }
@@ -56,10 +88,10 @@ public class NetworkUtils {
         }
       }
     } catch (Exception e) {
-      // If hostname resolution fails, fallback to simple string check
+      // If hostname resolution fails, return false
     }
 
-    return "127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr) || "localhost".equals(remoteAddr);
+    return false;
   }
 
   /**

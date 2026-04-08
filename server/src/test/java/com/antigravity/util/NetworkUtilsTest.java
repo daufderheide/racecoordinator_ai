@@ -71,4 +71,61 @@ public class NetworkUtilsTest {
     assertTrue(NetworkUtils.isLocalAddress("127.0.0.1", "127.0.0.1"));
     assertTrue(NetworkUtils.isLocalAddress("192.168.1.100", "mydevice.local"));
   }
+
+  @Test
+  public void testIsLocalhost_IPv4() {
+    assertTrue(NetworkUtils.isLocalhost("127.0.0.1", "localhost"));
+    assertTrue(NetworkUtils.isLocalhost("127.0.0.1", null));
+  }
+
+  @Test
+  public void testIsLocalhost_IPv6() {
+    assertTrue(NetworkUtils.isLocalhost("::1", "localhost"));
+    assertTrue(NetworkUtils.isLocalhost("::1", null));
+    assertTrue(NetworkUtils.isLocalhost("0:0:0:0:0:0:0:1", "localhost"));
+  }
+
+  @Test
+  public void testIsLocalhost_NotLocalNetwork() {
+    // LAN IPs are NOT localhost
+    assertFalse(NetworkUtils.isLocalhost("192.168.1.1", null));
+    assertFalse(NetworkUtils.isLocalhost("10.0.0.1", null));
+    assertFalse(NetworkUtils.isLocalhost("172.16.0.1", null));
+  }
+
+  @Test
+  public void testIsLocalNetwork_LAN_IPv4_192_168() {
+    assertTrue(NetworkUtils.isLocalNetwork("192.168.1.1"));
+    assertTrue(NetworkUtils.isLocalNetwork("192.168.0.100"));
+    assertTrue(NetworkUtils.isLocalNetwork("192.168.255.255"));
+  }
+
+  @Test
+  public void testIsLocalNetwork_LAN_IPv4_10x() {
+    assertTrue(NetworkUtils.isLocalNetwork("10.0.0.1"));
+    assertTrue(NetworkUtils.isLocalNetwork("10.255.255.255"));
+    assertTrue(NetworkUtils.isLocalNetwork("10.0.0.50"));
+  }
+
+  @Test
+  public void testIsLocalNetwork_LAN_IPv4_172x() {
+    assertTrue(NetworkUtils.isLocalNetwork("172.16.0.1"));
+    assertTrue(NetworkUtils.isLocalNetwork("172.20.5.100"));
+    assertTrue(NetworkUtils.isLocalNetwork("172.31.255.255"));
+  }
+
+  @Test
+  public void testIsLocalNetwork_NotLocalhost() {
+    // Localhost is NOT local network
+    assertFalse(NetworkUtils.isLocalNetwork("127.0.0.1"));
+    assertFalse(NetworkUtils.isLocalNetwork("::1"));
+    assertFalse(NetworkUtils.isLocalNetwork("localhost"));
+  }
+
+  @Test
+  public void testIsLocalNetwork_NotPublicIP() {
+    assertFalse(NetworkUtils.isLocalNetwork("8.8.8.8"));
+    assertFalse(NetworkUtils.isLocalNetwork("1.1.1.1"));
+    assertFalse(NetworkUtils.isLocalNetwork("203.0.113.1"));
+  }
 }
