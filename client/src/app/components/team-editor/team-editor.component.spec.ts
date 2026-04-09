@@ -4,7 +4,7 @@ import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@an
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of, BehaviorSubject, throwError } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';
 import { Driver } from 'src/app/models/driver';

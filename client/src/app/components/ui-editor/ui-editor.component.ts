@@ -4,7 +4,7 @@ import { forkJoin, Subscription } from 'rxjs';
 
 import { AnchorPoint } from 'src/app/components/raceday/column_definition';
 import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { ReorderDialogComponent, ReorderDialogData, ReorderDialogResult } from 'src/app/components/ui-editor/reorder-dialog/reorder-dialog.component';
+import { ReorderDialogData, ReorderDialogResult } from 'src/app/components/ui-editor/reorder-dialog/reorder-dialog.component';
 import { DataService } from 'src/app/data.service';
 import { DirtyComponent } from 'src/app/interfaces/dirty-component';
 import { Settings } from 'src/app/models/settings';

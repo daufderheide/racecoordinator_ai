@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { Subscription } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';
 import { com } from 'src/app/proto/message';

@@ -91,4 +91,3 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
     return await dropdown.isVisible();
   }
 }
-

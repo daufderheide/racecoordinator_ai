@@ -4,7 +4,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { of, BehaviorSubject, throwError } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { HelpOverlayComponent } from 'src/app/components/shared/help-overlay/help-overlay.component';

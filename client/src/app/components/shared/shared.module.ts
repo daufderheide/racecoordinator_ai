@@ -81,4 +81,3 @@ import { TranslatePipe } from 'src/app/pipes/translate.pipe';
 
 })
 export class SharedModule { }
-

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Track, ArduinoConfig } from 'src/app/models/track';
+import { ArduinoConfig } from 'src/app/models/track';
 import { TranslatePipe } from 'src/app/pipes/translate.pipe';
 import { com } from 'src/app/proto/message';
 import { TranslationService } from 'src/app/services/translation.service';

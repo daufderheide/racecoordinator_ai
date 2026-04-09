@@ -2,7 +2,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Location } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 
 import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
 import { ArduinoEditorComponent } from 'src/app/components/track-editor/arduino-editor/arduino-editor.component';

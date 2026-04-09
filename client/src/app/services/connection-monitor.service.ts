@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
-import { switchMap, catchError, map, retry, timeout } from 'rxjs/operators';
+import { switchMap, catchError, map, timeout } from 'rxjs/operators';
 
 import { DataService } from 'src/app/data.service';
 

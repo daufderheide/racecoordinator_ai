@@ -1,8 +1,8 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';

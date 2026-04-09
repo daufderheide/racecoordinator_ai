@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subscription, Subject, BehaviorSubject, Observable } from 'rxjs';
+import { Subscription, Subject, BehaviorSubject } from 'rxjs';
 
 import { DriverConverter } from 'src/app/converters/driver.converter';
 import { HeatConverter } from 'src/app/converters/heat.converter';

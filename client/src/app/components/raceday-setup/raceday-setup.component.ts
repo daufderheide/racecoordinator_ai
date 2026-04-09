@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import {
   Component,
   OnInit,
@@ -5,13 +6,9 @@ import {
   ViewContainerRef,
   Compiler,
   Injector,
-  NgModule,
-  ComponentRef,
-  Type,
   Inject,
   HostListener
 } from '@angular/core';
-import { ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 

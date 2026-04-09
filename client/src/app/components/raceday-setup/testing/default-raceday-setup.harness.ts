@@ -185,4 +185,3 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
     return dropdown !== null;
   }
 }
-

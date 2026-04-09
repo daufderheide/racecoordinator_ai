@@ -5,15 +5,12 @@ import {
   ViewContainerRef,
   Compiler,
   Injector,
-  NgModule,
-  ComponentRef,
-  Type,
   Inject,
   ChangeDetectorRef,
   ElementRef
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { DataService } from 'src/app/data.service';
 import { CanComponentDeactivate } from 'src/app/guards/raceday.guard';

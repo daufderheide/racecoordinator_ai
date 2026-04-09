@@ -1,6 +1,6 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Pipe, PipeTransform } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AcknowledgementModalComponent } from './acknowledgement-modal.component';
 import { AcknowledgementModalHarness } from './testing/acknowledgement-modal.harness';

@@ -1,4 +1,4 @@
-import { of, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 export class TranslationServiceMock {
   private currentLanguageSubject = new BehaviorSubject<string>('en');

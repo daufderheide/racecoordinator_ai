@@ -2,8 +2,8 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, Inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { map, catchError } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 
 import { SettingsService } from 'src/app/services/settings.service';
 

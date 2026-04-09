@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';

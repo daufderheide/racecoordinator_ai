@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Input, Output, EventEmitter, Pipe, PipeTr
 import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { of, throwError, delay } from 'rxjs';
+import { of, delay } from 'rxjs';
 
 import { AnchorPoint } from 'src/app/components/raceday/column_definition';
 import { DataService } from 'src/app/data.service';

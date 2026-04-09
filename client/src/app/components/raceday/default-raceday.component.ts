@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, Subject, of, Observable } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { RaceConverter } from 'src/app/converters/race.converter';
 import { TrackConverter } from 'src/app/converters/track.converter';
 import { DataService } from 'src/app/data.service';
 import { CanComponentDeactivate } from 'src/app/guards/raceday.guard';
-import { FinishMethod, AllowFinish, HeatScoring } from 'src/app/models/heat_scoring';
+import { FinishMethod, HeatScoring } from 'src/app/models/heat_scoring';
 import { Race } from 'src/app/models/race';
 import { RaceParticipant } from 'src/app/models/race_participant';
 import { Settings, ColumnVisibility } from 'src/app/models/settings';
@@ -23,8 +23,8 @@ import { SettingsService } from 'src/app/services/settings.service';
 import { TranslationService } from 'src/app/services/translation.service';
 import { playSound, createTTSContext } from 'src/app/utils/audio';
 
-import { AnchorPoint } from './column_definition';
 import { ColumnDefinition } from './column_definition';
+import { AnchorPoint } from './column_definition';
 
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 import { RaceConnectionService } from 'src/app/services/race-connection.service';
