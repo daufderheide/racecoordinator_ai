@@ -16,88 +16,167 @@
   </div>
 
   <div class="content-area" *ngIf="!isLoading">
-    <!-- Full-Width Column Layout Preview -->
-    <div class="panel layout-panel">
-      <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
-      <div class="panel-content column-layout-section">
-        <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
-          [resizingColumnKey]="resizingColumnKey" [columnVisibility]="editingSettings.columnVisibility">
-        </app-column-preview>
+    <!-- Left Sidebar - Screen Management -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3>{{ 'SM_TITLE' | translate }}</h3>
+        <button class="toolbar-btn info" (click)="openCreateScreen()">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
 
-        <div class="layout-controls">
-          <div class="sorting-selector">
-            <label class="checkbox-container">
-              <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
-              <span class="checkmark"></span>
-              {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
-            </label>
+      <div class="screens-list">
+        <div class="screen-card"
+             *ngFor="let screen of screens"
+             [class.active]="isScreenActive(screen.entity_id)"
+             [class.disabled]="!isScreenEnabled(screen.entity_id) && !isScreenActive(screen.entity_id)"
+             (click)="saveAndSwitchScreen(screen.entity_id)"
+             title="Click to edit this screen">
+
+          <!-- Top Actions -->
+          <div class="screen-top-actions" (click)="$event.stopPropagation()">
+            <div class="action-buttons">
+              <button class="toolbar-btn ghost"
+                      (click)="openEditScreen(screen)"
+                      [title]="'SM_TOOLTIP_EDIT' | translate">
+                <span class="material-icons">edit</span>
+              </button>
+
+              <button class="toolbar-btn ghost"
+                      (click)="duplicateScreen(screen)"
+                      [title]="'SM_TOOLTIP_DUPLICATE' | translate">
+                <span class="material-icons">content_copy</span>
+              </button>
+
+              <button class="toolbar-btn danger"
+                      (click)="openDeleteConfirm(screen)"
+                      [disabled]="!canDeleteScreen(screen)"
+                      [title]="canDeleteScreen(screen) ? ('SM_TOOLTIP_DELETE' | translate) : ('SM_TOOLTIP_CANNOT_DELETE' | translate)">
+                <span class="delete-x">X</span>
+              </button>
+            </div>
           </div>
 
-          <div class="sorting-selector">
-            <label class="checkbox-container">
-              <input type="checkbox" [(ngModel)]="editingSettings.highlightRowOnLap" (change)="captureState()">
-              <span class="checkmark"></span>
-              {{ 'UE_LABEL_HIGHLIGHT_LAP' | translate }}
-            </label>
+          <div class="screen-name">
+            {{ screen.name }}
           </div>
 
-          <div class="column-actions">
-            <button class="btn btn-secondary" (click)="openReorderDialog()">
-              <span class="material-icons"></span>
-              {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
-            </button>
+          <div class="screen-meta">
+            {{ 'SM_CREATED' | translate }}: {{ formatDate(screen.createdAt) }}
+            <span *ngIf="screen.updatedAt !== screen.createdAt">
+              | {{ 'SM_UPDATED' | translate }}: {{ formatDate(screen.updatedAt) }}
+            </span>
+          </div>
+
+          <!-- Bottom Badges -->
+          <div class="screen-badges">
+            <span class="default-badge"
+                  [class.disabled]="!screen.isDefault"
+                  (click)="$event.stopPropagation(); setDefaultScreen(screen.entity_id)"
+                  title="Click to set as default">{{ 'SM_BADGE_DEFAULT' | translate }}</span>
+            <span class="enabled-badge"
+                  [class.disabled]="!isScreenEnabled(screen.entity_id)"
+                  (click)="$event.stopPropagation(); toggleScreenEnabled(screen.entity_id)"
+                  title="Click to toggle enabled">{{ 'SM_BADGE_ENABLED' | translate }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="screens.length === 0">
+        <div class="empty-icon">
+          <span class="material-icons">desktop_windows</span>
+        </div>
+        <h4>{{ 'SM_EMPTY_TITLE' | translate }}</h4>
+        <p>{{ 'SM_EMPTY_DESCRIPTION' | translate }}</p>
       </div>
     </div>
 
-    <div class="config-grid">
-      <!-- Custom UI Settings -->
-      <div class="panel config-panel">
-        <div class="panel-header">{{ 'UE_HEADER_CUSTOM_UI' | translate }}</div>
-        <div class="panel-content">
-          <div class="directory-selector">
-            <label>{{ 'UE_DIRECTORY_LABEL' | translate }}</label>
-            <div class="directory-info">
-              <span class="directory-path" *ngIf="customDirectoryName">{{ customDirectoryName }}</span>
-              <span class="directory-path placeholder" *ngIf="!customDirectoryName">{{ 'UE_LABEL_NO_DIRECTORY' |
-                translate }}</span>
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Full-Width Column Layout Preview -->
+      <div class="panel layout-panel">
+        <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
+        <div class="panel-content column-layout-section">
+          <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
+            [resizingColumnKey]="resizingColumnKey" [columnVisibility]="editingSettings.columnVisibility">
+          </app-column-preview>
+
+          <div class="layout-controls">
+            <div class="sorting-selector">
+              <label class="checkbox-container">
+                <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
+                <span class="checkmark"></span>
+                {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
+              </label>
             </div>
-            <div class="directory-actions">
-              <button class="btn btn-secondary" (click)="selectDirectory()">
-                {{ 'UE_BTN_SELECT_DIRECTORY' | translate }}
-              </button>
-              <button class="btn btn-danger" (click)="resetDefault()" [disabled]="!customDirectoryName">
-                {{ 'UE_BTN_RESET_DEFAULT' | translate }}
+
+            <div class="sorting-selector">
+              <label class="checkbox-container">
+                <input type="checkbox" [(ngModel)]="editingSettings.highlightRowOnLap" (change)="captureState()">
+                <span class="checkmark"></span>
+                {{ 'UE_LABEL_HIGHLIGHT_LAP' | translate }}
+              </label>
+            </div>
+
+            <div class="column-actions">
+              <button class="btn btn-secondary" (click)="openReorderDialog()">
+                <span class="material-icons"></span>
+                {{ 'UE_BTN_REORDER_COLUMNS' | translate }}
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- Flag Image Settings -->
-      <div class="panel flags-panel">
-        <div class="panel-header">{{ 'UE_HEADER_FLAGS' | translate }}</div>
-        <div class="panel-content flags-grid">
-          <app-image-selector [label]="'UE_LABEL_GREEN_FLAG' | translate" [(imageUrl)]="editingSettings.flagGreen"
-            (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
-          <app-image-selector [label]="'UE_LABEL_YELLOW_FLAG' | translate" [(imageUrl)]="editingSettings.flagYellow"
-            (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
-          <app-image-selector [label]="'UE_LABEL_RED_FLAG' | translate" [(imageUrl)]="editingSettings.flagRed"
-            (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
-          <app-image-selector [label]="'UE_LABEL_WHITE_FLAG' | translate" [(imageUrl)]="editingSettings.flagWhite"
-            (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
-          <app-image-selector [label]="'UE_LABEL_BLACK_FLAG' | translate" [(imageUrl)]="editingSettings.flagBlack"
-            (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
-          <app-image-selector [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
-            [(imageUrl)]="editingSettings.flagCheckered" (imageUrlChange)="captureState()" [assets]="assets">
-          </app-image-selector>
+      <div class="config-grid">
+        <!-- Custom UI Settings -->
+        <div class="panel config-panel">
+          <div class="panel-header">{{ 'UE_HEADER_CUSTOM_UI' | translate }}</div>
+          <div class="panel-content">
+            <div class="directory-selector">
+              <label>{{ 'UE_DIRECTORY_LABEL' | translate }}</label>
+              <div class="directory-info">
+                <span class="directory-path" *ngIf="customDirectoryName">{{ customDirectoryName }}</span>
+                <span class="directory-path placeholder" *ngIf="!customDirectoryName">{{ 'UE_LABEL_NO_DIRECTORY' |
+                  translate }}</span>
+              </div>
+              <div class="directory-actions">
+                <button class="btn btn-secondary" (click)="selectDirectory()">
+                  {{ 'UE_BTN_SELECT_DIRECTORY' | translate }}
+                </button>
+                <button class="btn btn-danger" (click)="resetDefault()" [disabled]="!customDirectoryName">
+                  {{ 'UE_BTN_RESET_DEFAULT' | translate }}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Flag Image Settings -->
+        <div class="panel flags-panel">
+          <div class="panel-header">{{ 'UE_HEADER_FLAGS' | translate }}</div>
+          <div class="panel-content flags-grid">
+            <app-image-selector [label]="'UE_LABEL_GREEN_FLAG' | translate" [(imageUrl)]="editingSettings.flagGreen"
+              (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+            <app-image-selector [label]="'UE_LABEL_YELLOW_FLAG' | translate" [(imageUrl)]="editingSettings.flagYellow"
+              (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+            <app-image-selector [label]="'UE_LABEL_RED_FLAG' | translate" [(imageUrl)]="editingSettings.flagRed"
+              (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+            <app-image-selector [label]="'UE_LABEL_WHITE_FLAG' | translate" [(imageUrl)]="editingSettings.flagWhite"
+              (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+            <app-image-selector [label]="'UE_LABEL_BLACK_FLAG' | translate" [(imageUrl)]="editingSettings.flagBlack"
+              (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+            <app-image-selector [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
+              [(imageUrl)]="editingSettings.flagCheckered" (imageUrlChange)="captureState()" [assets]="assets">
+            </app-image-selector>
+          </div>
         </div>
       </div>
     </div>

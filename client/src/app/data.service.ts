@@ -5,6 +5,7 @@ import { map } from "rxjs/operators";
 import { ArduinoConfig } from "src/app/models/track";
 import { com } from "src/app/proto/message";
 import { SettingsService } from "src/app/services/settings.service";
+import { RaceScreenConfig } from "src/app/models/race-screen";
 
 @Injectable({
   providedIn: "root",
@@ -1033,5 +1034,28 @@ export class DataService {
     return this.http.get<{ clientId: string; measurementId: string }>(
       `${this.baseUrl}/api/analytics/config`,
     );
+  }
+
+  // Race Screen API methods
+  getRaceScreens(): Observable<RaceScreenConfig[]> {
+    return this.http.get<RaceScreenConfig[]>(`${this.baseUrl}/api/screens`);
+  }
+
+  getRaceScreen(id: string): Observable<RaceScreenConfig> {
+    return this.http.get<RaceScreenConfig>(`${this.baseUrl}/api/screens/${id}`);
+  }
+
+  createRaceScreen(screen: RaceScreenConfig): Observable<RaceScreenConfig> {
+    return this.http.post<RaceScreenConfig>(`${this.baseUrl}/api/screens`, screen);
+  }
+
+  updateRaceScreen(id: string, screen: RaceScreenConfig): Observable<RaceScreenConfig> {
+    return this.http.put<RaceScreenConfig>(`${this.baseUrl}/api/screens/${id}`, screen);
+  }
+
+  deleteRaceScreen(id: string): Observable<string> {
+    return this.http.delete(`${this.baseUrl}/api/screens/${id}`, {
+      responseType: "text",
+    });
   }
 }

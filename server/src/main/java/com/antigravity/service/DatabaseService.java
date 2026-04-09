@@ -36,6 +36,8 @@ public class DatabaseService {
     Track track = resetTracks(database);
     // Races must come after tracks because races include tracks
     resetRaces(database, track);
+    // Reset screens to default configuration
+    resetScreens(database);
 
     System.out.println("Database reset complete.");
   }
@@ -264,6 +266,23 @@ public class DatabaseService {
     raceCollection.insertOne(race);
 
     System.out.println("Races reset.");
+  }
+
+  private void resetScreens(MongoDatabase database) {
+    MongoCollection<com.antigravity.models.RaceScreen> screenCollection = 
+        database.getCollection("screens", com.antigravity.models.RaceScreen.class);
+    screenCollection.drop(); // Clear all existing data
+
+    // Reset sequence
+    resetSequence(database, "screens");
+
+    // Create default race screen with same values as client Settings.DEFAULT_COLUMNS
+    String entityId = getNextSequence(database, "screens");
+    com.antigravity.models.RaceScreen defaultScreen = new com.antigravity.models.RaceScreen(
+        "Default Race Screen", entityId, null);
+    
+    screenCollection.insertOne(defaultScreen);
+    System.out.println("Screens reset.");
   }
 
   private void resetTeams(DatabaseContext context, MongoDatabase database) {

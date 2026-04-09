@@ -16,8 +16,10 @@ import {
 import { DataService } from "src/app/data.service";
 import { DirtyComponent } from "src/app/interfaces/dirty-component";
 import { Settings } from "src/app/models/settings";
+import { RaceScreenConfig } from "src/app/models/race-screen";
 import { FileSystemService } from "src/app/services/file-system.service";
 import { SettingsService } from "src/app/services/settings.service";
+import { RaceScreenService } from "src/app/services/race-screen.service";
 
 @Component({
   selector: "app-ui-editor",
@@ -40,6 +42,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
+
+  // Screen management
+  screens: RaceScreenConfig[] = [];
+  currentScreen: RaceScreenConfig | null = null;
+  private raceScreenSubscription: Subscription | null = null;
 
   // TODO(aufderheide): I think this list is duplicated below.  If they're the same they should share the code.
   availableColumns = [
@@ -66,6 +73,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private settingsService: SettingsService,
     private fileSystem: FileSystemService,
     private dataService: DataService,
+    private raceScreenService: RaceScreenService,
     private cdr: ChangeDetectorRef,
     private router: Router,
   ) {
@@ -84,6 +92,25 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ngOnInit() {
     this.updateScale();
     this.loadData();
+    
+    // Load race screens
+    this.raceScreenService.loadRaceScreens();
+    
+    // Subscribe to race screen changes
+    this.raceScreenSubscription = this.raceScreenService.raceScreenManager$.subscribe(manager => {
+      const newScreen = this.raceScreenService.getActiveScreen() || null;
+      this.screens = this.raceScreenService.getScreens();
+      
+      // If active screen changed, load its config
+      if (newScreen?.entity_id !== this.currentScreen?.entity_id) {
+        this.currentScreen = newScreen;
+        if (this.currentScreen) {
+          this.loadScreenConfig(this.currentScreen);
+        }
+      }
+      
+      this.cdr.detectChanges();
+    });
 
     // Auto-save on changes (like Driver Editor)
     if (this.undoManager) {
@@ -97,6 +124,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.isDestroyed = true;
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
+    }
+    if (this.raceScreenSubscription) {
+      this.raceScreenSubscription.unsubscribe();
     }
     this.undoManager.destroy();
   }
@@ -352,7 +382,126 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, 500);
   }
 
+  // Race Screen Management Methods
+  private loadScreenConfig(screen: RaceScreenConfig): void {
+    // Load screen columns into editingSettings so Configure Columns dialog shows them
+    this.editingSettings = {
+      ...this.editingSettings,
+      racedayColumns: screen.columns,
+      columnAnchors: screen.columnAnchors,
+      columnLayouts: screen.columnLayouts,
+      columnVisibility: screen.columnVisibility
+    };
+    
+    // Reset undo tracking so switching screens doesn't count as unsaved changes
+    this.undoManager.resetTracking(this.editingSettings);
+    this.cdr.detectChanges();
+  }
+
+  private async saveScreenConfig(): Promise<void> {
+    if (!this.currentScreen) return;
+    
+    await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+      columns: this.currentScreen.columns,
+      columnAnchors: this.currentScreen.columnAnchors,
+      columnLayouts: this.currentScreen.columnLayouts,
+      columnVisibility: this.currentScreen.columnVisibility,
+      sortByStandings: this.currentScreen.sortByStandings,
+      highlightRowOnLap: this.currentScreen.highlightRowOnLap
+    });
+  }
+
+  async selectScreen(screenId: string): Promise<void> {
+    await this.raceScreenService.setActiveScreen(screenId);
+  }
+
+  // Screen management methods (delegating to race screen service)
+  async openCreateScreen(): Promise<void> {
+    const screenName = prompt('Enter screen name:');
+    if (screenName) {
+      await this.raceScreenService.createScreen(screenName);
+    }
+  }
+
+  async openEditScreen(screen: RaceScreenConfig): Promise<void> {
+    const newName = prompt('Enter screen name:', screen.name);
+    if (newName && newName !== screen.name) {
+      await this.raceScreenService.updateScreen(screen.entity_id, { name: newName });
+    }
+  }
+
+  async openDeleteConfirm(screen: RaceScreenConfig): Promise<void> {
+    if (confirm(`Are you sure you want to delete "${screen.name}"?`)) {
+      try {
+        await this.raceScreenService.deleteScreen(screen.entity_id);
+      } catch (error) {
+        console.error('Failed to delete screen:', error);
+        alert('Failed to delete screen: ' + (error as Error).message);
+      }
+    }
+  }
+
+  async duplicateScreen(screen: RaceScreenConfig): Promise<void> {
+    await this.raceScreenService.duplicateScreen(screen.entity_id);
+  }
+
+  // Screen helper methods for UI
+  isScreenActive(screenId: string): boolean {
+    return this.currentScreen?.entity_id === screenId;
+  }
+
+  isScreenEnabled(screenId: string): boolean {
+    return this.raceScreenService.isScreenEnabled(screenId);
+  }
+
+  async saveAndSwitchScreen(screenId: string): Promise<void> {
+    // Save current screen if there are changes
+    if (this.currentScreen && this.hasChanges()) {
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        columns: this.editingSettings.racedayColumns,
+        columnLayouts: this.editingSettings.columnLayouts,
+        columnVisibility: this.editingSettings.columnVisibility
+      });
+    }
+    // Switch to new screen
+    await this.selectScreen(screenId);
+  }
+
+  canDeleteScreen(screen: RaceScreenConfig): boolean {
+    return !screen.isDefault;
+  }
+
+  async setDefaultScreen(screenId: string): Promise<void> {
+    const screen = this.screens.find(s => s.entity_id === screenId);
+    if (screen && !screen.isDefault) {
+      // Unset current default
+      const currentDefault = this.screens.find(s => s.isDefault);
+      if (currentDefault) {
+        await this.raceScreenService.updateScreen(currentDefault.entity_id, { isDefault: false });
+      }
+      // Set new default
+      await this.raceScreenService.updateScreen(screenId, { isDefault: true });
+    }
+  }
+
+  async toggleScreenEnabled(screenId: string): Promise<void> {
+    const isEnabled = this.isScreenEnabled(screenId);
+    await this.raceScreenService.setScreenEnabled(screenId, !isEnabled);
+  }
+
+  formatDate(timestamp: number): string {
+    return new Date(timestamp).toLocaleDateString();
+  }
+
   onBack() {
+    // If screen columns changed, save them before navigating
+    if (this.currentScreen && this.hasChanges()) {
+      this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        columns: this.editingSettings.racedayColumns,
+        columnLayouts: this.editingSettings.columnLayouts,
+        columnVisibility: this.editingSettings.columnVisibility
+      });
+    }
     this.isNavigationApproved = true;
     this.router.navigate(["/raceday-setup"]);
   }
