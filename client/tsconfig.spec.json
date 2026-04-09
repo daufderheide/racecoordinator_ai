@@ -14,6 +14,8 @@
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     "src/**/*_test.ts",
+    "src/**/*.mock.ts",
+    "src/**/*.harness.ts",
     "src/**/*.d.ts"
   ]
 }
