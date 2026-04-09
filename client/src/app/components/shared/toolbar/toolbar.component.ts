@@ -1,17 +1,22 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
-
-import { AnalyticsService } from 'src/app/analytics.service';
-import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { TranslationService } from 'src/app/services/translation.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from "@angular/core";
+import { AnalyticsService } from "src/app/analytics.service";
+import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-toolbar',
-  templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.css'],
-  standalone: false
+  selector: "app-toolbar",
+  templateUrl: "./toolbar.component.html",
+  styleUrls: ["./toolbar.component.css"],
+  standalone: false,
 })
 export class ToolbarComponent {
-@Input() showAdd = false;
+  @Input() showAdd = false;
   @Input() showEdit = false;
   @Input() showHelp = false;
   @Input() showDelete = false;
@@ -22,13 +27,13 @@ export class ToolbarComponent {
   @Input() undoManager?: UndoManager<any>;
 
   showAnalyticsModal = false;
-  analyticsModalTitle = '';
-  analyticsModalMessage = '';
+  analyticsModalTitle = "";
+  analyticsModalMessage = "";
 
   constructor(
     private analyticsService: AnalyticsService,
     private translationService: TranslationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   @Output() add = new EventEmitter<void>();
@@ -62,10 +67,14 @@ export class ToolbarComponent {
   }
 
   onToggleAnalytics() {
-    this.analyticsService.toggleAnalytics().subscribe(result => {
+    this.analyticsService.toggleAnalytics().subscribe((result) => {
       if (!result.success && result.titleKey && result.messageKey) {
-        this.analyticsModalTitle = this.translationService.translate(result.titleKey);
-        this.analyticsModalMessage = this.translationService.translate(result.messageKey);
+        this.analyticsModalTitle = this.translationService.translate(
+          result.titleKey,
+        );
+        this.analyticsModalMessage = this.translationService.translate(
+          result.messageKey,
+        );
         this.showAnalyticsModal = true;
       }
       this.cdr.detectChanges();

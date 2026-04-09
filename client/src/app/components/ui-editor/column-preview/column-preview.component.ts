@@ -1,34 +1,33 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-
-import { AnchorPoint } from 'src/app/components/raceday/column_definition';
-import { ColumnVisibility } from 'src/app/models/settings';
+import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
+import { AnchorPoint } from "src/app/components/raceday/column_definition";
+import { ColumnVisibility } from "src/app/models/settings";
 
 // TODO(aufderheide): This may be the third time this list appears in code
 const PREVIEW_LABELS: { [key: string]: string } = {
-  'lapCount': 'RD_COL_LAP',
-  'lastLapTime': 'RD_COL_LAP_TIME',
-  'medianLapTime': 'RD_COL_MEDIAN_LAP',
-  'averageLapTime': 'RD_COL_AVG_LAP',
-  'bestLapTime': 'RD_COL_BEST_LAP',
-  'gapLeader': 'RD_COL_GAP_LEADER',
-  'gapPosition': 'RD_COL_GAP_POSITION',
-  'reactionTime': 'RD_COL_REACTION_TIME',
-  'participant.team.name': 'RD_COL_TEAM',
-  'driver.name': 'RD_COL_NAME',
-  'driver.nickname': 'RD_COL_NICKNAME',
-  'driver.avatarUrl': 'RD_COL_AVATAR',
-  'participant.fuelLevel': 'RD_COL_FUEL_LEVEL',
-  'fuelCapacity': 'RD_COL_FUEL_CAPACITY',
-  'fuelPercentage': 'RD_COL_FUEL_PERCENTAGE',
-  'imageset': 'RD_COL_FUEL_GAUGE'
+  lapCount: "RD_COL_LAP",
+  lastLapTime: "RD_COL_LAP_TIME",
+  medianLapTime: "RD_COL_MEDIAN_LAP",
+  averageLapTime: "RD_COL_AVG_LAP",
+  bestLapTime: "RD_COL_BEST_LAP",
+  gapLeader: "RD_COL_GAP_LEADER",
+  gapPosition: "RD_COL_GAP_POSITION",
+  reactionTime: "RD_COL_REACTION_TIME",
+  "participant.team.name": "RD_COL_TEAM",
+  "driver.name": "RD_COL_NAME",
+  "driver.nickname": "RD_COL_NICKNAME",
+  "driver.avatarUrl": "RD_COL_AVATAR",
+  "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
+  fuelCapacity: "RD_COL_FUEL_CAPACITY",
+  fuelPercentage: "RD_COL_FUEL_PERCENTAGE",
+  imageset: "RD_COL_FUEL_GAUGE",
 };
 
 @Component({
-  selector: 'app-column-preview',
-  templateUrl: './column-preview.component.html',
-  styleUrls: ['./column-preview.component.css'],
+  selector: "app-column-preview",
+  templateUrl: "./column-preview.component.html",
+  styleUrls: ["./column-preview.component.css"],
   standalone: false,
-  changeDetection: ChangeDetectionStrategy.Default
+  changeDetection: ChangeDetectionStrategy.Default,
 })
 export class ColumnPreviewComponent {
   @Input() resizingColumnKey: string | null = null;
@@ -38,11 +37,15 @@ export class ColumnPreviewComponent {
   @Input() set columnSlots(value: { key: string; label: string }[]) {
     this._columnSlots = value;
     this.columnSlotsMap.clear();
-    value.forEach(s => this.columnSlotsMap.set(s.key, s));
+    value.forEach((s) => this.columnSlotsMap.set(s.key, s));
   }
-  get columnSlots() { return this._columnSlots; }
+  get columnSlots() {
+    return this._columnSlots;
+  }
 
-  @Input() columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {};
+  @Input() columnLayouts: {
+    [columnKey: string]: { [A in AnchorPoint]?: string };
+  } = {};
   @Input() columnVisibility: { [columnKey: string]: ColumnVisibility } = {};
 
   anchorOptions = Object.values(AnchorPoint);
@@ -56,8 +59,8 @@ export class ColumnPreviewComponent {
   }
 
   getLabel(prop: string | undefined): string {
-    if (!prop) return '';
-    const baseKey = prop.split('_')[0];
+    if (!prop) return "";
+    const baseKey = prop.split("_")[0];
 
     // If it's a known static column, use the label key
     if (PREVIEW_LABELS[baseKey]) {
@@ -65,10 +68,10 @@ export class ColumnPreviewComponent {
     }
 
     // If it's an image set, try to find it in column slots to get the name
-    // TODO(aufderheide): I'm not sure we want this or not.  As long as it's not showing the 
+    // TODO(aufderheide): I'm not sure we want this or not.  As long as it's not showing the
     // uuid prefix for the asset it might be okay.
-    if (prop.startsWith('imageset_')) {
-      const slot = this.columnSlots.find(s => s.key === prop);
+    if (prop.startsWith("imageset_")) {
+      const slot = this.columnSlots.find((s) => s.key === prop);
       if (slot) return slot.label;
     }
 
@@ -91,7 +94,7 @@ export class ColumnPreviewComponent {
     const val = layout ? layout[anchor as AnchorPoint] : undefined;
     if (val) return val;
 
-    // Fallback: Default to CenterCenter showing the slot key if NO layout exists 
+    // Fallback: Default to CenterCenter showing the slot key if NO layout exists
     // or if CenterCenter is specifically missing/empty
     if (anchor === AnchorPoint.CenterCenter) {
       return slotKey;

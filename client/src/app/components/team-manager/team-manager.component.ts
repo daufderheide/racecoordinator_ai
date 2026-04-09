@@ -1,21 +1,29 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Router } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
-
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { Team } from 'src/app/models/team';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { Router } from "@angular/router";
+import { forkJoin, Subscription } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import { Team } from "src/app/models/team";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-team-manager',
-  templateUrl: './team-manager.component.html',
-  styleUrls: ['./team-manager.component.css'],
-  standalone: false
+  selector: "app-team-manager",
+  templateUrl: "./team-manager.component.html",
+  styleUrls: ["./team-manager.component.css"],
+  standalone: false,
 })
 export class TeamManagerComponent implements OnInit, OnDestroy {
   teams: Team[] = [];
@@ -24,17 +32,17 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   isSaving: boolean = false;
   scale: number = 1;
-  searchQuery: string = '';
+  searchQuery: string = "";
 
   get filteredTeams(): Team[] {
     let filtered = this.teams;
-    if (this.searchQuery && this.searchQuery.trim() !== '') {
+    if (this.searchQuery && this.searchQuery.trim() !== "") {
       const query = this.searchQuery.toLowerCase().trim();
-      filtered = this.teams.filter(t =>
-        (t.name && t.name.toLowerCase().includes(query))
+      filtered = this.teams.filter(
+        (t) => t.name && t.name.toLowerCase().includes(query),
       );
     }
-    return filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }
 
   // Connection Monitoring
@@ -49,9 +57,8 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
     private helpService: HelpService,
-    private settingsService: SettingsService
-  ) { }
-
+    private settingsService: SettingsService,
+  ) {}
 
   drivers: Driver[] = [];
   driversMap: Map<string, Driver> = new Map();
@@ -63,8 +70,8 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     this.loadData();
 
     // Trigger help automatically on first visit or if requested via query param
-    this.route.queryParams.subscribe(params => {
-      const forceHelp = params['help'] === 'true';
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.teamManagerHelpShown) {
         setTimeout(() => {
@@ -78,7 +85,6 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     });
   }
 
-
   ngOnDestroy() {
     this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
@@ -86,7 +92,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
@@ -107,23 +113,26 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     forkJoin({
       teams: this.dataService.getTeams(),
-      drivers: this.dataService.getDrivers()
+      drivers: this.dataService.getDrivers(),
     }).subscribe({
       next: (result) => {
         const teams = result.teams;
         this.drivers = result.drivers;
-        this.driversMap = new Map(this.drivers.map(d => [d.entity_id, d]));
+        this.driversMap = new Map(this.drivers.map((d) => [d.entity_id, d]));
 
-        this.teams = teams.map((t: any) => new Team(
-          t.entity_id || t.entityId || '',
-          t.name || '',
-          t.avatarUrl || undefined,
-          t.driverIds || []
-        ));
+        this.teams = teams.map(
+          (t: any) =>
+            new Team(
+              t.entity_id || t.entityId || "",
+              t.name || "",
+              t.avatarUrl || undefined,
+              t.driverIds || [],
+            ),
+        );
 
-        const selectedId = this.route.snapshot.queryParamMap.get('id');
+        const selectedId = this.route.snapshot.queryParamMap.get("id");
         if (selectedId) {
-          const found = this.teams.find(t => t.entity_id === selectedId);
+          const found = this.teams.find((t) => t.entity_id === selectedId);
           if (found) {
             this.selectTeam(found);
           } else if (this.teams.length > 0 && !this.selectedTeam) {
@@ -136,91 +145,88 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Failed to load data', err);
+        console.error("Failed to load data", err);
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('TMM_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('TMM_HELP_WELCOME_CONTENT'),
-        position: 'center'
+        title: this.translationService.translate("TMM_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("TMM_HELP_WELCOME_CONTENT"),
+        position: "center",
       },
       {
-        selector: '.sidebar-list',
-        title: this.translationService.translate('TMM_HELP_SIDEBAR_TITLE'),
-        content: this.translationService.translate('TMM_HELP_SIDEBAR_CONTENT'),
-        position: 'right'
+        selector: ".sidebar-list",
+        title: this.translationService.translate("TMM_HELP_SIDEBAR_TITLE"),
+        content: this.translationService.translate("TMM_HELP_SIDEBAR_CONTENT"),
+        position: "right",
       },
       {
-        selector: '.detail-panel',
-        title: this.translationService.translate('TMM_HELP_DETAIL_TITLE'),
-        content: this.translationService.translate('TMM_HELP_DETAIL_CONTENT'),
-        position: 'left'
+        selector: ".detail-panel",
+        title: this.translationService.translate("TMM_HELP_DETAIL_TITLE"),
+        content: this.translationService.translate("TMM_HELP_DETAIL_CONTENT"),
+        position: "left",
       },
       {
-        selector: '#edit-track-btn',
-        title: this.translationService.translate('TMM_HELP_EDIT_TITLE'),
-        content: this.translationService.translate('TMM_HELP_EDIT_CONTENT'),
-        position: 'bottom'
+        selector: "#edit-track-btn",
+        title: this.translationService.translate("TMM_HELP_EDIT_TITLE"),
+        content: this.translationService.translate("TMM_HELP_EDIT_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#add-item-btn',
-        title: this.translationService.translate('TMM_HELP_CREATE_TITLE'),
-        content: this.translationService.translate('TMM_HELP_CREATE_CONTENT'),
-        position: 'bottom'
+        selector: "#add-item-btn",
+        title: this.translationService.translate("TMM_HELP_CREATE_TITLE"),
+        content: this.translationService.translate("TMM_HELP_CREATE_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#delete-track-btn',
-        title: this.translationService.translate('TMM_HELP_DELETE_TITLE'),
-        content: this.translationService.translate('TMM_HELP_DELETE_CONTENT'),
-        position: 'bottom'
+        selector: "#delete-track-btn",
+        title: this.translationService.translate("TMM_HELP_DELETE_TITLE"),
+        content: this.translationService.translate("TMM_HELP_DELETE_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TMM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TMM_HELP_HELP_CONTENT'),
-        position: 'bottom'
-      }
+        selector: "#help-track-btn",
+        title: this.translationService.translate("TMM_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TMM_HELP_HELP_CONTENT"),
+        position: "bottom",
+      },
     ];
     this.helpService.startGuide(steps);
   }
 
-
   getDriversForTeam(team: Team): Driver[] {
     if (!team || !team.driverIds) return [];
     return team.driverIds
-      .map(id => this.driversMap.get(id))
+      .map((id) => this.driversMap.get(id))
       .filter((d): d is Driver => !!d);
   }
 
   selectTeam(team: Team) {
-    console.log('Selecting team:', team);
+    console.log("Selecting team:", team);
     this.selectedTeam = team;
-    this.editingTeam = new Team(
-      team.entity_id,
-      team.name,
-      team.avatarUrl,
-      [...team.driverIds]
-    );
+    this.editingTeam = new Team(team.entity_id, team.name, team.avatarUrl, [
+      ...team.driverIds,
+    ]);
   }
 
   monitorConnection() {
-    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
-      this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
-    });
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+      });
   }
 
   updateTeam() {
-    console.log('Update team clicked. Selected Team:', this.selectedTeam);
+    console.log("Update team clicked. Selected Team:", this.selectedTeam);
     if (!this.selectedTeam) return;
-    console.log('Navigating to editor with ID:', this.selectedTeam.entity_id);
-    this.router.navigate(['/team-editor'], {
-      queryParams: { id: this.selectedTeam.entity_id }
+    console.log("Navigating to editor with ID:", this.selectedTeam.entity_id);
+    this.router.navigate(["/team-editor"], {
+      queryParams: { id: this.selectedTeam.entity_id },
     });
   }
 
@@ -228,36 +234,42 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     if (this.isSaving) return;
     this.isSaving = true;
 
-    const baseName = this.translationService.translate('TMM_DEFAULT_TEAM_NAME');
+    const baseName = this.translationService.translate("TMM_DEFAULT_TEAM_NAME");
     const uniqueName = this.generateUniqueTeamName(baseName);
 
     const newTeam = {
       name: uniqueName,
       driverIds: [],
-      avatarUrl: undefined
+      avatarUrl: undefined,
     };
 
     this.dataService.createTeam(newTeam).subscribe({
       next: (createdTeam: any) => {
         this.isSaving = false;
-        this.router.navigate(['/team-editor'], { queryParams: { id: createdTeam.entity_id } });
+        this.router.navigate(["/team-editor"], {
+          queryParams: { id: createdTeam.entity_id },
+        });
       },
       error: (err: any) => {
-        console.error('Failed to create new team', err);
+        console.error("Failed to create new team", err);
         this.isSaving = false;
-      }
+      },
     });
   }
 
   private generateUniqueTeamName(baseName: string): string {
     let name = baseName;
-    if (!this.teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+    if (!this.teams.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
       return name;
     }
     let counter = 1;
     while (true) {
       const candidate = `${baseName}_${counter}`;
-      if (!this.teams.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.teams.some(
+          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -283,9 +295,9 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.loadData();
       },
       error: (err) => {
-        console.error('Failed to delete team', err);
+        console.error("Failed to delete team", err);
         this.isSaving = false;
-      }
+      },
     });
   }
 

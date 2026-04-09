@@ -1,24 +1,31 @@
-import { Location } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
-
-import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { createTTSContext, mockTTSContext } from 'src/app/utils/audio';
+import { Location } from "@angular/common";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { forkJoin, Subscription } from "rxjs";
+import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
+import { createTTSContext, mockTTSContext } from "src/app/utils/audio";
 
 @Component({
-  selector: 'app-driver-editor',
-  templateUrl: './driver-editor.component.html',
-  styleUrls: ['./driver-editor.component.css'],
-  standalone: false
+  selector: "app-driver-editor",
+  templateUrl: "./driver-editor.component.html",
+  styleUrls: ["./driver-editor.component.css"],
+  standalone: false,
 })
-
 export class DriverEditorComponent implements OnInit, OnDestroy {
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
@@ -50,7 +57,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   sectionsExpanded = {
-    audio: true
+    audio: true,
   };
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
@@ -66,7 +73,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private location: Location,
     private helpService: HelpService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
   ) {
     this.undoManager = new UndoManager<Driver>(
       {
@@ -79,9 +86,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingDriver) {
             this.editingDriver.entity_id = currentId;
           }
-        }
+        },
       },
-      () => this.editingDriver // snapshotGetter
+      () => this.editingDriver, // snapshotGetter
     );
   }
 
@@ -92,16 +99,18 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.loadData();
 
     if (this.undoManager) {
-      this.subscriptions.push(this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveDriver();
-      }));
+      this.subscriptions.push(
+        this.undoManager.stateCommitted$.subscribe(() => {
+          this.autoSaveDriver();
+        }),
+      );
     }
 
     // Trigger help automatically on first visit or if requested via query param
     // TODO(aufderheide): I think the param query is just for tests and if so
     // should be removed and the tests should fix flakiness issues some other way.
-    this.route.queryParams.subscribe(params => {
-      const forceHelp = params['help'] === 'true';
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.driverEditorHelpShown) {
         setTimeout(() => {
@@ -118,7 +127,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.isDestroyed = true;
     this.connectionMonitor.stopMonitoring();
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions.forEach((s) => s.unsubscribe());
     this.undoManager.destroy();
   }
 
@@ -128,18 +137,18 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       lastLapTime: 1.234,
       bestLapTime: 1.234,
       averageLapTime: 1.5,
-      lapCount: 10
+      lapCount: 10,
     });
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
 
-  @HostListener('window:keydown', ['$event'])
+  @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
         this.redo();
@@ -147,7 +156,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         this.undo();
       }
     }
-    if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
       event.preventDefault();
       this.redo();
     }
@@ -166,15 +175,15 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    const idParam = this.route.snapshot.queryParamMap.get('id');
+    const idParam = this.route.snapshot.queryParamMap.get("id");
     if (!idParam) {
-      throw new Error('Driver Editor: No entity ID provided.');
+      throw new Error("Driver Editor: No entity ID provided.");
     }
 
     this.isLoading = true;
     this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
-      assets: this.dataService.listAssets()
+      assets: this.dataService.listAssets(),
     }).subscribe({
       next: (result) => {
         try {
@@ -187,12 +196,12 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error('Failed to load data', err);
+        console.error("Failed to load data", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
         }
-      }
+      },
     });
   }
 
@@ -203,7 +212,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       driver.nickname,
       driver.avatarUrl,
       driver.lapAudio ? { ...driver.lapAudio } : undefined,
-      driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined
+      driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined,
     );
   }
 
@@ -218,22 +227,32 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   private areDriversEqual(d1: Driver, d2: Driver): boolean {
-    const normalizeString = (val: any) => (val === null || val === undefined) ? '' : String(val).trim();
+    const normalizeString = (val: any) =>
+      val === null || val === undefined ? "" : String(val).trim();
 
     const nameMatch = normalizeString(d1.name) === normalizeString(d2.name);
-    const nicknameMatch = normalizeString(d1.nickname) === normalizeString(d2.nickname);
-    const avatarMatch = normalizeString(d1.avatarUrl) === normalizeString(d2.avatarUrl);
+    const nicknameMatch =
+      normalizeString(d1.nickname) === normalizeString(d2.nickname);
+    const avatarMatch =
+      normalizeString(d1.avatarUrl) === normalizeString(d2.avatarUrl);
 
     const checkAudio = (a1: any, a2: any) => {
       if (!a1 || !a2) return a1 === a2;
-      return normalizeString(a1.url) === normalizeString(a2.url) &&
-        normalizeString(a1.type || 'preset') === normalizeString(a2.type || 'preset') &&
-        normalizeString(a1.text) === normalizeString(a2.text);
+      return (
+        normalizeString(a1.url) === normalizeString(a2.url) &&
+        normalizeString(a1.type || "preset") ===
+          normalizeString(a2.type || "preset") &&
+        normalizeString(a1.text) === normalizeString(a2.text)
+      );
     };
 
-    return nameMatch && nicknameMatch && avatarMatch &&
+    return (
+      nameMatch &&
+      nicknameMatch &&
+      avatarMatch &&
       checkAudio(d1.lapAudio, d2.lapAudio) &&
-      checkAudio(d1.bestLapAudio, d2.bestLapAudio);
+      checkAudio(d1.bestLapAudio, d2.bestLapAudio)
+    );
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
@@ -241,9 +260,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     const name = this.editingDriver.name.trim().toLowerCase();
     if (!name) return false;
 
-    return !this.allDrivers.some(d =>
-      (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-      d.name.toLowerCase() === name
+    return !this.allDrivers.some(
+      (d) =>
+        (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
+        d.name.toLowerCase() === name,
     );
   }
 
@@ -252,25 +272,27 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     const nickname = this.editingDriver.nickname?.trim().toLowerCase();
     if (!nickname) return true;
 
-    return !this.allDrivers.some(d =>
-      (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-      d.nickname?.toLowerCase() === nickname
+    return !this.allDrivers.some(
+      (d) =>
+        (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
+        d.nickname?.toLowerCase() === nickname,
     );
   }
 
-  private mapSoundType(type: string | undefined): 'preset' | 'tts' {
-    if (type === 'tts') return 'tts';
-    return 'preset';
+  private mapSoundType(type: string | undefined): "preset" | "tts" {
+    if (type === "tts") return "tts";
+    return "preset";
   }
 
   monitorConnection() {
-    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
-      this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
 
-      if (this.isConnectionLost) {
-        this.handleConnectionLoss();
-      }
-    });
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
   }
 
   handleConnectionLoss() {
@@ -283,7 +305,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
       if (Date.now() - startTime > 5000) {
         clearInterval(intervalId);
-        this.router.navigate(['/raceday-setup']);
+        this.router.navigate(["/raceday-setup"]);
       }
     }, 1000);
   }
@@ -302,7 +324,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
-    this.router.navigate(['/driver-manager'], { queryParams: { id: this.editingDriver?.entity_id } });
+    this.router.navigate(["/driver-manager"], {
+      queryParams: { id: this.editingDriver?.entity_id },
+    });
   }
 
   isConfigValid(): boolean {
@@ -313,7 +337,10 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (!this.undoManager) return false;
     const umChanges = this.undoManager.hasChanges();
     if (!this.editingDriver || !this.originalDriver) return umChanges;
-    const manualChanges = !this.areDriversEqual(this.editingDriver, this.originalDriver);
+    const manualChanges = !this.areDriversEqual(
+      this.editingDriver,
+      this.originalDriver,
+    );
     return umChanges || manualChanges;
   }
 
@@ -321,7 +348,9 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (!this.editingDriver) return;
     this.editingDriver.name = this.generateUniqueName(this.editingDriver.name);
     if (this.editingDriver.nickname) {
-      this.editingDriver.nickname = this.generateUniqueNickname(this.editingDriver.nickname);
+      this.editingDriver.nickname = this.generateUniqueNickname(
+        this.editingDriver.nickname,
+      );
     }
     this.updateDriver(true);
   }
@@ -329,11 +358,15 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   private generateUniqueName(baseName: string): string {
     let counter = 1;
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, '');
+    const base = baseName.replace(pattern, "");
 
     while (true) {
       const candidate = `${base}_${counter}`;
-      if (!this.allDrivers.some(d => d.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.allDrivers.some(
+          (d) => d.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -343,11 +376,15 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   private generateUniqueNickname(baseNickname: string): string {
     let counter = 1;
     const pattern = /(_\d+)$/;
-    const base = baseNickname.replace(pattern, '');
+    const base = baseNickname.replace(pattern, "");
 
     while (true) {
       const candidate = `${base}_${counter}`;
-      if (!this.allDrivers.some(d => d.nickname?.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.allDrivers.some(
+          (d) => d.nickname?.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -376,32 +413,44 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   private loadDataInternal(rawDrivers: any[], assets: any[]) {
-    this.allDrivers = rawDrivers.map(d => new Driver(
-      d.entity_id, d.name, d.nickname || '',
-      d.avatarUrl,
-      {
-        type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-        url: d.lapAudio?.url || d.lapSoundUrl,
-        text: d.lapAudio?.text || d.lapSoundText
-      },
-      {
-        type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
-        url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-        text: d.bestLapAudio?.text || d.bestLapSoundText
-      }
-    ));
+    this.allDrivers = rawDrivers.map(
+      (d) =>
+        new Driver(
+          d.entity_id,
+          d.name,
+          d.nickname || "",
+          d.avatarUrl,
+          {
+            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+            url: d.lapAudio?.url || d.lapSoundUrl,
+            text: d.lapAudio?.text || d.lapSoundText,
+          },
+          {
+            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+            text: d.bestLapAudio?.text || d.bestLapSoundText,
+          },
+        ),
+    );
 
     const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter(a => a.type === 'image');
-    this.soundAssets = allAssets.filter(a => a.type === 'sound');
+    this.avatarAssets = allAssets.filter((a) => a.type === "image");
+    this.soundAssets = allAssets.filter((a) => a.type === "sound");
 
-    const idParam = this.route.snapshot.queryParamMap.get('id');
+    const idParam = this.route.snapshot.queryParamMap.get("id");
 
-    if (idParam === 'new') {
+    if (idParam === "new") {
       this.selectedDriver = undefined;
-      this.editingDriver = new Driver('new', '', '', '', { type: 'preset' }, { type: 'preset' });
+      this.editingDriver = new Driver(
+        "new",
+        "",
+        "",
+        "",
+        { type: "preset" },
+        { type: "preset" },
+      );
     } else if (idParam) {
-      const found = this.allDrivers.find(d => d.entity_id === idParam);
+      const found = this.allDrivers.find((d) => d.entity_id === idParam);
       if (found) {
         this.selectDriver(found);
       } else {
@@ -411,21 +460,26 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
     // undoManager.initialize will be called inside selectDriver if count > 0,
     // or we call it once here if it's 'new'
-    if (idParam === 'new' && this.editingDriver) {
+    if (idParam === "new" && this.editingDriver) {
       this.undoManager.initialize(this.editingDriver);
     }
   }
 
-  undo() { this.undoManager.undo(); }
-  redo() { this.undoManager.redo(); }
+  undo() {
+    this.undoManager.undo();
+  }
+  redo() {
+    this.undoManager.redo();
+  }
 
-
-  onInputFocus() { this.undoManager.onInputFocus(); }
+  onInputFocus() {
+    this.undoManager.onInputFocus();
+  }
   onInputChange() {
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
-  onInputBlur() { 
+  onInputBlur() {
     this.undoManager.onInputBlur();
     this.cdr.detectChanges();
   }
@@ -441,19 +495,23 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.undoManager.initialize(this.editingDriver);
   }
 
-  private saveDriverData(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
+  private saveDriverData(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ) {
     if (!this.editingDriver) return;
 
     const driverToSend = { ...this.editingDriver };
-    const wasNew = isSaveAsNew || driverToSend.entity_id === 'new';
+    const wasNew = isSaveAsNew || driverToSend.entity_id === "new";
 
     if (wasNew) {
-      driverToSend.entity_id = 'new';
+      driverToSend.entity_id = "new";
     }
 
-    const obs = driverToSend.entity_id === 'new'
-      ? this.dataService.createDriver(driverToSend)
-      : this.dataService.updateDriver(driverToSend.entity_id, driverToSend);
+    const obs =
+      driverToSend.entity_id === "new"
+        ? this.dataService.createDriver(driverToSend)
+        : this.dataService.updateDriver(driverToSend.entity_id, driverToSend);
 
     obs.subscribe({
       next: (result) => {
@@ -470,10 +528,16 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
 
         if (wasNew) {
           if (isAutoSave) {
-            const url = this.router.serializeUrl(this.router.createUrlTree(['/driver-editor'], { queryParams: { id: result.entity_id } }));
+            const url = this.router.serializeUrl(
+              this.router.createUrlTree(["/driver-editor"], {
+                queryParams: { id: result.entity_id },
+              }),
+            );
             this.location.replaceState(url);
           } else {
-            this.router.navigate(['/driver-editor'], { queryParams: { id: result.entity_id } });
+            this.router.navigate(["/driver-editor"], {
+              queryParams: { id: result.entity_id },
+            });
           }
         }
 
@@ -484,47 +548,60 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         this.refreshDriverList();
       },
       error: (err) => {
-        console.error('Failed to save driver', err);
+        console.error("Failed to save driver", err);
         if (!isAutoSave) {
           if (err.status === 409) {
-            alert(err.error || this.translationService.translate('DE_ERROR_NAME_EXISTS'));
+            alert(
+              err.error ||
+                this.translationService.translate("DE_ERROR_NAME_EXISTS"),
+            );
           } else {
-            alert(this.translationService.translate('DE_ERROR_SAVE_FAILED') + (err.error || err.message));
+            alert(
+              this.translationService.translate("DE_ERROR_SAVE_FAILED") +
+                (err.error || err.message),
+            );
           }
         }
         this.isSaving = false;
         this.isAutoSaving = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
   private refreshDriverList() {
     this.dataService.getDrivers().subscribe({
       next: (drivers) => {
-        this.allDrivers = drivers.map(d => new Driver(
-          d.entity_id, d.name, d.nickname || '',
-          d.avatarUrl,
-          {
-            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-            url: d.lapAudio?.url || d.lapSoundUrl,
-            text: d.lapAudio?.text || d.lapSoundText
-          },
-          {
-            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
-            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-            text: d.bestLapAudio?.text || d.bestLapSoundText
-          }
-        ));
+        this.allDrivers = drivers.map(
+          (d) =>
+            new Driver(
+              d.entity_id,
+              d.name,
+              d.nickname || "",
+              d.avatarUrl,
+              {
+                type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+                url: d.lapAudio?.url || d.lapSoundUrl,
+                text: d.lapAudio?.text || d.lapSoundText,
+              },
+              {
+                type: this.mapSoundType(
+                  d.bestLapAudio?.type || d.bestLapSoundType,
+                ),
+                url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+                text: d.bestLapAudio?.text || d.bestLapSoundText,
+              },
+            ),
+        );
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Failed to refresh driver list', err)
+      error: (err) => console.error("Failed to refresh driver list", err),
     });
   }
 
   deleteDriver() {
     if (!this.editingDriver) return;
-    if (confirm(this.translationService.translate('DE_CONFIRM_DELETE'))) {
+    if (confirm(this.translationService.translate("DE_CONFIRM_DELETE"))) {
       this.isSaving = true;
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {
@@ -532,56 +609,56 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.onBack();
         },
         error: (err) => {
-          console.error('Failed to delete driver', err);
+          console.error("Failed to delete driver", err);
           this.isSaving = false;
-        }
+        },
       });
     }
   }
 
   getAvatarUrl(url?: string): string {
-    if (!url) return 'assets/images/default_avatar.svg';
-    if (url.startsWith('/')) return `http://localhost:7070${url}`;
+    if (!url) return "assets/images/default_avatar.svg";
+    if (url.startsWith("/")) return `http://localhost:7070${url}`;
     return url;
   }
 
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('DE_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('DE_HELP_WELCOME_CONTENT'),
-        position: 'center'
+        title: this.translationService.translate("DE_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("DE_HELP_WELCOME_CONTENT"),
+        position: "center",
       },
       {
-        selector: '#driver-avatar-section',
-        title: this.translationService.translate('DE_HELP_AVATAR_TITLE'),
-        content: this.translationService.translate('DE_HELP_AVATAR_CONTENT'),
-        position: 'right'
+        selector: "#driver-avatar-section",
+        title: this.translationService.translate("DE_HELP_AVATAR_TITLE"),
+        content: this.translationService.translate("DE_HELP_AVATAR_CONTENT"),
+        position: "right",
       },
       {
-        selector: '#driver-name-section',
-        title: this.translationService.translate('DE_HELP_NAME_TITLE'),
-        content: this.translationService.translate('DE_HELP_NAME_CONTENT'),
-        position: 'bottom'
+        selector: "#driver-name-section",
+        title: this.translationService.translate("DE_HELP_NAME_TITLE"),
+        content: this.translationService.translate("DE_HELP_NAME_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#driver-nickname-section',
-        title: this.translationService.translate('DE_HELP_NICKNAME_TITLE'),
-        content: this.translationService.translate('DE_HELP_NICKNAME_CONTENT'),
-        position: 'bottom'
+        selector: "#driver-nickname-section",
+        title: this.translationService.translate("DE_HELP_NICKNAME_TITLE"),
+        content: this.translationService.translate("DE_HELP_NICKNAME_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#copy-item-btn',
-        title: this.translationService.translate('DE_HELP_DUPLICATE_TITLE'),
-        content: this.translationService.translate('DE_HELP_DUPLICATE_CONTENT'),
-        position: 'bottom'
+        selector: "#copy-item-btn",
+        title: this.translationService.translate("DE_HELP_DUPLICATE_TITLE"),
+        content: this.translationService.translate("DE_HELP_DUPLICATE_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
-        position: 'bottom'
-      }
+        selector: "#help-track-btn",
+        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
+        position: "bottom",
+      },
     ];
 
     this.helpService.startGuide(steps);

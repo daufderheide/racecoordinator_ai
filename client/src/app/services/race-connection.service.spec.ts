@@ -1,13 +1,12 @@
-import { TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
+import { of, Subject } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { com } from "src/app/proto/message";
 
-import { DataService } from 'src/app/data.service';
-import { com } from 'src/app/proto/message';
+import { RaceService } from "./race.service";
+import { RaceConnectionService } from "./race-connection.service";
 
-import { RaceConnectionService } from './race-connection.service';
-import { RaceService } from './race.service';
-
-describe('RaceConnectionService', () => {
+describe("RaceConnectionService", () => {
   let service: RaceConnectionService;
   let mockDataService: any;
   let mockRaceService: any;
@@ -21,15 +20,29 @@ describe('RaceConnectionService', () => {
     raceUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<com.antigravity.ILap>();
 
-    mockDataService = jasmine.createSpyObj('DataService', [
-      'getInterfaceEvents', 'getRaceUpdate', 'getLaps', 'getRaceTime', 'getCarData', 
-      'getStandingsUpdate', 'getOverallStandingsUpdate', 'getReactionTimes', 'getSegments', 
-      'getRaceState', 'getDrivers', 'connectToInterfaceDataSocket', 'disconnectFromInterfaceDataSocket',
-      'updateRaceSubscription'
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getInterfaceEvents",
+      "getRaceUpdate",
+      "getLaps",
+      "getRaceTime",
+      "getCarData",
+      "getStandingsUpdate",
+      "getOverallStandingsUpdate",
+      "getReactionTimes",
+      "getSegments",
+      "getRaceState",
+      "getDrivers",
+      "connectToInterfaceDataSocket",
+      "disconnectFromInterfaceDataSocket",
+      "updateRaceSubscription",
     ]);
 
-    mockDataService.getInterfaceEvents.and.returnValue(interfaceEventsSubject.asObservable());
-    mockDataService.getRaceUpdate.and.returnValue(raceUpdateSubject.asObservable());
+    mockDataService.getInterfaceEvents.and.returnValue(
+      interfaceEventsSubject.asObservable(),
+    );
+    mockDataService.getRaceUpdate.and.returnValue(
+      raceUpdateSubject.asObservable(),
+    );
     mockDataService.getLaps.and.returnValue(lapsSubject.asObservable());
     mockDataService.getRaceTime.and.returnValue(of(0));
     mockDataService.getCarData.and.returnValue(of({}));
@@ -37,31 +50,38 @@ describe('RaceConnectionService', () => {
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
     mockDataService.getReactionTimes.and.returnValue(of({}));
     mockDataService.getSegments.and.returnValue(of(null));
-    mockDataService.getRaceState.and.returnValue(of(com.antigravity.RaceState.NOT_STARTED));
+    mockDataService.getRaceState.and.returnValue(
+      of(com.antigravity.RaceState.NOT_STARTED),
+    );
     mockDataService.getDrivers.and.returnValue(of([]));
 
-    mockRaceService = jasmine.createSpyObj('RaceService', ['getRace', 'getCurrentHeat']);
+    mockRaceService = jasmine.createSpyObj("RaceService", [
+      "getRace",
+      "getCurrentHeat",
+    ]);
     mockRaceService.getCurrentHeat.and.returnValue({
-      heatDrivers: [{ objectId: 'd1', addLapTime: jasmine.createSpy('addLapTime') }]
+      heatDrivers: [
+        { objectId: "d1", addLapTime: jasmine.createSpy("addLapTime") },
+      ],
     });
 
     TestBed.configureTestingModule({
       providers: [
         RaceConnectionService,
         { provide: DataService, useValue: mockDataService },
-        { provide: RaceService, useValue: mockRaceService }
-      ]
+        { provide: RaceService, useValue: mockRaceService },
+      ],
     });
     service = TestBed.inject(RaceConnectionService);
   });
 
-  it('should be created', () => {
+  it("should be created", () => {
     expect(service).toBeTruthy();
   });
 
-  describe('connect / disconnect (Reference Counting)', () => {
-    it('should call startConnection only on first connect', () => {
-      spyOn<any>(service, 'startConnection').and.callThrough();
+  describe("connect / disconnect (Reference Counting)", () => {
+    it("should call startConnection only on first connect", () => {
+      spyOn<any>(service, "startConnection").and.callThrough();
 
       service.connect();
       expect((service as any).startConnection).toHaveBeenCalledTimes(1);
@@ -70,8 +90,8 @@ describe('RaceConnectionService', () => {
       expect((service as any).startConnection).toHaveBeenCalledTimes(1); // Should still be 1
     });
 
-    it('should call stopConnection when reference count reaches 0', () => {
-      spyOn<any>(service, 'stopConnection').and.callThrough();
+    it("should call stopConnection when reference count reaches 0", () => {
+      spyOn<any>(service, "stopConnection").and.callThrough();
 
       service.connect();
       service.connect(); // Count = 2
@@ -84,66 +104,81 @@ describe('RaceConnectionService', () => {
     });
   });
 
-  describe('Watchdog and Alerts', () => {
-    it('should emit timeout alert after 5s of NO_STATUS on startup', fakeAsync(() => {
+  describe("Watchdog and Alerts", () => {
+    it("should emit timeout alert after 5s of NO_STATUS on startup", fakeAsync(() => {
       let emittedAlert: any = null;
-      const sub = service.interfaceAlert$.subscribe(alert => emittedAlert = alert);
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
 
       service.connect();
       expect(emittedAlert).toBeNull();
 
       tick(5000);
-      expect(emittedAlert).toEqual({ titleKey: 'ACK_MODAL_TITLE_DISCONNECTED', messageKey: 'ACK_MODAL_MSG_DISCONNECTED' });
+      expect(emittedAlert).toEqual({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
       sub.unsubscribe();
       flush();
     }));
 
-    it('should clear timeout alerts when CONNECTED is received', fakeAsync(() => {
+    it("should clear timeout alerts when CONNECTED is received", fakeAsync(() => {
       let emittedAlert: any = null;
-      const sub = service.interfaceAlert$.subscribe(alert => emittedAlert = alert);
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
 
       service.connect();
       tick(5000); // Trigger timeout
-      expect(emittedAlert.titleKey).toBe('ACK_MODAL_TITLE_DISCONNECTED');
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
-      interfaceEventsSubject.next({ status: { status: com.antigravity.InterfaceStatus.CONNECTED } });
-      expect(emittedAlert.titleKey).toBe('ACK_MODAL_TITLE_CONNECTED');
-      
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_CONNECTED");
+
       sub.unsubscribe();
       flush();
     }));
 
-    it('should set 5s alarm when DISCONNECTED is received', fakeAsync(() => {
+    it("should set 5s alarm when DISCONNECTED is received", fakeAsync(() => {
       let emittedAlert: any = null;
-      const sub = service.interfaceAlert$.subscribe(alert => emittedAlert = alert);
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
 
       service.connect();
-      interfaceEventsSubject.next({ status: { status: com.antigravity.InterfaceStatus.CONNECTED } });
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.CONNECTED },
+      });
       emittedAlert = null;
 
-      interfaceEventsSubject.next({ status: { status: com.antigravity.InterfaceStatus.DISCONNECTED } });
-      
+      interfaceEventsSubject.next({
+        status: { status: com.antigravity.InterfaceStatus.DISCONNECTED },
+      });
+
       tick(2000);
       expect(emittedAlert).toBeNull();
 
       tick(3000);
-      expect(emittedAlert.titleKey).toBe('ACK_MODAL_TITLE_DISCONNECTED');
-      
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
+
       sub.unsubscribe();
       flush();
     }));
   });
 
-  describe('Data Stream Forwarding', () => {
-    it('should pipe laps to laps$', (done) => {
-      const lapData: com.antigravity.ILap = { objectId: 'd1', lapTime: 1.234 };
+  describe("Data Stream Forwarding", () => {
+    it("should pipe laps to laps$", (done) => {
+      const lapData: com.antigravity.ILap = { objectId: "d1", lapTime: 1.234 };
       service.connect();
 
-      service.laps$.subscribe(lap => {
-         if (lap) {
-            expect(lap).toEqual(lapData);
-            done();
-         }
+      service.laps$.subscribe((lap) => {
+        if (lap) {
+          expect(lap).toEqual(lapData);
+          done();
+        }
       });
 
       lapsSubject.next(lapData);

@@ -1,32 +1,32 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, interval, Subscription, of } from 'rxjs';
-import { switchMap, catchError, map, timeout } from 'rxjs/operators';
-
-import { DataService } from 'src/app/data.service';
+import { Injectable, OnDestroy } from "@angular/core";
+import { BehaviorSubject, interval, Observable, of, Subscription } from "rxjs";
+import { catchError, map, switchMap, timeout } from "rxjs/operators";
+import { DataService } from "src/app/data.service";
 
 export enum ConnectionState {
-  CONNECTED = 'CONNECTED',
-  DISCONNECTED = 'DISCONNECTED',
-  RECONNECTING = 'RECONNECTING'
+  CONNECTED = "CONNECTED",
+  DISCONNECTED = "DISCONNECTED",
+  RECONNECTING = "RECONNECTING",
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class ConnectionMonitorService implements OnDestroy {
-  private connectionStateSubject = new BehaviorSubject<ConnectionState>(ConnectionState.CONNECTED);
+  private connectionStateSubject = new BehaviorSubject<ConnectionState>(
+    ConnectionState.CONNECTED,
+  );
   public connectionState$ = this.connectionStateSubject.asObservable();
 
   public get currentState(): ConnectionState {
     return this.connectionStateSubject.value;
   }
 
-
   private monitoringSubscription: Subscription | null = null;
   private readonly CHECK_INTERVAL_MS = 5000;
   private readonly TIMEOUT_MS = 3000;
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService) {}
 
   ngOnDestroy() {
     this.stopMonitoring();
@@ -41,9 +41,7 @@ export class ConnectionMonitorService implements OnDestroy {
     }
 
     this.monitoringSubscription = interval(this.CHECK_INTERVAL_MS)
-      .pipe(
-        switchMap(() => this.checkConnection())
-      )
+      .pipe(switchMap(() => this.checkConnection()))
       .subscribe();
   }
 
@@ -67,18 +65,18 @@ export class ConnectionMonitorService implements OnDestroy {
       timeout(this.TIMEOUT_MS),
       map(() => {
         if (this.connectionStateSubject.value !== ConnectionState.CONNECTED) {
-          console.log('Connection restored!');
+          console.log("Connection restored!");
           this.connectionStateSubject.next(ConnectionState.CONNECTED);
         }
         return true;
       }),
-      catchError(err => {
+      catchError((err) => {
         if (this.connectionStateSubject.value === ConnectionState.CONNECTED) {
-          console.warn('Connection lost in monitor', err);
+          console.warn("Connection lost in monitor", err);
           this.connectionStateSubject.next(ConnectionState.DISCONNECTED);
         }
         return of(false);
-      })
+      }),
     );
   }
 
@@ -97,15 +95,15 @@ export class ConnectionMonitorService implements OnDestroy {
     if (isConnected) return;
 
     // If not connected, poll rapidly until connected
-    return new Promise(resolve => {
-      const sub = interval(1000).pipe(
-        switchMap(() => this.checkConnection())
-      ).subscribe(connected => {
-        if (connected) {
-          sub.unsubscribe();
-          resolve();
-        }
-      });
+    return new Promise((resolve) => {
+      const sub = interval(1000)
+        .pipe(switchMap(() => this.checkConnection()))
+        .subscribe((connected) => {
+          if (connected) {
+            sub.unsubscribe();
+            resolve();
+          }
+        });
     });
   }
 }

@@ -1,32 +1,33 @@
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { DataService } from "src/app/data.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { AudioSelectorComponent } from "./audio-selector.component";
+import { AudioSelectorHarness } from "./testing/audio-selector.harness";
 
-import { AudioSelectorComponent } from './audio-selector.component';
-import { AudioSelectorHarness } from './testing/audio-selector.harness';
-
-@Component({ selector: 'app-item-selector', template: '', standalone: false })
+@Component({ selector: "app-item-selector", template: "", standalone: false })
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
   @Output() select = new EventEmitter<any>();
   @Output() close = new EventEmitter<void>();
-  @Input() itemType: string = 'image';
+  @Input() itemType: string = "image";
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
 }
 
-import { Pipe, PipeTransform } from '@angular/core';
-@Pipe({ name: 'translate', standalone: false })
+import { Pipe, PipeTransform } from "@angular/core";
+@Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string { return value; }
+  transform(value: string): string {
+    return value;
+  }
 }
 
-describe('AudioSelectorComponent', () => {
+describe("AudioSelectorComponent", () => {
   let component: AudioSelectorComponent;
   let fixture: ComponentFixture<AudioSelectorComponent>;
   let harness: AudioSelectorHarness;
@@ -34,53 +35,62 @@ describe('AudioSelectorComponent', () => {
   let mockTranslationService: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj('DataService', ['uploadAsset']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
-    mockDataService.serverUrl = 'http://localhost:8080';
+    mockDataService = jasmine.createSpyObj("DataService", ["uploadAsset"]);
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "translate",
+    ]);
+    mockDataService.serverUrl = "http://localhost:8080";
 
     await TestBed.configureTestingModule({
-      declarations: [AudioSelectorComponent, MockItemSelectorComponent, MockTranslatePipe],
+      declarations: [
+        AudioSelectorComponent,
+        MockItemSelectorComponent,
+        MockTranslatePipe,
+      ],
       imports: [FormsModule],
       providers: [
         { provide: DataService, useValue: mockDataService },
-        { provide: TranslationService, useValue: mockTranslationService }
-      ]
+        { provide: TranslationService, useValue: mockTranslationService },
+      ],
     }).compileComponents();
   });
 
   beforeEach(async () => {
     fixture = TestBed.createComponent(AudioSelectorComponent);
     component = fixture.componentInstance;
-    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, AudioSelectorHarness);
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      AudioSelectorHarness,
+    );
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should emit type change', () => {
-    spyOn(component.typeChange, 'emit');
-    component.onTypeChange('tts');
-    expect(component.type).toBe('tts');
-    expect(component.typeChange.emit).toHaveBeenCalledWith('tts');
+  it("should emit type change", () => {
+    spyOn(component.typeChange, "emit");
+    component.onTypeChange("tts");
+    expect(component.type).toBe("tts");
+    expect(component.typeChange.emit).toHaveBeenCalledWith("tts");
   });
 
-  it('should emit url change', () => {
-    spyOn(component.urlChange, 'emit');
-    component.onUrlChange('new-url');
-    expect(component.url).toBe('new-url');
-    expect(component.urlChange.emit).toHaveBeenCalledWith('new-url');
+  it("should emit url change", () => {
+    spyOn(component.urlChange, "emit");
+    component.onUrlChange("new-url");
+    expect(component.url).toBe("new-url");
+    expect(component.urlChange.emit).toHaveBeenCalledWith("new-url");
   });
 
-  it('should emit text change', () => {
-    spyOn(component.textChange, 'emit');
-    component.onTextChange('hello');
-    expect(component.text).toBe('hello');
-    expect(component.textChange.emit).toHaveBeenCalledWith('hello');
+  it("should emit text change", () => {
+    spyOn(component.textChange, "emit");
+    component.onTextChange("hello");
+    expect(component.text).toBe("hello");
+    expect(component.textChange.emit).toHaveBeenCalledWith("hello");
   });
 
-  it('should open and close item selector', async () => {
+  it("should open and close item selector", async () => {
     await harness.clickSelectSound();
     expect(component.showItemSelector).toBeTrue();
 
@@ -88,27 +98,27 @@ describe('AudioSelectorComponent', () => {
     expect(component.showItemSelector).toBeFalse();
   });
 
-  it('should handle asset selection', () => {
-    spyOn(component.urlChange, 'emit');
-    spyOn(component.typeChange, 'emit');
+  it("should handle asset selection", () => {
+    spyOn(component.urlChange, "emit");
+    spyOn(component.typeChange, "emit");
 
-    component.type = 'tts';
-    component.onAssetSelected({ url: 'asset-url' });
+    component.type = "tts";
+    component.onAssetSelected({ url: "asset-url" });
 
-    expect(component.url).toBe('asset-url');
-    expect(component.urlChange.emit).toHaveBeenCalledWith('asset-url');
-    expect(component.type).toBe('preset');
-    expect(component.typeChange.emit).toHaveBeenCalledWith('preset');
+    expect(component.url).toBe("asset-url");
+    expect(component.urlChange.emit).toHaveBeenCalledWith("asset-url");
+    expect(component.type).toBe("preset");
+    expect(component.typeChange.emit).toHaveBeenCalledWith("preset");
     expect(component.showItemSelector).toBeFalse();
   });
 
-  it('should play preset audio', () => {
-    component.type = 'preset';
-    component.url = 'test.mp3';
+  it("should play preset audio", () => {
+    component.type = "preset";
+    component.url = "test.mp3";
 
-    const mockAudio = jasmine.createSpyObj('Audio', ['play']);
+    const mockAudio = jasmine.createSpyObj("Audio", ["play"]);
     mockAudio.play.and.returnValue(Promise.resolve());
-    spyOn(window, 'Audio').and.returnValue(mockAudio);
+    spyOn(window, "Audio").and.returnValue(mockAudio);
 
     component.play();
 
@@ -119,12 +129,12 @@ describe('AudioSelectorComponent', () => {
   // Note: Testing TTS relies on window.speechSynthesis which might need more complex mocking
   // for a robust test environment, but this covers the basic logic paths.
 
-  it('should call playSound when onPlayPreview is called', () => {
-    const mockAudio = jasmine.createSpyObj('Audio', ['play']);
+  it("should call playSound when onPlayPreview is called", () => {
+    const mockAudio = jasmine.createSpyObj("Audio", ["play"]);
     mockAudio.play.and.returnValue(Promise.resolve());
-    spyOn(window, 'Audio').and.returnValue(mockAudio);
+    spyOn(window, "Audio").and.returnValue(mockAudio);
 
-    const item = { name: 'Test Sound', url: 'test.mp3' };
+    const item = { name: "Test Sound", url: "test.mp3" };
     component.onPlayPreview(item);
     expect(window.Audio).toHaveBeenCalled();
     expect(mockAudio.play).toHaveBeenCalled();

@@ -1,30 +1,41 @@
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { Location } from '@angular/common';
-import { Component, Input, Output, EventEmitter, Pipe, PipeTransform } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { of, BehaviorSubject } from 'rxjs';
+import { DragDropModule } from "@angular/cdk/drag-drop";
+import { Location } from "@angular/common";
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  Pipe,
+  PipeTransform,
+} from "@angular/core";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import { BehaviorSubject, of } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import { Team } from "src/app/models/team";
+import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { Team } from 'src/app/models/team';
-import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
-import { HelpService } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
-
-import { TeamEditorComponent } from './team-editor.component';
+import { TeamEditorComponent } from "./team-editor.component";
 
 // Mock Child Components
-@Component({ selector: 'app-back-button', template: '', standalone: false })
+@Component({ selector: "app-back-button", template: "", standalone: false })
 class MockBackButtonComponent {
   @Input() route: string | null = null;
   @Input() queryParams: any = {};
-  @Input() label: string = '';
+  @Input() label: string = "";
 }
 
-@Component({ selector: 'app-image-selector', template: '', standalone: false })
+@Component({ selector: "app-image-selector", template: "", standalone: false })
 class MockImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
@@ -34,30 +45,34 @@ class MockImageSelectorComponent {
   @Output() uploadFinished = new EventEmitter<void>();
 }
 
-@Component({ selector: 'app-item-selector', template: '', standalone: false })
+@Component({ selector: "app-item-selector", template: "", standalone: false })
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
-  @Input() title: string = '';
-  @Input() itemType: string = 'image';
+  @Input() title: string = "";
+  @Input() itemType: string = "image";
   @Output() select = new EventEmitter<any>();
   @Output() close = new EventEmitter<void>();
 }
 
-@Component({ selector: 'app-undo-redo-controls', template: '', standalone: false })
+@Component({
+  selector: "app-undo-redo-controls",
+  template: "",
+  standalone: false,
+})
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
-@Component({ selector: 'app-editor-title', template: '', standalone: false })
+@Component({ selector: "app-editor-title", template: "", standalone: false })
 class MockEditorTitleComponent {
-  @Input() titleKey: string = '';
-  @Input() backRoute: string = '';
+  @Input() titleKey: string = "";
+  @Input() backRoute: string = "";
   @Input() backConfirm: boolean = false;
-  @Input() backConfirmTitle: string = '';
-  @Input() backConfirmMessage: string = '';
+  @Input() backConfirmTitle: string = "";
+  @Input() backConfirmMessage: string = "";
   @Input() undoManager: any;
   @Input() showUndo: boolean = true;
   @Input() showRedo: boolean = true;
@@ -73,20 +88,24 @@ class MockEditorTitleComponent {
   @Output() delete = new EventEmitter<void>();
 }
 
-@Component({ selector: 'app-help-overlay', template: '', standalone: false })
+@Component({ selector: "app-help-overlay", template: "", standalone: false })
 class MockHelpOverlayComponent {}
 
-@Pipe({ name: 'translate', standalone: false })
+@Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string { return value; }
+  transform(value: string): string {
+    return value;
+  }
 }
 
-@Pipe({ name: 'avatarUrl', standalone: false })
+@Pipe({ name: "avatarUrl", standalone: false })
 class MockAvatarUrlPipe implements PipeTransform {
-  transform(value: string): string { return value; }
+  transform(value: string): string {
+    return value;
+  }
 }
 
-describe('TeamEditorComponent', () => {
+describe("TeamEditorComponent", () => {
   let component: TeamEditorComponent;
   let fixture: ComponentFixture<TeamEditorComponent>;
   let mockDataService: any;
@@ -99,44 +118,59 @@ describe('TeamEditorComponent', () => {
   let mockSettingsService: any;
 
   const mockDrivers = [
-    new Driver('d1', 'Alice', 'Rocket', 'assets/images/default_avatar.svg'),
-    new Driver('d2', 'Bob', 'Drifter', 'assets/images/default_avatar.svg')
+    new Driver("d1", "Alice", "Rocket", "assets/images/default_avatar.svg"),
+    new Driver("d2", "Bob", "Drifter", "assets/images/default_avatar.svg"),
   ];
 
   const mockTeams = [
-    new Team('t1', 'Team Alpha', 'assets/images/default_avatar.svg', ['d1'])
+    new Team("t1", "Team Alpha", "assets/images/default_avatar.svg", ["d1"]),
   ];
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'getTeams', 'listAssets', 'createTeam', 'updateTeam', 'uploadAsset']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getDrivers",
+      "getTeams",
+      "listAssets",
+      "createTeam",
+      "updateTeam",
+      "uploadAsset",
+    ]);
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "translate",
+    ]);
     mockConnectionMonitor = {
-      connectionState$: new BehaviorSubject('CONNECTED'),
-      startMonitoring: jasmine.createSpy('startMonitoring'),
-      stopMonitoring: jasmine.createSpy('stopMonitoring')
+      connectionState$: new BehaviorSubject("CONNECTED"),
+      startMonitoring: jasmine.createSpy("startMonitoring"),
+      stopMonitoring: jasmine.createSpy("stopMonitoring"),
     };
-    mockRouter = jasmine.createSpyObj('Router', ['navigate'], ['serializeUrl', 'createUrlTree']);
-    mockRouter.serializeUrl = (tree: any) => 'mock-url';
+    mockRouter = jasmine.createSpyObj(
+      "Router",
+      ["navigate"],
+      ["serializeUrl", "createUrlTree"],
+    );
+    mockRouter.serializeUrl = (tree: any) => "mock-url";
     mockRouter.createUrlTree = () => ({});
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: jasmine.createSpy('get').and.returnValue('new')
-        }
-      }
+          get: jasmine.createSpy("get").and.returnValue("new"),
+        },
+      },
     };
-    mockLocation = jasmine.createSpyObj('Location', ['replaceState']);
-    mockHelpService = jasmine.createSpyObj('HelpService', ['startGuide']);
+    mockLocation = jasmine.createSpyObj("Location", ["replaceState"]);
+    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
     mockSettingsService = {
-      getSettings: jasmine.createSpy('getSettings').and.returnValue({ teamEditorHelpShown: false }),
-      saveSettings: jasmine.createSpy('saveSettings')
+      getSettings: jasmine
+        .createSpy("getSettings")
+        .and.returnValue({ teamEditorHelpShown: false }),
+      saveSettings: jasmine.createSpy("saveSettings"),
     };
 
     mockDataService.getDrivers.and.returnValue(of(mockDrivers));
     mockDataService.getTeams.and.returnValue(of(mockTeams));
     mockDataService.listAssets.and.returnValue(of([]));
-    mockDataService.createTeam.and.returnValue(of({ entity_id: 'new-id' }));
-    mockDataService.updateTeam.and.returnValue(of({ entity_id: 't1' }));
+    mockDataService.createTeam.and.returnValue(of({ entity_id: "new-id" }));
+    mockDataService.updateTeam.and.returnValue(of({ entity_id: "t1" }));
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -149,7 +183,7 @@ describe('TeamEditorComponent', () => {
         MockEditorTitleComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
-        MockAvatarUrlPipe
+        MockAvatarUrlPipe,
       ],
       imports: [FormsModule, DragDropModule],
       providers: [
@@ -160,8 +194,8 @@ describe('TeamEditorComponent', () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Location, useValue: mockLocation },
         { provide: HelpService, useValue: mockHelpService },
-        { provide: SettingsService, useValue: mockSettingsService }
-      ]
+        { provide: SettingsService, useValue: mockSettingsService },
+      ],
     }).compileComponents();
   });
 
@@ -171,27 +205,27 @@ describe('TeamEditorComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
   it('should initialize with new team when "new" ID provided', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('new');
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("new");
     component.loadData();
-    expect(component.editingTeam?.entity_id).toBe('new');
+    expect(component.editingTeam?.entity_id).toBe("new");
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it('should load team when valid ID is provided', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should load team when valid ID is provided", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
-    expect(component.editingTeam?.entity_id).toBe('t1');
-    expect(component.editingTeam?.name).toBe('Team Alpha');
+    expect(component.editingTeam?.entity_id).toBe("t1");
+    expect(component.editingTeam?.name).toBe("Team Alpha");
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it('should toggle driver membership', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should toggle driver membership", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
     const driver2 = mockDrivers[1];
@@ -205,89 +239,94 @@ describe('TeamEditorComponent', () => {
     expect(component.isDriverInTeam(driver2)).toBeFalse();
   });
 
-  it('should save existing team', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should save existing team", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
-    component.editingTeam!.name = 'Updated Name';
-    mockDataService.updateTeam.and.returnValue(of({ entity_id: 't1' }));
-    mockDataService.getTeams.and.returnValue(of([new Team('t1', 'Updated Name', '', [])]));
+    component.editingTeam!.name = "Updated Name";
+    mockDataService.updateTeam.and.returnValue(of({ entity_id: "t1" }));
+    mockDataService.getTeams.and.returnValue(
+      of([new Team("t1", "Updated Name", "", [])]),
+    );
 
     component.updateTeam();
 
-    expect(mockDataService.updateTeam).toHaveBeenCalledWith('t1', jasmine.any(Object));
+    expect(mockDataService.updateTeam).toHaveBeenCalledWith(
+      "t1",
+      jasmine.any(Object),
+    );
   });
 
-  it('should save as new team', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should save as new team", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
-    component.editingTeam!.name = 'Team Gamma';
-    mockDataService.createTeam.and.returnValue(of({ entity_id: 't3' }));
+    component.editingTeam!.name = "Team Gamma";
+    mockDataService.createTeam.and.returnValue(of({ entity_id: "t3" }));
 
     component.saveAsNew();
 
     expect(mockDataService.createTeam).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-editor'], { queryParams: { id: 't3' } });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
+      queryParams: { id: "t3" },
+    });
   });
 
-  it('should support undo/redo for name changes', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should support undo/redo for name changes", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
     component.onInputFocus();
-    component.editingTeam!.name = 'Changed';
+    component.editingTeam!.name = "Changed";
     component.onInputBlur();
 
-    expect(component.editingTeam!.name).toBe('Changed');
+    expect(component.editingTeam!.name).toBe("Changed");
     component.undo();
-    expect(component.editingTeam!.name).toBe('Team Alpha');
+    expect(component.editingTeam!.name).toBe("Team Alpha");
     component.redo();
-    expect(component.editingTeam!.name).toBe('Changed');
+    expect(component.editingTeam!.name).toBe("Changed");
   });
 
-  it('should identify name as invalid if it already exists', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should identify name as invalid if it already exists", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
-    
-    component.allTeams = [
-      ...mockTeams,
-      new Team('t2', 'Team Beta', '', [])
-    ];
-    
-    component.editingTeam!.name = 'Team Beta'; // Duplicate
+
+    component.allTeams = [...mockTeams, new Team("t2", "Team Beta", "", [])];
+
+    component.editingTeam!.name = "Team Beta"; // Duplicate
     expect(component.isNameInvalid).toBeTrue();
   });
 
-  it('should navigate back directly on back fallback if name IS invalid', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should navigate back directly on back fallback if name IS invalid", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
-    
-    component.allTeams = [
-      ...mockTeams,
-      new Team('t2', 'Team Beta', '', [])
-    ];
-    component.editingTeam!.name = 'Team Beta';
-    
+
+    component.allTeams = [...mockTeams, new Team("t2", "Team Beta", "", [])];
+    component.editingTeam!.name = "Team Beta";
+
     component.onBackClicked();
-    
+
     expect(mockDataService.updateTeam).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager'], { queryParams: { id: 't1' } });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"], {
+      queryParams: { id: "t1" },
+    });
   });
 
-  it('should save and set flag onBackClicked if name IS valid', fakeAsync(() => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('t1');
+  it("should save and set flag onBackClicked if name IS valid", fakeAsync(() => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
     tick(); // Handle loadData subscription
-    
+
     component.onInputFocus();
-    component.editingTeam!.name = 'Unique Cool Name';
+    component.editingTeam!.name = "Unique Cool Name";
     component.onInputBlur();
-    
+
     component.onBackClicked();
     tick(); // Handle updateTeam save subscription
-    
+
     expect(mockDataService.updateTeam).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/team-manager'], { queryParams: { id: 't1' } });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"], {
+      queryParams: { id: "t1" },
+    });
   }));
 });

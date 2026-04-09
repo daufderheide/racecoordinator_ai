@@ -1,21 +1,20 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { Subscription, Subject, BehaviorSubject } from 'rxjs';
+import { Injectable, OnDestroy } from "@angular/core";
+import { BehaviorSubject, Subject, Subscription } from "rxjs";
+import { DriverConverter } from "src/app/converters/driver.converter";
+import { HeatConverter } from "src/app/converters/heat.converter";
+import { LaneConverter } from "src/app/converters/lane.converter";
+import { RaceConverter } from "src/app/converters/race.converter";
+import { RaceParticipantConverter } from "src/app/converters/race_participant.converter";
+import { TrackConverter } from "src/app/converters/track.converter";
+import { DataService } from "src/app/data.service";
+import { com } from "src/app/proto/message";
 
-import { DriverConverter } from 'src/app/converters/driver.converter';
-import { HeatConverter } from 'src/app/converters/heat.converter';
-import { LaneConverter } from 'src/app/converters/lane.converter';
-import { RaceConverter } from 'src/app/converters/race.converter';
-import { RaceParticipantConverter } from 'src/app/converters/race_participant.converter';
-import { TrackConverter } from 'src/app/converters/track.converter';
-import { DataService } from 'src/app/data.service';
-import { com } from 'src/app/proto/message';
-
-import { RaceService } from './race.service';
+import { RaceService } from "./race.service";
 
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class RaceConnectionService implements OnDestroy {
   private connectionCount = 0;
@@ -32,10 +31,12 @@ export class RaceConnectionService implements OnDestroy {
   private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
   standingsUpdate$ = this.standingsSubject.asObservable();
 
-  private overallStandingsSubject = new Subject<com.antigravity.IOverallStandingsUpdate>();
+  private overallStandingsSubject =
+    new Subject<com.antigravity.IOverallStandingsUpdate>();
   overallStandingsUpdate$ = this.overallStandingsSubject.asObservable();
 
-  private interfaceEventSubject = new Subject<com.antigravity.IInterfaceEvent>();
+  private interfaceEventSubject =
+    new Subject<com.antigravity.IInterfaceEvent>();
   interfaceEvents$ = this.interfaceEventSubject.asObservable();
 
   private carDataSubject = new Subject<com.antigravity.ICarData>();
@@ -44,10 +45,14 @@ export class RaceConnectionService implements OnDestroy {
   private segmentSubject = new Subject<com.antigravity.ISegment>();
   segments$ = this.segmentSubject.asObservable();
 
-  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({ time: 0 });
+  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+    time: 0,
+  });
   raceTime$ = this.raceTimeSubject.asObservable();
 
-  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
+  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
+    com.antigravity.RaceState.UNKNOWN_STATE,
+  );
   raceState$ = this.raceStateSubject.asObservable();
 
   // Watchdog variables
@@ -70,12 +75,14 @@ export class RaceConnectionService implements OnDestroy {
 
   constructor(
     private dataService: DataService,
-    private raceService: RaceService
+    private raceService: RaceService,
   ) {}
 
   connect() {
     this.connectionCount++;
-    console.log(`RaceConnectionService: Connection count incremented to ${this.connectionCount}`);
+    console.log(
+      `RaceConnectionService: Connection count incremented to ${this.connectionCount}`,
+    );
     if (this.connectionCount === 1) {
       this.startConnection();
     }
@@ -83,7 +90,9 @@ export class RaceConnectionService implements OnDestroy {
 
   disconnect() {
     this.connectionCount--;
-    console.log(`RaceConnectionService: Connection count decremented to ${this.connectionCount}`);
+    console.log(
+      `RaceConnectionService: Connection count decremented to ${this.connectionCount}`,
+    );
     if (this.connectionCount <= 0) {
       this.connectionCount = 0;
       this.stopConnection();
@@ -91,7 +100,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private startConnection() {
-    console.log('RaceConnectionService: Starting connection...');
+    console.log("RaceConnectionService: Starting connection...");
     // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();
     DriverConverter.clearCache();
@@ -99,103 +108,139 @@ export class RaceConnectionService implements OnDestroy {
     TrackConverter.clearCache();
     LaneConverter.clearCache();
 
-
     this.hydrateDrivers();
 
     this.dataService.updateRaceSubscription(true);
 
-    this.subscriptions.push(this.dataService.getRaceUpdate().subscribe(update => {
-      if (this.driversLoaded) {
-        this.processRaceUpdate(update);
-      } else {
-        console.log('RaceConnectionService: Deferring race update until drivers are hydrated.');
-        this.pendingUpdate = update;
-      }
-    }));
-
-    this.subscriptions.push(this.dataService.getRaceTime().subscribe(raceTime => {
-      this.raceTimeSubject.next(raceTime);
-    }));
-
-    this.subscriptions.push(this.dataService.getLaps().subscribe(lap => {
-      console.log('RaceConnectionService: Lap Received:', lap);
-      const heat = this.raceService.getCurrentHeat();
-      if (heat && heat.heatDrivers && lap && lap.objectId) {
-        const driverData = heat.heatDrivers.find(d => d.objectId === lap.objectId);
-        if (driverData) {
-          driverData.addLapTime(lap.lapNumber!, lap.lapTime!, lap.averageLapTime!, lap.medianLapTime!, lap.bestLapTime!, lap.driverId!);
-          this.lapSubject.next(lap);
+    this.subscriptions.push(
+      this.dataService.getRaceUpdate().subscribe((update) => {
+        if (this.driversLoaded) {
+          this.processRaceUpdate(update);
+        } else {
+          console.log(
+            "RaceConnectionService: Deferring race update until drivers are hydrated.",
+          );
+          this.pendingUpdate = update;
         }
-      }
-    }));
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getCarData().subscribe(carData => {
-      const heat = this.raceService.getCurrentHeat();
-      if (heat && heat.heatDrivers && carData && carData.lane != null) {
-        const driverData = heat.heatDrivers[carData.lane];
-        if (driverData && carData.fuelLevel != null) {
-          driverData.participant.fuelLevel = carData.fuelLevel as number;
-          this.carDataSubject.next(carData);
+    this.subscriptions.push(
+      this.dataService.getRaceTime().subscribe((raceTime) => {
+        this.raceTimeSubject.next(raceTime);
+      }),
+    );
+
+    this.subscriptions.push(
+      this.dataService.getLaps().subscribe((lap) => {
+        console.log("RaceConnectionService: Lap Received:", lap);
+        const heat = this.raceService.getCurrentHeat();
+        if (heat && heat.heatDrivers && lap && lap.objectId) {
+          const driverData = heat.heatDrivers.find(
+            (d) => d.objectId === lap.objectId,
+          );
+          if (driverData) {
+            driverData.addLapTime(
+              lap.lapNumber!,
+              lap.lapTime!,
+              lap.averageLapTime!,
+              lap.medianLapTime!,
+              lap.bestLapTime!,
+              lap.driverId!,
+            );
+            this.lapSubject.next(lap);
+          }
         }
-      }
-    }));
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getSegments().subscribe(segment => {
-      const heat = this.raceService.getCurrentHeat();
-      if (heat && heat.heatDrivers && segment && segment.objectId) {
-        const driverData = heat.heatDrivers.find(d => d.objectId === segment.objectId);
-        if (driverData) {
-          const segmentIndex = (segment.segmentNumber || 1) - 1;
-          driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
-          this.segmentSubject.next(segment);
+    this.subscriptions.push(
+      this.dataService.getCarData().subscribe((carData) => {
+        const heat = this.raceService.getCurrentHeat();
+        if (heat && heat.heatDrivers && carData && carData.lane != null) {
+          const driverData = heat.heatDrivers[carData.lane];
+          if (driverData && carData.fuelLevel != null) {
+            driverData.participant.fuelLevel = carData.fuelLevel as number;
+            this.carDataSubject.next(carData);
+          }
         }
-      }
-    }));
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getReactionTimes().subscribe(rt => {
-      const heat = this.raceService.getCurrentHeat();
-      if (heat && heat.heatDrivers && rt && rt.objectId) {
-        const driver = heat.heatDrivers.find(d => d.objectId === rt.objectId);
-        if (driver) {
-          driver.reactionTime = rt.reactionTime!;
-          this.reactionTimeSubject.next(rt);
+    this.subscriptions.push(
+      this.dataService.getSegments().subscribe((segment) => {
+        const heat = this.raceService.getCurrentHeat();
+        if (heat && heat.heatDrivers && segment && segment.objectId) {
+          const driverData = heat.heatDrivers.find(
+            (d) => d.objectId === segment.objectId,
+          );
+          if (driverData) {
+            const segmentIndex = (segment.segmentNumber || 1) - 1;
+            driverData.addSegmentTime(segmentIndex, segment.segmentTime!);
+            this.segmentSubject.next(segment);
+          }
         }
-      }
-    }));
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getStandingsUpdate().subscribe(update => {
-      const heat = this.raceService.getCurrentHeat();
-      this.applyStandingsUpdate(update, heat);
-      this.standingsSubject.next(update);
-    }));
+    this.subscriptions.push(
+      this.dataService.getReactionTimes().subscribe((rt) => {
+        const heat = this.raceService.getCurrentHeat();
+        if (heat && heat.heatDrivers && rt && rt.objectId) {
+          const driver = heat.heatDrivers.find(
+            (d) => d.objectId === rt.objectId,
+          );
+          if (driver) {
+            driver.reactionTime = rt.reactionTime!;
+            this.reactionTimeSubject.next(rt);
+          }
+        }
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getOverallStandingsUpdate().subscribe(update => {
-      if (update && update.participants) {
-        const participants = update.participants.map(p => RaceParticipantConverter.fromProto(p));
-        this.raceService.setParticipants(participants);
-        this.overallStandingsSubject.next(update);
-      }
-    }));
+    this.subscriptions.push(
+      this.dataService.getStandingsUpdate().subscribe((update) => {
+        const heat = this.raceService.getCurrentHeat();
+        this.applyStandingsUpdate(update, heat);
+        this.standingsSubject.next(update);
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getInterfaceEvents().subscribe(event => {
-      this.handleInterfaceEvent(event);
-      this.interfaceEventSubject.next(event);
-    }));
+    this.subscriptions.push(
+      this.dataService.getOverallStandingsUpdate().subscribe((update) => {
+        if (update && update.participants) {
+          const participants = update.participants.map((p) =>
+            RaceParticipantConverter.fromProto(p),
+          );
+          this.raceService.setParticipants(participants);
+          this.overallStandingsSubject.next(update);
+        }
+      }),
+    );
 
-    this.subscriptions.push(this.dataService.getRaceState().subscribe(state => {
-      this.raceStateSubject.next(state);
-    }));
+    this.subscriptions.push(
+      this.dataService.getInterfaceEvents().subscribe((event) => {
+        this.handleInterfaceEvent(event);
+        this.interfaceEventSubject.next(event);
+      }),
+    );
+
+    this.subscriptions.push(
+      this.dataService.getRaceState().subscribe((state) => {
+        this.raceStateSubject.next(state);
+      }),
+    );
 
     this.dataService.connectToInterfaceDataSocket();
     this.resetWatchdog();
   }
 
   private stopConnection() {
-    console.log('RaceConnectionService: Stopping connection...');
+    console.log("RaceConnectionService: Stopping connection...");
     this.dataService.updateRaceSubscription(false);
     this.dataService.disconnectFromInterfaceDataSocket();
 
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.subscriptions = [];
 
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
@@ -203,28 +248,35 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private hydrateDrivers() {
-    this.subscriptions.push(this.dataService.getDrivers().subscribe({
-      next: (drivers) => {
-        console.log(`RaceConnectionService: Hydrating ${drivers.length} drivers into cache.`);
-        drivers.forEach(d => {
-          const driver = DriverConverter.fromJSON(d);
-          DriverConverter.register(driver);
-        });
-        this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
-      },
-      error: (err) => {
-        console.error('RaceConnectionService: Failed to load drivers for hydration', err);
-        this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
-      }
-    }));
+    this.subscriptions.push(
+      this.dataService.getDrivers().subscribe({
+        next: (drivers) => {
+          console.log(
+            `RaceConnectionService: Hydrating ${drivers.length} drivers into cache.`,
+          );
+          drivers.forEach((d) => {
+            const driver = DriverConverter.fromJSON(d);
+            DriverConverter.register(driver);
+          });
+          this.driversLoaded = true;
+          if (this.pendingUpdate) {
+            this.processRaceUpdate(this.pendingUpdate);
+            this.pendingUpdate = null;
+          }
+        },
+        error: (err) => {
+          console.error(
+            "RaceConnectionService: Failed to load drivers for hydration",
+            err,
+          );
+          this.driversLoaded = true;
+          if (this.pendingUpdate) {
+            this.processRaceUpdate(this.pendingUpdate);
+            this.pendingUpdate = null;
+          }
+        },
+      }),
+    );
   }
 
   private processRaceUpdate(update: com.antigravity.IRace) {
@@ -237,13 +289,17 @@ export class RaceConnectionService implements OnDestroy {
     }
 
     if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map(d => RaceParticipantConverter.fromProto(d));
+      const participants = update.drivers.map((d) =>
+        RaceParticipantConverter.fromProto(d),
+      );
       this.raceService.setParticipants(participants);
       raceDataChanged = true;
     }
 
     if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h, index) => HeatConverter.fromProto(h, index + 1));
+      const heats = update.heats.map((h, index) =>
+        HeatConverter.fromProto(h, index + 1),
+      );
       this.raceService.setHeats(heats);
       raceDataChanged = true;
     }
@@ -257,12 +313,17 @@ export class RaceConnectionService implements OnDestroy {
     // Gaps updating after race update might be needed, or it's handled by StandingsUpdate
   }
 
-  private applyStandingsUpdate(update: com.antigravity.IStandingsUpdate, heat: any) {
+  private applyStandingsUpdate(
+    update: com.antigravity.IStandingsUpdate,
+    heat: any,
+  ) {
     if (heat && update && update.updates) {
-      update.updates.forEach(u => {
+      update.updates.forEach((u) => {
         if (u.objectId) {
           this.driverRankings.set(u.objectId, u.rank || 0);
-          const driverData = heat.heatDrivers.find((d: any) => d.objectId === u.objectId);
+          const driverData = heat.heatDrivers.find(
+            (d: any) => d.objectId === u.objectId,
+          );
           if (driverData) {
             driverData.gapLeader = u.gapLeader || 0;
             driverData.gapPosition = u.gapPosition || 0;
@@ -272,7 +333,10 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
-  private interfaceAlertSubject = new Subject<{titleKey: string, messageKey: string}>();
+  private interfaceAlertSubject = new Subject<{
+    titleKey: string;
+    messageKey: string;
+  }>();
   interfaceAlert$ = this.interfaceAlertSubject.asObservable();
 
   // ... inside starting connection ...
@@ -281,7 +345,10 @@ export class RaceConnectionService implements OnDestroy {
     if (event.status) {
       const status = event.status.status;
       if (status === this.lastInterfaceStatus) {
-        if (status !== InterfaceStatus.DISCONNECTED && status !== InterfaceStatus.NO_DATA) {
+        if (
+          status !== InterfaceStatus.DISCONNECTED &&
+          status !== InterfaceStatus.NO_DATA
+        ) {
           this.resetWatchdog();
         }
         return;
@@ -293,15 +360,21 @@ export class RaceConnectionService implements OnDestroy {
 
       if (status === InterfaceStatus.NO_DATA) {
         if (!this.hasInitiallyConnected) {
-          this.scheduleDisconnectedError('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          this.scheduleDisconnectedError(
+            "ACK_MODAL_TITLE_NO_DATA",
+            "ACK_MODAL_MSG_NO_DATA",
+          );
         } else {
-          this.emitAlert('ACK_MODAL_TITLE_NO_DATA', 'ACK_MODAL_MSG_NO_DATA');
+          this.emitAlert("ACK_MODAL_TITLE_NO_DATA", "ACK_MODAL_MSG_NO_DATA");
         }
       } else if (status === InterfaceStatus.DISCONNECTED) {
-        this.scheduleDisconnectedError('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+        this.scheduleDisconnectedError(
+          "ACK_MODAL_TITLE_DISCONNECTED",
+          "ACK_MODAL_MSG_DISCONNECTED",
+        );
       } else if (status === InterfaceStatus.CONNECTED) {
         this.clearDisconnectedError();
-        this.emitAlert('ACK_MODAL_TITLE_CONNECTED', 'ACK_MODAL_MSG_CONNECTED');
+        this.emitAlert("ACK_MODAL_TITLE_CONNECTED", "ACK_MODAL_MSG_CONNECTED");
         this.hasInitiallyConnected = true;
       }
     }
@@ -312,9 +385,12 @@ export class RaceConnectionService implements OnDestroy {
     this.noStatusWatchdog = setTimeout(() => {
       this.lastInterfaceStatus = -1;
       if (!this.hasInitiallyConnected) {
-        this.emitAlert('ACK_MODAL_TITLE_DISCONNECTED', 'ACK_MODAL_MSG_DISCONNECTED');
+        this.emitAlert(
+          "ACK_MODAL_TITLE_DISCONNECTED",
+          "ACK_MODAL_MSG_DISCONNECTED",
+        );
       } else {
-        this.emitAlert('ACK_MODAL_TITLE_NO_STATUS', 'ACK_MODAL_MSG_NO_STATUS');
+        this.emitAlert("ACK_MODAL_TITLE_NO_STATUS", "ACK_MODAL_MSG_NO_STATUS");
       }
     }, this.WATCHDOG_TIMEOUT);
   }

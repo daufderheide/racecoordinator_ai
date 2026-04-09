@@ -1,9 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
-
-test.describe('Custom Raceday Setup UI', () => {
-
+test.describe("Custom Raceday Setup UI", () => {
   test.beforeEach(async ({ page }) => {
     // 1. Setup Standard Mocks (Drivers, Races)
     await TestSetupHelper.setupStandardMocks(page);
@@ -24,30 +22,32 @@ test.describe('Custom Raceday Setup UI', () => {
     `;
 
     await TestSetupHelper.setupFileSystemMock(page, {
-      'raceday-setup.component.html': mockHtmlContent
+      "raceday-setup.component.html": mockHtmlContent,
     });
   });
 
-  test('Should load custom Hello World UI', async ({ page }) => {
-    await page.goto('/');
+  test("Should load custom Hello World UI", async ({ page }) => {
+    await page.goto("/");
 
     // Wait for the splash screen to disappear
-    const splashScreen = page.locator('.splash-screen');
-    if (await splashScreen.count() > 0) {
+    const splashScreen = page.locator(".splash-screen");
+    if ((await splashScreen.count()) > 0) {
       await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
     }
 
     // Wait for the custom title to appear
-    await expect(page.locator('.custom-title')).toHaveText('Hello Custom World');
+    await expect(page.locator(".custom-title")).toHaveText(
+      "Hello Custom World",
+    );
 
     // Wait for the start button
-    const startBtn = page.locator('.btn-start-race');
+    const startBtn = page.locator(".btn-start-race");
     await expect(startBtn).toBeVisible();
 
     // Take screenshot
-    await expect(page).toHaveScreenshot('custom-ui-hello-world.png', {
+    await expect(page).toHaveScreenshot("custom-ui-hello-world.png", {
       maxDiffPixelRatio: 0.05,
-      animations: 'disabled'
+      animations: "disabled",
     });
   });
 });

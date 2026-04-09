@@ -1,18 +1,18 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, Subject, ReplaySubject } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-import { ArduinoConfig } from 'src/app/models/track';
-import { com } from 'src/app/proto/message';
-import { SettingsService } from 'src/app/services/settings.service';
+import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
+import { map } from "rxjs/operators";
+import { ArduinoConfig } from "src/app/models/track";
+import { com } from "src/app/proto/message";
+import { SettingsService } from "src/app/services/settings.service";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class DataService {
   // Pointing to the Java server API
-  private serverIp = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  private serverIp =
+    typeof window !== "undefined" ? window.location.hostname : "localhost";
   private serverPort = 7070;
 
   private get baseUrl(): string {
@@ -37,7 +37,7 @@ export class DataService {
 
   constructor(
     private http: HttpClient,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
   ) {
     const settings = this.settingsService.getSettings();
     if (settings.serverIp) {
@@ -65,11 +65,15 @@ export class DataService {
   }
 
   getServerVersion(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/version`, { responseType: 'text' });
+    return this.http.get(`${this.baseUrl}/api/version`, {
+      responseType: "text",
+    });
   }
 
   getServerIp(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/server-ip`, { responseType: 'text' });
+    return this.http.get(`${this.baseUrl}/api/server-ip`, {
+      responseType: "text",
+    });
   }
 
   createDriver(driver: any): Observable<any> {
@@ -101,22 +105,33 @@ export class DataService {
   }
 
   exportRaceToCsv(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, { responseType: 'text' });
+    return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, {
+      responseType: "text",
+    });
   }
 
   generateHeats(raceId: string, driverCount: number): Observable<any> {
-
-    return this.http.post<any>(`http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`, {
-      driverCount
-    });
+    return this.http.post<any>(
+      `http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`,
+      {
+        driverCount,
+      },
+    );
   }
 
-  previewHeats(trackId: string, rotationType: string, driverCount: number): Observable<any> {
-    return this.http.post<any>(`http://${this.serverIp}:${this.serverPort}/api/heats/preview`, {
-      trackId,
-      rotationType,
-      driverCount
-    });
+  previewHeats(
+    trackId: string,
+    rotationType: string,
+    driverCount: number,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `http://${this.serverIp}:${this.serverPort}/api/heats/preview`,
+      {
+        trackId,
+        rotationType,
+        driverCount,
+      },
+    );
   }
 
   getTracks(): Observable<any[]> {
@@ -143,72 +158,108 @@ export class DataService {
     return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
   }
 
-  initializeRace(raceId: string, driverIds: string[], isDemoMode: boolean): Observable<com.antigravity.InitializeRaceResponse> {
-    const request = com.antigravity.InitializeRaceRequest.create({ raceId, driverIds, isDemoMode });
-    const buffer = com.antigravity.InitializeRaceRequest.encode(request).finish();
+  initializeRace(
+    raceId: string,
+    driverIds: string[],
+    isDemoMode: boolean,
+  ): Observable<com.antigravity.InitializeRaceResponse> {
+    const request = com.antigravity.InitializeRaceRequest.create({
+      raceId,
+      driverIds,
+      isDemoMode,
+    });
+    const buffer =
+      com.antigravity.InitializeRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/initialize-race`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        return com.antigravity.InitializeRaceResponse.decode(new Uint8Array(response as any));
+    return this.http
+      .post(`${this.baseUrl}/api/initialize-race`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          return com.antigravity.InitializeRaceResponse.decode(
+            new Uint8Array(response as any),
+          );
+        }),
+      );
   }
 
-  initializeInterface(configs: ArduinoConfig[], laneCount: number): Observable<com.antigravity.InitializeInterfaceResponse> {
+  initializeInterface(
+    configs: ArduinoConfig[],
+    laneCount: number,
+  ): Observable<com.antigravity.InitializeInterfaceResponse> {
     const request = com.antigravity.InitializeInterfaceRequest.create({
-      configs: configs.map(config => com.antigravity.ArduinoConfig.create({
-        name: config.name,
-        commPort: config.commPort,
-        baudRate: config.baudRate,
-        debounceUs: config.debounceUs,
-        hardwareType: config.hardwareType,
-        normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-        normallyClosedRelays: config.normallyClosedRelays,
-        globalInvertLights: config.globalInvertLights,
-        usePitsAsLaps: config.usePitsAsLaps,
-        useLapsForSegments: config.useLapsForSegments,
-        digitalIds: config.digitalIds,
-        analogIds: config.analogIds,
-        ledStrings: config.ledStrings?.map(ls => com.antigravity.LedString.create({
-          stringNum: ls.stringNum,
-          leds: ls.leds,
-          brightness: ls.brightness,
-          yellowFlagFlashRate: ls.yellowFlagFlashRate,
-          ledLaneColorOverrides: ls.ledLaneColorOverrides
-        })) || [],
-        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
-          lane: parseInt(lane, 10),
-          maxVoltage: maxVoltage as number
-        }))
-      })),
-      laneCount
+      configs: configs.map((config) =>
+        com.antigravity.ArduinoConfig.create({
+          name: config.name,
+          commPort: config.commPort,
+          baudRate: config.baudRate,
+          debounceUs: config.debounceUs,
+          hardwareType: config.hardwareType,
+          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
+          normallyClosedRelays: config.normallyClosedRelays,
+          globalInvertLights: config.globalInvertLights,
+          usePitsAsLaps: config.usePitsAsLaps,
+          useLapsForSegments: config.useLapsForSegments,
+          digitalIds: config.digitalIds,
+          analogIds: config.analogIds,
+          ledStrings:
+            config.ledStrings?.map((ls) =>
+              com.antigravity.LedString.create({
+                stringNum: ls.stringNum,
+                leds: ls.leds,
+                brightness: ls.brightness,
+                yellowFlagFlashRate: ls.yellowFlagFlashRate,
+                ledLaneColorOverrides: ls.ledLaneColorOverrides,
+              }),
+            ) || [],
+          voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
+            ([lane, maxVoltage]) =>
+              com.antigravity.VoltageConfig.create({
+                lane: parseInt(lane, 10),
+                maxVoltage: maxVoltage as number,
+              }),
+          ),
+        }),
+      ),
+      laneCount,
     });
-    const buffer = com.antigravity.InitializeInterfaceRequest.encode(request).finish();
+    const buffer =
+      com.antigravity.InitializeInterfaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/initialize-interface`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        return com.antigravity.InitializeInterfaceResponse.decode(new Uint8Array(response as any));
-      })
-    );
+    return this.http
+      .post(
+        `${this.baseUrl}/api/initialize-interface`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          return com.antigravity.InitializeInterfaceResponse.decode(
+            new Uint8Array(response as any),
+          );
+        }),
+      );
   }
 
-  updateInterfaceConfig(config: ArduinoConfig, interfaceIndex: number): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
+  updateInterfaceConfig(
+    config: ArduinoConfig,
+    interfaceIndex: number,
+  ): Observable<com.antigravity.UpdateInterfaceConfigResponse> {
     const request = com.antigravity.UpdateInterfaceConfigRequest.create({
       config: com.antigravity.ArduinoConfig.create({
         name: config.name,
@@ -223,82 +274,124 @@ export class DataService {
         useLapsForSegments: config.useLapsForSegments,
         digitalIds: config.digitalIds,
         analogIds: config.analogIds,
-        ledStrings: config.ledStrings?.map(ls => com.antigravity.LedString.create({
-          stringNum: ls.stringNum,
-          leds: ls.leds,
-          brightness: ls.brightness,
-          yellowFlagFlashRate: ls.yellowFlagFlashRate,
-          ledLaneColorOverrides: ls.ledLaneColorOverrides
-        })) || [],
-        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(([lane, maxVoltage]) => com.antigravity.VoltageConfig.create({
-          lane: parseInt(lane, 10),
-          maxVoltage: maxVoltage as number
-        }))
+        ledStrings:
+          config.ledStrings?.map((ls) =>
+            com.antigravity.LedString.create({
+              stringNum: ls.stringNum,
+              leds: ls.leds,
+              brightness: ls.brightness,
+              yellowFlagFlashRate: ls.yellowFlagFlashRate,
+              ledLaneColorOverrides: ls.ledLaneColorOverrides,
+            }),
+          ) || [],
+        voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
+          ([lane, maxVoltage]) =>
+            com.antigravity.VoltageConfig.create({
+              lane: parseInt(lane, 10),
+              maxVoltage: maxVoltage as number,
+            }),
+        ),
       }),
-      interfaceIndex
+      interfaceIndex,
     });
-    const buffer = com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();
+    const buffer =
+      com.antigravity.UpdateInterfaceConfigRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/update-interface-config`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        return com.antigravity.UpdateInterfaceConfigResponse.decode(new Uint8Array(response as any));
-      })
-    );
+    return this.http
+      .post(
+        `${this.baseUrl}/api/update-interface-config`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          return com.antigravity.UpdateInterfaceConfigResponse.decode(
+            new Uint8Array(response as any),
+          );
+        }),
+      );
   }
 
-  setInterfacePinState(pin: number, isDigital: boolean, isHigh: boolean, interfaceIndex: number): Observable<com.antigravity.SetInterfacePinStateResponse> {
+  setInterfacePinState(
+    pin: number,
+    isDigital: boolean,
+    isHigh: boolean,
+    interfaceIndex: number,
+  ): Observable<com.antigravity.SetInterfacePinStateResponse> {
     const request = com.antigravity.SetInterfacePinStateRequest.create({
       pin,
       isDigital,
       isHigh,
-      interfaceIndex
+      interfaceIndex,
     });
-    const buffer = com.antigravity.SetInterfacePinStateRequest.encode(request).finish();
+    const buffer =
+      com.antigravity.SetInterfacePinStateRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/set-interface-pin-state`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        return com.antigravity.SetInterfacePinStateResponse.decode(new Uint8Array(response as any));
-      })
-    );
+    return this.http
+      .post(
+        `${this.baseUrl}/api/set-interface-pin-state`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          return com.antigravity.SetInterfacePinStateResponse.decode(
+            new Uint8Array(response as any),
+          );
+        }),
+      );
   }
 
-  setInterfaceRgbLedState(stringIndex: number, leds: com.antigravity.IRgbLedState[], interfaceIndex: number): Observable<com.antigravity.SetInterfaceRgbLedStateResponse> {
+  setInterfaceRgbLedState(
+    stringIndex: number,
+    leds: com.antigravity.IRgbLedState[],
+    interfaceIndex: number,
+  ): Observable<com.antigravity.SetInterfaceRgbLedStateResponse> {
     const request = com.antigravity.SetInterfaceRgbLedStateRequest.create({
       stringIndex,
-      leds: leds.map(l => com.antigravity.RgbLedState.create(l)),
-      interfaceIndex
+      leds: leds.map((l) => com.antigravity.RgbLedState.create(l)),
+      interfaceIndex,
     });
-    const buffer = com.antigravity.SetInterfaceRgbLedStateRequest.encode(request).finish();
+    const buffer =
+      com.antigravity.SetInterfaceRgbLedStateRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/set-interface-rgb-led-state`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        return com.antigravity.SetInterfaceRgbLedStateResponse.decode(new Uint8Array(response as any));
-      })
-    );
+    return this.http
+      .post(
+        `${this.baseUrl}/api/set-interface-rgb-led-state`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          return com.antigravity.SetInterfaceRgbLedStateResponse.decode(
+            new Uint8Array(response as any),
+          );
+        }),
+      );
   }
 
   closeInterface(): Observable<any> {
@@ -310,19 +403,23 @@ export class DataService {
     const buffer = com.antigravity.StartRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/start-race`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const startResponse = com.antigravity.StartRaceResponse.decode(new Uint8Array(response as any));
-        return startResponse.success;
+    return this.http
+      .post(`${this.baseUrl}/api/start-race`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const startResponse = com.antigravity.StartRaceResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return startResponse.success;
+        }),
+      );
   }
 
   pauseRace(): Observable<boolean> {
@@ -330,19 +427,23 @@ export class DataService {
     const buffer = com.antigravity.PauseRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/pause-race`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const pauseResponse = com.antigravity.PauseRaceResponse.decode(new Uint8Array(response as any));
-        return pauseResponse.success;
+    return this.http
+      .post(`${this.baseUrl}/api/pause-race`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const pauseResponse = com.antigravity.PauseRaceResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return pauseResponse.success;
+        }),
+      );
   }
 
   nextHeat(): Observable<boolean> {
@@ -350,19 +451,23 @@ export class DataService {
     const buffer = com.antigravity.NextHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/next-heat`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const nextResponse = com.antigravity.NextHeatResponse.decode(new Uint8Array(response as any));
-        return nextResponse.success ?? false;
+    return this.http
+      .post(`${this.baseUrl}/api/next-heat`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const nextResponse = com.antigravity.NextHeatResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return nextResponse.success ?? false;
+        }),
+      );
   }
 
   restartHeat(): Observable<boolean> {
@@ -370,19 +475,23 @@ export class DataService {
     const buffer = com.antigravity.RestartHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/restart-heat`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const restartResponse = com.antigravity.RestartHeatResponse.decode(new Uint8Array(response as any));
-        return restartResponse.success ?? false;
+    return this.http
+      .post(`${this.baseUrl}/api/restart-heat`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const restartResponse = com.antigravity.RestartHeatResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return restartResponse.success ?? false;
+        }),
+      );
   }
 
   skipHeat(): Observable<boolean> {
@@ -390,19 +499,23 @@ export class DataService {
     const buffer = com.antigravity.SkipHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/skip-heat`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const skipResponse = com.antigravity.SkipHeatResponse.decode(new Uint8Array(response as any));
-        return skipResponse.success ?? false;
+    return this.http
+      .post(`${this.baseUrl}/api/skip-heat`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const skipResponse = com.antigravity.SkipHeatResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return skipResponse.success ?? false;
+        }),
+      );
   }
 
   deferHeat(): Observable<boolean> {
@@ -410,25 +523,31 @@ export class DataService {
     const buffer = com.antigravity.DeferHeatRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/defer-heat`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const deferResponse = com.antigravity.DeferHeatResponse.decode(new Uint8Array(response as any));
-        return deferResponse.success ?? false;
+    return this.http
+      .post(`${this.baseUrl}/api/defer-heat`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const deferResponse = com.antigravity.DeferHeatResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return deferResponse.success ?? false;
+        }),
+      );
   }
 
   // --- Database Management ---
 
   getTeams(): Observable<com.antigravity.ITeamModel[]> {
-    return this.http.get<com.antigravity.ITeamModel[]>(`${this.baseUrl}/api/teams`);
+    return this.http.get<com.antigravity.ITeamModel[]>(
+      `${this.baseUrl}/api/teams`,
+    );
   }
 
   createTeam(team: any): Observable<any> {
@@ -448,15 +567,21 @@ export class DataService {
   }
 
   getCurrentDatabase(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/api/databases/current?t=${new Date().getTime()}`);
+    return this.http.get<any>(
+      `${this.baseUrl}/api/databases/current?t=${new Date().getTime()}`,
+    );
   }
 
   createDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/create`, { name });
+    return this.http.post<any>(`${this.baseUrl}/api/databases/create`, {
+      name,
+    });
   }
 
   switchDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/switch`, { name });
+    return this.http.post<any>(`${this.baseUrl}/api/databases/switch`, {
+      name,
+    });
   }
 
   copyDatabase(name: string): Observable<any> {
@@ -468,7 +593,9 @@ export class DataService {
   }
 
   deleteDatabase(name: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/api/databases/delete`, { name });
+    return this.http.post<any>(`${this.baseUrl}/api/databases/delete`, {
+      name,
+    });
   }
 
   exportDatabase(name: string) {
@@ -477,87 +604,130 @@ export class DataService {
 
   importDatabase(name: string, file: File): Observable<any> {
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('file', file);
-    return this.http.post<any>(`${this.baseUrl}/api/databases/import`, formData);
+    formData.append("name", name);
+    formData.append("file", file);
+    return this.http.post<any>(
+      `${this.baseUrl}/api/databases/import`,
+      formData,
+    );
   }
 
   // --- Asset Management ---
   listAssets(): Observable<com.antigravity.IAssetMessage[]> {
-    return this.http.get(`${this.baseUrl}/api/assets/list`, {
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const listResponse = com.antigravity.ListAssetsResponse.decode(new Uint8Array(response as any));
-        return listResponse.assets;
+    return this.http
+      .get(`${this.baseUrl}/api/assets/list`, {
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const listResponse = com.antigravity.ListAssetsResponse.decode(
+            new Uint8Array(response as any),
+          );
+          return listResponse.assets;
+        }),
+      );
   }
 
-  uploadAsset(name: string, type: string, data: Uint8Array): Observable<com.antigravity.IAssetMessage> {
-    const request = com.antigravity.UploadAssetRequest.create({ name, type, data });
+  uploadAsset(
+    name: string,
+    type: string,
+    data: Uint8Array,
+  ): Observable<com.antigravity.IAssetMessage> {
+    const request = com.antigravity.UploadAssetRequest.create({
+      name,
+      type,
+      data,
+    });
     const buffer = com.antigravity.UploadAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/assets/upload`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const uploadResponse = com.antigravity.UploadAssetResponse.decode(new Uint8Array(response as any));
-        if (!uploadResponse.success) {
-          throw new Error(uploadResponse.message);
-        }
-        return uploadResponse.asset!;
+    return this.http
+      .post(`${this.baseUrl}/api/assets/upload`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const uploadResponse = com.antigravity.UploadAssetResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!uploadResponse.success) {
+            throw new Error(uploadResponse.message);
+          }
+          return uploadResponse.asset!;
+        }),
+      );
   }
 
-  saveImageSet(name: string, entries: com.antigravity.ISaveImageSetEntry[], id?: string): Observable<com.antigravity.IAssetMessage> {
-    const request = com.antigravity.SaveImageSetRequest.create({ id, name, entries });
+  saveImageSet(
+    name: string,
+    entries: com.antigravity.ISaveImageSetEntry[],
+    id?: string,
+  ): Observable<com.antigravity.IAssetMessage> {
+    const request = com.antigravity.SaveImageSetRequest.create({
+      id,
+      name,
+      entries,
+    });
     const buffer = com.antigravity.SaveImageSetRequest.encode(request).finish();
-    const headers = new HttpHeaders().set('Content-Type', 'application/octet-stream');
-
-    return this.http.post(`${this.baseUrl}/api/assets/save-image-set`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const saveResponse = com.antigravity.SaveImageSetResponse.decode(new Uint8Array(response as any));
-        if (!saveResponse.success) {
-          throw new Error(saveResponse.message ?? 'Unknown error saving image set');
-        }
-        return saveResponse.asset!;
-      })
+    const headers = new HttpHeaders().set(
+      "Content-Type",
+      "application/octet-stream",
     );
+
+    return this.http
+      .post(
+        `${this.baseUrl}/api/assets/save-image-set`,
+        new Blob([buffer as any]),
+        {
+          headers,
+          responseType: "arraybuffer",
+        },
+      )
+      .pipe(
+        map((response) => {
+          const saveResponse = com.antigravity.SaveImageSetResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!saveResponse.success) {
+            throw new Error(
+              saveResponse.message ?? "Unknown error saving image set",
+            );
+          }
+          return saveResponse.asset!;
+        }),
+      );
   }
 
   deleteAsset(id: string): Observable<boolean> {
-
     const request = com.antigravity.DeleteAssetRequest.create({ id });
     const buffer = com.antigravity.DeleteAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/assets/delete`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const deleteResponse = com.antigravity.DeleteAssetResponse.decode(new Uint8Array(response as any));
-        if (!deleteResponse.success) {
-          throw new Error(deleteResponse.message);
-        }
-        return true;
+    return this.http
+      .post(`${this.baseUrl}/api/assets/delete`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const deleteResponse = com.antigravity.DeleteAssetResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!deleteResponse.success) {
+            throw new Error(deleteResponse.message);
+          }
+          return true;
+        }),
+      );
   }
 
   renameAsset(id: string, newName: string): Observable<boolean> {
@@ -565,45 +735,60 @@ export class DataService {
     const buffer = com.antigravity.RenameAssetRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
-      'Content-Type': 'application/octet-stream',
-      'Accept': 'application/octet-stream'
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
     });
 
-    return this.http.post(`${this.baseUrl}/api/assets/rename`, new Blob([buffer as any]), {
-      headers,
-      responseType: 'arraybuffer'
-    }).pipe(
-      map(response => {
-        const renameResponse = com.antigravity.RenameAssetResponse.decode(new Uint8Array(response as any));
-        if (!renameResponse.success) {
-          throw new Error(renameResponse.message);
-        }
-        return true;
+    return this.http
+      .post(`${this.baseUrl}/api/assets/rename`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
       })
-    );
+      .pipe(
+        map((response) => {
+          const renameResponse = com.antigravity.RenameAssetResponse.decode(
+            new Uint8Array(response as any),
+          );
+          if (!renameResponse.success) {
+            throw new Error(renameResponse.message);
+          }
+          return true;
+        }),
+      );
   }
 
   private raceDataSocket?: WebSocket;
   private interfaceDataSocket?: WebSocket;
-  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({ time: 0 });
+  private raceTimeSubject = new BehaviorSubject<com.antigravity.IRaceTime>({
+    time: 0,
+  });
   private lapSubject = new Subject<com.antigravity.ILap>();
   private reactionTimeSubject = new Subject<com.antigravity.IReactionTime>();
   private standingsSubject = new Subject<com.antigravity.IStandingsUpdate>();
-  private overallStandingsSubject = new Subject<com.antigravity.IOverallStandingsUpdate>();
+  private overallStandingsSubject =
+    new Subject<com.antigravity.IOverallStandingsUpdate>();
   private raceUpdateSubject = new ReplaySubject<com.antigravity.IRace>(1);
-  private interfaceEventSubject = new Subject<com.antigravity.IInterfaceEvent>();
+  private interfaceEventSubject =
+    new Subject<com.antigravity.IInterfaceEvent>();
   private carDataSubject = new Subject<com.antigravity.ICarData>();
   private segmentSubject = new Subject<com.antigravity.ISegment>();
-  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(com.antigravity.RaceState.UNKNOWN_STATE);
+  private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
+    com.antigravity.RaceState.UNKNOWN_STATE,
+  );
 
   private shouldSubscribeToRaceData = false;
 
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
-    if (this.raceDataSocket && this.raceDataSocket.readyState === WebSocket.OPEN) {
+    if (
+      this.raceDataSocket &&
+      this.raceDataSocket.readyState === WebSocket.OPEN
+    ) {
       this.sendRaceSubscriptionRequest(subscribe);
     } else {
-      console.warn('Race Data WebSocket not open. Triggering connection check and queuing subscription.');
+      console.warn(
+        "Race Data WebSocket not open. Triggering connection check and queuing subscription.",
+      );
       // If we are completely disconnected, rely on the reconnect loop or trigger one now
       this.connectToRaceDataSocket();
       // Subscription will be sent on open
@@ -611,16 +796,27 @@ export class DataService {
   }
 
   private sendRaceSubscriptionRequest(subscribe: boolean) {
-    if (!this.raceDataSocket || this.raceDataSocket.readyState !== WebSocket.OPEN) return;
+    if (
+      !this.raceDataSocket ||
+      this.raceDataSocket.readyState !== WebSocket.OPEN
+    )
+      return;
 
-    const request = com.antigravity.RaceSubscriptionRequest.create({ subscribe });
-    const buffer = com.antigravity.RaceSubscriptionRequest.encode(request).finish();
+    const request = com.antigravity.RaceSubscriptionRequest.create({
+      subscribe,
+    });
+    const buffer =
+      com.antigravity.RaceSubscriptionRequest.encode(request).finish();
     this.raceDataSocket.send(buffer);
     console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
 
   public connectToRaceDataSocket() {
-    if (this.raceDataSocket && (this.raceDataSocket.readyState === WebSocket.OPEN || this.raceDataSocket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.raceDataSocket &&
+      (this.raceDataSocket.readyState === WebSocket.OPEN ||
+        this.raceDataSocket.readyState === WebSocket.CONNECTING)
+    ) {
       return; // Already connecting or connected
     }
 
@@ -635,10 +831,10 @@ export class DataService {
     const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
     console.log(`Attempting to connect to WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
-    this.raceDataSocket.binaryType = 'arraybuffer';
+    this.raceDataSocket.binaryType = "arraybuffer";
 
     this.raceDataSocket.onopen = () => {
-      console.log('Connected to Race Data WebSocket');
+      console.log("Connected to Race Data WebSocket");
       // If we had pending subscriptions or state, we might need to resend.
       if (this.shouldSubscribeToRaceData) {
         this.sendRaceSubscriptionRequest(true);
@@ -648,7 +844,9 @@ export class DataService {
     this.raceDataSocket.onmessage = (event) => {
       try {
         const arrayBuffer = event.data as ArrayBuffer;
-        const raceData = com.antigravity.RaceData.decode(new Uint8Array(arrayBuffer));
+        const raceData = com.antigravity.RaceData.decode(
+          new Uint8Array(arrayBuffer),
+        );
 
         if (raceData.raceTime) {
           this.raceTimeSubject.next(raceData.raceTime);
@@ -661,10 +859,10 @@ export class DataService {
         } else if (raceData.overallStandingsUpdate) {
           this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
         } else if (raceData.raceState) {
-          console.log('WS: Received RaceState', raceData.raceState);
+          console.log("WS: Received RaceState", raceData.raceState);
           this.raceStateSubject.next(raceData.raceState);
         } else if (raceData.race) {
-          console.log('WS: Received Race', raceData.race);
+          console.log("WS: Received Race", raceData.race);
           this.raceUpdateSubject.next(raceData.race);
           if (raceData.race.state) {
             this.raceStateSubject.next(raceData.race.state);
@@ -675,12 +873,12 @@ export class DataService {
           this.segmentSubject.next(raceData.segment);
         }
       } catch (e) {
-        console.error('Error parsing race data message', e);
+        console.error("Error parsing race data message", e);
       }
     };
 
     this.raceDataSocket.onclose = () => {
-      console.log('Race Data WebSocket closed. Reconnecting in 2 seconds...');
+      console.log("Race Data WebSocket closed. Reconnecting in 2 seconds...");
       this.raceDataSocket = undefined;
       setTimeout(() => {
         this.connectToRaceDataSocket();
@@ -688,43 +886,49 @@ export class DataService {
     };
 
     this.raceDataSocket.onerror = (err) => {
-      console.warn('Race Data WebSocket error', err);
+      console.warn("Race Data WebSocket error", err);
       // onerror often followed by onclose, so we rely on onclose for retry
     };
   }
 
   public connectToInterfaceDataSocket() {
-    if (this.interfaceDataSocket && (this.interfaceDataSocket.readyState === WebSocket.OPEN || this.interfaceDataSocket.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.interfaceDataSocket &&
+      (this.interfaceDataSocket.readyState === WebSocket.OPEN ||
+        this.interfaceDataSocket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
     if (this.interfaceDataSocket) {
       try {
         this.interfaceDataSocket.close();
-      } catch (e) { }
+      } catch (e) {}
     }
 
     const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/interface-data`;
     console.log(`Connecting to Interface WebSocket: ${wsUrl}`);
     this.interfaceDataSocket = new WebSocket(wsUrl);
-    this.interfaceDataSocket.binaryType = 'arraybuffer';
+    this.interfaceDataSocket.binaryType = "arraybuffer";
 
     this.interfaceDataSocket.onopen = () => {
-      console.log('Connected to Interface WebSocket');
+      console.log("Connected to Interface WebSocket");
     };
 
     this.interfaceDataSocket.onmessage = (event) => {
       try {
         const arrayBuffer = event.data as ArrayBuffer;
-        const msg = com.antigravity.InterfaceEvent.decode(new Uint8Array(arrayBuffer));
+        const msg = com.antigravity.InterfaceEvent.decode(
+          new Uint8Array(arrayBuffer),
+        );
         this.interfaceEventSubject.next(msg);
       } catch (e) {
-        console.error('Error parsing interface data message', e);
+        console.error("Error parsing interface data message", e);
       }
     };
 
     this.interfaceDataSocket.onclose = () => {
-      console.log('Interface Data WebSocket closed.');
+      console.log("Interface Data WebSocket closed.");
       this.interfaceDataSocket = undefined;
     };
   }
@@ -775,14 +979,25 @@ export class DataService {
   public getSegments(): Observable<com.antigravity.ISegment> {
     return this.segmentSubject.asObservable();
   }
-  public changeActualDriver(lane: number, driverId: string): Observable<string> {
-    return this.http.post(`${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`, {
-      driverId
-    }, { responseType: 'text' });
+  public changeActualDriver(
+    lane: number,
+    driverId: string,
+  ): Observable<string> {
+    return this.http.post(
+      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`,
+      {
+        driverId,
+      },
+      { responseType: "text" },
+    );
   }
 
   saveRace(): Observable<string> {
-    return this.http.post(`${this.baseUrl}/api/save-race`, {}, { responseType: 'text' });
+    return this.http.post(
+      `${this.baseUrl}/api/save-race`,
+      {},
+      { responseType: "text" },
+    );
   }
 
   getSavedRaces(): Observable<string[]> {
@@ -790,18 +1005,33 @@ export class DataService {
   }
 
   loadRace(filename: string): Observable<string> {
-    return this.http.post(`${this.baseUrl}/api/load-race`, { filename }, { responseType: 'text' });
+    return this.http.post(
+      `${this.baseUrl}/api/load-race`,
+      { filename },
+      { responseType: "text" },
+    );
   }
 
   deleteSavedRace(filename: string): Observable<string> {
-    return this.http.delete(`${this.baseUrl}/api/saved-races/${filename}`, { responseType: 'text' });
+    return this.http.delete(`${this.baseUrl}/api/saved-races/${filename}`, {
+      responseType: "text",
+    });
   }
 
   toggleServerAnalytics(enabled: boolean): Observable<string> {
-    return this.http.post(`${this.baseUrl}/api/analytics/toggle`, { enabled }, { responseType: 'text' });
+    return this.http.post(
+      `${this.baseUrl}/api/analytics/toggle`,
+      { enabled },
+      { responseType: "text" },
+    );
   }
 
-  getServerAnalyticsConfig(): Observable<{clientId: string, measurementId: string}> {
-    return this.http.get<{clientId: string, measurementId: string}>(`${this.baseUrl}/api/analytics/config`);
+  getServerAnalyticsConfig(): Observable<{
+    clientId: string;
+    measurementId: string;
+  }> {
+    return this.http.get<{ clientId: string; measurementId: string }>(
+      `${this.baseUrl}/api/analytics/config`,
+    );
   }
 }

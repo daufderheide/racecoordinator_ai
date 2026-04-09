@@ -1,55 +1,59 @@
-import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-
-import { DataService } from 'src/app/data.service';
-import { SettingsService } from 'src/app/services/settings.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnInit,
+} from "@angular/core";
+import { Router } from "@angular/router";
+import { forkJoin } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { SettingsService } from "src/app/services/settings.service";
 
 @Component({
-  selector: 'app-database-manager',
-  templateUrl: './database-manager.component.html',
-  styleUrls: ['./database-manager.component.css'],
-  standalone: false
+  selector: "app-database-manager",
+  templateUrl: "./database-manager.component.html",
+  styleUrls: ["./database-manager.component.css"],
+  standalone: false,
 })
 export class DatabaseManagerComponent implements OnInit {
   databases: any[] = [];
   selectedDatabase: any = null;
-  currentDatabaseName: string = '';
+  currentDatabaseName: string = "";
   loading = false;
   scale: number = 1;
 
   // Modal State
   showConfirmModal = false;
-  confirmModalTitle = '';
-  confirmModalMessage = '';
+  confirmModalTitle = "";
+  confirmModalMessage = "";
   confirmModalParams: any = {};
-  private onConfirmAction: () => void = () => { };
+  private onConfirmAction: () => void = () => {};
 
   showAckModal = false;
-  ackModalTitle = '';
-  ackModalMessage = '';
+  ackModalTitle = "";
+  ackModalMessage = "";
   ackModalParams: any = {};
 
   showInputModal = false;
-  inputModalTitle = '';
-  inputModalMessage = '';
+  inputModalTitle = "";
+  inputModalMessage = "";
   inputModalParams: any = {};
-  inputValue = '';
-  private onInputConfirmAction: (value: string) => void = () => { };
+  inputValue = "";
+  private onInputConfirmAction: (value: string) => void = () => {};
 
   constructor(
     private dataService: DataService,
     private settingsService: SettingsService,
     private router: Router,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     this.updateScale();
     this.initialLoad();
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
@@ -72,7 +76,7 @@ export class DatabaseManagerComponent implements OnInit {
 
     forkJoin({
       dbs: this.dataService.getDatabases(),
-      current: this.dataService.getCurrentDatabase()
+      current: this.dataService.getCurrentDatabase(),
     }).subscribe({
       next: ({ dbs, current }) => {
         this.databases = dbs;
@@ -80,7 +84,9 @@ export class DatabaseManagerComponent implements OnInit {
 
         // Auto-select current database if no selection or if strictly loading fresh
         if (!this.selectedDatabase) {
-          const found = this.databases.find(d => d.name === this.currentDatabaseName);
+          const found = this.databases.find(
+            (d) => d.name === this.currentDatabaseName,
+          );
           if (found) {
             this.selectedDatabase = found;
           }
@@ -90,10 +96,10 @@ export class DatabaseManagerComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error loading initial data', err);
-        this.openAck('DBM_TITLE', 'DBM_ERR_LOAD_INFO');
+        console.error("Error loading initial data", err);
+        this.openAck("DBM_TITLE", "DBM_ERR_LOAD_INFO");
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -106,13 +112,17 @@ export class DatabaseManagerComponent implements OnInit {
 
         // Re-establish selection object reference from new list
         if (this.selectedDatabase) {
-          const found = this.databases.find(d => d.name === this.selectedDatabase.name);
+          const found = this.databases.find(
+            (d) => d.name === this.selectedDatabase.name,
+          );
           if (found) {
             this.selectedDatabase = found;
           }
         } else if (this.currentDatabaseName) {
           // Fallback to current if nothing selected
-          const found = this.databases.find(d => d.name === this.currentDatabaseName);
+          const found = this.databases.find(
+            (d) => d.name === this.currentDatabaseName,
+          );
           if (found) this.selectedDatabase = found;
         }
 
@@ -120,10 +130,10 @@ export class DatabaseManagerComponent implements OnInit {
         this.cdr.detectChanges(); // Ensure data updates render immediately
       },
       error: (err) => {
-        console.error('Error loading databases', err);
-        this.openAck('DBM_TITLE', 'DBM_ERR_LOAD_LIST');
+        console.error("Error loading databases", err);
+        this.openAck("DBM_TITLE", "DBM_ERR_LOAD_LIST");
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -138,8 +148,8 @@ export class DatabaseManagerComponent implements OnInit {
     }
 
     this.openConfirm(
-      'DBM_CONFIRM_SWITCH_TITLE',
-      'DBM_CONFIRM_SWITCH_MSG',
+      "DBM_CONFIRM_SWITCH_TITLE",
+      "DBM_CONFIRM_SWITCH_MSG",
       { name: this.selectedDatabase.name },
       () => {
         this.loading = true;
@@ -151,19 +161,19 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error('Error switching database', err);
-            this.openAck('DBM_TITLE', 'DBM_ERR_SWITCH');
+            console.error("Error switching database", err);
+            this.openAck("DBM_TITLE", "DBM_ERR_SWITCH");
             this.loading = false;
-          }
+          },
         });
-      }
+      },
     );
   }
 
   createDatabase() {
     this.openInput(
-      'DBM_PROMPT_CREATE_TITLE',
-      'DBM_PROMPT_CREATE_MSG',
+      "DBM_PROMPT_CREATE_TITLE",
+      "DBM_PROMPT_CREATE_MSG",
       {},
       (name) => {
         this.loading = true;
@@ -176,30 +186,30 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error('Error creating database', err);
+            console.error("Error creating database", err);
             this.loading = false;
             if (err.status === 409) {
-              this.openAck('DBM_TITLE', 'DBM_ERR_EXISTS');
+              this.openAck("DBM_TITLE", "DBM_ERR_EXISTS");
             } else {
-              this.openAck('DBM_TITLE', 'DBM_ERR_CREATE');
+              this.openAck("DBM_TITLE", "DBM_ERR_CREATE");
             }
             this.cdr.detectChanges();
-          }
+          },
         });
-      }
+      },
     );
   }
 
   copyDatabase() {
     if (!this.selectedDatabase) return;
     if (this.selectedDatabase.name !== this.currentDatabaseName) {
-      this.openAck('DBM_TITLE', 'DBM_ERR_COPY_INACTIVE');
+      this.openAck("DBM_TITLE", "DBM_ERR_COPY_INACTIVE");
       return;
     }
 
     this.openInput(
-      'DBM_PROMPT_COPY_TITLE',
-      'DBM_PROMPT_COPY_MSG',
+      "DBM_PROMPT_COPY_TITLE",
+      "DBM_PROMPT_COPY_MSG",
       { name: this.selectedDatabase.name },
       (newName) => {
         this.loading = true;
@@ -207,39 +217,39 @@ export class DatabaseManagerComponent implements OnInit {
 
         this.dataService.copyDatabase(newName).subscribe({
           next: (stats) => {
-            this.openAck('DBM_TITLE', 'DBM_SUCCESS_COPY', { name: stats.name });
+            this.openAck("DBM_TITLE", "DBM_SUCCESS_COPY", { name: stats.name });
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error('Error copying database', err);
+            console.error("Error copying database", err);
             this.loading = false;
             if (err.status === 409) {
-              this.openAck('DBM_TITLE', 'DBM_ERR_EXISTS');
+              this.openAck("DBM_TITLE", "DBM_ERR_EXISTS");
             } else {
-              this.openAck('DBM_TITLE', 'DBM_ERR_COPY');
+              this.openAck("DBM_TITLE", "DBM_ERR_COPY");
             }
             this.cdr.detectChanges();
-          }
+          },
         });
-      }
+      },
     );
   }
 
   resetDatabase() {
     if (!this.selectedDatabase) return;
     if (this.selectedDatabase.name !== this.currentDatabaseName) {
-      this.openAck('DBM_TITLE', 'DBM_ERR_RESET_INACTIVE');
+      this.openAck("DBM_TITLE", "DBM_ERR_RESET_INACTIVE");
       return;
     }
 
     this.openConfirm(
-      'DBM_CONFIRM_RESET_TITLE',
-      'DBM_CONFIRM_RESET_MSG_1',
+      "DBM_CONFIRM_RESET_TITLE",
+      "DBM_CONFIRM_RESET_MSG_1",
       { name: this.selectedDatabase.name },
       () => {
         this.openConfirm(
-          'DBM_CONFIRM_RESET_TITLE',
-          'DBM_CONFIRM_RESET_MSG_2',
+          "DBM_CONFIRM_RESET_TITLE",
+          "DBM_CONFIRM_RESET_MSG_2",
           {},
           () => {
             this.loading = true;
@@ -249,31 +259,33 @@ export class DatabaseManagerComponent implements OnInit {
               next: (stats) => {
                 // Reset client-side settings to defaults
                 this.settingsService.resetToDefaults();
-                this.openAck('DBM_TITLE', 'DBM_SUCCESS_RESET', { name: stats.name });
+                this.openAck("DBM_TITLE", "DBM_SUCCESS_RESET", {
+                  name: stats.name,
+                });
                 this.loadDatabases(); // toggle loading off in here
               },
               error: (err) => {
-                console.error('Error resetting database', err);
-                this.openAck('DBM_TITLE', 'DBM_ERR_RESET');
+                console.error("Error resetting database", err);
+                this.openAck("DBM_TITLE", "DBM_ERR_RESET");
                 this.loading = false;
-              }
+              },
             });
-          }
+          },
         );
-      }
+      },
     );
   }
 
   deleteDatabase() {
     if (!this.selectedDatabase) return;
     if (this.selectedDatabase.name === this.currentDatabaseName) {
-      this.openAck('DBM_TITLE', 'DBM_ERR_DELETE_ACTIVE');
+      this.openAck("DBM_TITLE", "DBM_ERR_DELETE_ACTIVE");
       return;
     }
 
     this.openConfirm(
-      'DBM_CONFIRM_DELETE_TITLE',
-      'DBM_CONFIRM_DELETE_MSG',
+      "DBM_CONFIRM_DELETE_TITLE",
+      "DBM_CONFIRM_DELETE_MSG",
       { name: this.selectedDatabase.name },
       () => {
         this.loading = true;
@@ -281,18 +293,20 @@ export class DatabaseManagerComponent implements OnInit {
 
         this.dataService.deleteDatabase(this.selectedDatabase.name).subscribe({
           next: () => {
-            this.openAck('DBM_TITLE', 'DBM_SUCCESS_DELETE', { name: this.selectedDatabase.name });
+            this.openAck("DBM_TITLE", "DBM_SUCCESS_DELETE", {
+              name: this.selectedDatabase.name,
+            });
             this.selectedDatabase = null; // Clear selection
             this.loadDatabases();
           },
           error: (err) => {
-            console.error('Error deleting database', err);
+            console.error("Error deleting database", err);
             this.loading = false;
-            this.openAck('DBM_TITLE', 'DBM_ERR_DELETE');
+            this.openAck("DBM_TITLE", "DBM_ERR_DELETE");
             this.cdr.detectChanges();
-          }
+          },
         });
-      }
+      },
     );
   }
 
@@ -302,7 +316,9 @@ export class DatabaseManagerComponent implements OnInit {
   }
 
   importDatabase() {
-    const fileInput = document.getElementById('databaseImportInput') as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "databaseImportInput",
+    ) as HTMLInputElement;
     if (fileInput) {
       fileInput.click();
     }
@@ -316,8 +332,8 @@ export class DatabaseManagerComponent implements OnInit {
     const uniqueName = this.generateUniqueName(baseName);
 
     this.openInput(
-      'DBM_PROMPT_IMPORT_TITLE',
-      'DBM_PROMPT_IMPORT_MSG',
+      "DBM_PROMPT_IMPORT_TITLE",
+      "DBM_PROMPT_IMPORT_MSG",
       { filename: file.name },
       (name) => {
         this.loading = true;
@@ -325,21 +341,23 @@ export class DatabaseManagerComponent implements OnInit {
 
         this.dataService.importDatabase(name, file).subscribe({
           next: (stats) => {
-            this.openAck('DBM_TITLE', 'DBM_SUCCESS_IMPORT', { name: stats.name });
+            this.openAck("DBM_TITLE", "DBM_SUCCESS_IMPORT", {
+              name: stats.name,
+            });
             this.loadDatabases();
           },
           error: (err) => {
-            console.error('Error importing database', err);
+            console.error("Error importing database", err);
             this.loading = false;
-            this.openAck('DBM_TITLE', 'DBM_ERR_IMPORT');
+            this.openAck("DBM_TITLE", "DBM_ERR_IMPORT");
             this.cdr.detectChanges();
-          }
+          },
         });
       },
-      uniqueName
+      uniqueName,
     );
     // Reset input so the same file can be selected again
-    event.target.value = '';
+    event.target.value = "";
   }
 
   generateUniqueName(base: string): string {
@@ -353,15 +371,22 @@ export class DatabaseManagerComponent implements OnInit {
   }
 
   isNameUnique(name: string): boolean {
-    return !this.databases.find(db => db.name.toLowerCase() === name.toLowerCase());
+    return !this.databases.find(
+      (db) => db.name.toLowerCase() === name.toLowerCase(),
+    );
   }
 
   onBack() {
-    this.router.navigate(['/raceday-setup']);
+    this.router.navigate(["/raceday-setup"]);
   }
 
   // Modal Helpers
-  openConfirm(titleKey: string, messageKey: string, msgParams: any, onConfirm: () => void) {
+  openConfirm(
+    titleKey: string,
+    messageKey: string,
+    msgParams: any,
+    onConfirm: () => void,
+  ) {
     this.confirmModalTitle = titleKey;
     this.confirmModalMessage = messageKey;
     this.confirmModalParams = msgParams || {};
@@ -394,7 +419,13 @@ export class DatabaseManagerComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  openInput(titleKey: string, messageKey: string, msgParams: any, onConfirm: (val: string) => void, initialValue: string = '') {
+  openInput(
+    titleKey: string,
+    messageKey: string,
+    msgParams: any,
+    onConfirm: (val: string) => void,
+    initialValue: string = "",
+  ) {
     this.inputModalTitle = titleKey;
     this.inputModalMessage = messageKey;
     this.inputModalParams = msgParams || {};

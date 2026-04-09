@@ -1,27 +1,30 @@
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef } from "@angular/core";
 import {
+  Compiler,
   Component,
+  HostListener,
+  Inject,
+  Injector,
+  OnDestroy,
   OnInit,
   ViewChild,
   ViewContainerRef,
-  Compiler,
-  Injector,
-  Inject,
-  HostListener
-} from '@angular/core';
-import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+} from "@angular/core";
+import { Router } from "@angular/router";
+import { Subscription } from "rxjs";
+import { DataService } from "src/app/data.service";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { DynamicComponentService } from "src/app/services/dynamic-component.service";
+import { FileSystemService } from "src/app/services/file-system.service";
+import { HelpService } from "src/app/services/help.service";
+import { RaceService } from "src/app/services/race.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { HelpService } from 'src/app/services/help.service';
-import { RaceService } from 'src/app/services/race.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
-
-import { DefaultRacedaySetupComponent } from './default-raceday-setup.component';
+import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   constructor(
@@ -32,41 +35,50 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
     @Inject(TranslationService) translationService: TranslationService,
     @Inject(SettingsService) settingsService: SettingsService,
     @Inject(FileSystemService) fileSystem: FileSystemService,
-    @Inject(HelpService) helpService: HelpService
+    @Inject(HelpService) helpService: HelpService,
   ) {
-    super(dataService, cdr, raceService, router, translationService, settingsService, fileSystem, helpService);
+    super(
+      dataService,
+      cdr,
+      raceService,
+      router,
+      translationService,
+      settingsService,
+      fileSystem,
+      helpService,
+    );
   }
 }
 
 @Component({
-  selector: 'app-raceday-setup',
-  templateUrl: './raceday-setup.component.html',
-  styleUrl: './raceday-setup.component.css',
-  standalone: false
+  selector: "app-raceday-setup",
+  templateUrl: "./raceday-setup.component.html",
+  styleUrl: "./raceday-setup.component.css",
+  standalone: false,
 })
-export class RacedaySetupComponent implements OnInit {
-  @ViewChild('container', { read: ViewContainerRef, static: true }) container!: ViewContainerRef;
+export class RacedaySetupComponent implements OnInit, OnDestroy {
+  @ViewChild("container", { read: ViewContainerRef, static: true })
+  container!: ViewContainerRef;
 
   error: string | null = null;
   isLoading = true;
-
 
   showSplash = true;
   connectionVerified = false;
   minTimeElapsed = false;
   translationsLoaded = false;
   showServerConfig = false;
-  tempServerIp = 'localhost';
+  tempServerIp = "localhost";
   tempServerPort = 7070;
-  serverIp: string = '';
-  serverVersion: string = '';
-  clientVersion: string = (window as any).CLIENT_VERSION_OVERRIDE || '0.0.0.13';
+  serverIp: string = "";
+  serverVersion: string = "";
+  clientVersion: string = (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0.13";
   showAboutDialog = false;
 
   scale: number = 1;
 
   quoteKeys: string[] = [];
-  currentQuoteKey: string = '';
+  currentQuoteKey: string = "";
   quoteVisible = true;
   private quoteInterval: any;
 
@@ -85,7 +97,7 @@ export class RacedaySetupComponent implements OnInit {
     private dataService: DataService,
     private settingsService: SettingsService,
     private translationService: TranslationService,
-    private connectionMonitor: ConnectionMonitorService
+    private connectionMonitor: ConnectionMonitorService,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -93,7 +105,7 @@ export class RacedaySetupComponent implements OnInit {
     }
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
@@ -119,7 +131,7 @@ export class RacedaySetupComponent implements OnInit {
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing
-    this.translationService.getTranslationsLoaded().subscribe(loaded => {
+    this.translationService.getTranslationsLoaded().subscribe((loaded) => {
       this.translationsLoaded = loaded;
       if (loaded && !this.quoteInterval && this.showSplash) {
         this.startQuoteRotation();
@@ -136,9 +148,9 @@ export class RacedaySetupComponent implements OnInit {
     }
 
     // Check if we should skip the splash screen (e.g. after UI switch)
-    const skipIntro = sessionStorage.getItem('skipIntro') === 'true';
+    const skipIntro = sessionStorage.getItem("skipIntro") === "true";
     if (skipIntro) {
-      sessionStorage.removeItem('skipIntro');
+      sessionStorage.removeItem("skipIntro");
       this.showSplash = false;
       this.minTimeElapsed = true;
 
@@ -147,10 +159,12 @@ export class RacedaySetupComponent implements OnInit {
     } else {
       // Start Splash Screen Logic
 
-      const minTimePromise = new Promise<void>(resolve => setTimeout(() => {
-        this.minTimeElapsed = true;
-        resolve();
-      }, 5000));
+      const minTimePromise = new Promise<void>((resolve) =>
+        setTimeout(() => {
+          this.minTimeElapsed = true;
+          resolve();
+        }, 5000),
+      );
 
       // Wait for connection service
       await this.connectionMonitor.waitForConnection();
@@ -173,7 +187,10 @@ export class RacedaySetupComponent implements OnInit {
       }
       this.cdr.detectChanges();
     } catch (e: any) {
-      console.error('Failed to load custom component, falling back to default', e);
+      console.error(
+        "Failed to load custom component, falling back to default",
+        e,
+      );
       this.loadDefaultComponent();
       this.cdr.detectChanges();
     } finally {
@@ -201,17 +218,21 @@ export class RacedaySetupComponent implements OnInit {
 
   // Wrappers to match previous API if needed, or we implement logic directly
   monitorConnection() {
-    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
-      if (state === ConnectionState.DISCONNECTED && !this.isConnectionLost) {
-        this.handleConnectionLoss();
-      } else if (state === ConnectionState.CONNECTED && this.isConnectionLost) {
-        this.handleConnectionRestored();
-      }
-    });
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        if (state === ConnectionState.DISCONNECTED && !this.isConnectionLost) {
+          this.handleConnectionLoss();
+        } else if (
+          state === ConnectionState.CONNECTED &&
+          this.isConnectionLost
+        ) {
+          this.handleConnectionRestored();
+        }
+      });
   }
 
   handleConnectionLoss() {
-    console.warn('Connection lost, starting retry sequence...');
+    console.warn("Connection lost, starting retry sequence...");
     this.isConnectionLost = true;
     this.retryStartTime = Date.now();
     this.cdr.detectChanges();
@@ -221,7 +242,7 @@ export class RacedaySetupComponent implements OnInit {
   }
 
   handleConnectionRestored() {
-    console.log('Connection restored!');
+    console.log("Connection restored!");
     this.isConnectionLost = false;
     this.refreshServerInfo();
     this.cdr.detectChanges();
@@ -233,7 +254,7 @@ export class RacedaySetupComponent implements OnInit {
     // If we are still lost after 5 seconds, reset UI
     this.retryTimeout = setTimeout(() => {
       if (this.isConnectionLost) {
-        console.warn('Connection retry timed out. Resetting to splash screen.');
+        console.warn("Connection retry timed out. Resetting to splash screen.");
         this.resetToSplash();
       }
       this.retryTimeout = null;
@@ -268,8 +289,8 @@ export class RacedaySetupComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.warn('Failed to fetch server version', err);
-      }
+        console.warn("Failed to fetch server version", err);
+      },
     });
 
     this.dataService.getServerIp().subscribe({
@@ -278,8 +299,8 @@ export class RacedaySetupComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.warn('Failed to fetch server IP', err);
-      }
+        console.warn("Failed to fetch server IP", err);
+      },
     });
   }
 
@@ -320,7 +341,7 @@ export class RacedaySetupComponent implements OnInit {
         this.availableQuotes = [...this.quoteKeys];
         this.shuffleArray(this.availableQuotes);
       }
-      this.currentQuoteKey = this.availableQuotes.pop() || '';
+      this.currentQuoteKey = this.availableQuotes.pop() || "";
       this.quoteVisible = true;
       this.cdr.detectChanges();
     }, 500); // 500ms match CSS transition
@@ -347,7 +368,7 @@ export class RacedaySetupComponent implements OnInit {
 
     // Reset connection verification to force a new check with new address
     this.connectionVerified = false;
-    // We update the service monitor to check immediately? 
+    // We update the service monitor to check immediately?
     // The service continues polling, but let's manual check.
     this.connectionMonitor.checkConnection().subscribe();
 
@@ -358,14 +379,26 @@ export class RacedaySetupComponent implements OnInit {
   }
 
   // Old methods removed/replaced
-  waitForConnection() { /* removed */ }
-  startConnectionMonitoring() { /* removed */ }
-  stopConnectionMonitoring() { /* removed */ }
-  checkConnection() { /* removed */ }
-  retryConnection() { /* removed */ }
+  waitForConnection() {
+    /* removed */
+  }
+  startConnectionMonitoring() {
+    /* removed */
+  }
+  stopConnectionMonitoring() {
+    /* removed */
+  }
+  checkConnection() {
+    /* removed */
+  }
+  retryConnection() {
+    /* removed */
+  }
 
   loadDefaultComponent() {
-    const componentRef = this.container.createComponent(DefaultRacedaySetupComponent);
+    const componentRef = this.container.createComponent(
+      DefaultRacedaySetupComponent,
+    );
     componentRef.instance.requestServerConfig.subscribe(() => {
       this.showServerConfig = true;
       this.cdr.detectChanges();
@@ -378,20 +411,26 @@ export class RacedaySetupComponent implements OnInit {
 
   async loadCustomComponent() {
     try {
-      const html = await this.fileSystem.getCustomFile('raceday-setup.component.html');
-      let css = '';
+      const html = await this.fileSystem.getCustomFile(
+        "raceday-setup.component.html",
+      );
+      let css = "";
       try {
-        css = await this.fileSystem.getCustomFile('raceday-setup.component.css');
+        css = await this.fileSystem.getCustomFile(
+          "raceday-setup.component.css",
+        );
       } catch (e) {
         // CSS is optional
-        console.log('No custom CSS found or could not be read');
+        console.log("No custom CSS found or could not be read");
       }
 
-      let tsCode = '';
+      let tsCode = "";
       try {
-        tsCode = await this.fileSystem.getCustomFile('raceday-setup.component.ts');
+        tsCode = await this.fileSystem.getCustomFile(
+          "raceday-setup.component.ts",
+        );
       } catch (e) {
-        console.log('No custom TS found');
+        console.log("No custom TS found");
       }
 
       // Create Custom Component Class
@@ -400,7 +439,7 @@ export class RacedaySetupComponent implements OnInit {
         baseClass,
         html,
         css,
-        tsCode
+        tsCode,
       );
       // Create the component directly (no Module required for standalone)
       const componentRef = this.container.createComponent(componentType);
@@ -432,20 +471,21 @@ export class RacedaySetupComponent implements OnInit {
           });
         }
       }
-
     } catch (e: any) {
       // Propagate specific error message
-      const errorMsg = e instanceof Error ? e.message : 'Unknown error';
-      if (errorMsg.includes('Permission denied')) {
-        throw new Error('Permission denied to access custom files. Please re-select the folder.');
-      } else if (errorMsg.includes('not found')) {
-        throw new Error(`Required file not found in custom folder: ${e.message}`);
+      const errorMsg = e instanceof Error ? e.message : "Unknown error";
+      if (errorMsg.includes("Permission denied")) {
+        throw new Error(
+          "Permission denied to access custom files. Please re-select the folder.",
+        );
+      } else if (errorMsg.includes("not found")) {
+        throw new Error(
+          `Required file not found in custom folder: ${e.message}`,
+        );
       }
       throw e;
     }
   }
-
-
 
   async configureCustomView() {
     const success = await this.fileSystem.selectCustomFolder();

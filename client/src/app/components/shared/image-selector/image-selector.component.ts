@@ -1,18 +1,23 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-
-import { DataService } from 'src/app/data.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from "@angular/core";
+import { DataService } from "src/app/data.service";
 
 @Component({
-  selector: 'app-image-selector',
-  templateUrl: './image-selector.component.html',
-  styleUrl: './image-selector.component.css',
-  standalone: false
+  selector: "app-image-selector",
+  templateUrl: "./image-selector.component.html",
+  styleUrl: "./image-selector.component.css",
+  standalone: false,
 })
 export class ImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
   @Input() assets: any[] = [];
-  @Input() size: 'small' | 'medium' | 'large' = 'medium';
+  @Input() size: "small" | "medium" | "large" = "medium";
 
   @Output() imageUrlChange = new EventEmitter<string>();
   @Output() uploadStarted = new EventEmitter<void>();
@@ -25,8 +30,8 @@ export class ImageSelectorComponent {
 
   constructor(
     private dataService: DataService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
@@ -69,7 +74,7 @@ export class ImageSelectorComponent {
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const bytes = new Uint8Array(e.target.result);
-      this.dataService.uploadAsset(file.name, 'image', bytes).subscribe({
+      this.dataService.uploadAsset(file.name, "image", bytes).subscribe({
         next: (asset) => {
           this.isUploading = false;
           this.pendingPreview = null;
@@ -79,12 +84,12 @@ export class ImageSelectorComponent {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('Image upload failed', err);
+          console.error("Image upload failed", err);
           this.isUploading = false;
           this.pendingPreview = null;
           this.uploadFinished.emit();
           this.cdr.detectChanges();
-        }
+        },
       });
     };
     reader.readAsArrayBuffer(file);

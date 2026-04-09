@@ -1,29 +1,38 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, HostListener, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { Race } from 'src/app/models/race';
-import { Team } from 'src/app/models/team';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { HelpService } from 'src/app/services/help.service';
-import { RaceService } from 'src/app/services/race.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  OnInit,
+  Output,
+  ViewChild,
+} from "@angular/core";
+import { Router } from "@angular/router";
+import { forkJoin } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import { Race } from "src/app/models/race";
+import { Team } from "src/app/models/team";
+import { FileSystemService } from "src/app/services/file-system.service";
+import { HelpService } from "src/app/services/help.service";
+import { RaceService } from "src/app/services/race.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 type Participant = Driver | Team;
 
 @Component({
-  selector: 'app-default-raceday-setup',
-  templateUrl: './default-raceday-setup.component.html',
-  styleUrl: './default-raceday-setup.component.css',
-  standalone: false
+  selector: "app-default-raceday-setup",
+  templateUrl: "./default-raceday-setup.component.html",
+  styleUrl: "./default-raceday-setup.component.css",
+  standalone: false,
 })
 export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   @Output() requestServerConfig = new EventEmitter<void>();
-  @ViewChild('scrollContainer') scrollContainer?: ElementRef;
+  @ViewChild("scrollContainer") scrollContainer?: ElementRef;
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -43,8 +52,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   imageErrors = new Set<string>();
 
   // Search State
-  driverSearchQuery: string = '';
-  raceSearchQuery: string = '';
+  driverSearchQuery: string = "";
+  raceSearchQuery: string = "";
 
   // Race State
   races: Race[] = [];
@@ -68,8 +77,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   // Conflict Error Modal
   showErrorModal: boolean = false;
-  errorTitle: string = '';
-  errorMessage: string = '';
+  errorTitle: string = "";
+  errorMessage: string = "";
   errorMessageParams: any = {};
 
   // Modals
@@ -80,13 +89,25 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   isHelpDropdownOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
 
-  supportedLanguages: { code: string, nameKey: string }[] = [];
-  currentLanguage: string = '';
+  supportedLanguages: { code: string; nameKey: string }[] = [];
+  currentLanguage: string = "";
   menuItems = [
-    { label: 'RDS_MENU_FILE', action: (event: MouseEvent) => this.toggleFileDropdown(event) },
-    { label: 'RDS_MENU_CONFIG', action: (event: MouseEvent) => this.toggleConfigDropdown(event) },
-    { label: 'RDS_MENU_OPTIONS', action: (event: MouseEvent) => this.toggleOptionsDropdown(event) },
-    { label: 'RDS_MENU_HELP', action: (event: MouseEvent) => this.toggleHelpDropdown(event) }
+    {
+      label: "RDS_MENU_FILE",
+      action: (event: MouseEvent) => this.toggleFileDropdown(event),
+    },
+    {
+      label: "RDS_MENU_CONFIG",
+      action: (event: MouseEvent) => this.toggleConfigDropdown(event),
+    },
+    {
+      label: "RDS_MENU_OPTIONS",
+      action: (event: MouseEvent) => this.toggleOptionsDropdown(event),
+    },
+    {
+      label: "RDS_MENU_HELP",
+      action: (event: MouseEvent) => this.toggleHelpDropdown(event),
+    },
   ];
 
   constructor(
@@ -97,8 +118,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     private translationService: TranslationService,
     private settingsService: SettingsService,
     private fileSystem: FileSystemService,
-    private helpService: HelpService
-  ) { }
+    private helpService: HelpService,
+  ) {}
 
   ngOnInit() {
     this.updateScale();
@@ -106,31 +127,41 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
-      races: this.dataService.getRaces()
+      races: this.dataService.getRaces(),
     }).subscribe({
       next: (result) => {
-        const drivers = result.drivers.map(d => new Driver(
-          d.entity_id,
-          d.name,
-          d.nickname || '',
-          d.avatarUrl,
-          {
-            type: d.lapAudio?.type || (d.lapSoundType === 'tts' ? 'tts' : 'preset'),
-            url: d.lapAudio?.url || d.lapSoundUrl,
-            text: d.lapAudio?.text || d.lapSoundText
-          },
-          {
-            type: d.bestLapAudio?.type || (d.bestLapSoundType === 'tts' ? 'tts' : 'preset'),
-            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-            text: d.bestLapAudio?.text || d.bestLapSoundText
-          }
-        ));
-        const teams = result.teams.map((t: any) => new Team(
-          t.entity_id || t.entityId || '',
-          t.name || '',
-          t.avatarUrl || undefined,
-          t.driverIds || []
-        ));
+        const drivers = result.drivers.map(
+          (d) =>
+            new Driver(
+              d.entity_id,
+              d.name,
+              d.nickname || "",
+              d.avatarUrl,
+              {
+                type:
+                  d.lapAudio?.type ||
+                  (d.lapSoundType === "tts" ? "tts" : "preset"),
+                url: d.lapAudio?.url || d.lapSoundUrl,
+                text: d.lapAudio?.text || d.lapSoundText,
+              },
+              {
+                type:
+                  d.bestLapAudio?.type ||
+                  (d.bestLapSoundType === "tts" ? "tts" : "preset"),
+                url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+                text: d.bestLapAudio?.text || d.bestLapSoundText,
+              },
+            ),
+        );
+        const teams = result.teams.map(
+          (t: any) =>
+            new Team(
+              t.entity_id || t.entityId || "",
+              t.name || "",
+              t.avatarUrl || undefined,
+              t.driverIds || [],
+            ),
+        );
         const races = result.races;
 
         // --- Race Setup ---
@@ -139,9 +170,16 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);
 
-        if (localSettings && (localSettings.selectedRaceId || localSettings.recentRaceIds?.length > 0)) {
-          const defaultRaceId = localSettings.selectedRaceId || localSettings.recentRaceIds[0];
-          this.selectedRace = this.races.find(r => r.entity_id === defaultRaceId);
+        if (
+          localSettings &&
+          (localSettings.selectedRaceId ||
+            localSettings.recentRaceIds?.length > 0)
+        ) {
+          const defaultRaceId =
+            localSettings.selectedRaceId || localSettings.recentRaceIds[0];
+          this.selectedRace = this.races.find(
+            (r) => r.entity_id === defaultRaceId,
+          );
         }
 
         if (!this.selectedRace && this.races.length > 0) {
@@ -151,14 +189,19 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         // --- Participant Setup ---
         const allParticipants: Participant[] = [...drivers, ...teams];
         // Use prefixed IDs to avoid collision between drivers and teams sharing the same numeric sequence
-        const participantMap = new Map(allParticipants.map(p => [this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`, p]));
+        const participantMap = new Map(
+          allParticipants.map((p) => [
+            this.isDriver(p) ? `d_${p.entity_id}` : `t_${p.entity_id}`,
+            p,
+          ]),
+        );
 
         // Populate Selected (in saved order)
         if (localSettings && localSettings.selectedDriverIds) {
           for (const rawId of localSettings.selectedDriverIds) {
             // Support both prefixed and non-prefixed IDs for backward compatibility
             let prefixedId = rawId;
-            if (!rawId.startsWith('d_') && !rawId.startsWith('t_')) {
+            if (!rawId.startsWith("d_") && !rawId.startsWith("t_")) {
               // Old style ID, try driver first then team
               if (participantMap.has(`d_${rawId}`)) {
                 prefixedId = `d_${rawId}`;
@@ -174,47 +217,51 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
             }
           }
         }
-        this.unselectedParticipants = Array.from(participantMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        this.unselectedParticipants = Array.from(participantMap.values()).sort(
+          (a, b) => a.name.localeCompare(b.name),
+        );
 
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading initial data', err)
+      error: (err) => console.error("Error loading initial data", err),
     });
 
-    this.translationService.getTranslationsLoaded().subscribe(loaded => {
+    this.translationService.getTranslationsLoaded().subscribe((loaded) => {
       this.translationsLoaded = loaded;
       this.cdr.detectChanges();
     });
 
-    this.supportedLanguages = this.translationService.getSupportedLanguages().sort((a, b) => {
-      const nameA = this.translationService.translate(a.nameKey);
-      const nameB = this.translationService.translate(b.nameKey);
-      return nameA.localeCompare(nameB);
-    });
+    this.supportedLanguages = this.translationService
+      .getSupportedLanguages()
+      .sort((a, b) => {
+        const nameA = this.translationService.translate(a.nameKey);
+        const nameB = this.translationService.translate(b.nameKey);
+        return nameA.localeCompare(nameB);
+      });
     this.currentLanguage = this.settingsService.getSettings().language;
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
 
-  @HostListener('document:click', ['$event'])
+  @HostListener("document:click", ["$event"])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.custom-dropdown-container')) {
+    if (!target.closest(".custom-dropdown-container")) {
       this.closeDropdown();
     }
-    if (!target.closest('.options-menu-container')) {
+    if (!target.closest(".options-menu-container")) {
       this.closeOptionsDropdown();
     }
-    if (!target.closest('.file-menu-container')) {
+    if (!target.closest(".file-menu-container")) {
       this.closeFileDropdown();
     }
-    if (!target.closest('.config-menu-container')) {
+    if (!target.closest(".config-menu-container")) {
       this.closeConfigDropdown();
     }
-    if (!target.closest('.help-menu-container')) {
+    if (!target.closest(".help-menu-container")) {
       this.closeHelpDropdown();
     }
   }
@@ -232,39 +279,47 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getParticipantAvatarUrl(participant: Participant): string {
-    if (!participant.avatarUrl) return '';
-    if (participant.avatarUrl.startsWith('/')) {
+    if (!participant.avatarUrl) return "";
+    if (participant.avatarUrl.startsWith("/")) {
       return `${this.dataService.serverUrl}${participant.avatarUrl}`;
     }
     return participant.avatarUrl;
   }
 
   getLocalizedName(participant: Participant): string {
-    if (participant.name === 'Empty' && (!participant.entity_id || participant.entity_id === '')) {
-      return this.translationService.translate('RD_EMPTY_LANE');
+    if (
+      participant.name === "Empty" &&
+      (!participant.entity_id || participant.entity_id === "")
+    ) {
+      return this.translationService.translate("RD_EMPTY_LANE");
     }
-    return participant.name || '';
+    return participant.name || "";
   }
 
   getLocalizedNickname(participant: Participant): string {
     if (this.isDriver(participant)) {
-      if ((participant.nickname === 'Empty' || participant.name === 'Empty') && (!participant.entity_id || participant.entity_id === '')) {
-        return this.translationService.translate('RD_EMPTY_LANE');
+      if (
+        (participant.nickname === "Empty" || participant.name === "Empty") &&
+        (!participant.entity_id || participant.entity_id === "")
+      ) {
+        return this.translationService.translate("RD_EMPTY_LANE");
       }
-      return participant.nickname || participant.name || '';
+      return participant.nickname || participant.name || "";
     }
-    return '';
+    return "";
   }
 
   getLocalizedTeamMembers(participant: Participant): string {
     if (this.isTeam(participant)) {
-      return `${participant.driverIds.length} ${this.translationService.translate('RDS_TEAM_DRIVERS')}`;
+      return `${participant.driverIds.length} ${this.translationService.translate("RDS_TEAM_DRIVERS")}`;
     }
-    return '';
+    return "";
   }
 
   onParticipantImageError(participant: Participant) {
-    this.imageErrors.add((this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id);
+    this.imageErrors.add(
+      (this.isDriver(participant) ? "d_" : "t_") + participant.entity_id,
+    );
   }
 
   // --- Participant Logic ---
@@ -273,14 +328,25 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.updateListWithRefresh(() => {
       if (isSelected) {
         // Was selected, now unselecting
-        this.selectedParticipants = this.selectedParticipants.filter(p =>
-          !(p.entity_id === participant.entity_id && this.isDriver(p) === this.isDriver(participant))
+        this.selectedParticipants = this.selectedParticipants.filter(
+          (p) =>
+            !(
+              p.entity_id === participant.entity_id &&
+              this.isDriver(p) === this.isDriver(participant)
+            ),
         );
-        this.unselectedParticipants = [...this.unselectedParticipants, participant].sort((a, b) => a.name.localeCompare(b.name));
+        this.unselectedParticipants = [
+          ...this.unselectedParticipants,
+          participant,
+        ].sort((a, b) => a.name.localeCompare(b.name));
       } else {
         // Was unselected, now selecting
-        this.unselectedParticipants = this.unselectedParticipants.filter(p =>
-          !(p.entity_id === participant.entity_id && this.isDriver(p) === this.isDriver(participant))
+        this.unselectedParticipants = this.unselectedParticipants.filter(
+          (p) =>
+            !(
+              p.entity_id === participant.entity_id &&
+              this.isDriver(p) === this.isDriver(participant)
+            ),
         );
         this.selectedParticipants = [...this.selectedParticipants, participant];
       }
@@ -289,14 +355,20 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   addAllParticipants() {
     this.updateListWithRefresh(() => {
-      this.selectedParticipants = [...this.selectedParticipants, ...this.unselectedParticipants];
+      this.selectedParticipants = [
+        ...this.selectedParticipants,
+        ...this.unselectedParticipants,
+      ];
       this.unselectedParticipants = [];
     });
   }
 
   removeAllParticipants() {
     this.updateListWithRefresh(() => {
-      this.unselectedParticipants = [...this.unselectedParticipants, ...this.selectedParticipants].sort((a, b) => a.name.localeCompare(b.name));
+      this.unselectedParticipants = [
+        ...this.unselectedParticipants,
+        ...this.selectedParticipants,
+      ].sort((a, b) => a.name.localeCompare(b.name));
       this.selectedParticipants = [];
     });
   }
@@ -314,11 +386,17 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   isDriver(participant: Participant | undefined): participant is Driver {
-    return !!participant && (participant instanceof Driver || 'nickname' in participant);
+    return (
+      !!participant &&
+      (participant instanceof Driver || "nickname" in participant)
+    );
   }
 
   isTeam(participant: Participant | undefined): participant is Team {
-    return !!participant && (participant instanceof Team || 'driverIds' in participant);
+    return (
+      !!participant &&
+      (participant instanceof Team || "driverIds" in participant)
+    );
   }
 
   getDriver(participant: Participant | undefined): Driver | undefined {
@@ -330,7 +408,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getParticipantUniqueId(participant: Participant): string {
-    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id;
+    return (this.isDriver(participant) ? "d_" : "t_") + participant.entity_id;
   }
 
   private updateListWithRefresh(action: () => void) {
@@ -382,8 +460,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   trackByParticipant = (index: number, participant: Participant): string => {
-    return (this.isDriver(participant) ? 'd_' : 't_') + participant.entity_id;
-  }
+    return (this.isDriver(participant) ? "d_" : "t_") + participant.entity_id;
+  };
 
   preventSelection(event: Event) {
     event.preventDefault();
@@ -397,8 +475,15 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   drop(event: CdkDragDrop<Participant[]>) {
     // Only reorder within the selected list and if dropped strictly inside the container
-    if (event.container.id === 'selected-list' && event.isPointerOverContainer) {
-      moveItemInArray(this.selectedParticipants, event.previousIndex, event.currentIndex);
+    if (
+      event.container.id === "selected-list" &&
+      event.isPointerOverContainer
+    ) {
+      moveItemInArray(
+        this.selectedParticipants,
+        event.previousIndex,
+        event.currentIndex,
+      );
       this.saveSettings();
     }
   }
@@ -437,13 +522,18 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
       if (updateRecent) {
         let recentRaceIds = settings.recentRaceIds || [];
-        recentRaceIds = [this.selectedRace.entity_id, ...recentRaceIds.filter(id => id !== this.selectedRace?.entity_id)];
+        recentRaceIds = [
+          this.selectedRace.entity_id,
+          ...recentRaceIds.filter((id) => id !== this.selectedRace?.entity_id),
+        ];
         // Keep only the last two
         settings.recentRaceIds = recentRaceIds.slice(0, 2);
       }
     }
 
-    settings.selectedDriverIds = this.selectedParticipants.map(p => this.getParticipantUniqueId(p));
+    settings.selectedDriverIds = this.selectedParticipants.map((p) =>
+      this.getParticipantUniqueId(p),
+    );
 
     this.settingsService.saveSettings(settings);
 
@@ -454,13 +544,17 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   startRace(isDemo: boolean = false) {
     if (this.selectedRace && this.selectedParticipants.length > 0) {
-      console.log(`Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`);
+      console.log(
+        `Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`,
+      );
 
       const raceId = this.selectedRace.entity_id;
 
       this.dataService.getSavedRaces().subscribe({
         next: (races) => {
-          const autoSaveFile = races.find(f => f === `autosave_${raceId}.json`);
+          const autoSaveFile = races.find(
+            (f) => f === `autosave_${raceId}.json`,
+          );
           if (autoSaveFile) {
             this.autoSaveFileToLoad = autoSaveFile;
             this.pendingIsDemo = isDemo;
@@ -471,9 +565,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
           this.proceedWithStart(isDemo);
         },
         error: (err) => {
-          console.error('Failed to check for auto-save:', err);
+          console.error("Failed to check for auto-save:", err);
           this.proceedWithStart(isDemo);
-        }
+        },
       });
     }
   }
@@ -482,8 +576,8 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.showAutoSavePrompt = false;
     if (this.autoSaveFileToLoad) {
       this.dataService.loadRace(this.autoSaveFileToLoad).subscribe({
-        next: () => this.router.navigate(['/raceday']),
-        error: (err) => console.error('Failed to load auto-save:', err)
+        next: () => this.router.navigate(["/raceday"]),
+        error: (err) => console.error("Failed to load auto-save:", err),
       });
     }
   }
@@ -492,7 +586,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.showAutoSavePrompt = false;
     if (this.autoSaveFileToLoad) {
       this.dataService.deleteSavedRace(this.autoSaveFileToLoad).subscribe({
-        error: (err) => console.error('Failed to delete auto-save:', err)
+        error: (err) => console.error("Failed to delete auto-save:", err),
       });
     }
     this.proceedWithStart(this.pendingIsDemo);
@@ -502,46 +596,57 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.saveSettings(true);
     const settings = this.settingsService.getSettings();
 
-    this.dataService.initializeRace(this.selectedRace!.entity_id, settings.selectedDriverIds, isDemo).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.router.navigate(['/raceday']);
-        } else {
-          // Handle validation error
-          this.errorTitle = 'RDS_ERR_VALIDATION_TITLE';
-          const fixDescription = this.translationService.translate('RDS_ERR_START_RACE_FIX_DESCRIPTION');
-          
-          if (response.errorCode === 'DUPE_INDIVIDUAL_TEAM') {
-            this.errorMessage = 'RDS_ERR_DRIVER_DUPE_IND_TEAM';
-            this.errorMessageParams = {
-              driver: response.driverName,
-              team: response.teamNames.join(', ')
-            };
-          } else if (response.errorCode === 'DUPE_MULTIPLE_TEAMS') {
-            this.errorMessage = 'RDS_ERR_DRIVER_DUPE_TEAMS';
-            this.errorMessageParams = {
-              driver: response.driverName,
-              teams: response.teamNames.join(', ')
-            };
+    this.dataService
+      .initializeRace(
+        this.selectedRace!.entity_id,
+        settings.selectedDriverIds,
+        isDemo,
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.router.navigate(["/raceday"]);
           } else {
-            this.errorMessage = response.errorCode || 'Unknown error';
-            this.errorMessageParams = {};
-          }
-          
-          // Append fix description if it's a known error
-          if (response.errorCode) {
-            const translatedMessage = this.translationService.translate(this.errorMessage, this.errorMessageParams);
-            this.errorMessage = translatedMessage + '\n\n' + fixDescription;
-            // Clear messageParams since we've already done the translation for the main part
-            this.errorMessageParams = {};
-          }
+            // Handle validation error
+            this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+            const fixDescription = this.translationService.translate(
+              "RDS_ERR_START_RACE_FIX_DESCRIPTION",
+            );
 
-          this.showErrorModal = true;
-          this.cdr.detectChanges();
-        }
-      },
-      error: (err) => console.error(err)
-    });
+            if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
+              this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
+              this.errorMessageParams = {
+                driver: response.driverName,
+                team: response.teamNames.join(", "),
+              };
+            } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
+              this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
+              this.errorMessageParams = {
+                driver: response.driverName,
+                teams: response.teamNames.join(", "),
+              };
+            } else {
+              this.errorMessage = response.errorCode || "Unknown error";
+              this.errorMessageParams = {};
+            }
+
+            // Append fix description if it's a known error
+            if (response.errorCode) {
+              const translatedMessage = this.translationService.translate(
+                this.errorMessage,
+                this.errorMessageParams,
+              );
+              this.errorMessage = translatedMessage + "\n\n" + fixDescription;
+              // Clear messageParams since we've already done the translation for the main part
+              this.errorMessageParams = {};
+            }
+
+            this.showErrorModal = true;
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => console.error(err),
+      });
   }
 
   updateQuickStartRaces(recentRaceIds: string[] = []) {
@@ -550,7 +655,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     // 1. Try to populate from recent list
     if (recentRaceIds && recentRaceIds.length > 0) {
       for (const id of recentRaceIds) {
-        const race = this.races.find(r => r.entity_id === id);
+        const race = this.races.find((r) => r.entity_id === id);
         if (race) {
           this.quickStartRaces.push(race);
         }
@@ -560,9 +665,13 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     // 2. If we don't have enough, try to find "Grand Prix" or "Time Trial" as defaults if they aren't already in the list
     if (this.quickStartRaces.length < 2) {
       const defaults = [
-        this.races.find(r => r.name.toLowerCase().includes('grand prix')),
-        this.races.find(r => r.name.toLowerCase().includes('time trial'))
-      ].filter(r => r !== undefined && !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id)) as Race[];
+        this.races.find((r) => r.name.toLowerCase().includes("grand prix")),
+        this.races.find((r) => r.name.toLowerCase().includes("time trial")),
+      ].filter(
+        (r) =>
+          r !== undefined &&
+          !this.quickStartRaces.some((qsr) => qsr.entity_id === r.entity_id),
+      ) as Race[];
 
       for (const d of defaults) {
         if (this.quickStartRaces.length < 2) {
@@ -573,7 +682,10 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
     // 3. Last fallback: just pick first available races
     if (this.quickStartRaces.length < 2) {
-      const remaining = this.races.filter(r => !this.quickStartRaces.some(qsr => qsr.entity_id === r.entity_id));
+      const remaining = this.races.filter(
+        (r) =>
+          !this.quickStartRaces.some((qsr) => qsr.entity_id === r.entity_id),
+      );
       for (const r of remaining) {
         if (this.quickStartRaces.length < 2) {
           this.quickStartRaces.push(r);
@@ -583,30 +695,33 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getStartRaceTooltip(): string {
-    if (this.selectedParticipants.length > 0) return '';
-    const translated = this.translationService.translate('RDS_START_RACE_TOOLTIP');
-    console.log('DEBUG: getStartRaceTooltip returning:', translated);
+    if (this.selectedParticipants.length > 0) return "";
+    const translated = this.translationService.translate(
+      "RDS_START_RACE_TOOLTIP",
+    );
+    console.log("DEBUG: getStartRaceTooltip returning:", translated);
     return translated;
   }
 
   getRaceCardBackgroundClass(index: number): string {
-    const backgrounds = ['card-bg-gp', 'card-bg-tt'];
+    const backgrounds = ["card-bg-gp", "card-bg-tt"];
     return backgrounds[index % backgrounds.length];
   }
 
   get filteredUnselectedParticipants(): Participant[] {
     if (!this.driverSearchQuery) return this.unselectedParticipants;
     const q = this.driverSearchQuery.toLowerCase();
-    return this.unselectedParticipants.filter(p =>
-      p.name.toLowerCase().includes(q) ||
-      ((p as any).nickname && (p as any).nickname.toLowerCase().includes(q))
+    return this.unselectedParticipants.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        ((p as any).nickname && (p as any).nickname.toLowerCase().includes(q)),
     );
   }
 
   get filteredRaces(): Race[] {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
-    return this.races.filter(r => r.name.toLowerCase().includes(q));
+    return this.races.filter((r) => r.name.toLowerCase().includes(q));
   }
 
   // --- Options Menu Logic ---
@@ -647,19 +762,19 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   }
 
   getLanguageDisplayName(code: string): string {
-    if (code === '') {
+    if (code === "") {
       const browserCode = this.translationService.getBrowserLanguage();
       const langNameKey = `RDS_LANG_${browserCode.toUpperCase()}`;
       const browserLangName = this.translationService.translate(langNameKey);
-      return `${this.translationService.translate('RDS_LANG_DEFAULT')} (${browserLangName})`;
+      return `${this.translationService.translate("RDS_LANG_DEFAULT")} (${browserLangName})`;
     }
-    const lang = this.supportedLanguages.find(l => l.code === code);
+    const lang = this.supportedLanguages.find((l) => l.code === code);
     return lang ? this.translationService.translate(lang.nameKey) : code;
   }
 
   configureCustomUI() {
     this.closeOptionsDropdown();
-    this.router.navigate(['/ui-editor']);
+    this.router.navigate(["/ui-editor"]);
   }
 
   openServerSettings() {
@@ -688,29 +803,31 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   openAssetManager() {
     this.closeFileDropdown();
-    this.router.navigate(['/asset-manager']);
+    this.router.navigate(["/asset-manager"]);
   }
 
   openDriverManager() {
     this.closeConfigDropdown();
-    this.router.navigate(['/driver-manager']);
+    this.router.navigate(["/driver-manager"]);
   }
 
   openTeamManager() {
     this.closeConfigDropdown();
-    this.router.navigate(['/team-manager']);
+    this.router.navigate(["/team-manager"]);
   }
 
   openTrackManager() {
     this.closeConfigDropdown();
-    this.router.navigate(['/track-manager']);
+    this.router.navigate(["/track-manager"]);
   }
 
   openRaceManager() {
-    const queryParams: any = this.selectedRace ? { id: this.selectedRace.entity_id } : {};
+    const queryParams: any = this.selectedRace
+      ? { id: this.selectedRace.entity_id }
+      : {};
     queryParams.driverCount = this.selectedParticipants.length;
     this.closeConfigDropdown();
-    this.router.navigate(['/race-manager'], { queryParams });
+    this.router.navigate(["/race-manager"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {
@@ -762,7 +879,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
 
   openDatabaseManager() {
     this.closeFileDropdown();
-    this.router.navigate(['/database-manager']);
+    this.router.navigate(["/database-manager"]);
   }
 
   onSearchChange() {
@@ -775,63 +892,87 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
   startHelp() {
     this.helpService.startGuide([
       {
-        title: this.translationService.translate('RDS_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('RDS_HELP_WELCOME_CONTENT')
+        title: this.translationService.translate("RDS_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("RDS_HELP_WELCOME_CONTENT"),
       },
       {
-        selector: '.toolbar-btn.help',
-        title: this.translationService.translate('RDS_HELP_WALKTHROUGH_TITLE'),
-        content: this.translationService.translate('RDS_HELP_WALKTHROUGH_CONTENT'),
-        position: 'bottom'
+        selector: ".toolbar-btn.help",
+        title: this.translationService.translate("RDS_HELP_WALKTHROUGH_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_WALKTHROUGH_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        selector: '.toolbar-btn.analytics',
-        title: this.translationService.translate('RDS_HELP_ANALYTICS_TITLE'),
-        content: this.translationService.translate('RDS_HELP_ANALYTICS_CONTENT'),
-        position: 'bottom'
+        selector: ".toolbar-btn.analytics",
+        title: this.translationService.translate("RDS_HELP_ANALYTICS_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_ANALYTICS_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        selector: '.panel.driver-panel',
-        title: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_TITLE'),
-        content: this.translationService.translate('RDS_HELP_DRIVER_SELECTION_CONTENT'),
-        position: 'right'
+        selector: ".panel.driver-panel",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_SELECTION_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_SELECTION_CONTENT",
+        ),
+        position: "right",
       },
       {
-        selector: '.driver-action-bar',
-        title: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_TITLE'),
-        content: this.translationService.translate('RDS_HELP_DRIVER_ACTIONS_CONTENT'),
-        position: 'bottom'
+        selector: ".driver-action-bar",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_ACTIONS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_ACTIONS_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        selector: '.custom-dropdown-container',
-        title: this.translationService.translate('RDS_HELP_RACE_SELECTION_TITLE'),
-        content: this.translationService.translate('RDS_HELP_RACE_SELECTION_CONTENT'),
-        position: 'top'
+        selector: ".custom-dropdown-container",
+        title: this.translationService.translate(
+          "RDS_HELP_RACE_SELECTION_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_RACE_SELECTION_CONTENT",
+        ),
+        position: "top",
       },
       {
-        targetId: 'race-card-0',
-        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
-        content: this.translationService.translate('RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT'),
-        position: 'bottom'
+        targetId: "race-card-0",
+        title: this.translationService.translate("RDS_HELP_RECENT_RACE_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        targetId: 'race-card-1',
-        title: this.translationService.translate('RDS_HELP_RECENT_RACE_TITLE'),
-        content: this.translationService.translate('RDS_HELP_RECENT_RACE_CONTENT'),
-        position: 'bottom'
+        targetId: "race-card-1",
+        title: this.translationService.translate("RDS_HELP_RECENT_RACE_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_RECENT_RACE_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        selector: '.btn-start',
-        title: this.translationService.translate('RDS_HELP_START_RACE_TITLE'),
-        content: this.translationService.translate('RDS_HELP_START_RACE_CONTENT'),
-        position: 'top'
+        selector: ".btn-start",
+        title: this.translationService.translate("RDS_HELP_START_RACE_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_START_RACE_CONTENT",
+        ),
+        position: "top",
       },
       {
-        selector: '.btn-demo',
-        title: this.translationService.translate('RDS_HELP_START_DEMO_TITLE'),
-        content: this.translationService.translate('RDS_HELP_START_DEMO_CONTENT'),
-        position: 'top'
-      }
+        selector: ".btn-demo",
+        title: this.translationService.translate("RDS_HELP_START_DEMO_TITLE"),
+        content: this.translationService.translate(
+          "RDS_HELP_START_DEMO_CONTENT",
+        ),
+        position: "top",
+      },
     ]);
   }
 
@@ -844,7 +985,7 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
         this.selectedSavedRace = null;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Failed to get saved races:', err)
+      error: (err) => console.error("Failed to get saved races:", err),
     });
   }
 
@@ -862,9 +1003,9 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     this.dataService.loadRace(this.selectedSavedRace).subscribe({
       next: () => {
         this.closeLoadRaceModal();
-        this.router.navigate(['/raceday']);
+        this.router.navigate(["/raceday"]);
       },
-      error: (err) => console.error('Failed to load race:', err)
+      error: (err) => console.error("Failed to load race:", err),
     });
   }
 
@@ -873,13 +1014,13 @@ export class DefaultRacedaySetupComponent implements OnInit, AfterViewInit {
     if (confirm(`Are you sure you want to delete "${file}"?`)) {
       this.dataService.deleteSavedRace(file).subscribe({
         next: () => {
-          this.savedRaces = this.savedRaces.filter(r => r !== file);
+          this.savedRaces = this.savedRaces.filter((r) => r !== file);
           if (this.selectedSavedRace === file) {
             this.selectedSavedRace = null;
           }
           this.cdr.detectChanges();
         },
-        error: (err) => console.error('Failed to delete race:', err)
+        error: (err) => console.error("Failed to delete race:", err),
       });
     }
   }

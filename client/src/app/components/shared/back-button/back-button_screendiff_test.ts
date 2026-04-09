@@ -1,10 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { BackButtonHarnessE2e } from "./testing/back-button.harness.e2e";
 
-import { BackButtonHarnessE2e } from './testing/back-button.harness.e2e';
-
-test.describe('Back Button Visuals', () => {
+test.describe("Back Button Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
@@ -12,19 +11,25 @@ test.describe('Back Button Visuals', () => {
     await TestSetupHelper.setupAssetMocks(page);
   });
 
-  test('should display back button', async ({ page }) => {
+  test("should display back button", async ({ page }) => {
     // Navigate to Asset Manager
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
-    
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+
     // Verify Back Button is visible
-    const backButtonHost = page.locator('app-back-button');
-    await backButtonHost.waitFor({ state: 'visible' });
+    const backButtonHost = page.locator("app-back-button");
+    await backButtonHost.waitFor({ state: "visible" });
     const harness = new BackButtonHarnessE2e(backButtonHost);
-    
+
     // Label text checked visually
 
     // Screenshot the back button area
     // Just screenshot the button itself to be precise
-    await expect(backButtonHost).toHaveScreenshot('back-button.png', { maxDiffPixelRatio: 0.05 });
+    await expect(backButtonHost).toHaveScreenshot("back-button.png", {
+      maxDiffPixelRatio: 0.05,
+    });
   });
 });

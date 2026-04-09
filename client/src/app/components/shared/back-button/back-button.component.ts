@@ -1,17 +1,25 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
-
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from "@angular/core";
+import { Router } from "@angular/router";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
 
 @Component({
-  selector: 'app-back-button',
-  templateUrl: './back-button.component.html',
-  styleUrls: ['./back-button.component.css'],
-  standalone: false
+  selector: "app-back-button",
+  templateUrl: "./back-button.component.html",
+  styleUrls: ["./back-button.component.css"],
+  standalone: false,
 })
 export class BackButtonComponent {
-  @Input() label: string = 'BACK';
-  @Input() route: string = '/raceday-setup';
+  @Input() label: string = "BACK";
+  @Input() route: string = "/raceday-setup";
   @Input() queryParams: any = {};
 
   private _confirm: boolean = false;
@@ -21,9 +29,11 @@ export class BackButtonComponent {
       this.cdr.detectChanges();
     }
   }
-  get confirm(): boolean { return this._confirm; }
-  @Input() confirmTitle: string = 'CD_CONFIRM_EXIT_TITLE'; // Default title (Exit Race) or generic
-  @Input() confirmMessage: string = 'CD_CONFIRM_EXIT_MESSAGE'; // Default message
+  get confirm(): boolean {
+    return this._confirm;
+  }
+  @Input() confirmTitle: string = "CD_CONFIRM_EXIT_TITLE"; // Default title (Exit Race) or generic
+  @Input() confirmMessage: string = "CD_CONFIRM_EXIT_MESSAGE"; // Default message
 
   @Output() back = new EventEmitter<void>();
 
@@ -32,8 +42,8 @@ export class BackButtonComponent {
   constructor(
     private router: Router,
     private connectionMonitor: ConnectionMonitorService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   onBack() {
     if (this.confirm) {
@@ -53,20 +63,21 @@ export class BackButtonComponent {
   }
 
   private proceed() {
-    const isConnected = this.connectionMonitor.currentState === ConnectionState.CONNECTED;
+    const isConnected =
+      this.connectionMonitor.currentState === ConnectionState.CONNECTED;
 
     if (!isConnected) {
       // Always go back to splash screen if disconnected
-      sessionStorage.removeItem('skipIntro');
-      this.router.navigate(['/raceday-setup']);
+      sessionStorage.removeItem("skipIntro");
+      this.router.navigate(["/raceday-setup"]);
       return;
     }
 
     if (this.back.observed) {
-      sessionStorage.setItem('skipIntro', 'true');
+      sessionStorage.setItem("skipIntro", "true");
       this.back.emit();
     } else {
-      sessionStorage.setItem('skipIntro', 'true');
+      sessionStorage.setItem("skipIntro", "true");
       this.router.navigate([this.route], { queryParams: this.queryParams });
     }
   }

@@ -1,48 +1,102 @@
-import { ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import { of, throwError } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { TranslationService } from "src/app/services/translation.service";
+import {
+  mockRouter,
+  mockTranslationService,
+} from "src/app/testing/unit-test-mocks";
 
-import { DataService } from 'src/app/data.service';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { TranslationService } from 'src/app/services/translation.service';
-import { mockTranslationService, mockRouter } from 'src/app/testing/unit-test-mocks';
+import { DatabaseManagerComponent } from "./database-manager.component";
 
-import { DatabaseManagerComponent } from './database-manager.component';
-
-describe('DatabaseManagerComponent', () => {
+describe("DatabaseManagerComponent", () => {
   let component: DatabaseManagerComponent;
   let fixture: ComponentFixture<DatabaseManagerComponent>;
   let mockDataService: jasmine.SpyObj<DataService>;
 
   const mockDatabases = [
-    { name: 'db1', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 },
-    { name: 'db2', driverCount: 5, trackCount: 1, raceCount: 0, assetCount: 5, sizeBytes: 512000 }
+    {
+      name: "db1",
+      driverCount: 10,
+      trackCount: 2,
+      raceCount: 5,
+      assetCount: 20,
+      sizeBytes: 1024000,
+    },
+    {
+      name: "db2",
+      driverCount: 5,
+      trackCount: 1,
+      raceCount: 0,
+      assetCount: 5,
+      sizeBytes: 512000,
+    },
   ];
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj('DataService', [
-      'getDatabases',
-      'getCurrentDatabase',
-      'switchDatabase',
-      'createDatabase',
-      'copyDatabase',
-      'resetDatabase',
-      'deleteDatabase',
-      'exportDatabase',
-      'importDatabase'
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getDatabases",
+      "getCurrentDatabase",
+      "switchDatabase",
+      "createDatabase",
+      "copyDatabase",
+      "resetDatabase",
+      "deleteDatabase",
+      "exportDatabase",
+      "importDatabase",
     ]);
 
-    mockDataService.getDatabases.and.callFake(() => of(JSON.parse(JSON.stringify(mockDatabases))));
-    mockDataService.getCurrentDatabase.and.returnValue(of({ name: 'db1' }));
-    mockDataService.switchDatabase.and.returnValue(of({ name: 'db2' }));
-    mockDataService.createDatabase.and.returnValue(of({ name: 'newDB', driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 }));
-    mockDataService.copyDatabase.and.returnValue(of({ name: 'copyDB', driverCount: 10, trackCount: 2, raceCount: 5, assetCount: 20, sizeBytes: 1024000 }));
-    mockDataService.resetDatabase.and.returnValue(of({ name: 'db1', driverCount: 0, trackCount: 0, raceCount: 0, assetCount: 0, sizeBytes: 0 }));
+    mockDataService.getDatabases.and.callFake(() =>
+      of(JSON.parse(JSON.stringify(mockDatabases))),
+    );
+    mockDataService.getCurrentDatabase.and.returnValue(of({ name: "db1" }));
+    mockDataService.switchDatabase.and.returnValue(of({ name: "db2" }));
+    mockDataService.createDatabase.and.returnValue(
+      of({
+        name: "newDB",
+        driverCount: 0,
+        trackCount: 0,
+        raceCount: 0,
+        assetCount: 0,
+        sizeBytes: 0,
+      }),
+    );
+    mockDataService.copyDatabase.and.returnValue(
+      of({
+        name: "copyDB",
+        driverCount: 10,
+        trackCount: 2,
+        raceCount: 5,
+        assetCount: 20,
+        sizeBytes: 1024000,
+      }),
+    );
+    mockDataService.resetDatabase.and.returnValue(
+      of({
+        name: "db1",
+        driverCount: 0,
+        trackCount: 0,
+        raceCount: 0,
+        assetCount: 0,
+        sizeBytes: 0,
+      }),
+    );
     mockDataService.deleteDatabase.and.returnValue(of(null));
     mockDataService.exportDatabase.and.stub();
-    mockDataService.importDatabase.and.returnValue(of({ name: 'importedDB', driverCount: 1, trackCount: 1, raceCount: 1, assetCount: 1, sizeBytes: 100 }));
+    mockDataService.importDatabase.and.returnValue(
+      of({
+        name: "importedDB",
+        driverCount: 1,
+        trackCount: 1,
+        raceCount: 1,
+        assetCount: 1,
+        sizeBytes: 100,
+      }),
+    );
 
     // Reset router spy
     mockRouter.navigate.calls.reset();
@@ -54,11 +108,10 @@ describe('DatabaseManagerComponent', () => {
         { provide: DataService, useValue: mockDataService },
         { provide: Router, useValue: mockRouter },
         { provide: TranslationService, useValue: mockTranslationService },
-        ChangeDetectorRef
+        ChangeDetectorRef,
       ],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA]
-    })
-      .compileComponents();
+      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    }).compileComponents();
   });
 
   beforeEach(() => {
@@ -67,290 +120,307 @@ describe('DatabaseManagerComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load databases and current database on init', () => {
+  it("should load databases and current database on init", () => {
     expect(mockDataService.getDatabases).toHaveBeenCalled();
     expect(mockDataService.getCurrentDatabase).toHaveBeenCalled();
     expect(component.databases).toEqual(mockDatabases);
-    expect(component.currentDatabaseName).toEqual('db1');
+    expect(component.currentDatabaseName).toEqual("db1");
     expect(component.selectedDatabase).toEqual(mockDatabases[0]);
   });
 
-  it('should handle error during initial load', () => {
-    spyOn(console, 'error');
-    mockDataService.getDatabases.and.returnValue(throwError(() => new Error('Error')));
+  it("should handle error during initial load", () => {
+    spyOn(console, "error");
+    mockDataService.getDatabases.and.returnValue(
+      throwError(() => new Error("Error")),
+    );
     component.initialLoad();
     expect(component.loading).toBeFalse();
     expect(component.showAckModal).toBeTrue();
-    expect(component.ackModalMessage).toBe('DBM_ERR_LOAD_INFO');
+    expect(component.ackModalMessage).toBe("DBM_ERR_LOAD_INFO");
   });
 
-  it('should select a database', () => {
+  it("should select a database", () => {
     component.selectDatabase(mockDatabases[1]);
     expect(component.selectedDatabase).toEqual(mockDatabases[1]);
   });
 
-  describe('useDatabase', () => {
-    it('should not switch if already on current database', () => {
+  describe("useDatabase", () => {
+    it("should not switch if already on current database", () => {
       component.selectedDatabase = mockDatabases[0]; // db1 (current)
       component.useDatabase();
       expect(component.showConfirmModal).toBeFalse();
     });
 
-    it('should open confirm modal if selecting different database', () => {
+    it("should open confirm modal if selecting different database", () => {
       component.selectedDatabase = mockDatabases[1]; // db2
       component.useDatabase();
       expect(component.showConfirmModal).toBeTrue();
-      expect(component.confirmModalTitle).toBe('DBM_CONFIRM_SWITCH_TITLE');
+      expect(component.confirmModalTitle).toBe("DBM_CONFIRM_SWITCH_TITLE");
     });
 
-    it('should call switchDatabase when confirmed', () => {
+    it("should call switchDatabase when confirmed", () => {
       component.selectedDatabase = mockDatabases[1];
       component.useDatabase();
       component.onConfirm();
 
-      expect(mockDataService.switchDatabase).toHaveBeenCalledWith('db2');
-      expect(component.currentDatabaseName).toBe('db2');
+      expect(mockDataService.switchDatabase).toHaveBeenCalledWith("db2");
+      expect(component.currentDatabaseName).toBe("db2");
     });
 
-    it('should handle error during switch', () => {
-      spyOn(console, 'error');
-      mockDataService.switchDatabase.and.returnValue(throwError(() => new Error('Error')));
+    it("should handle error during switch", () => {
+      spyOn(console, "error");
+      mockDataService.switchDatabase.and.returnValue(
+        throwError(() => new Error("Error")),
+      );
       component.selectedDatabase = mockDatabases[1];
       component.useDatabase();
       component.onConfirm();
 
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_SWITCH');
+      expect(component.ackModalMessage).toBe("DBM_ERR_SWITCH");
     });
   });
 
-  describe('createDatabase', () => {
-    it('should open input modal', () => {
+  describe("createDatabase", () => {
+    it("should open input modal", () => {
       component.createDatabase();
       expect(component.showInputModal).toBeTrue();
-      expect(component.inputModalTitle).toBe('DBM_PROMPT_CREATE_TITLE');
+      expect(component.inputModalTitle).toBe("DBM_PROMPT_CREATE_TITLE");
     });
 
-    it('should call createDatabase when input confirmed', () => {
+    it("should call createDatabase when input confirmed", () => {
       component.createDatabase();
-      component.inputValue = 'newDB';
+      component.inputValue = "newDB";
       component.onInputConfirm();
 
-      expect(mockDataService.createDatabase).toHaveBeenCalledWith('newDB');
-      expect(component.currentDatabaseName).toBe('newDB');
-      expect(component.selectedDatabase.name).toBe('newDB');
+      expect(mockDataService.createDatabase).toHaveBeenCalledWith("newDB");
+      expect(component.currentDatabaseName).toBe("newDB");
+      expect(component.selectedDatabase.name).toBe("newDB");
     });
 
-    it('should handle general error during creation', () => {
-      spyOn(console, 'error');
-      mockDataService.createDatabase.and.returnValue(throwError(() => new Error('Error')));
+    it("should handle general error during creation", () => {
+      spyOn(console, "error");
+      mockDataService.createDatabase.and.returnValue(
+        throwError(() => new Error("Error")),
+      );
 
       component.createDatabase();
-      component.inputValue = 'newDB';
-      component.onInputConfirm();
-
-      expect(component.loading).toBeFalse();
-      expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_CREATE');
-    });
-
-    it('should handle conflict error during creation', () => {
-      spyOn(console, 'error');
-      mockDataService.createDatabase.and.returnValue(throwError(() => ({ status: 409 })));
-
-      component.createDatabase();
-      component.inputValue = 'existingDB';
+      component.inputValue = "newDB";
       component.onInputConfirm();
 
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_EXISTS');
+      expect(component.ackModalMessage).toBe("DBM_ERR_CREATE");
+    });
+
+    it("should handle conflict error during creation", () => {
+      spyOn(console, "error");
+      mockDataService.createDatabase.and.returnValue(
+        throwError(() => ({ status: 409 })),
+      );
+
+      component.createDatabase();
+      component.inputValue = "existingDB";
+      component.onInputConfirm();
+
+      expect(component.loading).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalMessage).toBe("DBM_ERR_EXISTS");
     });
   });
 
-  describe('copyDatabase', () => {
-    it('should return if no database selected', () => {
+  describe("copyDatabase", () => {
+    it("should return if no database selected", () => {
       component.selectedDatabase = null;
       component.copyDatabase();
       expect(component.showInputModal).toBeFalse();
     });
 
-    it('should show error if copying inactive database', () => {
+    it("should show error if copying inactive database", () => {
       component.selectedDatabase = mockDatabases[1]; // inactive
       component.copyDatabase();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_COPY_INACTIVE');
+      expect(component.ackModalMessage).toBe("DBM_ERR_COPY_INACTIVE");
     });
 
-    it('should open input modal for active database', () => {
+    it("should open input modal for active database", () => {
       component.selectedDatabase = mockDatabases[0]; // active
       component.copyDatabase();
       expect(component.showInputModal).toBeTrue();
-      expect(component.inputModalTitle).toBe('DBM_PROMPT_COPY_TITLE');
+      expect(component.inputModalTitle).toBe("DBM_PROMPT_COPY_TITLE");
     });
 
-    it('should call copyDatabase when input confirmed', () => {
+    it("should call copyDatabase when input confirmed", () => {
       component.selectedDatabase = mockDatabases[0];
       component.copyDatabase();
-      component.inputValue = 'copyDB';
+      component.inputValue = "copyDB";
       component.onInputConfirm();
 
-      expect(mockDataService.copyDatabase).toHaveBeenCalledWith('copyDB');
+      expect(mockDataService.copyDatabase).toHaveBeenCalledWith("copyDB");
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_SUCCESS_COPY');
+      expect(component.ackModalMessage).toBe("DBM_SUCCESS_COPY");
     });
 
-    it('should handle conflict error (409)', () => {
-      spyOn(console, 'error');
-      mockDataService.copyDatabase.and.returnValue(throwError(() => ({ status: 409 })));
+    it("should handle conflict error (409)", () => {
+      spyOn(console, "error");
+      mockDataService.copyDatabase.and.returnValue(
+        throwError(() => ({ status: 409 })),
+      );
       component.selectedDatabase = mockDatabases[0];
       component.copyDatabase();
-      component.inputValue = 'copyDB';
+      component.inputValue = "copyDB";
       component.onInputConfirm();
 
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_EXISTS');
+      expect(component.ackModalMessage).toBe("DBM_ERR_EXISTS");
     });
   });
 
-  describe('resetDatabase', () => {
-    it('should return if no database selected', () => {
+  describe("resetDatabase", () => {
+    it("should return if no database selected", () => {
       component.selectedDatabase = null;
       component.resetDatabase();
       expect(component.showConfirmModal).toBeFalse();
     });
 
-    it('should show error if resetting inactive database', () => {
+    it("should show error if resetting inactive database", () => {
       component.selectedDatabase = mockDatabases[1];
       component.resetDatabase();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_RESET_INACTIVE');
+      expect(component.ackModalMessage).toBe("DBM_ERR_RESET_INACTIVE");
     });
 
-    it('should require double confirmation', () => {
+    it("should require double confirmation", () => {
       component.selectedDatabase = mockDatabases[0];
       component.resetDatabase();
 
       // First confirm
       expect(component.showConfirmModal).toBeTrue();
-      expect(component.confirmModalTitle).toBe('DBM_CONFIRM_RESET_TITLE');
-      expect(component.confirmModalMessage).toBe('DBM_CONFIRM_RESET_MSG_1');
+      expect(component.confirmModalTitle).toBe("DBM_CONFIRM_RESET_TITLE");
+      expect(component.confirmModalMessage).toBe("DBM_CONFIRM_RESET_MSG_1");
 
       component.onConfirm();
 
       // Second confirm
       expect(component.showConfirmModal).toBeTrue();
-      expect(component.confirmModalTitle).toBe('DBM_CONFIRM_RESET_TITLE');
-      expect(component.confirmModalMessage).toBe('DBM_CONFIRM_RESET_MSG_2');
+      expect(component.confirmModalTitle).toBe("DBM_CONFIRM_RESET_TITLE");
+      expect(component.confirmModalMessage).toBe("DBM_CONFIRM_RESET_MSG_2");
 
       component.onConfirm();
 
       expect(mockDataService.resetDatabase).toHaveBeenCalled();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_SUCCESS_RESET');
+      expect(component.ackModalMessage).toBe("DBM_SUCCESS_RESET");
     });
   });
 
-  describe('deleteDatabase', () => {
-    it('should return if no database selected', () => {
+  describe("deleteDatabase", () => {
+    it("should return if no database selected", () => {
       component.selectedDatabase = null;
       component.deleteDatabase();
       expect(component.showConfirmModal).toBeFalse();
     });
 
-    it('should show error if deleting active database', () => {
+    it("should show error if deleting active database", () => {
       component.selectedDatabase = mockDatabases[0]; // active
       component.deleteDatabase();
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_ERR_DELETE_ACTIVE');
+      expect(component.ackModalMessage).toBe("DBM_ERR_DELETE_ACTIVE");
     });
 
-    it('should show confirm modal for inactive database', () => {
+    it("should show confirm modal for inactive database", () => {
       component.selectedDatabase = mockDatabases[1];
       component.deleteDatabase();
       expect(component.showConfirmModal).toBeTrue();
-      expect(component.confirmModalTitle).toBe('DBM_CONFIRM_DELETE_TITLE');
+      expect(component.confirmModalTitle).toBe("DBM_CONFIRM_DELETE_TITLE");
     });
 
-    it('should call deleteDatabase when confirmed', () => {
+    it("should call deleteDatabase when confirmed", () => {
       component.selectedDatabase = mockDatabases[1];
       component.deleteDatabase();
       component.onConfirm();
 
-      expect(mockDataService.deleteDatabase).toHaveBeenCalledWith('db2');
+      expect(mockDataService.deleteDatabase).toHaveBeenCalledWith("db2");
       // After delete, it reloads and selects the current database if none selected
       expect(component.selectedDatabase).toEqual(mockDatabases[0]);
       expect(component.showAckModal).toBeTrue();
-      expect(component.ackModalMessage).toBe('DBM_SUCCESS_DELETE');
+      expect(component.ackModalMessage).toBe("DBM_SUCCESS_DELETE");
     });
   });
 
-  it('should navigate back', () => {
+  it("should navigate back", () => {
     component.onBack();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/raceday-setup']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   });
 
-  it('should handle cancel confirm', () => {
+  it("should handle cancel confirm", () => {
     component.showConfirmModal = true;
     component.onCancelConfirm();
     expect(component.showConfirmModal).toBeFalse();
   });
 
-  it('should handle cancel input', () => {
+  it("should handle cancel input", () => {
     component.showInputModal = true;
     component.onCancelInput();
     expect(component.showInputModal).toBeFalse();
   });
 
-  describe('importDatabaseNaming', () => {
-    it('should default name to filename without extension', () => {
-      const event = { target: { files: [{ name: 'mybackup.zip' }], value: 'test' } };
+  describe("importDatabaseNaming", () => {
+    it("should default name to filename without extension", () => {
+      const event = {
+        target: { files: [{ name: "mybackup.zip" }], value: "test" },
+      };
       component.onFileSelected(event);
-      expect(component.inputValue).toBe('mybackup');
+      expect(component.inputValue).toBe("mybackup");
     });
 
-    it('should add postfix if name already exists', () => {
+    it("should add postfix if name already exists", () => {
       // db1 and db2 exist in mockDatabases
-      const event = { target: { files: [{ name: 'db1.zip' }], value: 'test' } };
+      const event = { target: { files: [{ name: "db1.zip" }], value: "test" } };
       component.onFileSelected(event);
-      expect(component.inputValue).toBe('db1_1');
+      expect(component.inputValue).toBe("db1_1");
     });
 
-    it('should increment postfix if multiple exist', () => {
-      component.databases.push({ name: 'db1_1' });
-      const event = { target: { files: [{ name: 'db1.zip' }], value: 'test' } };
+    it("should increment postfix if multiple exist", () => {
+      component.databases.push({ name: "db1_1" });
+      const event = { target: { files: [{ name: "db1.zip" }], value: "test" } };
       component.onFileSelected(event);
-      expect(component.inputValue).toBe('db1_2');
+      expect(component.inputValue).toBe("db1_2");
     });
   });
 
-  it('should handle error during import', () => {
-    spyOn(console, 'error');
-    mockDataService.importDatabase.and.returnValue(throwError(() => new Error('Error')));
-    const event = { target: { files: [{ name: 'db.zip' }], value: 'test' } };
+  it("should handle error during import", () => {
+    spyOn(console, "error");
+    mockDataService.importDatabase.and.returnValue(
+      throwError(() => new Error("Error")),
+    );
+    const event = { target: { files: [{ name: "db.zip" }], value: "test" } };
     component.onFileSelected(event);
-    component.inputValue = 'importedDB';
+    component.inputValue = "importedDB";
     component.onInputConfirm();
 
     expect(component.loading).toBeFalse();
     expect(component.showAckModal).toBeTrue();
-    expect(component.ackModalMessage).toBe('DBM_ERR_IMPORT');
+    expect(component.ackModalMessage).toBe("DBM_ERR_IMPORT");
   });
 
-  it('should handle success during import', () => {
-    const event = { target: { files: [{ name: 'db.zip' }], value: 'test' } };
+  it("should handle success during import", () => {
+    const event = { target: { files: [{ name: "db.zip" }], value: "test" } };
     component.onFileSelected(event);
-    component.inputValue = 'importedDB';
+    component.inputValue = "importedDB";
     component.onInputConfirm();
 
-    expect(mockDataService.importDatabase).toHaveBeenCalledWith('importedDB', event.target.files[0] as any);
+    expect(mockDataService.importDatabase).toHaveBeenCalledWith(
+      "importedDB",
+      event.target.files[0] as any,
+    );
     expect(component.showAckModal).toBeTrue();
-    expect(component.ackModalMessage).toBe('DBM_SUCCESS_IMPORT');
+    expect(component.ackModalMessage).toBe("DBM_SUCCESS_IMPORT");
   });
 });

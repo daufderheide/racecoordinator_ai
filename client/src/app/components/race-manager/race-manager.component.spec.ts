@@ -1,18 +1,17 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { TestBed } from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { Router } from "@angular/router";
+import { of } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { RaceManagerComponent } from "./race-manager.component";
 
-import { RaceManagerComponent } from './race-manager.component';
-
-describe('RaceManagerComponent', () => {
+describe("RaceManagerComponent", () => {
   let component: RaceManagerComponent;
   let mockDataService: jasmine.SpyObj<DataService>;
   let mockRouter: jasmine.SpyObj<Router>;
@@ -21,16 +20,29 @@ describe('RaceManagerComponent', () => {
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getRaces', 'getTracks', 'createRace', 'deleteRace', 'generateHeats', 'previewHeats']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
-    mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring'], { connectionState$: of() });
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getRaces",
+      "getTracks",
+      "createRace",
+      "deleteRace",
+      "generateHeats",
+      "previewHeats",
+    ]);
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "translate",
+    ]);
+    mockConnectionMonitor = jasmine.createSpyObj(
+      "ConnectionMonitorService",
+      ["startMonitoring", "stopMonitoring"],
+      { connectionState$: of() },
+    );
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: jasmine.createSpy('get').and.returnValue(null)
-        }
-      }
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
     };
 
     TestBed.configureTestingModule({
@@ -41,29 +53,31 @@ describe('RaceManagerComponent', () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
-        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor }
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
       ],
-      schemas: [NO_ERRORS_SCHEMA]
+      schemas: [NO_ERRORS_SCHEMA],
     });
 
     const fixture = TestBed.createComponent(RaceManagerComponent);
     component = fixture.componentInstance;
     mockDataService.getRaces.and.returnValue(of([]));
     mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.createRace.and.returnValue(of({ entity_id: 'new-race-id' }));
+    mockDataService.createRace.and.returnValue(
+      of({ entity_id: "new-race-id" }),
+    );
     mockDataService.generateHeats.and.returnValue(of({ heats: [] }));
     mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load races on init', () => {
+  it("should load races on init", () => {
     const mockRaces = [
-      { entity_id: '1', name: 'Race 1', track: { name: 'Track 1' } },
-      { entity_id: '2', name: 'Race 2', track: { name: 'Track 2' } }
+      { entity_id: "1", name: "Race 1", track: { name: "Track 1" } },
+      { entity_id: "2", name: "Race 2", track: { name: "Track 2" } },
     ];
     mockDataService.getRaces.and.returnValue(of(mockRaces));
 
@@ -73,50 +87,52 @@ describe('RaceManagerComponent', () => {
     expect(component.races.length).toBe(2);
   });
 
-  it('should filter races based on search query', () => {
+  it("should filter races based on search query", () => {
     component.races = [
-      { entity_id: '1', name: 'Grand Prix', track: { name: 'Monaco' } },
-      { entity_id: '2', name: 'Time Trial', track: { name: 'Spa' } },
-      { entity_id: '3', name: 'Endurance', track: { name: 'Le Mans' } }
+      { entity_id: "1", name: "Grand Prix", track: { name: "Monaco" } },
+      { entity_id: "2", name: "Time Trial", track: { name: "Spa" } },
+      { entity_id: "3", name: "Endurance", track: { name: "Le Mans" } },
     ];
 
-    component.searchQuery = 'Monaco';
+    component.searchQuery = "Monaco";
     expect(component.filteredRaces.length).toBe(1);
-    expect(component.filteredRaces[0].name).toBe('Grand Prix');
+    expect(component.filteredRaces[0].name).toBe("Grand Prix");
 
-    component.searchQuery = 'Trial';
+    component.searchQuery = "Trial";
     expect(component.filteredRaces.length).toBe(1);
-    expect(component.filteredRaces[0].name).toBe('Time Trial');
+    expect(component.filteredRaces[0].name).toBe("Time Trial");
 
-    component.searchQuery = '';
+    component.searchQuery = "";
     expect(component.filteredRaces.length).toBe(3);
   });
 
-  it('should select a race and load heats if driverCount > 0', () => {
-    const mockRace = { entity_id: '1', name: 'Race 1' };
+  it("should select a race and load heats if driverCount > 0", () => {
+    const mockRace = { entity_id: "1", name: "Race 1" };
     component.driverCount = 4;
-    mockDataService.generateHeats = jasmine.createSpy('generateHeats').and.returnValue(of({ heats: [] }));
+    mockDataService.generateHeats = jasmine
+      .createSpy("generateHeats")
+      .and.returnValue(of({ heats: [] }));
 
     component.selectRace(mockRace);
 
     expect(component.selectedRace).toEqual(mockRace);
     expect(component.editingRace).toEqual(mockRace);
-    expect(mockDataService.generateHeats).toHaveBeenCalledWith('1', 4);
+    expect(mockDataService.generateHeats).toHaveBeenCalledWith("1", 4);
   });
 
-  it('should navigate to race editor when updateRace is called', () => {
-    component.selectedRace = { entity_id: '1' };
+  it("should navigate to race editor when updateRace is called", () => {
+    component.selectedRace = { entity_id: "1" };
     component.driverCount = 4;
 
     component.updateRace();
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/race-editor'], {
-      queryParams: { id: '1', driverCount: 4 }
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+      queryParams: { id: "1", driverCount: 4 },
     });
   });
 
-  it('should show delete confirmation and delete race', () => {
-    component.editingRace = { entity_id: '1' };
+  it("should show delete confirmation and delete race", () => {
+    component.editingRace = { entity_id: "1" };
     mockDataService.deleteRace.and.returnValue(of({}));
     mockDataService.getRaces.and.returnValue(of([]));
 
@@ -124,19 +140,19 @@ describe('RaceManagerComponent', () => {
     expect(component.showDeleteConfirmation).toBeTrue();
 
     component.onConfirmDelete();
-    expect(mockDataService.deleteRace).toHaveBeenCalledWith('1');
+    expect(mockDataService.deleteRace).toHaveBeenCalledWith("1");
     expect(component.showDeleteConfirmation).toBeFalse();
     expect(mockDataService.getRaces).toHaveBeenCalledTimes(2); // Initial and after delete
   });
 
-  it('should cancel delete', () => {
+  it("should cancel delete", () => {
     component.showDeleteConfirmation = true;
     component.onCancelDelete();
     expect(component.showDeleteConfirmation).toBeFalse();
   });
 
-  it('should load tracks on loadData', () => {
-    const mockTracks = [{ entity_id: 't1', name: 'Track 1' }];
+  it("should load tracks on loadData", () => {
+    const mockTracks = [{ entity_id: "t1", name: "Track 1" }];
     mockDataService.getTracks.and.returnValue(of(mockTracks));
 
     component.loadData();
@@ -145,38 +161,40 @@ describe('RaceManagerComponent', () => {
     expect(component.tracks).toEqual(mockTracks);
   });
 
-  describe('createNewRace', () => {
-    it('should create race and navigate to race-editor', () => {
+  describe("createNewRace", () => {
+    it("should create race and navigate to race-editor", () => {
       component.tracks = [];
-      const createdRace = { entity_id: '123' };
+      const createdRace = { entity_id: "123" };
       mockDataService.createRace.and.returnValue(of(createdRace));
 
       component.createNewRace();
 
       expect(mockDataService.createRace).toHaveBeenCalled();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/race-editor'], {
-        queryParams: { id: '123', driverCount: component.driverCount }
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: { id: "123", driverCount: component.driverCount },
       });
     });
 
-    it('should auto-assign track if exactly one track exists', () => {
-      component.tracks = [{ entity_id: 't1', name: 'Track 1' }];
-      const createdRace = { entity_id: '123' };
+    it("should auto-assign track if exactly one track exists", () => {
+      component.tracks = [{ entity_id: "t1", name: "Track 1" }];
+      const createdRace = { entity_id: "123" };
       mockDataService.createRace.and.returnValue(of(createdRace));
 
       component.createNewRace();
 
-      expect(mockDataService.createRace).toHaveBeenCalledWith(jasmine.objectContaining({
-        track_entity_id: 't1'
-      }));
+      expect(mockDataService.createRace).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          track_entity_id: "t1",
+        }),
+      );
     });
 
-    it('should not auto-assign track if multiple tracks exist', () => {
+    it("should not auto-assign track if multiple tracks exist", () => {
       component.tracks = [
-        { entity_id: 't1', name: 'Track 1' },
-        { entity_id: 't2', name: 'Track 2' }
+        { entity_id: "t1", name: "Track 1" },
+        { entity_id: "t2", name: "Track 2" },
       ];
-      const createdRace = { entity_id: '123' };
+      const createdRace = { entity_id: "123" };
       mockDataService.createRace.and.returnValue(of(createdRace));
 
       component.createNewRace();

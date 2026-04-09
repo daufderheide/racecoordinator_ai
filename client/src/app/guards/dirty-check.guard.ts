@@ -1,19 +1,17 @@
-import { Injectable } from '@angular/core';
-import { CanDeactivate } from '@angular/router';
-import { Observable } from 'rxjs';
-
-import { DirtyComponent } from 'src/app/interfaces/dirty-component';
-import { TranslationService } from 'src/app/services/translation.service';
+import { Injectable } from "@angular/core";
+import { CanDeactivate } from "@angular/router";
+import { Observable } from "rxjs";
+import { DirtyComponent } from "src/app/interfaces/dirty-component";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class DirtyCheckGuard implements CanDeactivate<DirtyComponent> {
-
-  constructor(private translationService: TranslationService) { }
+  constructor(private translationService: TranslationService) {}
 
   canDeactivate(
-    component: DirtyComponent
+    component: DirtyComponent,
   ): Observable<boolean> | Promise<boolean> | boolean {
     if (component.hasChanges() && !component.isNavigationApproved) {
       // Keys from en.json (e.g. UE_CONFIRM_DISCARD_MESSAGE)
@@ -22,7 +20,9 @@ export class DirtyCheckGuard implements CanDeactivate<DirtyComponent> {
       // Looking at en.json, we have:
       // "UE_CONFIRM_DISCARD_MESSAGE": "You have unsaved changes. Are you sure you want to discard them?"
 
-      const message = this.translationService.translate('UE_CONFIRM_DISCARD_MESSAGE');
+      const message = this.translationService.translate(
+        "UE_CONFIRM_DISCARD_MESSAGE",
+      );
       return confirm(message);
     }
     return true;

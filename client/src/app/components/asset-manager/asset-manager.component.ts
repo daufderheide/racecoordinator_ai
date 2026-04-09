@@ -1,19 +1,21 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { forkJoin } from 'rxjs';
-
-import { DataService } from 'src/app/data.service';
-import { com } from 'src/app/proto/message';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { playSound, mockTTSContext } from 'src/app/utils/audio';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Router } from "@angular/router";
+import { Subscription } from "rxjs";
+import { forkJoin } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { com } from "src/app/proto/message";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { TranslationService } from "src/app/services/translation.service";
+import { mockTTSContext, playSound } from "src/app/utils/audio";
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
   id: string;
   name: string;
-  type: 'image' | 'sound' | 'image_set';
+  type: "image" | "sound" | "image_set";
   size: string;
   url: string;
   editMode?: boolean;
@@ -23,18 +25,18 @@ export interface AssetView {
 }
 
 @Component({
-  selector: 'app-asset-manager',
-  templateUrl: './asset-manager.component.html',
-  styleUrls: ['./asset-manager.component.css'],
-  standalone: false
+  selector: "app-asset-manager",
+  templateUrl: "./asset-manager.component.html",
+  styleUrls: ["./asset-manager.component.css"],
+  standalone: false,
 })
-export class AssetManagerComponent implements OnInit {
+export class AssetManagerComponent implements OnInit, OnDestroy {
   // Data
   assets: AssetView[] = [];
 
   // Filtering
-  filterType: 'all' | 'image' | 'sound' | 'image_set' = 'all';
-  filterName: string = '';
+  filterType: "all" | "image" | "sound" | "image_set" = "all";
+  filterName: string = "";
   isUploading: boolean = false;
   isLoading: boolean = true;
   isDragOver: boolean = false;
@@ -42,7 +44,7 @@ export class AssetManagerComponent implements OnInit {
   // Image Set Editor
   showImageSetEditor: boolean = false;
   editingAssetId?: string;
-  editingAssetName: string = '';
+  editingAssetName: string = "";
   editingAssetEntries: com.antigravity.ISaveImageSetEntry[] = [];
   lastSelectedIndex: number = -1;
 
@@ -55,10 +57,10 @@ export class AssetManagerComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private connectionMonitor: ConnectionMonitorService
-  ) { }
+    private connectionMonitor: ConnectionMonitorService,
+  ) {}
 
-  activeDatabaseName: string = '';
+  activeDatabaseName: string = "";
 
   ngOnInit() {
     this.connectionMonitor.startMonitoring();
@@ -70,15 +72,15 @@ export class AssetManagerComponent implements OnInit {
   loadActiveDatabase() {
     this.dataService.getCurrentDatabase().subscribe({
       next: (stats) => {
-        console.log('AssetManager: Loaded active database stats:', stats);
+        console.log("AssetManager: Loaded active database stats:", stats);
         if (stats && stats.name) {
           this.activeDatabaseName = stats.name;
           this.cdr.detectChanges();
         } else {
-          console.warn('AssetManager: Stats or name missing in response');
+          console.warn("AssetManager: Stats or name missing in response");
         }
       },
-      error: (err) => console.error('Failed to load active database', err)
+      error: (err) => console.error("Failed to load active database", err),
     });
   }
 
@@ -100,21 +102,22 @@ export class AssetManagerComponent implements OnInit {
   private connectionSubscription: Subscription | null = null;
 
   monitorConnection() {
-    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
-      this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
-      this.cdr.detectChanges();
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+        this.cdr.detectChanges();
 
-      if (this.isConnectionLost) {
-        // Start a separate check to see if we timed out too long? 
-        // Or just rely on user action / auto-reconnect from service.
-        // Original code navigated away after 5s. 
-        this.handleConnectionLoss();
-      }
-    });
+        if (this.isConnectionLost) {
+          // Start a separate check to see if we timed out too long?
+          // Or just rely on user action / auto-reconnect from service.
+          // Original code navigated away after 5s.
+          this.handleConnectionLoss();
+        }
+      });
   }
 
   handleConnectionLoss() {
-    // We can rely on the service to keep checking. 
+    // We can rely on the service to keep checking.
     // If we want the specific "navigate away after 5s" behavior, we implement that listener here.
     // The service continues to poll.
 
@@ -123,7 +126,7 @@ export class AssetManagerComponent implements OnInit {
 
     // Original requirement: "respond to lost communication in the same way".
     // If RacedaySetup shows a overlay, we should probably do similar or just show an overlay here too.
-    // The original code navigated to /raceday-setup. 
+    // The original code navigated to /raceday-setup.
 
     let startTime = Date.now();
     const intervalId = setInterval(() => {
@@ -134,29 +137,35 @@ export class AssetManagerComponent implements OnInit {
 
       if (Date.now() - startTime > 5000) {
         clearInterval(intervalId);
-        console.warn('Connection retry timed out. Navigating to splash screen.');
-        this.router.navigate(['/raceday-setup']);
+        console.warn(
+          "Connection retry timed out. Navigating to splash screen.",
+        );
+        this.router.navigate(["/raceday-setup"]);
       }
     }, 1000);
   }
-
 
   loadAssets() {
     this.isLoading = true;
     this.dataService.listAssets().subscribe({
       next: (serverAssets) => {
         if (serverAssets) {
-          this.assets = serverAssets.map(a => {
+          this.assets = serverAssets.map((a) => {
             return {
-              id: a.model?.entityId || '',
-              name: a.name || 'Unknown',
-              type: (a.type === 'image' || a.type === 'sound' || a.type === 'image_set') ? a.type as any : 'image',
-              size: a.size || '0 B',
+              id: a.model?.entityId || "",
+              name: a.name || "Unknown",
+              type:
+                a.type === "image" ||
+                a.type === "sound" ||
+                a.type === "image_set"
+                  ? (a.type as any)
+                  : "image",
+              size: a.size || "0 B",
               url: this.getAssetUrl(a),
               editMode: false,
               selected: false,
               images: a.images || [],
-              currentPreviewIndex: 0
+              currentPreviewIndex: 0,
             };
           });
           this.startPreviewCycling();
@@ -169,41 +178,43 @@ export class AssetManagerComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Failed to list assets', err);
+        console.error("Failed to list assets", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
         }
-      }
+      },
     });
   }
 
   // Helper to construct full URL if needed, or use what server sent
   getAssetUrl(asset: com.antigravity.IAssetMessage): string {
     // If server provides a relative path, prepend base url
-    if (asset.url && asset.url.startsWith('/')) {
+    if (asset.url && asset.url.startsWith("/")) {
       return `http://localhost:7070${asset.url}`;
     }
-    return asset.url || '';
+    return asset.url || "";
   }
 
   get filteredAssets(): AssetView[] {
-    return this.assets.filter(asset => {
+    return this.assets.filter((asset) => {
       let typeMatch = false;
-      if (this.filterType === 'all') {
+      if (this.filterType === "all") {
         typeMatch = true;
-      } else if (this.filterType === 'image') {
-        typeMatch = asset.type === 'image';
+      } else if (this.filterType === "image") {
+        typeMatch = asset.type === "image";
       } else {
         typeMatch = asset.type === this.filterType;
       }
-      const nameMatch = !this.filterName || asset.name.toLowerCase().includes(this.filterName.toLowerCase());
+      const nameMatch =
+        !this.filterName ||
+        asset.name.toLowerCase().includes(this.filterName.toLowerCase());
       return typeMatch && nameMatch;
     });
   }
 
   get allImages(): AssetView[] {
-    return this.assets.filter(a => a.type === 'image');
+    return this.assets.filter((a) => a.type === "image");
   }
 
   get totalSize(): string {
@@ -219,10 +230,10 @@ export class AssetManagerComponent implements OnInit {
 
     // Handle IEC units (KiB, MiB) by converting to JEDEC-like (KB, MB) for the parser
     // This assumes the value is base-1024 in both cases, which it is.
-    const normalized = sizeStr.replace('iB', 'B');
+    const normalized = sizeStr.replace("iB", "B");
 
-    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    const parts = normalized.split(' ');
+    const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+    const parts = normalized.split(" ");
     if (parts.length !== 2) return 0;
 
     const value = parseFloat(parts[0]);
@@ -234,25 +245,28 @@ export class AssetManagerComponent implements OnInit {
   }
 
   private formatBytes(bytes: number, decimals = 2): string {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   }
 
   get totalBytes(): number {
-    return this.assets.reduce((sum, asset) => sum + this.parseSize(asset.size), 0);
+    return this.assets.reduce(
+      (sum, asset) => sum + this.parseSize(asset.size),
+      0,
+    );
   }
 
   get imageUsagePercent(): number {
     if (this.totalBytes === 0) return 0;
     const imageBytes = this.assets
-      .filter(a => a.type === 'image')
+      .filter((a) => a.type === "image")
       .reduce((sum, a) => sum + this.parseSize(a.size), 0);
     return (imageBytes / this.totalBytes) * 100;
   }
@@ -260,20 +274,20 @@ export class AssetManagerComponent implements OnInit {
   get soundUsagePercent(): number {
     if (this.totalBytes === 0) return 0;
     const soundBytes = this.assets
-      .filter(a => a.type === 'sound')
+      .filter((a) => a.type === "sound")
       .reduce((sum, a) => sum + this.parseSize(a.size), 0);
     return (soundBytes / this.totalBytes) * 100;
   }
 
   get imageCount(): number {
-    return this.assets.filter(a => a.type === 'image').length;
+    return this.assets.filter((a) => a.type === "image").length;
   }
 
   get soundCount(): number {
-    return this.assets.filter(a => a.type === 'sound').length;
+    return this.assets.filter((a) => a.type === "sound").length;
   }
 
-  setFilterType(type: 'all' | 'image' | 'sound' | 'image_set') {
+  setFilterType(type: "all" | "image" | "sound" | "image_set") {
     this.filterType = type;
   }
 
@@ -283,9 +297,13 @@ export class AssetManagerComponent implements OnInit {
       clearInterval(this.previewInterval);
     }
     this.previewInterval = setInterval(() => {
-      this.assets.forEach(asset => {
-        if (asset.type === 'image_set' && asset.images && asset.images.length > 0) {
-          // Cycle from 100% to 0%. 
+      this.assets.forEach((asset) => {
+        if (
+          asset.type === "image_set" &&
+          asset.images &&
+          asset.images.length > 0
+        ) {
+          // Cycle from 100% to 0%.
           // Assuming images are already sorted or we sort them now.
           // Let's assume they are sorted by percentage descending (100 to 0).
           const index = asset.currentPreviewIndex ?? 0;
@@ -297,23 +315,23 @@ export class AssetManagerComponent implements OnInit {
   }
 
   getAssetImageUrl(asset: AssetView): string {
-    if (asset.type === 'image_set' && asset.images && asset.images.length > 0) {
+    if (asset.type === "image_set" && asset.images && asset.images.length > 0) {
       const entry = asset.images[asset.currentPreviewIndex ?? 0];
-      return this.getFullUrl(entry.url ?? '');
+      return this.getFullUrl(entry.url ?? "");
     }
     return asset.url;
   }
 
   onAssetDragStart(event: DragEvent, asset: AssetView) {
-    if (asset.type === 'image') {
-      event.dataTransfer?.setData('text/plain', asset.url);
+    if (asset.type === "image") {
+      event.dataTransfer?.setData("text/plain", asset.url);
       // Optional: hide the drag image or customize it
     }
   }
 
   private getFullUrl(url: string): string {
-    if (url && url.startsWith('/')) {
-      return `http://${this.dataService.serverUrl.split('//')[1].split(':')[0]}:${this.dataService.serverUrl.split(':')[2].split('/')[0]}${url}`;
+    if (url && url.startsWith("/")) {
+      return `http://${this.dataService.serverUrl.split("//")[1].split(":")[0]}:${this.dataService.serverUrl.split(":")[2].split("/")[0]}${url}`;
     }
     return url;
   }
@@ -358,37 +376,45 @@ export class AssetManagerComponent implements OnInit {
       this.isUploading = true;
       this.cdr.detectChanges();
 
-      const readFilePromises = Array.from(files).map((file: any) => this.readFile(file));
+      const readFilePromises = Array.from(files).map((file: any) =>
+        this.readFile(file),
+      );
 
-      Promise.all(readFilePromises).then(fileDataList => {
+      Promise.all(readFilePromises).then((fileDataList) => {
         const uploadObservables = fileDataList.map((fileData: any) =>
-          this.dataService.uploadAsset(fileData.name, fileData.type, fileData.data)
+          this.dataService.uploadAsset(
+            fileData.name,
+            fileData.type,
+            fileData.data,
+          ),
         );
 
         forkJoin(uploadObservables).subscribe({
           next: () => {
-            console.log('All uploads successful');
+            console.log("All uploads successful");
             this.loadAssets();
             this.isUploading = false;
             this.cdr.detectChanges();
           },
           error: (err) => {
-            console.error('One or more uploads failed', err);
+            console.error("One or more uploads failed", err);
             this.isUploading = false;
             this.cdr.detectChanges();
-          }
+          },
         });
       });
     }
   }
 
-  readFile(file: File): Promise<{ name: string, type: string, data: Uint8Array }> {
+  readFile(
+    file: File,
+  ): Promise<{ name: string; type: string; data: Uint8Array }> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const arrayBuffer = e.target.result;
         const bytes = new Uint8Array(arrayBuffer);
-        const type = file.type.startsWith('image/') ? 'image' : 'sound';
+        const type = file.type.startsWith("image/") ? "image" : "sound";
         resolve({ name: file.name, type, data: bytes });
       };
       reader.onerror = (e) => reject(e);
@@ -397,7 +423,7 @@ export class AssetManagerComponent implements OnInit {
   }
 
   onDelete(id: string) {
-    const asset = this.assets.find(a => a.id === id);
+    const asset = this.assets.find((a) => a.id === id);
     if (asset && asset.selected) {
       this.assetsToDeleteIds = this.selectedAssets.map((a: AssetView) => a.id);
     } else {
@@ -418,21 +444,21 @@ export class AssetManagerComponent implements OnInit {
       // Range selection
       const start = Math.min(this.lastSelectedIndex, currentIndex);
       const end = Math.max(this.lastSelectedIndex, currentIndex);
-      
+
       const range = assets.slice(start, end + 1);
-      range.forEach(a => a.selected = true);
+      range.forEach((a) => (a.selected = true));
     } else {
       // Single selection (clear others)
-      this.assets.forEach(a => a.selected = false);
+      this.assets.forEach((a) => (a.selected = false));
       asset.selected = true;
       this.lastSelectedIndex = currentIndex;
     }
-    
+
     this.cdr.detectChanges();
   }
 
   get selectedAssets(): AssetView[] {
-    return this.assets.filter(a => a.selected);
+    return this.assets.filter((a) => a.selected);
   }
 
   onDeleteSelected() {
@@ -446,7 +472,7 @@ export class AssetManagerComponent implements OnInit {
     const selected = this.selectedAssets;
     if (selected.length === 1) {
       const asset = selected[0];
-      if (asset.type === 'image_set') {
+      if (asset.type === "image_set") {
         this.openEditImageSetEditor(asset);
       } else {
         this.startEditing(asset.id);
@@ -455,25 +481,33 @@ export class AssetManagerComponent implements OnInit {
   }
 
   playAsset(asset: AssetView) {
-    if (asset.type === 'sound') {
+    if (asset.type === "sound") {
       const playContext = mockTTSContext();
-      playSound('preset', asset.url, '', this.dataService.serverUrl, playContext);
+      playSound(
+        "preset",
+        asset.url,
+        "",
+        this.dataService.serverUrl,
+        playContext,
+      );
     }
   }
 
   onConfirmDelete() {
     if (this.assetsToDeleteIds.length > 0) {
-      const deleteObservables = this.assetsToDeleteIds.map(id => this.dataService.deleteAsset(id));
+      const deleteObservables = this.assetsToDeleteIds.map((id) =>
+        this.dataService.deleteAsset(id),
+      );
       forkJoin(deleteObservables).subscribe({
         next: () => {
           this.loadAssets();
           this.onCancelDelete();
         },
         error: (err) => {
-          console.error('One or more deletes failed', err);
+          console.error("One or more deletes failed", err);
           this.loadAssets(); // Reload to see what's left
           this.onCancelDelete();
-        }
+        },
       });
     }
   }
@@ -484,14 +518,14 @@ export class AssetManagerComponent implements OnInit {
   }
 
   startEditing(id: string) {
-    const asset = this.assets.find(a => a.id === id);
+    const asset = this.assets.find((a) => a.id === id);
     if (asset) {
       asset.editMode = true;
     }
   }
 
   cancelEditing(id: string) {
-    const asset = this.assets.find(a => a.id === id);
+    const asset = this.assets.find((a) => a.id === id);
     if (asset) {
       asset.editMode = false;
       this.loadAssets(); // Revert changes
@@ -499,7 +533,7 @@ export class AssetManagerComponent implements OnInit {
   }
 
   saveName(id: string, newName: string) {
-    const asset = this.assets.find(a => a.id === id);
+    const asset = this.assets.find((a) => a.id === id);
     if (asset) {
       this.dataService.renameAsset(id, newName).subscribe({
         next: () => {
@@ -507,7 +541,7 @@ export class AssetManagerComponent implements OnInit {
           asset.name = newName; // Optimistic update or reload
           this.loadAssets();
         },
-        error: (err) => console.error('Rename failed', err)
+        error: (err) => console.error("Rename failed", err),
       });
     }
   }
@@ -515,7 +549,7 @@ export class AssetManagerComponent implements OnInit {
   // Image Set Editor Methods
   openNewImageSetEditor() {
     this.editingAssetId = undefined;
-    this.editingAssetName = '';
+    this.editingAssetName = "";
     this.editingAssetEntries = [];
     this.showImageSetEditor = true;
   }
@@ -523,11 +557,11 @@ export class AssetManagerComponent implements OnInit {
   openEditImageSetEditor(asset: AssetView) {
     this.editingAssetId = asset.id;
     this.editingAssetName = asset.name;
-    this.editingAssetEntries = (asset.images || []).map(img => ({
+    this.editingAssetEntries = (asset.images || []).map((img) => ({
       percentage: img.percentage,
       url: img.url,
       name: img.name,
-      data: new Uint8Array()
+      data: new Uint8Array(),
     }));
     this.showImageSetEditor = true;
   }

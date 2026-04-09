@@ -1,29 +1,42 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Location } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef, HostListener, OnDestroy, ViewChildren, QueryList } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, of } from 'rxjs';
-
-import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { ArduinoEditorComponent } from 'src/app/components/track-editor/arduino-editor/arduino-editor.component';
-import { DataService } from 'src/app/data.service';
-import { Lane } from 'src/app/models/lane';
-import { Track, ArduinoConfig, LedString, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from 'src/app/models/track';
-import { com } from 'src/app/proto/message';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import { Location } from "@angular/common";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChildren,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { of, Subscription } from "rxjs";
+import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { ArduinoEditorComponent } from "src/app/components/track-editor/arduino-editor/arduino-editor.component";
+import { DataService } from "src/app/data.service";
+import { Lane } from "src/app/models/lane";
+import {
+  ArduinoConfig,
+  LedString,
+  MAX_ANALOG_PINS,
+  MAX_DIGITAL_PINS,
+  Track,
+} from "src/app/models/track";
+import { com } from "src/app/proto/message";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-track-editor',
-  templateUrl: './track-editor.component.html',
-  styleUrls: ['./track-editor.component.css'],
-  standalone: false
+  selector: "app-track-editor",
+  templateUrl: "./track-editor.component.html",
+  styleUrls: ["./track-editor.component.css"],
+  standalone: false,
 })
 export class TrackEditorComponent implements OnInit, OnDestroy {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
-  trackName: string = '';
+  trackName: string = "";
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
@@ -36,11 +49,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   undoManager!: UndoManager<Track>;
   allTracks: Track[] = [];
 
-  @ViewChildren(ArduinoEditorComponent) arduinoEditors!: QueryList<ArduinoEditorComponent>;
+  @ViewChildren(ArduinoEditorComponent)
+  arduinoEditors!: QueryList<ArduinoEditorComponent>;
   sectionsExpanded = {
     general: true,
     interfaces: true,
-    lanes: true
+    lanes: true,
   };
 
   showLedStringDialog = false;
@@ -48,7 +62,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
-    localStorage.setItem('rc.track-editor.sections', JSON.stringify(this.sectionsExpanded));
+    localStorage.setItem(
+      "rc.track-editor.sections",
+      JSON.stringify(this.sectionsExpanded),
+    );
   }
 
   constructor(
@@ -59,7 +76,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private location: Location,
     private helpService: HelpService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
   ) {
     this.undoManager = new UndoManager<Track>(
       {
@@ -72,16 +89,21 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             this.lanes = [...this.editingTrack.lanes];
 
             // Restore Arduino Configs
-            if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
-              this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
+            if (
+              this.editingTrack.arduino_configs &&
+              this.editingTrack.arduino_configs.length > 0
+            ) {
+              this.arduinoConfigs = JSON.parse(
+                JSON.stringify(this.editingTrack.arduino_configs),
+              );
             } else {
               this.arduinoConfigs = [];
             }
             this.cdr.detectChanges();
           }
-        }
+        },
       },
-      () => this.createSnapshot()
+      () => this.createSnapshot(),
     );
   }
 
@@ -89,30 +111,34 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.updateScale();
 
     // Load expanded state from localStorage
-    const saved = localStorage.getItem('rc.track-editor.sections');
+    const saved = localStorage.getItem("rc.track-editor.sections");
     if (saved) {
       try {
         const savedSections = JSON.parse(saved);
         this.sectionsExpanded = { ...this.sectionsExpanded, ...savedSections };
       } catch (e) {
-        console.error('Failed to parse saved sections', e);
+        console.error("Failed to parse saved sections", e);
       }
     }
 
     // Subscribe to query params to reload data when ID changes (e.g. after Save as New)
-    this.subscriptions.push(this.route.queryParamMap.subscribe(() => {
-      this.loadData();
-    }));
+    this.subscriptions.push(
+      this.route.queryParamMap.subscribe(() => {
+        this.loadData();
+      }),
+    );
 
-    this.subscriptions.push(this.undoManager.stateCommitted$.subscribe(() => {
-      this.autoSaveTrack();
-    }));
+    this.subscriptions.push(
+      this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveTrack();
+      }),
+    );
 
     this.dataService.connectToInterfaceDataSocket();
 
     // Trigger help automatically on first visit or if requested via query param
-    this.route.queryParams.subscribe(params => {
-      const forceHelp = params['help'] === 'true';
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.trackEditorHelpShown) {
         setTimeout(() => {
@@ -130,21 +156,21 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.isDestroyed = true;
     this.undoManager.destroy();
     this.dataService.disconnectFromInterfaceDataSocket();
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions.forEach((s) => s.unsubscribe());
     this.subscriptions = [];
     if (this.colorDebounceTimer) {
       clearTimeout(this.colorDebounceTimer);
     }
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
 
-  @HostListener('window:keydown', ['$event'])
+  @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
         this.redo();
@@ -152,7 +178,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         this.undo();
       }
     }
-    if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
       event.preventDefault();
       this.redo();
     }
@@ -193,74 +219,98 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    const idParam = this.route.snapshot.queryParamMap.get('id');
+    const idParam = this.route.snapshot.queryParamMap.get("id");
     if (!idParam) {
-      this.router.navigate(['/track-manager']);
+      this.router.navigate(["/track-manager"]);
       return;
     }
 
     this.isLoading = true;
-    this.subscriptions.push(this.dataService.getTracks().subscribe({
-      next: (tracks) => {
-        this.allTracks = tracks;
+    this.subscriptions.push(
+      this.dataService.getTracks().subscribe({
+        next: (tracks) => {
+          this.allTracks = tracks;
 
-        if (idParam === 'new') {
-          // Fetch factory settings from server
-          this.subscriptions.push(this.dataService.getTrackFactorySettings().subscribe({
-            next: (factoryTrack) => {
-              this.editingTrack = new Track(
-                'new',
-                this.translationService.translate('TM_DEFAULT_TRACK_NAME'),
-                factoryTrack.lanes.map((l: any) => new Lane(this.generateId(), l.foreground_color, l.background_color, l.length)),
-                false,
-                factoryTrack.arduino_configs
-              );
-              this.initializeEditingState();
-            },
-            error: (err) => {
-              console.error('Failed to load factory settings', err);
-              // Fallback default
-              this.editingTrack = new Track('new', '', [
-                new Lane(this.generateId(), '#ef4444', 'black', 100),
-                new Lane(this.generateId(), '#ffffff', 'black', 100)
-              ], false);
-              this.initializeEditingState();
-            }
-          }));
-          return; // Wait for factory settings
-        } else {
-          const found = tracks.find(t => t.entity_id === idParam);
-          if (found) {
-            // Deep copy for editing
-            this.editingTrack = this.cloneTrack(found);
+          if (idParam === "new") {
+            // Fetch factory settings from server
+            this.subscriptions.push(
+              this.dataService.getTrackFactorySettings().subscribe({
+                next: (factoryTrack) => {
+                  this.editingTrack = new Track(
+                    "new",
+                    this.translationService.translate("TM_DEFAULT_TRACK_NAME"),
+                    factoryTrack.lanes.map(
+                      (l: any) =>
+                        new Lane(
+                          this.generateId(),
+                          l.foreground_color,
+                          l.background_color,
+                          l.length,
+                        ),
+                    ),
+                    false,
+                    factoryTrack.arduino_configs,
+                  );
+                  this.initializeEditingState();
+                },
+                error: (err) => {
+                  console.error("Failed to load factory settings", err);
+                  // Fallback default
+                  this.editingTrack = new Track(
+                    "new",
+                    "",
+                    [
+                      new Lane(this.generateId(), "#ef4444", "black", 100),
+                      new Lane(this.generateId(), "#ffffff", "black", 100),
+                    ],
+                    false,
+                  );
+                  this.initializeEditingState();
+                },
+              }),
+            );
+            return; // Wait for factory settings
           } else {
-            console.error('Track not found');
-            this.router.navigate(['/track-manager']);
-            return;
+            const found = tracks.find((t) => t.entity_id === idParam);
+            if (found) {
+              // Deep copy for editing
+              this.editingTrack = this.cloneTrack(found);
+            } else {
+              console.error("Track not found");
+              this.router.navigate(["/track-manager"]);
+              return;
+            }
           }
-        }
 
-        this.initializeEditingState();
-      },
-      error: (err) => {
-        console.error('Failed to load tracks', err);
-        this.isLoading = false;
-        if (!this.isDestroyed) {
-          this.cdr.detectChanges();
-        }
-      }
-    }));
+          this.initializeEditingState();
+        },
+        error: (err) => {
+          console.error("Failed to load tracks", err);
+          this.isLoading = false;
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
+        },
+      }),
+    );
   }
 
   private initializeEditingState() {
     if (this.editingTrack) {
       // Restore Arduino Config
-      if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
-        this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
+      if (
+        this.editingTrack.arduino_configs &&
+        this.editingTrack.arduino_configs.length > 0
+      ) {
+        this.arduinoConfigs = JSON.parse(
+          JSON.stringify(this.editingTrack.arduino_configs),
+        );
         // Ensure arrays exist
         for (let config of this.arduinoConfigs) {
-          if (!config.digitalIds) config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
-          if (!config.analogIds) config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
+          if (!config.digitalIds)
+            config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
+          if (!config.analogIds)
+            config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
           if (!config.ledStrings) config.ledStrings = [];
           if (!config.voltageConfigs) config.voltageConfigs = {};
 
@@ -280,8 +330,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       // Now initialize tracking with a fully populated model
       this.undoManager.initialize(this.editingTrack);
     } else {
-      this.editingTrack = new Track('new', '', [], false);
-      this.trackName = '';
+      this.editingTrack = new Track("new", "", [], false);
+      this.trackName = "";
       this.lanes = [];
       this.arduinoConfigs = [];
       this.undoManager.initialize(this.editingTrack);
@@ -298,22 +348,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private initializeInterfaces() {
     if (this.arduinoConfigs.length > 0) {
-      this.dataService.initializeInterface(this.arduinoConfigs, this.lanes.length).subscribe({
-        next: (response) => {
-          if (!response.success) {
-            console.warn(`Failed to initialize interfaces: ${response.message}`);
-          } else {
-            console.log('Interfaces initialized successfully');
-          }
-        },
-        error: (err) => {
-          console.error('Error calling initializeInterface', err);
-        }
-      });
+      this.dataService
+        .initializeInterface(this.arduinoConfigs, this.lanes.length)
+        .subscribe({
+          next: (response) => {
+            if (!response.success) {
+              console.warn(
+                `Failed to initialize interfaces: ${response.message}`,
+              );
+            } else {
+              console.log("Interfaces initialized successfully");
+            }
+          },
+          error: (err) => {
+            console.error("Error calling initializeInterface", err);
+          },
+        });
     } else {
       this.dataService.closeInterface().subscribe({
-        next: () => console.log('Interface closed successfully'),
-        error: (err) => console.error('Error closing interface', err)
+        next: () => console.log("Interface closed successfully"),
+        error: (err) => console.error("Error closing interface", err),
       });
     }
   }
@@ -324,23 +378,43 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   private cloneTrack(track: Track): Track {
-    const lanesCopy = track.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length));
-    const arduinoCopy = track.arduino_configs ? JSON.parse(JSON.stringify(track.arduino_configs)) : [];
-    return new Track(track.entity_id, track.name, lanesCopy, track.has_digital_fuel, arduinoCopy);
+    const lanesCopy = track.lanes.map(
+      (l) =>
+        new Lane(l.entity_id, l.foreground_color, l.background_color, l.length),
+    );
+    const arduinoCopy = track.arduino_configs
+      ? JSON.parse(JSON.stringify(track.arduino_configs))
+      : [];
+    return new Track(
+      track.entity_id,
+      track.name,
+      lanesCopy,
+      track.has_digital_fuel,
+      arduinoCopy,
+    );
   }
-
 
   private createSnapshot(): Track {
     if (!this.editingTrack) {
-      return new Track('new', '', [], false);
+      return new Track("new", "", [], false);
     }
-    const configs = this.arduinoConfigs ? JSON.parse(JSON.stringify(this.arduinoConfigs)) : [];
+    const configs = this.arduinoConfigs
+      ? JSON.parse(JSON.stringify(this.arduinoConfigs))
+      : [];
     return new Track(
       this.editingTrack.entity_id,
       this.trackName,
-      this.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length)),
+      this.lanes.map(
+        (l) =>
+          new Lane(
+            l.entity_id,
+            l.foreground_color,
+            l.background_color,
+            l.length,
+          ),
+      ),
       this.editingTrack.has_digital_fuel,
-      configs
+      configs,
     );
   }
 
@@ -354,8 +428,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     for (let i = 0; i < t1.lanes.length; i++) {
       const l1 = t1.lanes[i];
       const l2 = t2.lanes[i];
-      if (l1.entity_id !== l2.entity_id || l1.background_color !== l2.background_color ||
-        l1.foreground_color !== l2.foreground_color || l1.length !== l2.length) {
+      if (
+        l1.entity_id !== l2.entity_id ||
+        l1.background_color !== l2.background_color ||
+        l1.foreground_color !== l2.foreground_color ||
+        l1.length !== l2.length
+      ) {
         return false;
       }
     }
@@ -382,7 +460,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
             return false;
           }
           for (let i = 0; i < v1.length; i++) {
-            if (key === 'ledStrings') {
+            if (key === "ledStrings") {
               const ls1 = v1 as unknown as LedString[];
               const ls2 = v2 as unknown as LedString[];
               if (!this.isLedStringsEqual(ls1[i], ls2[i])) {
@@ -392,7 +470,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
               return false;
             }
           }
-        } else if (key === 'voltageConfigs') {
+        } else if (key === "voltageConfigs") {
           const vc1 = (v1 || {}) as { [lane: number]: number };
           const vc2 = (v2 || {}) as { [lane: number]: number };
           const entries1 = Object.entries(vc1);
@@ -416,14 +494,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   private isLedStringsEqual(s1: LedString, s2: LedString): boolean {
     if (!s1 || !s2) return s1 === s2;
-    if (s1.stringNum !== s2.stringNum ||
-        s1.numUsedLeds !== s2.numUsedLeds ||
-        s1.addressableLeds !== s2.addressableLeds ||
-        s1.brightness !== s2.brightness ||
-        s1.yellowFlagFlashRate !== s2.yellowFlagFlashRate) {
+    if (
+      s1.stringNum !== s2.stringNum ||
+      s1.numUsedLeds !== s2.numUsedLeds ||
+      s1.addressableLeds !== s2.addressableLeds ||
+      s1.brightness !== s2.brightness ||
+      s1.yellowFlagFlashRate !== s2.yellowFlagFlashRate
+    ) {
       return false;
     }
-    
+
     if (s1.leds?.length !== s2.leds?.length) return false;
     if (s1.leds) {
       for (let i = 0; i < s1.leds.length; i++) {
@@ -431,10 +511,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (s1.ledLaneColorOverrides?.length !== s2.ledLaneColorOverrides?.length) return false;
+    if (s1.ledLaneColorOverrides?.length !== s2.ledLaneColorOverrides?.length)
+      return false;
     if (s1.ledLaneColorOverrides) {
       for (let i = 0; i < s1.ledLaneColorOverrides.length; i++) {
-        if (s1.ledLaneColorOverrides[i] !== s2.ledLaneColorOverrides[i]) return false;
+        if (s1.ledLaneColorOverrides[i] !== s2.ledLaneColorOverrides[i])
+          return false;
       }
     }
 
@@ -476,81 +558,81 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: 'TE_HELP_WELCOME_TITLE',
-        content: 'TE_HELP_WELCOME_CONTENT',
-        position: 'center'
+        title: "TE_HELP_WELCOME_TITLE",
+        content: "TE_HELP_WELCOME_CONTENT",
+        position: "center",
       },
       {
-        title: 'TE_HELP_GENERAL_TITLE',
-        content: 'TE_HELP_GENERAL_CONTENT',
-        position: 'center'
+        title: "TE_HELP_GENERAL_TITLE",
+        content: "TE_HELP_GENERAL_CONTENT",
+        position: "center",
       },
       {
-        selector: '#track-name-input',
-        title: 'TE_HELP_NAME_TITLE',
-        content: 'TE_HELP_NAME_CONTENT',
-        position: 'bottom'
+        selector: "#track-name-input",
+        title: "TE_HELP_NAME_TITLE",
+        content: "TE_HELP_NAME_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#lane-editor-section',
-        title: 'TE_HELP_LANES_TITLE',
-        content: 'TE_HELP_LANES_CONTENT',
-        position: 'right'
+        selector: "#lane-editor-section",
+        title: "TE_HELP_LANES_TITLE",
+        content: "TE_HELP_LANES_CONTENT",
+        position: "right",
       },
       {
-        selector: '#lane-bg-0',
-        title: 'TE_HELP_LANE_BG_TITLE',
-        content: 'TE_HELP_LANE_BG_CONTENT',
-        position: 'bottom'
+        selector: "#lane-bg-0",
+        title: "TE_HELP_LANE_BG_TITLE",
+        content: "TE_HELP_LANE_BG_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#lane-fg-0',
-        title: 'TE_HELP_LANE_FG_TITLE',
-        content: 'TE_HELP_LANE_FG_CONTENT',
-        position: 'bottom'
+        selector: "#lane-fg-0",
+        title: "TE_HELP_LANE_FG_TITLE",
+        content: "TE_HELP_LANE_FG_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#lane-length-0',
-        title: 'TE_HELP_LANE_LENGTH_TITLE',
-        content: 'TE_HELP_LANE_LENGTH_CONTENT',
-        position: 'bottom'
+        selector: "#lane-length-0",
+        title: "TE_HELP_LANE_LENGTH_TITLE",
+        content: "TE_HELP_LANE_LENGTH_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#lane-drag-0',
-        title: 'TE_HELP_LANE_DRAG_TITLE',
-        content: 'TE_HELP_LANE_DRAG_CONTENT',
-        position: 'right'
+        selector: "#lane-drag-0",
+        title: "TE_HELP_LANE_DRAG_TITLE",
+        content: "TE_HELP_LANE_DRAG_CONTENT",
+        position: "right",
       },
       {
-        selector: '#lane-delete-0',
-        title: 'TE_HELP_DELETE_LANE_TITLE',
-        content: 'TE_HELP_DELETE_LANE_CONTENT',
-        position: 'right'
+        selector: "#lane-delete-0",
+        title: "TE_HELP_DELETE_LANE_TITLE",
+        content: "TE_HELP_DELETE_LANE_CONTENT",
+        position: "right",
       },
       {
-        selector: '#undo-btn',
-        title: 'TE_HELP_UNDO_TITLE',
-        content: 'TE_HELP_UNDO_CONTENT',
-        position: 'bottom'
+        selector: "#undo-btn",
+        title: "TE_HELP_UNDO_TITLE",
+        content: "TE_HELP_UNDO_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#redo-btn',
-        title: 'TE_HELP_REDO_TITLE',
-        content: 'TE_HELP_REDO_CONTENT',
-        position: 'bottom'
+        selector: "#redo-btn",
+        title: "TE_HELP_REDO_TITLE",
+        content: "TE_HELP_REDO_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#copy-item-btn',
-        title: 'TE_HELP_DUPLICATE_TITLE',
-        content: 'TE_HELP_DUPLICATE_CONTENT',
-        position: 'bottom'
+        selector: "#copy-item-btn",
+        title: "TE_HELP_DUPLICATE_TITLE",
+        content: "TE_HELP_DUPLICATE_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#add-interface-btn',
-        title: 'TE_HELP_ADD_INTERFACE_TITLE',
-        content: 'TE_HELP_ADD_INTERFACE_CONTENT',
-        position: 'left'
-      }
+        selector: "#add-interface-btn",
+        title: "TE_HELP_ADD_INTERFACE_TITLE",
+        content: "TE_HELP_ADD_INTERFACE_CONTENT",
+        position: "left",
+      },
     ];
 
     // Ensure lanes section is expanded if we are going to highlight items inside it
@@ -577,7 +659,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.helpService.startGuide(steps);
   }
 
-  onInputFocus() { this.undoManager.onInputFocus(); }
+  onInputFocus() {
+    this.undoManager.onInputFocus();
+  }
   onInputChange() {
     this.cdr.detectChanges();
     this.undoManager.onInputChange();
@@ -594,7 +678,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   // Lane Management
   addLane() {
-    this.lanes.push(new Lane(this.generateId(), '#ffffff', 'black', 100)); // Default white lane
+    this.lanes.push(new Lane(this.generateId(), "#ffffff", "black", 100)); // Default white lane
     this.sectionsExpanded.lanes = true;
     this.captureState();
   }
@@ -614,29 +698,46 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   private updateArduinoConfigsOnLaneDeletion(deletedLaneIndex: number) {
-    this.arduinoConfigs.forEach(config => {
+    this.arduinoConfigs.forEach((config) => {
       // Helper to update pin IDs
       const updatePinIds = (ids: number[]) => {
         if (!ids) return;
         for (let i = 0; i < ids.length; i++) {
           const val = ids[i];
-          if (val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
+          if (
+            val === com.antigravity.PinBehavior.BEHAVIOR_UNUSED ||
             val === com.antigravity.PinBehavior.BEHAVIOR_RESERVED ||
             val === com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
-            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY) {
+            val === com.antigravity.PinBehavior.BEHAVIOR_RELAY
+          ) {
             continue;
           }
 
           let base = -1;
-          if (val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE) {
+          if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE
+          ) {
             base = com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE;
-          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE) {
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE
+          ) {
             base = com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE;
-          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE) {
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE
+          ) {
             base = com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE;
-          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000) {
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE + 1000
+          ) {
             base = com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE;
-          } else if (val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE && val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000) {
+          } else if (
+            val >= com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
+            val < com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
+          ) {
             base = com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
           }
 
@@ -671,8 +772,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
       // Shift ledLaneColorOverrides for each LedString
       if (config.ledStrings) {
-        config.ledStrings.forEach(ls => {
-          if (ls.ledLaneColorOverrides && ls.ledLaneColorOverrides.length > deletedLaneIndex) {
+        config.ledStrings.forEach((ls) => {
+          if (
+            ls.ledLaneColorOverrides &&
+            ls.ledLaneColorOverrides.length > deletedLaneIndex
+          ) {
             ls.ledLaneColorOverrides.splice(deletedLaneIndex, 1);
           }
         });
@@ -687,7 +791,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   updateLaneBackgroundColor(index: number, color: string) {
     // Update live
     const l = this.lanes[index];
-    this.lanes[index] = new Lane(l.entity_id, l.foreground_color, color, l.length);
+    this.lanes[index] = new Lane(
+      l.entity_id,
+      l.foreground_color,
+      color,
+      l.length,
+    );
 
     if (!this.colorDebounceTimer) {
       this.captureState();
@@ -702,7 +811,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   updateLaneForegroundColor(index: number, color: string) {
     // Update live
     const l = this.lanes[index];
-    this.lanes[index] = new Lane(l.entity_id, color, l.background_color, l.length);
+    this.lanes[index] = new Lane(
+      l.entity_id,
+      color,
+      l.background_color,
+      l.length,
+    );
 
     if (!this.colorDebounceTimer) {
       this.captureState();
@@ -717,7 +831,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   updateLaneLength(index: number, length: any) {
     const val = parseInt(length, 10);
     const l = this.lanes[index];
-    this.lanes[index] = new Lane(l.entity_id, l.foreground_color, l.background_color, val);
+    this.lanes[index] = new Lane(
+      l.entity_id,
+      l.foreground_color,
+      l.background_color,
+      val,
+    );
     this.captureState();
   }
 
@@ -726,7 +845,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   addArduinoConfig() {
     this.arduinoConfigs.push({
       name: `Arduino ${this.arduinoConfigs.length + 1}`,
-      commPort: '',
+      commPort: "",
       baudRate: 9600,
       debounceUs: 200,
       normallyClosedLaneSensors: true,
@@ -737,10 +856,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       usePitsAsLaps: false,
       useLapsForSegments: true,
       hardwareType: 0, // 0 = Uno, 1 = Mega
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
-      analogIds: new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(
+        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
+      ),
+      analogIds: new Array(MAX_ANALOG_PINS).fill(
+        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
+      ),
       ledStrings: [],
-      lapPinPitBehavior: 3
+      lapPinPitBehavior: 3,
     });
     this.arduinoConfigs = [...this.arduinoConfigs]; // Ensure reference change for Angular change detection
     this.captureState();
@@ -776,12 +899,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     // We always want to append at least _1 if we are saving as new to avoid collision with self
     // and to follow the requirement "generate based on the old name with an _# at the end"
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, '');
+    const base = baseName.replace(pattern, "");
 
     // Try appending _1, _2, etc.
     while (true) {
       const candidate = `${base}_${counter}`;
-      if (!this.allTracks.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.allTracks.some(
+          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -800,7 +927,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
     // Validate
     if (!this.trackName.trim()) {
-      if (!isAutoSave) alert(this.translationService.translate('TE_ERROR_NAME_REQUIRED'));
+      if (!isAutoSave)
+        alert(this.translationService.translate("TE_ERROR_NAME_REQUIRED"));
       return;
     }
 
@@ -809,7 +937,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     // Construct payload
     const finalTrack = this.createSnapshot();
 
-    const wasNew = isSaveAsNew || finalTrack.entity_id === 'new';
+    const wasNew = isSaveAsNew || finalTrack.entity_id === "new";
 
     // Inject @id for Jackson identity resolution
     const payload: any = {
@@ -817,84 +945,119 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       "@id": 1,
       lanes: finalTrack.lanes.map((l, i) => ({
         ...l,
-        "@id": i + 2
-      }))
+        "@id": i + 2,
+      })),
     };
 
     const obs = wasNew
-      ? this.dataService.createTrack({ ...payload, entity_id: 'new' })
+      ? this.dataService.createTrack({ ...payload, entity_id: "new" })
       : this.dataService.updateTrack(payload.entity_id, payload);
 
-    this.subscriptions.push(obs.subscribe({
-      next: (result) => {
-        this.isSaving = false;
-        // Update local state with result (especially ID)
-        this.editingTrack = new Track(result.entity_id, result.name, result.lanes, result.has_digital_fuel ?? false, result.arduino_configs);
+    this.subscriptions.push(
+      obs.subscribe({
+        next: (result) => {
+          this.isSaving = false;
+          // Update local state with result (especially ID)
+          this.editingTrack = new Track(
+            result.entity_id,
+            result.name,
+            result.lanes,
+            result.has_digital_fuel ?? false,
+            result.arduino_configs,
+          );
 
-        // Update allTracks cache to ensure name uniqueness checks stay in sync
-        const idx = this.allTracks.findIndex(t => t.entity_id === result.entity_id);
-        if (idx >= 0) {
-          this.allTracks[idx] = this.editingTrack;
-        } else {
-          this.allTracks.push(this.editingTrack);
-        }
-
-        // Sync local UI state with server result to ensure clean state matches
-        this.trackName = this.editingTrack.name;
-        // Ensure lanes are proper objects/arrays as expected
-        this.lanes = this.editingTrack.lanes.map(l => new Lane(l.entity_id, l.foreground_color, l.background_color, l.length));
-
-        if (this.editingTrack.arduino_configs && this.editingTrack.arduino_configs.length > 0) {
-          this.arduinoConfigs = JSON.parse(JSON.stringify(this.editingTrack.arduino_configs));
-        } else {
-          this.arduinoConfigs = [];
-        }
-
-        if (wasNew) {
-          // Re-base the entire undo history onto the new track identity (ID and Name)
-          // so that undoing doesn't take us back to the old ID or Name.
-          this.undoManager.updateHistory(t => {
-            (t as any).entity_id = result.entity_id;
-            (t as any).name = result.name;
-            return t;
-          });
-        }
-
-        if (this.editingTrack) {
-          this.undoManager.resetTracking(this.createSnapshot());
-        }
-
-        // Force sync with UI and children (especially back-button confirm input)
-        if (!this.isDestroyed) {
-          this.cdr.detectChanges();
-        }
-
-        if (this.navigateBackOnSave) {
-          this.onBack();
-        } else if (wasNew) {
-          if (isAutoSave) {
-            const url = this.router.serializeUrl(this.router.createUrlTree(['/track-editor'], { queryParams: { id: result.entity_id } }));
-            this.location.replaceState(url);
+          // Update allTracks cache to ensure name uniqueness checks stay in sync
+          const idx = this.allTracks.findIndex(
+            (t) => t.entity_id === result.entity_id,
+          );
+          if (idx >= 0) {
+            this.allTracks[idx] = this.editingTrack;
           } else {
-            this.router.navigate(['/track-editor'], { queryParams: { id: result.entity_id } });
+            this.allTracks.push(this.editingTrack);
           }
-        } else {
-          // If not wasNew, we still check navigateBackOnSave (which we did above)
-          // The old code had no specific else for wasNew
-        }
-      },
-      error: (err) => {
-        console.error('Failed to save track', err);
-        if (!this.isDestroyed) {
-          if (err.status === 409) {
-            if (!isAutoSave) alert(this.translationService.translate('TE_ERROR_NAME_EXISTS'));
+
+          // Sync local UI state with server result to ensure clean state matches
+          this.trackName = this.editingTrack.name;
+          // Ensure lanes are proper objects/arrays as expected
+          this.lanes = this.editingTrack.lanes.map(
+            (l) =>
+              new Lane(
+                l.entity_id,
+                l.foreground_color,
+                l.background_color,
+                l.length,
+              ),
+          );
+
+          if (
+            this.editingTrack.arduino_configs &&
+            this.editingTrack.arduino_configs.length > 0
+          ) {
+            this.arduinoConfigs = JSON.parse(
+              JSON.stringify(this.editingTrack.arduino_configs),
+            );
           } else {
-            if (!isAutoSave) alert(this.translationService.translate('TE_ERROR_SAVE_FAILED'));
+            this.arduinoConfigs = [];
           }
-        }
-        this.isSaving = false;
-      }
-    }));
+
+          if (wasNew) {
+            // Re-base the entire undo history onto the new track identity (ID and Name)
+            // so that undoing doesn't take us back to the old ID or Name.
+            this.undoManager.updateHistory((t) => {
+              (t as any).entity_id = result.entity_id;
+              (t as any).name = result.name;
+              return t;
+            });
+          }
+
+          if (this.editingTrack) {
+            this.undoManager.resetTracking(this.createSnapshot());
+          }
+
+          // Force sync with UI and children (especially back-button confirm input)
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
+
+          if (this.navigateBackOnSave) {
+            this.onBack();
+          } else if (wasNew) {
+            if (isAutoSave) {
+              const url = this.router.serializeUrl(
+                this.router.createUrlTree(["/track-editor"], {
+                  queryParams: { id: result.entity_id },
+                }),
+              );
+              this.location.replaceState(url);
+            } else {
+              this.router.navigate(["/track-editor"], {
+                queryParams: { id: result.entity_id },
+              });
+            }
+          } else {
+            // If not wasNew, we still check navigateBackOnSave (which we did above)
+            // The old code had no specific else for wasNew
+          }
+        },
+        error: (err) => {
+          console.error("Failed to save track", err);
+          if (!this.isDestroyed) {
+            if (err.status === 409) {
+              if (!isAutoSave)
+                alert(
+                  this.translationService.translate("TE_ERROR_NAME_EXISTS"),
+                );
+            } else {
+              if (!isAutoSave)
+                alert(
+                  this.translationService.translate("TE_ERROR_SAVE_FAILED"),
+                );
+            }
+          }
+          this.isSaving = false;
+        },
+      }),
+    );
   }
 
   get isNameInvalid(): boolean {
@@ -905,8 +1068,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   isNameUnique(excludeSelf: boolean = true): boolean {
     if (!this.trackName) return false;
     const name = this.trackName.trim().toLowerCase();
-    return !this.allTracks.some(t => {
-      if (excludeSelf && this.editingTrack && t.entity_id === this.editingTrack.entity_id) {
+    return !this.allTracks.some((t) => {
+      if (
+        excludeSelf &&
+        this.editingTrack &&
+        t.entity_id === this.editingTrack.entity_id
+      ) {
         return false;
       }
       return t.name.toLowerCase() === name;
@@ -914,7 +1081,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
-    this.router.navigate(['/track-manager'], { queryParams: { id: this.editingTrack?.entity_id } });
+    this.router.navigate(["/track-manager"], {
+      queryParams: { id: this.editingTrack?.entity_id },
+    });
   }
 
   trackByLane(index: number, lane: Lane): string {

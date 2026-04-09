@@ -1,78 +1,97 @@
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, flush, discardPeriodicTasks } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { DragDropModule } from "@angular/cdk/drag-drop";
+import { Component, Input, NO_ERRORS_SCHEMA } from "@angular/core";
+import {
+  ComponentFixture,
+  discardPeriodicTasks,
+  fakeAsync,
+  flush,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
+import { BehaviorSubject, of, throwError } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Lane } from "src/app/models/lane";
+import { Settings } from "src/app/models/settings";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { Lane } from 'src/app/models/lane';
-import { Settings } from 'src/app/models/settings';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { HelpService } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { TrackEditorComponent } from "./track-editor.component";
 
-import { TrackEditorComponent } from './track-editor.component';
-
-// TODO(aufderheide): Move MockDataService to a shared test file and 
+// TODO(aufderheide): Move MockDataService to a shared test file and
 // allow users of it to customize it beyond the simple defaults.
 // Mock DataService
 class MockDataService {
   getTracks() {
     return of([
       {
-        entity_id: 't1',
-        name: 'Track 1',
-        lanes: [{ entity_id: 'l1', background_color: '#ff0000', foreground_color: '#ffffff', length: 10 }],
-        arduino_configs: [{
-          digitalIds: new Array(60).fill(-1),
-          analogIds: new Array(16).fill(-1),
-          hardwareType: 0,
-          ledStrings: [],
-          voltageConfigs: {}
-        }]
+        entity_id: "t1",
+        name: "Track 1",
+        lanes: [
+          {
+            entity_id: "l1",
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+            length: 10,
+          },
+        ],
+        arduino_configs: [
+          {
+            digitalIds: new Array(60).fill(-1),
+            analogIds: new Array(16).fill(-1),
+            hardwareType: 0,
+            ledStrings: [],
+            voltageConfigs: {},
+          },
+        ],
       },
       {
-        entity_id: 't2',
-        name: 'Existing Track',
+        entity_id: "t2",
+        name: "Existing Track",
         lanes: [],
-        arduino_configs: [{
-          digitalIds: new Array(60).fill(-1),
-          analogIds: new Array(16).fill(-1),
-          hardwareType: 0,
-          ledStrings: [],
-          voltageConfigs: {}
-        }]
-      }
+        arduino_configs: [
+          {
+            digitalIds: new Array(60).fill(-1),
+            analogIds: new Array(16).fill(-1),
+            hardwareType: 0,
+            ledStrings: [],
+            voltageConfigs: {},
+          },
+        ],
+      },
     ]);
   }
   getSerialPorts() {
-    return of(['COM1', 'COM2']);
+    return of(["COM1", "COM2"]);
   }
   updateTrack(id: string, track: any) {
     return of(track);
   }
   createTrack(track: any) {
-    return of({ ...track, entity_id: 't-new-id' });
+    return of({ ...track, entity_id: "t-new-id" });
   }
   getTrackFactorySettings() {
     return of({
       lanes: [
-        { background_color: '#ef4444', foreground_color: 'black', length: 100 },
-        { background_color: '#ffffff', foreground_color: 'black', length: 100 }
+        { background_color: "#ef4444", foreground_color: "black", length: 100 },
+        { background_color: "#ffffff", foreground_color: "black", length: 100 },
       ],
-      arduino_configs: [{
-        digitalIds: new Array(60).fill(-1),
-        analogIds: new Array(16).fill(-1),
-        hardwareType: 0,
-        ledStrings: [],
-        voltageConfigs: {}
-      }]
+      arduino_configs: [
+        {
+          digitalIds: new Array(60).fill(-1),
+          analogIds: new Array(16).fill(-1),
+          hardwareType: 0,
+          ledStrings: [],
+          voltageConfigs: {},
+        },
+      ],
     });
   }
-  connectToInterfaceDataSocket() { }
-  disconnectFromInterfaceDataSocket() { }
+  connectToInterfaceDataSocket() {}
+  disconnectFromInterfaceDataSocket() {}
   getInterfaceEvents() {
     return of({});
   }
@@ -92,7 +111,7 @@ class MockDataService {
 
 // Mock HelpService
 class MockHelpService {
-  startGuide = jasmine.createSpy('startGuide');
+  startGuide = jasmine.createSpy("startGuide");
 }
 
 // Mock TranslationService
@@ -104,18 +123,24 @@ class MockTranslationService {
 
 // Mock Router
 class MockRouter {
-  navigate = jasmine.createSpy('navigate');
+  navigate = jasmine.createSpy("navigate");
 }
 
 // Mock ActivatedRoute
 class MockActivatedRoute {
-  private queryParamMapSubject = new BehaviorSubject(convertToParamMap({ id: 't1' }));
-  private queryParamsSubject = new BehaviorSubject({ help: 'false' });
+  private queryParamMapSubject = new BehaviorSubject(
+    convertToParamMap({ id: "t1" }),
+  );
+  private queryParamsSubject = new BehaviorSubject({ help: "false" });
 
   snapshot = {
-    get queryParamMap() { return this._parent.queryParamMapSubject.value; },
-    get queryParams() { return this._parent.queryParamsSubject.value; },
-    _parent: this
+    get queryParamMap() {
+      return this._parent.queryParamMapSubject.value;
+    },
+    get queryParams() {
+      return this._parent.queryParamsSubject.value;
+    },
+    _parent: this,
   };
 
   queryParamMap = this.queryParamMapSubject.asObservable();
@@ -133,14 +158,18 @@ class MockActivatedRoute {
 // Mock SettingsService
 class MockSettingsService {
   settings = new Settings();
-  getSettings() { return this.settings; }
-  saveSettings(settings: Settings) { this.settings = settings; }
+  getSettings() {
+    return this.settings;
+  }
+  saveSettings(settings: Settings) {
+    this.settings = settings;
+  }
 }
 
 @Component({
-  selector: 'app-back-button',
-  template: '',
-  standalone: false
+  selector: "app-back-button",
+  template: "",
+  standalone: false,
 })
 class MockBackButtonComponent {
   @Input() targetUrl?: string;
@@ -152,28 +181,28 @@ class MockBackButtonComponent {
 }
 
 @Component({
-  selector: 'app-undo-redo-controls',
-  template: '',
-  standalone: false
+  selector: "app-undo-redo-controls",
+  template: "",
+  standalone: false,
 })
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
-import { EventEmitter, Output } from '@angular/core';
+import { EventEmitter, Output } from "@angular/core";
 
 @Component({
-  selector: 'app-editor-title',
-  template: '',
-  standalone: false
+  selector: "app-editor-title",
+  template: "",
+  standalone: false,
 })
 class MockEditorTitleComponent {
-  @Input() titleKey: string = '';
-  @Input() backRoute: string = '';
+  @Input() titleKey: string = "";
+  @Input() backRoute: string = "";
   @Input() backConfirm: boolean = false;
   @Input() backQueryParams: any = {};
-  @Input() backConfirmTitle: string = '';
-  @Input() backConfirmMessage: string = '';
+  @Input() backConfirmTitle: string = "";
+  @Input() backConfirmMessage: string = "";
   @Input() undoManager: any;
   @Input() showUndo: boolean = true;
   @Input() showRedo: boolean = true;
@@ -189,7 +218,7 @@ class MockEditorTitleComponent {
   @Output() delete = new EventEmitter<void>();
 }
 
-describe('TrackEditorComponent', () => {
+describe("TrackEditorComponent", () => {
   let component: TrackEditorComponent;
   let fixture: ComponentFixture<TrackEditorComponent>;
   let dataService: DataService;
@@ -197,7 +226,13 @@ describe('TrackEditorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [TrackEditorComponent, TranslatePipe, MockBackButtonComponent, MockUndoRedoControlsComponent, MockEditorTitleComponent],
+      declarations: [
+        TrackEditorComponent,
+        TranslatePipe,
+        MockBackButtonComponent,
+        MockUndoRedoControlsComponent,
+        MockEditorTitleComponent,
+      ],
       imports: [FormsModule, DragDropModule],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
@@ -206,10 +241,9 @@ describe('TrackEditorComponent', () => {
         { provide: Router, useClass: MockRouter },
         { provide: ActivatedRoute, useClass: MockActivatedRoute },
         { provide: HelpService, useClass: MockHelpService },
-        { provide: SettingsService, useClass: MockSettingsService }
-      ]
-    })
-      .compileComponents();
+        { provide: SettingsService, useClass: MockSettingsService },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TrackEditorComponent);
     component = fixture.componentInstance;
@@ -227,21 +261,21 @@ describe('TrackEditorComponent', () => {
     }
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should load track data for editing', () => {
-    expect(component.trackName).toBe('Track 1');
+  it("should load track data for editing", () => {
+    expect(component.trackName).toBe("Track 1");
     expect(component.lanes.length).toBe(1);
-    expect(component.editingTrack?.entity_id).toBe('t1');
+    expect(component.editingTrack?.entity_id).toBe("t1");
   });
 
-  it('should load factory settings for a new track', fakeAsync(() => {
+  it("should load factory settings for a new track", fakeAsync(() => {
     // Setup for 'new' ID
     const route = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
-    route.setQueryParams({ id: 'new' });
-    spyOn(dataService, 'getTrackFactorySettings').and.callThrough();
+    route.setQueryParams({ id: "new" });
+    spyOn(dataService, "getTrackFactorySettings").and.callThrough();
 
     // Re-run ngOnInit logic
     component.ngOnInit();
@@ -249,12 +283,12 @@ describe('TrackEditorComponent', () => {
     fixture.detectChanges();
 
     expect(dataService.getTrackFactorySettings).toHaveBeenCalled();
-    expect(component.trackName).toBe('TM_DEFAULT_TRACK_NAME');
+    expect(component.trackName).toBe("TM_DEFAULT_TRACK_NAME");
     expect(component.lanes.length).toBe(2);
-    expect(component.editingTrack?.entity_id).toBe('new');
+    expect(component.editingTrack?.entity_id).toBe("new");
   }));
 
-  it('should handle lane management', () => {
+  it("should handle lane management", () => {
     component.addLane();
     expect(component.lanes.length).toBe(2);
 
@@ -262,36 +296,43 @@ describe('TrackEditorComponent', () => {
     expect(component.lanes.length).toBe(1);
   });
 
-  it('should update lane properties', () => {
-    component.updateLaneBackgroundColor(0, '#00ff00');
-    expect(component.lanes[0].background_color).toBe('#00ff00');
+  it("should update lane properties", () => {
+    component.updateLaneBackgroundColor(0, "#00ff00");
+    expect(component.lanes[0].background_color).toBe("#00ff00");
 
     component.updateLaneLength(0, 15);
     expect(component.lanes[0].length).toBe(15);
   });
 
-  it('should update existing track', () => {
-    spyOn(dataService, 'updateTrack').and.callThrough();
-    component.trackName = 'Updated Track';
+  it("should update existing track", () => {
+    spyOn(dataService, "updateTrack").and.callThrough();
+    component.trackName = "Updated Track";
 
     component.updateTrack();
 
-    expect(dataService.updateTrack).toHaveBeenCalledWith('t1', jasmine.any(Object));
+    expect(dataService.updateTrack).toHaveBeenCalledWith(
+      "t1",
+      jasmine.any(Object),
+    );
     expect(component.isSaving).toBeFalse();
   });
 
-  it('should save as new track', () => {
-    spyOn(dataService, 'createTrack').and.callThrough();
+  it("should save as new track", () => {
+    spyOn(dataService, "createTrack").and.callThrough();
     component.saveAsNew();
 
     expect(dataService.createTrack).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/track-editor'], { queryParams: { id: 't-new-id' } });
+    expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
+      queryParams: { id: "t-new-id" },
+    });
   });
 
-  it('should stay on page and keep original ID when save as new fails', () => {
-    spyOn(console, 'error');
-    spyOn(dataService, 'createTrack').and.returnValue(throwError(() => ({ status: 409, error: 'Conflict' })));
-    spyOn(window, 'alert');
+  it("should stay on page and keep original ID when save as new fails", () => {
+    spyOn(console, "error");
+    spyOn(dataService, "createTrack").and.returnValue(
+      throwError(() => ({ status: 409, error: "Conflict" })),
+    );
+    spyOn(window, "alert");
 
     const originalTrackId = component.editingTrack?.entity_id;
     component.saveAsNew();
@@ -302,31 +343,33 @@ describe('TrackEditorComponent', () => {
     expect(window.alert).toHaveBeenCalled();
   });
 
-  it('should handle save error', () => {
-    spyOn(console, 'error');
-    spyOn(window, 'alert');
-    spyOn(dataService, 'updateTrack').and.returnValue(throwError(() => ({ status: 500 })));
+  it("should handle save error", () => {
+    spyOn(console, "error");
+    spyOn(window, "alert");
+    spyOn(dataService, "updateTrack").and.returnValue(
+      throwError(() => ({ status: 500 })),
+    );
 
     component.updateTrack();
 
-    expect(window.alert).toHaveBeenCalledWith('TE_ERROR_SAVE_FAILED');
+    expect(window.alert).toHaveBeenCalledWith("TE_ERROR_SAVE_FAILED");
     expect(component.isSaving).toBeFalse();
   });
 
-  it('should check for unsaved changes (dirty state)', () => {
+  it("should check for unsaved changes (dirty state)", () => {
     expect(component.isDirtyState()).toBeFalse();
-    component.trackName = 'Changed';
+    component.trackName = "Changed";
     component.onInputChange();
     expect(component.isDirtyState()).toBeTrue();
   });
 
-  it('should shift Arduino pin assignments when a lane is deleted', () => {
+  it("should shift Arduino pin assignments when a lane is deleted", () => {
     // 1. Setup track with 4 lanes
     component.lanes = [
-      new Lane('l1', '#ff0000', 'black', 100),
-      new Lane('l2', '#00ff00', 'black', 100),
-      new Lane('l3', '#0000ff', 'black', 100),
-      new Lane('l4', '#ffffff', 'black', 100)
+      new Lane("l1", "#ff0000", "black", 100),
+      new Lane("l2", "#00ff00", "black", 100),
+      new Lane("l3", "#0000ff", "black", 100),
+      new Lane("l4", "#ffffff", "black", 100),
     ];
 
     // 2. Add Arduino config with lane-specific behaviors
@@ -350,7 +393,7 @@ describe('TrackEditorComponent', () => {
     // voltageConfigs
     config.voltageConfigs = {
       1: 500, // Lane 2
-      2: 600  // Lane 3
+      2: 600, // Lane 3
     };
 
     // 3. Remove Lane 2 (index 1)
@@ -358,19 +401,19 @@ describe('TrackEditorComponent', () => {
 
     // 4. Verify results
     expect(component.lanes.length).toBe(3);
-    expect(component.lanes[1].entity_id).toBe('l3'); // Lane 3 is now index 1
+    expect(component.lanes[1].entity_id).toBe("l3"); // Lane 3 is now index 1
 
     const updatedConfig = component.arduinoConfigs[0];
     expect(updatedConfig.digitalIds[2]).toBe(1000); // Lane 1 unchanged
-    expect(updatedConfig.digitalIds[3]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
-    expect(updatedConfig.digitalIds[4]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
+    expect(updatedConfig.digitalIds[3]).toBe(0); // Lane 2 (deleted) becomes UNUSED
+    expect(updatedConfig.digitalIds[4]).toBe(0); // Lane 2 (deleted) becomes UNUSED
 
     expect(updatedConfig.digitalIds[5]).toBe(1001); // Lane 3 (index 2) shifted to index 1
     expect(updatedConfig.digitalIds[6]).toBe(4001); // Lane 3 (index 2) shifted to index 1
 
     expect(updatedConfig.digitalIds[7]).toBe(1002); // Lane 4 (index 3) shifted to index 2
 
-    expect(updatedConfig.analogIds[0]).toBe(0);    // Lane 2 (deleted) becomes UNUSED
+    expect(updatedConfig.analogIds[0]).toBe(0); // Lane 2 (deleted) becomes UNUSED
     expect(updatedConfig.analogIds[1]).toBe(7001); // Lane 3 (index 2) shifted to index 1
 
     expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Old Lane 3 (2) value shifted to index 1
@@ -378,11 +421,11 @@ describe('TrackEditorComponent', () => {
     expect(updatedConfig.voltageConfigs?.[2]).toBeUndefined(); // Shifted
   });
 
-  it('should reorder lanes and NOT update Arduino configs on drop', () => {
+  it("should reorder lanes and NOT update Arduino configs on drop", () => {
     // 1. Setup track with 2 lanes
     component.lanes = [
-      new Lane('l1', '#ff0000', 'black', 100),
-      new Lane('l2', '#00ff00', 'black', 100)
+      new Lane("l1", "#ff0000", "black", 100),
+      new Lane("l2", "#00ff00", "black", 100),
     ];
 
     // 2. Add Arduino config with lane-specific behaviors
@@ -396,16 +439,16 @@ describe('TrackEditorComponent', () => {
       previousIndex: 0,
       currentIndex: 1,
       container: { data: component.lanes },
-      item: { data: component.lanes[0] }
+      item: { data: component.lanes[0] },
     } as any;
 
-    spyOn(component, 'captureState').and.callThrough();
+    spyOn(component, "captureState").and.callThrough();
     component.onLaneDropped(event);
 
     // 4. Verify results
     expect(component.lanes.length).toBe(2);
-    expect(component.lanes[0].entity_id).toBe('l2');
-    expect(component.lanes[1].entity_id).toBe('l1');
+    expect(component.lanes[0].entity_id).toBe("l2");
+    expect(component.lanes[1].entity_id).toBe("l1");
 
     // Pin assignments MUST NOT change
     expect(component.arduinoConfigs[0].digitalIds[2]).toBe(1000); // Still Lane 1
@@ -414,10 +457,10 @@ describe('TrackEditorComponent', () => {
     expect(component.captureState).toHaveBeenCalled();
   });
 
-  describe('Auto-save and Duplicate', () => {
-    it('should auto-save on valid name change after debounce', fakeAsync(() => {
-      spyOn(dataService, 'updateTrack').and.callThrough();
-      component.trackName = 'Valid New Name';
+  describe("Auto-save and Duplicate", () => {
+    it("should auto-save on valid name change after debounce", fakeAsync(() => {
+      spyOn(dataService, "updateTrack").and.callThrough();
+      component.trackName = "Valid New Name";
       component.onInputChange(); // Triggers debounce in UndoManager
 
       tick(600); // Wait for debounce (500ms) + small buffer
@@ -428,10 +471,10 @@ describe('TrackEditorComponent', () => {
       expect(component.isDirtyState()).toBeFalse();
     }));
 
-    it('should NOT auto-save if the name is a duplicate', fakeAsync(() => {
-      spyOn(dataService, 'updateTrack').and.callThrough();
+    it("should NOT auto-save if the name is a duplicate", fakeAsync(() => {
+      spyOn(dataService, "updateTrack").and.callThrough();
       // 'Existing Track' already exists in MockDataService (t2)
-      component.trackName = 'Existing Track';
+      component.trackName = "Existing Track";
       component.onInputChange();
 
       tick(600);
@@ -441,9 +484,11 @@ describe('TrackEditorComponent', () => {
       expect(component.isNameInvalid).toBeTrue();
     }));
 
-    it('should remain dirty after an auto-save fails due to duplicate name (server error 409)', fakeAsync(() => {
-      spyOn(dataService, 'updateTrack').and.returnValue(throwError(() => ({ status: 409 })));
-      component.trackName = 'Conflict Name';
+    it("should remain dirty after an auto-save fails due to duplicate name (server error 409)", fakeAsync(() => {
+      spyOn(dataService, "updateTrack").and.returnValue(
+        throwError(() => ({ status: 409 })),
+      );
+      component.trackName = "Conflict Name";
       component.onInputChange();
 
       tick(600);
@@ -454,51 +499,55 @@ describe('TrackEditorComponent', () => {
       expect(component.isDirtyState()).toBeTrue();
     }));
 
-    it('should preserve undo/redo history and rebase it after Duplicate', () => {
+    it("should preserve undo/redo history and rebase it after Duplicate", () => {
       // 1. Make some changes to build history
-      component.trackName = 'Initial Name';
+      component.trackName = "Initial Name";
       component.onInputChange();
       // Manually call commitState to simulate a commit immediately for testing
-      component.undoManager.commitState(); 
-      
+      component.undoManager.commitState();
+
       const firstStackCount = component.undoManager.undoStackCount;
       expect(firstStackCount).toBeGreaterThan(0);
 
       // 2. Perform Duplicate
-      spyOn(dataService, 'createTrack').and.returnValue(of({
-        entity_id: 'new-id-123',
-        name: 'Initial Name_1',
-        lanes: component.lanes,
-        arduino_configs: component.arduinoConfigs
-      }));
-      
+      spyOn(dataService, "createTrack").and.returnValue(
+        of({
+          entity_id: "new-id-123",
+          name: "Initial Name_1",
+          lanes: component.lanes,
+          arduino_configs: component.arduinoConfigs,
+        }),
+      );
+
       component.saveAsNew();
 
       // 3. Verify history preserved and rebased
       expect(component.undoManager.undoStackCount).toBe(firstStackCount);
-      const lastUndoItem = component.undoManager.undoStackItems[component.undoManager.undoStackCount - 1] as any;
-      expect(lastUndoItem.entity_id).toBe('new-id-123');
-      expect(lastUndoItem.name).toBe('Initial Name_1');
+      const lastUndoItem = component.undoManager.undoStackItems[
+        component.undoManager.undoStackCount - 1
+      ] as any;
+      expect(lastUndoItem.entity_id).toBe("new-id-123");
+      expect(lastUndoItem.name).toBe("Initial Name_1");
     });
 
-    it('should highlight the name field in red when invalid', () => {
+    it("should highlight the name field in red when invalid", () => {
       component.isLoading = false; // Ensure validation is active
-      component.trackName = ''; // Invalid: empty
-      expect(component.isNameInvalid).toBeTrue();
-      
-      component.trackName = 'Existing Track'; // Invalid: duplicate (from MockDataService)
+      component.trackName = ""; // Invalid: empty
       expect(component.isNameInvalid).toBeTrue();
 
-      component.trackName = 'Unique Name';
+      component.trackName = "Existing Track"; // Invalid: duplicate (from MockDataService)
+      expect(component.isNameInvalid).toBeTrue();
+
+      component.trackName = "Unique Name";
       expect(component.isNameInvalid).toBeFalse();
     });
   });
 
-  describe('Guided Help', () => {
+  describe("Guided Help", () => {
     let helpService: HelpService;
     let settingsService: SettingsService;
     let mockSettingsService: MockSettingsService;
- 
+
     beforeEach(() => {
       helpService = TestBed.inject(HelpService);
       settingsService = TestBed.inject(SettingsService);
@@ -506,51 +555,53 @@ describe('TrackEditorComponent', () => {
       mockSettingsService.settings = new Settings();
     });
 
-    it('should trigger help automatically on first visit', fakeAsync(() => {
-      spyOn(component, 'startHelp').and.callThrough();
-       
+    it("should trigger help automatically on first visit", fakeAsync(() => {
+      spyOn(component, "startHelp").and.callThrough();
+
       component.ngOnInit();
       tick(1100);
-       
+
       expect(component.startHelp).toHaveBeenCalled();
       expect(helpService.startGuide).toHaveBeenCalled();
       expect(mockSettingsService.settings.trackEditorHelpShown).toBeTrue();
     }));
 
-    it('should trigger help if help=true query param is present even if already shown', fakeAsync(() => {
+    it("should trigger help if help=true query param is present even if already shown", fakeAsync(() => {
       mockSettingsService.settings.trackEditorHelpShown = true;
-      const activatedRoute = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
-      activatedRoute.setQueryParams({ help: 'true' });
-      spyOn(component, 'startHelp').and.callThrough();
-       
+      const activatedRoute = TestBed.inject(
+        ActivatedRoute,
+      ) as any as MockActivatedRoute;
+      activatedRoute.setQueryParams({ help: "true" });
+      spyOn(component, "startHelp").and.callThrough();
+
       component.ngOnInit();
       tick(1100);
-       
+
       expect(component.startHelp).toHaveBeenCalled();
     }));
 
-    it('should NOT trigger help automatically if already shown and no query param', fakeAsync(() => {
+    it("should NOT trigger help automatically if already shown and no query param", fakeAsync(() => {
       mockSettingsService.settings.trackEditorHelpShown = true;
-      spyOn(component, 'startHelp').and.callThrough();
-       
+      spyOn(component, "startHelp").and.callThrough();
+
       component.ngOnInit();
       tick(1100);
-       
+
       expect(component.startHelp).not.toHaveBeenCalled();
       expect(helpService.startGuide).not.toHaveBeenCalled();
     }));
 
-    it('should trigger help when startHelp is called manually', () => {
+    it("should trigger help when startHelp is called manually", () => {
       component.startHelp();
       expect(helpService.startGuide).toHaveBeenCalled();
     });
 
-    it('should expand lanes section if collapsed during help', () => {
+    it("should expand lanes section if collapsed during help", () => {
       component.sectionsExpanded.lanes = false;
-      component.lanes = [new Lane('l1', 'white', 'black', 100)];
-      
+      component.lanes = [new Lane("l1", "white", "black", 100)];
+
       component.startHelp();
-      
+
       expect(component.sectionsExpanded.lanes).toBeTrue();
     });
   });

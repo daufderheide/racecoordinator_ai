@@ -1,28 +1,27 @@
 import {
+  ChangeDetectorRef,
+  Compiler,
   Component,
+  ElementRef,
+  Inject,
+  Injector,
   OnInit,
   ViewChild,
   ViewContainerRef,
-  Compiler,
-  Injector,
-  Inject,
-  ChangeDetectorRef,
-  ElementRef
-} from '@angular/core';
-import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+} from "@angular/core";
+import { Router } from "@angular/router";
+import { Observable } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { CanComponentDeactivate } from "src/app/guards/raceday.guard";
+import { DynamicComponentService } from "src/app/services/dynamic-component.service";
+import { FileSystemService } from "src/app/services/file-system.service";
+import { RaceService } from "src/app/services/race.service";
+import { RaceConnectionService } from "src/app/services/race-connection.service";
+import { RaceFlagService } from "src/app/services/race-flag.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { CanComponentDeactivate } from 'src/app/guards/raceday.guard';
-import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { RaceConnectionService } from 'src/app/services/race-connection.service';
-import { RaceFlagService } from 'src/app/services/race-flag.service';
-import { RaceService } from 'src/app/services/race.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
-
-import { DefaultRacedayComponent } from './default-raceday.component';
+import { DefaultRacedayComponent } from "./default-raceday.component";
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {
@@ -35,20 +34,31 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(RaceFlagService) raceFlagService: RaceFlagService,
     @Inject(Router) router: Router,
     @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
-    @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef
+    @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
   ) {
-    super(el, translationService, dataService, raceService, settingsService, raceFlagService, router, raceConnectionService, cdr);
+    super(
+      el,
+      translationService,
+      dataService,
+      raceService,
+      settingsService,
+      raceFlagService,
+      router,
+      raceConnectionService,
+      cdr,
+    );
   }
 }
 
 @Component({
-  selector: 'app-raceday',
-  templateUrl: './raceday.component.html',
-  styleUrls: ['./raceday.component.css'],
-  standalone: false
+  selector: "app-raceday",
+  templateUrl: "./raceday.component.html",
+  styleUrls: ["./raceday.component.css"],
+  standalone: false,
 })
 export class RacedayComponent implements OnInit, CanComponentDeactivate {
-  @ViewChild('container', { read: ViewContainerRef, static: true }) container!: ViewContainerRef;
+  @ViewChild("container", { read: ViewContainerRef, static: true })
+  container!: ViewContainerRef;
   private childComponent: any;
 
   isLoading = true;
@@ -59,8 +69,8 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     private compiler: Compiler,
     private injector: Injector,
     private cdr: ChangeDetectorRef,
-    private dynamicComponentService: DynamicComponentService
-  ) { }
+    private dynamicComponentService: DynamicComponentService,
+  ) {}
 
   async ngOnInit() {
     this.isLoading = true;
@@ -73,7 +83,7 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
         // The fileSystem service uses 'raceday-setup-dir' handle.
         // We should look for 'raceday.component.html' / .css / .ts in that same folder.
 
-        // Note: hasCustomFiles checks for 'raceday-setup.component.html'. 
+        // Note: hasCustomFiles checks for 'raceday-setup.component.html'.
         // We should probably check for 'raceday.component.html' specifically here.
         // But the requirement says "if the custom files are not found in the custom folder, fallback".
 
@@ -84,7 +94,10 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
         this.loadDefaultComponent();
       }
     } catch (e: any) {
-      console.error('Failed to load custom raceday component, falling back to default', e);
+      console.error(
+        "Failed to load custom raceday component, falling back to default",
+        e,
+      );
       this.loadDefaultComponent();
     } finally {
       // Defer the loading state update to avoid ExpressionChangedAfterItHasBeenCheckedError
@@ -97,31 +110,35 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
   }
 
   loadDefaultComponent() {
-    const componentRef = this.container.createComponent(DefaultRacedayComponent);
+    const componentRef = this.container.createComponent(
+      DefaultRacedayComponent,
+    );
     this.childComponent = componentRef.instance;
   }
 
   async loadCustomComponent() {
     try {
       // We'll throw if the specific file 'raceday.component.html' is missing, triggering fallback.
-      // The 'hasCustomFiles' check in FS service checks for raceday-setup.html. 
+      // The 'hasCustomFiles' check in FS service checks for raceday-setup.html.
       // We might have a setup file but not a raceday file.
       // So we should try to get the file, and if it fails, we catch and fallback.
 
-      const html = await this.fileSystem.getCustomFile('raceday.component.html');
+      const html = await this.fileSystem.getCustomFile(
+        "raceday.component.html",
+      );
 
-      let css = '';
+      let css = "";
       try {
-        css = await this.fileSystem.getCustomFile('raceday.component.css');
+        css = await this.fileSystem.getCustomFile("raceday.component.css");
       } catch (e) {
-        console.log('No custom CSS found for raceday');
+        console.log("No custom CSS found for raceday");
       }
 
-      let tsCode = '';
+      let tsCode = "";
       try {
-        tsCode = await this.fileSystem.getCustomFile('raceday.component.ts');
+        tsCode = await this.fileSystem.getCustomFile("raceday.component.ts");
       } catch (e) {
-        console.log('No custom TS found for raceday');
+        console.log("No custom TS found for raceday");
       }
 
       const baseClass = CustomRacedayBaseComponent;
@@ -129,18 +146,16 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
         baseClass,
         html,
         css,
-        tsCode
+        tsCode,
       );
 
       const componentRef = this.container.createComponent(componentType);
       this.childComponent = componentRef.instance;
-
     } catch (e) {
       // If we can't find the specific raceday files, just throw so we fallback
       throw e;
     }
   }
-
 
   canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
     if (this.childComponent && this.childComponent.canDeactivate) {
@@ -148,5 +163,4 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     }
     return true;
   }
-
 }

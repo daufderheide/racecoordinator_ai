@@ -1,62 +1,74 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { DriverEditorHarnessE2e } from "./testing/driver-editor.harness.e2e";
 
-import { DriverEditorHarnessE2e } from './testing/driver-editor.harness.e2e';
-
-test.describe('Driver Editor Visuals', () => {
+test.describe("Driver Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page, { driverEditorHelpShown: true });
+    await TestSetupHelper.setupStandardMocks(page, {
+      driverEditorHelpShown: true,
+    });
     await page.setViewportSize({ width: 1600, height: 900 });
     await TestSetupHelper.setupRaceMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
-    await page.route('**/api/drivers', async route => {
+    await page.route("**/api/drivers", async (route) => {
       await route.fulfill({
         json: [
           {
-            entity_id: 'd1',
-            name: 'Test Driver',
-            nickname: 'Speedy',
-            avatarUrl: 'assets/images/default_avatar.svg',
-            lapSoundUrl: '',
-            bestLapSoundUrl: '',
-            lapSoundType: 'preset',
-            bestLapSoundType: 'preset',
-            lapSoundText: '',
-            bestLapSoundText: ''
-          }
-        ]
+            entity_id: "d1",
+            name: "Test Driver",
+            nickname: "Speedy",
+            avatarUrl: "assets/images/default_avatar.svg",
+            lapSoundUrl: "",
+            bestLapSoundUrl: "",
+            lapSoundType: "preset",
+            bestLapSoundType: "preset",
+            lapSoundText: "",
+            bestLapSoundText: "",
+          },
+        ],
       });
     });
 
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test('should display driver editor with driver loaded', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
+  test("should display driver editor with driver loaded", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
     // TODO(aufderheide): At very least don't wait for specific text values
-    await page.locator('.page-container').waitFor();
+    await page.locator(".page-container").waitFor();
 
-    const container = page.locator('.page-container');
+    const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
     // Driver name checked visually
 
-    await expect(page).toHaveScreenshot('driver-editor-loaded.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
+    await expect(page).toHaveScreenshot("driver-editor-loaded.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
   });
 
-  test('should support undo and redo operations', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
+  test("should support undo and redo operations", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
     // TOOD(aufderheide): At very least don't check for specific text values.
-    await page.locator('.page-container').waitFor();
+    await page.locator(".page-container").waitFor();
 
-    const container = page.locator('.page-container');
+    const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
     // 1. Make a change
-    await harness.setName('Test Driver Modified');
-    await page.keyboard.press('Tab'); // Trigger blur/commit
+    await harness.setName("Test Driver Modified");
+    await page.keyboard.press("Tab"); // Trigger blur/commit
 
     // Wait for undo state (Undo button enabled)
     // We can just await a short time or check if harness can check disabled state
@@ -73,101 +85,137 @@ test.describe('Driver Editor Visuals', () => {
     await harness.clickRedo();
     // Redo result checked visually
 
-    await expect(page).toHaveScreenshot('driver-editor-redone.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
+    await expect(page).toHaveScreenshot("driver-editor-redone.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
   });
 
-  test('should confirm discarding unsaved changes on back', async ({ page }) => {
+  test("should confirm discarding unsaved changes on back", async ({
+    page,
+  }) => {
     // Load the page FIRST, then set up the fail mock
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await page.locator('.page-container').waitFor();
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
 
     // Now intercept save requests to fail with 409 so autoSave doesn't clear isDirty
-    await page.route('**/api/drivers/*', async (route) => {
+    await page.route("**/api/drivers/*", async (route) => {
       await route.fulfill({
         status: 409,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Driver name already exists' })
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Driver name already exists" }),
       });
     });
 
-    const container = page.locator('.page-container');
+    const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
     // Make a change — fill triggers ngModelChange, then blur commits
-    await page.locator('#driver-name-input').focus();
-    await page.locator('#driver-name-input').fill('Duplicate Name');
-    await page.locator('#driver-name-input').blur();
+    await page.locator("#driver-name-input").focus();
+    await page.locator("#driver-name-input").fill("Duplicate Name");
+    await page.locator("#driver-name-input").blur();
     await page.waitForTimeout(300); // Allow Angular change detection and UndoManager debounce
 
     // Click back button — should trigger the discard confirmation modal
     await harness.clickBack();
 
     // Wait for the confirmation modal to be visible
-    await page.waitForSelector('app-back-button app-confirmation-modal .modal-content', { timeout: 5000 });
+    await page.waitForSelector(
+      "app-back-button app-confirmation-modal .modal-content",
+      { timeout: 5000 },
+    );
 
     // Disable animations and wait for final settling
     await TestSetupHelper.disableAnimations(page);
     await page.waitForTimeout(1000);
 
     // Screenshot ONLY the modal box for maximum isolation
-    const modalContent = page.locator('#confirmation-modal-content');
-    await expect(modalContent).toHaveScreenshot('driver-editor-discard-changes-modal.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
+    const modalContent = page.locator("#confirmation-modal-content");
+    await expect(modalContent).toHaveScreenshot(
+      "driver-editor-discard-changes-modal.png",
+      { animations: "disabled", maxDiffPixelRatio: 0.05 },
+    );
   });
 
-  test('should show validation error on duplicate name', async ({ page }) => {
+  test("should show validation error on duplicate name", async ({ page }) => {
     // 1. We mock that another driver exists with name 'Duplicate Name'
-    await page.route('**/api/drivers', async route => {
+    await page.route("**/api/drivers", async (route) => {
       await route.fulfill({
         json: [
-          { entity_id: 'd1', name: 'Test Driver', nickname: 'Speedy' },
-          { entity_id: 'd2', name: 'Duplicate Name', nickname: 'Other' }
-        ]
+          { entity_id: "d1", name: "Test Driver", nickname: "Speedy" },
+          { entity_id: "d2", name: "Duplicate Name", nickname: "Other" },
+        ],
       });
     });
 
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
     // TOOD(aufderheide): At very least don't check for specific text values.
-    await page.locator('.page-container').waitFor();
+    await page.locator(".page-container").waitFor();
 
-    const container = page.locator('.page-container');
+    const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
     // 2. Set name to duplicate
-    await harness.setName('Duplicate Name');
-    await page.keyboard.press('Tab'); // Commit
+    await harness.setName("Duplicate Name");
+    await page.keyboard.press("Tab"); // Commit
     await page.waitForTimeout(300);
 
-    await expect(page).toHaveScreenshot('driver-editor-validation-error.png', { animations: 'disabled', maxDiffPixelRatio: 0.05 });
+    await expect(page).toHaveScreenshot("driver-editor-validation-error.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
   });
 
-  test('should show guided help on first visit', async ({ page }) => {
+  test("should show guided help on first visit", async ({ page }) => {
     // Override standard mock with helpShown=false to trigger auto-open
-    await TestSetupHelper.setupStandardMocks(page, { driverEditorHelpShown: false });
+    await TestSetupHelper.setupStandardMocks(page, {
+      driverEditorHelpShown: false,
+    });
 
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1&help=true'));
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1&help=true"),
+    );
     // TOOD(aufderheide): At very least don't check for specific text values.
-    await page.locator('.page-container').waitFor();
-    await page.locator('.loader-overlay').waitFor({ state: 'hidden' });
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     // Wait for the help step to actually appear (it has an 800ms delay in component)
-    const popover = page.locator('.popover-content');
-    await popover.waitFor({ state: 'visible', timeout: 10000 });
-    
+    const popover = page.locator(".popover-content");
+    await popover.waitFor({ state: "visible", timeout: 10000 });
+
     // CRITICAL: Wait for localization to be applied (text instead of keys)
     // We wait until the popover doesn't contain a typical key prefix (e.g. "DE_")
-    await page.waitForFunction(() => {
-      const content = document.querySelector('.popover-content')?.textContent || '';
-      return content.length > 0 && !content.includes('DE_') && !content.includes('{{');
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const content =
+          document.querySelector(".popover-content")?.textContent || "";
+        return (
+          content.length > 0 &&
+          !content.includes("DE_") &&
+          !content.includes("{{")
+        );
+      },
+      { timeout: 10000 },
+    );
 
     // Disable animations and wait for settling
     await TestSetupHelper.disableAnimations(page);
     await page.waitForTimeout(1000);
 
-    await expect(popover).toHaveScreenshot('driver-editor-guided-help.png', {
-      animations: 'disabled',
+    await expect(popover).toHaveScreenshot("driver-editor-guided-help.png", {
+      animations: "disabled",
       maxDiffPixelRatio: 0.05,
-      timeout: 15000
+      timeout: 15000,
     });
   });
 });

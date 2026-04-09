@@ -1,16 +1,20 @@
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
+import { ChangeDetectorRef } from "@angular/core";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { BehaviorSubject } from "rxjs";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { HelpOverlayComponent } from "./help-overlay.component";
+import { HelpOverlayHarness } from "./testing/help-overlay.harness";
 
-import { HelpOverlayComponent } from './help-overlay.component';
-import { HelpOverlayHarness } from './testing/help-overlay.harness';
-
-describe('HelpOverlayComponent', () => {
+describe("HelpOverlayComponent", () => {
   let component: HelpOverlayComponent;
   let fixture: ComponentFixture<HelpOverlayComponent>;
   let harness: HelpOverlayHarness;
@@ -34,13 +38,15 @@ describe('HelpOverlayComponent', () => {
       hasPrevious$: hasPreviousSubject.asObservable(),
       steps: [],
       currentStepIndex: 0,
-      nextStep: jasmine.createSpy('nextStep'),
-      previousStep: jasmine.createSpy('previousStep'),
-      endGuide: jasmine.createSpy('endGuide')
+      nextStep: jasmine.createSpy("nextStep"),
+      previousStep: jasmine.createSpy("previousStep"),
+      endGuide: jasmine.createSpy("endGuide"),
     };
 
     translationServiceMock = {
-      translate: jasmine.createSpy('translate').and.callFake((key: string) => key)
+      translate: jasmine
+        .createSpy("translate")
+        .and.callFake((key: string) => key),
     };
 
     await TestBed.configureTestingModule({
@@ -48,58 +54,61 @@ describe('HelpOverlayComponent', () => {
       providers: [
         { provide: HelpService, useValue: helpServiceMock },
         { provide: TranslationService, useValue: translationServiceMock },
-        ChangeDetectorRef
-      ]
+        ChangeDetectorRef,
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HelpOverlayComponent);
     component = fixture.componentInstance;
-    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, HelpOverlayHarness);
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      HelpOverlayHarness,
+    );
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not be visible initially', async () => {
+  it("should not be visible initially", async () => {
     expect(component.isVisible).toBeFalse();
     expect(await harness.isVisible()).toBeFalse();
   });
 
-  it('should become visible when service emits true', async () => {
+  it("should become visible when service emits true", async () => {
     isVisibleSubject.next(true);
     fixture.detectChanges();
     expect(component.isVisible).toBeTrue();
     expect(await harness.isVisible()).toBeTrue();
   });
 
-  it('should display step title and content', fakeAsync(() => {
+  it("should display step title and content", fakeAsync(() => {
     isVisibleSubject.next(true);
     const step: GuideStep = {
-      title: 'Test Title',
-      content: 'Test Content',
-      selector: '#test-target'
+      title: "Test Title",
+      content: "Test Content",
+      selector: "#test-target",
     };
     currentStepSubject.next(step);
     tick(); // Wait for setTimeout in subscription and position update
     fixture.detectChanges();
 
-    // The harness methods return promises, which we can await via fakeAsync tick loop or directly. 
+    // The harness methods return promises, which we can await via fakeAsync tick loop or directly.
     // Given we are in fakeAsync, we can just resolve promises using tick().
-    let title = '';
-    let content = '';
-    harness.getTitle().then(t => title = t);
-    harness.getContent().then(c => content = c);
+    let title = "";
+    let content = "";
+    harness.getTitle().then((t) => (title = t));
+    harness.getContent().then((c) => (content = c));
     tick();
 
-    expect(title).toContain('Test Title');
-    expect(content).toContain('Test Content');
+    expect(title).toContain("Test Title");
+    expect(content).toContain("Test Content");
   }));
 
-  it('should call nextStep on next button click', fakeAsync(() => {
+  it("should call nextStep on next button click", fakeAsync(() => {
     isVisibleSubject.next(true);
-    currentStepSubject.next({ title: 'Step 1', content: 'Content' });
+    currentStepSubject.next({ title: "Step 1", content: "Content" });
     hasNextSubject.next(true);
     tick();
     fixture.detectChanges();
@@ -109,9 +118,9 @@ describe('HelpOverlayComponent', () => {
     expect(helpServiceMock.nextStep).toHaveBeenCalled();
   }));
 
-  it('should call previousStep on back button click', fakeAsync(() => {
+  it("should call previousStep on back button click", fakeAsync(() => {
     isVisibleSubject.next(true);
-    currentStepSubject.next({ title: 'Step 2', content: 'Content' });
+    currentStepSubject.next({ title: "Step 2", content: "Content" });
     hasPreviousSubject.next(true);
     tick();
     fixture.detectChanges();
@@ -121,9 +130,9 @@ describe('HelpOverlayComponent', () => {
     expect(helpServiceMock.previousStep).toHaveBeenCalled();
   }));
 
-  it('should call endGuide on finish button click', fakeAsync(() => {
+  it("should call endGuide on finish button click", fakeAsync(() => {
     isVisibleSubject.next(true);
-    currentStepSubject.next({ title: 'Last Step', content: 'Content' });
+    currentStepSubject.next({ title: "Last Step", content: "Content" });
     hasNextSubject.next(false); // Last step
     tick();
     fixture.detectChanges();
@@ -133,59 +142,59 @@ describe('HelpOverlayComponent', () => {
     expect(helpServiceMock.endGuide).toHaveBeenCalled();
   }));
 
-  it('should calculate position correctly for target element', fakeAsync(() => {
+  it("should calculate position correctly for target element", fakeAsync(() => {
     // Create a dummy target element in the DOM
-    const target = document.createElement('div');
-    target.id = 'test-target';
-    target.style.position = 'absolute';
-    target.style.top = '100px';
-    target.style.left = '100px';
-    target.style.width = '50px';
-    target.style.height = '50px';
+    const target = document.createElement("div");
+    target.id = "test-target";
+    target.style.position = "absolute";
+    target.style.top = "100px";
+    target.style.left = "100px";
+    target.style.width = "50px";
+    target.style.height = "50px";
     document.body.appendChild(target);
 
     isVisibleSubject.next(true);
     const step: GuideStep = {
-      title: 'Targeted Step',
-      content: 'Check Position',
-      selector: '#test-target',
-      position: 'bottom'
+      title: "Targeted Step",
+      content: "Check Position",
+      selector: "#test-target",
+      position: "bottom",
     };
     currentStepSubject.next(step);
 
-    // Trigger change detection and wait for async updates 
+    // Trigger change detection and wait for async updates
     fixture.detectChanges();
     tick(50);
     fixture.detectChanges();
 
     expect(component.highlightStyle).toBeTruthy();
     // highlight should match target rect
-    expect(component.highlightStyle.top).toBe('100px');
-    expect(component.highlightStyle.left).toBe('100px');
-    expect(component.highlightStyle.width).toBe('50px');
-    expect(component.highlightStyle.height).toBe('50px');
+    expect(component.highlightStyle.top).toBe("100px");
+    expect(component.highlightStyle.left).toBe("100px");
+    expect(component.highlightStyle.width).toBe("50px");
+    expect(component.highlightStyle.height).toBe("50px");
 
     // Popover should be below target (bottom + margin 15)
     // 100 (top) + 50 (height) + 15 (margin) = 165
-    expect(component.popoverStyle.top).toBe('165px');
+    expect(component.popoverStyle.top).toBe("165px");
 
     // Clean up
     document.body.removeChild(target);
   }));
 
-  it('should fallback to center if target not found', fakeAsync(() => {
+  it("should fallback to center if target not found", fakeAsync(() => {
     isVisibleSubject.next(true);
     const step: GuideStep = {
-      title: 'No Target Step',
-      content: 'Center Me',
-      selector: '#non-existent-id'
+      title: "No Target Step",
+      content: "Center Me",
+      selector: "#non-existent-id",
     };
     currentStepSubject.next(step);
     tick(50);
     fixture.detectChanges();
 
     expect(component.highlightStyle).toBeNull();
-    expect(component.popoverStyle.top).toBe('50%');
-    expect(component.popoverStyle.left).toBe('50%');
+    expect(component.popoverStyle.top).toBe("50%");
+    expect(component.popoverStyle.left).toBe("50%");
   }));
 });

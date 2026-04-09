@@ -1,18 +1,17 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-
-import { AnalyticsService } from 'src/app/analytics.service';
+import { Injectable } from "@angular/core";
+import { BehaviorSubject } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
 
 export interface GuideStep {
   targetId?: string; // ID of the element to highlight. If null/undefined, it's a general modal.
   selector?: string; // CSS selector of the element to highlight.
   title: string;
   content: string;
-  position?: 'top' | 'bottom' | 'left' | 'right' | 'center'; // Preferred position relative to target
+  position?: "top" | "bottom" | "left" | "right" | "center"; // Preferred position relative to target
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class HelpService {
   steps: GuideStep[] = [];
@@ -30,15 +29,15 @@ export class HelpService {
   private _hasPrevious = new BehaviorSubject<boolean>(false);
   hasPrevious$ = this._hasPrevious.asObservable();
 
-  constructor(private analyticsService: AnalyticsService) { }
+  constructor(private analyticsService: AnalyticsService) {}
 
   startGuide(steps: GuideStep[]) {
     if (!steps || steps.length === 0) return;
     this.steps = steps;
     this.currentStepIndex = 0;
 
-    const guideName = steps[0].title || 'Unknown Guide';
-    this.analyticsService.trackClick('help_started', { guide_name: guideName });
+    const guideName = steps[0].title || "Unknown Guide";
+    this.analyticsService.trackClick("help_started", { guide_name: guideName });
 
     this.updateState();
     this._isVisible.next(true);
@@ -62,12 +61,18 @@ export class HelpService {
 
   endGuide() {
     if (this.steps.length > 0) {
-      const guideName = this.steps[0].title || 'Unknown Guide';
+      const guideName = this.steps[0].title || "Unknown Guide";
       if (this.currentStepIndex === this.steps.length - 1) {
-        this.analyticsService.trackClick('help_completed', { guide_name: guideName });
+        this.analyticsService.trackClick("help_completed", {
+          guide_name: guideName,
+        });
       } else {
         const stepTitle = this.steps[this.currentStepIndex].title;
-        this.analyticsService.trackClick('help_ended_early', { guide_name: guideName, step_index: this.currentStepIndex, step_title: stepTitle });
+        this.analyticsService.trackClick("help_ended_early", {
+          guide_name: guideName,
+          step_index: this.currentStepIndex,
+          step_title: stepTitle,
+        });
       }
     }
 

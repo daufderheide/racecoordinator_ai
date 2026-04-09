@@ -1,11 +1,21 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-
-import { AnchorPoint } from 'src/app/components/raceday/column_definition';
-import { Settings, ColumnVisibility } from 'src/app/models/settings';
-import { TranslationService } from 'src/app/services/translation.service';
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {
+  ApplicationRef,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewEncapsulation,
+} from "@angular/core";
+import { Subject } from "rxjs";
+import { debounceTime } from "rxjs/operators";
+import { AnchorPoint } from "src/app/components/raceday/column_definition";
+import { ColumnVisibility, Settings } from "src/app/models/settings";
+import { TranslationService } from "src/app/services/translation.service";
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -22,18 +32,18 @@ export interface ReorderDialogResult {
 }
 
 @Component({
-  selector: 'app-reorder-dialog',
-  templateUrl: './reorder-dialog.component.html',
-  styleUrls: ['./reorder-dialog.component.css'],
+  selector: "app-reorder-dialog",
+  templateUrl: "./reorder-dialog.component.html",
+  styleUrls: ["./reorder-dialog.component.css"],
   standalone: false,
   changeDetection: ChangeDetectionStrategy.Default,
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class ReorderDialogComponent implements OnInit, OnDestroy {
   private _visible = false;
   private autoSaveSubject = new Subject<void>();
   private destroy$ = new Subject<void>();
-  
+
   // Saving state (like Driver Editor)
   isSaving: boolean = false;
   isAutoSaving: boolean = false;
@@ -43,7 +53,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     }
     this._visible = value;
   }
-  
+
   get visible(): boolean {
     return this._visible;
   }
@@ -52,23 +62,36 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       this.initialStateSet = false;
       this.undoStack = [];
       this.redoStack = [];
-      
-      // Store screen name
-      this.screenName = value.screenName || '';
-      
-      this.availableValues = [...value.availableValues].sort((a, b) => 
-        this.translationService.translate(a.label).localeCompare(this.translationService.translate(b.label)));
-      this.availableValuesMap = new Map(this.availableValues.map(v => [v.key, v]));
 
-      const newSlots = value.columnSlots.map(s => ({ ...s }));
+      // Store screen name
+      this.screenName = value.screenName || "";
+
+      this.availableValues = [...value.availableValues].sort((a, b) =>
+        this.translationService
+          .translate(a.label)
+          .localeCompare(this.translationService.translate(b.label)),
+      );
+      this.availableValuesMap = new Map(
+        this.availableValues.map((v) => [v.key, v]),
+      );
+
+      const newSlots = value.columnSlots.map((s) => ({ ...s }));
       const newLayouts = JSON.parse(JSON.stringify(value.columnLayouts || {}));
-      const newVisibility = JSON.parse(JSON.stringify(value.columnVisibility || {}));
+      const newVisibility = JSON.parse(
+        JSON.stringify(value.columnVisibility || {}),
+      );
 
       // Initialize items if missing or empty. Every slot MUST have at least one anchor filled.
-      newSlots.forEach(slot => {
-        if (!newLayouts[slot.key] || Object.keys(newLayouts[slot.key]).length === 0) {
+      newSlots.forEach((slot) => {
+        if (
+          !newLayouts[slot.key] ||
+          Object.keys(newLayouts[slot.key]).length === 0
+        ) {
           const layout = newLayouts[slot.key] || {};
-          newLayouts[slot.key] = { ...layout, [AnchorPoint.CenterCenter]: slot.key };
+          newLayouts[slot.key] = {
+            ...layout,
+            [AnchorPoint.CenterCenter]: slot.key,
+          };
         }
         if (!newVisibility[slot.key]) {
           newVisibility[slot.key] = ColumnVisibility.Always;
@@ -78,17 +101,17 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       this.columnSlots = newSlots;
       this.columnLayouts = newLayouts;
       this.columnVisibility = newVisibility;
-      
+
       // Store initial state for change detection (only once) - AFTER defaults applied
       if (!this.initialStateSet) {
         this.originalState = {
-          slots: this.columnSlots.map(s => s.key),
+          slots: this.columnSlots.map((s) => s.key),
           layouts: JSON.stringify(this.columnLayouts),
-          visibility: JSON.stringify(this.columnVisibility)
+          visibility: JSON.stringify(this.columnVisibility),
         };
         this.initialStateSet = true;
       }
-      
+
       this.hasUnsavedChanges = false;
 
       this.updateDropListIds();
@@ -99,14 +122,12 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   constructor(
     public cdr: ChangeDetectorRef,
     private appRef: ApplicationRef,
-    private translationService: TranslationService
-  ) { }
+    private translationService: TranslationService,
+  ) {}
 
   ngOnInit() {
     // Auto-save on changes (debounced like Driver Editor)
-    this.autoSaveSubject.pipe(
-      debounceTime(300)
-    ).subscribe(() => {
+    this.autoSaveSubject.pipe(debounceTime(300)).subscribe(() => {
       this.triggerAutoSave();
     });
   }
@@ -142,31 +163,45 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   anchorOptions = Object.values(AnchorPoint);
   visibilityOptions = Object.values(ColumnVisibility);
   cachedDropListIds: string[] = [];
-  screenName: string = '';
-  
+  screenName: string = "";
+
   // Track initial state for change detection
-  private initialState: { slots: string[], layouts: string, visibility: string } | null = null;
-  private originalState: { slots: string[], layouts: string, visibility: string } | null = null;
+  private initialState: {
+    slots: string[];
+    layouts: string;
+    visibility: string;
+  } | null = null;
+  private originalState: {
+    slots: string[];
+    layouts: string;
+    visibility: string;
+  } | null = null;
   private hasUnsavedChanges = false;
   private initialStateSet = false;
 
   // Undo/Redo state tracking
-  private undoStack: { slots: { key: string, label: string }[], layouts: { [key: string]: any }, visibility: { [key: string]: ColumnVisibility } }[] = [];
-  private redoStack: { slots: { key: string, label: string }[], layouts: { [key: string]: any }, visibility: { [key: string]: ColumnVisibility } }[] = [];
+  private undoStack: {
+    slots: { key: string; label: string }[];
+    layouts: { [key: string]: any };
+    visibility: { [key: string]: ColumnVisibility };
+  }[] = [];
+  private redoStack: {
+    slots: { key: string; label: string }[];
+    layouts: { [key: string]: any };
+    visibility: { [key: string]: ColumnVisibility };
+  }[] = [];
   private maxUndoStackSize = 50;
 
   private updateDropListIds() {
     const ids: string[] = [];
-    this.columnSlots.forEach(slot => {
-      this.anchorOptions.forEach(opt => {
+    this.columnSlots.forEach((slot) => {
+      this.anchorOptions.forEach((opt) => {
         ids.push(`slot-${slot.key}-${opt}`);
       });
     });
-    ids.push('slot-add-new');
+    ids.push("slot-add-new");
     this.cachedDropListIds = ids;
   }
-
-
 
   // Track which slot is being previewed or detail-edited if needed
   selectedSlotKey: string | null = null;
@@ -176,10 +211,10 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     moveItemInArray(newSlots, event.previousIndex, event.currentIndex);
     this.columnSlots = newSlots;
     this.updateDropListIds();
-    
+
     // Capture state before reindexing
     this.markChanges();
-    
+
     this.reindexAllSegments();
     this.cdr.detectChanges();
   }
@@ -187,16 +222,19 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   onValueDrop(slotKey: string, anchor: AnchorPoint, propertyName: string) {
     // Push current state to undo stack BEFORE modifying
     this.markChanges();
-    
+
     // Then modify the state
     const newLayouts = { ...this.columnLayouts };
-    newLayouts[slotKey] = { ...(newLayouts[slotKey] || {}), [anchor]: propertyName };
+    newLayouts[slotKey] = {
+      ...(newLayouts[slotKey] || {}),
+      [anchor]: propertyName,
+    };
     this.columnLayouts = newLayouts;
 
-    if (propertyName.startsWith('segmentTime')) {
+    if (propertyName.startsWith("segmentTime")) {
       this.reindexAllSegments();
     }
-    
+
     this.cdr.detectChanges();
   }
 
@@ -212,7 +250,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       newLayouts[slotKey] = newSlotLayout;
       this.columnLayouts = newLayouts;
 
-      if (clearedProp?.startsWith('segmentTime')) {
+      if (clearedProp?.startsWith("segmentTime")) {
         this.reindexAllSegments();
       }
       this.cdr.detectChanges();
@@ -223,8 +261,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     // Push current state to undo stack BEFORE removing
     this.markChanges();
 
-    const isSegment = slotKey.startsWith('segmentTime');
-    this.columnSlots = this.columnSlots.filter(s => s.key !== slotKey);
+    const isSegment = slotKey.startsWith("segmentTime");
+    this.columnSlots = this.columnSlots.filter((s) => s.key !== slotKey);
 
     const newLayouts = { ...this.columnLayouts };
     delete newLayouts[slotKey];
@@ -243,7 +281,9 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   }
 
   private reindexSegments() {
-    const segmentSlots = this.columnSlots.filter(s => s.key.startsWith('segmentTime'));
+    const segmentSlots = this.columnSlots.filter((s) =>
+      s.key.startsWith("segmentTime"),
+    );
     if (segmentSlots.length === 0) return;
 
     const newSlots = [...this.columnSlots];
@@ -252,11 +292,11 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     segmentSlots.forEach((slot, index) => {
       const oldKey = slot.key;
-      const newKey = index === 0 ? 'segmentTime' : `segmentTime_${index}`;
+      const newKey = index === 0 ? "segmentTime" : `segmentTime_${index}`;
 
       if (oldKey !== newKey) {
         // Update slot key
-        const slotIdx = newSlots.findIndex(s => s.key === oldKey);
+        const slotIdx = newSlots.findIndex((s) => s.key === oldKey);
         newSlots[slotIdx] = { ...newSlots[slotIdx], key: newKey };
 
         // Update layouts root key
@@ -291,20 +331,29 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     // Predetermined order of anchors for consistent indexing within a column
     const anchorOrder = [
-      AnchorPoint.TopLeft, AnchorPoint.TopCenter, AnchorPoint.TopRight,
-      AnchorPoint.CenterLeft, AnchorPoint.CenterCenter, AnchorPoint.CenterRight,
-      AnchorPoint.BottomLeft, AnchorPoint.BottomCenter, AnchorPoint.BottomRight
+      AnchorPoint.TopLeft,
+      AnchorPoint.TopCenter,
+      AnchorPoint.TopRight,
+      AnchorPoint.CenterLeft,
+      AnchorPoint.CenterCenter,
+      AnchorPoint.CenterRight,
+      AnchorPoint.BottomLeft,
+      AnchorPoint.BottomCenter,
+      AnchorPoint.BottomRight,
     ];
 
-    this.columnSlots.forEach(slot => {
+    this.columnSlots.forEach((slot) => {
       const layout = newLayouts[slot.key];
       if (layout) {
         let segmentCounter = 0; // Reset counter for each column
         const newSlotLayout = { ...layout };
-        anchorOrder.forEach(anchor => {
+        anchorOrder.forEach((anchor) => {
           const prop = newSlotLayout[anchor];
-          if (prop && prop.split('_')[0] === 'segmentTime') {
-            const newProp = segmentCounter === 0 ? 'segmentTime' : `segmentTime_${segmentCounter}`;
+          if (prop && prop.split("_")[0] === "segmentTime") {
+            const newProp =
+              segmentCounter === 0
+                ? "segmentTime"
+                : `segmentTime_${segmentCounter}`;
             newSlotLayout[anchor] = newProp;
             segmentCounter++;
           }
@@ -327,7 +376,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     let baseKey = propertyKey;
     let newKey = baseKey;
     let counter = 1;
-    while (this.columnSlots.some(s => s.key === newKey)) {
+    while (this.columnSlots.some((s) => s.key === newKey)) {
       newKey = `${baseKey}_${counter++}`;
     }
 
@@ -336,7 +385,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     const newLayouts = { ...this.columnLayouts };
     // For segmentTime, the property name should match the unique key to preserve indexing
-    const targetProperty = propertyKey === 'segmentTime' ? newKey : propertyKey;
+    const targetProperty = propertyKey === "segmentTime" ? newKey : propertyKey;
     newLayouts[newKey] = { [AnchorPoint.CenterCenter]: targetProperty };
     this.columnLayouts = newLayouts;
 
@@ -349,19 +398,18 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-
   getLabel(key: string): string {
     // Special case for builtin imagesets
-    if (key === 'imageset_fuel-gauge-builtin') {
-      return 'RD_COL_FUEL_GAUGE';
+    if (key === "imageset_fuel-gauge-builtin") {
+      return "RD_COL_FUEL_GAUGE";
     }
-    
-    const baseKey = key.split('_')[0];
+
+    const baseKey = key.split("_")[0];
     const val = this.availableValuesMap.get(baseKey);
     let label = val ? val.label : key;
 
-    if (key.startsWith('segmentTime')) {
-      const parts = key.split('_');
+    if (key.startsWith("segmentTime")) {
+      const parts = key.split("_");
       if (parts.length > 1) {
         const index = parseInt(parts[1], 10) + 1;
         return `${this.translationService.translate(label)} ${index}`;
@@ -379,24 +427,24 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       }
     }
 
-    const slot = this.columnSlots.find(s => s.key === slotKey);
+    const slot = this.columnSlots.find((s) => s.key === slotKey);
     return slot ? slot.label : slotKey;
   }
 
   onSave() {
     this.save.emit({
-      columns: this.columnSlots.map(c => c.key),
+      columns: this.columnSlots.map((c) => c.key),
       columnLayouts: this.columnLayouts,
-      columnVisibility: this.columnVisibility
+      columnVisibility: this.columnVisibility,
     });
     // Reset change tracking after save
     this.hasUnsavedChanges = false;
     // Update originalState to match current saved state
     // This ensures undo/redo properly track against the last saved state
     this.originalState = {
-      slots: this.columnSlots.map(s => s.key),
+      slots: this.columnSlots.map((s) => s.key),
       layouts: JSON.stringify(this.columnLayouts),
-      visibility: JSON.stringify(this.columnVisibility)
+      visibility: JSON.stringify(this.columnVisibility),
     };
     // Force UI update
     this.cdr.markForCheck();
@@ -404,15 +452,17 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
   hasChanges(): boolean {
     if (!this.originalState) return false;
-    
-    const currentSlots = this.columnSlots.map(s => s.key);
+
+    const currentSlots = this.columnSlots.map((s) => s.key);
     const currentLayouts = JSON.stringify(this.columnLayouts);
     const currentVisibility = JSON.stringify(this.columnVisibility);
-    
-    const slotsDiffer = JSON.stringify(currentSlots) !== JSON.stringify(this.originalState.slots);
+
+    const slotsDiffer =
+      JSON.stringify(currentSlots) !== JSON.stringify(this.originalState.slots);
     const layoutsDiffer = currentLayouts !== this.originalState.layouts;
-    const visibilityDiffer = currentVisibility !== this.originalState.visibility;
-    
+    const visibilityDiffer =
+      currentVisibility !== this.originalState.visibility;
+
     return slotsDiffer || layoutsDiffer || visibilityDiffer;
   }
 
@@ -429,16 +479,16 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     const state = {
       slots: JSON.parse(JSON.stringify(this.columnSlots)),
       layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
     };
-    
+
     this.undoStack.push(state);
-    
+
     // Limit stack size
     if (this.undoStack.length > this.maxUndoStackSize) {
       this.undoStack.shift();
     }
-    
+
     // Clear redo stack on new change
     this.redoStack = [];
   }
@@ -446,28 +496,28 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   // Undo last action
   undo(): void {
     if (this.undoStack.length === 0) return;
-    
+
     // Save current state to redo stack
     const currentState = {
       slots: JSON.parse(JSON.stringify(this.columnSlots)),
       layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
     };
     this.redoStack.push(currentState);
-    
+
     // Restore previous state with new references
     const previousState = this.undoStack.pop()!;
-    
+
     // Create new array references to trigger change detection
     this.columnSlots = [...previousState.slots];
     this.columnLayouts = { ...previousState.layouts };
     this.columnVisibility = { ...previousState.visibility };
-    
+
     this.updateDropListIds();
-    
+
     // Check if we're back to original state
     this.hasUnsavedChanges = this.hasChanges();
-    
+
     // Force full application change detection
     this.appRef.tick();
   }
@@ -475,23 +525,23 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   // Redo last undone action
   redo(): void {
     if (this.redoStack.length === 0) return;
-    
+
     // Save current state to undo stack
     const currentState = {
       slots: JSON.parse(JSON.stringify(this.columnSlots)),
       layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
     };
     this.undoStack.push(currentState);
-    
+
     // Restore next state
     const nextState = this.redoStack.pop()!;
     this.columnSlots = nextState.slots;
     this.columnLayouts = nextState.layouts;
     this.columnVisibility = nextState.visibility;
-    
+
     this.updateDropListIds();
-    
+
     // Check against current saved state
     this.hasUnsavedChanges = this.hasChanges();
     this.cdr.markForCheck();
@@ -500,14 +550,17 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   // Check if current state differs from initial state
   private checkStateDiffersFromInitial(): boolean {
     if (!this.initialState) return false;
-    
-    const currentSlots = this.columnSlots.map(s => s.key);
+
+    const currentSlots = this.columnSlots.map((s) => s.key);
     const currentLayouts = JSON.stringify(this.columnLayouts);
     const currentVisibility = JSON.stringify(this.columnVisibility);
-    
-    return JSON.stringify(currentSlots) !== JSON.stringify(this.initialState.slots) ||
-           currentLayouts !== this.initialState.layouts ||
-           currentVisibility !== this.initialState.visibility;
+
+    return (
+      JSON.stringify(currentSlots) !==
+        JSON.stringify(this.initialState.slots) ||
+      currentLayouts !== this.initialState.layouts ||
+      currentVisibility !== this.initialState.visibility
+    );
   }
 
   // Check if undo is available
@@ -522,36 +575,47 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
   onReset() {
     // Calculate what the reset state would be
-    const newSlots = Settings.DEFAULT_COLUMNS.map(key => ({
+    const newSlots = Settings.DEFAULT_COLUMNS.map((key) => ({
       key,
-      label: this.getLabel(key)
+      label: this.getLabel(key),
     }));
     const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
-    const newVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
+    const newVisibility = JSON.parse(
+      JSON.stringify(new Settings().columnVisibility),
+    );
 
     // Check if reset would actually change anything
-    const slotsSame = JSON.stringify(newSlots.map(s => s.key)) === JSON.stringify(this.columnSlots.map(s => s.key));
+    const slotsSame =
+      JSON.stringify(newSlots.map((s) => s.key)) ===
+      JSON.stringify(this.columnSlots.map((s) => s.key));
 
     // For layouts, sort keys before comparing since object key order matters in JSON.stringify
     const sortKeys = (obj: any) => {
       const sorted: any = {};
-      Object.keys(obj).sort().forEach(k => {
-        sorted[k] = obj[k];
-      });
+      Object.keys(obj)
+        .sort()
+        .forEach((k) => {
+          sorted[k] = obj[k];
+        });
       return sorted;
     };
-    const layoutsSame = JSON.stringify(sortKeys(newLayouts)) === JSON.stringify(sortKeys(this.columnLayouts));
+    const layoutsSame =
+      JSON.stringify(sortKeys(newLayouts)) ===
+      JSON.stringify(sortKeys(this.columnLayouts));
 
     // For visibility, normalize both sides by adding default "Always" for missing keys
     const normalizeVisibility = (vis: any, slots: any[]) => {
       const normalized: any = {};
-      slots.forEach(s => {
+      slots.forEach((s) => {
         normalized[s.key] = vis[s.key] || ColumnVisibility.Always;
       });
       return JSON.stringify(normalized);
     };
     const normalizedNewVis = normalizeVisibility(newVisibility, newSlots);
-    const normalizedCurrVis = normalizeVisibility(this.columnVisibility, this.columnSlots);
+    const normalizedCurrVis = normalizeVisibility(
+      this.columnVisibility,
+      this.columnSlots,
+    );
     const visibilitySame = normalizedNewVis === normalizedCurrVis;
 
     if (slotsSame && layoutsSame && visibilitySame) {
@@ -563,7 +627,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     const currentState = {
       slots: JSON.parse(JSON.stringify(this.columnSlots)),
       layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility))
+      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
     };
     this.undoStack.push(currentState);
 
@@ -573,16 +637,16 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     this.columnSlots = newSlots;
     this.columnLayouts = newLayouts;
     this.columnVisibility = newVisibility;
-    
+
     // Add "Always" visibility for any slots not in default settings
-    newSlots.forEach(slot => {
+    newSlots.forEach((slot) => {
       if (!this.columnVisibility[slot.key]) {
         this.columnVisibility[slot.key] = ColumnVisibility.Always;
       }
     });
-    
+
     this.updateDropListIds();
-    
+
     // Trigger auto-save
     this.markChanges();
   }
@@ -611,36 +675,47 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
   get isResetDisabled(): boolean {
     // Calculate what the reset state would be
-    const newSlots = Settings.DEFAULT_COLUMNS.map(key => ({
+    const newSlots = Settings.DEFAULT_COLUMNS.map((key) => ({
       key,
-      label: this.getLabel(key)
+      label: this.getLabel(key),
     }));
     const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
-    const newVisibility = JSON.parse(JSON.stringify(new Settings().columnVisibility));
+    const newVisibility = JSON.parse(
+      JSON.stringify(new Settings().columnVisibility),
+    );
 
     // Check if reset would actually change anything
-    const slotsSame = JSON.stringify(newSlots.map(s => s.key)) === JSON.stringify(this.columnSlots.map(s => s.key));
+    const slotsSame =
+      JSON.stringify(newSlots.map((s) => s.key)) ===
+      JSON.stringify(this.columnSlots.map((s) => s.key));
 
     // For layouts, sort keys before comparing since object key order matters in JSON.stringify
     const sortKeys = (obj: any) => {
       const sorted: any = {};
-      Object.keys(obj).sort().forEach(k => {
-        sorted[k] = obj[k];
-      });
+      Object.keys(obj)
+        .sort()
+        .forEach((k) => {
+          sorted[k] = obj[k];
+        });
       return sorted;
     };
-    const layoutsSame = JSON.stringify(sortKeys(newLayouts)) === JSON.stringify(sortKeys(this.columnLayouts));
+    const layoutsSame =
+      JSON.stringify(sortKeys(newLayouts)) ===
+      JSON.stringify(sortKeys(this.columnLayouts));
 
     // For visibility, normalize both sides by adding default "Always" for missing keys
     const normalizeVisibility = (vis: any, slots: any[]) => {
       const normalized: any = {};
-      slots.forEach(s => {
+      slots.forEach((s) => {
         normalized[s.key] = vis[s.key] || ColumnVisibility.Always;
       });
       return JSON.stringify(normalized);
     };
     const normalizedNewVis = normalizeVisibility(newVisibility, newSlots);
-    const normalizedCurrVis = normalizeVisibility(this.columnVisibility, this.columnSlots);
+    const normalizedCurrVis = normalizeVisibility(
+      this.columnVisibility,
+      this.columnSlots,
+    );
     const visibilitySame = normalizedNewVis === normalizedCurrVis;
 
     return slotsSame && layoutsSame && visibilitySame;

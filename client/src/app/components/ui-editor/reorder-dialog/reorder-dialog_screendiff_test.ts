@@ -1,9 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { UIEditorHarnessE2e } from "src/app/components/ui-editor/testing/ui-editor.harness.e2e";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { UIEditorHarnessE2e } from 'src/app/components/ui-editor/testing/ui-editor.harness.e2e';
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
-
-test.describe('Reorder Dialog Visuals', () => {
+test.describe("Reorder Dialog Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceMocks(page);
@@ -13,54 +12,72 @@ test.describe('Reorder Dialog Visuals', () => {
   });
 
   async function openDialog(page: any) {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/ui-editor'));
-    await page.locator('.ue-container').waitFor({ state: 'visible' });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
 
-    const editor = page.locator('.ue-container');
+    const editor = page.locator(".ue-container");
     const harness = new UIEditorHarnessE2e(editor);
 
     await harness.clickReorderColumns();
     const dialog = await harness.getReorderDialogHarness();
-    await expect(page.locator('.reorder-modal')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".reorder-modal")).toBeVisible({
+      timeout: 10000,
+    });
     return dialog;
   }
 
-  test('should display reorder dialog with default columns', async ({ page }) => {
+  test("should display reorder dialog with default columns", async ({
+    page,
+  }) => {
     const dialog = await openDialog(page);
 
-    await expect(page.locator('.reorder-modal')).toHaveScreenshot('reorder-dialog-default.png');
+    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
+      "reorder-dialog-default.png",
+    );
   });
 
-  test('should show preview correctly in reorder dialog', async ({ page }) => {
+  test("should show preview correctly in reorder dialog", async ({ page }) => {
     const dialog = await openDialog(page);
 
-    await expect(page.locator('.reorder-modal .preview-panel')).toBeVisible();
+    await expect(page.locator(".reorder-modal .preview-panel")).toBeVisible();
 
-    await expect(page.locator('.reorder-modal')).toHaveScreenshot('reorder-dialog-preview.png');
+    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
+      "reorder-dialog-preview.png",
+    );
   });
 
-  test('should show visibility selectors correctly in reorder dialog', async ({ page }) => {
+  test("should show visibility selectors correctly in reorder dialog", async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
-      const key = 'racecoordinator_settings';
+      const key = "racecoordinator_settings";
       const settings = {
-        racedayColumns: ['lapCount', 'participant.fuelLevel'],
+        racedayColumns: ["lapCount", "participant.fuelLevel"],
         columnVisibility: {
-          'lapCount': 'NonFuelRaceOnly',
-          'participant.fuelLevel': 'FuelRaceOnly'
-        }
+          lapCount: "NonFuelRaceOnly",
+          "participant.fuelLevel": "FuelRaceOnly",
+        },
       };
       localStorage.setItem(key, JSON.stringify(settings));
     });
 
     const dialog = await openDialog(page);
 
-    const selectors = page.locator('.reorder-modal select.visibility-select');
+    const selectors = page.locator(".reorder-modal select.visibility-select");
     // Selector count checked visually
 
-    await expect(page.locator('.reorder-modal')).toHaveScreenshot('reorder-dialog-visibility.png');
+    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
+      "reorder-dialog-visibility.png",
+    );
   });
 
-  test('should reset to defaults when reset button is clicked', async ({ page }) => {
+  test("should reset to defaults when reset button is clicked", async ({
+    page,
+  }) => {
     const dialog = await openDialog(page);
 
     const initialCount = await dialog.getSlotCount();
@@ -71,6 +88,8 @@ test.describe('Reorder Dialog Visuals', () => {
 
     // Reset state checked visually
 
-    await expect(page.locator('.reorder-modal')).toHaveScreenshot('reorder-dialog-reset.png');
+    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
+      "reorder-dialog-reset.png",
+    );
   });
 });

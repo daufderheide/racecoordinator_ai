@@ -1,17 +1,26 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { of, Subject } from 'rxjs';
+import { NO_ERRORS_SCHEMA } from "@angular/core";
+import {
+  ComponentFixture,
+  fakeAsync,
+  flush,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { of, Subject } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Lane } from "src/app/models/lane";
+import {
+  ArduinoConfig,
+  MAX_ANALOG_PINS,
+  MAX_DIGITAL_PINS,
+} from "src/app/models/track";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { com } from "src/app/proto/message";
+import { TranslationService } from "src/app/services/translation.service";
+import { TranslationServiceMock } from "src/app/testing/translation-service.mock";
 
-import { DataService } from 'src/app/data.service';
-import { Lane } from 'src/app/models/lane';
-import { ArduinoConfig, MAX_DIGITAL_PINS, MAX_ANALOG_PINS } from 'src/app/models/track';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { com } from 'src/app/proto/message';
-import { TranslationService } from 'src/app/services/translation.service';
-import { TranslationServiceMock } from 'src/app/testing/translation-service.mock';
-
-import { ArduinoEditorComponent } from './arduino-editor.component';
+import { ArduinoEditorComponent } from "./arduino-editor.component";
 
 // BEHAVIOR_VOLTAGE_LEVEL_BASE = 7000
 const VOLTAGE_BASE = 7000;
@@ -20,7 +29,7 @@ class MockDataService {
   interfaceEvents$ = new Subject<any>();
 
   getSerialPorts() {
-    return of(['COM1', 'COM2']);
+    return of(["COM1", "COM2"]);
   }
   getInterfaceEvents() {
     return this.interfaceEvents$.asObservable();
@@ -39,7 +48,7 @@ class MockDataService {
   }
 }
 
-describe('ArduinoEditorComponent', () => {
+describe("ArduinoEditorComponent", () => {
   let component: ArduinoEditorComponent;
   let fixture: ComponentFixture<ArduinoEditorComponent>;
   let translationService: TranslationServiceMock;
@@ -47,13 +56,19 @@ describe('ArduinoEditorComponent', () => {
 
   function makeConfig(analogIds?: number[]): ArduinoConfig {
     return {
-      name: 'Test Arduino',
-      commPort: 'COM1',
+      name: "Test Arduino",
+      commPort: "COM1",
       baudRate: 9600,
       debounceUs: 1000,
       hardwareType: 0,
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
-      analogIds: analogIds ?? new Array(MAX_ANALOG_PINS).fill(com.antigravity.PinBehavior.BEHAVIOR_UNUSED),
+      digitalIds: new Array(MAX_DIGITAL_PINS).fill(
+        com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
+      ),
+      analogIds:
+        analogIds ??
+        new Array(MAX_ANALOG_PINS).fill(
+          com.antigravity.PinBehavior.BEHAVIOR_UNUSED,
+        ),
       normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,
@@ -63,7 +78,7 @@ describe('ArduinoEditorComponent', () => {
       useLapsForSegments: true,
       ledStrings: [],
       voltageConfigs: {},
-      lapPinPitBehavior: 3
+      lapPinPitBehavior: 3,
     };
   }
 
@@ -77,18 +92,17 @@ describe('ArduinoEditorComponent', () => {
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: TranslationService, useValue: translationService },
-        { provide: DataService, useValue: mockDataService }
-      ]
-    })
-      .compileComponents();
+        { provide: DataService, useValue: mockDataService },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ArduinoEditorComponent);
     component = fixture.componentInstance;
 
     component.config = makeConfig();
     component.lanes = [
-      new Lane('l1', '#fff', '#000', 10),
-      new Lane('l2', '#fff', '#000', 10)
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
     ];
 
     fixture.detectChanges();
@@ -100,27 +114,27 @@ describe('ArduinoEditorComponent', () => {
 
   // --- Existing Tests ---
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with config', () => {
-    expect(component.config!.name).toBe('Test Arduino');
+  it("should initialize with config", () => {
+    expect(component.config!.name).toBe("Test Arduino");
     expect(component.lanes.length).toBe(2);
   });
 
-  it('should fetch serial ports on init', () => {
-    expect(component.availablePorts).toEqual(['COM1', 'COM2']);
+  it("should fetch serial ports on init", () => {
+    expect(component.availablePorts).toEqual(["COM1", "COM2"]);
   });
 
-  it('should periodically poll for serial ports', fakeAsync(() => {
+  it("should periodically poll for serial ports", fakeAsync(() => {
     // Re-create component to capture ngOnInit with spy
     fixture = TestBed.createComponent(ArduinoEditorComponent);
     component = fixture.componentInstance;
     component.config = makeConfig();
-    component.lanes = [new Lane('l1', '#fff', '#000', 10)];
+    component.lanes = [new Lane("l1", "#fff", "#000", 10)];
 
-    spyOn(component, 'fetchPorts').and.callThrough();
+    spyOn(component, "fetchPorts").and.callThrough();
     fixture.detectChanges(); // triggers ngOnInit
 
     expect(component.fetchPorts).toHaveBeenCalledTimes(1);
@@ -135,39 +149,49 @@ describe('ArduinoEditorComponent', () => {
     flush();
   }));
 
-  it('should update config when inputs change', () => {
-    spyOn(component.configChange, 'emit');
+  it("should update config when inputs change", () => {
+    spyOn(component.configChange, "emit");
     component.updateArduinoConfig();
     expect(component.configChange.emit).toHaveBeenCalled();
   });
 
-  it('should include Voltage Level Lane 1 only in analog actions', () => {
-    const voltageAction = component.analogPinActions.find(a => a.value === 'voltage_0');
+  it("should include Voltage Level Lane 1 only in analog actions", () => {
+    const voltageAction = component.analogPinActions.find(
+      (a) => a.value === "voltage_0",
+    );
     expect(voltageAction).toBeTruthy();
-    expect(voltageAction!.label).toBe('AE_PIN_VOLTAGE_LANE');
+    expect(voltageAction!.label).toBe("AE_PIN_VOLTAGE_LANE");
 
-    const digitalVoltageAction = component.digitalPinActions.find(a => a.value === 'voltage_0');
+    const digitalVoltageAction = component.digitalPinActions.find(
+      (a) => a.value === "voltage_0",
+    );
     expect(digitalVoltageAction).toBeUndefined();
   });
 
-  it('should regenerate actions when lanes change', () => {
+  it("should regenerate actions when lanes change", () => {
     component.lanes = [
-      new Lane('l1', '#fff', '#000', 10),
-      new Lane('l2', '#fff', '#000', 10),
-      new Lane('l3', '#fff', '#000', 10)
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l3", "#fff", "#000", 10),
     ];
 
-    const voltage0 = component.analogPinActions.find(a => a.value === 'voltage_0');
-    const voltage1 = component.analogPinActions.find(a => a.value === 'voltage_1');
-    const voltage2 = component.analogPinActions.find(a => a.value === 'voltage_2');
+    const voltage0 = component.analogPinActions.find(
+      (a) => a.value === "voltage_0",
+    );
+    const voltage1 = component.analogPinActions.find(
+      (a) => a.value === "voltage_1",
+    );
+    const voltage2 = component.analogPinActions.find(
+      (a) => a.value === "voltage_2",
+    );
 
     expect(voltage0).toBeTruthy();
     expect(voltage1).toBeTruthy();
     expect(voltage2).toBeTruthy();
   });
 
-  it('should find lanes with voltage pins', () => {
-    component.config!.analogIds[1] = VOLTAGE_BASE;     // Lane 0
+  it("should find lanes with voltage pins", () => {
+    component.config!.analogIds[1] = VOLTAGE_BASE; // Lane 0
     component.config!.analogIds[2] = VOLTAGE_BASE + 1; // Lane 1
     const lanes = component.getVoltageLanes();
     expect(lanes).toContain(0);
@@ -177,31 +201,33 @@ describe('ArduinoEditorComponent', () => {
 
   // --- Voltage Max Value Tests ---
 
-  it('should update voltage max value', () => {
-    spyOn(component, 'updateArduinoConfig');
-    component.setVoltageMax(0, '512');
+  it("should update voltage max value", () => {
+    spyOn(component, "updateArduinoConfig");
+    component.setVoltageMax(0, "512");
     expect(component.getVoltageMax(0)).toBe(512);
     expect(component.updateArduinoConfig).toHaveBeenCalled();
   });
 
-  it('should return 1023 as default max when no config set', () => {
+  it("should return 1023 as default max when no config set", () => {
     expect(component.getVoltageMax(0)).toBe(1023);
   });
 
   // --- Live Voltage Tests ---
 
-  it('should store live voltage when analogData event received', () => {
+  it("should store live voltage when analogData event received", () => {
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
     analogIds[0] = VOLTAGE_BASE; // Analog pin 0 => Lane 0
     component.config = makeConfig(analogIds);
     fixture.detectChanges();
 
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 512 } });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 512 },
+    });
 
     expect(component.liveVoltages[0]).toBe(512);
   });
 
-  it('should return correct live voltage for a lane via getLiveVoltageForLane', () => {
+  it("should return correct live voltage for a lane via getLiveVoltageForLane", () => {
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
     analogIds[2] = VOLTAGE_BASE + 1; // Analog pin 2 => Lane 1
     component.config = makeConfig(analogIds);
@@ -213,14 +239,14 @@ describe('ArduinoEditorComponent', () => {
     expect(component.getLiveVoltageForLane(0)).toBe(0); // Lane 0 has no pin assigned
   });
 
-  it('should return 0 for live voltage when no pin assigned to lane', () => {
+  it("should return 0 for live voltage when no pin assigned to lane", () => {
     component.config = makeConfig();
     expect(component.getLiveVoltageForLane(0)).toBe(0);
   });
 
-  it('should correctly map live voltage to the right lane when multiple pins assigned', () => {
+  it("should correctly map live voltage to the right lane when multiple pins assigned", () => {
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-    analogIds[0] = VOLTAGE_BASE;     // Analog pin 0 => Lane 0
+    analogIds[0] = VOLTAGE_BASE; // Analog pin 0 => Lane 0
     analogIds[3] = VOLTAGE_BASE + 1; // Analog pin 3 => Lane 1
     component.config = makeConfig(analogIds);
     fixture.detectChanges();
@@ -234,38 +260,51 @@ describe('ArduinoEditorComponent', () => {
 
   // --- Max Seen Tests ---
 
-  it('should track max voltage seen per lane', () => {
+  it("should track max voltage seen per lane", () => {
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
     analogIds[0] = VOLTAGE_BASE; // Analog pin 0 => Lane 0
     component.config = makeConfig(analogIds);
     fixture.detectChanges();
 
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 400 } });
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 700 } });
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 550 } });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 400 },
+    });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 700 },
+    });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 550 },
+    });
 
     expect(component.maxVoltagesSeen[0]).toBe(700);
   });
 
-  it('should not update max if new value is lower', () => {
+  it("should not update max if new value is lower", () => {
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
     analogIds[0] = VOLTAGE_BASE;
     component.config = makeConfig(analogIds);
     fixture.detectChanges();
 
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 900 } });
-    mockDataService.interfaceEvents$.next({ analogData: { pin: 0, value: 200 } });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 900 },
+    });
+    mockDataService.interfaceEvents$.next({
+      analogData: { pin: 0, value: 200 },
+    });
 
     expect(component.maxVoltagesSeen[0]).toBe(900);
   });
 
-  it('should apply max seen to only one lane when not linked', () => {
-    spyOn(component, 'updateArduinoConfig');
+  it("should apply max seen to only one lane when not linked", () => {
+    spyOn(component, "updateArduinoConfig");
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-    analogIds[0] = VOLTAGE_BASE;     // Lane 0
+    analogIds[0] = VOLTAGE_BASE; // Lane 0
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
-    component.lanes = [new Lane('l1', '#fff', '#000', 10), new Lane('l2', '#fff', '#000', 10)];
+    component.lanes = [
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
+    ];
     component.isVoltageLinked = false;
     fixture.detectChanges();
 
@@ -278,7 +317,7 @@ describe('ArduinoEditorComponent', () => {
     expect(component.getVoltageMax(1)).toBe(1023); // Untouched default
   });
 
-  it('should reset max voltages seen for all lanes', () => {
+  it("should reset max voltages seen for all lanes", () => {
     component.maxVoltagesSeen[0] = 500;
     component.maxVoltagesSeen[1] = 800;
 
@@ -289,55 +328,61 @@ describe('ArduinoEditorComponent', () => {
 
   // --- Lane Linking Tests ---
 
-  it('should be unlinked by default', () => {
+  it("should be unlinked by default", () => {
     expect(component.isVoltageLinked).toBeFalse();
   });
 
-  it('should apply voltage to all lanes when linked', () => {
-    spyOn(component, 'updateArduinoConfig');
+  it("should apply voltage to all lanes when linked", () => {
+    spyOn(component, "updateArduinoConfig");
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-    analogIds[0] = VOLTAGE_BASE;     // Lane 0
+    analogIds[0] = VOLTAGE_BASE; // Lane 0
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     analogIds[2] = VOLTAGE_BASE + 2; // Lane 2
     component.config = makeConfig(analogIds);
     component.lanes = [
-      new Lane('l1', '#fff', '#000', 10),
-      new Lane('l2', '#fff', '#000', 10),
-      new Lane('l3', '#fff', '#000', 10)
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
+      new Lane("l3", "#fff", "#000", 10),
     ];
     component.isVoltageLinked = true;
     fixture.detectChanges();
 
-    component.setVoltageMax(0, '600');
+    component.setVoltageMax(0, "600");
 
     expect(component.getVoltageMax(0)).toBe(600);
     expect(component.getVoltageMax(1)).toBe(600);
     expect(component.getVoltageMax(2)).toBe(600);
   });
 
-  it('should only apply voltage to one lane when not linked', () => {
-    spyOn(component, 'updateArduinoConfig');
+  it("should only apply voltage to one lane when not linked", () => {
+    spyOn(component, "updateArduinoConfig");
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-    analogIds[0] = VOLTAGE_BASE;     // Lane 0
+    analogIds[0] = VOLTAGE_BASE; // Lane 0
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
-    component.lanes = [new Lane('l1', '#fff', '#000', 10), new Lane('l2', '#fff', '#000', 10)];
+    component.lanes = [
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
+    ];
     component.isVoltageLinked = false;
     fixture.detectChanges();
 
-    component.setVoltageMax(0, '600');
+    component.setVoltageMax(0, "600");
 
     expect(component.getVoltageMax(0)).toBe(600);
     expect(component.getVoltageMax(1)).toBe(1023); // Default untouched
   });
 
-  it('should apply global max seen across all lanes when linked', () => {
-    spyOn(component, 'updateArduinoConfig');
+  it("should apply global max seen across all lanes when linked", () => {
+    spyOn(component, "updateArduinoConfig");
     const analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-    analogIds[0] = VOLTAGE_BASE;     // Lane 0
+    analogIds[0] = VOLTAGE_BASE; // Lane 0
     analogIds[1] = VOLTAGE_BASE + 1; // Lane 1
     component.config = makeConfig(analogIds);
-    component.lanes = [new Lane('l1', '#fff', '#000', 10), new Lane('l2', '#fff', '#000', 10)];
+    component.lanes = [
+      new Lane("l1", "#fff", "#000", 10),
+      new Lane("l2", "#fff", "#000", 10),
+    ];
     component.isVoltageLinked = true;
     fixture.detectChanges();
 
@@ -351,7 +396,7 @@ describe('ArduinoEditorComponent', () => {
     expect(component.getVoltageMax(1)).toBe(950);
   });
 
-  it('should clear out-of-range pins when switching from Mega to Uno', () => {
+  it("should clear out-of-range pins when switching from Mega to Uno", () => {
     // 1. Setup as Mega (1) with high pin assignments
     component.config!.hardwareType = 1;
     component.config!.digitalIds[10] = 1000; // D10 (within Uno range)
@@ -365,8 +410,8 @@ describe('ArduinoEditorComponent', () => {
     // 3. Verify
     expect(component.config!.hardwareType).toBe(0);
     expect(component.config!.digitalIds[10]).toBe(1000); // Should remain
-    expect(component.config!.digitalIds[50]).toBe(0);    // Should be BEHAVIOR_UNUSED (0)
-    expect(component.config!.analogIds[2]).toBe(7000);  // Should remain
-    expect(component.config!.analogIds[10]).toBe(0);     // Should be BEHAVIOR_UNUSED (0)
+    expect(component.config!.digitalIds[50]).toBe(0); // Should be BEHAVIOR_UNUSED (0)
+    expect(component.config!.analogIds[2]).toBe(7000); // Should remain
+    expect(component.config!.analogIds[10]).toBe(0); // Should be BEHAVIOR_UNUSED (0)
   });
 });

@@ -1,17 +1,27 @@
-import { Directive, ElementRef, Input, OnChanges, SimpleChanges, AfterViewInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Directive,
+  ElementRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  SimpleChanges,
+} from "@angular/core";
 
 @Directive({
-  selector: '[appSvgTextScaler]',
-  standalone: false
+  selector: "[appSvgTextScaler]",
+  standalone: false,
 })
-export class SvgTextScalerDirective implements OnChanges, AfterViewInit {
+export class SvgTextScalerDirective
+  implements OnChanges, AfterViewInit, OnDestroy
+{
   @Input() maxWidth: number = 0;
   @Input() scaleToFit: boolean = false;
 
-  constructor(private el: ElementRef<SVGTextElement>) { }
+  constructor(private el: ElementRef<SVGTextElement>) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['maxWidth'] || changes['scaleToFit'] || changes['text']) {
+    if (changes["maxWidth"] || changes["scaleToFit"] || changes["text"]) {
       this.scaleText();
     }
   }
@@ -31,8 +41,8 @@ export class SvgTextScalerDirective implements OnChanges, AfterViewInit {
     const textElement = this.el.nativeElement;
 
     // Reset attributes first
-    textElement.removeAttribute('textLength');
-    textElement.removeAttribute('lengthAdjust');
+    textElement.removeAttribute("textLength");
+    textElement.removeAttribute("lengthAdjust");
 
     if (!this.scaleToFit || this.maxWidth <= 0) {
       if (this.timer) {
@@ -51,8 +61,8 @@ export class SvgTextScalerDirective implements OnChanges, AfterViewInit {
       try {
         const currentLength = (textElement as any).getComputedTextLength();
         if (currentLength > this.maxWidth) {
-          textElement.setAttribute('textLength', this.maxWidth.toString());
-          textElement.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+          textElement.setAttribute("textLength", this.maxWidth.toString());
+          textElement.setAttribute("lengthAdjust", "spacingAndGlyphs");
         }
       } catch (e) {
         // SVG element might not be rendered or available in some JSDOM/Karma environments

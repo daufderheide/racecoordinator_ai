@@ -1,26 +1,31 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
-
-import { DataService } from 'src/app/data.service';
-import { TranslationService } from 'src/app/services/translation.service';
-import { playSound, mockTTSContext } from 'src/app/utils/audio';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from "@angular/core";
+import { DataService } from "src/app/data.service";
+import { TranslationService } from "src/app/services/translation.service";
+import { mockTTSContext, playSound } from "src/app/utils/audio";
 
 @Component({
-  selector: 'app-audio-selector',
-  templateUrl: './audio-selector.component.html',
-  styleUrls: ['./audio-selector.component.css'],
-  standalone: false
+  selector: "app-audio-selector",
+  templateUrl: "./audio-selector.component.html",
+  styleUrls: ["./audio-selector.component.css"],
+  standalone: false,
 })
 export class AudioSelectorComponent {
-  @Input() label: string = 'Audio';
-  @Input() type: 'preset' | 'tts' | undefined = 'preset';
+  @Input() label: string = "Audio";
+  @Input() type: "preset" | "tts" | undefined = "preset";
   @Input() readonly: boolean = false;
 
-  @Output() typeChange = new EventEmitter<'preset' | 'tts'>();
+  @Output() typeChange = new EventEmitter<"preset" | "tts">();
 
   @Input() url?: string;
   @Output() urlChange = new EventEmitter<string>();
 
-  @Input() text?: string = '';
+  @Input() text?: string = "";
   @Output() textChange = new EventEmitter<string>();
 
   @Input() assets: any[] = [];
@@ -33,18 +38,25 @@ export class AudioSelectorComponent {
   showItemSelector = false;
 
   get selectedAssetName(): string {
-    if (!this.url) return this.translationService ? this.translationService.translate('AS_SELECT_SOUND') : 'Select Sound...';
-    const asset = this.assets.find(a => a.url === this.url);
-    return asset ? asset.name : (this.translationService ? this.translationService.translate('AS_UNKNOWN_ASSET') : 'Unknown Asset');
+    if (!this.url)
+      return this.translationService
+        ? this.translationService.translate("AS_SELECT_SOUND")
+        : "Select Sound...";
+    const asset = this.assets.find((a) => a.url === this.url);
+    return asset
+      ? asset.name
+      : this.translationService
+        ? this.translationService.translate("AS_UNKNOWN_ASSET")
+        : "Unknown Asset";
   }
 
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
-    private translationService: TranslationService
-  ) { }
+    private translationService: TranslationService,
+  ) {}
 
-  onTypeChange(newType: 'preset' | 'tts' | undefined) {
+  onTypeChange(newType: "preset" | "tts" | undefined) {
     if (newType) {
       this.type = newType;
       this.typeChange.emit(this.type);
@@ -72,8 +84,8 @@ export class AudioSelectorComponent {
   onAssetSelected(asset: any) {
     if (asset && asset.url) {
       this.onUrlChange(asset.url);
-      if (this.type !== 'preset') {
-        this.onTypeChange('preset');
+      if (this.type !== "preset") {
+        this.onTypeChange("preset");
       }
     }
     this.closeItemSelector();
@@ -81,12 +93,18 @@ export class AudioSelectorComponent {
 
   onPlayPreview(item: any) {
     const playContext = this.context || mockTTSContext();
-    playSound('preset', item.url, '', this.dataService.serverUrl, playContext);
+    playSound("preset", item.url, "", this.dataService.serverUrl, playContext);
   }
 
   play() {
     const playContext = this.context || mockTTSContext();
-    playSound(this.type, this.url, this.text, this.dataService.serverUrl, playContext);
+    playSound(
+      this.type,
+      this.url,
+      this.text,
+      this.dataService.serverUrl,
+      playContext,
+    );
   }
 
   // Drag & Drop
@@ -110,21 +128,21 @@ export class AudioSelectorComponent {
     reader.onload = (e: any) => {
       const bytes = new Uint8Array(e.target.result);
       // Ensure we treat it as sound since this is an audio selector
-      const assetType = 'sound';
+      const assetType = "sound";
 
       this.dataService.uploadAsset(file.name, assetType, bytes).subscribe({
         next: (asset) => {
           if (asset.url) {
             this.onUrlChange(asset.url);
             // Switch to preset mode if not already
-            if (this.type !== 'preset') {
-              this.onTypeChange('preset');
+            if (this.type !== "preset") {
+              this.onTypeChange("preset");
             }
           }
         },
         error: (err) => {
-          console.error('Audio upload failed', err);
-        }
+          console.error("Audio upload failed", err);
+        },
       });
     };
     reader.readAsArrayBuffer(file);

@@ -1,23 +1,31 @@
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Location } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
-
-import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { Team } from 'src/app/models/team';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import { Location } from "@angular/common";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { forkJoin, Subscription } from "rxjs";
+import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import { Team } from "src/app/models/team";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-team-editor',
-  templateUrl: './team-editor.component.html',
-  styleUrls: ['./team-editor.component.css'],
-  standalone: false
+  selector: "app-team-editor",
+  templateUrl: "./team-editor.component.html",
+  styleUrls: ["./team-editor.component.css"],
+  standalone: false,
 })
 export class TeamEditorComponent implements OnInit, OnDestroy {
   private isDestroyed = false;
@@ -59,7 +67,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private location: Location,
     private helpService: HelpService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
   ) {
     this.undoManager = new UndoManager<Team>(
       {
@@ -71,9 +79,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingTeam) {
             this.editingTeam.entity_id = currentId;
           }
-        }
+        },
       },
-      () => this.editingTeam
+      () => this.editingTeam,
     );
   }
 
@@ -84,9 +92,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     this.loadData();
 
     if (this.undoManager) {
-      this.subscriptions.push(this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveTeam();
-      }));
+      this.subscriptions.push(
+        this.undoManager.stateCommitted$.subscribe(() => {
+          this.autoSaveTeam();
+        }),
+      );
     }
 
     // Trigger help automatically on first visit
@@ -109,18 +119,18 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
-    this.subscriptions.forEach(s => s.unsubscribe());
+    this.subscriptions.forEach((s) => s.unsubscribe());
     this.undoManager.destroy();
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
 
-  @HostListener('window:keydown', ['$event'])
+  @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
         this.redo();
@@ -128,7 +138,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.undo();
       }
     }
-    if ((event.metaKey || event.ctrlKey) && event.key === 'y') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
       event.preventDefault();
       this.redo();
     }
@@ -147,12 +157,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    const idParam = this.route.snapshot.queryParamMap.get('id');
-    console.log('TeamEditor loadData. ID param:', idParam);
+    const idParam = this.route.snapshot.queryParamMap.get("id");
+    console.log("TeamEditor loadData. ID param:", idParam);
     if (!idParam) {
-      console.warn('No ID provided, redirecting to manager');
+      console.warn("No ID provided, redirecting to manager");
       // Redirect back to manager instead of throwing
-      this.router.navigate(['/team-manager']);
+      this.router.navigate(["/team-manager"]);
       return;
     }
 
@@ -160,19 +170,23 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     this.dataSubscription = forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
-      assets: this.dataService.listAssets()
+      assets: this.dataService.listAssets(),
     }).subscribe({
       next: (result) => {
         try {
-          this.allDrivers = result.drivers.map(d => new Driver(
-            d.entity_id, d.name, d.nickname || '', d.avatarUrl
-          ));
-          this.allTeams = result.teams.map((t: any) => new Team(
-            t.entity_id || t.entityId || '',
-            t.name || '',
-            t.avatarUrl || undefined,
-            t.driverIds || []
-          ));
+          this.allDrivers = result.drivers.map(
+            (d) =>
+              new Driver(d.entity_id, d.name, d.nickname || "", d.avatarUrl),
+          );
+          this.allTeams = result.teams.map(
+            (t: any) =>
+              new Team(
+                t.entity_id || t.entityId || "",
+                t.name || "",
+                t.avatarUrl || undefined,
+                t.driverIds || [],
+              ),
+          );
           this.loadDataInternal(result.assets);
         } finally {
           this.isLoading = false;
@@ -182,22 +196,19 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error('Failed to load data', err);
+        console.error("Failed to load data", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
         }
-      }
+      },
     });
   }
 
   private cloneTeam(team: Team): Team {
-    return new Team(
-      team.entity_id,
-      team.name,
-      team.avatarUrl,
-      [...team.driverIds]
-    );
+    return new Team(team.entity_id, team.name, team.avatarUrl, [
+      ...team.driverIds,
+    ]);
   }
 
   private areTeamsEqual(a: Team, b: Team): boolean {
@@ -217,19 +228,21 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     const name = this.editingTeam.name.trim().toLowerCase();
     if (!name) return false;
 
-    return !this.allTeams.some(t =>
-      (excludeSelf ? t.entity_id !== this.editingTeam!.entity_id : true) &&
-      t.name.toLowerCase() === name
+    return !this.allTeams.some(
+      (t) =>
+        (excludeSelf ? t.entity_id !== this.editingTeam!.entity_id : true) &&
+        t.name.toLowerCase() === name,
     );
   }
 
   monitorConnection() {
-    this.connectionSubscription = this.connectionMonitor.connectionState$.subscribe(state => {
-      this.isConnectionLost = (state === ConnectionState.DISCONNECTED);
-      if (this.isConnectionLost) {
-        this.handleConnectionLoss();
-      }
-    });
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
   }
 
   handleConnectionLoss() {
@@ -241,22 +254,22 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
       }
       if (Date.now() - startTime > 5000) {
         clearInterval(intervalId);
-        this.router.navigate(['/team-manager']);
+        this.router.navigate(["/team-manager"]);
       }
     }, 1000);
   }
 
   private loadDataInternal(assets: any[]) {
     const allAssets = assets || [];
-    this.avatarAssets = allAssets.filter(a => a && a.type === 'image');
+    this.avatarAssets = allAssets.filter((a) => a && a.type === "image");
 
-    const idParam = this.route.snapshot.queryParamMap.get('id');
+    const idParam = this.route.snapshot.queryParamMap.get("id");
 
-    if (idParam === 'new') {
+    if (idParam === "new") {
       this.selectedTeam = undefined;
-      this.editingTeam = new Team('new', '', '', []);
+      this.editingTeam = new Team("new", "", "", []);
     } else if (idParam) {
-      const found = this.allTeams.find(t => t.entity_id === idParam);
+      const found = this.allTeams.find((t) => t.entity_id === idParam);
       if (found) {
         this.selectedTeam = found;
         this.editingTeam = this.cloneTeam(found);
@@ -272,15 +285,21 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   // Undo/Redo Proxies
-  undo() { this.undoManager.undo(); }
-  redo() { this.undoManager.redo(); }
-  onInputFocus() { this.undoManager.onInputFocus(); }
+  undo() {
+    this.undoManager.undo();
+  }
+  redo() {
+    this.undoManager.redo();
+  }
+  onInputFocus() {
+    this.undoManager.onInputFocus();
+  }
   onInputChange() {
     this.isDirty = true;
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
-  onInputBlur() { 
+  onInputBlur() {
     this.undoManager.onInputBlur();
     this.cdr.detectChanges();
   }
@@ -290,11 +309,20 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   private autoSaveTeam() {
-    console.log('autoSaveTeam triggered');
-    if (!this.editingTeam) { console.log('autoSaveTeam: no editingTeam'); return; }
-    if (this.isNameInvalid) { console.log('autoSaveTeam: name invalid'); return; }
-    if (this.isSaving) { console.log('autoSaveTeam: isSaving is true'); return; }
-    console.log('autoSaveTeam Triggering updateTeam');
+    console.log("autoSaveTeam triggered");
+    if (!this.editingTeam) {
+      console.log("autoSaveTeam: no editingTeam");
+      return;
+    }
+    if (this.isNameInvalid) {
+      console.log("autoSaveTeam: name invalid");
+      return;
+    }
+    if (this.isSaving) {
+      console.log("autoSaveTeam: isSaving is true");
+      return;
+    }
+    console.log("autoSaveTeam Triggering updateTeam");
     this.updateTeam(false, true);
   }
 
@@ -323,7 +351,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
-    this.router.navigate(['/team-manager'], { queryParams: { id: this.editingTeam?.entity_id } });
+    this.router.navigate(["/team-manager"], {
+      queryParams: { id: this.editingTeam?.entity_id },
+    });
   }
 
   updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
@@ -335,19 +365,23 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     this.saveTeamData(isSaveAsNew, isAutoSave);
   }
 
-  private saveTeamData(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
+  private saveTeamData(
+    isSaveAsNew: boolean = false,
+    isAutoSave: boolean = false,
+  ) {
     if (!this.editingTeam) return;
 
     const teamToSend = this.cloneTeam(this.editingTeam);
-    const wasNew = isSaveAsNew || teamToSend.entity_id === 'new';
+    const wasNew = isSaveAsNew || teamToSend.entity_id === "new";
 
     if (wasNew) {
-      teamToSend.entity_id = 'new';
+      teamToSend.entity_id = "new";
     }
 
-    const obs = teamToSend.entity_id === 'new'
-      ? this.dataService.createTeam(teamToSend)
-      : this.dataService.updateTeam(teamToSend.entity_id, teamToSend);
+    const obs =
+      teamToSend.entity_id === "new"
+        ? this.dataService.createTeam(teamToSend)
+        : this.dataService.updateTeam(teamToSend.entity_id, teamToSend);
 
     obs.subscribe({
       next: (result) => {
@@ -362,10 +396,16 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         if (wasNew) {
           const newId = result.entity_id || result.entityId;
           if (isAutoSave) {
-            const url = this.router.serializeUrl(this.router.createUrlTree(['/team-editor'], { queryParams: { id: newId } }));
+            const url = this.router.serializeUrl(
+              this.router.createUrlTree(["/team-editor"], {
+                queryParams: { id: newId },
+              }),
+            );
             this.location.replaceState(url);
           } else {
-            this.router.navigate(['/team-editor'], { queryParams: { id: newId } });
+            this.router.navigate(["/team-editor"], {
+              queryParams: { id: newId },
+            });
           }
         }
         this.refreshTeamList();
@@ -382,27 +422,33 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Failed to save team', err);
+        console.error("Failed to save team", err);
         if (!isAutoSave) {
-          alert(this.translationService.translate('TM_ERROR_SAVE_FAILED') + (err.error || err.message));
+          alert(
+            this.translationService.translate("TM_ERROR_SAVE_FAILED") +
+              (err.error || err.message),
+          );
         }
         this.isSaving = false;
         this.isAutoSaving = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
   private refreshTeamList() {
     this.dataService.getTeams().subscribe({
       next: (teams) => {
-        this.allTeams = teams.map((t: any) => new Team(
-          t.entity_id || t.entityId || '',
-          t.name || '',
-          t.avatarUrl || undefined,
-          t.driverIds || []
-        ));
-      }
+        this.allTeams = teams.map(
+          (t: any) =>
+            new Team(
+              t.entity_id || t.entityId || "",
+              t.name || "",
+              t.avatarUrl || undefined,
+              t.driverIds || [],
+            ),
+        );
+      },
     });
   }
 
@@ -410,13 +456,13 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   get assignedDrivers(): Driver[] {
     if (!this.editingTeam) return [];
     return this.editingTeam.driverIds
-      .map(id => this.allDrivers.find(d => d.entity_id === id))
-      .filter(d => !!d) as Driver[];
+      .map((id) => this.allDrivers.find((d) => d.entity_id === id))
+      .filter((d) => !!d) as Driver[];
   }
 
   get availableDrivers(): Driver[] {
     if (!this.allDrivers) return [];
-    return this.allDrivers.filter(d => !this.isDriverInTeam(d));
+    return this.allDrivers.filter((d) => !this.isDriverInTeam(d));
   }
 
   isDriverInTeam(driver: Driver): boolean {
@@ -434,29 +480,35 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   removeDriver(driver: Driver) {
     if (!this.editingTeam) return;
-    this.editingTeam.driverIds = this.editingTeam.driverIds.filter(id => id !== driver.entity_id);
+    this.editingTeam.driverIds = this.editingTeam.driverIds.filter(
+      (id) => id !== driver.entity_id,
+    );
     this.captureState();
   }
 
   onDriverDrop(event: CdkDragDrop<Driver[]>) {
     if (!this.editingTeam) return;
-    moveItemInArray(this.editingTeam.driverIds, event.previousIndex, event.currentIndex);
+    moveItemInArray(
+      this.editingTeam.driverIds,
+      event.previousIndex,
+      event.currentIndex,
+    );
     this.captureState();
   }
 
   saveAsNew() {
     if (!this.editingTeam || this.isSaving) return;
-    
+
     this.isSaving = true; // Lock immediately to prevent auto-save from starting
     this.editingTeam.name = this.generateUniqueName(this.editingTeam.name);
-    
-    // Sync the UndoManager with the new name. 
+
+    // Sync the UndoManager with the new name.
     // This will trigger stateCommitted$ but autoSaveTeam will exit because isSaving is true.
-    this.undoManager.commitState(); 
-    
-    // Proceed with the save as new. updateTeam(true) would return early now, 
+    this.undoManager.commitState();
+
+    // Proceed with the save as new. updateTeam(true) would return early now,
     // so we call saveTeamData directly or reset isSaving.
-    // Let's reset isSaving so updateTeam(true) can handle it normally, 
+    // Let's reset isSaving so updateTeam(true) can handle it normally,
     // but the gap is too small for autoSaveTeam to slip in.
     this.isSaving = false;
     this.updateTeam(true);
@@ -465,11 +517,15 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   private generateUniqueName(baseName: string): string {
     let counter = 1;
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, '').trim();
+    const base = baseName.replace(pattern, "").trim();
 
     while (true) {
       const candidate = `${base}_${counter}`;
-      if (!this.allTeams.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.allTeams.some(
+          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -477,54 +533,58 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   getAvatarUrl(url?: string): string {
-    if (!url) return 'assets/images/default_avatar.svg';
-    if (url.startsWith('/')) return `http://localhost:7070${url}`;
+    if (!url) return "assets/images/default_avatar.svg";
+    if (url.startsWith("/")) return `http://localhost:7070${url}`;
     return url;
   }
 
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('TEM_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('TEM_HELP_WELCOME_CONTENT'),
-        position: 'center'
+        title: this.translationService.translate("TEM_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("TEM_HELP_WELCOME_CONTENT"),
+        position: "center",
       },
       {
-        selector: '#avatar-selector',
-        title: this.translationService.translate('TEM_HELP_AVATAR_TITLE'),
-        content: this.translationService.translate('TEM_HELP_AVATAR_CONTENT'),
-        position: 'right'
+        selector: "#avatar-selector",
+        title: this.translationService.translate("TEM_HELP_AVATAR_TITLE"),
+        content: this.translationService.translate("TEM_HELP_AVATAR_CONTENT"),
+        position: "right",
       },
       {
-        selector: '#team-name-input',
-        title: this.translationService.translate('TEM_HELP_NAME_TITLE'),
-        content: this.translationService.translate('TEM_HELP_NAME_CONTENT'),
-        position: 'bottom'
+        selector: "#team-name-input",
+        title: this.translationService.translate("TEM_HELP_NAME_TITLE"),
+        content: this.translationService.translate("TEM_HELP_NAME_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#assigned-drivers-list',
-        title: this.translationService.translate('TEM_HELP_ASSIGNED_TITLE'),
-        content: this.translationService.translate('TEM_HELP_ASSIGNED_CONTENT'),
-        position: 'left'
+        selector: "#assigned-drivers-list",
+        title: this.translationService.translate("TEM_HELP_ASSIGNED_TITLE"),
+        content: this.translationService.translate("TEM_HELP_ASSIGNED_CONTENT"),
+        position: "left",
       },
       {
-        selector: '#available-drivers-list',
-        title: this.translationService.translate('TEM_HELP_AVAILABLE_TITLE'),
-        content: this.translationService.translate('TEM_HELP_AVAILABLE_CONTENT'),
-        position: 'left'
+        selector: "#available-drivers-list",
+        title: this.translationService.translate("TEM_HELP_AVAILABLE_TITLE"),
+        content: this.translationService.translate(
+          "TEM_HELP_AVAILABLE_CONTENT",
+        ),
+        position: "left",
       },
       {
-        selector: '#copy-item-btn',
-        title: this.translationService.translate('TEM_HELP_DUPLICATE_TITLE'),
-        content: this.translationService.translate('TEM_HELP_DUPLICATE_CONTENT'),
-        position: 'bottom'
+        selector: "#copy-item-btn",
+        title: this.translationService.translate("TEM_HELP_DUPLICATE_TITLE"),
+        content: this.translationService.translate(
+          "TEM_HELP_DUPLICATE_CONTENT",
+        ),
+        position: "bottom",
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
-        position: 'bottom'
-      }
+        selector: "#help-track-btn",
+        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
+        position: "bottom",
+      },
     ];
 
     this.helpService.startGuide(steps);

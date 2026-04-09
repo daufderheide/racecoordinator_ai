@@ -1,20 +1,28 @@
-import { Compiler, Injector, ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { ChangeDetectorRef, Compiler, Injector } from "@angular/core";
+import {
+  ComponentFixture,
+  discardPeriodicTasks,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { BehaviorSubject, of } from "rxjs";
+import { AnalyticsService } from "src/app/analytics.service";
+import { SharedModule } from "src/app/components/shared/shared.module";
+import { DataService } from "src/app/data.service";
+import { Settings } from "src/app/models/settings";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "src/app/services/connection-monitor.service";
+import { DynamicComponentService } from "src/app/services/dynamic-component.service";
+import { FileSystemService } from "src/app/services/file-system.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { AnalyticsService } from 'src/app/analytics.service';
-import { SharedModule } from 'src/app/components/shared/shared.module';
-import { DataService } from 'src/app/data.service';
-import { Settings } from 'src/app/models/settings';
-import { ConnectionMonitorService, ConnectionState } from 'src/app/services/connection-monitor.service';
-import { DynamicComponentService } from 'src/app/services/dynamic-component.service';
-import { FileSystemService } from 'src/app/services/file-system.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { RacedaySetupComponent } from "./raceday-setup.component";
 
-import { RacedaySetupComponent } from './raceday-setup.component';
-
-describe('RacedaySetupComponent', () => {
+describe("RacedaySetupComponent", () => {
   let component: RacedaySetupComponent;
   let fixture: ComponentFixture<RacedaySetupComponent>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
@@ -29,56 +37,109 @@ describe('RacedaySetupComponent', () => {
 
   beforeEach(() => {
     sessionStorage.clear();
-    mockFileSystemService = jasmine.createSpyObj('FileSystemService', ['selectCustomFolder', 'hasCustomFiles', 'getCustomFile']);
-    mockContainer = jasmine.createSpyObj('ViewContainerRef', ['clear', 'createComponent']);
+    mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
+      "selectCustomFolder",
+      "hasCustomFiles",
+      "getCustomFile",
+    ]);
+    mockContainer = jasmine.createSpyObj("ViewContainerRef", [
+      "clear",
+      "createComponent",
+    ]);
     mockContainer.createComponent.and.returnValue({
       instance: {
-        requestServerConfig: { subscribe: () => { } },
-        requestAbout: { subscribe: () => { } }
-      }
+        requestServerConfig: { subscribe: () => {} },
+        requestAbout: { subscribe: () => {} },
+      },
     });
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'setServerAddress', 'getServerVersion', 'getServerIp']);
-    mockSettingsService = jasmine.createSpyObj('SettingsService', ['getSettings', 'saveSettings']);
-    mockDynamicComponentService = jasmine.createSpyObj('DynamicComponentService', ['createDynamicComponent']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['getTranslationsLoaded', 'translate']);
-    mockAnalyticsService = jasmine.createSpyObj('AnalyticsService', ['initTracking', 'updateOptOutStatus', 'trackClick']);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getDrivers",
+      "setServerAddress",
+      "getServerVersion",
+      "getServerIp",
+    ]);
+    mockSettingsService = jasmine.createSpyObj("SettingsService", [
+      "getSettings",
+      "saveSettings",
+    ]);
+    mockDynamicComponentService = jasmine.createSpyObj(
+      "DynamicComponentService",
+      ["createDynamicComponent"],
+    );
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "getTranslationsLoaded",
+      "translate",
+    ]);
+    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "initTracking",
+      "updateOptOutStatus",
+      "trackClick",
+    ]);
 
-    connectionStateSubject = new BehaviorSubject<ConnectionState>(ConnectionState.CONNECTED);
-    mockConnectionMonitor = jasmine.createSpyObj('ConnectionMonitorService', ['startMonitoring', 'stopMonitoring', 'waitForConnection', 'checkConnection']);
-    Object.defineProperty(mockConnectionMonitor, 'connectionState$', { get: () => connectionStateSubject.asObservable() });
+    connectionStateSubject = new BehaviorSubject<ConnectionState>(
+      ConnectionState.CONNECTED,
+    );
+    mockConnectionMonitor = jasmine.createSpyObj("ConnectionMonitorService", [
+      "startMonitoring",
+      "stopMonitoring",
+      "waitForConnection",
+      "checkConnection",
+    ]);
+    Object.defineProperty(mockConnectionMonitor, "connectionState$", {
+      get: () => connectionStateSubject.asObservable(),
+    });
 
     mockConnectionMonitor.waitForConnection.and.returnValue(Promise.resolve());
     mockConnectionMonitor.checkConnection.and.returnValue(of(true));
 
     mockDataService.getDrivers.and.returnValue(of([]));
-    mockDataService.getServerVersion.and.returnValue(of('0.0.0'));
-    mockDataService.getServerIp.and.returnValue(of('192.168.1.100'));
+    mockDataService.getServerVersion.and.returnValue(of("0.0.0"));
+    mockDataService.getServerIp.and.returnValue(of("192.168.1.100"));
     mockSettingsService.getSettings.and.returnValue(new Settings());
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);
-    mockTranslationService.getBrowserLanguage = jasmine.createSpy().and.returnValue('en');
-    mockTranslationService.getSupportedLanguages = jasmine.createSpy().and.returnValue([]);
+    mockTranslationService.getBrowserLanguage = jasmine
+      .createSpy()
+      .and.returnValue("en");
+    mockTranslationService.getSupportedLanguages = jasmine
+      .createSpy()
+      .and.returnValue([]);
 
     TestBed.configureTestingModule({
       declarations: [RacedaySetupComponent],
       providers: [
         { provide: FileSystemService, useValue: mockFileSystemService },
-        { provide: Compiler, useValue: { compileModuleAsync: () => Promise.resolve({ create: () => ({ componentFactoryResolver: { resolveComponentFactory: () => { } } }) }) } },
+        {
+          provide: Compiler,
+          useValue: {
+            compileModuleAsync: () =>
+              Promise.resolve({
+                create: () => ({
+                  componentFactoryResolver: {
+                    resolveComponentFactory: () => {},
+                  },
+                }),
+              }),
+          },
+        },
         { provide: Injector, useValue: {} },
-        { provide: ChangeDetectorRef, useValue: { detectChanges: () => { } } },
+        { provide: ChangeDetectorRef, useValue: { detectChanges: () => {} } },
         { provide: DataService, useValue: mockDataService },
         { provide: SettingsService, useValue: mockSettingsService },
-        { provide: DynamicComponentService, useValue: mockDynamicComponentService },
+        {
+          provide: DynamicComponentService,
+          useValue: mockDynamicComponentService,
+        },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
-        { provide: AnalyticsService, useValue: mockAnalyticsService }
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
-      imports: [SharedModule]
+      imports: [SharedModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedaySetupComponent);
     component = fixture.componentInstance;
-    component.clientVersion = 'TEST-CLIENT-VERSION';
+    component.clientVersion = "TEST-CLIENT-VERSION";
     component.container = mockContainer;
   });
 
@@ -91,24 +152,24 @@ describe('RacedaySetupComponent', () => {
     }
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Splash Screen Logic', () => {
-    it('should initialize with splash screen showing', () => {
+  describe("Splash Screen Logic", () => {
+    it("should initialize with splash screen showing", () => {
       expect(component.showSplash).toBeTrue();
       expect(component.minTimeElapsed).toBeFalse();
       expect(component.connectionVerified).toBeFalse();
     });
 
-    it('should fetch and update server IP address on init', fakeAsync(() => {
+    it("should fetch and update server IP address on init", fakeAsync(() => {
       component.ngOnInit();
       tick(100);
-      expect(component.serverIp).toBe('192.168.1.100');
+      expect(component.serverIp).toBe("192.168.1.100");
     }));
 
-    it('should wait for minimum time and connection service before hiding splash', fakeAsync(() => {
+    it("should wait for minimum time and connection service before hiding splash", fakeAsync(() => {
       component.ngOnInit();
       tick(100);
       expect(component.connectionVerified).toBeTrue();
@@ -120,8 +181,8 @@ describe('RacedaySetupComponent', () => {
     }));
   });
 
-  describe('Connection Monitoring', () => {
-    it('should react to connection loss from service', fakeAsync(() => {
+  describe("Connection Monitoring", () => {
+    it("should react to connection loss from service", fakeAsync(() => {
       component.ngOnInit();
       tick(6000);
       expect(component.isConnectionLost).toBeFalse();
@@ -130,7 +191,7 @@ describe('RacedaySetupComponent', () => {
       expect(component.isConnectionLost).toBeTrue();
     }));
 
-    it('should react to connection restoration from service', fakeAsync(() => {
+    it("should react to connection restoration from service", fakeAsync(() => {
       component.ngOnInit();
       tick(6000);
       connectionStateSubject.next(ConnectionState.DISCONNECTED);
@@ -141,10 +202,12 @@ describe('RacedaySetupComponent', () => {
       expect(component.isConnectionLost).toBeFalse();
     }));
 
-    it('should reset to splash if connection lost for too long', fakeAsync(() => {
+    it("should reset to splash if connection lost for too long", fakeAsync(() => {
       component.ngOnInit();
       tick(6000);
-      mockConnectionMonitor.waitForConnection.and.returnValue(new Promise(() => { }));
+      mockConnectionMonitor.waitForConnection.and.returnValue(
+        new Promise(() => {}),
+      );
       connectionStateSubject.next(ConnectionState.DISCONNECTED);
       tick();
       tick(6000);
@@ -154,49 +217,65 @@ describe('RacedaySetupComponent', () => {
     }));
   });
 
-  describe('Server Configuration UI', () => {
-    it('should manually check connection on save config', fakeAsync(() => {
+  describe("Server Configuration UI", () => {
+    it("should manually check connection on save config", fakeAsync(() => {
       component.saveServerConfig();
       expect(mockConnectionMonitor.checkConnection).toHaveBeenCalled();
       expect(mockConnectionMonitor.waitForConnection).toHaveBeenCalled();
     }));
   });
 
-  describe('Dynamic Component Interaction', () => {
-    it('should listen to requestServerConfig from default component', fakeAsync(() => {
+  describe("Dynamic Component Interaction", () => {
+    it("should listen to requestServerConfig from default component", fakeAsync(() => {
       mockContainer.createComponent.and.returnValue({
         instance: {
-          requestServerConfig: { subscribe: (callback: any) => { callback(); return { unsubscribe: () => { } }; } },
-          requestAbout: { subscribe: () => { } }
-        }
+          requestServerConfig: {
+            subscribe: (callback: any) => {
+              callback();
+              return { unsubscribe: () => {} };
+            },
+          },
+          requestAbout: { subscribe: () => {} },
+        },
       });
-      mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
+      mockFileSystemService.hasCustomFiles.and.returnValue(
+        Promise.resolve(false),
+      );
       component.ngOnInit();
       tick(6000);
       expect(component.showServerConfig).toBeTrue();
     }));
 
-    it('should listen to requestAbout from default component', fakeAsync(() => {
+    it("should listen to requestAbout from default component", fakeAsync(() => {
       mockContainer.createComponent.and.returnValue({
         instance: {
-          requestServerConfig: { subscribe: () => { } },
-          requestAbout: { subscribe: (callback: any) => { callback(); return { unsubscribe: () => { } }; } }
-        }
+          requestServerConfig: { subscribe: () => {} },
+          requestAbout: {
+            subscribe: (callback: any) => {
+              callback();
+              return { unsubscribe: () => {} };
+            },
+          },
+        },
       });
-      mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
+      mockFileSystemService.hasCustomFiles.and.returnValue(
+        Promise.resolve(false),
+      );
       component.ngOnInit();
       tick(6000);
       expect(component.showAboutDialog).toBeTrue();
     }));
   });
 
-  it('should load default component if no custom files', fakeAsync(() => {
-    mockFileSystemService.hasCustomFiles.and.returnValue(Promise.resolve(false));
+  it("should load default component if no custom files", fakeAsync(() => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(
+      Promise.resolve(false),
+    );
     mockContainer.createComponent.and.returnValue({
       instance: {
-        requestServerConfig: { subscribe: () => { } },
-        requestAbout: { subscribe: () => { } }
-      }
+        requestServerConfig: { subscribe: () => {} },
+        requestAbout: { subscribe: () => {} },
+      },
     });
     component.ngOnInit();
     tick(6000);

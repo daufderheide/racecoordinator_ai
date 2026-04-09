@@ -1,55 +1,70 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { AssetManagerHarnessE2e } from "./testing/asset-manager.harness.e2e";
 
-import { AssetManagerHarnessE2e } from './testing/asset-manager.harness.e2e';
-
-test.describe('Asset Manager Visuals', () => {
+test.describe("Asset Manager Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
     // Hide connection overlay to prevent test flakiness
-    await page.addStyleTag({ content: '.connection-lost-overlay { display: none !important; }' });
+    await page.addStyleTag({
+      content: ".connection-lost-overlay { display: none !important; }",
+    });
   });
 
-  test('should display asset manager with mocked assets', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
-    await page.locator('.active-db-name').waitFor({ state: 'visible' });
+  test("should display asset manager with mocked assets", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".active-db-name").waitFor({ state: "visible" });
 
-    const container = page.locator('.am-container');
+    const container = page.locator(".am-container");
     const harness = new AssetManagerHarnessE2e(container);
 
     // Wait for the asset list to appear
-    await expect(page.locator('.asset-grid')).toBeVisible();
+    await expect(page.locator(".asset-grid")).toBeVisible();
 
     // Ensure loading is finished
-    await expect(page.locator('.loading-overlay')).not.toBeVisible();
+    await expect(page.locator(".loading-overlay")).not.toBeVisible();
 
     // Wait for items to be rendered (we expect 4 items from mock: image, sound, 2x image_set)
     // Counts and names checked visually
 
     // Reset scroll to top of all containers to avoid clipping
-    await page.locator('.asset-grid').evaluate((el: any) => el.scrollTop = 0).catch(() => null);
-    await page.locator('.stats-content').evaluate((el: any) => el.scrollTop = 0).catch(() => null);
+    await page
+      .locator(".asset-grid")
+      .evaluate((el: any) => (el.scrollTop = 0))
+      .catch(() => null);
+    await page
+      .locator(".stats-content")
+      .evaluate((el: any) => (el.scrollTop = 0))
+      .catch(() => null);
 
     await page.waitForTimeout(300); // Final settle
 
-    await expect(page).toHaveScreenshot('asset-manager-list.png', {
+    await expect(page).toHaveScreenshot("asset-manager-list.png", {
       maxDiffPixelRatio: 0.1,
-      threshold: 0.2
+      threshold: 0.2,
     });
   });
 
-  test('should filter assets visuals', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
-    await expect(page.locator('.asset-grid')).toBeVisible();
+  test("should filter assets visuals", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await expect(page.locator(".asset-grid")).toBeVisible();
 
-    const container = page.locator('.am-container');
+    const container = page.locator(".am-container");
     const harness = new AssetManagerHarnessE2e(container);
 
     // Click Images Filter
-    await harness.setFilterType('image');
+    await harness.setFilterType("image");
     await page.waitForTimeout(100); // Give Angular a moment to settle state after click
 
     // Filter state checked visually
@@ -57,7 +72,9 @@ test.describe('Asset Manager Visuals', () => {
     // Wait for list to update
     // Counts and names checked visually
 
-    await expect(page).toHaveScreenshot('asset-manager-filtered-images.png', { maxDiffPixelRatio: 0.05 });
+    await expect(page).toHaveScreenshot("asset-manager-filtered-images.png", {
+      maxDiffPixelRatio: 0.05,
+    });
   });
 
   // Navigation test removed as it has no screenshot and is covered by unit tests

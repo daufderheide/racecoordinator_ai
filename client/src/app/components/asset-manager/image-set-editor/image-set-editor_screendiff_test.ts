@@ -1,49 +1,62 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { AssetManagerHarnessE2e } from "src/app/components/asset-manager/testing/asset-manager.harness.e2e";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { AssetManagerHarnessE2e } from 'src/app/components/asset-manager/testing/asset-manager.harness.e2e';
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { ImageSetEditorHarnessE2e } from "./testing/image-set-editor.harness.e2e";
 
-import { ImageSetEditorHarnessE2e } from './testing/image-set-editor.harness.e2e';
-
-test.describe('Image Set Editor Visuals', () => {
+test.describe("Image Set Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log(`BROWSER [${msg.type()}]: ${msg.text()}`));
-    page.on('pageerror', err => console.error(`BROWSER ERROR: ${err.message}`));
+    page.on("console", (msg) =>
+      console.log(`BROWSER [${msg.type()}]: ${msg.text()}`),
+    );
+    page.on("pageerror", (err) =>
+      console.error(`BROWSER ERROR: ${err.message}`),
+    );
 
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test('should display empty image set editor modal', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
+  test("should display empty image set editor modal", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
 
-    const container = page.locator('.am-container');
+    const container = page.locator(".am-container");
     const amHarness = new AssetManagerHarnessE2e(container);
 
     // Click "IMAGE SETS" filter
-    await amHarness.setFilterType('image_set');
+    await amHarness.setFilterType("image_set");
 
     // Click "New Image Set" button
-    await page.getByRole('button', { name: 'New Image Set' }).click();
+    await page.getByRole("button", { name: "New Image Set" }).click();
 
-    const modalHost = page.locator('app-image-set-editor');
+    const modalHost = page.locator("app-image-set-editor");
     const harness = new ImageSetEditorHarnessE2e(modalHost);
 
-    await expect(modalHost.locator('.modal-content')).toBeVisible();
+    await expect(modalHost.locator(".modal-content")).toBeVisible();
     // Title checked visually
 
-    await expect(modalHost.locator('.modal-content')).toHaveScreenshot('image-set-editor-new.png');
+    await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
+      "image-set-editor-new.png",
+    );
   });
 
-  test('should display image set editor with entries', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/asset-manager'));
+  test("should display image set editor with entries", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
 
-    const container = page.locator('.am-container');
+    const container = page.locator(".am-container");
     const amHarness = new AssetManagerHarnessE2e(container);
 
     // Wait for assets to load
-    await expect(page.locator('.asset-card')).toHaveCount(4);
+    await expect(page.locator(".asset-card")).toHaveCount(4);
 
     // Click edit on the 'Custom Dash' image set card
     // We can use a helper or just locator for now if harness doesn't support "click edit by name"
@@ -52,27 +65,33 @@ test.describe('Image Set Editor Visuals', () => {
     const count = await amHarness.getAssetCardsCount();
     let editIndex = -1;
     for (let i = 0; i < count; i++) {
-        if ((await amHarness.getAssetCardName(i)).includes('Custom Dash')) {
-            editIndex = i;
-            break;
-        }
+      if ((await amHarness.getAssetCardName(i)).includes("Custom Dash")) {
+        editIndex = i;
+        break;
+      }
     }
-    
-    expect(editIndex).toBeGreaterThan(-1);
-    
-    // Click edit icon inside the card
-    await page.locator('.asset-card').nth(editIndex).locator('.action-icon[title="Edit"]').click();
 
-    const modalHost = page.locator('app-image-set-editor');
+    expect(editIndex).toBeGreaterThan(-1);
+
+    // Click edit icon inside the card
+    await page
+      .locator(".asset-card")
+      .nth(editIndex)
+      .locator('.action-icon[title="Edit"]')
+      .click();
+
+    const modalHost = page.locator("app-image-set-editor");
     const harness = new ImageSetEditorHarnessE2e(modalHost);
 
-    await expect(modalHost.locator('.modal-content')).toBeVisible();
+    await expect(modalHost.locator(".modal-content")).toBeVisible();
     // Title checked visually
 
     // Custom Dash has 2 entries in setupAssetMocks
     // Entry count checked visually
     // expect(await harness.getEntryCount()).toBe(2); // Removed
 
-    await expect(modalHost.locator('.modal-content')).toHaveScreenshot('image-set-editor-edit.png');
+    await expect(modalHost.locator(".modal-content")).toHaveScreenshot(
+      "image-set-editor-edit.png",
+    );
   });
 });

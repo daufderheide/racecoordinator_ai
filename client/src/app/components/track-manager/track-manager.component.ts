@@ -1,17 +1,21 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-
-import { DataService } from 'src/app/data.service';
-import { Track } from 'src/app/models/track';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { DataService } from "src/app/data.service";
+import { Track } from "src/app/models/track";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-track-manager',
-  templateUrl: './track-manager.component.html',
-  styleUrls: ['./track-manager.component.css'],
-  standalone: false
+  selector: "app-track-manager",
+  templateUrl: "./track-manager.component.html",
+  styleUrls: ["./track-manager.component.css"],
+  standalone: false,
 })
 export class TrackManagerComponent implements OnInit {
   tracks: Track[] = [];
@@ -29,8 +33,8 @@ export class TrackManagerComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private helpService: HelpService,
-    private settingsService: SettingsService
-  ) { }
+    private settingsService: SettingsService,
+  ) {}
 
   toggleLaneSummary() {
     this.isLaneSummaryExpanded = !this.isLaneSummaryExpanded;
@@ -41,8 +45,8 @@ export class TrackManagerComponent implements OnInit {
     this.loadTracks();
 
     // Trigger help automatically on first visit or if requested via query param
-    this.route.queryParams.subscribe(params => {
-      const forceHelp = params['help'] === 'true';
+    this.route.queryParams.subscribe((params) => {
+      const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       if (forceHelp || !settings.trackManagerHelpShown) {
         setTimeout(() => {
@@ -59,51 +63,51 @@ export class TrackManagerComponent implements OnInit {
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: 'TM_HELP_WELCOME_TITLE',
-        content: 'TM_HELP_WELCOME_CONTENT',
-        position: 'center'
+        title: "TM_HELP_WELCOME_TITLE",
+        content: "TM_HELP_WELCOME_CONTENT",
+        position: "center",
       },
       {
-        selector: '.sidebar-list',
-        title: 'TM_HELP_SIDEBAR_TITLE',
-        content: 'TM_HELP_SIDEBAR_CONTENT',
-        position: 'right'
+        selector: ".sidebar-list",
+        title: "TM_HELP_SIDEBAR_TITLE",
+        content: "TM_HELP_SIDEBAR_CONTENT",
+        position: "right",
       },
       {
-        selector: '.detail-content',
-        title: 'TM_HELP_DETAIL_TITLE',
-        content: 'TM_HELP_DETAIL_CONTENT',
-        position: 'left'
+        selector: ".detail-content",
+        title: "TM_HELP_DETAIL_TITLE",
+        content: "TM_HELP_DETAIL_CONTENT",
+        position: "left",
       },
       {
-        selector: '#edit-track-btn',
-        title: 'TM_HELP_EDIT_TITLE',
-        content: 'TM_HELP_EDIT_CONTENT',
-        position: 'bottom'
+        selector: "#edit-track-btn",
+        title: "TM_HELP_EDIT_TITLE",
+        content: "TM_HELP_EDIT_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#add-item-btn',
-        title: 'TM_HELP_CREATE_TITLE',
-        content: 'TM_HELP_CREATE_CONTENT',
-        position: 'bottom'
+        selector: "#add-item-btn",
+        title: "TM_HELP_CREATE_TITLE",
+        content: "TM_HELP_CREATE_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#delete-track-btn',
-        title: 'TM_HELP_DELETE_TITLE',
-        content: 'TM_HELP_DELETE_CONTENT',
-        position: 'bottom'
+        selector: "#delete-track-btn",
+        title: "TM_HELP_DELETE_TITLE",
+        content: "TM_HELP_DELETE_CONTENT",
+        position: "bottom",
       },
       {
-        selector: '#help-track-btn',
-        title: 'TM_HELP_HELP_TITLE',
-        content: 'TM_HELP_HELP_CONTENT',
-        position: 'bottom'
-      }
+        selector: "#help-track-btn",
+        title: "TM_HELP_HELP_TITLE",
+        content: "TM_HELP_HELP_CONTENT",
+        position: "bottom",
+      },
     ];
     this.helpService.startGuide(steps);
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
@@ -124,15 +128,26 @@ export class TrackManagerComponent implements OnInit {
     this.isLoading = true;
     this.dataService.getTracks().subscribe({
       next: (data) => {
-        this.tracks = data.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.has_digital_fuel ?? false, t.arduino_configs));
+        this.tracks = data.map(
+          (t) =>
+            new Track(
+              t.entity_id,
+              t.name,
+              t.lanes || [],
+              t.has_digital_fuel ?? false,
+              t.arduino_configs,
+            ),
+        );
         if (this.tracks.length > 0) {
-          const queryId = this.route.snapshot.queryParamMap.get('selectedId');
+          const queryId = this.route.snapshot.queryParamMap.get("selectedId");
           if (queryId) {
-            const found = this.tracks.find(t => t.entity_id === queryId);
+            const found = this.tracks.find((t) => t.entity_id === queryId);
             this.selectedTrack = found || this.tracks[0];
           } else if (this.selectedTrack) {
             // Maintain existing selection
-            const found = this.tracks.find(t => t.entity_id === this.selectedTrack!.entity_id);
+            const found = this.tracks.find(
+              (t) => t.entity_id === this.selectedTrack!.entity_id,
+            );
             this.selectedTrack = found || this.tracks[0];
           } else {
             this.selectedTrack = this.tracks[0];
@@ -142,10 +157,10 @@ export class TrackManagerComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Failed to load tracks', err);
+        console.error("Failed to load tracks", err);
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -155,7 +170,9 @@ export class TrackManagerComponent implements OnInit {
 
   editTrack() {
     if (!this.selectedTrack) return;
-    this.router.navigate(['/track-editor'], { queryParams: { id: this.selectedTrack.entity_id } });
+    this.router.navigate(["/track-editor"], {
+      queryParams: { id: this.selectedTrack.entity_id },
+    });
   }
 
   createNewTrack() {
@@ -164,43 +181,51 @@ export class TrackManagerComponent implements OnInit {
 
     this.dataService.getTrackFactorySettings().subscribe({
       next: (factoryTrack) => {
-        const baseName = this.translationService.translate('TM_DEFAULT_TRACK_NAME');
+        const baseName = this.translationService.translate(
+          "TM_DEFAULT_TRACK_NAME",
+        );
         const uniqueName = this.generateUniqueName(baseName);
 
         const newTrack = {
           ...factoryTrack,
           name: uniqueName,
-          entity_id: 'new'
+          entity_id: "new",
         };
 
         this.dataService.createTrack(newTrack).subscribe({
           next: (createdTrack) => {
             this.isSaving = false;
-            this.router.navigate(['/track-editor'], { queryParams: { id: createdTrack.entity_id } });
+            this.router.navigate(["/track-editor"], {
+              queryParams: { id: createdTrack.entity_id },
+            });
           },
           error: (err) => {
-            console.error('Failed to create new track', err);
+            console.error("Failed to create new track", err);
             this.isSaving = false;
-          }
+          },
         });
       },
       error: (err) => {
-        console.error('Failed to get factory settings', err);
+        console.error("Failed to get factory settings", err);
         this.isSaving = false;
-      }
+      },
     });
   }
 
   private generateUniqueName(baseName: string): string {
     let name = baseName;
-    if (!this.tracks.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+    if (!this.tracks.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
       return name;
     }
 
     let counter = 1;
     while (true) {
       const candidate = `${baseName}_${counter}`;
-      if (!this.tracks.some(t => t.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.tracks.some(
+          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -223,9 +248,9 @@ export class TrackManagerComponent implements OnInit {
         this.loadTracks();
       },
       error: (err) => {
-        console.error('Failed to delete track', err);
+        console.error("Failed to delete track", err);
         this.isSaving = false;
-      }
+      },
     });
   }
 
@@ -234,8 +259,6 @@ export class TrackManagerComponent implements OnInit {
   }
 
   onBack() {
-    this.router.navigate(['/raceday-setup']);
+    this.router.navigate(["/raceday-setup"]);
   }
-
-
 }

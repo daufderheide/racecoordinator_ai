@@ -1,18 +1,17 @@
-import { Pipe, PipeTransform } from '@angular/core';
-
-import { DataService } from 'src/app/data.service';
+import { Pipe, PipeTransform } from "@angular/core";
+import { DataService } from "src/app/data.service";
 
 @Pipe({
-  name: 'avatarUrl',
+  name: "avatarUrl",
   pure: true,
-  standalone: false
+  standalone: false,
 })
 export class AvatarUrlPipe implements PipeTransform {
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService) {}
 
   transform(url?: string): string {
-    if (!url) return 'assets/images/default_avatar.svg';
-    if (url.startsWith('/')) return `${this.dataService.serverUrl}${url}`;
+    if (!url) return "assets/images/default_avatar.svg";
+    if (url.startsWith("/")) return `${this.dataService.serverUrl}${url}`;
     return url;
   }
 }

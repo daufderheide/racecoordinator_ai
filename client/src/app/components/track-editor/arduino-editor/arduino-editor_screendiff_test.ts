@@ -1,16 +1,18 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
-
-import { ArduinoEditorHarnessE2e } from './testing/arduino-editor.harness.e2e';
+import { ArduinoEditorHarnessE2e } from "./testing/arduino-editor.harness.e2e";
 
 async function waitForBoardImage(page: any, root: any) {
-  const boardImg = root.locator('.board-image');
-  if (await boardImg.count() > 0) {
+  const boardImg = root.locator(".board-image");
+  if ((await boardImg.count()) > 0) {
     await boardImg.evaluate((img: any) => {
       return new Promise((resolve) => {
         const check = () => {
-          if ((img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0) {
+          if (
+            (img as HTMLImageElement).complete &&
+            (img as HTMLImageElement).naturalWidth > 0
+          ) {
             resolve(true);
           } else {
             setTimeout(check, 50);
@@ -24,16 +26,22 @@ async function waitForBoardImage(page: any, root: any) {
   }
 }
 
-test.describe('Arduino Editor Component Visuals', () => {
+test.describe("Arduino Editor Component Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test('should display editor with pin grid and assignments', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
+  test("should display editor with pin grid and assignments", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
 
-    const editor = page.locator('app-arduino-editor');
+    const editor = page.locator("app-arduino-editor");
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
@@ -43,221 +51,118 @@ test.describe('Arduino Editor Component Visuals', () => {
 
     // Board type checked visually
     // Take snapshot of the editor area
-    await expect(page).toHaveScreenshot('arduino-editor-component.png', { maxDiffPixels: 200, threshold: 0.2 });
+    await expect(page).toHaveScreenshot("arduino-editor-component.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
   });
 
-  test('should display reserved and unused pins correctly', async ({ page }) => {
-    await page.route('**/api/tracks', async (route) => {
+  test("should display reserved and unused pins correctly", async ({
+    page,
+  }) => {
+    await page.route("**/api/tracks", async (route) => {
       const tracks = [
         {
-          entity_id: 't-mix',
-          name: 'Mixed Pins',
-          lanes: [{ entity_id: 'l1', length: 10, backgroundColor: '#fff', foregroundColor: '#000' }],
-          arduino_configs: [{
-            name: 'Arduino Mix',
-            commPort: 'COM1',
-            baudRate: 115200,
-            debounceUs: 5000,
-            hardwareType: 0, // Uno
-            digitalIds: [0, 1, 2, 3], // Unused, Reserved, Call Button (Master), Relay (Master)
-            analogIds: [-1, -1, -1, -1],
-            normallyClosedLaneSensors: false,
-            normallyClosedRelays: true,
-            globalInvertLights: 0,
-            useLapsForPits: 0,
-            useLapsForPitEnd: 0,
-            usePitsAsLaps: false,
-            useLapsForSegments: true,
-            ledStrings: null,
-            ledLaneColorOverrides: null,
-            lapPinPitBehavior: 3
-          }]
-        }
+          entity_id: "t-mix",
+          name: "Mixed Pins",
+          lanes: [
+            {
+              entity_id: "l1",
+              length: 10,
+              backgroundColor: "#fff",
+              foregroundColor: "#000",
+            },
+          ],
+          arduino_configs: [
+            {
+              name: "Arduino Mix",
+              commPort: "COM1",
+              baudRate: 115200,
+              debounceUs: 5000,
+              hardwareType: 0, // Uno
+              digitalIds: [0, 1, 2, 3], // Unused, Reserved, Call Button (Master), Relay (Master)
+              analogIds: [-1, -1, -1, -1],
+              normallyClosedLaneSensors: false,
+              normallyClosedRelays: true,
+              globalInvertLights: 0,
+              useLapsForPits: 0,
+              useLapsForPitEnd: 0,
+              usePitsAsLaps: false,
+              useLapsForSegments: true,
+              ledStrings: null,
+              ledLaneColorOverrides: null,
+              lapPinPitBehavior: 3,
+            },
+          ],
+        },
       ];
 
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify(tracks),
       });
     });
 
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t-mix'));
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t-mix"),
+    );
 
-    const editor = page.locator('app-arduino-editor');
+    const editor = page.locator("app-arduino-editor");
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 
     // Pin actions checked visually
 
-    await expect(page).toHaveScreenshot('arduino-editor-mixed-pins.png');
+    await expect(page).toHaveScreenshot("arduino-editor-mixed-pins.png");
   });
 });
 
 const VOLTAGE_BASE = 7000;
 
-test.describe('Arduino Editor Voltage Divider Config Visuals', () => {
+test.describe("Arduino Editor Voltage Divider Config Visuals", () => {
   const voltageTrack = {
-    entity_id: 't-voltage',
-    name: 'Voltage Track',
+    entity_id: "t-voltage",
+    name: "Voltage Track",
     lanes: [
-      { entity_id: 'l1', length: 12.5, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
-      { entity_id: 'l2', length: 12.5, backgroundColor: '#0000ff', foregroundColor: '#ffffff' },
-      { entity_id: 'l3', length: 12.5, backgroundColor: '#00ff00', foregroundColor: '#ffffff' },
+      {
+        entity_id: "l1",
+        length: 12.5,
+        backgroundColor: "#ff0000",
+        foregroundColor: "#ffffff",
+      },
+      {
+        entity_id: "l2",
+        length: 12.5,
+        backgroundColor: "#0000ff",
+        foregroundColor: "#ffffff",
+      },
+      {
+        entity_id: "l3",
+        length: 12.5,
+        backgroundColor: "#00ff00",
+        foregroundColor: "#ffffff",
+      },
     ],
-    arduino_configs: [{
-      name: 'Voltage Arduino',
-      commPort: 'COM5',
-      baudRate: 115200,
-      debounceUs: 5000,
-      hardwareType: 0,
-      digitalIds: [-1, -1, -1, -1],
-      analogIds: [
-        VOLTAGE_BASE,
-        VOLTAGE_BASE + 1,
-        VOLTAGE_BASE + 2,
-        -1, -1, -1
-      ],
-      normallyClosedLaneSensors: false,
-      normallyClosedRelays: true,
-      globalInvertLights: 0,
-      useLapsForPits: 0,
-      useLapsForPitEnd: 0,
-      usePitsAsLaps: false,
-      useLapsForSegments: true,
-      ledStrings: null,
-      ledLaneColorOverrides: null,
-      lapPinPitBehavior: 3,
-      voltageConfigs: { 0: 900, 1: 1023, 2: 1023 }
-    }]
-  };
-
-  test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.disableAnimations(page);
-
-    await page.route('**/api/tracks', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([voltageTrack]),
-      });
-    });
-  });
-
-  test('should display voltage divider configuration section with lanes independent', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t-voltage'));
-
-    const editor = page.locator('app-arduino-editor');
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    await expect(editor).toBeVisible();
-
-    if (!(await harness.isSectionExpanded('voltage'))) {
-      await harness.toggleSection('voltage');
-    }
-
-    // Linked state checked visually
-
-    await expect(editor.locator('.voltage-config-section')).toHaveScreenshot('voltage-config-lanes-independent.png');
-  });
-
-  test('should display linked state for all voltage lanes', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t-voltage'));
-
-    const editor = page.locator('app-arduino-editor');
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    await expect(editor).toBeVisible();
-
-    if (!(await harness.isSectionExpanded('voltage'))) {
-      await harness.toggleSection('voltage');
-    }
-
-    await harness.clickVoltageLink(0);
-    // Linked state checked visually
-
-    await expect(editor.locator('.voltage-config-section')).toHaveScreenshot('voltage-config-lanes-linked.png');
-  });
-});
-
-test.describe('Arduino Editor Section Expander States', () => {
-  test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.disableAnimations(page);
-  });
-
-  async function openEditor(page: any) {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t1'));
-    const editor = page.locator('app-arduino-editor');
-    await expect(editor).toBeVisible();
-    await waitForBoardImage(page, editor);
-    return editor;
-  }
-
-  test('should show all sections expanded by default', async ({ page }) => {
-    const editor = await openEditor(page);
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    // Section expansion checked visually
-
-    await expect(editor).toHaveScreenshot('arduino-editor-all-expanded.png', { maxDiffPixelRatio: 0.05 });
-  });
-
-  test('should collapse main section when header is clicked', async ({ page }) => {
-    const editor = await openEditor(page);
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    await harness.toggleSection('main');
-    await page.waitForTimeout(600);
-    // Expansion state checked visually
-
-    await expect(editor).toHaveScreenshot('arduino-editor-main-collapsed.png', { maxDiffPixelRatio: 0.05 });
-  });
-
-  test('should collapse digital pins section when header is clicked', async ({ page }) => {
-    const editor = await openEditor(page);
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    await harness.toggleSection('digital');
-    await page.waitForTimeout(600);
-    // Expansion state checked visually
-
-    await expect(editor).toHaveScreenshot('arduino-editor-digital-collapsed.png', { maxDiffPixelRatio: 0.05 });
-  });
-
-  test('should collapse analog pins section when header is clicked', async ({ page }) => {
-    const editor = await openEditor(page);
-    const harness = new ArduinoEditorHarnessE2e(editor);
-
-    await harness.toggleSection('analog');
-    await page.waitForTimeout(600);
-    // Expansion state checked visually
-
-    await expect(editor).toHaveScreenshot('arduino-editor-analog-collapsed.png', { maxDiffPixelRatio: 0.05 });
-  });
-});
-
-test.describe('Arduino Editor RGB LED Visuals', () => {
-  test.setTimeout(300000); // 300s for extra heavy interaction/rendering in this environment
-
-  test('should display RGB LED configuration with one LED string added', async ({ page }) => {
-    const ledTrack = {
-      entity_id: 't-leds',
-      name: 'LED Track',
-      lanes: [
-        { entity_id: 'l1', length: 10, backgroundColor: '#ff0000', foregroundColor: '#ffffff' },
-        { entity_id: 'l2', length: 10, backgroundColor: '#00ff00', foregroundColor: '#000000' }
-      ],
-      arduino_configs: [{
-        name: 'LED Arduino',
-        commPort: 'COM9',
+    arduino_configs: [
+      {
+        name: "Voltage Arduino",
+        commPort: "COM5",
         baudRate: 115200,
         debounceUs: 5000,
         hardwareType: 0,
-        digitalIds: new Array(14).fill(-1),
-        analogIds: new Array(6).fill(-1),
+        digitalIds: [-1, -1, -1, -1],
+        analogIds: [
+          VOLTAGE_BASE,
+          VOLTAGE_BASE + 1,
+          VOLTAGE_BASE + 2,
+          -1,
+          -1,
+          -1,
+        ],
         normallyClosedLaneSensors: false,
         normallyClosedRelays: true,
         globalInvertLights: 0,
@@ -265,52 +170,248 @@ test.describe('Arduino Editor RGB LED Visuals', () => {
         useLapsForPitEnd: 0,
         usePitsAsLaps: false,
         useLapsForSegments: true,
+        ledStrings: null,
+        ledLaneColorOverrides: null,
         lapPinPitBehavior: 3,
-        ledStrings: [
-          {
-            stringNum: 0,
-            leds: new Array(10).fill(100), // 100 = some behavior code
-            numUsedLeds: 10,
-            addressableLeds: 10,
-            brightness: 255,
-            yellowFlagFlashRate: 5,
-            ledLaneColorOverrides: ['#ff0000', '#00ff00']
-          }
-        ]
-      }]
+        voltageConfigs: { 0: 900, 1: 1023, 2: 1023 },
+      },
+    ],
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+
+    await page.route("**/api/tracks", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([voltageTrack]),
+      });
+    });
+  });
+
+  test("should display voltage divider configuration section with lanes independent", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t-voltage"),
+    );
+
+    const editor = page.locator("app-arduino-editor");
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await expect(editor).toBeVisible();
+
+    if (!(await harness.isSectionExpanded("voltage"))) {
+      await harness.toggleSection("voltage");
+    }
+
+    // Linked state checked visually
+
+    await expect(editor.locator(".voltage-config-section")).toHaveScreenshot(
+      "voltage-config-lanes-independent.png",
+    );
+  });
+
+  test("should display linked state for all voltage lanes", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t-voltage"),
+    );
+
+    const editor = page.locator("app-arduino-editor");
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await expect(editor).toBeVisible();
+
+    if (!(await harness.isSectionExpanded("voltage"))) {
+      await harness.toggleSection("voltage");
+    }
+
+    await harness.clickVoltageLink(0);
+    // Linked state checked visually
+
+    await expect(editor.locator(".voltage-config-section")).toHaveScreenshot(
+      "voltage-config-lanes-linked.png",
+    );
+  });
+});
+
+test.describe("Arduino Editor Section Expander States", () => {
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+  });
+
+  async function openEditor(page: any) {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+    const editor = page.locator("app-arduino-editor");
+    await expect(editor).toBeVisible();
+    await waitForBoardImage(page, editor);
+    return editor;
+  }
+
+  test("should show all sections expanded by default", async ({ page }) => {
+    const editor = await openEditor(page);
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    // Section expansion checked visually
+
+    await expect(editor).toHaveScreenshot("arduino-editor-all-expanded.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should collapse main section when header is clicked", async ({
+    page,
+  }) => {
+    const editor = await openEditor(page);
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await harness.toggleSection("main");
+    await page.waitForTimeout(600);
+    // Expansion state checked visually
+
+    await expect(editor).toHaveScreenshot("arduino-editor-main-collapsed.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should collapse digital pins section when header is clicked", async ({
+    page,
+  }) => {
+    const editor = await openEditor(page);
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await harness.toggleSection("digital");
+    await page.waitForTimeout(600);
+    // Expansion state checked visually
+
+    await expect(editor).toHaveScreenshot(
+      "arduino-editor-digital-collapsed.png",
+      { maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should collapse analog pins section when header is clicked", async ({
+    page,
+  }) => {
+    const editor = await openEditor(page);
+    const harness = new ArduinoEditorHarnessE2e(editor);
+
+    await harness.toggleSection("analog");
+    await page.waitForTimeout(600);
+    // Expansion state checked visually
+
+    await expect(editor).toHaveScreenshot(
+      "arduino-editor-analog-collapsed.png",
+      { maxDiffPixelRatio: 0.05 },
+    );
+  });
+});
+
+test.describe("Arduino Editor RGB LED Visuals", () => {
+  test.setTimeout(300000); // 300s for extra heavy interaction/rendering in this environment
+
+  test("should display RGB LED configuration with one LED string added", async ({
+    page,
+  }) => {
+    const ledTrack = {
+      entity_id: "t-leds",
+      name: "LED Track",
+      lanes: [
+        {
+          entity_id: "l1",
+          length: 10,
+          backgroundColor: "#ff0000",
+          foregroundColor: "#ffffff",
+        },
+        {
+          entity_id: "l2",
+          length: 10,
+          backgroundColor: "#00ff00",
+          foregroundColor: "#000000",
+        },
+      ],
+      arduino_configs: [
+        {
+          name: "LED Arduino",
+          commPort: "COM9",
+          baudRate: 115200,
+          debounceUs: 5000,
+          hardwareType: 0,
+          digitalIds: new Array(14).fill(-1),
+          analogIds: new Array(6).fill(-1),
+          normallyClosedLaneSensors: false,
+          normallyClosedRelays: true,
+          globalInvertLights: 0,
+          useLapsForPits: 0,
+          useLapsForPitEnd: 0,
+          usePitsAsLaps: false,
+          useLapsForSegments: true,
+          lapPinPitBehavior: 3,
+          ledStrings: [
+            {
+              stringNum: 0,
+              leds: new Array(10).fill(100), // 100 = some behavior code
+              numUsedLeds: 10,
+              addressableLeds: 10,
+              brightness: 255,
+              yellowFlagFlashRate: 5,
+              ledLaneColorOverrides: ["#ff0000", "#00ff00"],
+            },
+          ],
+        },
+      ],
     };
 
     await TestSetupHelper.setupStandardMocks(page);
-    await page.route('**/api/tracks', async (route) => {
+    await page.route("**/api/tracks", async (route) => {
       await route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify([ledTrack]),
       });
     });
 
     await TestSetupHelper.disableAnimations(page);
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/track-editor?id=t-leds'));
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t-leds"),
+    );
 
-    const editor = page.locator('app-arduino-editor');
+    const editor = page.locator("app-arduino-editor");
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
 
     // Expand the LED Configuration section
-    if (!(await harness.isSectionExpanded('leds'))) {
-      await harness.toggleSection('leds');
+    if (!(await harness.isSectionExpanded("leds"))) {
+      await harness.toggleSection("leds");
     }
 
-    const ledSection = editor.locator('.led-config-section');
-    const ledStringsList = ledSection.locator('.led-strings-list');
-    
+    const ledSection = editor.locator(".led-config-section");
+    const ledStringsList = ledSection.locator(".led-strings-list");
+
     // Ensure the string is rendered and shows 10 LED items
-    await expect(ledStringsList.locator('.led-string-item')).toBeVisible();
-    const ledsGrid = ledStringsList.locator('.leds-grid');
-    await expect(ledsGrid.locator('.led-item')).toHaveCount(10);
+    await expect(ledStringsList.locator(".led-string-item")).toBeVisible();
+    const ledsGrid = ledStringsList.locator(".leds-grid");
+    await expect(ledsGrid.locator(".led-item")).toHaveCount(10);
 
     // Take screenshot of the LED section specifically
-    await expect(ledSection).toHaveScreenshot('arduino-editor-led-config-expanded.png');
+    await expect(ledSection).toHaveScreenshot(
+      "arduino-editor-led-config-expanded.png",
+    );
   });
 });

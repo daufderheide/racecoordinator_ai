@@ -1,10 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { ImageSelectorHarnessE2e } from "./testing/image-selector.harness.e2e";
 
-import { ImageSelectorHarnessE2e } from './testing/image-selector.harness.e2e';
-
-test.describe('Image Selector Visuals', () => {
+test.describe("Image Selector Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
@@ -13,28 +12,36 @@ test.describe('Image Selector Visuals', () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test('should display image selector in driver editor', async ({ page }) => {
+  test("should display image selector in driver editor", async ({ page }) => {
     // Navigate to Driver Editor which uses Image Selector
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
-    await page.locator('.page-container').waitFor();
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
 
-    const imageSelector = page.locator('app-image-selector').first();
+    const imageSelector = page.locator("app-image-selector").first();
     await expect(imageSelector).toBeVisible();
 
     // Screenshot the component
-    await expect(imageSelector).toHaveScreenshot('image-selector-default.png');
+    await expect(imageSelector).toHaveScreenshot("image-selector-default.png");
   });
 
-  test('should show dragging state', async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(page, 'en', page.goto('/driver-editor?id=d1'));
+  test("should show dragging state", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
 
-    const imageSelector = page.locator('app-image-selector').first();
+    const imageSelector = page.locator("app-image-selector").first();
     const harness = new ImageSelectorHarnessE2e(imageSelector);
 
     // Trigger dragover to show dragging state
     await harness.simulateDragOver();
 
     expect(await harness.hasDraggingState()).toBe(true);
-    await expect(imageSelector).toHaveScreenshot('image-selector-dragging.png');
+    await expect(imageSelector).toHaveScreenshot("image-selector-dragging.png");
   });
 });

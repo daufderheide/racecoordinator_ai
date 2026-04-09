@@ -1,13 +1,21 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { Subscription } from 'rxjs';
-
-import { HelpService, GuideStep } from 'src/app/services/help.service';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from "@angular/core";
+import { Subscription } from "rxjs";
+import { GuideStep, HelpService } from "src/app/services/help.service";
 
 @Component({
-  selector: 'app-help-overlay',
-  templateUrl: './help-overlay.component.html',
-  styleUrls: ['./help-overlay.component.css'],
-  standalone: false
+  selector: "app-help-overlay",
+  templateUrl: "./help-overlay.component.html",
+  styleUrls: ["./help-overlay.component.css"],
+  standalone: false,
 })
 export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   isVisible = false;
@@ -17,7 +25,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   highlightStyle: any = null;
   popoverStyle: any = {};
-  popoverClass: string = '';
+  popoverClass: string = "";
 
   private subscriptions: Subscription = new Subscription();
 
@@ -29,29 +37,37 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     public helpService: HelpService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit() {
-    document.addEventListener('scroll', this.scrollListener, true);
+    document.addEventListener("scroll", this.scrollListener, true);
 
-    this.subscriptions.add(this.helpService.isVisible$.subscribe(visible => {
-      this.isVisible = visible;
-      this.updatePosition();
-    }));
+    this.subscriptions.add(
+      this.helpService.isVisible$.subscribe((visible) => {
+        this.isVisible = visible;
+        this.updatePosition();
+      }),
+    );
 
-    this.subscriptions.add(this.helpService.currentStep$.subscribe(step => {
-      this.currentStep = step;
-      this.updatePosition();
-    }));
+    this.subscriptions.add(
+      this.helpService.currentStep$.subscribe((step) => {
+        this.currentStep = step;
+        this.updatePosition();
+      }),
+    );
 
-    this.subscriptions.add(this.helpService.hasNext$.subscribe(hasNext => {
-      this.hasNext = hasNext;
-    }));
+    this.subscriptions.add(
+      this.helpService.hasNext$.subscribe((hasNext) => {
+        this.hasNext = hasNext;
+      }),
+    );
 
-    this.subscriptions.add(this.helpService.hasPrevious$.subscribe(hasPrev => {
-      this.hasPrevious = hasPrev;
-    }));
+    this.subscriptions.add(
+      this.helpService.hasPrevious$.subscribe((hasPrev) => {
+        this.hasPrevious = hasPrev;
+      }),
+    );
   }
 
   ngAfterViewInit() {
@@ -59,12 +75,12 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
-    document.removeEventListener('scroll', this.scrollListener, true);
+    document.removeEventListener("scroll", this.scrollListener, true);
     this.subscriptions.unsubscribe();
   }
 
-  @HostListener('window:resize')
-  @HostListener('window:scroll')
+  @HostListener("window:resize")
+  @HostListener("window:scroll")
   onResize() {
     if (this.isVisible) {
       this.updatePosition();
@@ -83,7 +99,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     this.helpService.endGuide();
   }
 
-  @ViewChild('popoverRef') popoverRef!: ElementRef;
+  @ViewChild("popoverRef") popoverRef!: ElementRef;
 
   private updatePosition() {
     if (!this.isVisible || !this.currentStep) {
@@ -103,8 +119,8 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (el) {
       // Ensure element is visible
-      el.scrollIntoView({ behavior: 'auto', block: 'center' });
-      
+      el.scrollIntoView({ behavior: "auto", block: "center" });
+
       const timer = setTimeout(() => {
         const rect = el!.getBoundingClientRect();
         // Ensure we measure after the current layout cycle
@@ -126,14 +142,14 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isVisible || !this.currentStep || !el) return;
 
     this.highlightStyle = {
-      top: Math.round(rect.top) + 'px',
-      left: Math.round(rect.left) + 'px',
-      width: Math.round(rect.width) + 'px',
-      height: Math.round(rect.height) + 'px',
-      position: 'fixed',
+      top: Math.round(rect.top) + "px",
+      left: Math.round(rect.left) + "px",
+      width: Math.round(rect.width) + "px",
+      height: Math.round(rect.height) + "px",
+      position: "fixed",
       zIndex: 10001, // Above overlay
-      boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)', // The 'hole' effect
-      pointerEvents: 'none' // Allow clicks through if needed
+      boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)", // The 'hole' effect
+      pointerEvents: "none", // Allow clicks through if needed
     };
 
     // Get actual popover dimensions
@@ -155,21 +171,21 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     switch (position) {
       case "right":
-        top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+        top = rect.top + rect.height / 2 - popoverHeight / 2;
         left = rect.right + margin;
         break;
       case "left":
-        top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+        top = rect.top + rect.height / 2 - popoverHeight / 2;
         left = rect.left - popoverWidth - margin;
         break;
       case "top":
         top = rect.top - popoverHeight - margin;
-        left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+        left = rect.left + rect.width / 2 - popoverWidth / 2;
         break;
       case "bottom":
       default:
         top = rect.bottom + margin;
-        left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+        left = rect.left + rect.width / 2 - popoverWidth / 2;
         break;
     }
 
@@ -189,7 +205,11 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Check Bottom edge
     if (top + estimatedHeight > windowHeight) {
-      if (position === 'bottom' || position === 'right' || position === 'left') {
+      if (
+        position === "bottom" ||
+        position === "right" ||
+        position === "left"
+      ) {
         if (rect.top - estimatedHeight - margin > 0) {
           top = rect.top - estimatedHeight - margin;
         } else {
@@ -205,7 +225,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Check Right edge
     if (left + popoverWidth > windowWidth) {
-      if (position === 'right') {
+      if (position === "right") {
         if (rect.left - popoverWidth - margin > 0) {
           left = rect.left - popoverWidth - margin;
         } else {
@@ -229,7 +249,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     this.popoverStyle = {
       top: top + "px",
       left: left + "px",
-      position: "fixed"
+      position: "fixed",
     };
 
     this.cdr.detectChanges();
@@ -237,12 +257,12 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private centerPopover() {
     this.highlightStyle = null; // Full overlay
-    this.popoverClass = '';
+    this.popoverClass = "";
     this.popoverStyle = {
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      position: 'fixed'
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      position: "fixed",
     };
   }
 }

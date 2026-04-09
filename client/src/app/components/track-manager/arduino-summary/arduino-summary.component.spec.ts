@@ -1,14 +1,13 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ArduinoConfig } from "src/app/models/track";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { com } from "src/app/proto/message";
+import { TranslationService } from "src/app/services/translation.service";
+import { TranslationServiceMock } from "src/app/testing/translation-service.mock";
 
-import { ArduinoConfig } from 'src/app/models/track';
-import { TranslatePipe } from 'src/app/pipes/translate.pipe';
-import { com } from 'src/app/proto/message';
-import { TranslationService } from 'src/app/services/translation.service';
-import { TranslationServiceMock } from 'src/app/testing/translation-service.mock';
+import { ArduinoSummaryComponent } from "./arduino-summary.component";
 
-import { ArduinoSummaryComponent } from './arduino-summary.component';
-
-describe('ArduinoSummaryComponent', () => {
+describe("ArduinoSummaryComponent", () => {
   let component: ArduinoSummaryComponent;
   let fixture: ComponentFixture<ArduinoSummaryComponent>;
   let translationService: TranslationServiceMock;
@@ -19,109 +18,128 @@ describe('ArduinoSummaryComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [ArduinoSummaryComponent, TranslatePipe],
       providers: [
-        { provide: TranslationService, useValue: translationService }
-      ]
-    })
-      .compileComponents();
+        { provide: TranslationService, useValue: translationService },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ArduinoSummaryComponent);
     component = fixture.componentInstance;
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  describe('getBoardName', () => {
-    it('should return empty string if no track', () => {
+  describe("getBoardName", () => {
+    it("should return empty string if no track", () => {
       component.config = undefined;
-      expect(component.getBoardName()).toBe('');
+      expect(component.getBoardName()).toBe("");
     });
 
-    it('should return AS_BOARD_MEGA for hardware type 1', () => {
-      const config: Partial<ArduinoConfig> = { hardwareType: 1, lapPinPitBehavior: 3 };
+    it("should return AS_BOARD_MEGA for hardware type 1", () => {
+      const config: Partial<ArduinoConfig> = {
+        hardwareType: 1,
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
-      expect(component.getBoardName()).toBe('AS_BOARD_MEGA');
+      expect(component.getBoardName()).toBe("AS_BOARD_MEGA");
     });
 
-    it('should return AS_BOARD_UNO for hardware type 0', () => {
-      const config: Partial<ArduinoConfig> = { hardwareType: 0, lapPinPitBehavior: 3 };
+    it("should return AS_BOARD_UNO for hardware type 0", () => {
+      const config: Partial<ArduinoConfig> = {
+        hardwareType: 0,
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
-      expect(component.getBoardName()).toBe('AS_BOARD_UNO');
+      expect(component.getBoardName()).toBe("AS_BOARD_UNO");
     });
   });
 
-  describe('getConfiguredPinCount', () => {
-    it('should return 0 if no config', () => {
+  describe("getConfiguredPinCount", () => {
+    it("should return 0 if no config", () => {
       component.config = undefined;
       expect(component.getConfiguredPinCount()).toBe(0);
     });
 
-    it('should count configured pins excluding unused and reserved', () => {
+    it("should count configured pins excluding unused and reserved", () => {
       const digitalIds = [
         com.antigravity.PinBehavior.BEHAVIOR_UNUSED, // 0
         com.antigravity.PinBehavior.BEHAVIOR_RESERVED, // 1
         com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON, // 2 (Counted)
         -1, // Not counted
-        1000 // Counted
+        1000, // Counted
       ];
       const analogIds = [
         com.antigravity.PinBehavior.BEHAVIOR_UNUSED, // 0
-        2000 // Counted
+        2000, // Counted
       ];
 
-      const config: Partial<ArduinoConfig> = { digitalIds, analogIds, lapPinPitBehavior: 3 };
+      const config: Partial<ArduinoConfig> = {
+        digitalIds,
+        analogIds,
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
       expect(component.getConfiguredPinCount()).toBe(3);
     });
   });
 
-  describe('hasBehavior', () => {
-    it('should detect laps', () => {
+  describe("hasBehavior", () => {
+    it("should detect laps", () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_LAP_BASE]; // 1000
-      const config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
+      const config: Partial<ArduinoConfig> = {
+        digitalIds,
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('lap')).toBeTrue();
+      expect(component.hasBehavior("lap")).toBeTrue();
     });
 
-    it('should detect segments', () => {
+    it("should detect segments", () => {
       const digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_SEGMENT_BASE]; // 2000
-      const config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
+      const config: Partial<ArduinoConfig> = {
+        digitalIds,
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('segment')).toBeTrue();
+      expect(component.hasBehavior("segment")).toBeTrue();
     });
 
-    it('should detect call buttons', () => {
+    it("should detect call buttons", () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON]; // 2
       let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('call')).toBeTrue();
+      expect(component.hasBehavior("call")).toBeTrue();
 
       digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE]; // 3000
       config = { digitalIds };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('call')).toBeTrue();
+      expect(component.hasBehavior("call")).toBeTrue();
     });
 
-    it('should detect relays', () => {
+    it("should detect relays", () => {
       let digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY]; // 3
       let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('relay')).toBeTrue();
+      expect(component.hasBehavior("relay")).toBeTrue();
 
       digitalIds = [com.antigravity.PinBehavior.BEHAVIOR_RELAY_BASE]; // 4000
       config = { digitalIds };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('relay')).toBeTrue();
+      expect(component.hasBehavior("relay")).toBeTrue();
     });
 
-    it('should return false if behavior absent', () => {
-      const config: Partial<ArduinoConfig> = { digitalIds: [], analogIds: [], lapPinPitBehavior: 3 };
+    it("should return false if behavior absent", () => {
+      const config: Partial<ArduinoConfig> = {
+        digitalIds: [],
+        analogIds: [],
+        lapPinPitBehavior: 3,
+      };
       component.config = config as ArduinoConfig;
-      expect(component.hasBehavior('lap')).toBeFalse();
-      expect(component.hasBehavior('segment')).toBeFalse();
-      expect(component.hasBehavior('call')).toBeFalse();
-      expect(component.hasBehavior('relay')).toBeFalse();
+      expect(component.hasBehavior("lap")).toBeFalse();
+      expect(component.hasBehavior("segment")).toBeFalse();
+      expect(component.hasBehavior("call")).toBeFalse();
+      expect(component.hasBehavior("relay")).toBeFalse();
     });
   });
 });

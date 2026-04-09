@@ -1,27 +1,37 @@
-import { DragDropModule, CdkDropList, CdkDrag, CdkDragPreview } from '@angular/cdk/drag-drop';
-import { ScrollingModule } from '@angular/cdk/scrolling';
-import { CommonModule, NgIf, NgFor, NgClass, NgStyle, DecimalPipe } from '@angular/common';
-import { Injectable, Type, Component } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-import { SharedModule } from 'src/app/components/shared/shared.module';
+import {
+  CdkDrag,
+  CdkDragPreview,
+  CdkDropList,
+  DragDropModule,
+} from "@angular/cdk/drag-drop";
+import { ScrollingModule } from "@angular/cdk/scrolling";
+import {
+  CommonModule,
+  DecimalPipe,
+  NgClass,
+  NgFor,
+  NgIf,
+  NgStyle,
+} from "@angular/common";
+import { Component, Injectable, Type } from "@angular/core";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { SharedModule } from "src/app/components/shared/shared.module";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class DynamicComponentService {
-
-  constructor() { }
+  constructor() {}
 
   createDynamicComponent(
     baseClass: Type<any>,
     html: string,
     css: string,
-    tsCode: string
+    tsCode: string,
   ): Type<any> {
-    // If tsCode is provided, we nominally support transpiling it, 
-    // but without a sophisticated loader, we can't easily inject user logic 
-    // that imports other modules. 
+    // If tsCode is provided, we nominally support transpiling it,
+    // but without a sophisticated loader, we can't easily inject user logic
+    // that imports other modules.
     // For now, we follow the pattern of creating a class that extends the base class.
 
     // Future improvement: If we want to support actual TS logic execution:
@@ -33,7 +43,7 @@ export class DynamicComponentService {
     // and apply the template/styles.
 
     // Create a named class to help with debugging
-    const DynamicComponent = class extends baseClass { };
+    const DynamicComponent = class extends baseClass {};
 
     return Component({
       template: html,
@@ -53,9 +63,9 @@ export class DynamicComponentService {
         CdkDragPreview,
         ScrollingModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
         // Add other common modules here as needed for future compatibility
-      ]
+      ],
     })(DynamicComponent);
   }
 }

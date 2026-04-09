@@ -1,27 +1,36 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, HostListener, ChangeDetectorRef, SimpleChanges } from '@angular/core';
-
-import { DataService } from 'src/app/data.service';
-import { com } from 'src/app/proto/message';
-import { TranslationService } from 'src/app/services/translation.service';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from "@angular/core";
+import { DataService } from "src/app/data.service";
+import { com } from "src/app/proto/message";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-image-set-editor',
-  templateUrl: './image-set-editor.component.html',
-  styleUrls: ['./image-set-editor.component.css'],
-  standalone: false
+  selector: "app-image-set-editor",
+  templateUrl: "./image-set-editor.component.html",
+  styleUrls: ["./image-set-editor.component.css"],
+  standalone: false,
 })
 export class ImageSetEditorComponent implements OnInit, OnChanges {
   @Input() visible = false;
   @Input() assetId?: string;
-  @Input() initialName = '';
+  @Input() initialName = "";
   @Input() initialEntries: com.antigravity.ISaveImageSetEntry[] = [];
   @Input() allImages: any[] = [];
 
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<com.antigravity.IAssetMessage>();
 
-  id = 'image-set-editor-' + Math.random().toString(36).substr(2, 9);
-  name = '';
+  id = "image-set-editor-" + Math.random().toString(36).substr(2, 9);
+  name = "";
   entries: com.antigravity.ISaveImageSetEntry[] = [];
   isSaving = false;
   isDragging = false;
@@ -30,20 +39,20 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   constructor(
     private dataService: DataService,
     private translationService: TranslationService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit() {
     this.resetForm();
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['visible']) {
-      const wasVisible = changes['visible'].previousValue;
-      const isVisible = changes['visible'].currentValue;
+    if (changes["visible"]) {
+      const wasVisible = changes["visible"].previousValue;
+      const isVisible = changes["visible"].currentValue;
 
       if (isVisible && !wasVisible) {
-        console.log('ImageSetEditor: Opening modal, resetting form');
+        console.log("ImageSetEditor: Opening modal, resetting form");
         this.resetForm();
         this.dragCounter = 0;
         this.isDragging = false;
@@ -53,20 +62,20 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   }
 
   resetForm() {
-    this.name = this.initialName || '';
+    this.name = this.initialName || "";
     if (this.initialEntries && this.initialEntries.length > 0) {
-      this.entries = this.initialEntries.map(e => ({
+      this.entries = this.initialEntries.map((e) => ({
         percentage: e.percentage,
         url: e.url,
         name: e.name,
-        data: e.data
+        data: e.data,
       }));
     } else {
       this.entries = [];
     }
   }
 
-  @HostListener('window:dragenter', ['$event'])
+  @HostListener("window:dragenter", ["$event"])
   onDragEnter(event: DragEvent) {
     if (!this.visible) return;
     // We don't stop propagation on window level usually, but we want to prevent default
@@ -76,14 +85,14 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  @HostListener('window:dragover', ['$event'])
+  @HostListener("window:dragover", ["$event"])
   onDragOver(event: DragEvent) {
     if (!this.visible) return;
     event.preventDefault();
     this.isDragging = true;
   }
 
-  @HostListener('window:dragleave', ['$event'])
+  @HostListener("window:dragleave", ["$event"])
   onDragLeave(event: DragEvent) {
     if (!this.visible) return;
     event.preventDefault();
@@ -95,11 +104,11 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  @HostListener('window:drop', ['$event'])
+  @HostListener("window:drop", ["$event"])
   onDrop(event: DragEvent) {
     if (!this.visible) return;
     // If it reached window, it means it wasn't caught and stopped by the element handlers
-    console.log('ImageSetEditor: window:drop caught (bubbled)');
+    console.log("ImageSetEditor: window:drop caught (bubbled)");
     this.handleDropEvent(event);
   }
 
@@ -131,7 +140,7 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   }
 
   onElementDrop(event: DragEvent) {
-    console.log('ImageSetEditor: element:drop triggered');
+    console.log("ImageSetEditor: element:drop triggered");
     event.preventDefault();
     event.stopPropagation();
     this.handleDropEvent(event);
@@ -144,12 +153,14 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
 
     if (event.dataTransfer) {
       if (event.dataTransfer.files.length > 0) {
-        console.log(`ImageSetEditor: Processing ${event.dataTransfer.files.length} files`);
+        console.log(
+          `ImageSetEditor: Processing ${event.dataTransfer.files.length} files`,
+        );
         this.handleFiles(event.dataTransfer.files);
       } else {
         // Check for internal drags (e.g. from library)
-        const url = event.dataTransfer.getData('text/plain');
-        if (url && (url.startsWith('http') || url.startsWith('/assets/'))) {
+        const url = event.dataTransfer.getData("text/plain");
+        if (url && (url.startsWith("http") || url.startsWith("/assets/"))) {
           console.log(`ImageSetEditor: Processing internal asset URL: ${url}`);
           this.handleInternalDrop(url);
         }
@@ -159,32 +170,41 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
 
   handleInternalDrop(url: string) {
     // Try to find asset name from URL
-    let entryName = url.split('/').pop() || 'New Entry';
-    if (entryName.includes('_')) {
-      entryName = entryName.split('_').slice(1).join('_'); // Strip ID prefix
+    let entryName = url.split("/").pop() || "New Entry";
+    if (entryName.includes("_")) {
+      entryName = entryName.split("_").slice(1).join("_"); // Strip ID prefix
     }
 
     this.entries.push({
       percentage: 100,
       url: url,
       name: entryName,
-      data: new Uint8Array()
+      data: new Uint8Array(),
     });
     this.recalculatePercentages();
     this.cdr.detectChanges();
   }
 
   handleFiles(files: FileList) {
-    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    const fileArray = Array.from(files).filter((f) =>
+      f.type.startsWith("image/"),
+    );
     if (fileArray.length === 0) {
-      console.warn('ImageSetEditor: No image files found in drop');
+      console.warn("ImageSetEditor: No image files found in drop");
       return;
     }
 
     // Sort files to help with sequence detection
-    fileArray.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    fileArray.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      }),
+    );
 
-    const newEntries: com.antigravity.ISaveImageSetEntry[] = new Array(fileArray.length);
+    const newEntries: com.antigravity.ISaveImageSetEntry[] = new Array(
+      fileArray.length,
+    );
     let processedCount = 0;
 
     fileArray.forEach((file, index) => {
@@ -199,7 +219,7 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
             percentage: 0,
             url: pe.target.result, // Use DataURL for local preview
             name: file.name,
-            data: bytes
+            data: bytes,
           };
           processedCount++;
           if (processedCount === fileArray.length) {
@@ -231,31 +251,33 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
       return null;
     };
 
-    const entriesWithNums = this.entries.map(e => ({
+    const entriesWithNums = this.entries.map((e) => ({
       entry: e,
-      num: extractNumber(e.name || '')
+      num: extractNumber(e.name || ""),
     }));
 
-    const allHaveNums = entriesWithNums.every(e => e.num !== null);
+    const allHaveNums = entriesWithNums.every((e) => e.num !== null);
 
     if (allHaveNums && this.entries.length > 1) {
       // Sort entries by their extracted number
       this.entries.sort((a, b) => {
-        const numA = extractNumber(a.name || '') ?? -1;
-        const numB = extractNumber(b.name || '') ?? -1;
+        const numA = extractNumber(a.name || "") ?? -1;
+        const numB = extractNumber(b.name || "") ?? -1;
         return numA - numB;
       });
 
       // TODO(aufderheide): Support two cases here, one where the _# values are sequential
       // and we need to calculate percentage values and one where the _# valeus are the
       // percentage values.
-      const currentNums = this.entries.map(e => extractNumber(e.name || '') as number);
+      const currentNums = this.entries.map(
+        (e) => extractNumber(e.name || "") as number,
+      );
       const min = Math.min(...currentNums);
       const max = Math.max(...currentNums);
       const range = max - min;
 
-      this.entries.forEach(entry => {
-        const num = extractNumber(entry.name || '') as number;
+      this.entries.forEach((entry) => {
+        const num = extractNumber(entry.name || "") as number;
         if (range === 0) {
           entry.percentage = 100;
         } else {
@@ -279,9 +301,9 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
   addEntry() {
     this.entries.push({
       percentage: 100,
-      url: '',
-      name: '',
-      data: new Uint8Array()
+      url: "",
+      name: "",
+      data: new Uint8Array(),
     });
     this.recalculatePercentages();
     this.cdr.detectChanges();
@@ -299,22 +321,24 @@ export class ImageSetEditorComponent implements OnInit, OnChanges {
 
   onSave() {
     if (!this.name || this.entries.length === 0) {
-      alert(this.translationService.translate('AM_SET_EDITOR_ERR_REQUIRED'));
+      alert(this.translationService.translate("AM_SET_EDITOR_ERR_REQUIRED"));
       return;
     }
 
     this.isSaving = true;
-    this.dataService.saveImageSet(this.name, this.entries, this.assetId).subscribe({
-      next: (asset) => {
-        this.isSaving = false;
-        this.saved.emit(asset);
-        this.close.emit();
-      },
-      error: (err) => {
-        this.isSaving = false;
-        console.error('Failed to save image set', err);
-        alert('Error: ' + err.message);
-      }
-    });
+    this.dataService
+      .saveImageSet(this.name, this.entries, this.assetId)
+      .subscribe({
+        next: (asset) => {
+          this.isSaving = false;
+          this.saved.emit(asset);
+          this.close.emit();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error("Failed to save image set", err);
+          alert("Error: " + err.message);
+        },
+      });
   }
 }

@@ -1,12 +1,19 @@
-import { TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import {
+  discardPeriodicTasks,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { of, throwError } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { mockDataService } from "src/app/testing/unit-test-mocks";
 
-import { DataService } from 'src/app/data.service';
-import { mockDataService } from 'src/app/testing/unit-test-mocks';
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "./connection-monitor.service";
 
-import { ConnectionMonitorService, ConnectionState } from './connection-monitor.service';
-
-describe('ConnectionMonitorService', () => {
+describe("ConnectionMonitorService", () => {
   let service: ConnectionMonitorService;
 
   beforeEach(() => {
@@ -17,38 +24,40 @@ describe('ConnectionMonitorService', () => {
     TestBed.configureTestingModule({
       providers: [
         ConnectionMonitorService,
-        { provide: DataService, useValue: mockDataService }
-      ]
+        { provide: DataService, useValue: mockDataService },
+      ],
     });
     service = TestBed.inject(ConnectionMonitorService);
-    spyOn(console, 'warn');
-    spyOn(console, 'error');
+    spyOn(console, "warn");
+    spyOn(console, "error");
   });
 
-  it('should be created', () => {
+  it("should be created", () => {
     expect(service).toBeTruthy();
   });
 
-  describe('checkConnection', () => {
-    it('should return true and update state to CONNECTED on success', (done) => {
+  describe("checkConnection", () => {
+    it("should return true and update state to CONNECTED on success", (done) => {
       // Set initial state to something else to verify change (or verify no change if already connected)
       service.setConnectionState(ConnectionState.DISCONNECTED);
 
-      service.checkConnection().subscribe(isConnected => {
+      service.checkConnection().subscribe((isConnected) => {
         expect(isConnected).toBeTrue();
-        service.connectionState$.subscribe(state => {
+        service.connectionState$.subscribe((state) => {
           expect(state).toBe(ConnectionState.CONNECTED);
           done();
         });
       });
     });
 
-    it('should return false and update state to DISCONNECTED on failure', (done) => {
-      mockDataService.getDrivers.and.returnValue(throwError(() => new Error('Network Error')));
+    it("should return false and update state to DISCONNECTED on failure", (done) => {
+      mockDataService.getDrivers.and.returnValue(
+        throwError(() => new Error("Network Error")),
+      );
 
-      service.checkConnection().subscribe(isConnected => {
+      service.checkConnection().subscribe((isConnected) => {
         expect(isConnected).toBeFalse();
-        service.connectionState$.subscribe(state => {
+        service.connectionState$.subscribe((state) => {
           expect(state).toBe(ConnectionState.DISCONNECTED);
           done();
         });
@@ -56,11 +65,11 @@ describe('ConnectionMonitorService', () => {
     });
   });
 
-  describe('startMonitoring', () => {
-    it('should periodically check connection', fakeAsync(() => {
+  describe("startMonitoring", () => {
+    it("should periodically check connection", fakeAsync(() => {
       service.startMonitoring();
 
-      // Initial tick shouldn't trigger immediate check (switchMap on interval starts after delay usually, 
+      // Initial tick shouldn't trigger immediate check (switchMap on interval starts after delay usually,
       // but let's check basic interval behavior: interval(5000) emits at T+5000)
       expect(mockDataService.getDrivers).not.toHaveBeenCalled();
 
@@ -74,17 +83,19 @@ describe('ConnectionMonitorService', () => {
       discardPeriodicTasks();
     }));
 
-    it('should recover from disconnected to connected during monitoring', fakeAsync(() => {
+    it("should recover from disconnected to connected during monitoring", fakeAsync(() => {
       // Start disconnected
       service.setConnectionState(ConnectionState.DISCONNECTED);
 
       // 1. Fail first check
-      mockDataService.getDrivers.and.returnValue(throwError(() => new Error('Fail')));
+      mockDataService.getDrivers.and.returnValue(
+        throwError(() => new Error("Fail")),
+      );
 
       service.startMonitoring();
       tick(5000);
 
-      service.connectionState$.subscribe(state => {
+      service.connectionState$.subscribe((state) => {
         if (mockDataService.getDrivers.calls.count() === 1) {
           expect(state).toBe(ConnectionState.DISCONNECTED);
         }
@@ -95,7 +106,7 @@ describe('ConnectionMonitorService', () => {
       tick(5000);
 
       let currentState: ConnectionState | undefined;
-      service.connectionState$.subscribe(s => currentState = s);
+      service.connectionState$.subscribe((s) => (currentState = s));
       expect(currentState).toBe(ConnectionState.CONNECTED);
 
       service.stopMonitoring();
@@ -103,29 +114,29 @@ describe('ConnectionMonitorService', () => {
     }));
   });
 
-  describe('waitForConnection', () => {
-    it('should resolve immediately if already connected (via check)', fakeAsync(() => {
+  describe("waitForConnection", () => {
+    it("should resolve immediately if already connected (via check)", fakeAsync(() => {
       // Mock successful check
       mockDataService.getDrivers.and.returnValue(of([]));
 
       let resolved = false;
-      service.waitForConnection().then(() => resolved = true);
+      service.waitForConnection().then(() => (resolved = true));
 
       tick(); // Allow checkConnection observable to complete
       expect(resolved).toBeTrue();
       expect(mockDataService.getDrivers).toHaveBeenCalledTimes(1);
     }));
 
-    it('should poll until connected if initially failing', fakeAsync(() => {
+    it("should poll until connected if initially failing", fakeAsync(() => {
       // 1. Fail initial check
       let isSuccess = false;
       mockDataService.getDrivers.and.callFake(() => {
-        if (!isSuccess) return throwError(() => new Error('Fail'));
+        if (!isSuccess) return throwError(() => new Error("Fail"));
         return of([]);
       });
 
       let resolved = false;
-      service.waitForConnection().then(() => resolved = true);
+      service.waitForConnection().then(() => (resolved = true));
 
       tick(); // Initial check fails
       expect(resolved).toBeFalse();

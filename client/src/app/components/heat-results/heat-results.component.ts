@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { Subscription } from 'rxjs';
-
-import { Race } from 'src/app/models/race';
-import { Heat } from 'src/app/race/heat';
-import { RaceConnectionService } from 'src/app/services/race-connection.service';
-import { RaceService } from 'src/app/services/race.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
+import { Race } from "src/app/models/race";
+import { Heat } from "src/app/race/heat";
+import { RaceService } from "src/app/services/race.service";
+import { RaceConnectionService } from "src/app/services/race-connection.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 interface GraphPoint {
   x: number;
@@ -24,10 +23,10 @@ interface DriverLine {
 }
 
 @Component({
-  selector: 'app-heat-results',
-  templateUrl: './heat-results.component.html',
-  styleUrls: ['./heat-results.component.css'],
-  standalone: false
+  selector: "app-heat-results",
+  templateUrl: "./heat-results.component.html",
+  styleUrls: ["./heat-results.component.css"],
+  standalone: false,
 })
 export class HeatResultsComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
@@ -43,7 +42,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   protected padding = { top: 80, right: 100, bottom: 150, left: 100 };
 
   protected maxX = 10; // Min scale
-  protected maxY = 5;  // Min scale
+  protected maxY = 5; // Min scale
 
   protected legendItemWidth = 180;
 
@@ -56,25 +55,31 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     private raceConnectionService: RaceConnectionService,
     private raceService: RaceService,
     private translationService: TranslationService,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit() {
     this.raceConnectionService.connect();
 
-    this.subscriptions.push(this.translationService.getCurrentLanguage().subscribe(() => {
-      this.updateGraph();
-      this.cdr.detectChanges();
-    }));
+    this.subscriptions.push(
+      this.translationService.getCurrentLanguage().subscribe(() => {
+        this.updateGraph();
+        this.cdr.detectChanges();
+      }),
+    );
 
-    this.subscriptions.push(this.raceService.currentHeat$.subscribe(() => {
-      this.loadRaceData();
-      this.updateGraph();
-    }));
+    this.subscriptions.push(
+      this.raceService.currentHeat$.subscribe(() => {
+        this.loadRaceData();
+        this.updateGraph();
+      }),
+    );
 
-    this.subscriptions.push(this.raceConnectionService.laps$.subscribe(() => {
-      this.updateGraph();
-    }));
+    this.subscriptions.push(
+      this.raceConnectionService.laps$.subscribe(() => {
+        this.updateGraph();
+      }),
+    );
 
     this.loadRaceData();
     this.updateGraph();
@@ -82,32 +87,36 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.raceConnectionService.disconnect();
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   private loadRaceData() {
     this.race = this.raceService.getRace();
     this.heat = this.raceService.getCurrentHeat();
-
-
   }
 
   protected updateGraph() {
     if (!this.heat || !this.heat.heatDrivers) return;
 
     this.driverLines = this.heat.heatDrivers
-      .filter(hd => hd.driver && hd.driver.name && hd.driver.name.trim().toLowerCase() !== 'empty' && hd.driver.name.trim() !== '')
-      .map(hd => {
+      .filter(
+        (hd) =>
+          hd.driver &&
+          hd.driver.name &&
+          hd.driver.name.trim().toLowerCase() !== "empty" &&
+          hd.driver.name.trim() !== "",
+      )
+      .map((hd) => {
         const driverName = hd.driver.nickname || hd.driver.name;
         const lane = this.race?.track?.lanes[hd.laneIndex];
-        const color = lane?.foreground_color || '#ffffff';
-        const backgroundColor = lane?.background_color || '#333333';
+        const color = lane?.foreground_color || "#ffffff";
+        const backgroundColor = lane?.background_color || "#333333";
 
         const laps = hd.lapTimes; // Uses our new getter
         let currentAbsoluteTime = 0;
         const points: GraphPoint[] = [];
 
-        laps.forEach(lapTime => {
+        laps.forEach((lapTime) => {
           currentAbsoluteTime += lapTime;
           points.push({ x: currentAbsoluteTime, y: lapTime });
         });
@@ -118,9 +127,9 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
           color,
           backgroundColor,
           points,
-          pathData: '',
+          pathData: "",
           rankPoints: [],
-          rankPathData: ''
+          rankPathData: "",
         };
       });
 
@@ -131,12 +140,14 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     }
 
     const events: ChronoEvent[] = [];
-    this.driverLines.forEach(line => {
+    this.driverLines.forEach((line) => {
       let accum = 0;
       // Get the corresponding DriverHeatData to fetch lapTimes
-      const hd = this.heat?.heatDrivers.find(d => d.objectId === line.objectId);
+      const hd = this.heat?.heatDrivers.find(
+        (d) => d.objectId === line.objectId,
+      );
       const laps = hd?.lapTimes || [];
-      laps.forEach(lap => {
+      laps.forEach((lap) => {
         accum += lap;
         events.push({ absoluteTime: accum, objectId: line.objectId });
       });
@@ -149,18 +160,18 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     const lastLapTime: { [id: string]: number } = {};
     const rankingHistory: { [id: string]: GraphPoint[] } = {};
 
-    this.driverLines.forEach(line => {
+    this.driverLines.forEach((line) => {
       lapsCount[line.objectId] = 0;
       lastLapTime[line.objectId] = 0;
       rankingHistory[line.objectId] = [{ x: 0, y: 0 }]; // Initial setup loaded from timeline loops
     });
 
-    events.forEach(event => {
+    events.forEach((event) => {
       lapsCount[event.objectId]++;
       lastLapTime[event.objectId] = event.absoluteTime;
 
       // Score drivers: descending laps first, tiebreak with ascending total time spent completing that lap length
-      const scores = this.driverLines.map(line => ({
+      const scores = this.driverLines.map((line) => ({
         objectId: line.objectId,
         laps: lapsCount[line.objectId],
         time: lastLapTime[line.objectId],
@@ -172,12 +183,15 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       });
 
       scores.forEach((score, index) => {
-        rankingHistory[score.objectId].push({ x: event.absoluteTime, y: index + 1 });
+        rankingHistory[score.objectId].push({
+          x: event.absoluteTime,
+          y: index + 1,
+        });
       });
     });
 
     // Assign ranking points to driver lines
-    this.driverLines.forEach(line => {
+    this.driverLines.forEach((line) => {
       const history = rankingHistory[line.objectId];
       if (history.length > 1 && history[0].x === 0 && history[0].y === 0) {
         history[0].y = history[1].y; // align start point for cleaner curve
@@ -186,8 +200,8 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     });
 
     // Calculate Max X & Max Y for scaling
-    let allX = this.driverLines.flatMap(line => line.points.map(p => p.x));
-    let allY = this.driverLines.flatMap(line => line.points.map(p => p.y));
+    let allX = this.driverLines.flatMap((line) => line.points.map((p) => p.x));
+    let allY = this.driverLines.flatMap((line) => line.points.map((p) => p.y));
 
     if (allX.length > 0) {
       this.maxX = Math.max(...allX) * 1.05; // 5% padding
@@ -202,7 +216,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     }
 
     // Generate SVG path strings
-    this.driverLines.forEach(line => {
+    this.driverLines.forEach((line) => {
       if (line.points.length > 0) {
         line.pathData = this.generatePath(line.points, false);
       }
@@ -215,22 +229,26 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   }
 
   private generatePath(points: GraphPoint[], isRank: boolean): string {
-    if (points.length === 0) return '';
+    if (points.length === 0) return "";
 
-    return points.map((point, index) => {
-      const x = isRank ? this.scaleXLeft(point.x) : this.scaleXRight(point.x);
-      const y = isRank ? this.scaleYLeft(point.y) : this.scaleY(point.y);
-      return (index === 0 ? 'M' : 'L') + ` ${x} ${y}`;
-    }).join(' ');
+    return points
+      .map((point, index) => {
+        const x = isRank ? this.scaleXLeft(point.x) : this.scaleXRight(point.x);
+        const y = isRank ? this.scaleYLeft(point.y) : this.scaleY(point.y);
+        return (index === 0 ? "M" : "L") + ` ${x} ${y}`;
+      })
+      .join(" ");
   }
 
   protected scaleXLeft(x: number): number {
-    const graphWidth = (this.width - this.padding.left - this.padding.right - 80) / 2;
+    const graphWidth =
+      (this.width - this.padding.left - this.padding.right - 80) / 2;
     return this.padding.left + (x / this.maxX) * graphWidth;
   }
 
   protected scaleXRight(x: number): number {
-    const graphWidth = (this.width - this.padding.left - this.padding.right - 80) / 2;
+    const graphWidth =
+      (this.width - this.padding.left - this.padding.right - 80) / 2;
     const offset = this.padding.left + graphWidth + 80;
     return offset + (x / this.maxX) * graphWidth;
   }
@@ -280,6 +298,4 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     }
     return ticks;
   }
-
-
 }

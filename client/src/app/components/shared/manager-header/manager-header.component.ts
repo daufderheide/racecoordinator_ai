@@ -1,14 +1,14 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 
 @Component({
-  selector: 'app-manager-header',
-  templateUrl: './manager-header.component.html',
-  styleUrls: ['./manager-header.component.css'],
-  standalone: false
+  selector: "app-manager-header",
+  templateUrl: "./manager-header.component.html",
+  styleUrls: ["./manager-header.component.css"],
+  standalone: false,
 })
 export class ManagerHeaderComponent {
-  @Input() title: string = '';
-  @Input() backTargetUrl: string = '/raceday-setup';
+  @Input() title: string = "";
+  @Input() backTargetUrl: string = "/raceday-setup";
   @Input() showActions: boolean = true;
   @Input() showAdd: boolean = true;
   @Input() showEdit: boolean = true;

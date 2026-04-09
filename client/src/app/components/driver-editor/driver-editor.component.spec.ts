@@ -1,30 +1,35 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { of, BehaviorSubject, throwError } from 'rxjs';
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import {
+  ComponentFixture,
+  discardPeriodicTasks,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import { BehaviorSubject, of, throwError } from "rxjs";
+import { DataService } from "src/app/data.service";
+import { Driver } from "src/app/models/driver";
+import { ConnectionMonitorService } from "src/app/services/connection-monitor.service";
+import { TranslationService } from "src/app/services/translation.service";
 
-import { DataService } from 'src/app/data.service';
-import { Driver } from 'src/app/models/driver';
-import { ConnectionMonitorService } from 'src/app/services/connection-monitor.service';
-import { TranslationService } from 'src/app/services/translation.service';
-
-import { DriverEditorComponent } from './driver-editor.component';
+import { DriverEditorComponent } from "./driver-editor.component";
 
 // Mock Child Components
-@Component({ selector: 'app-back-button', template: '', standalone: false })
+@Component({ selector: "app-back-button", template: "", standalone: false })
 class MockBackButtonComponent {
   @Input() route: string | null = null;
   @Input() queryParams: any = {};
-  @Input() label: string = '';
+  @Input() label: string = "";
   @Input() confirm: boolean = false;
-  @Input() confirmTitle: string = '';
-  @Input() confirmMessage: string = '';
+  @Input() confirmTitle: string = "";
+  @Input() confirmMessage: string = "";
 }
 
-@Component({ selector: 'app-audio-selector', template: '', standalone: false })
+@Component({ selector: "app-audio-selector", template: "", standalone: false })
 class MockAudioSelectorComponent {
-  @Input() label: string = '';
+  @Input() label: string = "";
   @Input() type: any;
   @Output() typeChange = new EventEmitter<any>();
   @Input() url: any;
@@ -37,7 +42,7 @@ class MockAudioSelectorComponent {
   @Input() context: any;
 }
 
-@Component({ selector: 'app-image-selector', template: '', standalone: false })
+@Component({ selector: "app-image-selector", template: "", standalone: false })
 class MockImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
@@ -47,31 +52,35 @@ class MockImageSelectorComponent {
   @Output() uploadFinished = new EventEmitter<void>();
 }
 
-@Component({ selector: 'app-item-selector', template: '', standalone: false })
+@Component({ selector: "app-item-selector", template: "", standalone: false })
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
   @Output() select = new EventEmitter<any>();
   @Output() close = new EventEmitter<void>();
-  @Input() itemType: string = 'image';
+  @Input() itemType: string = "image";
   @Input() backButtonRoute: string | null = null;
   @Input() backButtonQueryParams: any = {};
-  @Input() title: string = '';
+  @Input() title: string = "";
 }
 
-@Component({ selector: 'app-undo-redo-controls', template: '', standalone: false })
+@Component({
+  selector: "app-undo-redo-controls",
+  template: "",
+  standalone: false,
+})
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
-@Component({ selector: 'app-editor-title', template: '', standalone: false })
+@Component({ selector: "app-editor-title", template: "", standalone: false })
 class MockEditorTitleComponent {
-  @Input() titleKey: string = '';
-  @Input() backRoute: string = '';
+  @Input() titleKey: string = "";
+  @Input() backRoute: string = "";
   @Input() backConfirm: boolean = false;
   @Input() backQueryParams: any = {};
-  @Input() backConfirmTitle: string = '';
-  @Input() backConfirmMessage: string = '';
+  @Input() backConfirmTitle: string = "";
+  @Input() backConfirmMessage: string = "";
   @Input() undoManager: any;
   @Input() showUndo: boolean = true;
   @Input() showRedo: boolean = true;
@@ -87,25 +96,29 @@ class MockEditorTitleComponent {
   @Output() delete = new EventEmitter<void>();
 }
 
-@Component({ selector: 'app-help-overlay', template: '', standalone: false })
+@Component({ selector: "app-help-overlay", template: "", standalone: false })
 class MockHelpOverlayComponent {
   @Input() steps: any[] = [];
   @Input() showHelp: boolean = false;
   @Output() helpClosed = new EventEmitter<void>();
 }
 
-import { Pipe, PipeTransform } from '@angular/core';
-@Pipe({ name: 'translate', standalone: false })
+import { Pipe, PipeTransform } from "@angular/core";
+@Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string { return value; }
+  transform(value: string): string {
+    return value;
+  }
 }
 
-@Pipe({ name: 'avatarUrl', standalone: false })
+@Pipe({ name: "avatarUrl", standalone: false })
 class MockAvatarUrlPipe implements PipeTransform {
-  transform(value: string): string { return value; }
+  transform(value: string): string {
+    return value;
+  }
 }
 
-describe('DriverEditorComponent', () => {
+describe("DriverEditorComponent", () => {
   let component: DriverEditorComponent;
   let fixture: ComponentFixture<DriverEditorComponent>;
   let mockDataService: any;
@@ -115,28 +128,39 @@ describe('DriverEditorComponent', () => {
   let mockActivatedRoute: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj('DataService', ['getDrivers', 'listAssets', 'createDriver', 'updateDriver', 'deleteDriver', 'uploadAsset']);
-    mockTranslationService = jasmine.createSpyObj('TranslationService', ['translate']);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getDrivers",
+      "listAssets",
+      "createDriver",
+      "updateDriver",
+      "deleteDriver",
+      "uploadAsset",
+    ]);
+    mockTranslationService = jasmine.createSpyObj("TranslationService", [
+      "translate",
+    ]);
     mockConnectionMonitor = {
-      connectionState$: new BehaviorSubject('CONNECTED'),
-      startMonitoring: jasmine.createSpy('startMonitoring'),
-      stopMonitoring: jasmine.createSpy('stopMonitoring')
+      connectionState$: new BehaviorSubject("CONNECTED"),
+      startMonitoring: jasmine.createSpy("startMonitoring"),
+      stopMonitoring: jasmine.createSpy("stopMonitoring"),
     };
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: jasmine.createSpy('get').and.returnValue('new')
-        }
+          get: jasmine.createSpy("get").and.returnValue("new"),
+        },
       },
-      queryParams: of({})
+      queryParams: of({}),
     };
 
     // Default mock returns
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.listAssets.and.returnValue(of([]));
-    mockDataService.updateDriver.and.callFake((id: string, data: any) => of({ entity_id: id }));
-    mockDataService.createDriver.and.returnValue(of({ entity_id: 'new_id' }));
+    mockDataService.updateDriver.and.callFake((id: string, data: any) =>
+      of({ entity_id: id }),
+    );
+    mockDataService.createDriver.and.returnValue(of({ entity_id: "new_id" }));
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -150,7 +174,7 @@ describe('DriverEditorComponent', () => {
         MockEditorTitleComponent,
         MockHelpOverlayComponent,
         MockTranslatePipe,
-        MockAvatarUrlPipe
+        MockAvatarUrlPipe,
       ],
       imports: [FormsModule],
       providers: [
@@ -158,8 +182,8 @@ describe('DriverEditorComponent', () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute }
-      ]
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+      ],
     }).compileComponents();
   });
 
@@ -184,99 +208,110 @@ describe('DriverEditorComponent', () => {
     component.allDrivers = [driver];
   }
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should throw error when no ID provided', () => {
+  it("should throw error when no ID provided", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
-    expect(() => component.loadData()).toThrowError('Driver Editor: No entity ID provided.');
+    expect(() => component.loadData()).toThrowError(
+      "Driver Editor: No entity ID provided.",
+    );
   });
 
   it('should initialize with new driver when "new" ID provided', () => {
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('new');
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("new");
     component.loadData();
     expect(component.editingDriver).toBeDefined();
-    expect(component.editingDriver?.entity_id).toBe('new');
+    expect(component.editingDriver?.entity_id).toBe("new");
     // element implicitly has 'any' type error on private access, so skipping explicit initialState check if not needed
     // verify hasChanges is false
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it('should load driver when valid ID is provided', () => {
-    const mockDriver = { entity_id: 'd1', name: 'Test Driver', nickname: 'TD' };
+  it("should load driver when valid ID is provided", () => {
+    const mockDriver = { entity_id: "d1", name: "Test Driver", nickname: "TD" };
     mockDataService.getDrivers.and.returnValue(of([mockDriver]));
-    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue('d1');
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("d1");
 
     component.loadData();
 
-    expect(component.editingDriver?.entity_id).toBe('d1');
-    expect(component.editingDriver?.name).toBe('Test Driver');
+    expect(component.editingDriver?.entity_id).toBe("d1");
+    expect(component.editingDriver?.name).toBe("Test Driver");
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it('should save new driver', () => {
-    const newDriver = { entity_id: 'new_id', name: 'New Driver' };
-    const initial = new Driver('new', 'New Driver', '');
+  it("should save new driver", () => {
+    const newDriver = { entity_id: "new_id", name: "New Driver" };
+    const initial = new Driver("new", "New Driver", "");
     setupDriver(initial);
 
     // Simulate change
-    component.editingDriver!.name = 'New Driver Name';
+    component.editingDriver!.name = "New Driver Name";
 
     mockDataService.createDriver.and.returnValue(of(newDriver));
 
     component.updateDriver();
 
     expect(mockDataService.createDriver).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-editor'], { queryParams: { id: 'new_id' } });
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+      queryParams: { id: "new_id" },
+    });
   });
 
-  it('should stay on page and keep original ID when save as new fails', () => {
-    spyOn(console, 'error');
-    const driver = new Driver('d1', 'Original', 'Orig');
+  it("should stay on page and keep original ID when save as new fails", () => {
+    spyOn(console, "error");
+    const driver = new Driver("d1", "Original", "Orig");
     setupDriver(driver);
 
-    mockDataService.createDriver.and.returnValue(throwError(() => ({ status: 409, error: 'Conflict' })));
-    spyOn(window, 'alert');
+    mockDataService.createDriver.and.returnValue(
+      throwError(() => ({ status: 409, error: "Conflict" })),
+    );
+    spyOn(window, "alert");
 
     component.saveAsNew();
 
     expect(mockDataService.createDriver).toHaveBeenCalled();
-    expect(component.editingDriver?.entity_id).toBe('d1');
+    expect(component.editingDriver?.entity_id).toBe("d1");
     expect(component.isSaving).toBeFalse();
     expect(window.alert).toHaveBeenCalled();
   });
 
-  it('should update existing driver', () => {
-    const driver = new Driver('d1', 'Updated Driver', '');
+  it("should update existing driver", () => {
+    const driver = new Driver("d1", "Updated Driver", "");
     setupDriver(driver);
 
     // Make a change
-    component.editingDriver!.name = 'Changed Name';
+    component.editingDriver!.name = "Changed Name";
 
     mockDataService.updateDriver.and.returnValue(of({}));
 
     component.updateDriver();
 
-    expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
+    expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+      "d1",
+      jasmine.any(Object),
+    );
   });
 
-  it('should delete driver and navigate back', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-    const driver = new Driver('d1', 'Driver to Delete', '');
+  it("should delete driver and navigate back", () => {
+    spyOn(window, "confirm").and.returnValue(true);
+    const driver = new Driver("d1", "Driver to Delete", "");
     setupDriver(driver);
 
     mockDataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
 
-    expect(mockDataService.deleteDriver).toHaveBeenCalledWith('d1');
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/driver-manager'], { queryParams: { id: 'd1' } });
+    expect(mockDataService.deleteDriver).toHaveBeenCalledWith("d1");
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-manager"], {
+      queryParams: { id: "d1" },
+    });
   });
 
-  it('should not delete if confirm is cancelled', () => {
-    spyOn(window, 'confirm').and.returnValue(false);
-    const driver = new Driver('d1', '', '');
+  it("should not delete if confirm is cancelled", () => {
+    spyOn(window, "confirm").and.returnValue(false);
+    const driver = new Driver("d1", "", "");
     setupDriver(driver);
 
     component.deleteDriver();
@@ -285,75 +320,75 @@ describe('DriverEditorComponent', () => {
   });
 
   // Undo/Redo Tests
-  it('should track changes and support undo/redo', () => {
-    const initial = new Driver('d1', 'Start', '');
+  it("should track changes and support undo/redo", () => {
+    const initial = new Driver("d1", "Start", "");
     setupDriver(initial);
 
     // 1. Capture state (simulating focus/before change)
     component.onInputFocus();
 
     // 2. Make change
-    component.editingDriver!.name = 'Change 1';
+    component.editingDriver!.name = "Change 1";
 
     // 3. Blur (simulating commit)
     component.onInputBlur();
     // undoStack should have 'Start'
     expect(component.undoManager.undoStackItems.length).toBe(1);
-    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+    expect(component.undoManager.undoStackItems[0].name).toBe("Start");
 
     // 4. Undo
     component.undo();
-    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.editingDriver!.name).toBe("Start");
     expect(component.undoManager.redoStackItems.length).toBe(1);
-    expect(component.undoManager.redoStackItems[0].name).toBe('Change 1');
+    expect(component.undoManager.redoStackItems[0].name).toBe("Change 1");
 
     // 5. Redo
     component.redo();
-    expect(component.editingDriver!.name).toBe('Change 1');
+    expect(component.editingDriver!.name).toBe("Change 1");
     expect(component.undoManager.undoStackItems.length).toBe(1);
   });
 
-  it('should validate uniqueness', () => {
-    const driver = new Driver('d1', 'MyName', 'MyNick');
+  it("should validate uniqueness", () => {
+    const driver = new Driver("d1", "MyName", "MyNick");
     setupDriver(driver);
 
     component.allDrivers = [
-      new Driver('d1', 'MyName', 'MyNick'),
-      new Driver('d2', 'ExistingName', 'ExistingNick')
+      new Driver("d1", "MyName", "MyNick"),
+      new Driver("d2", "ExistingName", "ExistingNick"),
     ];
 
     // Valid
     expect(component.isNameUnique()).toBeTrue();
 
     // Duplicate Name
-    component.editingDriver!.name = 'ExistingName';
+    component.editingDriver!.name = "ExistingName";
     expect(component.isNameUnique()).toBeFalse();
 
     // Duplicate Nickname
-    component.editingDriver!.name = 'MyName'; // Reset name
-    component.editingDriver!.nickname = 'ExistingNick';
+    component.editingDriver!.name = "MyName"; // Reset name
+    component.editingDriver!.nickname = "ExistingNick";
     expect(component.isNicknameUnique()).toBeFalse();
 
     // Self is not duplicate
-    component.editingDriver!.nickname = 'MyNick';
+    component.editingDriver!.nickname = "MyNick";
     expect(component.isNicknameUnique()).toBeTrue();
   });
-  it('should preserve undo stack after save', () => {
-    const driver = new Driver('d1', 'Start', '');
+  it("should preserve undo stack after save", () => {
+    const driver = new Driver("d1", "Start", "");
     setupDriver(driver);
 
     // Make change and push to stack
-    component.editingDriver!.name = 'Changed';
+    component.editingDriver!.name = "Changed";
     component.captureState(); // Capture AFTER change
 
-    mockDataService.updateDriver.and.returnValue(of({ entity_id: 'd1' }));
+    mockDataService.updateDriver.and.returnValue(of({ entity_id: "d1" }));
 
     // Save
     component.updateDriver();
 
     // Verify stack is preserved
     expect(component.undoManager.undoStackItems.length).toBe(1);
-    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+    expect(component.undoManager.undoStackItems[0].name).toBe("Start");
 
     // Verify hasChanges matches DB (Clean)
     expect(component.isDirtyState()).toBeFalse();
@@ -367,16 +402,16 @@ describe('DriverEditorComponent', () => {
     // Stack has 'Start'.
     // Undo -> Editing Driver = 'Start'.
     // 'Start' != 'Changed' (Initial). So hasChanges() -> TRUE.
-    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.editingDriver!.name).toBe("Start");
   });
 
-  it('should preserve entity_id on undo (context safety)', () => {
-    const driver = new Driver('d1', 'Start', '');
+  it("should preserve entity_id on undo (context safety)", () => {
+    const driver = new Driver("d1", "Start", "");
     setupDriver(driver);
 
     // Simulate "Save as New" causing ID change to 'd2'
-    component.editingDriver!.entity_id = 'd2';
-    component.editingDriver!.name = 'New Name';
+    component.editingDriver!.entity_id = "d2";
+    component.editingDriver!.name = "New Name";
 
     // Snapshot was 'd1', current is now 'd2'. Capture commits 'd1'.
     component.captureState();
@@ -385,20 +420,20 @@ describe('DriverEditorComponent', () => {
     component.undo();
 
     // Name should revert to 'Start'
-    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.editingDriver!.name).toBe("Start");
 
     // ID should STAY 'd2' (current context)
-    expect(component.editingDriver!.entity_id).toBe('d2');
+    expect(component.editingDriver!.entity_id).toBe("d2");
   });
-  it('should debounce text input changes for undo history', fakeAsync(() => {
-    const driver = new Driver('d1', 'Start', '');
+  it("should debounce text input changes for undo history", fakeAsync(() => {
+    const driver = new Driver("d1", "Start", "");
     setupDriver(driver);
 
     // Simulate focus
     component.onInputFocus();
 
     // Type "A"
-    component.editingDriver!.name = 'A';
+    component.editingDriver!.name = "A";
     component.onInputChange(); // Trigger debounce subject
 
     // Should NOT have saved yet (debounce 100ms)
@@ -406,7 +441,7 @@ describe('DriverEditorComponent', () => {
     expect(component.undoManager.undoStackItems.length).toBe(0);
 
     // Type "AB" before debounce hits
-    component.editingDriver!.name = 'AB';
+    component.editingDriver!.name = "AB";
     component.onInputChange(); // Reset debounce timer
 
     tick(50);
@@ -417,67 +452,73 @@ describe('DriverEditorComponent', () => {
 
     // Should now have saved the SNAPSHOT state ('Start')
     expect(component.undoManager.undoStackItems.length).toBe(1);
-    expect(component.undoManager.undoStackItems[0].name).toBe('Start');
+    expect(component.undoManager.undoStackItems[0].name).toBe("Start");
 
     // Snapshot should now be 'AB'
     // Accessing private _snapshot on UndoManager via bracket notation if needed, but checking behavior is safer
     // Trigger another change to see if it captures 'AB'
-    component.editingDriver!.name = 'ABC';
+    component.editingDriver!.name = "ABC";
     component.onInputChange();
     tick(100);
     // Stack should now have 'AB'
-    expect(component.undoManager.undoStackItems[1].name).toBe('AB');
+    expect(component.undoManager.undoStackItems[1].name).toBe("AB");
 
     // Undo should go to 'AB'
     component.undo();
-    expect(component.editingDriver!.name).toBe('AB');
+    expect(component.editingDriver!.name).toBe("AB");
 
     component.undo();
-    expect(component.editingDriver!.name).toBe('Start');
+    expect(component.editingDriver!.name).toBe("Start");
 
     discardPeriodicTasks();
   }));
 
-  describe('Auto-save on name/nickname change', () => {
-    it('should auto-save when name changes to a valid unique value', fakeAsync(() => {
-      const driver = new Driver('d1', 'OriginalName', 'Nick');
+  describe("Auto-save on name/nickname change", () => {
+    it("should auto-save when name changes to a valid unique value", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "Nick");
       setupDriver(driver);
 
       // Simulate focus, type new name, and blur to trigger commit
       component.onInputFocus();
-      component.editingDriver!.name = 'NewUniqueName';
+      component.editingDriver!.name = "NewUniqueName";
       component.onInputBlur();
       tick(200); // Allow debounce to settle
 
-      expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
+      expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+        "d1",
+        jasmine.any(Object),
+      );
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
     }));
 
-    it('should auto-save when nickname changes to a valid unique value', fakeAsync(() => {
-      const driver = new Driver('d1', 'SomeName', 'OrigNick');
+    it("should auto-save when nickname changes to a valid unique value", fakeAsync(() => {
+      const driver = new Driver("d1", "SomeName", "OrigNick");
       setupDriver(driver);
 
       component.onInputFocus();
-      component.editingDriver!.nickname = 'NewUniqueNick';
+      component.editingDriver!.nickname = "NewUniqueNick";
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateDriver).toHaveBeenCalledWith('d1', jasmine.any(Object));
+      expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+        "d1",
+        jasmine.any(Object),
+      );
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
     }));
 
-    it('should not auto-save when name is set to a duplicate', fakeAsync(() => {
-      const driver = new Driver('d1', 'OriginalName', '');
+    it("should not auto-save when name is set to a duplicate", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver('d1', 'OriginalName', ''),
-        new Driver('d2', 'TakenName', '')
+        new Driver("d1", "OriginalName", ""),
+        new Driver("d2", "TakenName", ""),
       ];
 
       component.onInputFocus();
-      component.editingDriver!.name = 'TakenName';
+      component.editingDriver!.name = "TakenName";
       component.onInputBlur();
       tick(200);
 
@@ -485,16 +526,16 @@ describe('DriverEditorComponent', () => {
       expect(component.isNameInvalid).toBeTrue();
     }));
 
-    it('should not auto-save when nickname is set to a duplicate', fakeAsync(() => {
-      const driver = new Driver('d1', 'Name', 'OrigNick');
+    it("should not auto-save when nickname is set to a duplicate", fakeAsync(() => {
+      const driver = new Driver("d1", "Name", "OrigNick");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver('d1', 'Name', 'OrigNick'),
-        new Driver('d2', 'Other', 'TakenNick')
+        new Driver("d1", "Name", "OrigNick"),
+        new Driver("d2", "Other", "TakenNick"),
       ];
 
       component.onInputFocus();
-      component.editingDriver!.nickname = 'TakenNick';
+      component.editingDriver!.nickname = "TakenNick";
       component.onInputBlur();
       tick(200);
 
@@ -502,12 +543,12 @@ describe('DriverEditorComponent', () => {
       expect(component.isNicknameInvalid).toBeTrue();
     }));
 
-    it('should not auto-save when name is empty', fakeAsync(() => {
-      const driver = new Driver('d1', 'OriginalName', '');
+    it("should not auto-save when name is empty", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "");
       setupDriver(driver);
 
       component.onInputFocus();
-      component.editingDriver!.name = '';
+      component.editingDriver!.name = "";
       component.onInputBlur();
       tick(200);
 
@@ -515,13 +556,13 @@ describe('DriverEditorComponent', () => {
       expect(component.isNameInvalid).toBeTrue();
     }));
 
-    it('should not show back confirmation when config is valid after name change', fakeAsync(() => {
-      const driver = new Driver('d1', 'OriginalName', '');
+    it("should not show back confirmation when config is valid after name change", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "");
       setupDriver(driver);
 
       // Change name to valid unique value and allow auto-save to complete
       component.onInputFocus();
-      component.editingDriver!.name = 'ValidNewName';
+      component.editingDriver!.name = "ValidNewName";
       component.onInputBlur();
       tick(200);
 
@@ -530,36 +571,36 @@ describe('DriverEditorComponent', () => {
       expect(component.isDirtyState()).toBeFalse();
     }));
 
-    it('should show back confirmation when name is invalid (empty)', () => {
-      const driver = new Driver('d1', '', '');
+    it("should show back confirmation when name is invalid (empty)", () => {
+      const driver = new Driver("d1", "", "");
       setupDriver(driver);
-      component.editingDriver!.name = '';
+      component.editingDriver!.name = "";
 
       // Config is invalid because name is empty
       expect(component.isConfigValid()).toBeFalse();
     });
 
-    it('should show back confirmation when name is a duplicate', () => {
-      const driver = new Driver('d1', 'OrigName', '');
+    it("should show back confirmation when name is a duplicate", () => {
+      const driver = new Driver("d1", "OrigName", "");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver('d1', 'OrigName', ''),
-        new Driver('d2', 'Taken', '')
+        new Driver("d1", "OrigName", ""),
+        new Driver("d2", "Taken", ""),
       ];
 
-      component.editingDriver!.name = 'Taken';
+      component.editingDriver!.name = "Taken";
       expect(component.isConfigValid()).toBeFalse();
     });
 
-    it('should show back confirmation when nickname is a duplicate', () => {
-      const driver = new Driver('d1', 'ValidName', 'OrigNick');
+    it("should show back confirmation when nickname is a duplicate", () => {
+      const driver = new Driver("d1", "ValidName", "OrigNick");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver('d1', 'ValidName', 'OrigNick'),
-        new Driver('d2', 'Other', 'TakenNick')
+        new Driver("d1", "ValidName", "OrigNick"),
+        new Driver("d2", "Other", "TakenNick"),
       ];
 
-      component.editingDriver!.nickname = 'TakenNick';
+      component.editingDriver!.nickname = "TakenNick";
       expect(component.isConfigValid()).toBeFalse();
     });
   });

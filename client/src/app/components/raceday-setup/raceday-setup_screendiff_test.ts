@@ -1,17 +1,22 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
+import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
-import { TestSetupHelper } from 'src/app/testing/test-setup_helper';
+import { RacedaySetupHarnessE2e } from "./testing/raceday-setup.harness.e2e";
 
-import { RacedaySetupHarnessE2e } from './testing/raceday-setup.harness.e2e';
-
-test.describe('Splash Screen Visuals', () => {
-  test('should display splash screen and server config modal correctly', async ({ page }) => {
+test.describe("Splash Screen Visuals", () => {
+  test("should display splash screen and server config modal correctly", async ({
+    page,
+  }) => {
     await page.clock.install();
     await TestSetupHelper.setupStandardMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
 
-    await page.route('**/api/version', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'text/plain', body: '1.2.3-TEST' });
+    await page.route("**/api/version", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/plain",
+        body: "1.2.3-TEST",
+      });
     });
 
     await page.addInitScript(() => {
@@ -19,23 +24,25 @@ test.describe('Splash Screen Visuals', () => {
     });
 
     await TestSetupHelper.setupLocalStorage(page, {
-      racedaySetupWalkthroughSeen: true
+      racedaySetupWalkthroughSeen: true,
     });
 
-    await page.route('**/api/drivers', async () => {
+    await page.route("**/api/drivers", async () => {
       // Simulate hanging connection
     });
 
-    await page.goto('/');
+    await page.goto("/");
     await TestSetupHelper.disableAnimations(page);
 
-    const container = page.locator('.shell-container');
+    const container = page.locator(".shell-container");
     const harness = new RacedaySetupHarnessE2e(container);
 
     expect(await harness.isSplashScreenVisible()).toBe(true);
 
-    await expect(page.locator('.quote-text')).toHaveText(/./, { timeout: 5000 });
-    await expect(page.locator('.quote-container')).toBeVisible();
+    await expect(page.locator(".quote-text")).toHaveText(/./, {
+      timeout: 5000,
+    });
+    await expect(page.locator(".quote-container")).toBeVisible();
 
     await page.clock.runFor(2000);
     await page.waitForTimeout(500);
@@ -45,13 +52,13 @@ test.describe('Splash Screen Visuals', () => {
       content: `
         .progress-bar-container, .quote-container { visibility: hidden !important; }
         .splash-screen { transition: none !important; }
-      `
+      `,
     });
 
-    await expect(page).toHaveScreenshot('splash-screen-initial.png', {
+    await expect(page).toHaveScreenshot("splash-screen-initial.png", {
       maxDiffPixelRatio: 0.1,
       threshold: 0.2,
-      animations: 'disabled'
+      animations: "disabled",
     });
 
     await harness.clickServerConfig();
@@ -61,10 +68,10 @@ test.describe('Splash Screen Visuals', () => {
 
     expect(await harness.isServerConfigModalVisible()).toBe(true);
 
-    await expect(page).toHaveScreenshot('server-config-modal.png', {
+    await expect(page).toHaveScreenshot("server-config-modal.png", {
       maxDiffPixelRatio: 0.1,
       threshold: 0.2,
-      animations: 'disabled'
+      animations: "disabled",
     });
 
     // Close Modal - Harness doesn't have closeServerConfig, but it has clickServerConfig which might toggle?

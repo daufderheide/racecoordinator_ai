@@ -1,20 +1,25 @@
-import { Location } from '@angular/common';
-import { Component, OnInit, HostListener, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-
-import { UndoManager } from 'src/app/components/shared/undo-redo-controls/undo-manager';
-import { DataService } from 'src/app/data.service';
-import { FuelUsageType } from 'src/app/models/fuel_options';
-import { Track } from 'src/app/models/track';
-import { HelpService, GuideStep } from 'src/app/services/help.service';
-import { SettingsService } from 'src/app/services/settings.service';
-import { TranslationService } from 'src/app/services/translation.service';
+import { Location } from "@angular/common";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
+import { DataService } from "src/app/data.service";
+import { FuelUsageType } from "src/app/models/fuel_options";
+import { Track } from "src/app/models/track";
+import { GuideStep, HelpService } from "src/app/services/help.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Component({
-  selector: 'app-race-editor',
-  templateUrl: './race-editor.component.html',
-  styleUrls: ['./race-editor.component.css'],
-  standalone: false
+  selector: "app-race-editor",
+  templateUrl: "./race-editor.component.html",
+  styleUrls: ["./race-editor.component.css"],
+  standalone: false,
 })
 export class RaceEditorComponent implements OnInit, OnDestroy {
   editingRace: any;
@@ -30,15 +35,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   driverCount: number = 10;
   generatedHeats: any[] = [];
 
-  heatRotationTypes = ['RoundRobin', 'Bracket', 'Swiss'];
-  raceScoringTypes = ['Points', 'Time'];
+  heatRotationTypes = ["RoundRobin", "Bracket", "Swiss"];
+  raceScoringTypes = ["Points", "Time"];
 
   private static readonly EMPTY_LABELS: string[] = [];
 
   // Acknowledgement modal properties
   showAckModal: boolean = false;
-  ackModalTitle: string = '';
-  ackModalMessage: string = '';
+  ackModalTitle: string = "";
+  ackModalMessage: string = "";
 
   sectionsExpanded = {
     general: true,
@@ -46,16 +51,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     heats: true,
     fuel_analog: true,
     fuel_digital: true,
-    team: true
+    team: true,
   };
 
   isConfigValid(): boolean {
-    return !this.isNameInvalid && !!this.editingRace?.track_entity_id && !!this.editingRace?.heat_rotation_type;
+    return (
+      !this.isNameInvalid &&
+      !!this.editingRace?.track_entity_id &&
+      !!this.editingRace?.heat_rotation_type
+    );
   }
 
   isDirtyState(): boolean {
     const umChanges = this.undoManager.hasChanges();
-    const manualChanges = JSON.stringify(this.editingRace) !== JSON.stringify(this.originalRace);
+    const manualChanges =
+      JSON.stringify(this.editingRace) !== JSON.stringify(this.originalRace);
     return umChanges || manualChanges;
   }
 
@@ -73,21 +83,29 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
-    this.router.navigate(['/race-manager'], { queryParams: { id: this.editingRace?.entity_id, driverCount: this.driverCount } });
+    this.router.navigate(["/race-manager"], {
+      queryParams: {
+        id: this.editingRace?.entity_id,
+        driverCount: this.driverCount,
+      },
+    });
   }
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
     try {
-      localStorage.setItem('race_editor_expanders', JSON.stringify(this.sectionsExpanded));
+      localStorage.setItem(
+        "race_editor_expanders",
+        JSON.stringify(this.sectionsExpanded),
+      );
     } catch (e) {
-      console.error('Error saving expander state', e);
+      console.error("Error saving expander state", e);
     }
   }
 
   loadExpanderState() {
     try {
-      const saved = localStorage.getItem('race_editor_expanders');
+      const saved = localStorage.getItem("race_editor_expanders");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.fuel !== undefined) {
@@ -98,7 +116,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
       }
     } catch (e) {
-      console.error('Error loading expander state', e);
+      console.error("Error loading expander state", e);
     }
   }
 
@@ -115,7 +133,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private location: Location,
     private helpService: HelpService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
   ) {
     this.undoManager = new UndoManager<any>(
       {
@@ -127,9 +145,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           if (currentId && this.editingRace) {
             this.editingRace.entity_id = currentId;
           }
-        }
+        },
       },
-      () => this.editingRace
+      () => this.editingRace,
     );
   }
 
@@ -138,13 +156,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.loadExpanderState();
 
     // Get driver count from query param (from race day setup) or default to 10
-    const driverCountParam = this.route.snapshot.queryParamMap.get('driverCount');
+    const driverCountParam =
+      this.route.snapshot.queryParamMap.get("driverCount");
     if (driverCountParam) {
       this.driverCount = parseInt(driverCountParam, 10);
     }
 
-    const id = this.route.snapshot.queryParamMap.get('id');
-    if (id && id !== 'new') {
+    const id = this.route.snapshot.queryParamMap.get("id");
+    if (id && id !== "new") {
       this.loadRace(id);
     } else {
       this.createNewRace();
@@ -161,14 +180,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.undoManager.destroy();
   }
 
-  @HostListener('window:resize')
+  @HostListener("window:resize")
   onResize() {
     this.updateScale();
   }
 
-  @HostListener('window:keydown', ['$event'])
+  @HostListener("window:keydown", ["$event"])
   onKeyDown(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'z') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       if (event.shiftKey) {
         event.preventDefault();
         this.undoManager.redo();
@@ -196,14 +215,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.dataService.getRaces().subscribe({
       next: (races) => {
-        const race = races.find(r => r.entity_id === id);
+        const race = races.find((r) => r.entity_id === id);
         if (race) {
           this.editingRace = {
             ...this.deepCopy(race),
             auto_advance_time: race.auto_advance_time || 0,
             auto_start_time: race.auto_start_time || 0,
             auto_advance_warmup_time: race.auto_advance_warmup_time || 0,
-            auto_start_warmup_time: race.auto_start_warmup_time || 0
+            auto_start_warmup_time: race.auto_start_warmup_time || 0,
           };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
@@ -216,7 +235,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               start_level: 100,
               refuel_rate: 10,
               pit_stop_delay: 2.0,
-              reference_time: 6.0
+              reference_time: 6.0,
             };
           }
           if (!this.editingRace.team_options) {
@@ -225,7 +244,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               heat_time_limit: 0,
               overall_lap_limit: 0,
               overall_time_limit: 0,
-              require_pit_stop_change_driver: false
+              require_pit_stop_change_driver: false,
             };
           }
         } else {
@@ -241,7 +260,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             usage_rate: 4.0,
             start_level: 100,
             refuel_rate: 10,
-            pit_stop_delay: 2.0
+            pit_stop_delay: 2.0,
           };
         }
         this.enforceFuelRules();
@@ -256,43 +275,52 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
       error: (err: any) => {
-        console.error('Failed to load race', err);
+        console.error("Failed to load race", err);
         this.isLoading = false;
-      }
+      },
     });
   }
 
   loadTracks() {
     this.dataService.getTracks().subscribe({
       next: (tracks) => {
-        this.tracks = tracks.map(t => new Track(t.entity_id, t.name, t.lanes || [], t.has_digital_fuel ?? false, t.arduino_configs));
+        this.tracks = tracks.map(
+          (t) =>
+            new Track(
+              t.entity_id,
+              t.name,
+              t.lanes || [],
+              t.has_digital_fuel ?? false,
+              t.arduino_configs,
+            ),
+        );
         this.enforceFuelRules();
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
       error: (err) => {
-        console.error('Failed to load tracks', err);
-      }
+        console.error("Failed to load tracks", err);
+      },
     });
   }
 
   createNewRace() {
     this.editingRace = {
-      entity_id: 'new',
-      name: '',
-      track_entity_id: '',
-      heat_rotation_type: 'RoundRobin',
+      entity_id: "new",
+      name: "",
+      track_entity_id: "",
+      heat_rotation_type: "RoundRobin",
       heat_scoring: {
-        finish_method: 'Lap',
+        finish_method: "Lap",
         finish_value: 10,
-        heat_ranking: 'LAP_COUNT',
-        heat_ranking_tiebreaker: 'FASTEST_LAP_TIME',
-        allow_finish: 'None'
+        heat_ranking: "LAP_COUNT",
+        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+        allow_finish: "None",
       },
       overall_scoring: {
         dropped_heats: 0,
-        ranking_method: 'LAP_COUNT',
-        tiebreaker: 'FASTEST_LAP_TIME'
+        ranking_method: "LAP_COUNT",
+        tiebreaker: "FASTEST_LAP_TIME",
       },
       auto_advance_time: 0,
       auto_start_time: 0,
@@ -308,7 +336,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0
+        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -319,7 +347,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        capacity: 100
+        capacity: 100,
       },
       min_lap_time: 0,
       team_options: {
@@ -327,8 +355,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         heat_time_limit: 0,
         overall_lap_limit: 0,
         overall_time_limit: 0,
-        require_pit_stop_change_driver: false
-      }
+        require_pit_stop_change_driver: false,
+      },
     };
     this.originalRace = this.deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -362,12 +390,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   private validateWarmupTimes() {
     if (!this.editingRace) return;
 
-    if (this.editingRace.auto_advance_warmup_time > this.editingRace.auto_advance_time) {
-      this.editingRace.auto_advance_warmup_time = this.editingRace.auto_advance_time;
+    if (
+      this.editingRace.auto_advance_warmup_time >
+      this.editingRace.auto_advance_time
+    ) {
+      this.editingRace.auto_advance_warmup_time =
+        this.editingRace.auto_advance_time;
     }
 
-    if (this.editingRace.auto_start_warmup_time > this.editingRace.auto_start_time) {
-      this.editingRace.auto_start_warmup_time = this.editingRace.auto_start_time;
+    if (
+      this.editingRace.auto_start_warmup_time > this.editingRace.auto_start_time
+    ) {
+      this.editingRace.auto_start_warmup_time =
+        this.editingRace.auto_start_time;
     }
   }
 
@@ -387,62 +422,87 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   get hasDigitalFuel(): boolean {
     if (!this.editingRace?.track_entity_id || !this.tracks) return false;
-    const track = this.tracks.find(t => t.entity_id === this.editingRace.track_entity_id);
+    const track = this.tracks.find(
+      (t) => t.entity_id === this.editingRace.track_entity_id,
+    );
     if (!track) return false;
 
     // Fallback for raw mock objects in tests
-    if (typeof track.hasDigitalFuel === 'function') {
+    if (typeof track.hasDigitalFuel === "function") {
       return track.hasDigitalFuel();
     }
-    const hasDigital = !!(track as any).has_digital_fuel || (track as any).arduino_configs?.some((conf: any) => conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0);
+    const hasDigital =
+      !!(track as any).has_digital_fuel ||
+      (track as any).arduino_configs?.some(
+        (conf: any) =>
+          conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0,
+      );
     return hasDigital;
   }
 
   onRotationTypeChange() {
-    console.log('Rotation type changed to:', this.editingRace?.heat_rotation_type);
+    console.log(
+      "Rotation type changed to:",
+      this.editingRace?.heat_rotation_type,
+    );
     this.captureState();
     // Immediately update heats when rotation type changes
     this.loadHeats();
   }
 
   onDriverCountChange() {
-    console.log('Driver count changed to:', this.driverCount);
+    console.log("Driver count changed to:", this.driverCount);
     // Update heats when driver count changes
     this.loadHeats();
   }
 
   loadHeats() {
-    console.log('loadHeats called - entity_id:', this.editingRace?.entity_id, 'driverCount:', this.driverCount, 'trackId:', this.editingRace?.track_entity_id, 'rotationType:', this.editingRace?.heat_rotation_type);
+    console.log(
+      "loadHeats called - entity_id:",
+      this.editingRace?.entity_id,
+      "driverCount:",
+      this.driverCount,
+      "trackId:",
+      this.editingRace?.track_entity_id,
+      "rotationType:",
+      this.editingRace?.heat_rotation_type,
+    );
 
     // Clear heats if missing required data
-    if (!this.editingRace || this.driverCount <= 0 || !this.editingRace.track_entity_id || !this.editingRace.heat_rotation_type) {
-      console.log('Clearing heats - missing required data');
+    if (
+      !this.editingRace ||
+      this.driverCount <= 0 ||
+      !this.editingRace.track_entity_id ||
+      !this.editingRace.heat_rotation_type
+    ) {
+      console.log("Clearing heats - missing required data");
       this.generatedHeats = [];
       return;
     }
 
     // Always use preview endpoint to show heats based on current form values
     // This allows users to see heat changes before saving the race
-    console.log('Calling previewHeats with current form values');
-    this.dataService.previewHeats(
-      this.editingRace.track_entity_id,
-      this.editingRace.heat_rotation_type,
-      this.driverCount
-    ).subscribe({
-      next: (response) => {
-        console.log('Preview heats response:', response);
-        this.generatedHeats = [...(response.heats || [])]; // Force new array reference
-        this.cdr.markForCheck();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Failed to preview heats', err);
-        this.generatedHeats = [];
-        this.cdr.detectChanges();
-      }
-    });
+    console.log("Calling previewHeats with current form values");
+    this.dataService
+      .previewHeats(
+        this.editingRace.track_entity_id,
+        this.editingRace.heat_rotation_type,
+        this.driverCount,
+      )
+      .subscribe({
+        next: (response) => {
+          console.log("Preview heats response:", response);
+          this.generatedHeats = [...(response.heats || [])]; // Force new array reference
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error("Failed to preview heats", err);
+          this.generatedHeats = [];
+          this.cdr.detectChanges();
+        },
+      });
   }
-
 
   private autoSaveRace() {
     if (!this.editingRace) return;
@@ -460,7 +520,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.isAutoSaving = isAutoSave;
     const payload = this.buildRacePayload(this.editingRace);
 
-    if (this.editingRace.entity_id === 'new') {
+    if (this.editingRace.entity_id === "new") {
       this.dataService.createRace(payload).subscribe({
         next: (created) => {
           this.isSaving = false;
@@ -471,53 +531,68 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           this.undoManager.resetTracking(this.editingRace);
           this.loadRaces(); // Reload races to update duplicate detection
           this.cdr.detectChanges(); // Ensure spinner clears
-          
+
           if (this.navigateBackOnSave) {
             this.onBack();
           } else if (isAutoSave) {
-            const url = this.router.serializeUrl(this.router.createUrlTree([], { 
-              queryParams: { id: created.entity_id, driverCount: this.driverCount },
-              queryParamsHandling: 'merge'
-            }));
+            const url = this.router.serializeUrl(
+              this.router.createUrlTree([], {
+                queryParams: {
+                  id: created.entity_id,
+                  driverCount: this.driverCount,
+                },
+                queryParamsHandling: "merge",
+              }),
+            );
             this.location.replaceState(url);
           } else {
             this.onBack();
           }
         },
         error: (err) => {
-          console.error('Failed to create race', err);
-          if (!isAutoSave) this.showError('Error Creating Race', err.error || err.message || 'Unknown error');
+          console.error("Failed to create race", err);
+          if (!isAutoSave)
+            this.showError(
+              "Error Creating Race",
+              err.error || err.message || "Unknown error",
+            );
           this.isSaving = false;
           this.isAutoSaving = false;
-          this.loadRaces();  // Reload races after error
+          this.loadRaces(); // Reload races after error
           this.cdr.detectChanges(); // Ensure spinner clears
-        }
+        },
       });
     } else {
-      this.dataService.updateRace(this.editingRace.entity_id, payload).subscribe({
-        next: () => {
-          this.isSaving = false;
-          this.isAutoSaving = false;
-          // Sync originalRace with editingRace so isDirtyState() returns false
-          this.originalRace = this.deepCopy(this.editingRace);
-          // Reset tracking point but keep history
-          this.undoManager.resetTracking(this.editingRace);
-          this.loadRaces();  // Reload races to update duplicate detection
-          this.cdr.detectChanges();  // Force change detection to hide spinner
-          
-          if (this.navigateBackOnSave) {
-            this.onBack();
-          }
-        },
-        error: (err) => {
-          console.error('Failed to update race', err);
-          if (!isAutoSave) this.showError('Error Updating Race', err.error || err.message || 'Unknown error');
-          this.isSaving = false;
-          this.isAutoSaving = false;
-          this.loadRaces();  // Reload races after error
-          this.cdr.detectChanges();  // Force change detection to hide spinner
-        }
-      });
+      this.dataService
+        .updateRace(this.editingRace.entity_id, payload)
+        .subscribe({
+          next: () => {
+            this.isSaving = false;
+            this.isAutoSaving = false;
+            // Sync originalRace with editingRace so isDirtyState() returns false
+            this.originalRace = this.deepCopy(this.editingRace);
+            // Reset tracking point but keep history
+            this.undoManager.resetTracking(this.editingRace);
+            this.loadRaces(); // Reload races to update duplicate detection
+            this.cdr.detectChanges(); // Force change detection to hide spinner
+
+            if (this.navigateBackOnSave) {
+              this.onBack();
+            }
+          },
+          error: (err) => {
+            console.error("Failed to update race", err);
+            if (!isAutoSave)
+              this.showError(
+                "Error Updating Race",
+                err.error || err.message || "Unknown error",
+              );
+            this.isSaving = false;
+            this.isAutoSaving = false;
+            this.loadRaces(); // Reload races after error
+            this.cdr.detectChanges(); // Force change detection to hide spinner
+          },
+        });
     }
   }
 
@@ -545,19 +620,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         // Update URL without navigation
         this.router.navigate([], {
           queryParams: { id: created.entity_id, driverCount: this.driverCount },
-          queryParamsHandling: 'merge',
-          replaceUrl: true
+          queryParamsHandling: "merge",
+          replaceUrl: true,
         });
       },
       error: (err) => {
-        console.error('Failed to save as new race', err);
-        this.showError('Error Saving Race', err.error || err.message || 'Unknown error');
+        console.error("Failed to save as new race", err);
+        this.showError(
+          "Error Saving Race",
+          err.error || err.message || "Unknown error",
+        );
         this.isSaving = false;
         // Reload races to update duplicate detection
         this.loadRaces();
         // Force change detection for modal visibility
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -571,9 +649,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.races = races;
       },
       error: (err) => {
-        console.error('Failed to load races', err);
+        console.error("Failed to load races", err);
         this.races = [];
-      }
+      },
     });
   }
 
@@ -583,20 +661,25 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     const trimmedName = this.editingRace.name.trim().toLowerCase();
-    return this.races.some((race) =>
-      race.entity_id !== this.editingRace.entity_id &&
-      race.name.trim().toLowerCase() === trimmedName
+    return this.races.some(
+      (race) =>
+        race.entity_id !== this.editingRace.entity_id &&
+        race.name.trim().toLowerCase() === trimmedName,
     );
   }
-  
+
   private generateUniqueName(baseName: string): string {
     let counter = 1;
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, '');
+    const base = baseName.replace(pattern, "");
 
     while (true) {
       const candidate = `${base}_${counter}`;
-      if (!this.races.some(r => r.name.toLowerCase() === candidate.toLowerCase())) {
+      if (
+        !this.races.some(
+          (r) => r.name.toLowerCase() === candidate.toLowerCase(),
+        )
+      ) {
         return candidate;
       }
       counter++;
@@ -622,12 +705,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   getUpdateTooltip(): string {
     if (!this.isDirtyState()) {
-      return 'RE_TOOLTIP_NO_CHANGES';
+      return "RE_TOOLTIP_NO_CHANGES";
     }
     if (this.isNameDuplicate()) {
-      return 'RE_TOOLTIP_NAME_EXISTS';
+      return "RE_TOOLTIP_NAME_EXISTS";
     }
-    return '';
+    return "";
   }
 
   showError(title: string, message: string) {
@@ -642,13 +725,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
   // Fuel Graph Hover State
   hoveredPoint: {
-    svgX: number,
-    svgY: number,
-    screenX: number,
-    screenY: number,
-    time: number,
-    value: number,
-    type: 'usage' | 'pit' | 'digital_usage' | 'digital_pit'
+    svgX: number;
+    svgY: number;
+    screenX: number;
+    screenY: number;
+    time: number;
+    value: number;
+    type: "usage" | "pit" | "digital_usage" | "digital_pit";
   } | null = null;
 
   // Cache for graph performance
@@ -685,9 +768,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const usageRate = this.editingRace.fuel_options.usage_rate || 0;
     const usageType = this.editingRace.fuel_options.usage_type;
     const minTime = 2;
-    const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+    const referenceTime =
+      Number(this.editingRace.fuel_options.reference_time) || 6;
 
-    let maxFuel = getAnalogFuelUsage(usageType, usageRate, minTime, referenceTime);
+    let maxFuel = getAnalogFuelUsage(
+      usageType,
+      usageRate,
+      minTime,
+      referenceTime,
+    );
 
     if (isNaN(maxFuel) || !isFinite(maxFuel)) maxFuel = 0;
     return maxFuel <= 0 ? 1 : maxFuel;
@@ -714,10 +803,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const steps = 50;
     for (let i = 0; i <= steps; i++) {
       const time = minTime + (i / steps) * (maxTime - minTime);
-      const fuel = getAnalogFuelUsage(usageType, usageRate, time, referenceTime);
+      const fuel = getAnalogFuelUsage(
+        usageType,
+        usageRate,
+        time,
+        referenceTime,
+      );
       const x = (i / steps) * width;
-      const yRatio = maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / maxFuelValue)) : 0;
-      const y = height - (yRatio * height);
+      const yRatio =
+        maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / maxFuelValue)) : 0;
+      const y = height - yRatio * height;
       points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
     }
 
@@ -727,10 +822,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     this.usageGraphCache = {
-      path: `M ${points.join(' L ')}`,
+      path: `M ${points.join(" L ")}`,
       labels: labels,
       maxVal: maxFuelValue,
-      argsKey: key
+      argsKey: key,
     };
   }
 
@@ -739,16 +834,25 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const usageRate = Number(this.editingRace.fuel_options.usage_rate) || 0;
     const capacity = Number(this.editingRace.fuel_options.capacity) || 100;
     const usageType = this.editingRace.fuel_options.usage_type;
-    const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+    const referenceTime =
+      Number(this.editingRace.fuel_options.reference_time) || 6;
     const maxTime = 15;
 
     if (usageRate <= 0) return 3600;
 
-    const minFuel = getAnalogFuelUsage(usageType, usageRate, maxTime, referenceTime);
+    const minFuel = getAnalogFuelUsage(
+      usageType,
+      usageRate,
+      maxTime,
+      referenceTime,
+    );
     if (minFuel <= 0) return 3600;
 
     const pitTimeSeconds = (capacity / minFuel) * maxTime;
-    const safePitTime = isNaN(pitTimeSeconds) || !isFinite(pitTimeSeconds) ? 3600 : Math.min(3600, pitTimeSeconds);
+    const safePitTime =
+      isNaN(pitTimeSeconds) || !isFinite(pitTimeSeconds)
+        ? 3600
+        : Math.min(3600, pitTimeSeconds);
     return Math.max(1, safePitTime);
   }
 
@@ -775,7 +879,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i <= steps; i++) {
       const lapTime = minLapTime + (i / steps) * (maxLapTime - minLapTime);
-      const fuelPerLap = getAnalogFuelUsage(usageType, usageRate, lapTime, referenceTime);
+      const fuelPerLap = getAnalogFuelUsage(
+        usageType,
+        usageRate,
+        lapTime,
+        referenceTime,
+      );
 
       let pitTimeSeconds = 0;
       if (fuelPerLap > 0) {
@@ -785,7 +894,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       }
 
       const y = height - (i / steps) * height; // 2s at bottom, 15s at top
-      const xPercent = maxPitTime > 0 ? Math.max(0, Math.min(1, pitTimeSeconds / maxPitTime)) : 1;
+      const xPercent =
+        maxPitTime > 0
+          ? Math.max(0, Math.min(1, pitTimeSeconds / maxPitTime))
+          : 1;
       const x = xPercent * width;
       points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
     }
@@ -796,16 +908,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     this.pitGraphCache = {
-      path: `M ${points.join(' L ')}`,
+      path: `M ${points.join(" L ")}`,
       labels: labels,
       maxVal: maxPitTime,
-      argsKey: key
+      argsKey: key,
     };
   }
 
   private getMaxDigitalFuelUsage(): number {
     if (!this.editingRace?.digital_fuel_options) return 1;
-    const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+    const usageRate =
+      Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
     const usageType = this.editingRace.digital_fuel_options.usage_type;
     return usageRate <= 0 ? 1 : usageRate;
   }
@@ -815,7 +928,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const options = this.editingRace.digital_fuel_options;
     const key = `${options.usage_type}_${options.usage_rate}`;
 
-    if (this.digitalUsageGraphCache && this.digitalUsageGraphCache.argsKey === key) return;
+    if (
+      this.digitalUsageGraphCache &&
+      this.digitalUsageGraphCache.argsKey === key
+    )
+      return;
 
     const maxFuelValue = this.getMaxDigitalFuelUsage();
     const width = 400;
@@ -824,10 +941,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const steps = 50;
     for (let i = 0; i <= steps; i++) {
       const throttle = (i / steps) * 100;
-      const fuel = getDigitalFuelUsage(options.usage_type, options.usage_rate, throttle);
+      const fuel = getDigitalFuelUsage(
+        options.usage_type,
+        options.usage_rate,
+        throttle,
+      );
       const x = (i / steps) * width;
-      const yRatio = maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / Math.max(0.001, maxFuelValue))) : 0;
-      const y = height - (yRatio * height);
+      const yRatio =
+        maxFuelValue > 0
+          ? Math.max(0, Math.min(1.5, fuel / Math.max(0.001, maxFuelValue)))
+          : 0;
+      const y = height - yRatio * height;
       points.push(`${(x || 0).toFixed(1)},${(y || 0).toFixed(1)}`);
     }
 
@@ -837,19 +961,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     this.digitalUsageGraphCache = {
-      path: `M ${points.join(' L ')}`,
+      path: `M ${points.join(" L ")}`,
       labels: labels,
       maxVal: maxFuelValue,
-      argsKey: key
+      argsKey: key,
     };
   }
 
   private getMaxDigitalPitTime(): number {
     if (!this.editingRace?.digital_fuel_options) return 3600;
-    const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
-    const capacity = Number(this.editingRace.digital_fuel_options.capacity) || 100;
+    const usageRate =
+      Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+    const capacity =
+      Number(this.editingRace.digital_fuel_options.capacity) || 100;
     if (usageRate <= 0) return 3600;
-    return Math.max(1, capacity / usageRate * 10); // arbitrary max based on full throttle
+    return Math.max(1, (capacity / usageRate) * 10); // arbitrary max based on full throttle
   }
 
   private updateDigitalPitGraphCache() {
@@ -857,7 +983,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const options = this.editingRace.digital_fuel_options;
     const key = `${options.usage_type}_${options.usage_rate}_${options.capacity}`;
 
-    if (this.digitalPitGraphCache && this.digitalPitGraphCache.argsKey === key) return;
+    if (this.digitalPitGraphCache && this.digitalPitGraphCache.argsKey === key)
+      return;
 
     const capacity = Number(options.capacity) || 100;
     const usageRate = Number(options.usage_rate) || 0;
@@ -869,8 +996,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     // Usage at 100% throttle is usageRate. So min time is Capacity/UsageRate.
     // Usage at 10% throttle is much less.
     const minTime = capacity / (usageRate || 1);
-    const maxTime = capacity / (getDigitalFuelUsage(usageType, usageRate, 10) || 0.001);
-    const safeMaxTime = isNaN(maxTime) || !isFinite(maxTime) ? 3600 : Math.min(3600, maxTime);
+    const maxTime =
+      capacity / (getDigitalFuelUsage(usageType, usageRate, 10) || 0.001);
+    const safeMaxTime =
+      isNaN(maxTime) || !isFinite(maxTime) ? 3600 : Math.min(3600, maxTime);
 
     const width = 400;
     const height = 150;
@@ -883,7 +1012,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
       const y = height - (i / steps) * height;
       const divisor = Math.max(0.001, safeMaxTime);
-      const xPercent = divisor > 0 ? Math.max(0, Math.min(1.5, timeToEmpty / divisor)) : 1;
+      const xPercent =
+        divisor > 0 ? Math.max(0, Math.min(1.5, timeToEmpty / divisor)) : 1;
       const x = xPercent * width;
       points.push(`${(x || 0).toFixed(1)},${(y || 0).toFixed(1)}`);
     }
@@ -894,34 +1024,38 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
 
     this.digitalPitGraphCache = {
-      path: `M ${points.join(' L ')}`,
+      path: `M ${points.join(" L ")}`,
       labels: labels,
       maxVal: safeMaxTime,
-      argsKey: key
+      argsKey: key,
     };
   }
 
   getDigitalUsagePath(): string {
     this.updateDigitalUsageGraphCache();
-    return this.digitalUsageGraphCache?.path || '';
+    return this.digitalUsageGraphCache?.path || "";
   }
 
   getDigitalUsageYLabels(): string[] {
     this.updateDigitalUsageGraphCache();
-    return this.digitalUsageGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS;
+    return (
+      this.digitalUsageGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS
+    );
   }
 
   getDigitalPitPath(): string {
     this.updateDigitalPitGraphCache();
-    return this.digitalPitGraphCache?.path || '';
+    return this.digitalPitGraphCache?.path || "";
   }
 
   getDigitalPitXLabels(): string[] {
     this.updateDigitalPitGraphCache();
-    return this.digitalPitGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS;
+    return (
+      this.digitalPitGraphCache?.labels || RaceEditorComponent.EMPTY_LABELS
+    );
   }
 
-  onDigitalGraphMouseMove(event: MouseEvent, type: 'usage' | 'pit') {
+  onDigitalGraphMouseMove(event: MouseEvent, type: "usage" | "pit") {
     if (!this.editingRace?.digital_fuel_options) return;
 
     const svg = event.currentTarget as SVGSVGElement;
@@ -931,10 +1065,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const width = rect.width;
     const height = rect.height;
 
-    if (type === 'usage') {
+    if (type === "usage") {
       const xPercent = Math.max(0, Math.min(1, mouseX / (width || 1)));
       const throttle = xPercent * 100;
-      const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+      const usageRate =
+        Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
       const usageType = this.editingRace.digital_fuel_options.usage_type;
       const fuel = getDigitalFuelUsage(usageType, usageRate, throttle);
 
@@ -944,25 +1079,30 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
       this.hoveredPoint = {
         svgX: Number(((xPercent || 0) * 400).toFixed(2)) || 0,
-        svgY: Number((150 - ((yPercent || 0) * 150)).toFixed(2)) || 0,
+        svgY: Number((150 - (yPercent || 0) * 150).toFixed(2)) || 0,
         screenX: mouseX || 0,
         screenY: mouseY || 0,
         time: throttle || 0, // we use 'time' field for 'throttle' here
         value: fuel || 0,
-        type: 'digital_usage'
+        type: "digital_usage",
       };
     } else {
       const yPercent = 1 - Math.max(0, Math.min(1, mouseY / (height || 1)));
       const throttle = yPercent * 100;
-      const usageRate = Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
+      const usageRate =
+        Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
       const usageType = this.editingRace.digital_fuel_options.usage_type;
-      const capacity = Number(this.editingRace.digital_fuel_options.capacity) || 100;
+      const capacity =
+        Number(this.editingRace.digital_fuel_options.capacity) || 100;
       const fuelPerSec = getDigitalFuelUsage(usageType, usageRate, throttle);
 
       this.updateDigitalPitGraphCache();
       const maxVal = this.digitalPitGraphCache?.maxVal || 1;
       let timeToEmpty = fuelPerSec > 0 ? capacity / fuelPerSec : maxVal;
-      const xPercent = maxVal > 0 ? Math.max(0, Math.min(1.5, timeToEmpty / Math.max(0.001, maxVal))) : 1;
+      const xPercent =
+        maxVal > 0
+          ? Math.max(0, Math.min(1.5, timeToEmpty / Math.max(0.001, maxVal)))
+          : 1;
 
       this.hoveredPoint = {
         svgX: Number(((xPercent || 0) * 400).toFixed(2)) || 0,
@@ -971,14 +1111,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         screenY: mouseY || 0,
         time: throttle || 0,
         value: timeToEmpty || 0,
-        type: 'digital_pit'
+        type: "digital_pit",
       };
     }
   }
 
   getFuelUsagePath(): string {
     this.updateUsageGraphCache();
-    return this.usageGraphCache?.path || '';
+    return this.usageGraphCache?.path || "";
   }
 
   getFuelUsageYLabels(): string[] {
@@ -986,14 +1126,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (this.usageGraphCache) return this.usageGraphCache.labels;
 
     if (!this.editingRace?.fuel_options?.enabled) {
-      return ['0.00', '0.00', '0.00', '0.00', '0.00'];
+      return ["0.00", "0.00", "0.00", "0.00", "0.00"];
     }
     return RaceEditorComponent.EMPTY_LABELS;
   }
 
   getPitGraphPath(): string {
     this.updatePitGraphCache();
-    return this.pitGraphCache?.path || '';
+    return this.pitGraphCache?.path || "";
   }
 
   getPitGraphXLabels(): string[] {
@@ -1001,12 +1141,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     if (this.pitGraphCache) return this.pitGraphCache.labels;
 
     if (!this.editingRace?.fuel_options?.enabled) {
-      return ['0', '0', '0', '0', '0'];
+      return ["0", "0", "0", "0", "0"];
     }
     return RaceEditorComponent.EMPTY_LABELS;
   }
 
-  onGraphMouseMove(event: MouseEvent, type: 'usage' | 'pit') {
+  onGraphMouseMove(event: MouseEvent, type: "usage" | "pit") {
     if (!this.editingRace?.fuel_options) return;
 
     const svg = event.currentTarget as SVGSVGElement;
@@ -1019,13 +1159,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     const minTime = 2;
     const maxTime = 15;
 
-    if (type === 'usage') {
+    if (type === "usage") {
       const xPercent = Math.max(0, Math.min(1, mouseX / width));
       const time = minTime + xPercent * (maxTime - minTime);
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
-      const fuel = getAnalogFuelUsage(usageType, usageRate, time, referenceTime);
+      const referenceTime =
+        Number(this.editingRace.fuel_options.reference_time) || 6;
+      const fuel = getAnalogFuelUsage(
+        usageType,
+        usageRate,
+        time,
+        referenceTime,
+      );
 
       this.updateUsageGraphCache();
       const maxVal = this.usageGraphCache?.maxVal || 1;
@@ -1033,12 +1179,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
       this.hoveredPoint = {
         svgX: Number((xPercent * 400).toFixed(2)),
-        svgY: Number((150 - (yPercent * 150)).toFixed(2)),
+        svgY: Number((150 - yPercent * 150).toFixed(2)),
         screenX: mouseX,
         screenY: mouseY,
         time: time,
         value: fuel,
-        type: 'usage'
+        type: "usage",
       };
     } else {
       // Pit Graph: Y is Lap Time (bottom 2, top 15)
@@ -1047,10 +1193,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
 
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime = Number(this.editingRace.fuel_options.reference_time) || 6;
+      const referenceTime =
+        Number(this.editingRace.fuel_options.reference_time) || 6;
       const capacity = this.editingRace.fuel_options.capacity || 100;
 
-      const fuelPerLap = getAnalogFuelUsage(usageType, usageRate, lapTime, referenceTime);
+      const fuelPerLap = getAnalogFuelUsage(
+        usageType,
+        usageRate,
+        lapTime,
+        referenceTime,
+      );
       let pitTime = 0;
       if (fuelPerLap > 0) pitTime = (capacity / fuelPerLap) * lapTime;
 
@@ -1065,7 +1217,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         screenY: mouseY,
         time: lapTime,
         value: pitTime,
-        type: 'pit'
+        type: "pit",
       };
     }
   }
@@ -1085,89 +1237,104 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         finish_value: race.heat_scoring.finish_value,
         heat_ranking: race.heat_scoring.heat_ranking,
         heat_ranking_tiebreaker: race.heat_scoring.heat_ranking_tiebreaker,
-        allow_finish: race.heat_scoring.allow_finish
+        allow_finish: race.heat_scoring.allow_finish,
       },
       overall_scoring: {
         dropped_heats: race.overall_scoring.dropped_heats,
         ranking_method: race.overall_scoring.ranking_method,
-        tiebreaker: race.overall_scoring.tiebreaker
+        tiebreaker: race.overall_scoring.tiebreaker,
       },
-      fuel_options: race.fuel_options ? {
-        enabled: race.fuel_options.enabled,
-        reset_fuel_at_heat_start: race.fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: race.fuel_options.end_heat_on_out_of_fuel,
-        capacity: race.fuel_options.capacity,
-        usage_type: race.fuel_options.usage_type,
-        usage_rate: race.fuel_options.usage_rate,
-        start_level: race.fuel_options.start_level,
-        refuel_rate: race.fuel_options.refuel_rate,
-        pit_stop_delay: race.fuel_options.pit_stop_delay,
-        reference_time: race.fuel_options.reference_time
-      } : undefined,
-      digital_fuel_options: race.digital_fuel_options ? {
-        enabled: race.digital_fuel_options.enabled,
-        reset_fuel_at_heat_start: race.digital_fuel_options.reset_fuel_at_heat_start,
-        end_heat_on_out_of_fuel: race.digital_fuel_options.end_heat_on_out_of_fuel,
-        capacity: race.digital_fuel_options.capacity,
-        usage_type: race.digital_fuel_options.usage_type,
-        usage_rate: race.digital_fuel_options.usage_rate,
-        start_level: race.digital_fuel_options.start_level,
-        refuel_rate: race.digital_fuel_options.refuel_rate,
-        pit_stop_delay: race.digital_fuel_options.pit_stop_delay
-      } : undefined,
+      fuel_options: race.fuel_options
+        ? {
+            enabled: race.fuel_options.enabled,
+            reset_fuel_at_heat_start:
+              race.fuel_options.reset_fuel_at_heat_start,
+            end_heat_on_out_of_fuel: race.fuel_options.end_heat_on_out_of_fuel,
+            capacity: race.fuel_options.capacity,
+            usage_type: race.fuel_options.usage_type,
+            usage_rate: race.fuel_options.usage_rate,
+            start_level: race.fuel_options.start_level,
+            refuel_rate: race.fuel_options.refuel_rate,
+            pit_stop_delay: race.fuel_options.pit_stop_delay,
+            reference_time: race.fuel_options.reference_time,
+          }
+        : undefined,
+      digital_fuel_options: race.digital_fuel_options
+        ? {
+            enabled: race.digital_fuel_options.enabled,
+            reset_fuel_at_heat_start:
+              race.digital_fuel_options.reset_fuel_at_heat_start,
+            end_heat_on_out_of_fuel:
+              race.digital_fuel_options.end_heat_on_out_of_fuel,
+            capacity: race.digital_fuel_options.capacity,
+            usage_type: race.digital_fuel_options.usage_type,
+            usage_rate: race.digital_fuel_options.usage_rate,
+            start_level: race.digital_fuel_options.start_level,
+            refuel_rate: race.digital_fuel_options.refuel_rate,
+            pit_stop_delay: race.digital_fuel_options.pit_stop_delay,
+          }
+        : undefined,
       auto_advance_time: race.auto_advance_time,
       auto_start_time: race.auto_start_time,
       auto_advance_warmup_time: race.auto_advance_warmup_time,
       auto_start_warmup_time: race.auto_start_warmup_time,
       min_lap_time: race.min_lap_time,
-      team_options: race.team_options ? {
-        heat_lap_limit: race.team_options.heat_lap_limit,
-        heat_time_limit: race.team_options.heat_time_limit,
-        overall_lap_limit: race.team_options.overall_lap_limit,
-        overall_time_limit: race.team_options.overall_time_limit,
-        require_pit_stop_change_driver: race.team_options.require_pit_stop_change_driver
-      } : undefined
+      team_options: race.team_options
+        ? {
+            heat_lap_limit: race.team_options.heat_lap_limit,
+            heat_time_limit: race.team_options.heat_time_limit,
+            overall_lap_limit: race.team_options.overall_lap_limit,
+            overall_time_limit: race.team_options.overall_time_limit,
+            require_pit_stop_change_driver:
+              race.team_options.require_pit_stop_change_driver,
+          }
+        : undefined,
     };
   }
 
   startHelp() {
     const steps: GuideStep[] = [
       {
-        title: this.translationService.translate('RE_HELP_WELCOME_TITLE'),
-        content: this.translationService.translate('RE_HELP_WELCOME_CONTENT'),
-        position: 'center'
+        title: this.translationService.translate("RE_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("RE_HELP_WELCOME_CONTENT"),
+        position: "center",
       },
       {
-        selector: '#race-name-input',
-        title: this.translationService.translate('RM_LABEL_NAME'),
-        content: this.translationService.translate('RE_HELP_NAME_CONTENT'),
-        position: 'bottom'
+        selector: "#race-name-input",
+        title: this.translationService.translate("RM_LABEL_NAME"),
+        content: this.translationService.translate("RE_HELP_NAME_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#track-select',
-        title: this.translationService.translate('RM_LABEL_TRACK'),
-        content: this.translationService.translate('RE_HELP_TRACK_CONTENT'),
-        position: 'bottom'
+        selector: "#track-select",
+        title: this.translationService.translate("RM_LABEL_TRACK"),
+        content: this.translationService.translate("RE_HELP_TRACK_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#copy-item-btn',
-        title: this.translationService.translate('RE_HELP_DUPLICATE_TITLE'),
-        content: this.translationService.translate('RE_HELP_DUPLICATE_CONTENT'),
-        position: 'bottom'
+        selector: "#copy-item-btn",
+        title: this.translationService.translate("RE_HELP_DUPLICATE_TITLE"),
+        content: this.translationService.translate("RE_HELP_DUPLICATE_CONTENT"),
+        position: "bottom",
       },
       {
-        selector: '#help-track-btn',
-        title: this.translationService.translate('TM_HELP_HELP_TITLE'),
-        content: this.translationService.translate('TM_HELP_HELP_CONTENT'),
-        position: 'bottom'
-      }
+        selector: "#help-track-btn",
+        title: this.translationService.translate("TM_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TM_HELP_HELP_CONTENT"),
+        position: "bottom",
+      },
     ];
 
     this.helpService.startGuide(steps);
   }
 }
 
-function getAnalogFuelUsage(usageType: FuelUsageType | string, usageRate: number, time: number, referenceTime: number): number {
+function getAnalogFuelUsage(
+  usageType: FuelUsageType | string,
+  usageRate: number,
+  time: number,
+  referenceTime: number,
+): number {
   if (usageType === FuelUsageType.LINEAR) {
     const safeRefTime = Math.max(0.1, referenceTime);
     const x1 = safeRefTime * 2;
@@ -1186,21 +1353,27 @@ function getAnalogFuelUsage(usageType: FuelUsageType | string, usageRate: number
   const safeRefTime = Math.max(0.1, referenceTime);
   let val = 0;
   if (usageType === FuelUsageType.QUADRATIC) {
-    val = usageRate * (safeRefTime * safeRefTime) / (safeTime * safeTime);
+    val = (usageRate * (safeRefTime * safeRefTime)) / (safeTime * safeTime);
   } else if (usageType === FuelUsageType.CUBIC) {
-    val = usageRate * (safeRefTime * safeRefTime * safeRefTime) / (safeTime * safeTime * safeTime);
+    val =
+      (usageRate * (safeRefTime * safeRefTime * safeRefTime)) /
+      (safeTime * safeTime * safeTime);
   }
 
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
 }
 
-function getDigitalFuelUsage(usageType: FuelUsageType | string, usageRate: number, throttle: number): number {
+function getDigitalFuelUsage(
+  usageType: FuelUsageType | string,
+  usageRate: number,
+  throttle: number,
+): number {
   const tRatio = throttle / 100;
   let val = usageRate * tRatio;
   if (usageType === FuelUsageType.QUADRATIC) {
-    val *= (1 + (1 - tRatio));
+    val *= 1 + (1 - tRatio);
   } else if (usageType === FuelUsageType.CUBIC) {
-    val *= (1 + (1 - tRatio) * (1 + (1 - tRatio)));
+    val *= 1 + (1 - tRatio) * (1 + (1 - tRatio));
   }
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, Math.min(val, 100));
 }
