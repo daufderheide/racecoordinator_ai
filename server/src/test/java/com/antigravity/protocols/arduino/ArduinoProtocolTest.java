@@ -36,7 +36,8 @@ public class ArduinoProtocolTest {
   private MockSerialConnection serialConnection;
   private ArduinoConfig config;
 
-  // TODO(aufderheide): Move MockSerialConnection to a common test utilities package. It'll be
+  // TODO(aufderheide): Move MockSerialConnection to a common test utilities
+  // package. It'll be
   // needed in other tests
   // down the road.
   private static class MockSerialConnection extends SerialConnection {
@@ -161,7 +162,7 @@ public class ArduinoProtocolTest {
     serialConnection = new MockSerialConnection();
     config = new ArduinoConfig();
     config.commPort = "COM1";
-    config.baudRate = 9600;
+    config.baudRate = 115200;
     config.normallyClosedLaneSensors = false;
     config.normallyClosedRelays = false;
 
@@ -269,7 +270,7 @@ public class ArduinoProtocolTest {
     // Update: D2 is now Call Button (Lane 0)
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
-    newConfig.baudRate = 9600;
+    newConfig.baudRate = 115200;
     newConfig.normallyClosedLaneSensors = false;
     newConfig.digitalIds =
         new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
@@ -1211,7 +1212,8 @@ public class ArduinoProtocolTest {
 
   @Test
   public void testSetHeatStandings() {
-    // Configure LED string 1 with 2 leds: Lane 0 leader (2000), Lane 1 leader (2001)
+    // Configure LED string 1 with 2 leds: Lane 0 leader (2000), Lane 1 leader
+    // (2001)
     LedString ledString = new LedString();
     ledString.stringNum = 1;
     ledString.leds =
@@ -1230,7 +1232,8 @@ public class ArduinoProtocolTest {
     // Expected SET_RGB_LED_VALUES command for String 1:
     // LED 0: Lane 0 leader -> OFF (0,0,0)
     // LED 1: Lane 1 leader -> ON (0,255,0)
-    // Opcode: 0x4C, String: 1, NumLeds: 2, [0, 0, 0, 0, 1, 0, 255, 0], Terminator: 0x3B
+    // Opcode: 0x4C, String: 1, NumLeds: 2, [0, 0, 0, 0, 1, 0, 255, 0], Terminator:
+    // 0x3B
     byte[] expected = {
       0x4C,
       0x01,

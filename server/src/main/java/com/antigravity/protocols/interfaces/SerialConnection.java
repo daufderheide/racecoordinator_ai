@@ -26,7 +26,7 @@ public class SerialConnection {
   }
 
   public void connect(String portName) throws IOException {
-    connect(portName, 9600);
+    connect(portName, 115200);
   }
 
   public void connect(String portName, int baudRate) throws IOException {

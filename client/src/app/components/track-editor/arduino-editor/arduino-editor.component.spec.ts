@@ -58,7 +58,7 @@ describe("ArduinoEditorComponent", () => {
     return {
       name: "Test Arduino",
       commPort: "COM1",
-      baudRate: 9600,
+      baudRate: 115200,
       debounceUs: 1000,
       hardwareType: 0,
       digitalIds: new Array(MAX_DIGITAL_PINS).fill(

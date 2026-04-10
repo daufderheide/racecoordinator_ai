@@ -3,56 +3,65 @@
 
    I/O Sketch - V1.0.0.15
 
-   The Race Coordinator Arduino sketch is covered by the Creative Commons - Attribution-NonCommercial-ShareAlike 4.0 International license.
-   Copyright 2014 by Dave Aufderheide and Kevin Gee.  All rights reserved.
-   If you find this sketch and corresponding wiring suggestions useful please
-   consider making a donation to the RC charity
-   http://racecoordinator.net/charity.html
+   The Race Coordinator Arduino sketch is covered by the Creative Commons -
+   Attribution-NonCommercial-ShareAlike 4.0 International license. Copyright
+   2014 by Dave Aufderheide and Kevin Gee.  All rights reserved. If you find
+   this sketch and corresponding wiring suggestions useful please consider
+   making a donation to the RC charity http://racecoordinator.net/charity.html
 
-   This is a human-readable summary of (and not a substitute for) the license which can be found here:
+   This is a human-readable summary of (and not a substitute for) the license
+   which can be found here:
    http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
    You are free to:
 
    Share — copy and redistribute the material in any medium or format
    Adapt — remix, transform, and build upon the material
-   The licensor cannot revoke these freedoms as long as you follow the license terms.
-   Under the following terms:
+   The licensor cannot revoke these freedoms as long as you follow the license
+   terms. Under the following terms:
 
-   Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-   NonCommercial — You may not use the material for commercial purposes.
-   ShareAlike — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
-   No additional restrictions — You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
-   Notices:
+   Attribution — You must give appropriate credit, provide a link to the
+   license, and indicate if changes were made. You may do so in any reasonable
+   manner, but not in any way that suggests the licensor endorses you or your
+   use. NonCommercial — You may not use the material for commercial purposes.
+   ShareAlike — If you remix, transform, or build upon the material, you must
+   distribute your contributions under the same license as the original. No
+   additional restrictions — You may not apply legal terms or technological
+   measures that legally restrict others from doing anything the license
+   permits. Notices:
 
-   You do not have to comply with the license for elements of the material in the public domain or where your use is permitted by an applicable exception or limitation.
-   No warranties are given. The license may not give you all of the permissions necessary for your intended use. For example, other rights such as publicity, privacy, or moral rights may limit how you use the material.
+   You do not have to comply with the license for elements of the material in
+   the public domain or where your use is permitted by an applicable exception
+   or limitation. No warranties are given. The license may not give you all of
+   the permissions necessary for your intended use. For example, other rights
+   such as publicity, privacy, or moral rights may limit how you use the
+   material.
 
    For complete license details please visit:
    http://creativecommons.org/licenses/by-nc-sa/4.0/
 */
 
-// Comment in to enable rgb led support.  You'll also likely 
+// Comment in to enable rgb led support.  You'll also likely
 // need to make other changes.  Search for WITH_FAST_LED and
 // the places you need to modify should be clearly marked.
-//#define WITH_FAST_LED
+// #define WITH_FAST_LED
 
-// Comment in to enable the watch dog, which is a slightly 
+// Comment in to enable the watch dog, which is a slightly
 // better way to do a software reset of the board.  Unfortunately
 // not all boards support it.
-//#define WITH_WATCH_DOG
+// #define WITH_WATCH_DOG
 
 // Comment in to enable support for toggling on/off fuel stuttering
 // which causes relays to open/close when a driver is out of fuel in
 // a fuel race.  Additional configuration is required so if you enable
-// this support search for WITH_FUEL_STUTTER to find the clearly 
+// this support search for WITH_FUEL_STUTTER to find the clearly
 // marked places in code you also likely need to change.
-//#define WITH_FUEL_STUTTER
+// #define WITH_FUEL_STUTTER
 
 // Enable to print clear text into a serial monitor.  This has
 // limitations and is only useful to debug the sketch.  If this is
 // enabled, RC will not work with the sketch.
-//#define WITH_SERIAL_DEBUG
+// #define WITH_SERIAL_DEBUG
 
 #ifdef WITH_WATCH_DOG
 #include <avr/wdt.h>
@@ -62,94 +71,88 @@
 #include <FastLED.h>
 #endif
 
-
-const byte term = 0x3B;  // ;
+const byte term = 0x3B; // ;
 
 // Version is "major"."minor"."patch"."drop"
 // V1.0.0.15
-const byte rcVersion[] = { 0x56, 0x01, 0x00, 0x00, 0x0f, term };
+const byte rcVersion[] = {0x56, 0x01, 0x00, 0x00, 0x0f, term};
 
 // Setting for the baud rate RC will run at 115200
 const long iBaudRate = 115200;
 // For WAVGAT boards set this baudrate in the sketch and
-// connect to the board at 9600.  My money says timing 
-// will be 4x off so we'll likely have to adjust timing 
-// in the sketch
-//const long iBaudRate = 38400;
+// connect to the board at 9600.  My money says timing
+// will be 4x off so we'll likely have to adjust timing
+// in the sketch.  If we were to support this, we should
+// probably create a "WAVGOT" board type.
+// const long iBaudRate = 38400;
 
 // Bytes for messages
-const byte resetRequest = 0x52;           // R
-const byte pinModeRequest = 0x50;         // P
-const byte analogPinModeRequest = 0x70;   // p
-const byte writeRequest = 0x4F;           // O
-const byte analogRequest = 0x41;          // A
-const byte digitalRequest = 0x44;         // D
+const byte resetRequest = 0x52;         // R
+const byte pinModeRequest = 0x50;       // P
+const byte analogPinModeRequest = 0x70; // p
+const byte writeRequest = 0x4F;         // O
+const byte analogRequest = 0x41;        // A
+const byte digitalRequest = 0x44;       // D
 
 // Extended protocol
-const byte extendedRequest = 0x45;        // E
+const byte extendedRequest = 0x45; // E
 // Extended protocol sub-commands
 const byte extRaceState = 0;
 const byte extHeatLeader = 1;
 const byte extHeatStandings = 2;
 const byte extFuel = 3;
-const byte extRefueling = 4; 
+const byte extRefueling = 4;
 const byte extRaceTime = 5;
 const byte extDeslot = 6;
 const byte extLapPerformance = 7;
 
-const byte getInfoRequest = 0x47;         // G
-const byte versionRequest = 0x56;         // V
-const byte timeResetRequest = 0x54;       // T
-const byte debounceRequest = 0x64;        // d
-const byte ledModeRequest = 0x6C;         // l
-const byte ledWriteRequest = 0x4C;        // L
+const byte getInfoRequest = 0x47;   // G
+const byte versionRequest = 0x56;   // V
+const byte timeResetRequest = 0x54; // T
+const byte debounceRequest = 0x64;  // d
+const byte ledModeRequest = 0x6C;   // l
+const byte ledWriteRequest = 0x4C;  // L
 
-byte timeResponse[] = { 0x54, 0x00, 0x00, 0x00, 0x00, 0, term };
+byte timeResponse[] = {0x54, 0x00, 0x00, 0x00, 0x00, 0, term};
 
-byte inputChanged[] = { 0x49, 0xFF, 0xFF, 0xFF, term };
+byte inputChanged[] = {0x49, 0xFF, 0xFF, 0xFF, term};
 
 // Opcode count [pin byte1 byte2 byte3 byte4] term
 // Max 10 pins right now
-byte analogData[] = { 0x41, 0x00,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 0x00, 
-                      term };
+byte analogData[] = {0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, term};
 
 // Unknown
-const byte getInfo[] = { 0x47, 0x3F, 0xFF, 0xFF, term };  // G ? -1 -1 ;
+const byte getInfo[] = {0x47, 0x3F, 0xFF, 0xFF, term}; // G ? -1 -1 ;
 // Trinket
-//const byte getInfo[] = {0x47, 0x54, 0x05, 0x00, term};  // G T 5 0 ;
+// const byte getInfo[] = {0x47, 0x54, 0x05, 0x00, term};  // G T 5 0 ;
 // Nano
-//const byte getInfo[] = {0x47, 0x4E, 0x08, 0x0E, term};  // N N 8 14 ;
+// const byte getInfo[] = {0x47, 0x4E, 0x08, 0x0E, term};  // N N 8 14 ;
 // Uno
-//const byte getInfo[] = {0x47, 0x55, 0x06, 0x0E, term};  // G U 6 14 ;
+// const byte getInfo[] = {0x47, 0x55, 0x06, 0x0E, term};  // G U 6 14 ;
 // Mega
-//const byte getInfo[] = {0x47, 0x4D, 0x10, 0x36, term};  // G M 16 54 ;
+// const byte getInfo[] = {0x47, 0x4D, 0x10, 0x36, term};  // G M 16 54 ;
 
 int iPinSignal = HIGH;
 int iNumReadPins = 0;
-int* pReadPins = NULL;
-int* pLastReadSignal = NULL;
+int *pReadPins = NULL;
+int *pLastReadSignal = NULL;
 
 unsigned long ulDebounceHighUs = 0;
 unsigned long ulDebounceLowUs = 0;
-int* pDebounceState = NULL;
-int* pDebounceNextState = NULL;
-unsigned long* pDebounceTime = NULL;
+int *pDebounceState = NULL;
+int *pDebounceNextState = NULL;
+unsigned long *pDebounceTime = NULL;
 
 #ifdef WITH_FUEL_STUTTER
 
 // TODO: WITH_FUEL_STUTTER: Set these to the values you want
 #define FUEL_NUM_LANES 4
-#define FUEL_ON_TIME_US  (1000L * 1000L)
+#define FUEL_ON_TIME_US (1000L * 1000L)
 #define FUEL_OFF_TIME_US (1000L * 1000L)
 #define FUEL_POWER_ON HIGH
 #define FUEL_POWER_OFF LOW
@@ -177,8 +180,8 @@ unsigned long ulPrevHwTimeUs;
 unsigned long ulPrevPingUs;
 unsigned long ulPingTimeUs = 1000000UL;
 #ifdef WITH_SERIAL_DEBUG
-#define INT_TO_TXT_CONVERSION  + '0'
-#define TXT_TO_INT_CONVERSION  - '0'
+#define INT_TO_TXT_CONVERSION +'0'
+#define TXT_TO_INT_CONVERSION -'0'
 
 #define SERIAL_PRINT(x) Serial.print(x);
 #define SERIAL_PRINTLN(x) Serial.println(x);
@@ -195,13 +198,14 @@ unsigned long ulCurDebounceUs;
 #ifdef WITH_FAST_LED
 // RGB pixels
 #define MAX_RGB_LED_STRINGS 4
-#define STRING_PIN_1  A0
-#define STRING_PIN_2  A1
-#define STRING_PIN_3  A2
-#define STRING_PIN_4  A3
+#define STRING_PIN_1 A0
+#define STRING_PIN_2 A1
+#define STRING_PIN_3 A2
+#define STRING_PIN_4 A3
 
-// Here's all the types of leds FastLed supports.  There are actually others that require a CLOCK pin
-// that we could support but as of right now I didn't bother.
+// Here's all the types of leds FastLed supports.  There are actually others
+// that require a CLOCK pin that we could support but as of right now I didn't
+// bother.
 //  #define LED_TYPE_1 TM1803
 //  #define LED_TYPE_1 TM1804
 //  #define LED_TYPE_1 TM1809
@@ -219,25 +223,32 @@ unsigned long ulCurDebounceUs;
 #define LED_TYPE_3 WS2811
 #define LED_TYPE_4 WS2811
 
-// Comment in LED_TYPE_1 through LED_TYPE_4 and set them to the correct value.  Then comment in
-// these 4 macros, OR leave these 4 macros commented out and comment in the 4 NEOPIXEL macros
-// which are basically WS2811 with the color format set to GRB.
-//#define SETUP_LED_1(leds, numLeds) FastLED.addLeds<LED_TYPE_1, STRING_PIN_1, RGB>(leds, numLeds);
-//#define SETUP_LED_2(leds, numLeds) FastLED.addLeds<LED_TYPE_2, STRING_PIN_2, RGB>(leds, numLeds);
-//#define SETUP_LED_3(leds, numLeds) FastLED.addLeds<LED_TYPE_3, STRING_PIN_3, RGB>(leds, numLeds);
-//#define SETUP_LED_4(leds, numLeds) FastLED.addLeds<LED_TYPE_4, STRING_PIN_4, RGB>(leds, numLeds);
+// Comment in LED_TYPE_1 through LED_TYPE_4 and set them to the correct value.
+// Then comment in these 4 macros, OR leave these 4 macros commented out and
+// comment in the 4 NEOPIXEL macros which are basically WS2811 with the color
+// format set to GRB.
+// #define SETUP_LED_1(leds, numLeds) FastLED.addLeds<LED_TYPE_1, STRING_PIN_1,
+// RGB>(leds, numLeds); #define SETUP_LED_2(leds, numLeds)
+// FastLED.addLeds<LED_TYPE_2, STRING_PIN_2, RGB>(leds, numLeds); #define
+// SETUP_LED_3(leds, numLeds) FastLED.addLeds<LED_TYPE_3, STRING_PIN_3,
+// RGB>(leds, numLeds); #define SETUP_LED_4(leds, numLeds)
+// FastLED.addLeds<LED_TYPE_4, STRING_PIN_4, RGB>(leds, numLeds);
 
-#define SETUP_LED_1(leds, numLeds) FastLED.addLeds<NEOPIXEL, STRING_PIN_1>(leds, numLeds);
-#define SETUP_LED_2(leds, numLeds) FastLED.addLeds<NEOPIXEL, STRING_PIN_2>(leds, numLeds);
-#define SETUP_LED_3(leds, numLeds) FastLED.addLeds<NEOPIXEL, STRING_PIN_3>(leds, numLeds);
-#define SETUP_LED_4(leds, numLeds) FastLED.addLeds<NEOPIXEL, STRING_PIN_4>(leds, numLeds);
+#define SETUP_LED_1(leds, numLeds)                                             \
+  FastLED.addLeds<NEOPIXEL, STRING_PIN_1>(leds, numLeds);
+#define SETUP_LED_2(leds, numLeds)                                             \
+  FastLED.addLeds<NEOPIXEL, STRING_PIN_2>(leds, numLeds);
+#define SETUP_LED_3(leds, numLeds)                                             \
+  FastLED.addLeds<NEOPIXEL, STRING_PIN_3>(leds, numLeds);
+#define SETUP_LED_4(leds, numLeds)                                             \
+  FastLED.addLeds<NEOPIXEL, STRING_PIN_4>(leds, numLeds);
 
 typedef struct {
   int numLeds;
-  CRGB* leds;
+  CRGB *leds;
 } s_rgbLedString;
 s_rgbLedString rgbLedStrings[MAX_RGB_LED_STRINGS];
-CLEDController* rgbLedControllers[MAX_RGB_LED_STRINGS];
+CLEDController *rgbLedControllers[MAX_RGB_LED_STRINGS];
 byte rgbLedBrightness[MAX_RGB_LED_STRINGS];
 int rgbLedUpdateRateMs = 20;
 boolean rgbLedUpdateString[MAX_RGB_LED_STRINGS];
@@ -248,13 +259,13 @@ boolean rgbLedInit = false;
 /*
    Setup on start configure input pins for track sensors
 */
-void setup()
-{
+void setup() {
   Serial.begin(iBaudRate);
 
   // If the Leonardo or Micro is used,
   // wait for the serial monitor to open.
-  while (!Serial);
+  while (!Serial)
+    ;
 
   SERIAL_PRINT("Num Read Pins: ");
   SERIAL_PRINTLN(iNumReadPins);
@@ -281,19 +292,19 @@ void setup()
 #endif
 
 #ifdef WITH_FUEL_STUTTER
-  // TODO: WITH_FUEL_STUTTER: 
+  // TODO: WITH_FUEL_STUTTER:
   // This puts the lane relays on pins D2-D5, change
   // this to your pin configuration as needed.  Make sure
   // to comment in/out any lanes you are/are not using.
   // The defaults here are assuming a 4 lane track.
-  fuelRelayPin[0] = 2;  // Lane 1
-  fuelRelayPin[1] = 3;  // Lane 2
-  fuelRelayPin[2] = 4;  // Lane 3
-  fuelRelayPin[3] = 5;  // Lane 4
-//  fuelRelayPin[4] = 6;  // Lane 5
-//  fuelRelayPin[5] = 7;  // Lane 6
-//  fuelRelayPin[6] = 8;  // Lane 7
-//  fuelRelayPin[7] = 9;  // Lane 8
+  fuelRelayPin[0] = 2; // Lane 1
+  fuelRelayPin[1] = 3; // Lane 2
+  fuelRelayPin[2] = 4; // Lane 3
+  fuelRelayPin[3] = 5; // Lane 4
+                       //  fuelRelayPin[4] = 6;  // Lane 5
+                       //  fuelRelayPin[5] = 7;  // Lane 6
+                       //  fuelRelayPin[6] = 8;  // Lane 7
+                       //  fuelRelayPin[7] = 9;  // Lane 8
 
   fuelHeatInProgress = false;
   for (int i = 0; i < FUEL_NUM_LANES; i++) {
@@ -304,7 +315,6 @@ void setup()
     pinMode(fuelRelayPin[i], OUTPUT);
   }
 
-  
 #endif
 
   ulPrevHwTimeUs = micros();
@@ -323,7 +333,7 @@ unsigned long ulStartMs = 0;
 unsigned long ulLoopCnt = 0;
 
 #ifdef WITH_FUEL_STUTTER
-void stutterRelays(unsigned long ulDeltaUs) {  
+void stutterRelays(unsigned long ulDeltaUs) {
   if (fuelHeatInProgress) {
     for (int i = 0; i < FUEL_NUM_LANES; i++) {
       // Fuel Stuttering only occurs if RC wants the power
@@ -337,16 +347,14 @@ void stutterRelays(unsigned long ulDeltaUs) {
               fuelTimeUs[i] = FUEL_OFF_TIME_US;
               fuelPowerOn[i] = false;
               digitalWrite(fuelRelayPin[i], FUEL_POWER_OFF);
-            }
-            else {
+            } else {
               // Turn power on
               fuelTimeUs[i] = FUEL_ON_TIME_US;
               fuelPowerOn[i] = true;
               digitalWrite(fuelRelayPin[i], FUEL_POWER_ON);
             }
           }
-        }
-        else {
+        } else {
           if (!fuelPowerOn[i]) {
             // Turn power on
             fuelTimeUs[i] = FUEL_ON_TIME_US;
@@ -357,16 +365,15 @@ void stutterRelays(unsigned long ulDeltaUs) {
       }
     }
   } else {
-      // Force the relay pin to the state RC wants.
-      for (int i = 0; i < FUEL_NUM_LANES; i++) {
-        digitalWrite(fuelRelayPin[i], fuelRCPower[i]);
-      }
+    // Force the relay pin to the state RC wants.
+    for (int i = 0; i < FUEL_NUM_LANES; i++) {
+      digitalWrite(fuelRelayPin[i], fuelRCPower[i]);
+    }
   }
 }
 #endif
 
-void loop()
-{
+void loop() {
   // Need micros for debounce and milis for timing data
   // TODO: consider calling micros and milis rather than
   // the divide.  There's a good chance the divide is more
@@ -385,8 +392,7 @@ void loop()
     // this is the first time through the loop
     if (bReset) {
       sendStateChange(i, iPinSignal, ulCurTimeMs);
-    }
-    else if (iPinSignal != pLastReadSignal[i]) {
+    } else if (iPinSignal != pLastReadSignal[i]) {
       setupStateChange(i, iPinSignal, ulCurTimeMs);
     }
     pLastReadSignal[i] = iPinSignal;
@@ -394,8 +400,7 @@ void loop()
   bReset = false;
 
   // If there is some data from RC to process do it here
-  if (bRead)
-  {
+  if (bRead) {
     processRequest();
   }
 #ifdef WITH_FAST_LED
@@ -446,32 +451,32 @@ void loop()
 }
 
 #ifdef WITH_SERIAL_DEBUG
-  // 5s
-  long long lAnalogReadDelayUs = (5L * 1000L * 1000L);
+// 5s
+long long lAnalogReadDelayUs = (5L * 1000L * 1000L);
 #else
-  // 10ms
-  long long lAnalogReadDelayUs = (10L * 1000L);
+// 10ms
+long long lAnalogReadDelayUs = (10L * 1000L);
 #endif
 long long lAnalogReadTimeUs = 0L;
 int iNumAnalogReadPins = 0;
-int* pAnalogReadPins = NULL;
+int *pAnalogReadPins = NULL;
 
 void readAnalog(unsigned long deltaUs) {
   if (iNumAnalogReadPins <= 0) {
     return;
   }
 
-  lAnalogReadTimeUs -= deltaUs;  
+  lAnalogReadTimeUs -= deltaUs;
   if (lAnalogReadTimeUs <= 0) {
     lAnalogReadTimeUs += lAnalogReadDelayUs;
 
     SERIAL_PRINTLN("Reading analog pins...");
-    
+
     int index = 2;
     for (int i = 0; i < iNumAnalogReadPins; i++) {
       SERIAL_PRINT("Reading analog pin: ");
       SERIAL_PRINT(pAnalogReadPins[i] - A0);
-      
+
       int analogValue = analogRead(pAnalogReadPins[i]);
 
       SERIAL_PRINT(" -- value is: ");
@@ -481,19 +486,19 @@ void readAnalog(unsigned long deltaUs) {
       analogData[index + 1] = ((analogValue >> 24) & 0xff);
       analogData[index + 2] = ((analogValue >> 16) & 0xff);
       analogData[index + 3] = ((analogValue >> 8) & 0xff);
-      analogData[index + 4] = (analogValue & 0xff); 
+      analogData[index + 4] = (analogValue & 0xff);
 
       index += 5;
     }
     analogData[index] = term;
-    
+
     int byteCount = 1 + 1 + (5 * iNumAnalogReadPins) + 1;
     Serial.write(analogData, byteCount);
   }
 }
 
-
-void handleDebounce(int pinIndex, unsigned long ulCurTimeMs, unsigned long ulDeltaUs) {
+void handleDebounce(int pinIndex, unsigned long ulCurTimeMs,
+                    unsigned long ulDeltaUs) {
   if (pDebounceTime[pinIndex] != 0xffffffff) {
     // Currently debouncing this pin
     pDebounceTime[pinIndex] += ulDeltaUs;
@@ -549,8 +554,7 @@ void sendStateChange(int pinIndex, int pinState, unsigned long ulCurTimeMs) {
   // not needed, but it's what RC is looking for
   if (pinState == HIGH) {
     pinState = 1;
-  }
-  else {
+  } else {
     pinState = 0;
   }
 
@@ -576,8 +580,7 @@ void setupStateChange(int pinIndex, int pinState, unsigned long ulCurTimeMs) {
 
     pDebounceNextState[pinIndex] = pinState;
     pDebounceTime[pinIndex] = 0xffffffff;
-  }
-  else if (pinState != pDebounceNextState[pinIndex]) {
+  } else if (pinState != pDebounceNextState[pinIndex]) {
     pDebounceNextState[pinIndex] = pinState;
     pDebounceTime[pinIndex] = 0;
 
@@ -585,8 +588,7 @@ void setupStateChange(int pinIndex, int pinState, unsigned long ulCurTimeMs) {
     SERIAL_PRINT(pReadPins[pinIndex]);
     SERIAL_PRINT(" setting up debounce to state ");
     SERIAL_PRINTLN(pinState);
-  }
-  else {
+  } else {
     // Should never be here, this would mean we're trying
     // to change states to the state we're already debouncing
     // which shouldn't be possible.
@@ -600,62 +602,61 @@ void setupStateChange(int pinIndex, int pinState, unsigned long ulCurTimeMs) {
 /*
    Process any requests from RC
 */
-void processRequest()
-{
+void processRequest() {
   SERIAL_PRINTLN("");
   SERIAL_PRINT("PR Opcode: ");
   SERIAL_PRINTLN(inBuffer[0]);
 
   switch (inBuffer[0]) {
-    case resetRequest:
-      processResetRequest();
+  case resetRequest:
+    processResetRequest();
     break;
 
-    case ledModeRequest:
-      processLedModeRequest();
+  case ledModeRequest:
+    processLedModeRequest();
     break;
 
-    case ledWriteRequest:
-      processLedWriteRequest();
+  case ledWriteRequest:
+    processLedWriteRequest();
     break;
 
-    case pinModeRequest:
-      processPinModeRequest();
+  case pinModeRequest:
+    processPinModeRequest();
     break;
 
-    case analogPinModeRequest:
-      processAnalogPinModeRequest();
+  case analogPinModeRequest:
+    processAnalogPinModeRequest();
     break;
 
-    case writeRequest:
-      processWriteRequest();
+  case writeRequest:
+    processWriteRequest();
     break;
 
-    case getInfoRequest:
-      Serial.write(getInfo, sizeof(getInfo));
+  case getInfoRequest:
+    Serial.write(getInfo, sizeof(getInfo));
     break;
 
-    case versionRequest:
-      Serial.write(rcVersion, sizeof(rcVersion));
+  case versionRequest:
+    Serial.write(rcVersion, sizeof(rcVersion));
     break;
 
-    case timeResetRequest:
-      processTimeResetRequest();
+  case timeResetRequest:
+    processTimeResetRequest();
     break;
 
-    case debounceRequest:
-      processDebounceRequest();
+  case debounceRequest:
+    processDebounceRequest();
     break;
 
-    case extendedRequest:
-      processExtendedRequest();
+  case extendedRequest:
+    processExtendedRequest();
     break;
 
-    default:
-      SERIAL_PRINTLN("");
-      SERIAL_PRINT("***Unknown OpCode: ");
-      SERIAL_PRINTLN(inBuffer[1]);
-      break;
+  default:
+    SERIAL_PRINTLN("");
+    SERIAL_PRINT("***Unknown OpCode: ");
+    SERIAL_PRINTLN(inBuffer[1]);
+    break;
   }
   SERIAL_PRINTLN("**** PM DONE ****");
 
@@ -664,8 +665,8 @@ void processRequest()
 }
 
 void processResetRequest() {
-  if (inBuffer[1] == 0x45 && inBuffer[2] == 0x53 && inBuffer[3] == 0x45 && inBuffer[4] == 0x54)
-  {
+  if (inBuffer[1] == 0x45 && inBuffer[2] == 0x53 && inBuffer[3] == 0x45 &&
+      inBuffer[4] == 0x54) {
     SERIAL_PRINTLN("");
     SERIAL_PRINTLN("Handle Reset");
     softwareReboot();
@@ -687,7 +688,7 @@ void processLedModeRequest() {
     rgbLedBrightness[stringNum] = inBuffer[3];
     rgbLedUpdateRateMs = inBuffer[4];
     rgbLedUpdateRateMs |= (inBuffer[5] << 8);
-#endif          
+#endif
     SERIAL_PRINTLN("");
     SERIAL_PRINT("Led String ");
     SERIAL_PRINT(stringNum);
@@ -702,7 +703,7 @@ void processLedModeRequest() {
         free(rgbLedStrings[stringNum].leds);
       }
       rgbLedStrings[stringNum].numLeds = numLeds;
-      rgbLedStrings[stringNum].leds = (CRGB*)malloc(sizeof(CRGB) * numLeds);
+      rgbLedStrings[stringNum].leds = (CRGB *)malloc(sizeof(CRGB) * numLeds);
     }
 
     for (int i = 0; i < rgbLedStrings[stringNum].numLeds; i++) {
@@ -712,16 +713,20 @@ void processLedModeRequest() {
     if (needsController) {
       switch (stringNum) {
       case 0:
-        rgbLedControllers[stringNum] = &SETUP_LED_1(rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
+        rgbLedControllers[stringNum] = &SETUP_LED_1(
+            rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
         break;
       case 1:
-        rgbLedControllers[stringNum] = &SETUP_LED_2(rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
+        rgbLedControllers[stringNum] = &SETUP_LED_2(
+            rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
         break;
       case 2:
-        rgbLedControllers[stringNum] = &SETUP_LED_3(rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
+        rgbLedControllers[stringNum] = &SETUP_LED_3(
+            rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
         break;
       case 3:
-        rgbLedControllers[stringNum] = &SETUP_LED_4(rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
+        rgbLedControllers[stringNum] = &SETUP_LED_4(
+            rgbLedStrings[stringNum].leds, rgbLedStrings[stringNum].numLeds);
         break;
       }
     }
@@ -788,10 +793,8 @@ void processLedWriteRequest() {
    Receive any messages from RC
    add them until we have a complete message
 */
-void serialEvent()
-{
-  while (!bRead && Serial.available())
-  {
+void serialEvent() {
+  while (!bRead && Serial.available()) {
     byte inChar = Serial.read();
 
     // Note: The opening of the serial port ends up sending us
@@ -800,8 +803,7 @@ void serialEvent()
     // haven't read in one of our opcodes yet.
     if (iReadCount > 0 || (inChar > 0x19 && inChar < 0x7f)) {
       inBuffer[iReadCount++] = inChar;
-      if (inChar == term)
-      {
+      if (inChar == term) {
         bRead = true;
       }
     }
@@ -826,12 +828,13 @@ void processPinModeRequest() {
 
     // Setup the new configuration
     iNumReadPins = inBuffer[2] TXT_TO_INT_CONVERSION;
-    pReadPins = (int*)malloc(iNumReadPins * sizeof(int));
-    pLastReadSignal = (int*)malloc(iNumReadPins * sizeof(int));
+    pReadPins = (int *)malloc(iNumReadPins * sizeof(int));
+    pLastReadSignal = (int *)malloc(iNumReadPins * sizeof(int));
 
-    pDebounceState = (int*)malloc(iNumReadPins * sizeof(int));
-    pDebounceNextState = (int*)malloc(iNumReadPins * sizeof(int));
-    pDebounceTime = (unsigned long*)malloc(iNumReadPins * sizeof(unsigned long));
+    pDebounceState = (int *)malloc(iNumReadPins * sizeof(int));
+    pDebounceNextState = (int *)malloc(iNumReadPins * sizeof(int));
+    pDebounceTime =
+        (unsigned long *)malloc(iNumReadPins * sizeof(unsigned long));
 
     int iBufIndex = 3;
     for (int i = 0; i < iNumReadPins; i++) {
@@ -854,8 +857,7 @@ void processPinModeRequest() {
     }
     // Force send the initial pin states
     bReset = true;
-  }
-  else {
+  } else {
     // Write pins
     SERIAL_PRINTLN("");
     SERIAL_PRINTLN("Write Pin Modes");
@@ -880,32 +882,32 @@ void processPinModeRequest() {
 }
 
 void processAnalogPinModeRequest() {
-  // Setup pins that read raw analog data      
+  // Setup pins that read raw analog data
   SERIAL_PRINTLN("");
   SERIAL_PRINTLN("Analog Read Pin Modes");
 
   // Free the old setup if it existed
   if (pAnalogReadPins != NULL) {
     free(pAnalogReadPins);
-  } 
+  }
 
   // Setup the new configuration
   iNumAnalogReadPins = inBuffer[1] TXT_TO_INT_CONVERSION;
-  pAnalogReadPins = (int*)malloc(iNumAnalogReadPins * sizeof(int));
-  analogData[1] = iNumAnalogReadPins; 
+  pAnalogReadPins = (int *)malloc(iNumAnalogReadPins * sizeof(int));
+  analogData[1] = iNumAnalogReadPins;
 
   SERIAL_PRINT("   Num Pins: ");
   SERIAL_PRINTLN(analogData[1]);
-  
+
   int iBufIndex = 2;
-  for (int i = 0; i < iNumAnalogReadPins; i++) {  
-    // Skip past pin type.  This pin mode uses the same code in RC, but we already know
-    // the pin type is Analog
+  for (int i = 0; i < iNumAnalogReadPins; i++) {
+    // Skip past pin type.  This pin mode uses the same code in RC, but we
+    // already know the pin type is Analog
     int pin = inBuffer[iBufIndex + 1] TXT_TO_INT_CONVERSION;
 
     SERIAL_PRINT("      Pin: ");
     SERIAL_PRINTLN(pin);
-    
+
     pin += A0;
 
     pAnalogReadPins[i] = pin;
@@ -915,7 +917,7 @@ void processAnalogPinModeRequest() {
 }
 
 void processWriteRequest() {
-  int pin = inBuffer[2] TXT_TO_INT_CONVERSION;      
+  int pin = inBuffer[2] TXT_TO_INT_CONVERSION;
   if (inBuffer[1] == 0x41) {
     // Write to an analog pin
     pin += A0;
@@ -924,7 +926,7 @@ void processWriteRequest() {
   byte state = inBuffer[3] TXT_TO_INT_CONVERSION;
 #ifdef WITH_FUEL_STUTTER
   // Check if this is a per lane relay pin, if so,
-  // figure out what to do    
+  // figure out what to do
   boolean fuelPin = false;
   for (int i = 0; i < FUEL_NUM_LANES; i++) {
     if (fuelRelayPin[i] == pin) {
@@ -934,9 +936,9 @@ void processWriteRequest() {
 
       if (state == FUEL_POWER_OFF) {
         fuelPowerOn[i] = false;
-        fuelTimeUs[i] = 0;                
+        fuelTimeUs[i] = 0;
       }
-      
+
       break;
     }
   }
@@ -956,14 +958,13 @@ void processWriteRequest() {
   SERIAL_PRINTLN(inBuffer[3] TXT_TO_INT_CONVERSION);
 }
 
-void processTimeResetRequest()   {
+void processTimeResetRequest() {
   // Note: RC does not send a lane, but DRC does
   // I don't this DRC needs to...
   byte lane;
   if (inBuffer[1] == term) {
     lane = 0;
-  }
-  else {
+  } else {
     lane = inBuffer[1] TXT_TO_INT_CONVERSION;
   }
 
@@ -1007,76 +1008,75 @@ void processExtendedRequest() {
   SERIAL_PRINTLN(inBuffer[4]);
 
   switch ((inBuffer[1] TXT_TO_INT_CONVERSION)) {
-    case extRaceState:
-    {
-      SERIAL_PRINTLN("Got extRaceState");
+  case extRaceState: {
+    SERIAL_PRINTLN("Got extRaceState");
 
-      //  Race State
-      switch (inBuffer[2]) {
-        case 0:
-        case 1:
-          // Heat not started (0)
-          // Heat not restarted (1)
+    //  Race State
+    switch (inBuffer[2]) {
+    case 0:
+    case 1:
+      // Heat not started (0)
+      // Heat not restarted (1)
 #ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = false;
-#endif                
-        break;
-
-        case 2:
-        case 3:
-          // Heat starting (2)
-          // Heat re-started (3)
-
-          // NOTE: inBuffer[3] is the countdown timer (4, 3, 2, 1, 0)
-          // But there's some whacked things like a -2 which I think is
-          // a jammed in "go" state.  It should be considered a green flag
-#ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = true;
+      fuelHeatInProgress = false;
 #endif
-        break;
+      break;
 
-        case 4:
-          // Heat is running
-#ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = true;
-#endif        
-        break;
+    case 2:
+    case 3:
+      // Heat starting (2)
+      // Heat re-started (3)
 
-        case 5:
-          // Heat is paused
+      // NOTE: inBuffer[3] is the countdown timer (4, 3, 2, 1, 0)
+      // But there's some whacked things like a -2 which I think is
+      // a jammed in "go" state.  It should be considered a green flag
 #ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = false;
-#endif        
-        break;
+      fuelHeatInProgress = true;
+#endif
+      break;
 
-        case 6:
-          // Heat ended
+    case 4:
+      // Heat is running
 #ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = false;
-#endif        
-        break;
+      fuelHeatInProgress = true;
+#endif
+      break;
 
-        case 7:
-          // Race ended
+    case 5:
+      // Heat is paused
 #ifdef WITH_FUEL_STUTTER
-         fuelHeatInProgress = false;
-#endif        
-        break;
+      fuelHeatInProgress = false;
+#endif
+      break;
 
-        case 8:
-          // RC is closing
+    case 6:
+      // Heat ended
 #ifdef WITH_FUEL_STUTTER
-          fuelHeatInProgress = false;
-#endif        
-        break;        
-      }
+      fuelHeatInProgress = false;
+#endif
+      break;
+
+    case 7:
+      // Race ended
+#ifdef WITH_FUEL_STUTTER
+      fuelHeatInProgress = false;
+#endif
+      break;
+
+    case 8:
+      // RC is closing
+#ifdef WITH_FUEL_STUTTER
+      fuelHeatInProgress = false;
+#endif
+      break;
+    }
     break;
   }
   case extHeatLeader:
     // Heat Leader
     // byte lane = inBuffer[2];
     SERIAL_PRINTLN("Got extHeatLeader");
-  break;
+    break;
 
   case extHeatStandings:
     // Heat Standings
@@ -1088,10 +1088,10 @@ void processExtendedRequest() {
     // Position [i] = inbuffer[3 + i];
     // }
     SERIAL_PRINTLN("Got extHeatStandings");
-  break;
+    break;
 
   case extFuel:
-    // Fuel      
+    // Fuel
 #ifdef WITH_FUEL_STUTTER
   {
     SERIAL_PRINTLN("**********Got extFuel*********");
@@ -1106,13 +1106,12 @@ void processExtendedRequest() {
       SERIAL_PRINTLN(level);
 
       if (level == 0 && !fuelOOF[lane]) {
-        // Assume power is on, setting time to 0 will cause it 
+        // Assume power is on, setting time to 0 will cause it
         // to turn off
         fuelOOF[lane] = true;
         fuelTimeUs[lane] = 0;
         fuelPowerOn[lane] = true;
-      }
-      else if (level > 0) {
+      } else if (level > 0) {
         // This will turn power back on if its not already
         fuelOOF[lane] = false;
       }
@@ -1126,14 +1125,14 @@ void processExtendedRequest() {
     // byte lane = inBuffer[2];
     // bool refueling = (inBuffer[3] != 0);
     SERIAL_PRINTLN("**********Got extRefueling*********");
-  break;
+    break;
 
   case extRaceTime:
     // Race Time
     // byte timePct = inBuffer[2];
     // timePct range is [0, 100]
     SERIAL_PRINTLN("**********Got extRaceTime*********");
-  break;
+    break;
 
   case extDeslot:
     // Deslot
@@ -1141,7 +1140,7 @@ void processExtendedRequest() {
     // byte deslotes = inBuffer[3];
     // byte maxDeslots = inBuffer[4];
     SERIAL_PRINTLN("**********Got extDeslot*********");
-  break;
+    break;
 
   case extLapPerformance:
     // Lap Performance
@@ -1155,7 +1154,7 @@ void processExtendedRequest() {
     // byte bestLap = inBuffer[6];
     // byte bestHeatLap = inBuffer[7];
     SERIAL_PRINTLN("**********Got extLapPerformance*********");
-  break;
+    break;
   }
 }
 
@@ -1201,13 +1200,11 @@ void sendPing() {
    RC requires a keep alive once every 5 seconds
    so do 1 every second just in case
 */
-void keepAlive()
-{
+void keepAlive() {
   unsigned long ulCurTimeUs = micros();
   unsigned long ulDeltaUs = ulCurTimeUs - ulPrevPingUs;
 
-  if (ulDeltaUs > ulPingTimeUs)
-  {
+  if (ulDeltaUs > ulPingTimeUs) {
     sendPing();
   }
 }
@@ -1231,16 +1228,14 @@ void resetLeds() {
 }
 #endif
 
-void softwareReboot()
-{
+void softwareReboot() {
 #ifdef WITH_FAST_LED
   resetLeds();
 #endif
 
 #ifdef WITH_WATCH_DOG
   wdt_enable(WDTO_15MS);
-  while (1)
-  {
+  while (1) {
     SERIAL_PRINTLN("Waiting for watch dog reboot");
   }
 #else

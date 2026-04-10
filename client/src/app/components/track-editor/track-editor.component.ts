@@ -846,7 +846,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.arduinoConfigs.push({
       name: `Arduino ${this.arduinoConfigs.length + 1}`,
       commPort: "",
-      baudRate: 9600,
+      baudRate: 115200,
       debounceUs: 200,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,

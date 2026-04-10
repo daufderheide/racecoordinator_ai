@@ -11,8 +11,10 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.Racing;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +94,18 @@ public class TeamRacingTest {
             .track(track)
             .isDemoMode(false)
             .build();
+
+    // Disable ALL background protocols (Arduino/Demo) so they don't interfere with
+    // the manual lap test injections
+    try {
+      Field protocolsField = com.antigravity.race.Race.class.getDeclaredField("protocols");
+      protocolsField.setAccessible(true);
+      ProtocolDelegate delegate = new ProtocolDelegate(new ArrayList<>());
+      delegate.setListener(race);
+      protocolsField.set(race, delegate);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to mock protocols for test", e);
+    }
   }
 
   @Test
