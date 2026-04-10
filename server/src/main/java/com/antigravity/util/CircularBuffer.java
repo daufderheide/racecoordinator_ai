@@ -131,4 +131,18 @@ public class CircularBuffer {
     }
     return buffer[(head + offset) % capacity];
   }
+
+  /**
+   * Returns a hex string representation of the current contents of the buffer.
+   *
+   * @return hex string
+   */
+  public synchronized String toHexString() {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      byte b = buffer[(head + i) % capacity];
+      sb.append(String.format("%02X ", b));
+    }
+    return sb.toString().trim();
+  }
 }

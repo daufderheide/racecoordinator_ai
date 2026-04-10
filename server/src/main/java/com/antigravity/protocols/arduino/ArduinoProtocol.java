@@ -145,9 +145,6 @@ public class ArduinoProtocol extends DefaultProtocol {
       return true;
     }
 
-    // Moving status scheduler start to after COM port validation
-    // startStatusScheduler();
-
     if (config.commPort == null || config.commPort.isEmpty()) {
       logger.info(
           "[{}] No COM port specified for ArduinoProtocol on lanes {}, status will be DISCONNECTED",
@@ -157,12 +154,14 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
 
     try {
+      // Force 115200 baud for now as requested, as it's not currently configurable in the UI
+      int baudRateToUse = 115200;
       logger.info(
           "[{}] Attempting to connect to {} at {} baud",
           getLogTime(),
           config.commPort,
-          config.baudRate);
-      serialConnection.connect(config.commPort, config.baudRate);
+          baudRateToUse);
+      serialConnection.connect(config.commPort, baudRateToUse);
 
       serialConnection.addListener(
           new SerialPortDataListener() {
@@ -178,8 +177,9 @@ public class ArduinoProtocol extends DefaultProtocol {
 
               byte[] data = event.getReceivedData();
               if (data != null && data.length > 0) {
-                logger.debug("[{}] Received: {}", getLogTime(), bytesToHex(data));
+                logger.info("[{}] Received: {}", getLogTime(), bytesToHex(data));
                 rxBuffer.write(data);
+                logger.debug("[{}] Buffer state: {}", getLogTime(), rxBuffer.toHexString());
                 processData();
               }
             }
@@ -385,7 +385,9 @@ public class ArduinoProtocol extends DefaultProtocol {
         default:
           // Unknown opcode, skip one byte to resync
           logger.warn(
-              "Unknown opcode: {}, skipping one byte to resync", String.format("0x%02X", opcode));
+              "[{}] Unknown opcode: {}, skipping one byte to resync",
+              getLogTime(),
+              String.format("0x%02X", opcode));
           rxBuffer.get();
           continue;
       }
@@ -399,14 +401,17 @@ public class ArduinoProtocol extends DefaultProtocol {
       if (rxBuffer.peek(messageLength - 1) != TERMINATOR) {
         // Invalid message (bad terminator), skip one byte to resync
         logger.error(
-            "Invalid message (bad terminator) for opcode {}, skipping one byte",
-            String.format("0x%02X", opcode));
+            "[{}] Invalid message (bad terminator) for opcode {}, skipping one byte. Buffer: {}",
+            getLogTime(),
+            String.format("0x%02X", opcode),
+            rxBuffer.toHexString());
         rxBuffer.get();
         continue;
       }
 
       // Valid message, read it
       byte[] message = rxBuffer.read(messageLength);
+      logger.info("[{}] Processing message: {}", getLogTime(), bytesToHex(message));
       handleMessage(message);
     }
   }
@@ -415,6 +420,10 @@ public class ArduinoProtocol extends DefaultProtocol {
     byte opcode = message[0];
 
     if (!versionVerified && opcode != OPCODE_VERSION) {
+      logger.warn(
+          "[{}] Ignoring message (opcode: 0x{}) before version verification",
+          getLogTime(),
+          String.format("%02X", opcode));
       return;
     }
 
@@ -497,7 +506,12 @@ public class ArduinoProtocol extends DefaultProtocol {
         sendTimeReset();
         sendRgbLedMode();
       } else {
-        logger.error("Invalid firmware version: {}.{}.{}", major, minor, patch);
+        logger.error(
+            "[{}] Invalid firmware version: {}.{}.{}. Expected 1.0.0",
+            getLogTime(),
+            major,
+            minor,
+            patch);
       }
     }
   }
@@ -1291,5 +1305,9 @@ public class ArduinoProtocol extends DefaultProtocol {
       logger.error("Failed to parse color hex: {}", hex, e);
     }
     return new int[] {0, 0, 0};
+  }
+
+  public boolean isOpen() {
+    return versionVerified;
   }
 }

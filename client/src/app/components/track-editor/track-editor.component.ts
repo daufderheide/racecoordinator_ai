@@ -1082,7 +1082,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   onBack() {
     this.router.navigate(["/track-manager"], {
-      queryParams: { id: this.editingTrack?.entity_id },
+      queryParams: { selectedId: this.editingTrack?.entity_id },
     });
   }
 

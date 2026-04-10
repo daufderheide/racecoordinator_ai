@@ -1279,4 +1279,44 @@ public class ArduinoProtocolTest {
       }
     }
   }
+
+  @Test
+  public void testVersionVerificationAndIgnoredMessages() {
+    protocol.open();
+
+    // 1. Send Heatbeat (T) before version - should be ignored
+    // Heartbeat: T <long:timeInUse> <byte:isReset> ; -> 54 00 01 02 03 00 3B
+    byte[] heartbeatMsg = {0x54, 0, 0, 1, 0, 0, 0x3B};
+    serialConnection.injectData(heartbeatMsg);
+
+    assertEquals(
+        "Heartbeat should be ignored before version verification", 0, protocol.lastHeartbeatTimeMs);
+
+    // 2. Send Input (I) before version - should be ignored
+    byte[] inputLap = {0x49, 0x44, 0x02, 0x00, 0x3B};
+    serialConnection.injectData(inputLap);
+    assertEquals("Input should be ignored before version verification", 0, listener.lapCount);
+
+    // 3. Send Version (V) - should verify
+    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue(
+        "Version should be verified",
+        protocol.isOpen()); // Actually checking it's open and verified
+
+    // 4. Send Heartbeat again - should be processed
+    serialConnection.injectData(heartbeatMsg);
+    assertTrue(
+        "Heartbeat should be processed after version verification",
+        protocol.lastHeartbeatTimeMs > 0);
+
+    // 5. Send Input again - should be processed
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+    protocol.updateConfig(config);
+
+    serialConnection.injectData(inputLap);
+    assertEquals("Input should be processed after version verification", 1, listener.lapCount);
+  }
 }

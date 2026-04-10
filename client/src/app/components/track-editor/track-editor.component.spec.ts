@@ -327,6 +327,13 @@ describe("TrackEditorComponent", () => {
     });
   });
 
+  it("should navigate back to manager with selectedId", () => {
+    component.onBack();
+    expect(router.navigate).toHaveBeenCalledWith(["/track-manager"], {
+      queryParams: { selectedId: "t1" },
+    });
+  });
+
   it("should stay on page and keep original ID when save as new fails", () => {
     spyOn(console, "error");
     spyOn(dataService, "createTrack").and.returnValue(

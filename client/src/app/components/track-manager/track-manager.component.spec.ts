@@ -75,7 +75,7 @@ class MockRouter {
 class MockActivatedRoute {
   snapshot = {
     queryParamMap: {
-      get: (key: string) => null,
+      get: (key: string): string | null => null,
     },
   };
   queryParamMap = of(this.snapshot.queryParamMap);
@@ -146,6 +146,18 @@ describe("TrackManagerComponent", () => {
   it("should select a track", () => {
     component.selectTrack(component.tracks[1]);
     expect(component.selectedTrack?.name).toBe("Track 2");
+  });
+
+  it("should select track from query parameter on init", () => {
+    // Setup route with selectedId=t2
+    const route = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
+    spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
+      if (key === "selectedId") return "t2";
+      return null;
+    });
+
+    component.ngOnInit();
+    expect(component.selectedTrack?.entity_id).toBe("t2");
   });
 
   it("should navigate to editor for editing", () => {

@@ -157,6 +157,9 @@ public class ArduinoConfig {
     this.name = name;
     this.commPort = commPort;
     this.baudRate = baudRate;
+    if (this.baudRate <= 0) {
+      this.baudRate = 115200;
+    }
     this.debounceUs = debounceUs;
     this.hardwareType = hardwareType;
     this.normallyClosedLaneSensors = normallyClosedLaneSensors;
