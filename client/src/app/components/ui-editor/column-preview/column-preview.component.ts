@@ -91,11 +91,12 @@ export class ColumnPreviewComponent {
 
   getAnchorValue(slotKey: string, anchor: string): string | undefined {
     const layout = this.columnLayouts[slotKey];
-    const val = layout ? layout[anchor as AnchorPoint] : undefined;
-    if (val) return val;
+    // If layout exists for this slot, return the anchor value (even if undefined/cleared)
+    if (layout) {
+      return layout[anchor as AnchorPoint];
+    }
 
-    // Fallback: Default to CenterCenter showing the slot key if NO layout exists
-    // or if CenterCenter is specifically missing/empty
+    // Fallback: Only show slot key in CenterCenter when NO layout exists at all
     if (anchor === AnchorPoint.CenterCenter) {
       return slotKey;
     }

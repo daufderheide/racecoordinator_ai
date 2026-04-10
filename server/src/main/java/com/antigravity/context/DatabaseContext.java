@@ -197,6 +197,7 @@ public class DatabaseContext {
     long trackCount = db.getCollection("tracks").countDocuments();
     long raceCount = db.getCollection("races").countDocuments();
     long assetCount = db.getCollection("assets").countDocuments();
+    long screenCount = db.getCollection("screens").countDocuments();
 
     Document stats = db.runCommand(new Document("dbStats", 1));
     double sizeBytes = 0;
@@ -219,7 +220,7 @@ public class DatabaseContext {
     sizeBytes += assetSizeBytes;
 
     return new DatabaseStats(
-        dbName, driverCount, teamCount, trackCount, raceCount, assetCount, sizeBytes);
+        dbName, driverCount, teamCount, trackCount, raceCount, assetCount, screenCount, sizeBytes);
   }
 
   public void exportDatabase(String dbName, OutputStream out) throws IOException {
@@ -333,6 +334,7 @@ public class DatabaseContext {
     public long trackCount;
     public long raceCount;
     public long assetCount;
+    public long screenCount;
     public double sizeBytes;
 
     public DatabaseStats(
@@ -342,6 +344,7 @@ public class DatabaseContext {
         long trackCount,
         long raceCount,
         long assetCount,
+        long screenCount,
         double sizeBytes) {
       this.name = name;
       this.driverCount = driverCount;
@@ -349,6 +352,7 @@ public class DatabaseContext {
       this.trackCount = trackCount;
       this.raceCount = raceCount;
       this.assetCount = assetCount;
+      this.screenCount = screenCount;
       this.sizeBytes = sizeBytes;
     }
   }

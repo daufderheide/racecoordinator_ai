@@ -140,6 +140,10 @@ export class RaceScreenService {
     return this.getScreenById(this.raceScreenManager.activeScreenId);
   }
 
+  getDefaultScreen(): RaceScreenConfig | undefined {
+    return this.getScreenById(this.raceScreenManager.defaultScreenId);
+  }
+
   async setActiveScreen(screenId: string): Promise<void> {
     this.raceScreenManager.activeScreenId = screenId;
     if (!this.raceScreenManager.activeScreenIds.includes(screenId)) {

@@ -276,16 +276,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       columnVisibility: JSON.parse(
         JSON.stringify(this.editingSettings.columnVisibility || {}),
       ),
-      screenName: "Default",
+      screenName: this.currentScreen?.name || "Default",
     };
     this.showReorderModal = true;
   }
 
-  onReorderSave(result: ReorderDialogResult) {
+  async onReorderSave(result: ReorderDialogResult) {
     this.editingSettings.racedayColumns = result.columns;
     this.editingSettings.columnLayouts = result.columnLayouts;
     this.editingSettings.columnVisibility = result.columnVisibility;
     this.captureState();
+    
+    // Actually save to server, not just local state
+    if (this.currentScreen) {
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        columns: result.columns,
+        columnLayouts: result.columnLayouts,
+        columnVisibility: result.columnVisibility
+      });
+    }
+    
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
@@ -382,22 +392,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, 500);
   }
 
-  // Race Screen Management Methods
-  private loadScreenConfig(screen: RaceScreenConfig): void {
-    // Load screen columns into editingSettings so Configure Columns dialog shows them
-    this.editingSettings = {
-      ...this.editingSettings,
-      racedayColumns: screen.columns,
-      columnAnchors: screen.columnAnchors,
-      columnLayouts: screen.columnLayouts,
-      columnVisibility: screen.columnVisibility
-    };
-    
-    // Reset undo tracking so switching screens doesn't count as unsaved changes
-    this.undoManager.resetTracking(this.editingSettings);
-    this.cdr.detectChanges();
-  }
-
   private async saveScreenConfig(): Promise<void> {
     if (!this.currentScreen) return;
     
@@ -409,6 +403,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       sortByStandings: this.currentScreen.sortByStandings,
       highlightRowOnLap: this.currentScreen.highlightRowOnLap
     });
+  }
+
+  // Race Screen Management Methods
+  private loadScreenConfig(screen: RaceScreenConfig): void {
+    // Load screen columns into editingSettings so Configure Columns dialog shows them
+    // Deep clone to prevent shared references between screens
+    this.editingSettings = {
+      ...this.editingSettings,
+      racedayColumns: [...screen.columns],
+      columnAnchors: { ...screen.columnAnchors },
+      columnLayouts: JSON.parse(JSON.stringify(screen.columnLayouts)),
+      columnVisibility: { ...screen.columnVisibility },
+    };
+
+    // Reset undo tracking so switching screens doesn't count as unsaved changes
+    this.undoManager.resetTracking(this.editingSettings);
+    this.cdr.detectChanges();
   }
 
   async selectScreen(screenId: string): Promise<void> {
@@ -442,6 +453,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   async duplicateScreen(screen: RaceScreenConfig): Promise<void> {
+    // First save any pending changes to the current screen
+    if (this.currentScreen && this.hasChanges()) {
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        columns: this.editingSettings.racedayColumns,
+        columnLayouts: this.editingSettings.columnLayouts,
+        columnVisibility: this.editingSettings.columnVisibility
+      });
+    }
+    // Now duplicate with fresh data
     await this.raceScreenService.duplicateScreen(screen.entity_id);
   }
 
@@ -489,25 +509,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     await this.raceScreenService.setScreenEnabled(screenId, !isEnabled);
   }
 
-  formatDate(timestamp: number): string {
-    return new Date(timestamp).toLocaleDateString();
-  }
-
-  onBack() {
-    // If screen columns changed, save them before navigating
-    if (this.currentScreen && this.hasChanges()) {
-      this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
-        columns: this.editingSettings.racedayColumns,
-        columnLayouts: this.editingSettings.columnLayouts,
-        columnVisibility: this.editingSettings.columnVisibility
+  async onSortByStandingsChange(value: boolean): Promise<void> {
+    if (this.currentScreen) {
+      this.currentScreen.sortByStandings = value;
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        sortByStandings: value
       });
     }
-    this.isNavigationApproved = true;
-    this.router.navigate(["/raceday-setup"]);
   }
 
-  hasChanges() {
-    return this.undoManager.hasChanges();
+  async onHighlightRowOnLapChange(value: boolean): Promise<void> {
+    if (this.currentScreen) {
+      this.currentScreen.highlightRowOnLap = value;
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        highlightRowOnLap: value
+      });
+    }
   }
 
   undo() {
@@ -518,5 +535,27 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   captureState() {
     this.undoManager.captureState();
+  }
+
+  hasChanges(): boolean {
+    return this.undoManager.hasChanges();
+  }
+
+  async onBack() {
+    // If screen columns changed, save them before navigating
+    if (this.currentScreen && this.hasChanges()) {
+      await this.raceScreenService.updateScreen(this.currentScreen.entity_id, {
+        columns: this.editingSettings.racedayColumns,
+        columnLayouts: this.editingSettings.columnLayouts,
+        columnVisibility: this.editingSettings.columnVisibility
+      });
+    }
+    this.isNavigationApproved = true;
+    this.router.navigate(['/raceday-setup']);
+  }
+
+  formatDate(timestamp: number): string {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleDateString();
   }
 }

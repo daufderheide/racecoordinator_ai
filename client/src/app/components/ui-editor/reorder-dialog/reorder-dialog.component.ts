@@ -83,18 +83,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
         JSON.stringify(value.columnVisibility || {}),
       );
 
-      // Initialize items if missing or empty. Every slot MUST have at least one anchor filled.
+      // Only initialize visibility if missing, not layouts
       newSlots.forEach((slot) => {
-        if (
-          !newLayouts[slot.key] ||
-          Object.keys(newLayouts[slot.key]).length === 0
-        ) {
-          const layout = newLayouts[slot.key] || {};
-          newLayouts[slot.key] = {
-            ...layout,
-            [AnchorPoint.CenterCenter]: slot.key,
-          };
-        }
         if (!newVisibility[slot.key]) {
           newVisibility[slot.key] = ColumnVisibility.Always;
         }

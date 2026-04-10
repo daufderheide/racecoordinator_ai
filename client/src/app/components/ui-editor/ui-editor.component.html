@@ -96,7 +96,10 @@
     <div class="main-content">
       <!-- Full-Width Column Layout Preview -->
       <div class="panel layout-panel">
-        <div class="panel-header">{{ 'UE_LABEL_COLUMNS' | translate }}</div>
+        <div class="panel-header">
+          <span class="header-screen-name" *ngIf="currentScreen">{{ currentScreen.name }}</span>
+          <span>{{ 'UE_LABEL_COLUMNS' | translate }}</span>
+        </div>
         <div class="panel-content column-layout-section">
           <app-column-preview [columnSlots]="columnSlots" [columnLayouts]="editingSettings.columnLayouts"
             [resizingColumnKey]="resizingColumnKey" [columnVisibility]="editingSettings.columnVisibility">
@@ -105,7 +108,7 @@
           <div class="layout-controls">
             <div class="sorting-selector">
               <label class="checkbox-container">
-                <input type="checkbox" [(ngModel)]="editingSettings.sortByStandings" (change)="captureState()">
+                <input type="checkbox" [ngModel]="currentScreen?.sortByStandings" (ngModelChange)="onSortByStandingsChange($event)">
                 <span class="checkmark"></span>
                 {{ 'UE_LABEL_SORT_STANDINGS' | translate }}
               </label>
@@ -113,7 +116,7 @@
 
             <div class="sorting-selector">
               <label class="checkbox-container">
-                <input type="checkbox" [(ngModel)]="editingSettings.highlightRowOnLap" (change)="captureState()">
+                <input type="checkbox" [ngModel]="currentScreen?.highlightRowOnLap" (ngModelChange)="onHighlightRowOnLapChange($event)">
                 <span class="checkmark"></span>
                 {{ 'UE_LABEL_HIGHLIGHT_LAP' | translate }}
               </label>

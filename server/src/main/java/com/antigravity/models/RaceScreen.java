@@ -79,27 +79,27 @@ public class RaceScreen extends Model {
     Map<String, Map<String, String>> layouts = new java.util.HashMap<>();
     
     Map<String, String> nicknameLayout = new java.util.HashMap<>();
-    nicknameLayout.put("CenterCenter", "driver.nickname");
-    nicknameLayout.put("BottomRight", "participant.team.name");
+    nicknameLayout.put("center-center", "driver.nickname");
+    nicknameLayout.put("bottom-right", "participant.team.name");
     layouts.put("driver.nickname", nicknameLayout);
     
     Map<String, String> fuelLayout = new java.util.HashMap<>();
-    fuelLayout.put("CenterCenter", "imageset_fuel-gauge-builtin");
+    fuelLayout.put("center-center", "imageset_fuel-gauge-builtin");
     layouts.put("imageset_fuel-gauge-builtin", fuelLayout);
     
     Map<String, String> lapCountLayout = new java.util.HashMap<>();
-    lapCountLayout.put("CenterCenter", "lapCount");
+    lapCountLayout.put("center-center", "lapCount");
     layouts.put("lapCount", lapCountLayout);
     
     Map<String, String> lastLapLayout = new java.util.HashMap<>();
-    lastLapLayout.put("CenterCenter", "lastLapTime");
-    lastLapLayout.put("TopRight", "bestLapTime");
-    lastLapLayout.put("BottomRight", "averageLapTime");
+    lastLapLayout.put("center-center", "lastLapTime");
+    lastLapLayout.put("top-right", "bestLapTime");
+    lastLapLayout.put("bottom-right", "averageLapTime");
     layouts.put("lastLapTime", lastLapLayout);
     
     Map<String, String> gapLayout = new java.util.HashMap<>();
-    gapLayout.put("CenterCenter", "gapLeader");
-    gapLayout.put("BottomRight", "gapPosition");
+    gapLayout.put("center-center", "gapLeader");
+    gapLayout.put("bottom-right", "gapPosition");
     layouts.put("gapLeader", gapLayout);
     
     return layouts;

@@ -34,6 +34,7 @@ import { AnchorPoint } from "./column_definition";
 
 import InterfaceStatus = com.antigravity.InterfaceStatus;
 import { RaceConnectionService } from "src/app/services/race-connection.service";
+import { RaceScreenService } from "src/app/services/race-screen.service";
 /**
  * The raceday component is the main component for the raceday screen.
  */
@@ -283,6 +284,7 @@ export class DefaultRacedayComponent
     private raceFlagService: RaceFlagService,
     private router: Router,
     private raceConnectionService: RaceConnectionService,
+    private raceScreenService: RaceScreenService,
     private cdr: ChangeDetectorRef,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
@@ -427,8 +429,8 @@ export class DefaultRacedayComponent
               );
             }
 
-            const settings = this.settingsService.getSettings();
-            if (settings.highlightRowOnLap) {
+            const defaultScreen = this.raceScreenService.getDefaultScreen();
+            if (defaultScreen?.highlightRowOnLap ?? this.settingsService.getSettings().highlightRowOnLap) {
               this.highlightedDrivers.add(lap.objectId!);
               if (!this.isDestroyed) {
                 this.cdr.detectChanges();
@@ -588,8 +590,8 @@ export class DefaultRacedayComponent
       (a, b) => a.laneIndex - b.laneIndex,
     );
 
-    const settings = this.settingsService.getSettings();
-    if (settings.sortByStandings) {
+    const defaultScreen = this.raceScreenService.getDefaultScreen();
+    if (defaultScreen?.sortByStandings ?? this.settingsService.getSettings().sortByStandings) {
       // Sort a separate copy to determine visual positions
       const ranked = [...this.heat.heatDrivers].sort((a, b) => {
         const rankA = this.driverRankings.get(a.objectId) ?? 999;
@@ -1446,18 +1448,27 @@ export class DefaultRacedayComponent
   }
 
   private loadColumns() {
+    // Get default screen configuration
+    const defaultScreen = this.raceScreenService.getDefaultScreen();
     const settings = this.settingsService.getSettings();
-    let selectedColumns = settings.racedayColumns;
+    
+    // Use screen-specific columns if available, otherwise fall back to global settings
+    let selectedColumns = defaultScreen?.columns || settings.racedayColumns;
     if (!selectedColumns || selectedColumns.length === 0) {
       selectedColumns = Settings.DEFAULT_COLUMNS;
     }
+
+    // Use screen-specific columnVisibility and columnLayouts if available
+    const screenVisibility = defaultScreen?.columnVisibility;
+    const screenLayouts = defaultScreen?.columnLayouts;
 
     // Filter columns based on race settings
     const race = this.raceService.getRace();
     const isFuelRace =
       (race?.fuel_options?.enabled || race?.digital_fuel_options?.enabled) ??
       false;
-    const visibilityMap = settings.columnVisibility || {};
+    // Use screen's columnVisibility, fall back to settings
+    const visibilityMap = (screenVisibility !== undefined ? screenVisibility : settings.columnVisibility) || {};
 
     selectedColumns = selectedColumns.filter((key) => {
       const visibility = visibilityMap[key] || ColumnVisibility.Always;
@@ -1503,9 +1514,12 @@ export class DefaultRacedayComponent
     let totalFixedWithoutResizingColumn = 0;
     let resizingColumnKey: string | null = null;
 
+    // Get layouts - use screen's layouts if available, fall back to settings
+    const layouts = (screenLayouts !== undefined ? screenLayouts : settings.columnLayouts) || {};
+
     // Find the first column containing name/nickname in its layout to use as resizing column
     for (const key of selectedColumns) {
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = layouts[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const containsName = Object.values(layout).some((v) =>
@@ -1526,7 +1540,7 @@ export class DefaultRacedayComponent
     // Sum up widths of all OTHER columns
     selectedColumns.forEach((key) => {
       if (key === resizingColumnKey) return;
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = layouts[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const primaryProp =
@@ -1541,7 +1555,7 @@ export class DefaultRacedayComponent
     );
 
     this.columns = selectedColumns.map((key) => {
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = layouts[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const primaryProp =
@@ -1551,7 +1565,10 @@ export class DefaultRacedayComponent
       const labelKey = this.getLabelKeyForColumn(key, layout);
       const isResizing = key === resizingColumnKey;
       const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
-      const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
+      const screenAnchors = defaultScreen?.columnAnchors;
+      const anchor = (screenAnchors !== undefined && screenAnchors[key] !== undefined 
+        ? screenAnchors[key] 
+        : settings.columnAnchors[key]) || AnchorPoint.CenterCenter;
 
       const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
         return this.formatValue(primaryProp, v, hd, col);

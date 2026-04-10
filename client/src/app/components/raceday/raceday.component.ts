@@ -18,6 +18,7 @@ import { FileSystemService } from "src/app/services/file-system.service";
 import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
 import { RaceFlagService } from "src/app/services/race-flag.service";
+import { RaceScreenService } from "src/app/services/race-screen.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
@@ -35,6 +36,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(Router) router: Router,
     @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
+    @Inject(RaceScreenService) raceScreenService: RaceScreenService,
   ) {
     super(
       el,
@@ -45,6 +47,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       raceFlagService,
       router,
       raceConnectionService,
+      raceScreenService,
       cdr,
     );
   }

@@ -2,6 +2,8 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.RaceScreen;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -11,6 +13,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class RaceScreenHandler {
   private final DatabaseContext databaseContext;
@@ -60,37 +63,132 @@ public class RaceScreenHandler {
 
   private void createScreen(Context ctx) {
     try {
-      RaceScreen screen = ctx.bodyAsClass(RaceScreen.class);
+      // Parse JSON manually to avoid Jackson @JsonIdentityInfo issues with RaceScreen
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode json = mapper.readTree(ctx.body());
+      
+      String name = json.get("name").asText();
+      System.out.println("Creating screen: " + name);
+      
       MongoDatabase db = databaseContext.getDatabase();
       MongoCollection<RaceScreen> collection = db.getCollection("screens", RaceScreen.class);
       
       // Generate entity_id using counter
       String entityId = getNextSequence(db, "screens");
+      System.out.println("Generated entity_id: " + entityId);
       
-      // Create new screen with generated ID
+      // Extract fields from JSON
+      List<String> columns = extractList(json, "columns");
+      Map<String, Map<String, String>> columnLayouts = extractNestedMap(json, "columnLayouts");
+      Map<String, String> columnVisibility = extractStringMap(json, "columnVisibility");
+      Map<String, String> columnAnchors = extractStringMap(json, "columnAnchors");
+      boolean sortByStandings = json.has("sortByStandings") ? json.get("sortByStandings").asBoolean() : true;
+      boolean highlightRowOnLap = json.has("highlightRowOnLap") ? json.get("highlightRowOnLap").asBoolean() : true;
+      boolean isDefault = json.has("isDefault") ? json.get("isDefault").asBoolean() : false;
+      boolean isEnabled = json.has("isEnabled") ? json.get("isEnabled").asBoolean() : true;
+      
+      // Create new screen with all fields from JSON and generated ID
       RaceScreen newScreen = new RaceScreen(
-          screen.getName(),
+          name,
+          columns,
+          columnLayouts,
+          columnVisibility,
+          columnAnchors,
+          sortByStandings,
+          highlightRowOnLap,
+          isDefault,
+          isEnabled,
           entityId,
           new ObjectId()
       );
       
       collection.insertOne(newScreen);
+      System.out.println("Screen inserted successfully: " + entityId);
       ctx.json(newScreen);
     } catch (Exception e) {
+      System.err.println("Error creating screen: " + e.getMessage());
       e.printStackTrace();
       ctx.status(500).result("Error creating screen: " + e.getMessage());
     }
+  }
+  
+  private List<String> extractList(JsonNode json, String field) {
+    List<String> result = new ArrayList<>();
+    if (json.has(field) && json.get(field).isArray()) {
+      for (JsonNode node : json.get(field)) {
+        result.add(node.asText());
+      }
+    }
+    return result;
+  }
+  
+  @SuppressWarnings("unchecked")
+  private Map<String, Map<String, String>> extractNestedMap(JsonNode json, String field) {
+    if (json.has(field) && json.get(field).isObject()) {
+      return new ObjectMapper().convertValue(json.get(field), Map.class);
+    }
+    return new java.util.HashMap<>();
+  }
+  
+  @SuppressWarnings("unchecked")
+  private Map<String, String> extractStringMap(JsonNode json, String field) {
+    if (json.has(field) && json.get(field).isObject()) {
+      return new ObjectMapper().convertValue(json.get(field), Map.class);
+    }
+    return new java.util.HashMap<>();
   }
 
   private void updateScreen(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      RaceScreen updates = ctx.bodyAsClass(RaceScreen.class);
+      
+      // Parse JSON manually to avoid Jackson @JsonIdentityInfo issues with RaceScreen
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode json = mapper.readTree(ctx.body());
+      
       MongoDatabase db = databaseContext.getDatabase();
       MongoCollection<RaceScreen> collection = db.getCollection("screens", RaceScreen.class);
       
-      collection.replaceOne(Filters.eq("entity_id", id), updates);
-      ctx.json(updates);
+      // Get existing screen to preserve ID and createdAt
+      RaceScreen existing = collection.find(Filters.eq("entity_id", id)).first();
+      if (existing == null) {
+        ctx.status(404).result("Screen not found");
+        return;
+      }
+      
+      // Extract fields from JSON
+      String name = json.has("name") ? json.get("name").asText() : existing.getName();
+      List<String> columns = json.has("columns") ? extractList(json, "columns") : existing.getColumns();
+      Map<String, Map<String, String>> columnLayouts = json.has("columnLayouts") 
+          ? extractNestedMap(json, "columnLayouts") : existing.getColumnLayouts();
+      Map<String, String> columnVisibility = json.has("columnVisibility") 
+          ? extractStringMap(json, "columnVisibility") : existing.getColumnVisibility();
+      Map<String, String> columnAnchors = json.has("columnAnchors") 
+          ? extractStringMap(json, "columnAnchors") : existing.getColumnAnchors();
+      boolean sortByStandings = json.has("sortByStandings") 
+          ? json.get("sortByStandings").asBoolean() : existing.isSortByStandings();
+      boolean highlightRowOnLap = json.has("highlightRowOnLap") 
+          ? json.get("highlightRowOnLap").asBoolean() : existing.isHighlightRowOnLap();
+      boolean isDefault = json.has("isDefault") ? json.get("isDefault").asBoolean() : existing.isDefault();
+      boolean isEnabled = json.has("isEnabled") ? json.get("isEnabled").asBoolean() : existing.isEnabled();
+      
+      // Create updated screen preserving original ID and created timestamp
+      RaceScreen updated = new RaceScreen(
+          name,
+          columns,
+          columnLayouts,
+          columnVisibility,
+          columnAnchors,
+          sortByStandings,
+          highlightRowOnLap,
+          isDefault,
+          isEnabled,
+          existing.getEntityId(),
+          existing.getId()
+      );
+      
+      collection.replaceOne(Filters.eq("entity_id", id), updated);
+      ctx.json(updated);
     } catch (Exception e) {
       e.printStackTrace();
       ctx.status(500).result("Error updating screen: " + e.getMessage());

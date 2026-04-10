@@ -74,6 +74,10 @@ export class RaceScreenConfigFactory {
 
   static clone(config: RaceScreenConfig): RaceScreenConfig {
     const newId = `screen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Ensure columnLayouts is an object, not null/undefined
+    const safeColumnLayouts = config.columnLayouts || {};
+    const safeColumnAnchors = config.columnAnchors || {};
+    const safeColumnVisibility = config.columnVisibility || {};
     return {
       ...config,
       id: newId,
@@ -81,7 +85,12 @@ export class RaceScreenConfigFactory {
       name: `${config.name} (Copy)`,
       isDefault: false, // Cloned screen is never default
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      // Deep clone nested objects to prevent shared references
+      columns: [...config.columns],
+      columnAnchors: { ...safeColumnAnchors },
+      columnLayouts: JSON.parse(JSON.stringify(safeColumnLayouts)),
+      columnVisibility: { ...safeColumnVisibility }
     };
   }
 }
