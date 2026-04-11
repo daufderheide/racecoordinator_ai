@@ -24,8 +24,8 @@ export function naturalSortCompare(a: string, b: string): number {
         return aNum - bNum;
       }
     } else {
-      // At least one is not a number, compare as strings
-      const cmp = aPart.localeCompare(bPart);
+      // At least one is not a number, compare as strings (case-insensitive)
+      const cmp = aPart.localeCompare(bPart, undefined, { sensitivity: 'base' });
       if (cmp !== 0) {
         return cmp;
       }
