@@ -779,9 +779,7 @@ export class TestSetupHelper {
         (window as any).WATCHDOG_TIMEOUT = 99999999;
       }
 
-      // @ts-ignore
       window.allMockSockets = [];
-      // @ts-ignore
       window.MockWebSocket = class extends EventTarget {
         url: string;
         readyState: number;
@@ -799,12 +797,10 @@ export class TestSetupHelper {
           super();
           this.url = url;
           this.readyState = 0; // CONNECTING
-          // @ts-ignore
-          window.allMockSockets.push(this);
+          window.allMockSockets?.push(this);
 
           setTimeout(() => {
             this.readyState = 1; // OPEN
-            // @ts-ignore
             window.mockSocket = this;
             const openEvent = new Event("open");
             this.dispatchEvent(openEvent);
@@ -856,9 +852,7 @@ export class TestSetupHelper {
             }
 
             // Initial race data if available
-            // @ts-ignore
             if (url.includes("race-data") && window.mockRaceDataBuffer) {
-              // @ts-ignore
               const event = new MessageEvent("message", {
                 data: window.mockRaceDataBuffer,
               });
@@ -966,23 +960,17 @@ export class TestSetupHelper {
     const dataArray = Array.from(buffer);
 
     await page.addInitScript((data) => {
-      // @ts-ignore
       window.mockRaceDataBuffer = new Uint8Array(data).buffer;
       // Also broadcast it to any already open sockets
-      // @ts-ignore
       if (window.allMockSockets) {
-        // @ts-ignore
         const raceSockets = window.allMockSockets.filter((s: any) =>
           s.url.includes("race-data"),
         );
         raceSockets.forEach((s: any) => {
-          // @ts-ignore
           const event = new MessageEvent("message", {
             data: window.mockRaceDataBuffer,
           });
-          // @ts-ignore
           s.dispatchEvent(event);
-          // @ts-ignore
           if (s.onmessage) s.onmessage(event);
         });
       }
