@@ -122,4 +122,83 @@ test.describe("UI Editor Visuals", () => {
       "ui-editor-columns-list.png",
     );
   });
+
+  test("should display screen manager sidebar with screens", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const editor = page.locator(".ue-container");
+    const harness = new UIEditorHarnessE2e(editor);
+
+    // Wait for screen cards to be visible
+    await page
+      .locator(".screen-card")
+      .first()
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    // Verify screens are loaded
+    const screenCount = await harness.getScreenCount();
+    expect(screenCount).toBeGreaterThan(0);
+
+    await expect(page.locator(".sidebar-container")).toHaveScreenshot(
+      "ui-editor-screen-manager-sidebar.png",
+    );
+  });
+
+  test("should display empty screen state when no screens exist", async ({
+    page,
+  }) => {
+    // Mock empty screens response
+    await page.route("**/api/race-screens", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ screens: [], defaultScreenId: null }),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Wait for empty state to be visible
+    await page
+      .locator(".empty-state")
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    await expect(page.locator(".sidebar-container")).toHaveScreenshot(
+      "ui-editor-screen-manager-empty.png",
+    );
+  });
+
+  test("should display screen card with badges and actions", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Wait for screen cards to be visible
+    await page
+      .locator(".screen-card")
+      .first()
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    // Take screenshot of the first screen card
+    await expect(page.locator(".screen-card").first()).toHaveScreenshot(
+      "ui-editor-screen-card.png",
+    );
+  });
 });
