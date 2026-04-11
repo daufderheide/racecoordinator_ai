@@ -756,5 +756,16 @@
   "UI_EDITOR_COL_GAP_LEADER": "DIFERENÇA PARA O LÍDER",
   "UI_EDITOR_COL_GAP_POSITION": "DIFERENÇA PARA A POSIÇÃO",
   "UI_EDITOR_COL_REACTION_TIME": "TEMPO DE REAÇÃO",
-  "UI_EDITOR_COL_TEAM": "NOME DA EQUIPE"
+  "UI_EDITOR_COL_TEAM": "NOME DA EQUIPE",
+  "SM_TITLE": "Gerenciador de Telas de Corrida",
+  "SM_EMPTY_TITLE": "Nenhuma Tela",
+  "SM_EMPTY_DESCRIPTION": "Crie uma tela para personalizar sua UI de dia de corrida.",
+  "SM_BADGE_DEFAULT": "Padrão",
+  "SM_BADGE_ENABLED": "Ativado",
+  "SM_TOOLTIP_EDIT": "Editar nome da tela",
+  "SM_TOOLTIP_DUPLICATE": "Duplicar tela",
+  "SM_TOOLTIP_DELETE": "Excluir tela",
+  "SM_TOOLTIP_CANNOT_DELETE": "Não é possível excluir a tela padrão",
+  "SM_CREATED": "Criado",
+  "SM_UPDATED": "Atualizado"
 }

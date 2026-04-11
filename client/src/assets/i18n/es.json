@@ -756,5 +756,16 @@
   "UI_EDITOR_COL_GAP_LEADER": "DIFERENCIA CON EL LÍDER",
   "UI_EDITOR_COL_GAP_POSITION": "DIFERENCIA CON LA POSICIÓN",
   "UI_EDITOR_COL_REACTION_TIME": "TIEMPO DE REACCIÓN",
-  "UI_EDITOR_COL_TEAM": "NOMBRE DEL EQUIPO"
+  "UI_EDITOR_COL_TEAM": "NOMBRE DEL EQUIPO",
+  "SM_TITLE": "Gestor de Pantallas de Carrera",
+  "SM_EMPTY_TITLE": "Sin Pantallas",
+  "SM_EMPTY_DESCRIPTION": "Cree una pantalla para personalizar su UI de día de carrera.",
+  "SM_BADGE_DEFAULT": "Predeterminado",
+  "SM_BADGE_ENABLED": "Activado",
+  "SM_TOOLTIP_EDIT": "Editar nombre de pantalla",
+  "SM_TOOLTIP_DUPLICATE": "Duplicar pantalla",
+  "SM_TOOLTIP_DELETE": "Eliminar pantalla",
+  "SM_TOOLTIP_CANNOT_DELETE": "No se puede eliminar la pantalla predeterminada",
+  "SM_CREATED": "Creado",
+  "SM_UPDATED": "Actualizado"
 }

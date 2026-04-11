@@ -756,5 +756,16 @@
   "UI_EDITOR_COL_GAP_LEADER": "GAT NAAR LEIDER",
   "UI_EDITOR_COL_GAP_POSITION": "GAT NAAR POSITIE",
   "UI_EDITOR_COL_REACTION_TIME": "REACTIETIJD",
-  "UI_EDITOR_COL_TEAM": "TEAM NAAM"
+  "UI_EDITOR_COL_TEAM": "TEAM NAAM",
+  "SM_TITLE": "Race Scherm Beheerder",
+  "SM_EMPTY_TITLE": "Geen Schermen",
+  "SM_EMPTY_DESCRIPTION": "Maak een scherm aan om je race dag UI aan te passen.",
+  "SM_BADGE_DEFAULT": "Standaard",
+  "SM_BADGE_ENABLED": "Ingeschakeld",
+  "SM_TOOLTIP_EDIT": "Schermnaam bewerken",
+  "SM_TOOLTIP_DUPLICATE": "Scherm dupliceren",
+  "SM_TOOLTIP_DELETE": "Scherm verwijderen",
+  "SM_TOOLTIP_CANNOT_DELETE": "Standaardscherm kan niet worden verwijderd",
+  "SM_CREATED": "Aangemaakt",
+  "SM_UPDATED": "Bijgewerkt"
 }

@@ -382,7 +382,15 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     this.columnLayouts = newLayouts;
 
     const newVisibility = { ...this.columnVisibility };
-    newVisibility[newKey] = ColumnVisibility.Always;
+    // Fuel-related columns should default to FuelRaceOnly visibility
+    const isFuelColumn =
+      propertyKey === "participant.fuelLevel" ||
+      propertyKey === "fuelCapacity" ||
+      propertyKey === "fuelPercentage" ||
+      propertyKey === "imageset_fuel-gauge-builtin";
+    newVisibility[newKey] = isFuelColumn
+      ? ColumnVisibility.FuelRaceOnly
+      : ColumnVisibility.Always;
     this.columnVisibility = newVisibility;
 
     this.updateDropListIds();
