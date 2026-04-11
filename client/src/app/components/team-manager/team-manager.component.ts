@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import {
   ChangeDetectorRef,
   Component,
@@ -21,21 +20,7 @@ import {
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-=======
-import { Component, OnInit, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
-import { DataService } from 'src/app/data.service';
-import { Team } from 'src/app/models/team';
-import { Driver } from 'src/app/models/driver';
-import { Router } from '@angular/router';
-import { TranslationService } from 'src/app/services/translation.service';
-import { ConnectionMonitorService, ConnectionState } from '../../services/connection-monitor.service';
-import { Subscription, forkJoin } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { HelpService, GuideStep } from '../../services/help.service';
-import { SettingsService } from '../../services/settings.service';
-import { naturalSortCompare } from '../../utils/sorting.utils';
-
->>>>>>> 88bf7e8 (Refactor: Extract naturalSortCompare to shared utility with unit tests)
+import { naturalSortCompare } from "src/app/utils/sorting.utils";
 
 @Component({
   selector: "app-team-manager",
@@ -61,11 +46,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         (t) => t.name && t.name.toLowerCase().includes(query),
       );
     }
-<<<<<<< HEAD
-    return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-=======
-    return filtered.sort((a, b) => naturalSortCompare(a.name || '', b.name || ''));
->>>>>>> 88bf7e8 (Refactor: Extract naturalSortCompare to shared utility with unit tests)
+    return filtered.sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
   }
 
   // Connection Monitoring
