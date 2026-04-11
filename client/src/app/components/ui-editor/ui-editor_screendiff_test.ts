@@ -146,7 +146,7 @@ test.describe("UI Editor Visuals", () => {
     const screenCount = await harness.getScreenCount();
     expect(screenCount).toBeGreaterThan(0);
 
-    await expect(page.locator(".sidebar-container")).toHaveScreenshot(
+    await expect(page.locator(".sidebar")).toHaveScreenshot(
       "ui-editor-screen-manager-sidebar.png",
     );
   });
@@ -155,11 +155,11 @@ test.describe("UI Editor Visuals", () => {
     page,
   }) => {
     // Mock empty screens response
-    await page.route("**/api/race-screens", async (route) => {
+    await page.route("**/api/screens", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ screens: [], defaultScreenId: null }),
+        body: JSON.stringify([]),
       });
     });
 
@@ -175,7 +175,7 @@ test.describe("UI Editor Visuals", () => {
       .locator(".empty-state")
       .waitFor({ state: "visible", timeout: 5000 });
 
-    await expect(page.locator(".sidebar-container")).toHaveScreenshot(
+    await expect(page.locator(".sidebar")).toHaveScreenshot(
       "ui-editor-screen-manager-empty.png",
     );
   });
