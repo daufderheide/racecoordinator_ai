@@ -32,4 +32,44 @@ export class UIEditorHarness
       await previews[index].click();
     }
   }
+
+  // Screen Manager methods - stub implementations for unit tests
+  async getScreenCount(): Promise<number> {
+    return 0;
+  }
+
+  async clickAddScreen(): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickAddScreen not implemented in unit test harness");
+  }
+
+  async clickEditScreen(index: number): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickEditScreen not implemented in unit test harness");
+  }
+
+  async clickDuplicateScreen(index: number): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickDuplicateScreen not implemented in unit test harness");
+  }
+
+  async clickDeleteScreen(index: number): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickDeleteScreen not implemented in unit test harness");
+  }
+
+  async clickDefaultBadge(index: number): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickDefaultBadge not implemented in unit test harness");
+  }
+
+  async clickEnabledBadge(index: number): Promise<void> {
+    // Not implemented in unit test harness
+    throw new Error("clickEnabledBadge not implemented in unit test harness");
+  }
+
+  async getScreenName(index: number): Promise<string> {
+    // Not implemented in unit test harness
+    return "";
+  }
 }
