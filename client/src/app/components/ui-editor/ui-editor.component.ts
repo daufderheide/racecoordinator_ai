@@ -499,7 +499,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       if (currentDefault) {
         await this.raceScreenService.updateScreen(currentDefault.entity_id, { isDefault: false });
       }
-      // Set new default
+      // Set new default - this also updates defaultScreenId in the service
       await this.raceScreenService.updateScreen(screenId, { isDefault: true });
     }
   }

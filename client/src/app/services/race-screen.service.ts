@@ -199,6 +199,15 @@ export class RaceScreenService {
       this.raceScreenManager.screens[screenIndex] = updatedScreen;
     }
 
+    // If this screen is now the default, update defaultScreenId
+    if (updates.isDefault === true) {
+      this.raceScreenManager.defaultScreenId = screenId;
+    } else if (updates.isDefault === false && this.raceScreenManager.defaultScreenId === screenId) {
+      // If we're unsetting this screen as default, clear defaultScreenId
+      // It will be recalculated when screens are reloaded
+      this.raceScreenManager.defaultScreenId = '';
+    }
+
     this.raceScreenManagerSubject.next({ ...this.raceScreenManager });
     return this.raceScreenManager.screens[screenIndex];
   }
