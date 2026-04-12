@@ -44,6 +44,114 @@ export class TestSetupHelper {
     // Mock WebSockets by default to avoid connection refused/watchdog issues
     await this.setupWebSocketMock(page);
 
+    // Mock Screens API for Race Screen Manager with CORS support
+    let screens = [
+      {
+        entity_id: "screen-1",
+        name: "Default Screen",
+        isDefault: true,
+        isEnabled: true,
+        columns: ["driver.name", "lapCount"],
+        columnLayouts: {
+          "driver.name": { CenterCenter: "driver.name" },
+          lapCount: { CenterCenter: "lapCount" }
+        },
+        columnVisibility: {},
+        sortByStandings: true,
+        highlightRowOnLap: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+    ];
+
+    // Mock list endpoint with full CORS
+    await page.route("**/api/screens", async (route) => {
+      const method = route.request().method();
+
+      // Handle CORS preflight
+      if (method === "OPTIONS") {
+        await route.fulfill({
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+          }
+        });
+        return;
+      }
+
+      if (method === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(screens),
+        });
+      } else if (method === "POST") {
+        const data = route.request().postDataJSON();
+        const newScreen = { ...data, entity_id: `screen-${Date.now()}`, createdAt: Date.now(), updatedAt: Date.now() };
+        screens.push(newScreen);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(newScreen),
+        });
+      }
+    });
+
+    // Mock individual screen endpoint with CORS
+    await page.route("**/api/screens/**", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop();
+
+      // Handle CORS preflight
+      if (method === "OPTIONS") {
+        await route.fulfill({
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+          }
+        });
+        return;
+      }
+
+      const screen = screens.find(s => s.entity_id === id) || screens[0];
+
+      if (method === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(screen),
+        });
+      } else if (method === "PUT") {
+        const data = route.request().postDataJSON();
+        const idx = screens.findIndex(s => s.entity_id === id);
+        if (idx >= 0) {
+          screens[idx] = { ...screens[idx], ...data, updatedAt: Date.now() };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(screens[idx] || data),
+        });
+      } else if (method === "DELETE") {
+        screens = screens.filter(s => s.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify({ success: true }),
+        });
+      }
+    });
+
     // Mock Localization
     await this.setupLocalizationMocks(page);
 
