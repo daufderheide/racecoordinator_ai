@@ -13,7 +13,7 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     );
 
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.disableAnimations(page);
     await page.setViewportSize({ width: 1600, height: 900 });

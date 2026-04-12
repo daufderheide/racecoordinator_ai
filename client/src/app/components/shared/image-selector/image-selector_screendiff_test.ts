@@ -7,7 +7,7 @@ test.describe("Image Selector Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.disableAnimations(page);
   });

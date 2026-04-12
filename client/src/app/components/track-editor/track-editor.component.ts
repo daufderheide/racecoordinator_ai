@@ -445,17 +445,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         const v2 = (ac2 as any)[key];
 
         if (Array.isArray(v1)) {
-          if (!Array.isArray(v2) || v1.length !== v2.length) {
+          const v2Arr = Array.isArray(v2) ? v2 : [];
+          if (v1.length !== v2Arr.length) {
             return false;
           }
+          const v2Effective = v2Arr;
           for (let i = 0; i < v1.length; i++) {
             if (key === "ledStrings") {
               const ls1 = v1 as unknown as LedString[];
-              const ls2 = v2 as unknown as LedString[];
+              const ls2 = v2Effective as unknown as LedString[];
               if (!this.isLedStringsEqual(ls1[i], ls2[i])) {
                 return false;
               }
-            } else if (v1[i] !== v2[i]) {
+            } else if (v1[i] !== v2Effective[i]) {
               return false;
             }
           }
@@ -1064,7 +1066,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       ) {
         return false;
       }
-      return t.name.toLowerCase() === name;
+      return t.name && t.name.toLowerCase() === name;
     });
   }
 

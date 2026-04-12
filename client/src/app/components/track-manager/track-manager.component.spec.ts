@@ -10,106 +10,20 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-import { createTestSettings } from "src/app/testing/unit-test-mocks";
+import {
+  MOCK_TRACK_INSTANCES,
+  MOCK_TRACKS,
+} from "src/app/testing/data/tracks_data";
+import {
+  mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
+} from "src/app/testing/unit-test-mocks";
 
+import { createTrackManagerDataServiceMock } from "./testing/track-manager_helper";
 import { TrackManagerComponent } from "./track-manager.component";
-
-// Mock DataService
-class MockDataService {
-  getTracks() {
-    return of([
-      new Track(
-        "t1",
-        "Track 1",
-        [{ objectId: "l1", length: 10 } as any],
-        false,
-        [],
-      ),
-      new Track(
-        "t2",
-        "Track 2",
-        [{ objectId: "l2", length: 12 } as any],
-        false,
-        [],
-      ),
-    ]);
-  }
-  deleteTrack(id: string) {
-    return of(true);
-  }
-  createTrack(track: any) {
-    return of({ ...track, entity_id: "t-new-id" });
-  }
-  getTrackFactorySettings() {
-    return of({
-      lanes: [
-        { background_color: "#ef4444", foreground_color: "black", length: 0 },
-        { background_color: "#ffffff", foreground_color: "black", length: 0 },
-      ],
-      arduino_configs: [{}],
-    });
-  }
-  connectToInterfaceDataSocket() {}
-  disconnectFromInterfaceDataSocket() {}
-  getInterfaceEvents() {
-    return of({});
-  }
-  getRaceState() {
-    return of(0); // com.antigravity.RaceState.NOT_STARTED
-  }
-  closeInterface() {
-    return of({ success: true });
-  }
-}
-
-// Mock TranslationService
-class MockTranslationService {
-  translate(key: string) {
-    return key;
-  }
-}
-
-// Mock Router
-class MockRouter {
-  navigate = jasmine.createSpy("navigate");
-}
-
-// Mock ActivatedRoute
-class MockActivatedRoute {
-  snapshot = {
-    queryParamMap: {
-      get: (key: string): string | null => null,
-    },
-  };
-  queryParamMap = of(this.snapshot.queryParamMap);
-  queryParams = of({ help: "false" });
-}
-
-// Mock SettingsService
-class MockSettingsService {
-  getSettings() {
-    return createTestSettings();
-  }
-  saveSettings(settings: Settings) {}
-}
-
-// Mock HelpService
-class MockHelpService {
-  startGuide = jasmine.createSpy("startGuide");
-  isVisible$ = of(false);
-  currentStep$ = of(null);
-  hasNext$ = of(false);
-  hasPrevious$ = of(false);
-}
-
-// Mock AnalyticsService
-class MockAnalyticsService {
-  isEnabled = jasmine.createSpy("isEnabled").and.returnValue(true);
-  toggleAnalytics = jasmine
-    .createSpy("toggleAnalytics")
-    .and.returnValue(of({ success: true }));
-  trackClick = jasmine.createSpy("trackClick");
-}
 
 @Component({
   selector: "app-back-button",
@@ -128,10 +42,23 @@ class MockBackButtonComponent {
 describe("TrackManagerComponent", () => {
   let component: TrackManagerComponent;
   let fixture: ComponentFixture<TrackManagerComponent>;
-  let dataService: DataService;
-  let router: Router;
+  let dataService: any;
+  let router: any;
 
   beforeEach(async () => {
+    mockTranslationService.translate.and.callFake((key: string) => key);
+    mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
+
+    const mockActivatedRoute = {
+      snapshot: {
+        queryParamMap: {
+          get: (key: string): string | null => null,
+        },
+      },
+      queryParamMap: of({ get: (key: string) => null }),
+      queryParams: of({ help: "false" }),
+    };
+
     await TestBed.configureTestingModule({
       declarations: [
         TrackManagerComponent,
@@ -140,13 +67,21 @@ describe("TrackManagerComponent", () => {
       ],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
-        { provide: DataService, useClass: MockDataService },
-        { provide: TranslationService, useClass: MockTranslationService },
-        { provide: Router, useClass: MockRouter },
-        { provide: ActivatedRoute, useClass: MockActivatedRoute },
-        { provide: SettingsService, useClass: MockSettingsService },
-        { provide: HelpService, useClass: MockHelpService },
-        { provide: AnalyticsService, useClass: MockAnalyticsService },
+        { provide: DataService, useValue: createTrackManagerDataServiceMock() },
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: Router, useValue: mockRouter },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: SettingsService, useValue: mockSettingsService },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
     }).compileComponents();
 
@@ -154,7 +89,18 @@ describe("TrackManagerComponent", () => {
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
     router = TestBed.inject(Router);
+    // Deep copy mock data AND set prototypes to ensure Track methods work
+    component.tracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
+      (t: any) => {
+        Object.setPrototypeOf(t, Track.prototype);
+        return t;
+      },
+    );
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    resetMocks();
   });
 
   it("should create", () => {
@@ -163,17 +109,17 @@ describe("TrackManagerComponent", () => {
 
   it("should load tracks on init", () => {
     expect(component.tracks.length).toBe(2);
-    expect(component.selectedTrack?.name).toBe("Track 1");
+    expect(component.selectedTrack?.name).toBe("Classic Circuit");
   });
 
   it("should select a track", () => {
     component.selectTrack(component.tracks[1]);
-    expect(component.selectedTrack?.name).toBe("Track 2");
+    expect(component.selectedTrack?.name).toBe("Speedway");
   });
 
   it("should select track from query parameter on init", () => {
     // Setup route with selectedId=t2
-    const route = TestBed.inject(ActivatedRoute) as any as MockActivatedRoute;
+    const route = TestBed.inject(ActivatedRoute) as any;
     spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
       if (key === "selectedId") return "t2";
       return null;
@@ -191,9 +137,7 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should create a new track with unique name and navigate", () => {
-    spyOn(dataService, "getTrackFactorySettings").and.callThrough();
-    spyOn(dataService, "createTrack").and.callThrough();
-    spyOn(component.translationService, "translate").and.returnValue(
+    (component.translationService.translate as jasmine.Spy).and.returnValue(
       "New Track",
     );
 
@@ -212,14 +156,15 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should generate a unique name if default name exists", () => {
-    spyOn(dataService, "createTrack").and.callThrough();
-    spyOn(component.translationService, "translate").and.returnValue("Track 1"); // Exists in MockDataService
+    (component.translationService.translate as jasmine.Spy).and.returnValue(
+      "Classic Circuit",
+    ); // Exists in MOCK_TRACKS
 
     component.createNewTrack();
 
     expect(dataService.createTrack).toHaveBeenCalledWith(
       jasmine.objectContaining({
-        name: "Track 1_1",
+        name: "Classic Circuit_1",
       }),
     );
   });
@@ -230,7 +175,6 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should delete track when onConfirmDelete is called", () => {
-    spyOn(dataService, "deleteTrack").and.callThrough();
     spyOn(component, "loadTracks").and.callThrough();
 
     component.onConfirmDelete();
@@ -241,8 +185,6 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should hide delete confirmation modal when onCancelDelete is called", () => {
-    spyOn(dataService, "deleteTrack").and.callThrough();
-
     component.showDeleteConfirm = true;
     component.onCancelDelete();
 

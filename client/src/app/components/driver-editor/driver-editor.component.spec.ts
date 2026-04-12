@@ -17,8 +17,6 @@ import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
-import { DriverEditorComponent } from "./driver-editor.component";
-
 // Mock Child Components
 @Component({ selector: "app-back-button", template: "", standalone: false })
 class MockBackButtonComponent {
@@ -112,9 +110,20 @@ class MockHelpOverlayComponent {
 
 import { Pipe, PipeTransform } from "@angular/core";
 import {
-  createTestSettings,
+  MOCK_DRIVER_INSTANCES,
+  MOCK_DRIVERS,
+} from "src/app/testing/data/drivers_data";
+import {
   mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
+
+import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
+import { DriverEditorComponent } from "./driver-editor.component";
+
 @Pipe({ name: "translate", standalone: false })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
@@ -132,48 +141,20 @@ class MockAvatarUrlPipe implements PipeTransform {
 describe("DriverEditorComponent", () => {
   let component: DriverEditorComponent;
   let fixture: ComponentFixture<DriverEditorComponent>;
-  let mockDataService: any;
-  let mockTranslationService: any;
+  let dataService: any;
+  let router: any;
   let mockConnectionMonitor: any;
-  let mockRouter: any;
   let mockActivatedRoute: any;
-  let mockHelpService: jasmine.SpyObj<HelpService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getDrivers",
-      "listAssets",
-      "createDriver",
-      "updateDriver",
-      "deleteDriver",
-      "uploadAsset",
-    ]);
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "translate",
-    ]);
-
-    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
-    mockHelpService.isVisible$ = of(false);
-    mockHelpService.currentStep$ = of(null);
-    mockHelpService.hasNext$ = of(false);
-    mockHelpService.hasPrevious$ = of(false);
-
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
-    ]);
-    mockSettingsService.getSettings.and.returnValue(createTestSettings());
+    mockTranslationService.translate.and.callFake((key: string) => key);
 
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject("CONNECTED"),
       startMonitoring: jasmine.createSpy("startMonitoring"),
       stopMonitoring: jasmine.createSpy("stopMonitoring"),
     };
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
@@ -182,15 +163,6 @@ describe("DriverEditorComponent", () => {
       },
       queryParams: of({ help: "false" }),
     };
-
-    // Default mock returns
-    mockDataService.getDrivers.and.returnValue(of([]));
-    mockDataService.listAssets.and.returnValue(of([]));
-    mockDataService.updateDriver.and.callFake((id: string, data: any) =>
-      of({ entity_id: id }),
-    );
-    mockDataService.createDriver.and.returnValue(of({ entity_id: "new_id" }));
-    mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
       declarations: [
@@ -207,13 +179,24 @@ describe("DriverEditorComponent", () => {
       ],
       imports: [FormsModule],
       providers: [
-        { provide: DataService, useValue: mockDataService },
+        {
+          provide: DataService,
+          useValue: createDriverManagerDataServiceMock(),
+        },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
       ],
     }).compileComponents();
@@ -222,10 +205,13 @@ describe("DriverEditorComponent", () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(DriverEditorComponent);
     component = fixture.componentInstance;
+    dataService = TestBed.inject(DataService);
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
   afterEach(() => {
+    resetMocks();
     fixture.destroy();
     try {
       discardPeriodicTasks();
@@ -262,14 +248,12 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should load driver when valid ID is provided", () => {
-    const mockDriver = { entity_id: "d1", name: "Test Driver", nickname: "TD" };
-    mockDataService.getDrivers.and.returnValue(of([mockDriver]));
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("d1");
 
     component.loadData();
 
     expect(component.editingDriver?.entity_id).toBe("d1");
-    expect(component.editingDriver?.name).toBe("Test Driver");
+    expect(component.editingDriver?.name).toBe("Alice");
     expect(component.isDirtyState()).toBeFalse();
   });
 
@@ -281,12 +265,12 @@ describe("DriverEditorComponent", () => {
     // Simulate change
     component.editingDriver!.name = "New Driver Name";
 
-    mockDataService.createDriver.and.returnValue(of(newDriver));
+    dataService.createDriver.and.returnValue(of(newDriver));
 
     component.updateDriver();
 
-    expect(mockDataService.createDriver).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+    expect(dataService.createDriver).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(["/driver-editor"], {
       queryParams: { id: "new_id" },
     });
   });
@@ -296,14 +280,14 @@ describe("DriverEditorComponent", () => {
     const driver = new Driver("d1", "Original", "Orig");
     setupDriver(driver);
 
-    mockDataService.createDriver.and.returnValue(
+    dataService.createDriver.and.returnValue(
       throwError(() => ({ status: 409, error: "Conflict" })),
     );
     spyOn(window, "alert");
 
     component.saveAsNew();
 
-    expect(mockDataService.createDriver).toHaveBeenCalled();
+    expect(dataService.createDriver).toHaveBeenCalled();
     expect(component.editingDriver?.entity_id).toBe("d1");
     expect(component.isSaving).toBeFalse();
     expect(window.alert).toHaveBeenCalled();
@@ -316,11 +300,11 @@ describe("DriverEditorComponent", () => {
     // Make a change
     component.editingDriver!.name = "Changed Name";
 
-    mockDataService.updateDriver.and.returnValue(of({}));
+    dataService.updateDriver.and.returnValue(of({}));
 
     component.updateDriver();
 
-    expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+    expect(dataService.updateDriver).toHaveBeenCalledWith(
       "d1",
       jasmine.any(Object),
     );
@@ -331,12 +315,12 @@ describe("DriverEditorComponent", () => {
     const driver = new Driver("d1", "Driver to Delete", "");
     setupDriver(driver);
 
-    mockDataService.deleteDriver.and.returnValue(of({}));
+    dataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
 
-    expect(mockDataService.deleteDriver).toHaveBeenCalledWith("d1");
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-manager"], {
+    expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
+    expect(router.navigate).toHaveBeenCalledWith(["/driver-manager"], {
       queryParams: { id: "d1" },
     });
   });
@@ -348,7 +332,7 @@ describe("DriverEditorComponent", () => {
 
     component.deleteDriver();
 
-    expect(mockDataService.deleteDriver).not.toHaveBeenCalled();
+    expect(dataService.deleteDriver).not.toHaveBeenCalled();
   });
 
   // Undo/Redo Tests
@@ -385,6 +369,7 @@ describe("DriverEditorComponent", () => {
     setupDriver(driver);
 
     component.allDrivers = [
+      ...MOCK_DRIVER_INSTANCES,
       new Driver("d1", "MyName", "MyNick"),
       new Driver("d2", "ExistingName", "ExistingNick"),
     ];
@@ -413,7 +398,7 @@ describe("DriverEditorComponent", () => {
     component.editingDriver!.name = "Changed";
     component.captureState(); // Capture AFTER change
 
-    mockDataService.updateDriver.and.returnValue(of({ entity_id: "d1" }));
+    dataService.updateDriver.and.returnValue(of({ entity_id: "d1" }));
 
     // Save
     component.updateDriver();
@@ -516,7 +501,7 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200); // Allow debounce to settle
 
-      expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+      expect(dataService.updateDriver).toHaveBeenCalledWith(
         "d1",
         jasmine.any(Object),
       );
@@ -533,7 +518,7 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateDriver).toHaveBeenCalledWith(
+      expect(dataService.updateDriver).toHaveBeenCalledWith(
         "d1",
         jasmine.any(Object),
       );
@@ -554,7 +539,7 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(dataService.updateDriver).not.toHaveBeenCalled();
       expect(component.isNameInvalid).toBeTrue();
     }));
 
@@ -571,7 +556,7 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(dataService.updateDriver).not.toHaveBeenCalled();
       expect(component.isNicknameInvalid).toBeTrue();
     }));
 
@@ -584,7 +569,7 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateDriver).not.toHaveBeenCalled();
+      expect(dataService.updateDriver).not.toHaveBeenCalled();
       expect(component.isNameInvalid).toBeTrue();
     }));
 

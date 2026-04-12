@@ -87,8 +87,10 @@ module.exports = function (config) {
       ChromeHeadlessWithCustomConfig: {
         base: "Chrome",
         flags: [
-          "--headless=new",
+          "--headless",
           "--no-sandbox",
+          "--single-process",
+          "--disable-namespace-sandbox",
           "--disable-gpu",
           "--disable-dev-shm-usage",
           "--user-data-dir=" + chromeUserData,

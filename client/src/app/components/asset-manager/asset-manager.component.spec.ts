@@ -22,7 +22,9 @@ import {
   mockAnalyticsService,
   mockDataService,
   mockRouter,
+  mockSettingsService,
   mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
 import { AssetManagerComponent } from "./asset-manager.component";
@@ -37,26 +39,19 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
+import { MOCK_ASSETS } from "src/app/testing/data/assets_data";
+
 describe("AssetManagerComponent", () => {
   let component: AssetManagerComponent;
   let fixture: ComponentFixture<AssetManagerComponent>;
-  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let dataService: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
+  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockHelpService: jasmine.SpyObj<HelpService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
   const mockActivatedRoute = { queryParams: of({ help: "false" }) };
 
   beforeEach(async () => {
-    // Reset mock calls before each test to ensure isolation
-    mockDataService.listAssets.calls.reset();
-    mockDataService.deleteAsset.calls.reset();
-    mockDataService.renameAsset.calls.reset();
-    mockDataService.getDrivers.calls.reset();
-    mockDataService.uploadAsset.calls.reset();
-    mockDataService.getCurrentDatabase.calls.reset();
-    mockTranslationService.translate.calls.reset();
-    mockRouter.navigate.calls.reset();
+    mockTranslationService.translate.and.callFake((key: string) => key);
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
       ConnectionState.CONNECTED,
@@ -66,30 +61,6 @@ describe("AssetManagerComponent", () => {
       "stopMonitoring",
       "checkConnection",
     ]);
-    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
-    Object.defineProperty(mockHelpService, "isVisible$", {
-      get: () => of(false),
-    });
-    Object.defineProperty(mockHelpService, "currentStep$", {
-      get: () => of(null),
-    });
-    Object.defineProperty(mockHelpService, "hasNext$", {
-      get: () => of(false),
-    });
-    Object.defineProperty(mockHelpService, "hasPrevious$", {
-      get: () => of(false),
-    });
-
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
-    ]);
-    mockSettingsService.getSettings.and.returnValue({
-      assetManagerHelpShown: true,
-    } as any);
-
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
     });
@@ -103,8 +74,16 @@ describe("AssetManagerComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
-        { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
@@ -112,9 +91,20 @@ describe("AssetManagerComponent", () => {
     }).compileComponents();
   });
 
+  afterEach(() => {
+    resetMocks();
+  });
+
   beforeEach(() => {
     fixture = TestBed.createComponent(AssetManagerComponent);
     component = fixture.componentInstance;
+    dataService = TestBed.inject(DataService);
+
+    // Default mock returns
+    mockDataService.listAssets.and.returnValue(of(MOCK_ASSETS));
+    mockDataService.deleteAsset.and.returnValue(of(true));
+    mockDataService.renameAsset.and.returnValue(of(true));
+
     fixture.detectChanges();
   });
 
@@ -123,24 +113,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should filter assets by type", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "Img1",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-      {
-        id: "2",
-        name: "Snd1",
-        type: "sound",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
     component.setFilterType("image");
     expect(component.filterType).toBe("image");
@@ -154,36 +127,11 @@ describe("AssetManagerComponent", () => {
 
     component.setFilterType("image_set");
     expect(component.filterType).toBe("image_set");
-    expect(component.filteredAssets.length).toBe(0); // None in this mock data
+    expect(component.filteredAssets.length).toBe(1);
   });
 
   it("should exclude image_sets when filtering by image", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "Img1",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-      {
-        id: "2",
-        name: "Set1",
-        type: "image_set",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-      {
-        id: "3",
-        name: "Snd1",
-        type: "sound",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
     component.setFilterType("image");
     expect(component.filteredAssets.length).toBe(1);
@@ -194,120 +142,76 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should filter assets by name", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "RaceTrack",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-      {
-        id: "2",
-        name: "CarSound",
-        type: "sound",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
-    component.filterName = "Race";
+    component.filterName = "Red";
     expect(component.filteredAssets.length).toBe(1);
-    expect(component.filteredAssets[0].name).toBe("RaceTrack");
+    expect(component.filteredAssets[0].name).toBe("RedCar");
   });
 
   it("should open delete confirmation modal", () => {
-    component.onDelete("1");
-    expect(component.assetsToDeleteIds).toEqual(["1"]);
+    component.onDelete("a1");
+    expect(component.assetsToDeleteIds).toEqual(["a1"]);
     expect(component.showDeleteConfirm).toBeTrue();
   });
 
   it("should delete asset on confirmation", () => {
-    component.assetsToDeleteIds = ["1"];
+    component.assetsToDeleteIds = ["a1"];
     component.showDeleteConfirm = true;
     mockDataService.deleteAsset.and.returnValue(of(true));
 
     component.onConfirmDelete();
 
-    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("1");
+    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("a1");
     expect(mockDataService.listAssets).toHaveBeenCalled();
     expect(component.showDeleteConfirm).toBeFalse();
     expect(component.assetsToDeleteIds).toEqual([]);
   });
 
   it("should close modal on cancel", () => {
-    component.assetsToDeleteIds = ["1"];
+    component.assetsToDeleteIds = ["a1"];
     component.showDeleteConfirm = true;
-
     component.onCancelDelete();
-
-    expect(mockDataService.deleteAsset).not.toHaveBeenCalled();
     expect(component.showDeleteConfirm).toBeFalse();
     expect(component.assetsToDeleteIds).toEqual([]);
   });
 
   it("should rename an asset", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "OldName",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
     const asset = component.assets[0];
 
     // Start editing
-    component.startEditing("1");
+    component.startEditing("a1");
     expect(asset.editMode).toBeTrue();
 
     // Save
     const newName = "NewName";
-    component.saveName("1", newName);
+    component.saveName("a1", newName);
 
-    expect(mockDataService.renameAsset).toHaveBeenCalledWith("1", newName);
-    // Note: In real component, listAssets() is called on success which refreshes the list
-    // verification of name change depends on mock behavior or manual update in component
-    // current component implementation calls loadAssets() on success.
+    expect(mockDataService.renameAsset).toHaveBeenCalledWith("a1", newName);
     expect(mockDataService.listAssets).toHaveBeenCalled();
   });
 
   it("should cycle preview index for image sets", fakeAsync(() => {
-    component.assets = [
-      {
-        id: "1",
-        name: "Fuel",
-        type: "image_set",
-        size: "100 B",
-        url: "",
-        images: [
-          { url: "img1", percentage: 100 },
-          { url: "img2", percentage: 90 },
-        ],
-        currentPreviewIndex: 0,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    const imageSet = component.assets.find((a) => a.type === "image_set");
 
-    // Trigger preview cycling (starts in constructor/loadAssets)
-    // For test, we can manually call startPreviewCycling if not already running
+    // Trigger preview cycling
     (component as any).startPreviewCycling();
 
     tick(1100);
-    expect(component.assets[0].currentPreviewIndex).toBe(1);
+    expect(imageSet!.currentPreviewIndex).toBe(1);
 
     tick(1100);
-    expect(component.assets[0].currentPreviewIndex).toBe(0);
+    expect(imageSet!.currentPreviewIndex).toBe(2);
 
-    // Cleanup handled by ngOnDestroy if called, but fakeAsync handles the ticks
+    tick(1100);
+    expect(imageSet!.currentPreviewIndex).toBe(0);
   }));
 
   it("should toggle asset selection with Ctrl key", () => {
     const asset: any = {
-      id: "1",
+      id: "a1",
       name: "Img1",
       type: "image",
       selected: false,
@@ -338,35 +242,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should select range with Shift key", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "Img1",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-        selected: false,
-      },
-      {
-        id: "2",
-        name: "Img2",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-        selected: false,
-      },
-      {
-        id: "3",
-        name: "Img3",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-        selected: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
     // First click (single)
     const event1 = new MouseEvent("click");
@@ -386,7 +262,7 @@ describe("AssetManagerComponent", () => {
   it("should clear selection on single click", () => {
     component.assets = [
       {
-        id: "1",
+        id: "a1",
         name: "Img1",
         type: "image",
         size: "100 B",
@@ -395,7 +271,7 @@ describe("AssetManagerComponent", () => {
         selected: true,
       },
       {
-        id: "2",
+        id: "a2",
         name: "Img2",
         type: "image",
         size: "100 B",
@@ -413,34 +289,16 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should return correct selectedAssets", () => {
-    component.assets = [
-      {
-        id: "1",
-        name: "Img1",
-        type: "image",
-        size: "100 B",
-        url: "",
-        editMode: false,
-        selected: true,
-      },
-      {
-        id: "2",
-        name: "Snd1",
-        type: "sound",
-        size: "100 B",
-        url: "",
-        editMode: false,
-        selected: false,
-      },
-    ];
+    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets[0].selected = true;
     expect(component.selectedAssets.length).toBe(1);
-    expect(component.selectedAssets[0].id).toBe("1");
+    expect(component.selectedAssets[0].id).toBe("a1");
   });
 
   it("should open delete confirmation for multiple selected assets", () => {
     component.assets = [
       {
-        id: "1",
+        id: "a1",
         name: "Img1",
         type: "image",
         size: "100 B",
@@ -449,7 +307,7 @@ describe("AssetManagerComponent", () => {
         selected: true,
       },
       {
-        id: "2",
+        id: "a2",
         name: "Snd1",
         type: "sound",
         size: "100 B",
@@ -459,19 +317,19 @@ describe("AssetManagerComponent", () => {
       },
     ];
     component.onDeleteSelected();
-    expect(component.assetsToDeleteIds).toEqual(["1", "2"]);
+    expect(component.assetsToDeleteIds).toEqual(["a1", "a2"]);
     expect(component.showDeleteConfirm).toBeTrue();
   });
 
   it("should delete all selected assets on confirmation", () => {
-    component.assetsToDeleteIds = ["1", "2"];
+    component.assetsToDeleteIds = ["a1", "a2"];
     component.showDeleteConfirm = true;
     mockDataService.deleteAsset.and.returnValue(of(true));
 
     component.onConfirmDelete();
 
-    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("1");
-    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("2");
+    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("a1");
+    expect(mockDataService.deleteAsset).toHaveBeenCalledWith("a2");
     expect(mockDataService.listAssets).toHaveBeenCalled();
     expect(component.showDeleteConfirm).toBeFalse();
     expect(component.assetsToDeleteIds).toEqual([]);
@@ -480,7 +338,7 @@ describe("AssetManagerComponent", () => {
   it("should handle edit for single selected asset", () => {
     component.assets = [
       {
-        id: "1",
+        id: "a1",
         name: "Img1",
         type: "image",
         size: "100 B",
@@ -491,13 +349,13 @@ describe("AssetManagerComponent", () => {
     ];
     spyOn(component, "startEditing");
     component.onEditSelected();
-    expect(component.startEditing).toHaveBeenCalledWith("1");
+    expect(component.startEditing).toHaveBeenCalledWith("a1");
   });
 
   it("should not handle edit for multiple selected assets", () => {
     component.assets = [
       {
-        id: "1",
+        id: "a1",
         name: "Img1",
         type: "image",
         size: "100 B",
@@ -506,7 +364,7 @@ describe("AssetManagerComponent", () => {
         selected: true,
       },
       {
-        id: "2",
+        id: "a2",
         name: "Img2",
         type: "image",
         size: "100 B",

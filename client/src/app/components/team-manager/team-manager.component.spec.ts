@@ -22,81 +22,39 @@ import {
 import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-import { createTestSettings } from "src/app/testing/unit-test-mocks";
+import { MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
+import {
+  MOCK_TEAM_INSTANCES,
+  MOCK_TEAMS,
+} from "src/app/testing/data/teams_data";
+import {
+  mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
+} from "src/app/testing/unit-test-mocks";
 
 import { TeamManagerComponent } from "./team-manager.component";
 import { TeamManagerHarness } from "./testing/team-manager.harness";
+import { createTeamManagerDataServiceMock } from "./testing/team-manager_helper";
 
 describe("TeamManagerComponent", () => {
   let component: TeamManagerComponent;
   let fixture: ComponentFixture<TeamManagerComponent>;
-  let mockDataService: jasmine.SpyObj<DataService>;
-  let mockTranslationService: jasmine.SpyObj<TranslationService>;
-  let mockRouter: jasmine.SpyObj<Router>;
-  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
-  let mockHelpService: jasmine.SpyObj<HelpService>;
-  let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
+  let dataService: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
-  let mockActivatedRoute: any;
   let loader: HarnessLoader;
   let harness: TeamManagerHarness;
-
-  const mockDrivers = [
-    new Driver("d1", "Alice", "Rocket", "assets/images/default_avatar.svg"),
-    new Driver("d2", "Bob", "Drifter", "assets/images/default_avatar.svg"),
-  ];
-
-  const mockTeams = [
-    new Team("t1", "Team Alpha", "assets/images/default_avatar.svg", ["d1"]),
-    new Team("t2", "Team Beta", "assets/images/default_avatar.svg", ["d2"]),
-  ];
+  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let mockActivatedRoute: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getTeams",
-      "getDrivers",
-      "deleteTeam",
-      "createTeam",
-    ]);
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "translate",
-    ]);
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockTranslationService.translate.and.callFake((key: string) => key);
+
     mockConnectionMonitor = jasmine.createSpyObj("ConnectionMonitorService", [
       "startMonitoring",
       "stopMonitoring",
-    ]);
-    mockHelpService = jasmine.createSpyObj("HelpService", [
-      "startGuide",
-      "nextStep",
-      "previousStep",
-      "endGuide",
-    ]);
-    Object.defineProperty(mockHelpService, "isVisible$", {
-      get: () => of(false),
-    });
-    Object.defineProperty(mockHelpService, "currentStep$", {
-      get: () => of(null),
-    });
-    Object.defineProperty(mockHelpService, "hasNext$", {
-      get: () => of(false),
-    });
-    Object.defineProperty(mockHelpService, "hasPrevious$", {
-      get: () => of(false),
-    });
-
-    mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
-      "isEnabled",
-      "toggleAnalytics",
-      "trackClick",
-    ]);
-    mockAnalyticsService.isEnabled.and.returnValue(true);
-    mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
-
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
     ]);
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
@@ -115,21 +73,24 @@ describe("TeamManagerComponent", () => {
       queryParams: of({}),
     };
 
-    mockDataService.getTeams.and.returnValue(of(mockTeams));
-    mockDataService.getDrivers.and.returnValue(of(mockDrivers));
-    mockTranslationService.translate.and.callFake((key) => key);
-    mockSettingsService.getSettings.and.returnValue(createTestSettings());
-
     await TestBed.configureTestingModule({
       declarations: [TeamManagerComponent],
       imports: [SharedModule],
       providers: [
-        { provide: DataService, useValue: mockDataService },
+        { provide: DataService, useValue: createTeamManagerDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
-        { provide: HelpService, useValue: mockHelpService },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
         ChangeDetectorRef,
@@ -137,9 +98,14 @@ describe("TeamManagerComponent", () => {
     }).compileComponents();
   });
 
+  afterEach(() => {
+    resetMocks();
+  });
+
   beforeEach(async () => {
     fixture = TestBed.createComponent(TeamManagerComponent);
     component = fixture.componentInstance;
+    dataService = TestBed.inject(DataService);
     harness = await TestbedHarnessEnvironment.harnessForFixture(
       fixture,
       TeamManagerHarness,
@@ -153,8 +119,8 @@ describe("TeamManagerComponent", () => {
 
   describe("Initialization", () => {
     it("should load teams and drivers on init", async () => {
-      expect(mockDataService.getTeams).toHaveBeenCalled();
-      expect(mockDataService.getDrivers).toHaveBeenCalled();
+      expect(dataService.getTeams).toHaveBeenCalled();
+      expect(dataService.getDrivers).toHaveBeenCalled();
       expect(await harness.getTeamCount()).toBe(2);
     });
 
@@ -171,7 +137,10 @@ describe("TeamManagerComponent", () => {
         declarations: [TeamManagerComponent, AvatarUrlPipe],
         imports: [SharedModule],
         providers: [
-          { provide: DataService, useValue: mockDataService },
+          {
+            provide: DataService,
+            useValue: createTeamManagerDataServiceMock(),
+          },
           { provide: TranslationService, useValue: mockTranslationService },
           { provide: Router, useValue: mockRouter },
           { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -179,7 +148,15 @@ describe("TeamManagerComponent", () => {
             provide: ConnectionMonitorService,
             useValue: mockConnectionMonitor,
           },
-          { provide: HelpService, useValue: mockHelpService },
+          {
+            provide: HelpService,
+            useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+              isVisible$: of(false),
+              currentStep$: of(null),
+              hasNext$: of(false),
+              hasPrevious$: of(false),
+            }),
+          },
           { provide: AnalyticsService, useValue: mockAnalyticsService },
           { provide: SettingsService, useValue: mockSettingsService },
           ChangeDetectorRef,
@@ -199,13 +176,18 @@ describe("TeamManagerComponent", () => {
   });
 
   describe("Create New Team", () => {
+    it("should select a team and navigate to editor", async () => {
+      component.selectTeam(MOCK_TEAM_INSTANCES[0]);
+      expect(component.selectedTeam).toBe(MOCK_TEAM_INSTANCES[0]);
+    });
+
     it("should create a team with unique name and navigate to editor", async () => {
       const createdTeam = { entity_id: "t-new", name: "New Team" };
-      mockDataService.createTeam.and.returnValue(of(createdTeam));
+      dataService.createTeam.and.returnValue(of(createdTeam));
 
       await harness.clickNewTeam();
 
-      expect(mockDataService.createTeam).toHaveBeenCalledWith(
+      expect(dataService.createTeam).toHaveBeenCalledWith(
         jasmine.objectContaining({
           name: "TMM_DEFAULT_TEAM_NAME",
           driverIds: [],
@@ -230,11 +212,11 @@ describe("TeamManagerComponent", () => {
         entity_id: "t-new-1",
         name: "TMM_DEFAULT_TEAM_NAME_1",
       };
-      mockDataService.createTeam.and.returnValue(of(createdTeam));
+      dataService.createTeam.and.returnValue(of(createdTeam));
 
       await harness.clickNewTeam();
 
-      expect(mockDataService.createTeam).toHaveBeenCalledWith(
+      expect(dataService.createTeam).toHaveBeenCalledWith(
         jasmine.objectContaining({
           name: "TMM_DEFAULT_TEAM_NAME_1",
         }),
@@ -261,12 +243,12 @@ describe("TeamManagerComponent", () => {
     });
 
     it("should delete team if confirmed", async () => {
-      mockDataService.deleteTeam.and.returnValue(of({}));
+      dataService.deleteTeam.and.returnValue(of({}));
       await harness.selectTeam(0);
       await harness.clickDelete();
       component.onConfirmDelete();
       expect(component.showDeleteConfirmation).toBeFalse();
-      expect(mockDataService.deleteTeam).toHaveBeenCalledWith("t1");
+      expect(dataService.deleteTeam).toHaveBeenCalledWith("t1");
     });
   });
 });

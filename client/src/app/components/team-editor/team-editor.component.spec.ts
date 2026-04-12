@@ -11,6 +11,7 @@ import {
 import {
   ComponentFixture,
   fakeAsync,
+  flush,
   TestBed,
   tick,
 } from "@angular/core/testing";
@@ -26,10 +27,22 @@ import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
-  createTestSettings,
+  MOCK_DRIVER_INSTANCES,
+  MOCK_DRIVERS,
+} from "src/app/testing/data/drivers_data";
+import {
+  MOCK_TEAM_INSTANCES,
+  MOCK_TEAMS,
+} from "src/app/testing/data/teams_data";
+import {
   mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
+import { createTeamManagerDataServiceMock } from "../team-manager/testing/team-manager_helper";
 import { TeamEditorComponent } from "./team-editor.component";
 
 // Mock Child Components
@@ -117,49 +130,24 @@ class MockAvatarUrlPipe implements PipeTransform {
 describe("TeamEditorComponent", () => {
   let component: TeamEditorComponent;
   let fixture: ComponentFixture<TeamEditorComponent>;
-  let mockDataService: any;
-  let mockTranslationService: any;
+  let dataService: any;
+  let router: any;
   let mockConnectionMonitor: any;
-  let mockRouter: any;
   let mockActivatedRoute: any;
-  let mockLocation: any;
-  let mockHelpService: any;
-  let mockSettingsService: any;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
-
-  const mockDrivers = [
-    new Driver("d1", "Alice", "Rocket", "assets/images/default_avatar.svg"),
-    new Driver("d2", "Bob", "Drifter", "assets/images/default_avatar.svg"),
-  ];
-
-  const mockTeams = [
-    new Team("t1", "Team Alpha", "assets/images/default_avatar.svg", ["d1"]),
-  ];
+  let activatedRoute: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getDrivers",
-      "getTeams",
-      "listAssets",
-      "createTeam",
-      "updateTeam",
-      "uploadAsset",
-    ]);
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "translate",
-    ]);
+    mockTranslationService.translate.and.callFake((key: string) => key);
+
     mockConnectionMonitor = {
       connectionState$: new BehaviorSubject("CONNECTED"),
       startMonitoring: jasmine.createSpy("startMonitoring"),
       stopMonitoring: jasmine.createSpy("stopMonitoring"),
     };
-    mockRouter = jasmine.createSpyObj(
-      "Router",
-      ["navigate"],
-      ["serializeUrl", "createUrlTree"],
-    );
-    mockRouter.serializeUrl = (tree: any) => "mock-url";
-    mockRouter.createUrlTree = () => ({});
+
+    mockRouter.serializeUrl.and.returnValue("mock-url");
+    mockRouter.createUrlTree.and.returnValue({});
+
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
@@ -168,22 +156,6 @@ describe("TeamEditorComponent", () => {
       },
       queryParams: of({ help: "false" }),
     };
-    mockLocation = jasmine.createSpyObj("Location", ["replaceState"]);
-    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
-    mockSettingsService = {
-      getSettings: jasmine
-        .createSpy("getSettings")
-        .and.returnValue(createTestSettings()),
-      saveSettings: jasmine.createSpy("saveSettings"),
-    };
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockDataService.getDrivers.and.returnValue(of(mockDrivers));
-    mockDataService.getTeams.and.returnValue(of(mockTeams));
-    mockDataService.listAssets.and.returnValue(of([]));
-    mockDataService.createTeam.and.returnValue(of({ entity_id: "new-id" }));
-    mockDataService.updateTeam.and.returnValue(of({ entity_id: "t1" }));
-    mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
       declarations: [
@@ -199,14 +171,25 @@ describe("TeamEditorComponent", () => {
       ],
       imports: [FormsModule, DragDropModule],
       providers: [
-        { provide: DataService, useValue: mockDataService },
+        { provide: DataService, useValue: createTeamManagerDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: Location, useValue: mockLocation },
-        { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
+        {
+          provide: Location,
+          useValue: jasmine.createSpyObj("Location", ["replaceState"]),
+        },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
       ],
     }).compileComponents();
@@ -215,7 +198,34 @@ describe("TeamEditorComponent", () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(TeamEditorComponent);
     component = fixture.componentInstance;
+    dataService = TestBed.inject(DataService);
+    router = TestBed.inject(Router);
+    activatedRoute = TestBed.inject(ActivatedRoute);
+
+    // Use deep copies of mock data AND set prototypes
+    component.editingTeam = JSON.parse(JSON.stringify(MOCK_TEAM_INSTANCES[0]));
+    Object.setPrototypeOf(component.editingTeam, Team.prototype);
+    component.allDrivers = JSON.parse(
+      JSON.stringify(MOCK_DRIVER_INSTANCES),
+    ).map((d: any) => {
+      Object.setPrototypeOf(d, Driver.prototype);
+      return d;
+    });
+    component.allTeams = JSON.parse(JSON.stringify(MOCK_TEAM_INSTANCES)).map(
+      (t: any) => {
+        Object.setPrototypeOf(t, Team.prototype);
+        return t;
+      },
+    );
+
     fixture.detectChanges();
+    component.isDirty = false;
+    component.originalTeam = JSON.parse(JSON.stringify(component.editingTeam));
+    component.undoManager.initialize(component.editingTeam!);
+  });
+
+  afterEach(() => {
+    resetMocks();
   });
 
   it("should create", () => {
@@ -225,6 +235,8 @@ describe("TeamEditorComponent", () => {
   it('should initialize with new team when "new" ID provided', () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("new");
     component.loadData();
+    component.isDirty = false;
+    component.undoManager.initialize(component.editingTeam!);
     expect(component.editingTeam?.entity_id).toBe("new");
     expect(component.isDirtyState()).toBeFalse();
   });
@@ -237,34 +249,39 @@ describe("TeamEditorComponent", () => {
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it("should toggle driver membership", () => {
+  it("should toggle driver membership", fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
+    // Re-synchronize after loadData completes (mock is synchronous)
+    component.isDirty = false;
+    component.undoManager.initialize(component.editingTeam!);
 
-    const driver2 = mockDrivers[1];
-    expect(component.isDriverInTeam(driver2)).toBeFalse();
+    const driver3 = MOCK_DRIVER_INSTANCES[2]; // Charlie (not in Team Alpha)
+    expect(component.isDriverInTeam(driver3)).toBeFalse();
 
-    component.addDriver(driver2);
-    expect(component.isDriverInTeam(driver2)).toBeTrue();
+    component.addDriver(driver3);
+    flush(); // Handle auto-save trigger
+    expect(component.isDriverInTeam(driver3)).toBeTrue();
     expect(component.isDirtyState()).toBeFalse(); // Instant auto-save with synchronous mocks
 
-    component.removeDriver(driver2);
-    expect(component.isDriverInTeam(driver2)).toBeFalse();
-  });
+    component.removeDriver(driver3);
+    flush(); // Handle auto-save trigger
+    expect(component.isDriverInTeam(driver3)).toBeFalse();
+  }));
 
   it("should save existing team", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
     component.editingTeam!.name = "Updated Name";
-    mockDataService.updateTeam.and.returnValue(of({ entity_id: "t1" }));
-    mockDataService.getTeams.and.returnValue(
+    dataService.updateTeam.and.returnValue(of({ entity_id: "t1" }));
+    dataService.getTeams.and.returnValue(
       of([new Team("t1", "Updated Name", "", [])]),
     );
 
     component.updateTeam();
 
-    expect(mockDataService.updateTeam).toHaveBeenCalledWith(
+    expect(dataService.updateTeam).toHaveBeenCalledWith(
       "t1",
       jasmine.any(Object),
     );
@@ -275,12 +292,12 @@ describe("TeamEditorComponent", () => {
     component.loadData();
 
     component.editingTeam!.name = "Team Gamma";
-    mockDataService.createTeam.and.returnValue(of({ entity_id: "t3" }));
+    dataService.createTeam.and.returnValue(of({ entity_id: "t3" }));
 
     component.saveAsNew();
 
-    expect(mockDataService.createTeam).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
+    expect(dataService.createTeam).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(["/team-editor"], {
       queryParams: { id: "t3" },
     });
   });
@@ -304,7 +321,10 @@ describe("TeamEditorComponent", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
-    component.allTeams = [...mockTeams, new Team("t2", "Team Beta", "", [])];
+    component.allTeams = [
+      ...MOCK_TEAM_INSTANCES,
+      new Team("t2", "Team Beta", "", []),
+    ];
 
     component.editingTeam!.name = "Team Beta"; // Duplicate
     expect(component.isNameInvalid).toBeTrue();
@@ -314,13 +334,16 @@ describe("TeamEditorComponent", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
 
-    component.allTeams = [...mockTeams, new Team("t2", "Team Beta", "", [])];
-    component.editingTeam!.name = "Team Beta";
-
+    component.allTeams = [
+      ...MOCK_TEAM_INSTANCES,
+      new Team("t2", "Same Name", "", []),
+    ];
+    component.editingTeam!.name = "Same Name";
+    dataService.updateTeam.calls.reset(); // Suppress any auto-save from name change
     component.onBackClicked();
 
-    expect(mockDataService.updateTeam).not.toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"], {
+    expect(dataService.updateTeam).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(["/team-manager"], {
       queryParams: { id: "t1" },
     });
   });
@@ -328,17 +351,18 @@ describe("TeamEditorComponent", () => {
   it("should save and set flag onBackClicked if name IS valid", fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
-    tick(); // Handle loadData subscription
+    flush(); // Handle loadData subscription
 
     component.onInputFocus();
     component.editingTeam!.name = "Unique Cool Name";
     component.onInputBlur();
+    flush();
 
     component.onBackClicked();
-    tick(); // Handle updateTeam save subscription
+    flush(); // Handle updateTeam save subscription
 
-    expect(mockDataService.updateTeam).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"], {
+    expect(dataService.updateTeam).toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(["/team-manager"], {
       queryParams: { id: "t1" },
     });
   }));

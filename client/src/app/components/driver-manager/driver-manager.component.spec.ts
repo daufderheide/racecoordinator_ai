@@ -1,5 +1,10 @@
 import { ChangeDetectorRef } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
@@ -15,62 +20,44 @@ import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
-  createTestSettings,
+  MOCK_DRIVER_INSTANCES,
+  MOCK_DRIVERS,
+} from "src/app/testing/data/drivers_data";
+import {
+  MOCK_TEAM_INSTANCES,
+  MOCK_TEAMS,
+} from "src/app/testing/data/teams_data";
+import {
   mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
 import { DriverManagerComponent } from "./driver-manager.component";
+import { createDriverManagerDataServiceMock } from "./testing/driver-manager_helper";
 
 describe("DriverManagerComponent", () => {
   let component: DriverManagerComponent;
   let fixture: ComponentFixture<DriverManagerComponent>;
-  let mockDataService: jasmine.SpyObj<DataService>;
-  let mockTranslationService: jasmine.SpyObj<TranslationService>;
-  let mockRouter: jasmine.SpyObj<Router>;
-  let mockHelpService: jasmine.SpyObj<HelpService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
-  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let dataService: any;
+  let connectionMonitor: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
+  let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockActivatedRoute: any;
 
-  const mockDrivers = [
-    new Driver("d1", "Alice", "Rocket", "assets/images/default_avatar.svg"),
-    new Driver("d2", "Bob", "Drifter", "assets/images/default_avatar.svg"),
-  ];
-
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getDrivers",
-      "deleteDriver",
-      "listAssets",
-    ]);
+    mockTranslationService.translate.and.callFake((key: string) => key);
 
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "translate",
-    ]);
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    connectionStateSubject = new BehaviorSubject<ConnectionState>(
+      ConnectionState.CONNECTED,
+    );
+
     mockConnectionMonitor = jasmine.createSpyObj("ConnectionMonitorService", [
       "startMonitoring",
       "stopMonitoring",
     ]);
-    connectionStateSubject = new BehaviorSubject<ConnectionState>(
-      ConnectionState.CONNECTED,
-    );
-    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
-    mockHelpService.isVisible$ = of(false);
-    mockHelpService.currentStep$ = of(null);
-    mockHelpService.hasNext$ = of(false);
-    mockHelpService.hasPrevious$ = of(false);
-
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
-    ]);
-    mockSettingsService.getSettings.and.returnValue(createTestSettings());
-
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
     });
@@ -84,30 +71,49 @@ describe("DriverManagerComponent", () => {
       queryParams: of({ help: "false" }),
     };
 
-    mockDataService.getDrivers.and.returnValue(of(mockDrivers));
-    mockDataService.listAssets.and.returnValue(of([]));
-    mockTranslationService.translate.and.callFake((key) => key);
-
     await TestBed.configureTestingModule({
       declarations: [DriverManagerComponent, AvatarUrlPipe],
       imports: [SharedModule],
       providers: [
-        { provide: DataService, useValue: mockDataService },
+        {
+          provide: DataService,
+          useValue: createDriverManagerDataServiceMock(),
+        },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
-        { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
         ChangeDetectorRef,
       ],
     }).compileComponents();
   });
 
+  afterEach(() => {
+    resetMocks();
+  });
+
   beforeEach(() => {
     fixture = TestBed.createComponent(DriverManagerComponent);
     component = fixture.componentInstance;
+    dataService = TestBed.inject(DataService);
+    // Deep copy mock data AND set prototypes to ensure Driver methods work
+    component.drivers = JSON.parse(JSON.stringify(MOCK_DRIVER_INSTANCES)).map(
+      (d: any) => {
+        Object.setPrototypeOf(d, Driver.prototype);
+        return d;
+      },
+    );
     fixture.detectChanges();
   });
 
@@ -117,9 +123,9 @@ describe("DriverManagerComponent", () => {
 
   describe("Initialization", () => {
     it("should load drivers on init", () => {
-      expect(mockDataService.getDrivers).toHaveBeenCalled();
-      expect(component.drivers.length).toBe(2);
-      expect(component.filteredDrivers.length).toBe(2);
+      expect(dataService.getDrivers).toHaveBeenCalled();
+      expect(component.drivers.length).toBe(4);
+      expect(component.filteredDrivers.length).toBe(4);
     });
 
     it("should select first driver by default if no query param", () => {
@@ -128,40 +134,28 @@ describe("DriverManagerComponent", () => {
       expect(component.editingDriver?.name).toBe("Alice");
     });
 
-    it("should select driver from query param", () => {
-      // Need to recreate component to inject different route
-      TestBed.resetTestingModule();
-      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("d2");
+    it("should select driver from query param", fakeAsync(() => {
+      // Mock different query param for this test case specifically
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (key: string) => {
+          if (key === "id") return "d2";
+          return null;
+        },
+      );
 
-      TestBed.configureTestingModule({
-        declarations: [DriverManagerComponent, AvatarUrlPipe],
-        imports: [SharedModule],
-        providers: [
-          { provide: DataService, useValue: mockDataService },
-          { provide: TranslationService, useValue: mockTranslationService },
-          { provide: Router, useValue: mockRouter },
-          { provide: ActivatedRoute, useValue: mockActivatedRoute },
-          {
-            provide: ConnectionMonitorService,
-            useValue: mockConnectionMonitor,
-          },
-          { provide: HelpService, useValue: mockHelpService },
-          { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
-          ChangeDetectorRef,
-        ],
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(DriverManagerComponent);
-      component = fixture.componentInstance;
+      // Manually trigger reload as ngOnInit uses queryParamMap subscription
+      component.ngOnInit();
+      tick();
       fixture.detectChanges();
 
       expect(component.selectedDriver?.entity_id).toBe("d2");
-    });
+      expect(component.editingDriver?.entity_id).toBe("d2");
+    }));
   });
 
   describe("Driver Selection", () => {
     it("should update selected and editing driver on select", () => {
-      component.selectDriver(mockDrivers[1]);
+      component.selectDriver(MOCK_DRIVER_INSTANCES[1]);
       expect(component.selectedDriver?.entity_id).toBe("d2");
       expect(component.editingDriver).toBeDefined();
       expect(component.editingDriver?.entity_id).toBe("d2");
@@ -178,20 +172,20 @@ describe("DriverManagerComponent", () => {
     });
 
     it("should filter drivers by nickname", () => {
-      component.searchQuery = "drift"; // Should match Bob (Drifter)
+      component.searchQuery = "drift"; // Should match Bob (Drift King)
       expect(component.filteredDrivers.length).toBe(1);
       expect(component.filteredDrivers[0].name).toBe("Bob");
     });
 
     it("should show all drivers if query is empty", () => {
       component.searchQuery = "";
-      expect(component.filteredDrivers.length).toBe(2);
+      expect(component.filteredDrivers.length).toBe(4);
     });
   });
 
   describe("Navigation", () => {
-    it("should navigate to editor on edit", () => {
-      component.selectDriver(mockDrivers[0]);
+    it("should select a driver and navigate to editor", async () => {
+      component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
       component.updateDriver();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
         queryParams: { id: "d1" },
@@ -201,30 +195,30 @@ describe("DriverManagerComponent", () => {
 
   describe("Deletion", () => {
     it("should show confirmation modal on deleteDriver", () => {
-      component.selectDriver(mockDrivers[0]);
+      component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
       component.deleteDriver();
       expect(component.showDeleteConfirmation).toBeTrue();
     });
 
     it("should delete driver if confirmed in modal", () => {
-      mockDataService.deleteDriver.and.returnValue(of({}));
+      dataService.deleteDriver.and.returnValue(of({}));
 
-      component.selectDriver(mockDrivers[0]);
+      component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
       component.deleteDriver();
       component.onConfirmDelete();
 
       expect(component.showDeleteConfirmation).toBeFalse();
-      expect(mockDataService.deleteDriver).toHaveBeenCalledWith("d1");
-      expect(mockDataService.getDrivers).toHaveBeenCalledTimes(2); // Once on init, once after delete re-load
+      expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
+      expect(dataService.getDrivers).toHaveBeenCalledTimes(2); // Once on init, once after delete re-load
     });
 
     it("should not delete driver if cancelled in modal", () => {
-      component.selectDriver(mockDrivers[0]);
+      component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
       component.deleteDriver();
       component.onCancelDelete();
 
       expect(component.showDeleteConfirmation).toBeFalse();
-      expect(mockDataService.deleteDriver).not.toHaveBeenCalled();
+      expect(dataService.deleteDriver).not.toHaveBeenCalled();
     });
   });
 

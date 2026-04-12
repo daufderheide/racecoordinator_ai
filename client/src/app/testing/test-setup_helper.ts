@@ -1,6 +1,11 @@
 import { Page } from "@playwright/test";
 
 import { com } from "../proto/message";
+import { MOCK_ASSETS } from "./data/assets_data";
+import { MOCK_DRIVERS } from "./data/drivers_data";
+import { MOCK_RACES } from "./data/races_data";
+import { MOCK_TEAMS } from "./data/teams_data";
+import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
 
 export interface SetupOptions {
   skipIntro?: boolean;
@@ -39,84 +44,14 @@ export class TestSetupHelper {
     // Mock WebSockets by default to avoid connection refused/watchdog issues
     await this.setupWebSocketMock(page);
 
-    // Mock Drivers API
-    await page.route("**/api/drivers", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([
-          { entity_id: "d1", name: "Alice", nickname: "The Rocket" },
-          { entity_id: "d2", name: "Bob", nickname: "Drift King" },
-          { entity_id: "d3", name: "Charlie", nickname: "Speedy" },
-          { entity_id: "d4", name: "Dave", nickname: "Noob" },
-        ]),
-      });
-    });
-
-    await page.route("**/api/races", async (route) => {
-      const standardRace = (id: string, name: string) => ({
-        entity_id: id,
-        name: name,
-        track_entity_id: "t1",
-        track: {
-          entity_id: "t1",
-          name: "Classic Circuit",
-          lanes: [
-            {
-              entity_id: "l1",
-              length: 12.5,
-              backgroundColor: "#ff0000",
-              foregroundColor: "#ffffff",
-            },
-            {
-              entity_id: "l2",
-              length: 12.5,
-              backgroundColor: "#0000ff",
-              foregroundColor: "#ffffff",
-            },
-          ],
-        },
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-          allow_finish: "None",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-      });
-
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([
-          standardRace("r1", "Grand Prix"),
-          standardRace("r2", "Time Trial"),
-          standardRace("r3", "Endurance"),
-          standardRace("r4", "Sprint"),
-          standardRace("r5", "Elimination"),
-          standardRace("r6", "Team Race"),
-          standardRace("r7", "Junior GP"),
-          standardRace("r8", "Veteran GP"),
-        ]),
-      });
-    });
-
     // Mock Localization
     await this.setupLocalizationMocks(page);
 
-    // Mock Tracks API
+    // Mock specialized APIs
+    await this.setupDriverMocks(page);
+    await this.setupRaceRestMocks(page);
     await this.setupTrackMocks(page);
-
-    // Mock Teams API
     await this.setupTeamMocks(page);
-
-    // Mock Assets API
     await this.setupAssetMocks(page);
 
     // Mock Server Version API
@@ -215,26 +150,107 @@ export class TestSetupHelper {
     }
   }
 
+  static async setupDriverMocks(page: Page) {
+    let currentDrivers = [...MOCK_DRIVERS];
+
+    await page.route("**/api/drivers", async (route) => {
+      const method = route.request().method();
+      if (method === "POST") {
+        const postData = route.request().postDataJSON();
+        const newDriver = { ...postData, entity_id: `d-${Date.now()}` };
+        currentDrivers.push(newDriver);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newDriver),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentDrivers),
+        });
+      }
+    });
+
+    await page.route("**/api/drivers/*", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop();
+
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentDrivers.findIndex((d) => d.entity_id === id);
+        if (index !== -1) {
+          currentDrivers[index] = { ...currentDrivers[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(postData),
+        });
+      } else if (method === "DELETE") {
+        currentDrivers = currentDrivers.filter((d) => d.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+  }
+
   static async setupTeamMocks(page: Page) {
+    let currentTeams = [...MOCK_TEAMS];
+
     await page.route("**/api/teams", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([
-          {
-            entity_id: "t1",
-            name: "Team Alpha",
-            avatarUrl: "",
-            driverIds: ["d1", "d2"],
-          },
-          {
-            entity_id: "t2",
-            name: "Team Beta",
-            avatarUrl: "",
-            driverIds: ["d3", "d4"],
-          },
-        ]),
-      });
+      const method = route.request().method();
+      if (method === "POST") {
+        const postData = route.request().postDataJSON();
+        const newTeam = { ...postData, entity_id: `team-${Date.now()}` };
+        currentTeams.push(newTeam);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newTeam),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentTeams),
+        });
+      }
+    });
+
+    await page.route("**/api/teams/*", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop();
+
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentTeams.findIndex((t) => t.entity_id === id);
+        if (index !== -1) {
+          currentTeams[index] = { ...currentTeams[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(postData),
+        });
+      } else if (method === "DELETE") {
+        currentTeams = currentTeams.filter((t) => t.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -358,169 +374,66 @@ export class TestSetupHelper {
   }
 
   static async setupTrackMocks(page: Page) {
+    let currentTracks = [...MOCK_TRACKS];
+
     await page.route("**/api/tracks", async (route) => {
       const method = route.request().method();
-      const tracks = [
-        {
-          entity_id: "t1",
-          name: "Classic Circuit",
-          lanes: [
-            {
-              entity_id: "l1",
-              length: 12.5,
-              backgroundColor: "#ff0000",
-              foregroundColor: "#ffffff",
-            },
-            {
-              entity_id: "l2",
-              length: 12.5,
-              backgroundColor: "#0000ff",
-              foregroundColor: "#ffffff",
-            },
-          ],
-          arduino_configs: [
-            {
-              name: "Arduino 1",
-              commPort: "COM3",
-              baudRate: 115200,
-              debounceUs: 5000,
-              hardwareType: 1, // Mega
-              digitalIds: new Array(60).fill(0),
-              analogIds: new Array(16).fill(0),
-              normallyClosedLaneSensors: false,
-              normallyClosedRelays: true,
-              globalInvertLights: 0,
-              useLapsForPits: 0,
-              useLapsForPitEnd: 0,
-              usePitsAsLaps: false,
-              useLapsForSegments: true,
-              ledStrings: null,
-              ledLaneColorOverrides: null,
-              lapPinPitBehavior: 3,
-            },
-          ],
-        },
-        {
-          entity_id: "t2",
-          name: "Speedway",
-          lanes: [
-            {
-              entity_id: "l1",
-              length: 15.0,
-              backgroundColor: "#ffff00",
-              foregroundColor: "#000000",
-            },
-            {
-              entity_id: "l2",
-              length: 15.0,
-              backgroundColor: "#00ff00",
-              foregroundColor: "#000000",
-            },
-            {
-              entity_id: "l3",
-              length: 15.0,
-              backgroundColor: "#ff00ff",
-              foregroundColor: "#ffffff",
-            },
-            {
-              entity_id: "l4",
-              length: 15.0,
-              backgroundColor: "#00ffff",
-              foregroundColor: "#000000",
-            },
-          ],
-          arduino_configs: [
-            {
-              name: "Arduino 2",
-              commPort: "COM4",
-              baudRate: 115200,
-              debounceUs: 5000,
-              hardwareType: 0, // Uno
-              digitalIds: new Array(60).fill(0),
-              analogIds: new Array(16).fill(0),
-              normallyClosedLaneSensors: false,
-              normallyClosedRelays: true,
-              globalInvertLights: 0,
-              useLapsForPits: 0,
-              useLapsForPitEnd: 0,
-              usePitsAsLaps: false,
-              useLapsForSegments: true,
-              ledStrings: null,
-              ledLaneColorOverrides: null,
-              lapPinPitBehavior: 3,
-            },
-          ],
-        },
-      ];
-
       if (method === "POST") {
         const postData = route.request().postDataJSON();
-        const newTrack = { ...postData, entity_id: "t-new-id" };
+        const newTrack = { ...postData, entity_id: `t-${Date.now()}` };
+        currentTracks.push(newTrack);
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(newTrack),
         });
       } else {
-        // Include t-new-id if it's "created" (flexible for tests)
-        const extendedTracks = [
-          ...tracks,
-          {
-            entity_id: "t-new-id",
-            name: "New Track",
-            lanes: [
-              {
-                entity_id: "l1",
-                length: 10,
-                backgroundColor: "#ef4444",
-                foregroundColor: "black",
-              },
-              {
-                entity_id: "l2",
-                length: 10,
-                backgroundColor: "#ffffff",
-                foregroundColor: "black",
-              },
-              {
-                entity_id: "l3",
-                length: 10,
-                backgroundColor: "#3b82f6",
-                foregroundColor: "black",
-              },
-              {
-                entity_id: "l4",
-                length: 10,
-                backgroundColor: "#fbbf24",
-                foregroundColor: "black",
-              },
-            ],
-            arduino_configs: [],
-          },
-        ];
-
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(extendedTracks),
+          body: JSON.stringify(currentTracks),
         });
       }
     });
 
     await page.route("**/api/tracks/*", async (route) => {
       const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop()?.split("?")[0];
+
       if (method === "PUT") {
         const postData = route.request().postDataJSON();
+        const index = currentTracks.findIndex((t) => t.entity_id === id);
+        if (index !== -1) {
+          currentTracks[index] = { ...currentTracks[index], ...postData };
+        }
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(postData),
         });
       } else if (method === "DELETE") {
+        currentTracks = currentTracks.filter((t) => t.entity_id !== id);
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({ success: true }),
         });
+      } else if (method === "GET") {
+        const found = currentTracks.find((t) => t.entity_id === id);
+        if (found) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(found),
+          });
+        } else {
+          await route.fulfill({
+            status: 404,
+            contentType: "application/json",
+            body: JSON.stringify({ error: "Track not found" }),
+          });
+        }
       } else {
         await route.continue();
       }
@@ -538,52 +451,7 @@ export class TestSetupHelper {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          lanes: [
-            {
-              background_color: "#ef4444",
-              foreground_color: "black",
-              length: 10,
-            },
-            {
-              background_color: "#ffffff",
-              foreground_color: "black",
-              length: 10,
-            },
-            {
-              background_color: "#3b82f6",
-              foreground_color: "black",
-              length: 10,
-            },
-            {
-              background_color: "#fbbf24",
-              foreground_color: "black",
-              length: 10,
-            },
-          ],
-          arduino_configs: [
-            {
-              name: "Arduino 1",
-              commPort: "",
-              baudRate: 115200,
-              debounceUs: 5000,
-              hardwareType: 0,
-              digitalIds: new Array(60).fill(0),
-              analogIds: new Array(16).fill(0),
-              normallyClosedLaneSensors: false,
-              normallyClosedRelays: true,
-              globalInvertLights: 0,
-              useLapsForPits: 0,
-              useLapsForPitEnd: 0,
-              usePitsAsLaps: false,
-              useLapsForSegments: true,
-              ledStrings: null,
-              ledLaneColorOverrides: null,
-              lapPinPitBehavior: 3,
-              voltageConfigs: {},
-            },
-          ],
-        }),
+        body: JSON.stringify(MOCK_FACTORY_SETTINGS),
       });
     });
 
@@ -888,7 +756,74 @@ export class TestSetupHelper {
     });
   }
 
-  static async setupRaceMocks(page: Page) {
+  static async setupRaceRestMocks(page: Page) {
+    let currentRaces = [...MOCK_RACES];
+
+    await page.route("**/api/races", async (route) => {
+      const method = route.request().method();
+      if (method === "POST") {
+        const postData = route.request().postDataJSON();
+        const newRace = { ...postData, entity_id: `r-${Date.now()}` };
+        currentRaces.push(newRace);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newRace),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentRaces),
+        });
+      }
+    });
+
+    await page.route("**/api/races/*", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop()?.split("?")[0];
+
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentRaces.findIndex((r) => r.entity_id === id);
+        if (index !== -1) {
+          currentRaces[index] = { ...currentRaces[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(postData),
+        });
+      } else if (method === "DELETE") {
+        currentRaces = currentRaces.filter((r) => r.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true }),
+        });
+      } else if (method === "GET") {
+        const found = currentRaces.find((r) => r.entity_id === id);
+        if (found) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(found),
+          });
+        } else {
+          await route.fulfill({
+            status: 404,
+            contentType: "application/json",
+            body: JSON.stringify({ error: "Race not found" }),
+          });
+        }
+      } else {
+        await route.continue();
+      }
+    });
+  }
+
+  static async setupRaceWebSocketMocks(page: Page) {
     const raceData = com.antigravity.RaceData.create({
       race: {
         // IRace

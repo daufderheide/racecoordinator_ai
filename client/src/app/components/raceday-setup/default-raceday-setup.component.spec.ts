@@ -22,13 +22,25 @@ import { HelpService } from "src/app/services/help.service";
 import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
+import { MOCK_RACES } from "src/app/testing/data/races_data";
+import { createDefaultSettings } from "src/app/testing/data/settings_data";
+import { MOCK_TEAMS } from "src/app/testing/data/teams_data";
 import {
   mockAnalyticsService,
+  mockRouter,
   mockSettingsService,
+  mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 import { DefaultRacedaySetupHarness } from "./testing/default-raceday-setup.harness";
+import {
+  createRacedaySetupDataServiceMock,
+  createRacedaySetupHelpServiceMock,
+  MOCK_AUTOSAVE_RACES,
+} from "./testing/raceday-setup_helper";
 
 @Component({
   selector: "app-toolbar",
@@ -54,34 +66,16 @@ describe("DefaultRacedaySetupComponent", () => {
   let component: DefaultRacedaySetupComponent;
   let fixture: ComponentFixture<DefaultRacedaySetupComponent>;
   let harness: DefaultRacedaySetupHarness;
-  let mockDataService: jasmine.SpyObj<DataService>;
+  let mockDataService: any;
   let mockRaceService: jasmine.SpyObj<RaceService>;
-  let mockTranslationService: jasmine.SpyObj<TranslationService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
   let mockHelpService: any;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
-  let mockRouter: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getDrivers",
-      "getTeams",
-      "getRaces",
-      "initializeRace",
-      "getSavedRaces",
-      "loadRace",
-      "deleteSavedRace",
-      "toggleServerAnalytics",
-    ]);
+    mockDataService = createRacedaySetupDataServiceMock();
     mockRaceService = jasmine.createSpyObj("RaceService", ["startRace"]);
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "getTranslationsLoaded",
-      "translate",
-      "setLanguage",
-      "getSupportedLanguages",
-      "getBrowserLanguage",
-    ]);
+
+    // Configure shared mocks from unit-test-mocks or provide specific overrides
     mockTranslationService.translate.and.callFake(
       (key: string, params?: any) => {
         let result = key;
@@ -99,73 +93,43 @@ describe("DefaultRacedaySetupComponent", () => {
       },
     );
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
-    mockTranslationService.getSupportedLanguages.and.returnValue([]);
-    mockTranslationService.getBrowserLanguage.and.returnValue("en");
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
-    ]);
-    // mockSettingsService from unit-test-mocks
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    (mockTranslationService as any).getSupportedLanguages = jasmine
+      .createSpy()
+      .and.returnValue([
+        { code: "en", nameKey: "RDS_LANG_EN" },
+        { code: "es", nameKey: "RDS_LANG_ES" },
+      ]);
+    (mockTranslationService as any).getBrowserLanguage = jasmine
+      .createSpy()
+      .and.returnValue("en");
+    (mockTranslationService as any).setLanguage = jasmine.createSpy();
+
+    // Robust SettingsService mock that maintains state for tests
+    let currentSettings = createDefaultSettings({
+      recentRaceIds: ["r1"],
+      selectedDriverIds: [],
+      serverIp: "localhost",
+      serverPort: 7070,
+      language: "",
+      racedaySetupWalkthroughSeen: true,
+      sortByStandings: true,
+    });
+    mockSettingsService.getSettings.and.callFake(() => currentSettings);
+    (mockSettingsService as any).settings = currentSettings; // For direct property access
+    (mockSettingsService as any).updateSettings = jasmine
+      .createSpy("updateSettings")
+      .and.callFake((update: any) => {
+        currentSettings = { ...currentSettings, ...update };
+        (mockSettingsService as any).settings = currentSettings;
+        mockSettingsService.saveSettings(currentSettings);
+      });
+
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
       "selectCustomFolder",
       "clearCustomFolder",
     ]);
 
-    // Mock HelpService using spyObj and observables
-    mockHelpService = jasmine.createSpyObj("HelpService", [
-      "startGuide",
-      "nextStep",
-      "previousStep",
-      "endGuide",
-    ]);
-    mockHelpService.isVisible$ = new BehaviorSubject(false);
-    mockHelpService.currentStep$ = new BehaviorSubject(null);
-    mockHelpService.hasNext$ = new BehaviorSubject(false);
-    mockHelpService.hasNext$ = new BehaviorSubject(false);
-    mockHelpService.hasPrevious$ = new BehaviorSubject(false);
-
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockDataService.getDrivers.and.returnValue(
-      of([
-        { entity_id: "d1", name: "Driver 1", nickname: "D1" },
-        { entity_id: "d2", name: "Driver 2", nickname: "D2" },
-      ]),
-    );
-    mockDataService.getTeams.and.returnValue(
-      of([{ entity_id: "t1", name: "Team 1", driverIds: ["d1"] }]),
-    );
-    mockDataService.getRaces.and.returnValue(
-      of([
-        { entity_id: "r1", name: "Grand Prix" },
-        { entity_id: "r2", name: "Time Trial" },
-      ]),
-    );
-    mockDataService.getSavedRaces.and.returnValue(
-      of(["race1.json", "race2.json"]),
-    );
-    mockDataService.loadRace.and.returnValue(of("OK"));
-    mockDataService.deleteSavedRace.and.returnValue(of("OK"));
-    mockDataService.toggleServerAnalytics.and.returnValue(of("OK"));
-    mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
-
-    mockTranslationService.getBrowserLanguage.and.returnValue("en");
-    mockTranslationService.getSupportedLanguages.and.returnValue([
-      { code: "en", nameKey: "RDS_LANG_EN" },
-      { code: "es", nameKey: "RDS_LANG_ES" },
-    ]);
-    mockSettingsService.getSettings.and.returnValue(
-      Object.assign(new Settings(), {
-        recentRaceIds: [],
-        selectedDriverIds: [],
-        serverIp: "localhost",
-        serverPort: 7070,
-        language: "",
-        racedaySetupWalkthroughSeen: true,
-        sortByStandings: true,
-      }),
-    );
+    mockHelpService = createRacedaySetupHelpServiceMock();
 
     TestBed.configureTestingModule({
       imports: [FormsModule, DragDropModule],
@@ -183,8 +147,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
-        { provide: SettingsService, useValue: mockSettingsService },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
@@ -211,14 +174,14 @@ describe("DefaultRacedaySetupComponent", () => {
 
   it("should toggle driver selection", fakeAsync(() => {
     // Flush the ngOnInit translations and help walkthrough timers
-    tick(1000);
+    flush();
     fixture.detectChanges();
 
     const driverToSelect = component.filteredUnselectedParticipants.find(
       (d: any) => d.entity_id === "d2",
     )!;
     component.toggleParticipantSelection(driverToSelect, false);
-    tick(); // updateListWithRefresh
+    flush(); // updateListWithRefresh
     fixture.detectChanges();
 
     expect(component.selectedParticipants.length).toBe(1);
@@ -226,20 +189,20 @@ describe("DefaultRacedaySetupComponent", () => {
 
     const driverToUnselect = component.selectedParticipants[0];
     component.toggleParticipantSelection(driverToUnselect, true);
-    tick(); // updateListWithRefresh
+    flush(); // updateListWithRefresh
     fixture.detectChanges();
 
     expect(component.selectedParticipants.length).toBe(0);
-    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    expect(component.filteredUnselectedParticipants.length).toBe(6);
   }));
 
   it("should toggle team selection", fakeAsync(() => {
-    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    expect(component.filteredUnselectedParticipants.length).toBe(6);
     const teamToSelect = component.filteredUnselectedParticipants.find(
       (d: any) => d.entity_id === "t1",
     )!;
     component.toggleParticipantSelection(teamToSelect, false);
-    tick(); // Wait for updateListWithRefresh setTimeout
+    flush(); // Wait for updateListWithRefresh setTimeout
     fixture.detectChanges();
 
     expect(component.selectedParticipants.length).toBe(1);
@@ -254,17 +217,17 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should search drivers", () => {
-    expect(component.filteredUnselectedParticipants.length).toBe(3);
-    component.driverSearchQuery = "Driver 1";
+    expect(component.filteredUnselectedParticipants.length).toBe(6);
+    component.driverSearchQuery = "Alice";
     expect(component.filteredUnselectedParticipants.length).toBe(1);
-    expect(component.filteredUnselectedParticipants[0].name).toBe("Driver 1");
+    expect(component.filteredUnselectedParticipants[0].name).toBe("Alice");
   });
 
   it("should search races", () => {
-    expect(component.filteredRaces.length).toBe(2);
-    component.raceSearchQuery = "Time Trial";
+    expect(component.filteredRaces.length).toBe(3);
+    component.raceSearchQuery = "Endurance";
     expect(component.filteredRaces.length).toBe(1);
-    expect(component.filteredRaces[0].name).toBe("Time Trial");
+    expect(component.filteredRaces[0].name).toBe("Endurance Challenge");
   });
 
   it("should auto-open race dropdown when searching races", () => {
@@ -304,10 +267,11 @@ describe("DefaultRacedaySetupComponent", () => {
     const response = com.antigravity.InitializeRaceResponse.fromObject({
       success: true,
     });
+    mockDataService.getSavedRaces.and.returnValue(of([])); // no autosave
     mockDataService.initializeRace.and.returnValue(of(response));
 
     component.startRace(false);
-    tick(); // startRace calls getSavedRaces and proceedWithStart
+    flush(); // startRace calls getSavedRaces and proceedWithStart
     fixture.detectChanges();
 
     // After starting, r2 should be the first in quickStartRaces
@@ -328,7 +292,7 @@ describe("DefaultRacedaySetupComponent", () => {
     mockDataService.getSavedRaces.and.returnValue(of([])); // no autosave
 
     component.startRace(false);
-    tick();
+    flush();
     fixture.detectChanges();
 
     expect(mockDataService.initializeRace).toHaveBeenCalled();
@@ -336,14 +300,15 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should prompt to load autosave and load it if confirmed", fakeAsync(() => {
-    component.selectedRace = component.races[0]; // entity_id: 'r1'
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];
-
     mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
-    mockDataService.loadRace.and.returnValue(of("OK"));
+    mockDataService.loadRace.and.returnValue(
+      of(com.antigravity.Race.fromObject({})),
+    );
 
     component.startRace(false);
-    flush();
+    tick();
 
     expect(component.showAutoSavePrompt).toBeTrue();
     expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
@@ -358,7 +323,7 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should prompt to load autosave and delete it if canceled", fakeAsync(() => {
-    component.selectedRace = component.races[0]; // entity_id: 'r1'
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];
 
     mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
@@ -369,13 +334,13 @@ describe("DefaultRacedaySetupComponent", () => {
     mockDataService.initializeRace.and.returnValue(of(response));
 
     component.startRace(false);
-    flush();
+    tick();
 
     expect(component.showAutoSavePrompt).toBeTrue();
     expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
 
     component.onCancelAutoSave();
-    flush();
+    tick();
 
     expect(component.showAutoSavePrompt).toBeFalse();
     expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
@@ -391,10 +356,11 @@ describe("DefaultRacedaySetupComponent", () => {
     const response = com.antigravity.InitializeRaceResponse.fromObject({
       success: true,
     });
+    mockDataService.getSavedRaces.and.returnValue(of([])); // Bypass auto-save prompt
     mockDataService.initializeRace.and.returnValue(of(response));
 
     component.startRace(true);
-    tick();
+    flush();
     fixture.detectChanges();
 
     expect(mockDataService.initializeRace).toHaveBeenCalledWith(
@@ -405,14 +371,14 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should add all drivers", fakeAsync(() => {
-    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    expect(component.filteredUnselectedParticipants.length).toBe(6);
     expect(component.selectedParticipants.length).toBe(0);
 
     component.addAllParticipants();
     flush();
 
     expect(component.filteredUnselectedParticipants.length).toBe(0);
-    expect(component.selectedParticipants.length).toBe(3);
+    expect(component.selectedParticipants.length).toBe(6);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   }));
 
@@ -420,15 +386,15 @@ describe("DefaultRacedaySetupComponent", () => {
     // Setup initial state: select all
     component.addAllParticipants();
     flush();
-    expect(component.selectedParticipants.length).toBe(3);
+    expect(component.selectedParticipants.length).toBe(6);
 
     component.removeAllParticipants();
     flush();
 
     expect(component.selectedParticipants.length).toBe(0);
-    expect(component.filteredUnselectedParticipants.length).toBe(3);
+    expect(component.filteredUnselectedParticipants.length).toBe(6);
     // Should be sorted alphabetically
-    expect(component.filteredUnselectedParticipants[0].name).toBe("Driver 1");
+    expect(component.filteredUnselectedParticipants[0].name).toBe("Alice");
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   }));
 
@@ -552,6 +518,7 @@ describe("DefaultRacedaySetupComponent", () => {
     component.loadSavedRaces();
     expect(mockDataService.getSavedRaces).toHaveBeenCalled();
     expect(component.showLoadRaceModal).toBeTrue();
+    // In this spec, we mock 2 saved races in the helper
     expect(component.savedRaces.length).toBe(2);
   });
 
@@ -575,7 +542,7 @@ describe("DefaultRacedaySetupComponent", () => {
   it("should show error modal when server returns DUPE_INDIVIDUAL_TEAM", fakeAsync(() => {
     component.selectedRace = { entity_id: "r1", name: "Grand Prix" } as any;
     component.selectedParticipants = [
-      { entity_id: "d1", name: "Driver 1" },
+      { entity_id: "d1", name: "Alice" },
     ] as any;
 
     mockDataService.getSavedRaces.and.returnValue(of([]));
@@ -583,24 +550,24 @@ describe("DefaultRacedaySetupComponent", () => {
       of({
         success: false,
         errorCode: "DUPE_INDIVIDUAL_TEAM",
-        driverName: "Driver 1",
-        teamNames: ["Team A"],
+        driverName: "Alice",
+        teamNames: ["Team Alpha"],
       } as any),
     );
 
     component.startRace();
-    tick();
+    flush();
 
     expect(component.showErrorModal).toBeTrue();
     expect(component.errorTitle).toBe("RDS_ERR_VALIDATION_TITLE");
-    expect(component.errorMessage).toContain("Driver 1");
-    expect(component.errorMessage).toContain("Team A");
+    expect(component.errorMessage).toContain("Alice");
+    expect(component.errorMessage).toContain("Team Alpha");
   }));
 
   it("should show error modal when server returns DUPE_MULTIPLE_TEAMS", fakeAsync(() => {
     component.selectedRace = { entity_id: "r1", name: "Grand Prix" } as any;
     component.selectedParticipants = [
-      { entity_id: "t1", name: "Team A" },
+      { entity_id: "t1", name: "Team Alpha" },
     ] as any;
 
     mockDataService.getSavedRaces.and.returnValue(of([]));
@@ -608,17 +575,17 @@ describe("DefaultRacedaySetupComponent", () => {
       of({
         success: false,
         errorCode: "DUPE_MULTIPLE_TEAMS",
-        driverName: "Driver 1",
-        teamNames: ["Team A", "Team B"],
+        driverName: "Alice",
+        teamNames: ["Team Alpha", "Team Beta"],
       } as any),
     );
 
     component.startRace();
-    tick();
+    flush();
 
     expect(component.showErrorModal).toBeTrue();
-    expect(component.errorMessage).toContain("Driver 1");
-    expect(component.errorMessage).toContain("Team A");
-    expect(component.errorMessage).toContain("Team B");
+    expect(component.errorMessage).toContain("Alice");
+    expect(component.errorMessage).toContain("Team Alpha");
+    expect(component.errorMessage).toContain("Team Beta");
   }));
 });

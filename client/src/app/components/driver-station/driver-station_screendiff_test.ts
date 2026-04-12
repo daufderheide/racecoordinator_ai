@@ -6,7 +6,7 @@ import { DriverStationHarnessE2e } from "./testing/driver-station.harness.e2e";
 test.describe("Driver Station Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.disableAnimations(page);
 
     // Set viewport size to a mobile device layout, e.g., iPhone X

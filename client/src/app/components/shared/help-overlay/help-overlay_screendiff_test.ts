@@ -8,7 +8,7 @@ test.describe("Help Overlay Visuals", () => {
     // Setup standard mocks including races and drivers so the main page loads populated
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
 
     // Ensure we don't auto-trigger help from "first run" logic by presetting settings
     await TestSetupHelper.setupLocalStorage(page, {

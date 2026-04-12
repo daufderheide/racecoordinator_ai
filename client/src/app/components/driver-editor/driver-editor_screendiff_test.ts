@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { MOCK_DRIVERS } from "src/app/testing/data/drivers_data";
 import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 
 import { DriverEditorHarnessE2e } from "./testing/driver-editor.harness.e2e";
@@ -9,27 +10,8 @@ test.describe("Driver Editor Visuals", () => {
       driverEditorHelpShown: true,
     });
     await page.setViewportSize({ width: 1600, height: 900 });
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
-
-    await page.route("**/api/drivers", async (route) => {
-      await route.fulfill({
-        json: [
-          {
-            entity_id: "d1",
-            name: "Test Driver",
-            nickname: "Speedy",
-            avatarUrl: "assets/images/default_avatar.svg",
-            lapSoundUrl: "",
-            bestLapSoundUrl: "",
-            lapSoundType: "preset",
-            bestLapSoundType: "preset",
-            lapSoundText: "",
-            bestLapSoundText: "",
-          },
-        ],
-      });
-    });
 
     await TestSetupHelper.disableAnimations(page);
   });
@@ -40,7 +22,6 @@ test.describe("Driver Editor Visuals", () => {
       "en",
       page.goto("/driver-editor?id=d1"),
     );
-    // TODO(aufderheide): At very least don't wait for specific text values
     await page.locator(".page-container").waitFor();
 
     const container = page.locator(".page-container");
@@ -60,7 +41,6 @@ test.describe("Driver Editor Visuals", () => {
       "en",
       page.goto("/driver-editor?id=d1"),
     );
-    // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator(".page-container").waitFor();
 
     const container = page.locator(".page-container");
@@ -145,10 +125,7 @@ test.describe("Driver Editor Visuals", () => {
     // 1. We mock that another driver exists with name 'Duplicate Name'
     await page.route("**/api/drivers", async (route) => {
       await route.fulfill({
-        json: [
-          { entity_id: "d1", name: "Test Driver", nickname: "Speedy" },
-          { entity_id: "d2", name: "Duplicate Name", nickname: "Other" },
-        ],
+        json: [MOCK_DRIVERS[0], { ...MOCK_DRIVERS[1], name: "Duplicate Name" }],
       });
     });
 
@@ -157,7 +134,6 @@ test.describe("Driver Editor Visuals", () => {
       "en",
       page.goto("/driver-editor?id=d1"),
     );
-    // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator(".page-container").waitFor();
 
     const container = page.locator(".page-container");
@@ -166,7 +142,7 @@ test.describe("Driver Editor Visuals", () => {
     // 2. Set name to duplicate
     await harness.setName("Duplicate Name");
     await page.keyboard.press("Tab"); // Commit
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(1000);
 
     await expect(page).toHaveScreenshot("driver-editor-validation-error.png", {
       animations: "disabled",
@@ -185,7 +161,6 @@ test.describe("Driver Editor Visuals", () => {
       "en",
       page.goto("/driver-editor?id=d1&help=true"),
     );
-    // TOOD(aufderheide): At very least don't check for specific text values.
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 

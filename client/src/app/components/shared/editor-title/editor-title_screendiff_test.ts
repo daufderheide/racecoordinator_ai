@@ -6,7 +6,7 @@ import { EditorTitleHarnessE2e } from "./testing/editor-title.harness.e2e";
 test.describe("Editor Title Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.disableAnimations(page);
   });

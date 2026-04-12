@@ -5,7 +5,7 @@ import { TestSetupHelper } from "src/app/testing/test-setup_helper";
 test.describe("Reorder Dialog Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupFileSystemMock(page, {});
     await TestSetupHelper.disableAnimations(page);

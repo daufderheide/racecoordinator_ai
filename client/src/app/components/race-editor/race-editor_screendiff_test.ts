@@ -7,7 +7,7 @@ test.describe("Race Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.waitForLoadState("networkidle");
 
@@ -103,10 +103,11 @@ test.describe("Race Editor Visuals", () => {
     const harness = new RaceEditorHarnessE2e(page.locator("body"));
 
     // Change name to a duplicate
-    await harness.setName("Time Trial");
+    await harness.setName("Endurance Challenge");
+    await page.keyboard.press("Tab"); // Trigger blur/commit
 
     // With auto-saving, duplicate name triggers an 'invalid' class highlighting
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);

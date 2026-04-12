@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   Directive,
   EventEmitter,
@@ -14,6 +15,13 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { Router } from "@angular/router";
+import { DataService } from "src/app/data.service";
+import { AllowFinish, FinishMethod } from "src/app/models/heat_scoring";
+import { ColumnVisibility, Settings } from "src/app/models/settings";
+import { RaceService } from "src/app/services/race.service";
+import { SettingsService } from "src/app/services/settings.service";
+import { TranslationService } from "src/app/services/translation.service";
 
 @Pipe({
   name: "translate",
@@ -42,7 +50,7 @@ import { RaceConnectionService } from "src/app/services/race-connection.service"
   template: "",
   standalone: false,
 })
-class MockAcknowledgementModalComponent {
+class DefaultRacedayMockAcknowledgementModalComponent {
   @Input() visible: boolean = false;
   @Input() title: string = "";
   @Input() message: string = "";
@@ -55,7 +63,7 @@ class MockAcknowledgementModalComponent {
   template: "",
   standalone: false,
 })
-class MockConfirmationModalComponent {
+class DefaultRacedayMockConfirmationModalComponent {
   @Input() visible: boolean = false;
   @Input() title: string = "";
   @Input() message: string = "";
@@ -65,17 +73,20 @@ class MockConfirmationModalComponent {
   @Output() cancel = new EventEmitter<void>();
 }
 
-import { ChangeDetectorRef } from "@angular/core";
-import { Router } from "@angular/router";
-import { DataService } from "src/app/data.service";
-import { AllowFinish, FinishMethod } from "src/app/models/heat_scoring";
-import { ColumnVisibility, Settings } from "src/app/models/settings";
-import { RaceService } from "src/app/services/race.service";
-import { SettingsService } from "src/app/services/settings.service";
-import { TranslationService } from "src/app/services/translation.service";
+import { MOCK_HEATS } from "src/app/testing/data/heats_data";
+import { MOCK_RACES } from "src/app/testing/data/races_data";
+import { createDefaultSettings } from "src/app/testing/data/settings_data";
+import { MOCK_TRACKS } from "src/app/testing/data/tracks_data";
+import {
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
+} from "src/app/testing/unit-test-mocks";
 
 import { AnchorPoint, ColumnDefinition } from "./column_definition";
 import { DefaultRacedayComponent } from "./default-raceday.component";
+import { createRacedayMocks } from "./testing/raceday_helper";
 
 describe("DefaultRacedayComponent", () => {
   let component: DefaultRacedayComponent;
@@ -93,88 +104,19 @@ describe("DefaultRacedayComponent", () => {
   let participantsSubject: Subject<any[]>;
 
   beforeEach(async () => {
-    interfaceEventsSubject = new Subject<com.antigravity.IInterfaceEvent>();
-    interfaceAlertSubject = new Subject<{
-      titleKey: string;
-      messageKey: string;
-    }>();
-    raceTimeSubject = new Subject<com.antigravity.IRaceTime>();
-    lapsSubject = new Subject<com.antigravity.ILap>();
-    raceStateSubject = new Subject<com.antigravity.RaceState>();
-    standingsUpdateSubject = new Subject<com.antigravity.IStandingsUpdate>();
-    participantsSubject = new Subject<any[]>();
+    const mocks = createRacedayMocks();
+    mockDataService = mocks.mockDataService;
+    mockRaceService = mocks.mockRaceService;
+    mockRaceConnectionService = mocks.mockRaceConnectionService;
+    interfaceEventsSubject = mocks.interfaceEventsSubject;
+    interfaceAlertSubject = mocks.interfaceAlertSubject;
+    raceTimeSubject = mocks.raceTimeSubject;
+    lapsSubject = mocks.lapsSubject;
+    raceStateSubject = mocks.raceStateSubject;
+    standingsUpdateSubject = mocks.standingsUpdateSubject;
+    participantsSubject = mocks.participantsSubject;
 
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "updateRaceSubscription",
-      "getRaceUpdate",
-      "getRaceTime",
-      "getLaps",
-      "getReactionTimes",
-      "getStandingsUpdate",
-      "getOverallStandingsUpdate",
-      "getInterfaceEvents",
-      "getRaceState",
-      "getDrivers",
-      "connectToInterfaceDataSocket",
-      "disconnectFromInterfaceDataSocket",
-      "listAssets",
-      "getCarData",
-      "getSegments",
-    ]);
-    mockDataService.listAssets.and.returnValue(of([]));
-    mockDataService.getDrivers.and.returnValue(of([]));
-    mockDataService.serverUrl = "http://localhost";
-
-    mockRaceConnectionService = jasmine.createSpyObj("RaceConnectionService", [
-      "connect",
-      "disconnect",
-    ]);
-    mockRaceConnectionService.interfaceEvents$ =
-      interfaceEventsSubject.asObservable();
-    mockRaceConnectionService.interfaceAlert$ =
-      interfaceAlertSubject.asObservable();
-    mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
-    mockRaceConnectionService.laps$ = lapsSubject.asObservable();
-    mockRaceConnectionService.carData$ = of({});
-    mockRaceConnectionService.segments$ = of(null);
-    mockRaceConnectionService.reactionTimes$ = of(null);
-    mockRaceConnectionService.standingsUpdate$ =
-      standingsUpdateSubject.asObservable();
-    mockRaceConnectionService.raceState$ = raceStateSubject.asObservable();
-    mockRaceConnectionService.isInterfaceConnected = false;
-
-    const mockTranslationService = {
-      get: (key: string) => of(key),
-      translate: (key: string) => key,
-    };
-
-    mockRaceService = jasmine.createSpyObj("RaceService", [
-      "setRace",
-      "setParticipants",
-      "setHeats",
-      "setCurrentHeat",
-      "getRace",
-      "getHeats",
-      "getCurrentHeat",
-    ]);
-    mockRaceService.currentHeat$ = of({});
-    mockRaceService.race$ = of({});
-    mockRaceService.participants$ = participantsSubject.asObservable();
-
-    mockRaceService.getRace.and.returnValue({
-      name: "Some Race Name",
-      track: {
-        name: "Bright Plume Raceway",
-        lanes: [
-          { foreground_color: "white", background_color: "black" },
-          { foreground_color: "white", background_color: "black" },
-        ],
-      },
-      fuel_options: { enabled: false },
-    });
-    mockRaceService.getHeats.and.returnValue([]);
-
-    mockSettings = Object.assign(new Settings(), {
+    mockSettings = createDefaultSettings({
       sortByStandings: true,
       racedayColumns: ["driver.nickname", "lapCount", "fuelPercentage"],
       columnVisibility: {
@@ -182,15 +124,11 @@ describe("DefaultRacedayComponent", () => {
       },
     });
 
-    const mockRouter = {
-      navigate: jasmine.createSpy("navigate"),
-    };
-
     await TestBed.configureTestingModule({
       declarations: [
         DefaultRacedayComponent,
-        MockAcknowledgementModalComponent,
-        MockConfirmationModalComponent,
+        DefaultRacedayMockAcknowledgementModalComponent,
+        DefaultRacedayMockConfirmationModalComponent,
         MockTranslatePipe,
         MockSvgTextScalerDirective,
       ],
@@ -216,21 +154,14 @@ describe("DefaultRacedayComponent", () => {
     fixture = TestBed.createComponent(DefaultRacedayComponent);
     component = fixture.componentInstance;
     const mockTrack = {
-      name: "Test Track",
-      lanes: [{ background_color: "red" }, { background_color: "green" }],
+      ...MOCK_TRACKS[0],
       hasDigitalFuel: () => false,
     };
-    component["race"] = { name: "Test Race", track: mockTrack } as any;
+    component["race"] = { ...MOCK_RACES[0], track: mockTrack } as any;
     component["track"] = mockTrack as any;
-    component["heat"] = {
-      heatNumber: 1,
-      heatDrivers: [
-        { objectId: "hd1", laneIndex: 0, driver: { name: "Driver 1" } },
-        { objectId: "hd2", laneIndex: 1, driver: { name: "Driver 2" } },
-      ],
-    } as any;
-    // fixture.detectChanges(); // Removed to allow manual control in fakeAsync
+    component["heat"] = MOCK_HEATS[0] as any;
   });
+  // fixture.detectChanges(); // Removed to allow manual control in fakeAsync
 
   it("should create", () => {
     fixture.detectChanges();
@@ -1111,29 +1042,29 @@ describe("DefaultRacedayComponent", () => {
       mockSettings.highlightRowOnLap = true;
 
       lapsSubject.next({
-        objectId: "driver1",
+        objectId: "hd1",
         lapTime: 1.234,
         bestLapTime: 1.0,
       });
       fixture.detectChanges();
 
-      expect(component["highlightedDrivers"].has("driver1")).toBeTrue();
+      expect(component["highlightedDrivers"].has("hd1")).toBeTrue();
 
       tick(400);
-      expect(component["highlightedDrivers"].has("driver1")).toBeFalse();
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
 
     it("should not highlight driver when lap is received but disabled", fakeAsync(() => {
       mockSettings.highlightRowOnLap = false;
 
       lapsSubject.next({
-        objectId: "driver1",
+        objectId: "hd1",
         lapTime: 1.234,
         bestLapTime: 1.0,
       });
       fixture.detectChanges();
 
-      expect(component["highlightedDrivers"].has("driver1")).toBeFalse();
+      expect(component["highlightedDrivers"].has("hd1")).toBeFalse();
     }));
   });
 
@@ -1238,7 +1169,7 @@ describe("DefaultRacedayComponent", () => {
       component["driverRankings"].set("hd2", 2);
 
       fixture.detectChanges(); // Trigger ngOnInit setup
-      flush(); // Flush any timers
+      tick(); // Flush any timers
 
       standingsUpdateSubject.next({
         updates: [

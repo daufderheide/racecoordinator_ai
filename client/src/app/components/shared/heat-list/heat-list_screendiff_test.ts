@@ -8,7 +8,7 @@ test.describe("Heat List Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
 
     // Mock Heat Generation API
     await page.route("**/api/races/*/generate-heats", async (route) => {

@@ -4,6 +4,7 @@ import { NO_ERRORS_SCHEMA } from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
+  flush,
   TestBed,
   tick,
 } from "@angular/core/testing";
@@ -13,16 +14,29 @@ import { of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { DataService } from "src/app/data.service";
 import { FuelUsageType } from "src/app/models/fuel_options";
+import { Race } from "src/app/models/race";
 import { Track } from "src/app/models/track";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import {
-  createTestSettings,
+  MOCK_RACE_INSTANCES,
+  MOCK_RACES,
+} from "src/app/testing/data/races_data";
+import {
+  MOCK_TRACK_INSTANCES,
+  MOCK_TRACKS,
+} from "src/app/testing/data/tracks_data";
+import {
   mockAnalyticsService,
+  mockRouter,
+  mockSettingsService,
+  mockTranslationService,
+  resetMocks,
 } from "src/app/testing/unit-test-mocks";
 
+import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
 import { RaceEditorComponent } from "./race-editor.component";
 import { RaceEditorHarness } from "./testing/race-editor.harness";
 
@@ -30,48 +44,19 @@ describe("RaceEditorComponent", () => {
   let component: RaceEditorComponent;
   let fixture: ComponentFixture<RaceEditorComponent>;
   let loader: HarnessLoader;
-  let mockDataService: jasmine.SpyObj<DataService>;
-  let mockRouter: jasmine.SpyObj<Router>;
-  let mockActivatedRoute: any;
-  let mockTranslationService: jasmine.SpyObj<TranslationService>;
-  let mockHelpService: jasmine.SpyObj<HelpService>;
-  let mockSettingsService: jasmine.SpyObj<SettingsService>;
-  let mockAnalyticsServiceLocal: jasmine.SpyObj<AnalyticsService>;
+  let dataService: any;
+  let router: any;
+  let activatedRoute: any;
 
   beforeEach(() => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getRaces",
-      "getTracks",
-      "createRace",
-      "updateRace",
-      "generateHeats",
-      "previewHeats",
-    ]);
-    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
-    mockTranslationService = jasmine.createSpyObj("TranslationService", [
-      "translate",
-    ]);
+    mockTranslationService.translate.and.callFake((key: string) => key);
 
-    mockHelpService = jasmine.createSpyObj("HelpService", ["startGuide"]);
-    mockHelpService.isVisible$ = of(false);
-    mockHelpService.currentStep$ = of(null);
-    mockHelpService.hasNext$ = of(false);
-    mockHelpService.hasPrevious$ = of(false);
-
-    mockAnalyticsServiceLocal = mockAnalyticsService as any;
-
-    mockSettingsService = jasmine.createSpyObj("SettingsService", [
-      "getSettings",
-      "saveSettings",
-    ]);
-    mockSettingsService.getSettings.and.returnValue(createTestSettings());
-
-    mockActivatedRoute = {
+    const mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
           get: jasmine.createSpy("get").and.callFake((key: string) => {
             if (key === "driverCount") return "10";
-            if (key === "id") return "1";
+            if (key === "id") return "r1";
             return null;
           }),
         },
@@ -83,12 +68,20 @@ describe("RaceEditorComponent", () => {
       imports: [FormsModule],
       declarations: [RaceEditorComponent, TranslatePipe],
       providers: [
-        { provide: DataService, useValue: mockDataService },
+        { provide: DataService, useValue: createRaceManagerDataServiceMock() },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
-        { provide: HelpService, useValue: mockHelpService },
-        { provide: AnalyticsService, useValue: mockAnalyticsServiceLocal },
+        {
+          provide: HelpService,
+          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
+            isVisible$: of(false),
+            currentStep$: of(null),
+            hasNext$: of(false),
+            hasPrevious$: of(false),
+          }),
+        },
+        { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -97,71 +90,32 @@ describe("RaceEditorComponent", () => {
     fixture = TestBed.createComponent(RaceEditorComponent);
     component = fixture.componentInstance;
     loader = TestbedHarnessEnvironment.loader(fixture);
+    dataService = TestBed.inject(DataService);
+    router = TestBed.inject(Router);
+    activatedRoute = TestBed.inject(ActivatedRoute);
 
-    // Initialize with safe defaults for template binding
-    component.editingRace = {
-      entity_id: "new",
-      name: "",
-      track_entity_id: "",
-      heat_rotation_type: "RoundRobin",
-      heat_scoring: {
-        finish_method: "Lap",
-        finish_value: 10,
-        heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        allow_finish: "None",
-      },
-      overall_scoring: {
-        dropped_heats: 0,
-        ranking_method: "LAP_COUNT",
-        tiebreaker: "FASTEST_LAP_TIME",
-      },
-      auto_advance_time: 0,
-      auto_start_time: 0,
-      auto_advance_warmup_time: 0,
-      auto_start_warmup_time: 0,
-      fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        capacity: 100,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        reference_time: 6.0,
-      },
-      digital_fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        capacity: 100,
-      },
-      min_lap_time: 0,
-      team_options: {
-        heat_lap_limit: 0,
-        heat_time_limit: 0,
-        overall_lap_limit: 0,
-        overall_time_limit: 0,
-        require_pit_stop_change_driver: false,
-      },
-    };
+    // Initialize with safe defaults for template binding (usually handled by loadData)
+    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    Object.setPrototypeOf(component.editingRace, Race.prototype);
     component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.undoManager.initialize(component.editingRace!);
 
-    // Default return values for spies
-    mockDataService.getRaces.and.returnValue(of([]));
-    mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
-    mockDataService.generateHeats.and.returnValue(of({ heats: [] }));
+    component.races = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES)).map(
+      (r: any) => {
+        Object.setPrototypeOf(r, Race.prototype);
+        return r;
+      },
+    );
+    component.tracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
+      (t: any) => {
+        Object.setPrototypeOf(t, Track.prototype);
+        return t;
+      },
+    );
   });
 
   afterEach(() => {
+    resetMocks();
     TestBed.resetTestingModule();
   });
 
@@ -170,94 +124,31 @@ describe("RaceEditorComponent", () => {
   });
 
   it("should load race on init when ID is provided", fakeAsync(() => {
-    const mockRaces = [
-      {
-        entity_id: "1",
-        name: "Race 1",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-        fuel_options: {
-          enabled: false,
-          reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
-          capacity: 100,
-          usage_type: "LINEAR",
-          usage_rate: 4.0,
-          start_level: 100,
-          refuel_rate: 10,
-          pit_stop_delay: 2.0,
-          reference_time: 6.0,
-        },
-      },
-    ];
-    mockDataService.getRaces.and.returnValue(of(mockRaces));
-    mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
-    mockDataService.generateHeats.and.returnValue(of({ heats: [] }));
+    dataService.getRaces.and.returnValue(of(MOCK_RACES));
+    dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+    dataService.previewHeats.and.returnValue(of({ heats: [] }));
 
     component.ngOnInit();
     tick(); // Handle setTimeout in loadRace, loadTracks, createNewRace
 
-    expect(mockDataService.getRaces).toHaveBeenCalled();
+    expect(dataService.getRaces).toHaveBeenCalled();
     expect(component.editingRace).toBeDefined();
+    expect(component.editingRace?.entity_id).toBe("r1");
   }));
 
   it("should load heats when race is loaded", fakeAsync(() => {
-    const mockRaces = [
-      {
-        entity_id: "1",
-        name: "Race 1",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-        fuel_options: {
-          enabled: false,
-          reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
-          capacity: 100,
-          usage_type: "LINEAR",
-          usage_rate: 4.0,
-          start_level: 100,
-          refuel_rate: 10,
-          pit_stop_delay: 2.0,
-          reference_time: 6.0,
-        },
-      },
-    ];
     const mockHeats = {
       heats: [{ heatNumber: 1, lanes: [{ laneNumber: 1, driverNumber: 1 }] }],
     };
-    mockDataService.getRaces.and.returnValue(of(mockRaces));
-    mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.previewHeats.and.returnValue(of(mockHeats));
+    dataService.getRaces.and.returnValue(of(MOCK_RACES));
+    dataService.previewHeats.and.returnValue(of(mockHeats));
 
     component.driverCount = 10;
     component.ngOnInit();
     tick();
 
-    expect(mockDataService.previewHeats).toHaveBeenCalledWith(
-      "track1",
+    expect(dataService.previewHeats).toHaveBeenCalledWith(
+      "t1",
       "RoundRobin",
       10,
     );
@@ -265,47 +156,15 @@ describe("RaceEditorComponent", () => {
   }));
 
   it("should regenerate heats when driver count changes", fakeAsync(() => {
-    const mockRaces = [
-      {
-        entity_id: "1",
-        name: "Race 1",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-        fuel_options: {
-          enabled: false,
-          reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
-          capacity: 100,
-          usage_type: "LINEAR",
-          usage_rate: 4.0,
-          start_level: 100,
-          refuel_rate: 10,
-          pit_stop_delay: 2.0,
-          reference_time: 6.0,
-        },
-      },
-    ];
-    mockDataService.getRaces.and.returnValue(of(mockRaces));
-    mockDataService.getTracks.and.returnValue(of([]));
-    mockDataService.previewHeats.and.returnValue(of({ heats: [] }));
+    dataService.getRaces.and.returnValue(of(MOCK_RACES));
+    dataService.previewHeats.and.returnValue(of({ heats: [] }));
 
     component.driverCount = 10;
     component.ngOnInit();
     tick();
 
-    expect(mockDataService.previewHeats).toHaveBeenCalledWith(
-      "track1",
+    expect(dataService.previewHeats).toHaveBeenCalledWith(
+      "t1",
       "RoundRobin",
       10,
     );
@@ -314,82 +173,31 @@ describe("RaceEditorComponent", () => {
     component.onDriverCountChange();
     tick();
 
-    expect(mockDataService.previewHeats).toHaveBeenCalledWith(
-      "track1",
+    expect(dataService.previewHeats).toHaveBeenCalledWith(
+      "t1",
       "RoundRobin",
       12,
     );
   }));
 
   it("should not load heats for new race", () => {
-    component.editingRace = {
-      entity_id: "new",
-      name: "",
-      track_entity_id: "",
-      heat_rotation_type: "RoundRobin",
-      heat_scoring: {
-        finish_method: "Lap",
-        finish_value: 10,
-        heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        allow_finish: "None",
-      },
-      overall_scoring: {
-        dropped_heats: 0,
-        ranking_method: "LAP_COUNT",
-        tiebreaker: "FASTEST_LAP_TIME",
-      },
-      auto_advance_time: 0,
-      auto_start_time: 0,
-      auto_advance_warmup_time: 0,
-      auto_start_warmup_time: 0,
-      fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        capacity: 100,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        reference_time: 6.0,
-      },
-      digital_fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        capacity: 100,
-      },
-      min_lap_time: 0,
-      team_options: {
-        heat_lap_limit: 0,
-        heat_time_limit: 0,
-        overall_lap_limit: 0,
-        overall_time_limit: 0,
-        require_pit_stop_change_driver: false,
-      },
-    };
+    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    Object.setPrototypeOf(component.editingRace, Race.prototype);
+    component.editingRace.entity_id = "new";
+    dataService.previewHeats.calls.reset();
     component.loadHeats();
 
-    expect(mockDataService.previewHeats).not.toHaveBeenCalled();
+    expect(dataService.previewHeats).not.toHaveBeenCalled();
     expect(component.generatedHeats.length).toBe(0);
   });
 
   it("should detect duplicate names", () => {
-    component.races = [
-      { entity_id: "1", name: "Existing Race" },
-      { entity_id: "2", name: "Another Race" },
-    ];
-    component.editingRace = {
-      entity_id: "new",
-      name: "Existing Race",
-      track_entity_id: "",
+    component.races = [...MOCK_RACE_INSTANCES];
+    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    Object.setPrototypeOf(component.editingRace, Race.prototype);
+    component.editingRace.entity_id = "new";
+    component.editingRace.name = MOCK_RACES[0].name;
+    const baseRace = {
       heat_rotation_type: "RoundRobin",
       heat_scoring: {
         finish_method: "Lap",
@@ -439,6 +247,7 @@ describe("RaceEditorComponent", () => {
         require_pit_stop_change_driver: false,
       },
     };
+    Object.assign(component.editingRace, baseRace);
 
     expect(component.isNameDuplicate()).toBeTrue();
 
@@ -447,7 +256,7 @@ describe("RaceEditorComponent", () => {
   });
 
   it("should validate canSaveAsNew", () => {
-    component.originalRace = {
+    const baseRace = {
       entity_id: "1",
       name: "Original",
       track_entity_id: "",
@@ -500,8 +309,15 @@ describe("RaceEditorComponent", () => {
         require_pit_stop_change_driver: false,
       },
     };
+    component.originalRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    Object.setPrototypeOf(component.originalRace, Race.prototype);
     component.editingRace = JSON.parse(JSON.stringify(component.originalRace));
-    component.races = [{ entity_id: "1", name: "Original" }];
+    Object.setPrototypeOf(component.editingRace, Race.prototype);
+    Object.assign(component.editingRace, baseRace);
+    component.undoManager.initialize(component.editingRace!);
+    component.races = [
+      { ...MOCK_RACE_INSTANCES[0], entity_id: "1", name: "Original" } as any,
+    ];
 
     expect(component.canSaveAsNew()).toBeTrue(); // Name unchanged
 
@@ -580,25 +396,11 @@ describe("RaceEditorComponent", () => {
 
   describe("Analog Fuel Options", () => {
     it("should initialize with default fuel options if not present", fakeAsync(() => {
-      const raceWithoutFuel: any = {
-        entity_id: "1",
-        name: "Race No Fuel",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-      };
+      const raceWithoutFuel: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      delete raceWithoutFuel.fuel_options;
+      delete raceWithoutFuel.digital_fuel_options;
 
-      mockDataService.getRaces.and.returnValue(of([raceWithoutFuel]));
+      dataService.getRaces.and.returnValue(of([raceWithoutFuel]));
 
       component.ngOnInit();
       tick();
@@ -606,6 +408,7 @@ describe("RaceEditorComponent", () => {
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
       );
+      component.undoManager.initialize(component.editingRace!);
 
       expect(component.editingRace.fuel_options).toBeDefined();
       expect(component.editingRace.fuel_options?.enabled).toBeFalse();
@@ -628,16 +431,10 @@ describe("RaceEditorComponent", () => {
 
   describe("Digital Fuel Options", () => {
     it("should initialize with default digital fuel options if not present", fakeAsync(() => {
-      const raceWithoutFuel: any = {
-        entity_id: "1",
-        name: "Race No Fuel",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: { finish_method: "Lap" },
-        overall_scoring: { dropped_heats: 0 },
-      };
+      const raceWithoutFuel: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      delete raceWithoutFuel.digital_fuel_options;
 
-      mockDataService.getRaces.and.returnValue(of([raceWithoutFuel]));
+      dataService.getRaces.and.returnValue(of([raceWithoutFuel]));
 
       component.ngOnInit();
       tick();
@@ -651,14 +448,14 @@ describe("RaceEditorComponent", () => {
 
     it("should correctly identify digital fuel capability of a track", () => {
       component.tracks = [
-        new Track("track1", "Analog Track", [], false),
-        new Track("track2", "Digital Track", [], true),
+        new Track("t1", "Analog Track", [], false),
+        new Track("speedway", "Digital Track", [], true),
       ];
 
-      component.editingRace.track_entity_id = "track1";
+      component.editingRace.track_entity_id = "t1";
       expect(component.hasDigitalFuel).toBeFalse();
 
-      component.editingRace.track_entity_id = "track2";
+      component.editingRace.track_entity_id = "speedway";
       expect(component.hasDigitalFuel).toBeTrue();
     });
 
@@ -713,67 +510,15 @@ describe("RaceEditorComponent", () => {
   });
 
   it("should call updateRace API", fakeAsync(() => {
-    component.editingRace = {
-      entity_id: "1",
-      name: "Updated Name",
-      track_entity_id: "track1",
-      heat_rotation_type: "RoundRobin",
-      heat_scoring: {
-        finish_method: "Lap",
-        finish_value: 10,
-        heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        allow_finish: "None",
-      },
-      overall_scoring: {
-        dropped_heats: 0,
-        ranking_method: "LAP_COUNT",
-        tiebreaker: "FASTEST_LAP_TIME",
-      },
-      auto_advance_time: 0,
-      auto_start_time: 0,
-      auto_advance_warmup_time: 0,
-      auto_start_warmup_time: 0,
-      fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        capacity: 100,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        reference_time: 6.0,
-      },
-      digital_fuel_options: {
-        enabled: false,
-        reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
-        usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
-        start_level: 100,
-        refuel_rate: 10,
-        pit_stop_delay: 2.0,
-        capacity: 100,
-      },
-      min_lap_time: 0,
-      team_options: {
-        heat_lap_limit: 0,
-        heat_time_limit: 0,
-        overall_lap_limit: 0,
-        overall_time_limit: 0,
-        require_pit_stop_change_driver: false,
-      },
-    };
+    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACES[0]));
     spyOn(component, "isDirtyState").and.returnValue(true);
-    mockDataService.updateRace.and.returnValue(of({}));
-    mockDataService.getRaces.and.returnValue(of([]));
+    dataService.updateRace.and.returnValue(of({}));
+    dataService.getRaces.and.returnValue(of([]));
 
     component.updateRace();
     tick(); // Handles setTimeout in loadRaces()
 
-    expect(mockDataService.updateRace).toHaveBeenCalled();
+    expect(dataService.updateRace).toHaveBeenCalled();
     expect(component.isSaving).toBeFalse();
   }));
 
@@ -795,14 +540,14 @@ describe("RaceEditorComponent", () => {
     } as any;
 
     spyOn(component, "isDirtyState").and.returnValue(true);
-    mockDataService.updateRace.and.returnValue(of({}));
-    mockDataService.getRaces.and.returnValue(of([]));
+    dataService.updateRace.and.returnValue(of({}));
+    dataService.getRaces.and.returnValue(of([]));
 
     component.updateRace();
     tick();
 
-    expect(mockDataService.updateRace).toHaveBeenCalled();
-    const payload = mockDataService.updateRace.calls.mostRecent().args[1];
+    expect(dataService.updateRace).toHaveBeenCalled();
+    const payload = dataService.updateRace.calls.mostRecent().args[1];
     expect(payload.team_options).toBeDefined();
     expect(payload.team_options.heat_lap_limit).toBe(10);
     expect(payload.team_options.require_pit_stop_change_driver).toBeTrue();
@@ -864,7 +609,7 @@ describe("RaceEditorComponent", () => {
     };
     component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
     component.driverCount = 10;
-    mockDataService.createRace.and.returnValue(
+    dataService.createRace.and.returnValue(
       of({
         entity_id: "2",
         name: "New Race",
@@ -895,13 +640,13 @@ describe("RaceEditorComponent", () => {
         },
       }),
     );
-    mockDataService.getRaces.and.returnValue(of([]));
+    dataService.getRaces.and.returnValue(of([]));
     spyOn(component, "isDirtyState").and.returnValue(true);
 
     component.updateRace();
     tick(); // Handles setTimeout in loadRaces()
 
-    expect(mockDataService.createRace).toHaveBeenCalled();
+    expect(dataService.createRace).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
       queryParams: { id: "2", driverCount: 10 },
     });
@@ -916,7 +661,7 @@ describe("RaceEditorComponent", () => {
     component.editingRace.entity_id = "1"; // Ensure button is not disabled
     component.races = [{ entity_id: "1", name: "Grand Prix" }];
 
-    mockDataService.createRace.and.returnValue(
+    dataService.createRace.and.returnValue(
       of({ ...component.editingRace, entity_id: "2", name: "Grand Prix_1" }),
     );
 
@@ -924,8 +669,8 @@ describe("RaceEditorComponent", () => {
     fixture.detectChanges();
     tick();
 
-    expect(mockDataService.createRace).toHaveBeenCalled();
-    const calledArg = mockDataService.createRace.calls.mostRecent().args[0];
+    expect(dataService.createRace).toHaveBeenCalled();
+    const calledArg = dataService.createRace.calls.mostRecent().args[0];
     expect(calledArg.name).toBe("Grand Prix_1");
   }));
 
@@ -937,10 +682,11 @@ describe("RaceEditorComponent", () => {
 
     // Setup a race
     component.editingRace.name = "Initial Name";
-    component.editingRace.entity_id = "1"; // Ensure it calls updateRace instead of createRace
+    component.editingRace.entity_id = "1"; // Ensure component.editingRace.auto_advance_warmup_time = 1;
     component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.undoManager.initialize(component.editingRace!);
 
-    mockDataService.updateRace.and.returnValue(of({}));
+    dataService.updateRace.and.returnValue(of({}));
 
     // Trigger state committed stream through component
     await harness.setName("Auto Save Test");
@@ -952,7 +698,7 @@ describe("RaceEditorComponent", () => {
     fixture.detectChanges();
     tick();
 
-    expect(mockDataService.updateRace).toHaveBeenCalled();
+    expect(dataService.updateRace).toHaveBeenCalled();
   }));
 
   describe("Expander State Save/Load", () => {
@@ -1041,9 +787,9 @@ describe("RaceEditorComponent", () => {
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
       );
-      component.undoManager.initialize(component.editingRace);
+      component.undoManager.initialize(component.editingRace!);
       component.races = [{ entity_id: "1", name: "OriginalName" }];
-      mockDataService.updateRace.and.returnValue(of({}));
+      dataService.updateRace.and.returnValue(of({}));
 
       // Simulate text input: focus, type, blur (matching template bindings)
       component.onInputFocus();
@@ -1051,7 +797,7 @@ describe("RaceEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateRace).toHaveBeenCalledWith(
+      expect(dataService.updateRace).toHaveBeenCalledWith(
         "1",
         jasmine.any(Object),
       );
@@ -1094,7 +840,7 @@ describe("RaceEditorComponent", () => {
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
       );
-      component.undoManager.initialize(component.editingRace);
+      component.undoManager.initialize(component.editingRace!);
       component.races = [
         { entity_id: "1", name: "OriginalName" },
         { entity_id: "2", name: "TakenName" },
@@ -1105,7 +851,7 @@ describe("RaceEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateRace).not.toHaveBeenCalled();
+      expect(dataService.updateRace).not.toHaveBeenCalled();
       expect(component.isNameDuplicate()).toBeTrue();
     }));
 
@@ -1144,14 +890,14 @@ describe("RaceEditorComponent", () => {
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
       );
-      component.undoManager.initialize(component.editingRace);
+      component.undoManager.initialize(component.editingRace!);
 
       component.onInputFocus();
       component.editingRace.name = "";
       component.onInputBlur();
       tick(200);
 
-      expect(mockDataService.updateRace).not.toHaveBeenCalled();
+      expect(dataService.updateRace).not.toHaveBeenCalled();
     }));
 
     it("should not show back confirmation when name changes to a valid unique value", fakeAsync(() => {
@@ -1189,9 +935,9 @@ describe("RaceEditorComponent", () => {
       component.originalRace = JSON.parse(
         JSON.stringify(component.editingRace),
       );
-      component.undoManager.initialize(component.editingRace);
+      component.undoManager.initialize(component.editingRace!);
       component.races = [{ entity_id: "1", name: "OriginalName" }];
-      mockDataService.updateRace.and.returnValue(of({}));
+      dataService.updateRace.and.returnValue(of({}));
 
       component.onInputFocus();
       component.editingRace.name = "ValidNewName";

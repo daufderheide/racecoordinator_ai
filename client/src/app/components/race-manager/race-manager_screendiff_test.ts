@@ -8,7 +8,7 @@ test.describe("Race Manager Visuals", () => {
   test.beforeEach(async ({ page }) => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.waitForLoadState("networkidle");
 

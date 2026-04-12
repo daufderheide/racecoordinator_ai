@@ -6,7 +6,7 @@ import { UIEditorHarnessE2e } from "./testing/ui-editor.harness.e2e";
 test.describe("UI Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
 
     await TestSetupHelper.setupSettings(page, {

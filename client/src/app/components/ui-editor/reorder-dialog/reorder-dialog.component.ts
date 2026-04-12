@@ -66,11 +66,13 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       // Store screen name
       this.screenName = value.screenName || "";
 
-      this.availableValues = [...value.availableValues].sort((a, b) =>
-        this.translationService
-          .translate(a.label)
-          .localeCompare(this.translationService.translate(b.label)),
-      );
+      this.availableValues = [...value.availableValues].sort((a, b) => {
+        const labelA =
+          this.translationService.translate(a.label || a.key) || "";
+        const labelB =
+          this.translationService.translate(b.label || b.key) || "";
+        return labelA.localeCompare(labelB, undefined, { sensitivity: "base" });
+      });
       this.availableValuesMap = new Map(
         this.availableValues.map((v) => [v.key, v]),
       );

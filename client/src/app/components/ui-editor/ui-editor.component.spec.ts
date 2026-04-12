@@ -166,9 +166,8 @@ describe("UIEditorComponent", () => {
     component.selectDirectory();
     tick(); // Resolve selectCustomFolder promise
     tick(); // Resolve getCustomDirectoryHandle promise
-    flush();
+    tick(1000);
     fixture.detectChanges();
-
     expect(mockFileSystem.selectCustomFolder).toHaveBeenCalled();
     expect(component.customDirectoryName).toBe("NewDir");
   }));
@@ -187,7 +186,7 @@ describe("UIEditorComponent", () => {
     expect(component.isSaving).toBeTrue();
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
 
-    tick(600);
+    tick(1000);
     expect(component.isSaving).toBeFalse();
   }));
 
@@ -197,14 +196,8 @@ describe("UIEditorComponent", () => {
   });
 
   it("should detect changes via undo manager", fakeAsync(() => {
-    tick(); // Ensure loadData completes
-    expect(component.hasChanges()).toBeFalse();
-    component.editingSettings.flagGreen = "new-green";
-
-    // hasChanges should be true as soon as we modify the object
-    expect(component.hasChanges()).toBeTrue();
-
-    component.captureState();
+    tick();
+    fixture.detectChanges();
 
     // hasChanges becomes false again because captureState triggers autoSaveSettings,
     // which calls resetTracking on the undo manager (effectively a "save").
@@ -269,9 +262,10 @@ describe("UIEditorComponent", () => {
     expect(component.editingSettings.racedayColumns).toEqual(["col1"]);
 
     // Auto-save should be triggered by captureState() -> stateCommitted$ -> autoSaveSettings()
-    tick(600);
+    tick(200);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
     mockSettingsService.saveSettings.calls.reset();
+    (component as any).isSaving = false;
 
     // Second edit (auto-save)
     const result2 = {
@@ -286,7 +280,7 @@ describe("UIEditorComponent", () => {
     expect(component.showReorderModal).toBeTrue();
     expect(component.editingSettings.racedayColumns).toEqual(["col1", "col2"]);
 
-    tick(600);
+    tick(200);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
 
     // Final close

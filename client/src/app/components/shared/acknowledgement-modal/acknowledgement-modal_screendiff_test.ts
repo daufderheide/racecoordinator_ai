@@ -39,7 +39,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
     });
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
-    await TestSetupHelper.setupRaceMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
   });
 

@@ -81,6 +81,7 @@ describe("ReorderDialogComponent", () => {
 
   it("should initialize data and alphabetize available values", () => {
     component.data = mockData;
+    fixture.detectChanges();
     expect(component.availableValues.length).toBe(2);
     // driver.name (RD_COL_NAME) should come after lapCount (RD_COL_LAP) because R comes after L? No, RD_COL_LAP comes before RD_COL_NAME.
     // Wait, "RD_COL_LAP" vs "RD_COL_NAME". alphabetically "L" comes before "N".
@@ -95,6 +96,7 @@ describe("ReorderDialogComponent", () => {
         { key: "a", label: "A" },
       ],
     };
+    fixture.detectChanges();
     expect(component.availableValues[0].key).toBe("a");
     expect(component.availableValues[1].key).toBe("z");
   });

@@ -1,13 +1,24 @@
 import { of, Subject } from "rxjs";
 
 import { Settings } from "../models/settings";
+import { MOCK_DRIVERS } from "./data/drivers_data";
+import { MOCK_RACES } from "./data/races_data";
+import { createDefaultSettings } from "./data/settings_data";
+import { MOCK_TEAMS } from "./data/teams_data";
 
 export const mockDataService = {
   listAssets: jasmine.createSpy("listAssets").and.returnValue(of([])),
   deleteAsset: jasmine.createSpy("deleteAsset").and.returnValue(of(true)),
   renameAsset: jasmine.createSpy("renameAsset").and.returnValue(of(true)),
-  getDrivers: jasmine.createSpy("getDrivers").and.returnValue(of([])),
-  getTeams: jasmine.createSpy("getTeams").and.returnValue(of([])),
+  getDrivers: jasmine
+    .createSpy("getDrivers")
+    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_DRIVERS)))),
+  getTeams: jasmine
+    .createSpy("getTeams")
+    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_TEAMS)))),
+  getRaces: jasmine
+    .createSpy("getRaces")
+    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_RACES)))),
   createTeam: jasmine
     .createSpy("createTeam")
     .and.returnValue(of({ entity_id: "new_t" })),
@@ -29,6 +40,26 @@ export const mockDataService = {
   getServerAnalyticsConfig: jasmine
     .createSpy("getServerAnalyticsConfig")
     .and.returnValue(of({ measurementId: "G-TEST", clientId: "test-client" })),
+  getDatabases: jasmine.createSpy("getDatabases").and.returnValue(of([])),
+  switchDatabase: jasmine
+    .createSpy("switchDatabase")
+    .and.returnValue(of({ success: true })),
+  createDatabase: jasmine
+    .createSpy("createDatabase")
+    .and.returnValue(of({ success: true })),
+  copyDatabase: jasmine
+    .createSpy("copyDatabase")
+    .and.returnValue(of({ success: true })),
+  resetDatabase: jasmine
+    .createSpy("resetDatabase")
+    .and.returnValue(of({ success: true })),
+  deleteDatabase: jasmine
+    .createSpy("deleteDatabase")
+    .and.returnValue(of({ success: true })),
+  exportDatabase: jasmine.createSpy("exportDatabase"),
+  importDatabase: jasmine
+    .createSpy("importDatabase")
+    .and.returnValue(of({ success: true })),
   serverUrl: "http://localhost:7070",
 };
 
@@ -37,6 +68,13 @@ export const mockTranslationService = {
   getTranslationsLoaded: jasmine
     .createSpy("getTranslationsLoaded")
     .and.returnValue(of(true)),
+  setLanguage: jasmine.createSpy("setLanguage"),
+  getBrowserLanguage: jasmine
+    .createSpy("getBrowserLanguage")
+    .and.returnValue("en"),
+  getSupportedLanguages: jasmine
+    .createSpy("getSupportedLanguages")
+    .and.returnValue([]),
 };
 
 export const mockRouter = {
@@ -57,26 +95,57 @@ export const mockAnalyticsService = {
   trackPageView: jasmine.createSpy("trackPageView"),
 };
 
+/** @deprecated Use createDefaultSettings from settings_data.ts instead */
 export function createTestSettings(
   overrides: Partial<Settings> = {},
 ): Settings {
-  const s = new Settings();
-  s.racedaySetupWalkthroughSeen = true;
-  s.trackManagerHelpShown = true;
-  s.trackEditorHelpShown = true;
-  s.driverEditorHelpShown = true;
-  s.driverManagerHelpShown = true;
-  s.teamManagerHelpShown = true;
-  s.teamEditorHelpShown = true;
-  s.assetManagerHelpShown = true;
-  s.raceManagerHelpShown = true;
-  s.raceEditorHelpShown = true;
-  return Object.assign(s, overrides);
+  return createDefaultSettings(overrides);
 }
 
 export const mockSettingsService = {
   getSettings: jasmine
     .createSpy("getSettings")
-    .and.callFake(() => createTestSettings()),
+    .and.callFake(() => createDefaultSettings()),
   saveSettings: jasmine.createSpy("saveSettings"),
 };
+
+/**
+ * Resets all shared mock spies and subjects to their default state.
+ */
+export function resetMocks() {
+  const mocks = [
+    mockDataService,
+    mockTranslationService,
+    mockRouter,
+    mockAnalyticsService,
+    mockSettingsService,
+  ];
+
+  mocks.forEach((mock) => {
+    Object.keys(mock).forEach((key) => {
+      const prop = (mock as any)[key];
+      if (prop && prop.calls && typeof prop.calls.reset === "function") {
+        prop.calls.reset();
+      }
+    });
+  });
+
+  // Specifically restore default return values for DataService spies that return mutable data
+  mockDataService.getDrivers.and.callFake(() =>
+    of(JSON.parse(JSON.stringify(MOCK_DRIVERS))),
+  );
+  mockDataService.getTeams.and.callFake(() =>
+    of(JSON.parse(JSON.stringify(MOCK_TEAMS))),
+  );
+  mockDataService.getRaces.and.callFake(() =>
+    of(JSON.parse(JSON.stringify(MOCK_RACES))),
+  );
+  mockDataService.listAssets.and.returnValue(of([]));
+  mockDataService.getDatabases.and.returnValue(of([]));
+
+  // Re-initialize specific Subject-based properties if needed
+  (mockRouter as any).events = new Subject().asObservable();
+  (mockDataService as any).getRaceUpdate = jasmine
+    .createSpy("getRaceUpdate")
+    .and.returnValue(new Subject().asObservable());
+}
