@@ -349,13 +349,13 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       {
         selector: ".sidebar-list",
         title: this.translationService.translate("TM_HELP_SIDEBAR_TITLE"),
-        content: this.translationService.translate("RM_HELP_WELCOME_CONTENT"),
+        content: this.translationService.translate("RM_HELP_SIDEBAR_CONTENT"),
         position: "right",
       },
       {
         selector: ".detail-panel",
         title: this.translationService.translate("TM_HELP_DETAIL_TITLE"),
-        content: this.translationService.translate("RM_HELP_WELCOME_CONTENT"),
+        content: this.translationService.translate("RM_HELP_DETAIL_CONTENT"),
         position: "left",
       },
     ];
