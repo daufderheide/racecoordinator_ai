@@ -54,6 +54,7 @@ public class ArduinoConfig {
   static {
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber(), PinMode.READ);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_RELAY.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber(), PinMode.WRITE);
 
     for (int i = 0; i < MAX_LANES; i++) {
       PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + i, PinMode.READ);

@@ -16,4 +16,5 @@ message Race {
   repeated Heat heats = 3;
   Heat current_heat = 4;
   RaceState state = 5;
+  RaceFlag flag = 6;
 }

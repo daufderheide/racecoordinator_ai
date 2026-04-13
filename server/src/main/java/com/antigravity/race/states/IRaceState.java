@@ -1,9 +1,12 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 
 public interface IRaceState {
+
+  RaceFlag getFlagType(Race race);
 
   void enter(Race race);
 

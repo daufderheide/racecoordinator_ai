@@ -8,7 +8,6 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
-import com.antigravity.proto.ArduinoConfig;
 import com.antigravity.proto.DeferHeatResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
@@ -554,10 +553,13 @@ public class ClientCommandTaskHandler {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
 
       List<IProtocol> protocols = new ArrayList<>();
-      for (ArduinoConfig protoConfig : request.getConfigsList()) {
+      List<com.antigravity.proto.ArduinoConfig> configsList = request.getConfigsList();
+      for (int i = 0; i < configsList.size(); i++) {
+        com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i);
         com.antigravity.protocols.arduino.ArduinoConfig config =
             ArduinoConfigConverter.fromProto(protoConfig);
         ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount());
+        arduino.setInterfaceIndex(i);
         arduino.setListener(new TestInterfaceListener());
         protocols.add(arduino);
       }

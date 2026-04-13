@@ -1,4 +1,18 @@
+import { AnalogFuelOptions } from "../../models/analog_fuel_options";
+import { DigitalFuelOptions } from "../../models/digital_fuel_options";
 import { FuelUsageType } from "../../models/fuel_options";
+import {
+  AllowFinish,
+  FinishMethod,
+  HeatRanking,
+  HeatRankingTiebreaker,
+  HeatScoring,
+} from "../../models/heat_scoring";
+import {
+  OverallRanking,
+  OverallRankingTiebreaker,
+  OverallScoring,
+} from "../../models/overall_scoring";
 import { Race } from "../../models/race";
 import { Track } from "../../models/track";
 
@@ -53,7 +67,7 @@ export const MOCK_RACES = [
     track_entity_id: "t1",
     heat_rotation_type: "RoundRobin",
     heat_scoring: {
-      finish_method: "Time",
+      finish_method: "Timed",
       finish_value: 300,
       heat_ranking: "LAP_COUNT",
       heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
@@ -85,16 +99,57 @@ export const MOCK_RACES = [
   },
 ];
 
-export const MOCK_RACE_INSTANCES = MOCK_RACES.map(
-  (r: any) =>
-    new Race(
-      r.entity_id,
-      r.name,
-      new Track(r.track_entity_id || "", "", []),
-      (r as any).heat_scoring,
-      (r as any).overall_scoring,
-      (r as any).fuel_options,
-      (r as any).digital_fuel_options,
-      (r as any).team_options,
-    ),
-);
+export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
+  const hs = r.heat_scoring || {};
+  const heatScoring = new HeatScoring(
+    hs.finish_method as FinishMethod,
+    hs.finish_value,
+    hs.heat_ranking as HeatRanking,
+    hs.heat_ranking_tiebreaker as HeatRankingTiebreaker,
+    hs.allow_finish as AllowFinish,
+  );
+
+  const os = r.overall_scoring || {};
+  const overallScoring = new OverallScoring(
+    os.dropped_heats,
+    os.ranking_method as OverallRanking,
+    os.tiebreaker as OverallRankingTiebreaker,
+  );
+
+  const fo = r.fuel_options || {};
+  const fuelOptions = new AnalogFuelOptions(
+    fo.enabled,
+    false, // reset_fuel_at_heat_start
+    false, // end_heat_on_out_of_fuel
+    fo.capacity,
+    fo.usage_type as FuelUsageType,
+    fo.usage_rate,
+    fo.start_level,
+    fo.refuel_rate,
+    fo.pit_stop_delay,
+  );
+
+  const df = r.digital_fuel_options || {};
+  const digitalFuelOptions = new DigitalFuelOptions(
+    df.enabled,
+    false, // reset_fuel_at_heat_start
+    false, // end_heat_on_out_of_fuel
+    df.capacity,
+    df.usage_type as FuelUsageType,
+    df.usage_rate,
+    df.start_level,
+    df.refuel_rate,
+    df.pit_stop_delay,
+  );
+
+  return new Race(
+    r.entity_id,
+    r.name,
+    new Track(r.track_entity_id || "", "", []),
+    heatScoring,
+    overallScoring,
+    fuelOptions,
+    digitalFuelOptions,
+    r.team_options,
+  );
+});

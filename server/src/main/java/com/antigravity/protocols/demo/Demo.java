@@ -138,7 +138,7 @@ public class Demo extends DefaultProtocol {
             () -> {
               try {
                 if (listener != null) {
-                  listener.onInterfaceStatus(InterfaceStatus.CONNECTED);
+                  listener.onInterfaceStatus(InterfaceStatus.CONNECTED, getInterfaceIndex());
                 }
               } catch (Exception e) {
                 System.err.println("Demo: Error reporting status: " + e.getMessage());
@@ -218,7 +218,10 @@ public class Demo extends DefaultProtocol {
                         int segmentId = 101 + i;
                         long prevOffset = (j == 0) ? 0 : state.segmentOffsets[j - 1];
                         listener.onSegment(
-                            i, (state.segmentOffsets[j] - prevOffset) / 1000.0, segmentId);
+                            i,
+                            (state.segmentOffsets[j] - prevOffset) / 1000.0,
+                            segmentId,
+                            getInterfaceIndex());
                       }
                     }
                   }
@@ -229,7 +232,7 @@ public class Demo extends DefaultProtocol {
 
                   if (listener != null) {
                     int laneInterfaceId = DemoPinId.DEMO_PIN_ID_LANE_BASE_VALUE.getNumber() + i;
-                    listener.onLap(i, lapTime, laneInterfaceId);
+                    listener.onLap(i, lapTime, laneInterfaceId, getInterfaceIndex());
                   }
 
                   // Reset for next lap

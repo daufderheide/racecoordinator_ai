@@ -21,19 +21,20 @@ public class TestDemoProtocol {
     ProtocolListener mockListener =
         new ProtocolListener() {
           @Override
-          public void onLap(int lane, double lapTime, int interfaceId) {}
+          public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {}
 
           @Override
-          public void onSegment(int lane, double segmentTime, int interfaceId) {}
+          public void onSegment(
+              int lane, double segmentTime, int interfaceId, int interfaceIndex) {}
 
           @Override
-          public void onCallbutton(int lane) {}
+          public void onCallbutton(int lane, int interfaceIndex) {}
 
           @Override
           public void onCarData(CarData carData) {}
 
           @Override
-          public void onInterfaceStatus(InterfaceStatus status) {
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
             if (status == InterfaceStatus.CONNECTED) {
               statusUpdates.incrementAndGet();
             }

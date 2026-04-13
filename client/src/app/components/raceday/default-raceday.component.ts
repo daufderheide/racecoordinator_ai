@@ -1305,12 +1305,7 @@ export class DefaultRacedayComponent
   }
 
   getCurrentFlagUrl(): string {
-    const flagType = this.raceFlagService.getFlagType(
-      this.raceState,
-      this.hasRacedInCurrentHeat,
-      this.isWarmup,
-      this.heat,
-    );
+    const flagType = this.raceFlagService.getFlagType();
 
     const settings = this.settingsService.getSettings();
 
@@ -1350,7 +1345,8 @@ export class DefaultRacedayComponent
       green_yellow: "Yellow Green Flag",
     };
 
-    const displayName = displayNames[flagType];
+    const displayName =
+      displayNames[flagType as FlagType] || displayNames["red"];
     const slug = displayName.replace(/\s+/g, "_");
     // Strict match by name first, then by slugified name
     const defaultAsset =

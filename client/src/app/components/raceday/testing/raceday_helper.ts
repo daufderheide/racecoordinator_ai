@@ -39,8 +39,10 @@ export function createRacedayMocks(overrides: any = {}) {
     "listAssets",
     "getCarData",
     "getSegments",
+    "getRaceFlag",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
+  mockDataService.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
   mockDataService.getDrivers.and.callFake(() =>
     of(
       JSON.parse(JSON.stringify(MOCK_DRIVERS)).map((d: any) => ({
@@ -105,6 +107,17 @@ export function createRacedayMocks(overrides: any = {}) {
     mockDataService,
     mockRaceConnectionService,
     mockRaceService,
+    mockRaceFlagService: (() => {
+      const spy = jasmine.createSpyObj("RaceFlagService", [
+        "getFlagType",
+        "getFlagColor",
+        "getFlagNameKey",
+      ]);
+      spy.getFlagType.and.returnValue("red");
+      spy.getFlagColor.and.returnValue("red");
+      spy.getFlagNameKey.and.returnValue("RACE_FLAG_RED");
+      return spy;
+    })(),
     interfaceEventsSubject,
     interfaceAlertSubject,
     raceTimeSubject,

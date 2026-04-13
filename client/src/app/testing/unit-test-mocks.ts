@@ -130,7 +130,7 @@ export function resetMocks() {
     });
   });
 
-  // Specifically restore default return values for DataService spies that return mutable data
+  // Restore default behaviors for mockDataService
   mockDataService.getDrivers.and.callFake(() =>
     of(JSON.parse(JSON.stringify(MOCK_DRIVERS))),
   );
@@ -142,10 +142,31 @@ export function resetMocks() {
   );
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getDatabases.and.returnValue(of([]));
+  mockDataService.connectToRaceDataSocket.and.stub();
+  mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
 
-  // Re-initialize specific Subject-based properties if needed
+  // Restore default behaviors for mockTranslationService
+  mockTranslationService.translate.and.callFake((key: string) => key);
+  mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
+  mockTranslationService.setLanguage.and.stub();
+  mockTranslationService.getBrowserLanguage.and.returnValue("en");
+  mockTranslationService.getSupportedLanguages.and.returnValue([]);
+
+  // Restore default behaviors for mockRouter
+  mockRouter.navigate.and.stub();
   (mockRouter as any).events = new Subject().asObservable();
-  (mockDataService as any).getRaceUpdate = jasmine
-    .createSpy("getRaceUpdate")
-    .and.returnValue(new Subject().asObservable());
+  mockRouter.serializeUrl.and.returnValue("mock-url");
+  mockRouter.createUrlTree.and.returnValue({});
+
+  // Restore default behaviors for mockAnalyticsService
+  mockAnalyticsService.isEnabled.and.returnValue(true);
+  mockAnalyticsService.toggleAnalytics.and.returnValue(of({ success: true }));
+  mockAnalyticsService.initTracking.and.stub();
+  mockAnalyticsService.updateOptOutStatus.and.stub();
+  mockAnalyticsService.trackClick.and.stub();
+  mockAnalyticsService.trackPageView.and.stub();
+
+  // Restore default behaviors for mockSettingsService
+  mockSettingsService.getSettings.and.callFake(() => createDefaultSettings());
+  mockSettingsService.saveSettings.and.stub();
 }

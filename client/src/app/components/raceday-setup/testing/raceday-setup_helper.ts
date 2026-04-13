@@ -21,6 +21,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "loadRace",
     "deleteSavedRace",
     "toggleServerAnalytics",
+    "getRaceFlag",
   ]);
 
   mock.getDrivers.and.callFake(() =>
@@ -37,6 +38,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
   mock.initializeRace.and.returnValue(
     of(com.antigravity.InitializeRaceResponse.create({ success: true })),
   );
+  mock.getRaceFlag.and.returnValue(of(com.antigravity.RaceFlag.RED));
 
   return Object.assign(mock, overrides);
 }

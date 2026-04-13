@@ -45,7 +45,7 @@ export class ArduinoSummaryComponent {
   }
 
   hasBehavior(
-    behaviorType: "lap" | "segment" | "call" | "relay" | "voltage",
+    behaviorType: "lap" | "segment" | "call" | "relay" | "voltage" | "led",
   ): boolean {
     if (!this.config) return false;
     const digitalIds = this.config.digitalIds || [];
@@ -82,6 +82,12 @@ export class ArduinoSummaryComponent {
           (id) =>
             id >= PB.BEHAVIOR_VOLTAGE_LEVEL_BASE &&
             id < PB.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000,
+        );
+      case "led":
+        return allPins.some(
+          (id) =>
+            id === (PB as any).BEHAVIOR_LED_RGB_STRING ||
+            (this.config?.ledStrings && this.config.ledStrings.length > 0),
         );
       default:
         return false;

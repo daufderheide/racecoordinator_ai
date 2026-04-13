@@ -10,32 +10,37 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LedString {
 
-  public int stringNum;
+  public int pin;
   public List<Integer> leds;
   public int numUsedLeds;
   public int addressableLeds;
   public int brightness;
-  public double yellowFlagFlashRate;
+  public int ledType;
+  public double flagFlashRate;
   public List<String> ledLaneColorOverrides;
 
   public LedString() {
     this.leds = new ArrayList<>();
     this.ledLaneColorOverrides = new ArrayList<>();
     this.brightness = 255;
-    this.yellowFlagFlashRate = 5.0;
+    this.ledType = 0;
+    this.flagFlashRate = 5.0;
+    this.pin = 0;
   }
 
   @JsonCreator
   public LedString(
-      @JsonProperty("stringNum") int stringNum,
+      @JsonProperty("pin") int pin,
       @JsonProperty("leds") List<Integer> leds,
       @JsonProperty("brightness") int brightness,
-      @JsonProperty("yellowFlagFlashRate") double yellowFlagFlashRate,
+      @JsonProperty("ledType") int ledType,
+      @JsonProperty("flagFlashRate") double flagFlashRate,
       @JsonProperty("ledLaneColorOverrides") List<String> ledLaneColorOverrides) {
-    this.stringNum = stringNum;
+    this.pin = pin;
     this.leds = leds != null ? leds : new ArrayList<>();
     this.brightness = brightness;
-    this.yellowFlagFlashRate = yellowFlagFlashRate;
+    this.ledType = ledType;
+    this.flagFlashRate = flagFlashRate;
     this.ledLaneColorOverrides =
         ledLaneColorOverrides != null ? ledLaneColorOverrides : new ArrayList<>();
 
@@ -59,15 +64,16 @@ public class LedString {
       return false;
     }
     LedString that = (LedString) o;
-    return stringNum == that.stringNum
+    return pin == that.pin
         && brightness == that.brightness
-        && Double.compare(that.yellowFlagFlashRate, yellowFlagFlashRate) == 0
+        && ledType == that.ledType
+        && Double.compare(that.flagFlashRate, flagFlashRate) == 0
         && Objects.equals(leds, that.leds)
         && Objects.equals(ledLaneColorOverrides, that.ledLaneColorOverrides);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(stringNum, leds, brightness, yellowFlagFlashRate, ledLaneColorOverrides);
+    return Objects.hash(pin, leds, brightness, ledType, flagFlashRate, ledLaneColorOverrides);
   }
 }

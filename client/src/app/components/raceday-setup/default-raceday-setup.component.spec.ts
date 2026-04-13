@@ -159,6 +159,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
   afterEach(() => {
     fixture.destroy();
+    resetMocks();
   });
 
   beforeEach(async () => {

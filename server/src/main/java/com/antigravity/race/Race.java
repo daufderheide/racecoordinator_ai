@@ -7,11 +7,13 @@ import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.Track;
+import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.OverallStandingsUpdate;
 import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceModel;
 import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceTime;
@@ -239,12 +241,15 @@ public class Race implements ProtocolListener {
       AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
       boolean isFuelRace = fuelOptions != null && fuelOptions.isEnabled();
       Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace);
+      protocol.setInterfaceIndex(0);
       protocols_list.add(protocol);
     } else {
       List<ArduinoConfig> configs = this.track.getArduinoConfigs();
       if (configs != null && !configs.isEmpty()) {
-        for (ArduinoConfig config : configs) {
+        for (int i = 0; i < configs.size(); i++) {
+          ArduinoConfig config = configs.get(i);
           ArduinoProtocol protocol = new ArduinoProtocol(config, this.track.getLanes().size());
+          protocol.setInterfaceIndex(i);
           protocols_list.add(protocol);
         }
       } else {
@@ -323,6 +328,14 @@ public class Race implements ProtocolListener {
     this.broadcast(raceDataMsg);
   }
 
+  public void broadcastFlag(com.antigravity.proto.RaceFlag flag) {
+    RaceData raceDataMsg = RaceData.newBuilder().setFlag(flag).build();
+    this.broadcast(raceDataMsg);
+    if (protocols != null) {
+      protocols.setRaceState(getProtoState(state), flag, 0);
+    }
+  }
+
   public boolean isAutoStartFired() {
     return autoStartFired;
   }
@@ -379,20 +392,31 @@ public class Race implements ProtocolListener {
   }
 
   public synchronized void changeState(IRaceState newState) {
-    if (state != null) {
-      state.exit(this);
+    IRaceState previousState = this.state;
+    this.state = newState;
+
+    // Initialize the new state immediately
+    this.state.enter(this);
+
+    // Calculate and broadcast the new state and flag for UI responsiveness
+    // This happens before the potentially slow exit() of the previous state
+    RaceState protoState = getProtoState(state);
+    RaceFlag protoFlag = state.getFlagType(this);
+
+    RaceData raceData = RaceData.newBuilder().setRaceState(protoState).setFlag(protoFlag).build();
+    broadcast(raceData);
+
+    if (protocols != null) {
+      protocols.setRaceState(protoState, protoFlag, 0);
     }
-    state = newState;
-    state.enter(this);
+
+    if (previousState != null) {
+      previousState.exit(this);
+    }
 
     if (state instanceof RaceOver) {
       ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId());
     }
-
-    RaceState protoState = getProtoState(state);
-
-    RaceData raceData = RaceData.newBuilder().setRaceState(protoState).build();
-    broadcast(raceData);
   }
 
   public void startRace() {
@@ -457,6 +481,33 @@ public class Race implements ProtocolListener {
   public void setHeatStandings(List<Integer> laneIndices) {
     if (protocols != null) {
       protocols.setHeatStandings(laneIndices);
+    }
+  }
+
+  public void setRefueling(int laneIndex, boolean isRefueling) {
+    if (protocols != null) {
+      protocols.setRefueling(laneIndex, isRefueling);
+    }
+  }
+
+  public void setFuelLevel(int laneIndex, int fuelLevelPct) {
+    if (protocols != null) {
+      protocols.setFuelLevel(laneIndex, fuelLevelPct);
+    }
+  }
+
+  public void setHeatProgress(double percentage) {
+    if (this.protocols != null) {
+      this.protocols.setHeatProgress(percentage);
+    }
+  }
+
+  public void setRaceState(
+      com.antigravity.proto.RaceState state,
+      com.antigravity.proto.RaceFlag flag,
+      double countdown) {
+    if (protocols != null) {
+      protocols.setRaceState(state, flag, countdown);
     }
   }
 
@@ -585,25 +636,41 @@ public class Race implements ProtocolListener {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
+  public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
     state.onLap(lane, lapTime, interfaceId);
+    // Optionally we could broadcast an InterfaceEvent here too if the UI needs it
+    // but Racing state usually handles Lap updates via overall snapshot.
   }
 
   @Override
-  public void onSegment(int lane, double segmentTime, int interfaceId) {
+  public void onSegment(int lane, double segmentTime, int interfaceId, int interfaceIndex) {
     state.onSegment(lane, segmentTime, interfaceId);
   }
 
   @Override
-  public void onCallbutton(int lane) {
+  public void onCallbutton(int lane, int interfaceIndex) {
     state.onCallbutton(this, lane);
+    // Broadcast as InterfaceEvent for UI feedback in Editor
+    InterfaceEvent event =
+        InterfaceEvent.newBuilder()
+            .setCallbutton(
+                CallbuttonEvent.newBuilder()
+                    .setLane(lane)
+                    .setInterfaceIndex(interfaceIndex)
+                    .build())
+            .build();
+    ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
   @Override
-  public void onInterfaceStatus(InterfaceStatus status) {
+  public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
     InterfaceEvent event =
         InterfaceEvent.newBuilder()
-            .setStatus(InterfaceStatusEvent.newBuilder().setStatus(status).build())
+            .setStatus(
+                InterfaceStatusEvent.newBuilder()
+                    .setStatus(status)
+                    .setInterfaceIndex(interfaceIndex)
+                    .build())
             .build();
     // Since this is an InterfaceEvent, we use broadcastInterfaceEvent if available
     // or just broadcast it if it's a generic message.
@@ -650,6 +717,7 @@ public class Race implements ProtocolListener {
             .addAllHeats(heatProtos)
             .setCurrentHeat(HeatConverter.toProto(currentHeat, sentObjectIds))
             .setState(getProtoState(state))
+            .setFlag(state.getFlagType(this))
             .build();
 
     return RaceData.newBuilder().setRace(raceUpdate).build();

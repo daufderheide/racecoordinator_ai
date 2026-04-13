@@ -23,25 +23,30 @@ message InterfaceEvent {
 
 message InterfaceStatusEvent {
   InterfaceStatus status = 1;
+  int32 interface_index = 2;
 }
 
 message LapEvent {
   int32 lane = 1;
   double lap_time = 2;
   int32 interface_id = 3;
+  int32 interface_index = 4;
 }
 
 message SegmentEvent {
   int32 lane = 1;
   double segment_time = 2;
   int32 interface_id = 3;
+  int32 interface_index = 4;
 }
 
 message CallbuttonEvent {
   int32 lane = 1;
+  int32 interface_index = 2;
 }
 
 message InterfaceAnalogDataEvent {
   int32 pin = 1;
   int32 value = 2;
+  int32 interface_index = 3;
 }

@@ -246,11 +246,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   }
 
   get raceStateColor(): string {
-    return this.raceFlagService.getFlagColor(
-      this.raceState,
-      this.hasRacedInCurrentHeat,
-      this.heat,
-    );
+    return this.raceFlagService.getFlagColor();
   }
 
   get backgroundColor(): string {

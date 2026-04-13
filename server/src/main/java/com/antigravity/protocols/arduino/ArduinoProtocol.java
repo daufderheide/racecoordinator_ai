@@ -5,7 +5,8 @@ import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.PinId;
-import com.antigravity.proto.RgbLedBehavior;
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
@@ -21,11 +22,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -34,6 +33,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ArduinoProtocol extends DefaultProtocol {
+
+  @Override
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    ledHelper.setRaceState(state, flag, countdown);
+  }
+
   private static final Logger logger = LoggerFactory.getLogger(ArduinoProtocol.class);
 
   private ArduinoConfig config;
@@ -51,6 +56,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private ScheduledExecutorService statusScheduler;
   private ScheduledFuture<?> statusFuture;
   private ScheduledFuture<?> refuelFuture;
+  private ScheduledFuture<?> ledFlashFuture;
   protected long lastHeartbeatTimeMs = 0;
 
   // Lane specific
@@ -60,7 +66,7 @@ public class ArduinoProtocol extends DefaultProtocol {
   private int[] lastPitOutState;
   private int[] lastLapPinState;
   private Map<Integer, Integer> lastCallButtonState = new HashMap<>();
-  private Map<Integer, Integer> lastAddressableLeds = new HashMap<>();
+  private ArduinoLedHelper ledHelper;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
@@ -117,12 +123,13 @@ public class ArduinoProtocol extends DefaultProtocol {
       lastPitOutState[i] = -1;
       lastLapPinState[i] = -1;
     }
+    this.ledHelper = new ArduinoLedHelper(this);
   }
 
   private static final DateTimeFormatter LOG_TIME_FORMATTER =
       DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
-  private String getLogTime() {
+  protected String getLogTime() {
     return LocalTime.now().format(LOG_TIME_FORMATTER);
   }
 
@@ -150,11 +157,13 @@ public class ArduinoProtocol extends DefaultProtocol {
           "[{}] No COM port specified for ArduinoProtocol on lanes {}, status will be DISCONNECTED",
           getLogTime(),
           numLanes);
+      startStatusScheduler();
       return true;
     }
 
     try {
-      // Force 115200 baud for now as requested, as it's not currently configurable in the UI
+      // Force 115200 baud for now as requested, as it's not currently configurable in
+      // the UI
       int baudRateToUse = 115200;
       logger.info(
           "[{}] Attempting to connect to {} at {} baud",
@@ -185,7 +194,7 @@ public class ArduinoProtocol extends DefaultProtocol {
             }
           });
 
-      serialConnection.writeData(RESET_COMMAND);
+      writeData(RESET_COMMAND);
       logger.info("[{}] Connected to {}. Sent RESET command.", getLogTime(), config.commPort);
       startStatusScheduler();
 
@@ -209,6 +218,9 @@ public class ArduinoProtocol extends DefaultProtocol {
     }
     if (refuelFuture != null) {
       refuelFuture.cancel(true);
+    }
+    if (ledFlashFuture != null) {
+      ledFlashFuture.cancel(true);
     }
     if (statusScheduler != null) {
       statusScheduler.shutdown();
@@ -242,7 +254,7 @@ public class ArduinoProtocol extends DefaultProtocol {
                   } else {
                     status = InterfaceStatus.DISCONNECTED;
                   }
-                  listener.onInterfaceStatus(status);
+                  listener.onInterfaceStatus(status, getInterfaceIndex());
                 }
               } catch (Exception e) {
                 logger.error("Error in status scheduler", e);
@@ -286,6 +298,19 @@ public class ArduinoProtocol extends DefaultProtocol {
             0,
             100,
             TimeUnit.MILLISECONDS);
+
+    ledFlashFuture =
+        statusScheduler.scheduleAtFixedRate(
+            () -> {
+              try {
+                ledHelper.refreshRaceState();
+              } catch (Exception e) {
+                logger.error("Error in led flash scheduler", e);
+              }
+            },
+            0,
+            50,
+            TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -308,22 +333,32 @@ public class ArduinoProtocol extends DefaultProtocol {
   }
 
   public void updateConfig(ArduinoConfig newConfig) {
+    boolean commPortChanged = !Objects.equals(this.config.commPort, newConfig.commPort);
     boolean debounceChanged = this.config.debounceUs != newConfig.debounceUs;
     boolean digitalPinsChanged = !this.config.digitalIds.equals(newConfig.digitalIds);
     boolean analogPinsChanged = !this.config.analogIds.equals(newConfig.analogIds);
     boolean ledStringsChanged = !Objects.equals(this.config.ledStrings, newConfig.ledStrings);
 
+    String oldPort = this.config.commPort;
     this.config = newConfig;
     buildPinLookup();
 
-    if (versionVerified) {
+    if (commPortChanged) {
+      logger.info(
+          "[{}] COM port changed from {} to {}. Reconnecting...",
+          getLogTime(),
+          oldPort,
+          newConfig.commPort);
+      close();
+      open();
+    } else if (versionVerified) {
       if (digitalPinsChanged || analogPinsChanged) {
         sendPinModeRead();
         sendPinModeWrite();
         sendPinModeAnalogRead();
       }
       if (ledStringsChanged) {
-        sendRgbLedMode();
+        ledHelper.sendRgbLedMode();
       }
       if (debounceChanged) {
         sendDebounce();
@@ -346,16 +381,12 @@ public class ArduinoProtocol extends DefaultProtocol {
     message[3] = isHigh ? (byte) 1 : (byte) 0;
     message[4] = TERMINATOR;
 
-    try {
-      serialConnection.writeData(message);
-      logger.info(
-          "Sent Output Command - Type: {}, Pin: {}, State: {}",
-          (isDigital ? "Digital" : "Analog"),
-          pin,
-          (isHigh ? "High" : "Low"));
-    } catch (IOException e) {
-      logger.error("Failed to send output command", e);
-    }
+    writeData(message);
+    logger.info(
+        "Sent Output Command - Type: {}, Pin: {}, State: {}",
+        (isDigital ? "Digital" : "Analog"),
+        pin,
+        (isHigh ? "High" : "Low"));
   }
 
   private void processData() {
@@ -496,7 +527,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     if (!versionVerified) {
       // Note: Not checking build number as it changes frequently and indicates
       // backwards compatibility with previous versions.
-      if (major == 1 && minor == 0 && patch == 0) {
+      if (major == 2 && minor == 0 && patch == 0) {
         versionVerified = true;
         logger.info("Version verified - {}.{}.{}.{}", major, minor, patch, build);
         sendPinModeRead();
@@ -504,10 +535,10 @@ public class ArduinoProtocol extends DefaultProtocol {
         sendPinModeAnalogRead();
         sendDebounce();
         sendTimeReset();
-        sendRgbLedMode();
+        ledHelper.sendRgbLedMode();
       } else {
         logger.error(
-            "[{}] Invalid firmware version: {}.{}.{}. Expected 1.0.0",
+            "[{}] Invalid firmware version: {}.{}.{}. Expected 2.0.0",
             getLogTime(),
             major,
             minor,
@@ -591,17 +622,9 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     message[idx++] = TERMINATOR;
 
-    try {
-      serialConnection.writeData(message);
-      logger.info(
-          "[{}] Sent PIN_MODE {} (opcode: 0x{})",
-          getLogTime(),
-          mode,
-          String.format("%02X", opcode));
-    } catch (IOException e) {
-      logger.error(
-          "Failed to send PIN_MODE {} (opcode: 0x{})", mode, String.format("%02X", opcode), e);
-    }
+    writeData(message);
+    logger.info(
+        "[{}] Sent PIN_MODE {} (opcode: 0x{})", getLogTime(), mode, String.format("%02X", opcode));
   }
 
   private void sendDebounce() {
@@ -615,123 +638,64 @@ public class ArduinoProtocol extends DefaultProtocol {
     message[4] = message[2]; // Lus
     message[5] = TERMINATOR;
 
-    try {
-      serialConnection.writeData(message);
-      logger.info("[{}] Sent DEBOUNCE", getLogTime());
-    } catch (IOException e) {
-      logger.error("Failed to send DEBOUNCE", e);
-    }
+    writeData(message);
+    logger.info("[{}] Sent DEBOUNCE", getLogTime());
   }
 
   private void sendTimeReset() {
-    try {
-      serialConnection.writeData(TIME_RESET_COMMAND);
-      logger.info("[{}] Sent TIME_RESET", getLogTime());
-    } catch (IOException e) {
-      logger.error("Failed to send TIME_RESET", e);
-    }
+    writeData(TIME_RESET_COMMAND);
+    logger.info("[{}] Sent TIME_RESET", getLogTime());
   }
 
-  private void sendRgbLedMode() {
-    if (!serialConnection.isOpen()) {
+  protected boolean isSerialOpen() {
+    return serialConnection != null && serialConnection.isOpen();
+  }
+
+  protected ArduinoConfig getConfig() {
+    return config;
+  }
+
+  protected int getMaxBufferSize() {
+    // Mega (1) has a 512-byte buffer, Uno (0 or other) has a 128-byte buffer
+    return (config.hardwareType == 1) ? 512 : 128;
+  }
+
+  // TODO(aufderheide): Make this private and mock the serialConnection instead
+  // of calling this directly in unit tests.
+  protected void writeData(byte[] message) {
+    if (message == null || message.length == 0) {
       return;
     }
 
-    // Track strings we updated/sent in this configuration
-    Set<Integer> updatedStrings = new HashSet<>();
-
-    if (config.ledStrings != null) {
-      for (LedString ledString : config.ledStrings) {
-        int stringNum = ledString.stringNum;
-        int currentMax = ledString.addressableLeds;
-        int previousMax = lastAddressableLeds.getOrDefault(stringNum, 0);
-        int ledCount = Math.max(currentMax, previousMax);
-
-        if (ledCount > 0) {
-          sendRgbLedModeMessage(stringNum, ledCount, ledString.brightness);
-        }
-
-        lastAddressableLeds.put(stringNum, currentMax);
-        updatedStrings.add(stringNum);
-      }
-    }
-
-    // Handle removed strings: send a clear command (0 brightness) for any string
-    // that existed previously but is not in the new config.
-    for (Integer stringNum : new ArrayList<>(lastAddressableLeds.keySet())) {
-      if (!updatedStrings.contains(stringNum)) {
-        int previousMax = lastAddressableLeds.get(stringNum);
-        if (previousMax > 0) {
-          sendRgbLedModeMessage(stringNum, previousMax, 0);
-        }
-        lastAddressableLeds.remove(stringNum);
-      }
-    }
-  }
-
-  private void sendRgbLedModeMessage(int stringNum, int ledCount, int brightness) {
-    // { 0x6C, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3B }
-    // opcode string# ledCount brightness updateRateLow updateRateHigh ;
-    byte[] message = new byte[7];
-    int updateRate = 20;
-
-    message[0] = 0x6C; // 'l'
-    message[1] = (byte) (stringNum & 0xFF);
-    message[2] = (byte) (ledCount & 0xFF);
-    message[3] = (byte) (brightness & 0xFF);
-    message[4] = (byte) (updateRate & 0xFF);
-    message[5] = (byte) ((updateRate >> 8) & 0xFF);
-    message[6] = TERMINATOR;
-
-    try {
-      serialConnection.writeData(message);
-      logger.info(
-          "[{}] Sent RGB_LED_MODE - String: {}, Count: {}, Brightness: {}, UpdateRate: {}",
+    int maxBuffer = getMaxBufferSize();
+    if (message.length > maxBuffer) {
+      logger.error(
+          "[{}] Attempted to send message of size {} which exceeds Arduino buffer limit of {}",
           getLogTime(),
-          stringNum,
-          ledCount,
-          brightness,
-          updateRate);
-    } catch (IOException e) {
-      logger.error("Failed to send RGB_LED_MODE message", e);
-    }
-  }
-
-  public void setStringRgbLedValues(int stringNumber, List<RgbLedState> rgbLeds) {
-    if (!serialConnection.isOpen() || rgbLeds == null || rgbLeds.isEmpty()) {
+          message.length,
+          maxBuffer);
       return;
     }
 
-    // { 0x4C, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x3B }
-    // opcode string# #leds [led# r g b ..] ;
-    int numLeds = rgbLeds.size();
-    int msgLen = 3 + (numLeds * 4) + 1;
-    byte[] message = new byte[msgLen];
-
-    message[0] = 0x4C; // 'L'
-    message[1] = (byte) (stringNumber & 0xFF);
-    message[2] = (byte) (numLeds & 0xFF);
-
-    int idx = 3;
-    for (RgbLedState led : rgbLeds) {
-      message[idx++] = (byte) (led.getIndex() & 0xFF);
-      message[idx++] = (byte) (led.getR() & 0xFF);
-      message[idx++] = (byte) (led.getG() & 0xFF);
-      message[idx++] = (byte) (led.getB() & 0xFF);
-    }
-
-    message[idx] = TERMINATOR;
-
     try {
       serialConnection.writeData(message);
-      logger.info(
-          "[{}] Sent SET_RGB_LED_VALUES - String: {}, Count: {}",
-          getLogTime(),
-          stringNumber,
-          numLeds);
     } catch (IOException e) {
-      logger.error("Failed to send SET_RGB_LED_VALUES message", e);
+      logger.error("[{}] Failed to write data to Arduino: {}", getLogTime(), e.getMessage());
     }
+  }
+
+  public void setStringRgbLedValues(int pinId, List<RgbLedState> rgbLeds) {
+    ledHelper.setStringRgbLedValues(pinId, rgbLeds);
+  }
+
+  @Override
+  public void setFuelLevel(int laneIndex, int fuelLevelPct) {
+    ledHelper.setFuelLevel(laneIndex, fuelLevelPct);
+  }
+
+  @Override
+  public void setHeatProgress(double percentage) {
+    ledHelper.setHeatProgress(percentage);
   }
 
   private void onInput(boolean isDigital, int pin, int state) {
@@ -800,7 +764,11 @@ public class ArduinoProtocol extends DefaultProtocol {
       InterfaceEvent event =
           InterfaceEvent.newBuilder()
               .setAnalogData(
-                  InterfaceAnalogDataEvent.newBuilder().setPin(pin).setValue(value).build())
+                  InterfaceAnalogDataEvent.newBuilder()
+                      .setPin(pin)
+                      .setValue(value)
+                      .setInterfaceIndex(getInterfaceIndex())
+                      .build())
               .build();
       listener.onInterfaceEvent(event);
 
@@ -874,7 +842,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           onSegmentCounter(laneIndex, state, interfaceId);
         }
 
-        listener.onLap(laneIndex, time, interfaceId);
+        listener.onLap(laneIndex, time, interfaceId, getInterfaceIndex());
 
         if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN
             || config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
@@ -930,7 +898,7 @@ public class ArduinoProtocol extends DefaultProtocol {
 
       logger.info("[{}] Handling Segment - Lane: {}, Time: {}", getLogTime(), laneIndex, time);
       if (listener != null) {
-        listener.onSegment(laneIndex, time, interfaceId);
+        listener.onSegment(laneIndex, time, interfaceId, getInterfaceIndex());
       }
     }
   }
@@ -946,7 +914,7 @@ public class ArduinoProtocol extends DefaultProtocol {
     Integer prevState = lastCallButtonState.get(interfaceId);
     if (state == 0 && prevState != null && prevState == 1) {
       if (listener != null) {
-        listener.onCallbutton(laneIndex);
+        listener.onCallbutton(laneIndex, getInterfaceIndex());
       }
     }
     lastCallButtonState.put(interfaceId, state);
@@ -959,20 +927,6 @@ public class ArduinoProtocol extends DefaultProtocol {
 
     for (PinConfig pc : pinLookup.values()) {
       if (pc.behavior == InputBehavior.PIT_IN
-          && (pc.laneIndex == -1 || pc.laneIndex == laneIndex)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean hasPitOutConfigured(int laneIndex) {
-    if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-      return true;
-    }
-
-    for (PinConfig pc : pinLookup.values()) {
-      if (pc.behavior == InputBehavior.PIT_OUT
           && (pc.laneIndex == -1 || pc.laneIndex == laneIndex)) {
         return true;
       }
@@ -1238,53 +1192,29 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   @Override
   public void setHeatStandings(List<Integer> laneIndices) {
-    if (laneIndices == null || laneIndices.isEmpty()) {
-      return;
+    ledHelper.setHeatStandings(laneIndices);
+  }
+
+  @Override
+  public void setRefueling(int laneIndex, boolean isRefueling) {
+    ledHelper.setRefueling(laneIndex, isRefueling);
+  }
+
+  /**
+   * Translates internal software pin IDs (0-53 digital, 1000-1015 analog) to physical Arduino pin
+   * bytes based on the board type.
+   */
+  private int getPhysicalPin(int interfaceId) {
+    boolean isAnalog = interfaceId >= 1000;
+    int index = isAnalog ? interfaceId - 1000 : interfaceId;
+    boolean isMega = config.hardwareType == 1;
+
+    if (isAnalog) {
+      // Mega: A0 are pins 54-69
+      // Uno:  A0 are pins 14-19
+      return isMega ? 54 + index : 14 + index;
     }
-
-    int leaderLaneIndex = laneIndices.get(0);
-    int leaderBehavior = RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + leaderLaneIndex;
-
-    if (config.ledStrings != null) {
-      for (LedString ledString : config.ledStrings) {
-        List<RgbLedState> updates = new ArrayList<>();
-        boolean success = true;
-
-        for (int i = 0; i < ledString.leds.size(); i++) {
-          int behavior = ledString.leds.get(i);
-          // Check if this LED is configured as a heat leader
-          if (behavior >= RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE
-              && behavior < RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE) {
-            if (behavior == leaderBehavior) {
-              if (leaderLaneIndex < 0
-                  || leaderLaneIndex >= ledString.ledLaneColorOverrides.size()) {
-                logger.error(
-                    "Missing color mapping for lane {} on string {}",
-                    leaderLaneIndex,
-                    ledString.stringNum);
-                success = false;
-                break;
-              }
-              int[] rgb = parseColor(ledString.ledLaneColorOverrides.get(leaderLaneIndex));
-              updates.add(
-                  RgbLedState.newBuilder()
-                      .setIndex(i)
-                      .setR(rgb[0])
-                      .setG(rgb[1])
-                      .setB(rgb[2])
-                      .build());
-            } else {
-              // Not the leader lane, turn off
-              updates.add(RgbLedState.newBuilder().setIndex(i).setR(0).setG(0).setB(0).build());
-            }
-          }
-        }
-
-        if (success && !updates.isEmpty()) {
-          setStringRgbLedValues(ledString.stringNum, updates);
-        }
-      }
-    }
+    return index;
   }
 
   private int[] parseColor(String hex) {

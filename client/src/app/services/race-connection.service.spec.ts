@@ -32,6 +32,7 @@ describe("RaceConnectionService", () => {
       "getSegments",
       "getRaceState",
       "getDrivers",
+      "getRaceFlag",
       "connectToInterfaceDataSocket",
       "disconnectFromInterfaceDataSocket",
       "updateRaceSubscription",
@@ -54,6 +55,9 @@ describe("RaceConnectionService", () => {
       of(com.antigravity.RaceState.NOT_STARTED),
     );
     mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getRaceFlag.and.returnValue(
+      of(com.antigravity.RaceFlag.RED),
+    );
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",
@@ -182,6 +186,24 @@ describe("RaceConnectionService", () => {
       });
 
       lapsSubject.next(lapData);
+    });
+
+    it("should pipe flags to raceFlag$", (done) => {
+      const mockFlagSubject = new Subject<com.antigravity.RaceFlag>();
+      mockDataService.getRaceFlag.and.returnValue(
+        mockFlagSubject.asObservable(),
+      );
+
+      service.connect();
+
+      service.raceFlag$.subscribe((flag) => {
+        if (flag === com.antigravity.RaceFlag.GREEN) {
+          expect(flag).toBe(com.antigravity.RaceFlag.GREEN);
+          done();
+        }
+      });
+
+      mockFlagSubject.next(com.antigravity.RaceFlag.GREEN);
     });
   });
 });

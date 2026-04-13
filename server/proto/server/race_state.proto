@@ -14,3 +14,13 @@ enum RaceState {
   HEAT_OVER = 5;
   RACE_OVER = 6;
 }
+
+enum RaceFlag {
+   UNKNOWN_FLAG = 0;
+   RED = 1;
+   GREEN = 2;
+   YELLOW = 3;
+   WHITE = 4;
+   CHECKERED = 5;
+   GREEN_YELLOW = 6;
+}

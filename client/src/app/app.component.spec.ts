@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { ChildrenOutletContexts, NavigationEnd, Router } from "@angular/router";
 import { of, Subject } from "rxjs";
+import { com } from "src/app/proto/message";
 
 import { AnalyticsService } from "./analytics.service";
 import { AppComponent } from "./app.component";
@@ -32,10 +33,14 @@ describe("AppComponent", () => {
       "getServerVersion",
       "connectToRaceDataSocket",
       "getRaceUpdate",
+      "getRaceFlag",
     ]);
     mockDataService.getServerVersion.and.returnValue(of("TEST-SERVER-VERSION"));
     mockDataService.connectToRaceDataSocket.and.stub();
     mockDataService.getRaceUpdate.and.returnValue(of({}));
+    mockDataService.getRaceFlag.and.returnValue(
+      of(com.antigravity.RaceFlag.RED),
+    );
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
       "initTracking",
@@ -79,6 +84,7 @@ describe("AppComponent", () => {
   });
 
   it("should create the app", () => {
+    console.log("TEST: AppComponent should create");
     expect(component).toBeTruthy();
   });
 
@@ -87,6 +93,7 @@ describe("AppComponent", () => {
       pageTransition: "slide",
     });
     const data = component.getRouteAnimationData();
+
     // Format: {type}:{direction}:{path}:{counter}
     expect(data).toMatch(/^slide:forward:test-page:\d+$/);
   });

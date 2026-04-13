@@ -18,7 +18,13 @@ export class Track implements Model {
   readonly has_digital_fuel: boolean;
   readonly arduino_configs: ArduinoConfig[];
 
-  constructor(entity_id: string, name: string, lanes: Lane[], has_digital_fuel: boolean = false, arduino_configs?: ArduinoConfig[]) {
+  constructor(
+    entity_id: string,
+    name: string,
+    lanes: Lane[],
+    has_digital_fuel: boolean = false,
+    arduino_configs?: ArduinoConfig[],
+  ) {
     this.entity_id = entity_id;
     this.name = name;
     this.lanes = lanes;
@@ -39,7 +45,10 @@ export class Track implements Model {
     }
     // For now, if any config has digital fuel, track has digital fuel.
     for (const config of this.arduino_configs) {
-      if (config.voltageConfigs != null && Object.keys(config.voltageConfigs).length > 0) {
+      if (
+        config.voltageConfigs != null &&
+        Object.keys(config.voltageConfigs).length > 0
+      ) {
         return true;
       }
     }
@@ -52,12 +61,13 @@ export class Track implements Model {
 }
 
 export interface LedString {
-  stringNum: number;
+  pin: number;
   leds: number[];
   numUsedLeds: number;
   addressableLeds: number;
   brightness: number;
-  yellowFlagFlashRate: number;
+  ledType: number;
+  flagFlashRate: number;
   ledLaneColorOverrides: string[];
 }
 

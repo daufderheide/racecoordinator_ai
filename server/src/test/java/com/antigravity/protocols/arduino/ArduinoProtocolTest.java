@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,13 +48,24 @@ public class ArduinoProtocolTest {
     SerialPort mockPort = mock(SerialPort.class);
     public byte[] lastWrittenData;
     public List<byte[]> allWrittenData = new ArrayList<>();
+    public int connectionCount = 0;
+    public String lastPortName;
+    public int lastBaudRate;
 
     @Override
     public void connect(String portName, int baudRate) throws IOException {
+      connectionCount++;
+      lastPortName = portName;
+      lastBaudRate = baudRate;
       if (portName.equals("FAIL")) {
         throw new IOException("Connection failed");
       }
       open = true;
+    }
+
+    @Override
+    public void disconnect() {
+      open = false;
     }
 
     @Override
@@ -92,26 +104,31 @@ public class ArduinoProtocolTest {
     int callButtonCount = 0;
     int segmentCount = 0;
     public InterfaceEvent lastEvent;
+    public int lastInterfaceIndex = -1;
 
     @Override
-    public void onLap(int lane, double lapTime, int interfaceId) {
+    public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
       lapCount++;
       lastLapLane = lane;
+      this.lastInterfaceIndex = interfaceIndex;
     }
 
     @Override
-    public void onSegment(int lane, double segmentTime, int interfaceId) {
+    public void onSegment(int lane, double segmentTime, int interfaceId, int interfaceIndex) {
       segmentCount++;
+      this.lastInterfaceIndex = interfaceIndex;
     }
 
     @Override
-    public void onCallbutton(int lane) {
+    public void onCallbutton(int lane, int interfaceIndex) {
       callButtonCount++;
+      this.lastInterfaceIndex = interfaceIndex;
     }
 
     @Override
-    public void onInterfaceStatus(InterfaceStatus status) {
+    public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
       lastStatus = status;
+      this.lastInterfaceIndex = interfaceIndex;
     }
 
     @Override
@@ -136,6 +153,17 @@ public class ArduinoProtocolTest {
     public TestableArduinoProtocol(
         ArduinoConfig config, int numLanes, MockScheduler scheduler, MockSerialConnection serial) {
       super(config, numLanes, serial, scheduler);
+      this.mockScheduler = scheduler;
+    }
+
+    private final MockScheduler mockScheduler;
+
+    @Override
+    protected ScheduledExecutorService createScheduler() {
+      if (mockScheduler.isShutdown()) {
+        mockScheduler.reset();
+      }
+      return mockScheduler;
     }
 
     @Override
@@ -256,7 +284,7 @@ public class ArduinoProtocolTest {
 
     // Inject Version to verify
     // V 1.0.0.0 ; -> 56 01 00 00 00 3B
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D2 input (Digital=0x44, Pin=2, State=0 - NO means 0 triggers)
@@ -466,7 +494,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D4 low (0 - NO means 0 triggers) -> In pits
@@ -497,7 +525,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D5 high (Pit Out - transition from 0 to 1 should trigger Main)
@@ -520,7 +548,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D4 low (Pit In/Out - wantState is 0) -> In pits
@@ -549,7 +577,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D4 low (Pit In - wantState is 0) -> In pits
@@ -583,7 +611,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Initial state: Main
@@ -622,7 +650,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D2 low (Lap/Pit In - NO means 0 triggers) -> In pits
@@ -650,7 +678,7 @@ public class ArduinoProtocolTest {
     protocol.setListener(listener);
     protocol.open();
 
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Enter pit via Pit In (D4 LOW - NO means 0 triggers)
@@ -713,7 +741,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     byte[] callLow = {0x49, 0x44, 0x02, 0x00, 0x3B};
@@ -764,7 +792,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Normal (NO): Trigger D2 LOW (state 0) -> Segment should trigger
@@ -804,7 +832,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Trigger D2 LOW (state 0) -> Should trigger BOTH Lap and Segment
@@ -842,7 +870,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Inject Version to verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Inverted: Trigger D3 HIGH (state 1) -> Segment should trigger
@@ -870,7 +898,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Trigger Version to send pin modes
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // After version, sendPinModeAnalogRead should be called
@@ -897,7 +925,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Send version first to verify protocol
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Opcode 0x41 (A), Count 1, Pin 1, Value 1023 (0x3FF)
@@ -915,7 +943,7 @@ public class ArduinoProtocolTest {
   public void testOnAnalogData_ZeroValue() {
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Pin 0, Value 0
@@ -932,7 +960,7 @@ public class ArduinoProtocolTest {
   public void testOnAnalogData_MaxValue() {
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Pin 2, Value 1023 (max 10-bit ADC reading)
@@ -949,7 +977,7 @@ public class ArduinoProtocolTest {
   public void testOnAnalogData_MidRangeValue() {
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Pin 3, Value 512 = 0x00000200
@@ -977,7 +1005,7 @@ public class ArduinoProtocolTest {
     protocol.setListener(multiListener);
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Count = 3
@@ -1037,7 +1065,7 @@ public class ArduinoProtocolTest {
     protocol.setListener(multiListener);
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // First message: Pin 0, Value 200
@@ -1059,7 +1087,7 @@ public class ArduinoProtocolTest {
   public void testOnAnalogData_PartialMessageDoesNotFire() {
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Inject only the opcode and count (not the full message body)
@@ -1076,7 +1104,7 @@ public class ArduinoProtocolTest {
   public void testOnAnalogData_HighPinIndex() {
     protocol.open();
 
-    byte[] versionMsg = {0x56, 0x01, 0x00, 0x00, 0x00, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     // Pin 15 (last analog pin on Mega A15), Value 750 = 0x000002EE
@@ -1106,7 +1134,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Verify version
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     protocol.simulateHeartbeat();
@@ -1133,7 +1161,7 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Verify version
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
     protocol.simulateHeartbeat();
@@ -1156,7 +1184,7 @@ public class ArduinoProtocolTest {
     leds.set(
         4, RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE_VALUE); // Max index 4, so count is 5
 
-    LedString string0 = new LedString(0, leds, 150, 5.0, new ArrayList<>());
+    LedString string0 = new LedString(14, leds, 150, 2, 5.0, new ArrayList<>()); // ledType 2
     config.ledStrings = new ArrayList<>();
     config.ledStrings.add(string0);
 
@@ -1164,16 +1192,17 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Trigger Version to send RGB LED mode
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B}; // V2
     serialConnection.injectData(versionMsg);
 
     // Opcode 0x6C (l)
-    // stringIndex = 0
+    // pin = 14 (translated to physical 14 for Uno A0)
     // ledCount = 5
-    // brightness = 150 (hardcoded to 150 in ArduinoProtocol or from config)
-    // updateRate = 20 (hardcoded in ArduinoProtocol, 0x0014)
-    // Expected: 0x6C 0x00 0x05 0x96 0x14 0x00 0x3B
-    byte[] expected = {0x6C, 0x00, 0x05, (byte) 150, 0x14, 0x00, 0x3B};
+    // brightness = 150
+    // updateRate = 20 (0x0014)
+    // ledType = 2
+    // Expected: 0x6C 0x0E 0x05 0x96 0x14 0x00 0x02 0x3B
+    byte[] expected = {0x6C, 0x0E, 0x05, (byte) 150, 0x14, 0x00, 0x02, 0x3B};
 
     boolean found = false;
     for (byte[] data : serialConnection.allWrittenData) {
@@ -1190,22 +1219,22 @@ public class ArduinoProtocolTest {
     protocol.open();
 
     // Trigger Version to verify protocol
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
-    // Set LED 2 to Red (255, 0, 0) on string 0
+    // Set LED 2 to Red (255, 0, 0) on pin 14
     List<RgbLedState> leds = new ArrayList<>();
     leds.add(RgbLedState.newBuilder().setIndex(2).setR(255).setG(0).setB(0).build());
 
-    protocol.setStringRgbLedValues(0, leds);
+    protocol.setStringRgbLedValues(14, leds);
 
     // Opcode 0x4C (L)
-    // stringIndex = 0
-    // numLeds = 1
+    // pin = 14 (physical 14)
+    // numUpdates = 1
     // LedIndex = 2
     // R = 255 (0xFF), G = 0, B = 0
-    // Expected: 0x4C 0x00 0x01 0x02 0xFF 0x00 0x00 0x3B
-    byte[] expected = {0x4C, 0x00, 0x01, 0x02, (byte) 0xFF, 0x00, 0x00, 0x3B};
+    // Expected: 0x4C 0x0E 0x01 0x02 0xFF 0x00 0x00 0x3B
+    byte[] expected = {0x4C, 0x0E, 0x01, 0x02, (byte) 0xFF, 0x00, 0x00, 0x3B};
 
     assertArrayEquals(expected, serialConnection.lastWrittenData);
   }
@@ -1215,7 +1244,7 @@ public class ArduinoProtocolTest {
     // Configure LED string 1 with 2 leds: Lane 0 leader (2000), Lane 1 leader
     // (2001)
     LedString ledString = new LedString();
-    ledString.stringNum = 1;
+    ledString.pin = 1;
     ledString.leds =
         Arrays.asList(
             RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 0,
@@ -1249,21 +1278,20 @@ public class ArduinoProtocolTest {
       0x3B
     };
 
-    byte[] lastLCommand = null;
+    boolean found = false;
     for (byte[] data : serialConnection.allWrittenData) {
-      if (data.length > 0 && data[0] == 0x4C) {
-        lastLCommand = data;
+      if (Arrays.equals(expected, data)) {
+        found = true;
+        break;
       }
     }
-
-    assertNotNull("Should have sent SET_RGB_LED_VALUES command", lastLCommand);
-    assertArrayEquals(expected, lastLCommand);
+    assertTrue("Should have sent SET_RGB_LED_VALUES command for standings", found);
   }
 
   @Test
   public void testSetHeatStandings_MissingColorMapping() {
     LedString ledString = new LedString();
-    ledString.stringNum = 1;
+    ledString.pin = 1;
     ledString.leds =
         Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE_VALUE + 0);
     ledString.ledLaneColorOverrides = new ArrayList<>(); // Empty mapping
@@ -1301,7 +1329,7 @@ public class ArduinoProtocolTest {
     assertEquals("Input should be ignored before version verification", 0, listener.lapCount);
 
     // 3. Send Version (V) - should verify
-    byte[] versionMsg = {0x56, 1, 0, 0, 0, 0x3B};
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
     assertTrue(
         "Version should be verified",
@@ -1321,5 +1349,256 @@ public class ArduinoProtocolTest {
 
     serialConnection.injectData(inputLap);
     assertEquals("Input should be processed after version verification", 1, listener.lapCount);
+  }
+
+  @Test
+  public void testSendRgbLedMode_Removals() {
+    // 1. Initial configuration with an LED string
+    ArduinoConfig configWithLed = new ArduinoConfig();
+    configWithLed.commPort = "COM1";
+    LedString string0 = new LedString(2, Arrays.asList(1), 100, 0, 5.0, new ArrayList<>());
+    configWithLed.ledStrings = new ArrayList<>(Collections.singletonList(string0));
+
+    protocol.updateConfig(configWithLed);
+    protocol.open();
+
+    // Verify version to enable sending commands
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Initial mode message should have been sent (Pin 2, Count 1, Brightness 100)
+    byte[] expectedInitial = {0x6C, 0x02, 0x01, 100, 0x14, 0x00, 0x00, 0x3B};
+    assertTrue(
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedInitial, d)));
+
+    // 2. Update config to remove the LED string
+    serialConnection.allWrittenData.clear();
+    ArduinoConfig configNoLed = new ArduinoConfig();
+    configNoLed.commPort = "COM1";
+    configNoLed.ledStrings = null; // Removed
+
+    protocol.updateConfig(configNoLed);
+
+    // Should send cleanup message: pin 2, brightness 0 (to turn off previous string)
+    byte[] expectedCleanup = {0x6C, 0x02, 0x01, 0, 0x14, 0x00, 0x00, 0x3B};
+    assertTrue(
+        "Should have sent cleanup message with brightness 0 for pin 2",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedCleanup, d)));
+  }
+
+  @Test
+  public void testWriteData_EnforcesBufferLimit() {
+    // Configure for Uno
+    config.hardwareType = 0;
+    protocol.updateConfig(config);
+    protocol.open();
+    assertEquals("Uno buffer limit should be 128", 128, protocol.getMaxBufferSize());
+
+    serialConnection.allWrittenData.clear();
+
+    // Send 128 bytes - should succeed
+    byte[] msg128 = new byte[128];
+    Arrays.fill(msg128, (byte) 0);
+    msg128[127] = 0x3B; // Valid terminator (though writeData doesn't check it, it checks length)
+    protocol.writeData(msg128);
+    assertEquals("128 byte message should be sent", 1, serialConnection.allWrittenData.size());
+
+    // Send 129 bytes - should be dropped
+    serialConnection.allWrittenData.clear();
+    byte[] msg129 = new byte[129];
+    protocol.writeData(msg129);
+    assertEquals(
+        "129 byte message should be dropped on Uno", 0, serialConnection.allWrittenData.size());
+
+    // Configure for Mega
+    config.hardwareType = 1;
+    protocol.updateConfig(config);
+    assertEquals("Mega buffer limit should be 512", 512, protocol.getMaxBufferSize());
+
+    // Send 129 bytes - should succeed now
+    serialConnection.allWrittenData.clear();
+    protocol.writeData(msg129);
+    assertEquals(
+        "129 byte message should be sent on Mega", 1, serialConnection.allWrittenData.size());
+
+    // Send 513 bytes - should be dropped
+    serialConnection.allWrittenData.clear();
+    byte[] msg513 = new byte[513];
+    protocol.writeData(msg513);
+    assertEquals(
+        "513 byte message should be dropped on Mega", 0, serialConnection.allWrittenData.size());
+  }
+
+  @Test
+  public void testSetRefueling() {
+    protocol.open();
+    // Configure Pin 8 as RGB String (Behavior 4)
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(8, PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber());
+
+    // Setup an LED string with Refueling Lane behavior (Base + 0)
+    LedString ledString = new LedString();
+    ledString.pin = 8;
+    ledString.brightness = 255;
+    ledString.addressableLeds = 10;
+    ledString.leds =
+        new ArrayList<>(
+            Collections.nCopies(
+                10, com.antigravity.proto.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED_VALUE));
+    ledString.leds.set(
+        0, com.antigravity.proto.RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE_VALUE + 0);
+    ledString.ledLaneColorOverrides = Arrays.asList("#FF0000", "#00FF00"); // Red for Lane 0
+    config.ledStrings = Collections.singletonList(ledString);
+
+    protocol.updateConfig(config);
+    serialConnection.allWrittenData.clear();
+
+    // Set Refueling to TRUE for Lane 0
+    protocol.setRefueling(0, true);
+
+    // Should send SET_RGB_LED_VALUES (opcode 'L' = 0x4C)
+    // Pin 8 is physical pin 8 on Uno (default hardware type 0)
+    // Batch size 1, Item 0: color #FF0000 (R=255, G=0, B=0)
+    // Message: 0x4C, 0x08, 0x01, 0x00, 0xFF, 0x00, 0x00, 0x3B
+    byte[] expected = {0x4C, 0x08, 0x01, 0x00, (byte) 0xFF, 0x00, 0x00, 0x3B};
+    boolean found = false;
+    for (byte[] msg : serialConnection.allWrittenData) {
+      if (Arrays.equals(msg, expected)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Should have sent Refueling ON command", found);
+
+    // Set Refueling to FALSE for Lane 0
+    serialConnection.allWrittenData.clear();
+    protocol.setRefueling(0, false);
+    // Message: 0x4C, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x3B
+    byte[] expectedOff = {0x4C, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x3B};
+    found = false;
+    for (byte[] msg : serialConnection.allWrittenData) {
+      if (Arrays.equals(msg, expectedOff)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Should have sent Refueling OFF command", found);
+  }
+
+  @Test
+  public void testSetHeatProgress() {
+    protocol.open();
+    // Configure Pin 8 as RGB String
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(8, PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber());
+
+    // Setup an LED string with Heat Progress behavior (Value 2)
+    LedString ledString = new LedString();
+    ledString.pin = 8;
+    ledString.brightness = 255;
+    ledString.addressableLeds = 1;
+    ledString.leds =
+        Collections.singletonList(
+            com.antigravity.proto.RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    protocol.updateConfig(config);
+    serialConnection.allWrittenData.clear();
+
+    // 10% progress -> Should be GREEN (normalizedProgress 0.1 < 0.5)
+    protocol.setHeatProgress(0.1);
+
+    // Message: 0x4C, 0x08, 0x01, 0x00, 0x00, 0xFF, 0x00, 0x3B
+    byte[] expected = {0x4C, 0x08, 0x01, 0x00, 0x00, (byte) 0xFF, 0x00, 0x3B};
+    boolean found = false;
+    for (byte[] msg : serialConnection.allWrittenData) {
+      if (Arrays.equals(msg, expected)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Should have sent Heat Progress Green command", found);
+  }
+
+  @Test
+  public void testInterfaceIndexReporting() {
+    protocol.setInterfaceIndex(7);
+    assertEquals("Internal index should be 7", 7, protocol.getInterfaceIndex());
+
+    // Configure Pin 2 as Lane 0 Lap pin
+    // Use the existing config set up in setUp() but update it
+    config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE_VALUE);
+    protocol.updateConfig(config);
+
+    protocol.open();
+
+    // Must inject version (v2.0.0.0) and heartbeat to enable the protocol to process data
+    byte[] versionMsg = {0x56, 2, 0, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    protocol.simulateHeartbeat();
+
+    // Trigger Lap input
+    byte[] inputLap = {0x49, 0x44, 0x02, 0x00, 0x3B};
+    serialConnection.injectData(inputLap);
+
+    assertEquals("Lap should have correct index", 7, listener.lastInterfaceIndex);
+
+    // Trigger Status update via scheduler
+    scheduler.tick();
+    assertEquals("Status should have correct index", 7, listener.lastInterfaceIndex);
+  }
+
+  @Test
+  public void testStatusDisconnected_NoPort_SchedulerRuns() {
+    config.commPort = "";
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+
+    protocol.open();
+    // Scheduler should be running and tick should report DISCONNECTED
+    scheduler.tick();
+    assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
+  }
+
+  @Test
+  public void testUpdateConfig_ReconnectOnPortChange() {
+    protocol.open();
+    assertTrue("Should be open initially", serialConnection.isOpen());
+    int initialConnections = serialConnection.connectionCount;
+    assertEquals("COM1", serialConnection.lastPortName);
+
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM2"; // Changed
+    newConfig.baudRate = 115200;
+    newConfig.digitalIds = new ArrayList<>(config.digitalIds);
+    newConfig.analogIds = new ArrayList<>(config.analogIds);
+
+    protocol.updateConfig(newConfig);
+
+    assertTrue("Should be open after reconnect", serialConnection.isOpen());
+    assertEquals(
+        "Connection count should have incremented",
+        initialConnections + 1,
+        serialConnection.connectionCount);
+    assertEquals("Port name should have updated", "COM2", serialConnection.lastPortName);
+  }
+
+  @Test
+  public void testUpdateConfig_NoReconnectOnSamePort() {
+    protocol.open();
+    int initialConnections = serialConnection.connectionCount;
+
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM1"; // Same
+    newConfig.baudRate = 115200;
+    newConfig.digitalIds = new ArrayList<>(config.digitalIds);
+    newConfig.analogIds = new ArrayList<>(config.analogIds);
+    newConfig.debounceUs = 5000; // Changed other field
+
+    protocol.updateConfig(newConfig);
+
+    assertEquals(initialConnections, serialConnection.connectionCount);
   }
 }

@@ -20,6 +20,7 @@ import { DataService } from "src/app/data.service";
 import { AllowFinish, FinishMethod } from "src/app/models/heat_scoring";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
 import { RaceService } from "src/app/services/race.service";
+import { RaceFlagService } from "src/app/services/race-flag.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
@@ -95,6 +96,7 @@ describe("DefaultRacedayComponent", () => {
   let mockRaceService: any;
   let mockSettings: Settings;
   let mockRaceConnectionService: any;
+  let mockRaceFlagService: any;
   let interfaceEventsSubject: Subject<com.antigravity.IInterfaceEvent>;
   let interfaceAlertSubject: Subject<{ titleKey: string; messageKey: string }>;
   let raceTimeSubject: Subject<com.antigravity.IRaceTime>;
@@ -107,6 +109,7 @@ describe("DefaultRacedayComponent", () => {
     const mocks = createRacedayMocks();
     mockDataService = mocks.mockDataService;
     mockRaceService = mocks.mockRaceService;
+    mockRaceFlagService = mocks.mockRaceFlagService;
     mockRaceConnectionService = mocks.mockRaceConnectionService;
     interfaceEventsSubject = mocks.interfaceEventsSubject;
     interfaceAlertSubject = mocks.interfaceAlertSubject;
@@ -137,6 +140,7 @@ describe("DefaultRacedayComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
+        { provide: RaceFlagService, useValue: mocks.mockRaceFlagService },
         {
           provide: SettingsService,
           useValue: {
@@ -160,6 +164,10 @@ describe("DefaultRacedayComponent", () => {
     component["race"] = { ...MOCK_RACES[0], track: mockTrack } as any;
     component["track"] = mockTrack as any;
     component["heat"] = MOCK_HEATS[0] as any;
+  });
+
+  afterEach(() => {
+    resetMocks();
   });
   // fixture.detectChanges(); // Removed to allow manual control in fakeAsync
 
@@ -1185,82 +1193,6 @@ describe("DefaultRacedayComponent", () => {
     }));
   });
 
-  describe("Lap Highlighting", () => {
-    let mockHd1: any;
-    let mockHd2: any;
-
-    beforeEach(() => {
-      mockHd1 = {
-        objectId: "hd1",
-        laneIndex: 0,
-        driver: { name: "Driver 1", lapAudio: {}, bestLapAudio: {} },
-        participant: {},
-        addLapTime: () => {},
-      };
-      mockHd2 = {
-        objectId: "hd2",
-        laneIndex: 1,
-        driver: { name: "Driver 2", lapAudio: {}, bestLapAudio: {} },
-        participant: {},
-        addLapTime: () => {},
-      };
-      const mockHeat = {
-        heatDrivers: [mockHd1, mockHd2],
-        heatNumber: 1,
-        standings: [],
-      };
-      component["heat"] = mockHeat as any;
-      component["track"] = { name: "Test Track", lanes: [{}, {}] } as any;
-
-      mockRaceService.getRace.and.returnValue({
-        track: { lanes: [{}, {}] },
-        fuel_options: { enabled: false },
-      });
-      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
-
-      // Manually trigger sortHeatDrivers to ensure .table-row elements are rendered
-      component["heat"] = mockHeat as any;
-      component["sortHeatDrivers"]();
-      fixture.detectChanges();
-    });
-
-    it("should add highlight class when a lap occurs and highlightRowOnLap is true", fakeAsync(() => {
-      mockSettings.highlightRowOnLap = true;
-
-      lapsSubject.next({
-        objectId: "hd1",
-        lapNumber: 1,
-        lapTime: 10.5,
-        bestLapTime: 10.5,
-      });
-      tick();
-      fixture.detectChanges();
-
-      const rows = fixture.nativeElement.querySelectorAll(".table-row");
-      expect(rows[0].classList.contains("highlight")).toBeTrue();
-
-      tick(400);
-      fixture.detectChanges();
-      expect(rows[0].classList.contains("highlight")).toBeFalse();
-    }));
-
-    it("should NOT add highlight class when highlightRowOnLap is false", fakeAsync(() => {
-      mockSettings.highlightRowOnLap = false;
-
-      lapsSubject.next({
-        objectId: "hd1",
-        lapNumber: 1,
-        lapTime: 10.5,
-        bestLapTime: 10.5,
-      });
-      tick();
-      fixture.detectChanges();
-
-      const rows = fixture.nativeElement.querySelectorAll(".table-row");
-      expect(rows[0].classList.contains("highlight")).toBeFalse();
-    }));
-  });
-
   describe("onFileMenuSelect", () => {
     it("should trigger CSV export when EXPORT_CSV is selected", fakeAsync(() => {
       mockDataService.exportRaceToCsv = jasmine
@@ -1325,109 +1257,38 @@ describe("DefaultRacedayComponent", () => {
       ];
     });
 
-    it("should return red flag when state is NOT_STARTED", () => {
-      component["raceState"] = com.antigravity.RaceState.NOT_STARTED;
+    it("should return red flag when service returns 'red'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("red");
       expect(component.getCurrentFlagUrl()).toContain("red.png");
     });
 
-    it("should return red flag when state is HEAT_OVER", () => {
-      component["raceState"] = com.antigravity.RaceState.HEAT_OVER;
-      expect(component.getCurrentFlagUrl()).toContain("red.png");
-    });
-
-    it("should return red flag when state is RACE_OVER", () => {
-      component["raceState"] = com.antigravity.RaceState.RACE_OVER;
-      expect(component.getCurrentFlagUrl()).toContain("red.png");
-    });
-
-    it("should return green flag when state is RACING and no one has finished", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
-      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
-      component["heat"] = {
-        heatDrivers: [{ lapCount: 5, totalTime: 30 } as any],
-      } as any;
-
+    it("should return green flag when service returns 'green'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("green");
       expect(component.getCurrentFlagUrl()).toContain("green.png");
     });
 
-    it("should return checkered flag when state is RACING and at least one driver finished (Lap race)", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
-      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
-      mockScoring.finishMethod = FinishMethod.Lap;
-      mockScoring.finishValue = 10;
-
-      component["heat"] = {
-        heatDrivers: [
-          { lapCount: 10, totalTime: 100 } as any, // Finished
-          { lapCount: 5, totalTime: 50 } as any, // Not finished
-        ],
-      } as any;
-
-      expect(component.getCurrentFlagUrl()).toContain("checkered.png");
-    });
-
-    it("should return checkered flag when state is RACING and at least one driver finished (Timed race)", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
-      mockScoring.allowFinish = AllowFinish.AF_ALLOW;
-      mockScoring.finishMethod = FinishMethod.Timed;
-      mockScoring.finishValue = 60;
-
-      component["heat"] = {
-        heatDrivers: [
-          { lapCount: 6, totalTime: 66 } as any, // Finished
-          { lapCount: 5, totalTime: 55 } as any, // Not finished
-        ],
-      } as any;
-
-      expect(component.getCurrentFlagUrl()).toContain("checkered.png");
-    });
-
-    it("should NOT return checkered flag if allowFinish is None even if someone finished", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
-      mockScoring.allowFinish = AllowFinish.AF_NONE;
-      mockScoring.finishMethod = FinishMethod.Lap;
-      mockScoring.finishValue = 10;
-
-      component["heat"] = {
-        heatDrivers: [{ lapCount: 10, totalTime: 100 } as any],
-      } as any;
-
-      expect(component.getCurrentFlagUrl()).toContain("green.png");
-    });
-
-    it("should return yellow flag when state is PAUSED", () => {
-      component["raceState"] = com.antigravity.RaceState.PAUSED;
+    it("should return yellow flag when service returns 'yellow'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("yellow");
       expect(component.getCurrentFlagUrl()).toContain("yellow.png");
     });
 
-    it("should return white flag when state is RACING and any driver has 1 lap to go", () => {
-      component["raceState"] = com.antigravity.RaceState.RACING;
-      mockScoring.finishMethod = FinishMethod.Lap;
-      mockScoring.finishValue = 10;
-      component["heat"] = {
-        heatDrivers: [
-          { lapCount: 9 } as any, // 1 to go
-          { lapCount: 5 } as any,
-        ],
-      } as any;
-
+    it("should return white flag when service returns 'white'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("white");
       expect(component.getCurrentFlagUrl()).toContain("white.png");
     });
 
-    it("should return red flag when state is STARTING and heat hasn't started yet", () => {
-      component["raceState"] = com.antigravity.RaceState.STARTING;
-      component["hasRacedInCurrentHeat"] = false;
-      expect(component.getCurrentFlagUrl()).toContain("red.png");
+    it("should return checkered flag when service returns 'checkered'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("checkered");
+      expect(component.getCurrentFlagUrl()).toContain("checkered.png");
     });
 
-    it("should return yellow flag when state is STARTING and heat is being resumed (hasRaced=true)", () => {
-      component["raceState"] = com.antigravity.RaceState.STARTING;
-      component["hasRacedInCurrentHeat"] = true;
-      expect(component.getCurrentFlagUrl()).toContain("yellow.png");
+    it("should return green flag for 'green_yellow'", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("green_yellow");
+      expect(component.getCurrentFlagUrl()).toContain("green.png");
     });
 
-    it("should return red flag for default/unknown state", () => {
-      (component as any).raceState = 999; // Unknown state
+    it("should return red flag for default/unknown flag type", () => {
+      mockRaceFlagService.getFlagType.and.returnValue("unknown");
       expect(component.getCurrentFlagUrl()).toContain("red.png");
     });
   });

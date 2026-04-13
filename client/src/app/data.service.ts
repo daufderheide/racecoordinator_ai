@@ -212,10 +212,12 @@ export class DataService {
           ledStrings:
             config.ledStrings?.map((ls) =>
               com.antigravity.LedString.create({
-                stringNum: ls.stringNum,
+                pin: ls.pin,
                 leds: ls.leds,
+                numUsedLeds: ls.numUsedLeds,
+                addressableLeds: ls.addressableLeds,
                 brightness: ls.brightness,
-                yellowFlagFlashRate: ls.yellowFlagFlashRate,
+                flagFlashRate: ls.flagFlashRate,
                 ledLaneColorOverrides: ls.ledLaneColorOverrides,
               }),
             ) || [],
@@ -277,10 +279,12 @@ export class DataService {
         ledStrings:
           config.ledStrings?.map((ls) =>
             com.antigravity.LedString.create({
-              stringNum: ls.stringNum,
+              pin: ls.pin,
               leds: ls.leds,
+              numUsedLeds: ls.numUsedLeds,
+              addressableLeds: ls.addressableLeds,
               brightness: ls.brightness,
-              yellowFlagFlashRate: ls.yellowFlagFlashRate,
+              flagFlashRate: ls.flagFlashRate,
               ledLaneColorOverrides: ls.ledLaneColorOverrides,
             }),
           ) || [],
@@ -775,6 +779,9 @@ export class DataService {
   private raceStateSubject = new BehaviorSubject<com.antigravity.RaceState>(
     com.antigravity.RaceState.UNKNOWN_STATE,
   );
+  private flagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
+    com.antigravity.RaceFlag.UNKNOWN_FLAG,
+  );
 
   private shouldSubscribeToRaceData = false;
 
@@ -850,27 +857,42 @@ export class DataService {
 
         if (raceData.raceTime) {
           this.raceTimeSubject.next(raceData.raceTime);
-        } else if (raceData.lap) {
+        }
+        if (raceData.lap) {
           this.lapSubject.next(raceData.lap);
-        } else if (raceData.reactionTime) {
+        }
+        if (raceData.reactionTime) {
           this.reactionTimeSubject.next(raceData.reactionTime);
-        } else if (raceData.standingsUpdate) {
+        }
+        if (raceData.standingsUpdate) {
           this.standingsSubject.next(raceData.standingsUpdate);
-        } else if (raceData.overallStandingsUpdate) {
+        }
+        if (raceData.overallStandingsUpdate) {
           this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        } else if (raceData.raceState) {
+        }
+        if (raceData.raceState) {
           console.log("WS: Received RaceState", raceData.raceState);
           this.raceStateSubject.next(raceData.raceState);
-        } else if (raceData.race) {
+        }
+        if (raceData.race) {
           console.log("WS: Received Race", raceData.race);
           this.raceUpdateSubject.next(raceData.race);
           if (raceData.race.state) {
             this.raceStateSubject.next(raceData.race.state);
           }
-        } else if (raceData.carData) {
+          if (raceData.race.flag) {
+            this.flagSubject.next(raceData.race.flag);
+          }
+        }
+        if (raceData.carData) {
           this.carDataSubject.next(raceData.carData);
-        } else if (raceData.segment) {
+        }
+        if (raceData.segment) {
           this.segmentSubject.next(raceData.segment);
+        }
+        if (raceData.flag) {
+          console.log("WS: Received RaceFlag", raceData.flag);
+          this.flagSubject.next(raceData.flag);
         }
       } catch (e) {
         console.error("Error parsing race data message", e);
@@ -970,6 +992,10 @@ export class DataService {
 
   public getRaceState(): Observable<com.antigravity.RaceState> {
     return this.raceStateSubject.asObservable();
+  }
+
+  public getRaceFlag(): Observable<com.antigravity.RaceFlag> {
+    return this.flagSubject.asObservable();
   }
 
   public getCarData(): Observable<com.antigravity.ICarData> {

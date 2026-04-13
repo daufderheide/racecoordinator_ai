@@ -22,10 +22,11 @@ public class ArduinoConfigConverter {
             .map(
                 ls ->
                     new LedString(
-                        ls.getStringNum(),
+                        ls.getPin(),
                         new ArrayList<>(ls.getLedsList()),
                         ls.getBrightness(),
-                        ls.getYellowFlagFlashRate(),
+                        ls.getLedType(),
+                        ls.getFlagFlashRate(),
                         new ArrayList<>(ls.getLedLaneColorOverridesList())))
             .collect(Collectors.toList());
 
@@ -79,11 +80,12 @@ public class ArduinoConfigConverter {
       for (LedString ls : config.ledStrings) {
         com.antigravity.proto.LedString.Builder lsBuilder =
             com.antigravity.proto.LedString.newBuilder()
-                .setStringNum(ls.stringNum)
+                .setPin(ls.pin)
                 .setNumUsedLeds(ls.numUsedLeds)
                 .setAddressableLeds(ls.addressableLeds)
                 .setBrightness(ls.brightness)
-                .setYellowFlagFlashRate(ls.yellowFlagFlashRate);
+                .setLedType(ls.ledType)
+                .setFlagFlashRate(ls.flagFlashRate);
 
         if (ls.leds != null) {
           lsBuilder.addAllLeds(ls.leds);

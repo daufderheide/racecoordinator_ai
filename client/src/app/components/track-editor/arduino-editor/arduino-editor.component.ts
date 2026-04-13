@@ -64,12 +64,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   liveVoltages: { [key: number]: number | undefined } = {};
   maxVoltagesSeen: { [key: number]: number | undefined } = {};
   isVoltageLinked: boolean = false;
+  isLedStringsLinked: boolean = true;
   ledStringExpanded: boolean[] = [];
   activeRgbLedStates: { [key: string]: boolean } = {};
+  ledTypes: PinAction[] = [];
 
   private interfaceEventsSubscription?: Subscription;
   private portPollingSubscription?: Subscription;
   private pinActivityTimers: { [key: string]: any } = {};
+  private colorDebounceTimer: any = null;
 
   resetMaxSeenAll() {
     this.maxVoltagesSeen = {};
@@ -101,7 +104,26 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       }
     }
 
+    // Load link states
+    const savedVoltageLink = localStorage.getItem(
+      `rc.arduino-editor.voltage-linked.${this.index}`,
+    );
+    if (savedVoltageLink !== null) {
+      this.isVoltageLinked = savedVoltageLink === "true";
+    }
+
+    const savedLedLink = localStorage.getItem(
+      `rc.arduino-editor.led-strings-linked.${this.index}`,
+    );
+    if (savedLedLink !== null) {
+      this.isLedStringsLinked = savedLedLink === "true";
+    }
+
     if (this.config && this.config.ledStrings) {
+      this.config.ledStrings.forEach((ls) => {
+        if (ls.ledType === undefined) ls.ledType = 0;
+      });
+
       // Default to open (true)
       this.ledStringExpanded = new Array(this.config.ledStrings.length).fill(
         true,
@@ -127,6 +149,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
     this.updatePinActions();
     this.updateLedBehaviors();
+    this.updateLedTypes();
 
     // Subscribe to Interface Events for status and pin activity
     this.interfaceEventsSubscription = this.dataService
@@ -134,60 +157,60 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (event) => {
           if (event.lap) {
-            this.triggerPinActivity(event.lap.interfaceId ?? -1);
+            if (event.lap.interfaceIndex === this.index) {
+              this.triggerPinActivity(event.lap.interfaceId ?? -1);
+            }
           } else if (event.segment) {
-            this.triggerPinActivity(event.segment.interfaceId ?? -1);
+            if (event.segment.interfaceIndex === this.index) {
+              this.triggerPinActivity(event.segment.interfaceId ?? -1);
+            }
           } else if (event.callbutton) {
-            // TODO(aufderheide): Because we only have the lane here, we don't
-            // actually know which pin triggered the callbutton.  For now, we'll
-            // just find any behavior that matches the lane.
+            if (event.callbutton.interfaceIndex === this.index) {
+              const lane = event.callbutton.lane;
+              // Trigger activity for master call button or specific lane call button
+              const isMega = this.config?.hardwareType === 1;
+              const digitalCount = isMega ? 54 : 14;
+              const analogCount = isMega ? 16 : 6;
 
-            const lane = event.callbutton.lane;
-            // Trigger activity for master call button or specific lane call button
-            const isMega = this.config?.hardwareType === 1;
-            const digitalCount = isMega ? 54 : 14;
-            const analogCount = isMega ? 16 : 6;
+              const checkPin = (isDigital: boolean, pinCount: number) => {
+                for (let i = 0; i < pinCount; i++) {
+                  if (isDigital && i < 2) continue; // Skip D0, D1
+                  const behavior = this.getPinBehavior(isDigital, i);
+                  if (
+                    behavior ===
+                      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
+                    behavior ===
+                      com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE +
+                        (lane ?? 0)
+                  ) {
+                    this.triggerPinActivity(isDigital ? i : i + 1000);
+                  }
+                }
+              };
 
-            let pinFound = false;
+              checkPin(true, digitalCount);
+              checkPin(false, analogCount);
+            }
+          } else if (event.status) {
+            if (event.status.interfaceIndex === this.index) {
+              this.interfaceStatus = event.status.status as number;
+              this.cdr.detectChanges();
+            }
+          } else if (event.analogData) {
+            if (event.analogData.interfaceIndex === this.index) {
+              const pin = event.analogData.pin ?? -1;
+              const value = event.analogData.value ?? 0;
+              this.liveVoltages[pin] = value;
 
-            const checkPin = (isDigital: boolean, pinCount: number) => {
-              for (let i = 0; i < pinCount; i++) {
-                if (isDigital && i < 2) continue; // Skip D0, D1
-                const behavior = this.getPinBehavior(isDigital, i);
-                if (
-                  behavior ===
-                    com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON ||
-                  behavior ===
-                    com.antigravity.PinBehavior.BEHAVIOR_CALL_BUTTON_BASE +
-                      (lane ?? 0)
-                ) {
-                  // Determine interface ID logic:
-                  // in triggerPinActivity, interfaceId is passed and it reconstructs 'D' + id or 'A' + (id - 1000)
-                  // So if digital, pass i. If analog, pass i + 1000.
-                  this.triggerPinActivity(isDigital ? i : i + 1000);
-                  pinFound = true;
+              const lane = this.getLaneForAnalogPin(pin);
+              if (lane !== -1) {
+                const currentMax = this.maxVoltagesSeen[lane] ?? 0;
+                if (value > currentMax) {
+                  this.maxVoltagesSeen[lane] = value;
                 }
               }
-            };
-
-            checkPin(true, digitalCount);
-            checkPin(false, analogCount);
-          } else if (event.status) {
-            this.interfaceStatus = event.status.status as number;
-            this.cdr.detectChanges();
-          } else if (event.analogData) {
-            const pin = event.analogData.pin ?? -1;
-            const value = event.analogData.value ?? 0;
-            this.liveVoltages[pin] = value;
-
-            const lane = this.getLaneForAnalogPin(pin);
-            if (lane !== -1) {
-              const currentMax = this.maxVoltagesSeen[lane] ?? 0;
-              if (value > currentMax) {
-                this.maxVoltagesSeen[lane] = value;
-              }
+              this.cdr.detectChanges();
             }
-            this.cdr.detectChanges();
           }
         },
       });
@@ -206,6 +229,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.translationService.getCurrentLanguage().subscribe(() => {
       this.updatePinActions();
       this.updateLedBehaviors();
+      this.updateLedTypes();
     });
 
     this.updateArduinoConfig();
@@ -217,6 +241,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     Object.values(this.pinActivityTimers).forEach((timer) =>
       clearTimeout(timer),
     );
+    if (this.colorDebounceTimer) {
+      clearTimeout(this.colorDebounceTimer);
+    }
     this.dataService.closeInterface().subscribe({
       next: () => console.log("Interface closed successfully"),
       error: (err) => console.error("Error closing interface", err),
@@ -237,6 +264,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (!this.config) return;
 
     this.config.hardwareType = newType;
+    this.updateLedTypes();
 
     if (newType === 0) {
       // Uno
@@ -307,13 +335,17 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     let changed = false;
 
     if (isDigital) {
-      if (this.config.digitalIds[pinIndex] !== val) {
+      const oldVal = this.config.digitalIds[pinIndex];
+      if (oldVal !== val) {
         this.config.digitalIds[pinIndex] = val;
+        this.handlePinBehaviorChange(pinIndex, true, oldVal, val);
         changed = true;
       }
     } else {
-      if (this.config.analogIds[pinIndex] !== val) {
+      const oldVal = this.config.analogIds[pinIndex];
+      if (oldVal !== val) {
         this.config.analogIds[pinIndex] = val;
+        this.handlePinBehaviorChange(pinIndex, false, oldVal, val);
         changed = true;
       }
     }
@@ -513,6 +545,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     )
       return `voltage_${val - com.antigravity.PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE}`;
 
+    if (val === (com.antigravity.PinBehavior as any).BEHAVIOR_LED_RGB_STRING)
+      return "led_string";
+
     return "";
   }
 
@@ -545,14 +580,34 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     } else if (action.startsWith("pitout_")) {
       const laneIndex = parseInt(action.split("_")[1], 10);
       val = com.antigravity.PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
-    } else if (action.startsWith("pitinout_")) {
-      const laneIndex = parseInt(action.split("_")[1], 10);
-      val =
-        (com.antigravity.PinBehavior as any).BEHAVIOR_PIT_IN_OUT_BASE +
-        laneIndex;
+    } else if (action === "led_string") {
+      val = (com.antigravity.PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
+  }
+
+  private handlePinBehaviorChange(
+    pinIndex: number,
+    isDigital: boolean,
+    oldVal: number,
+    newVal: number,
+  ) {
+    if (!this.config) return;
+
+    const actualPin = isDigital ? pinIndex : pinIndex + 1000;
+    const LED_BEHAVIOR = (com.antigravity.PinBehavior as any)
+      .BEHAVIOR_LED_RGB_STRING;
+
+    // If changing FROM LedRGBString, remove the string
+    if (oldVal === LED_BEHAVIOR) {
+      this.removeLedStringByPin(actualPin);
+    }
+
+    // If changing TO LedRGBString, add a new string
+    if (newVal === LED_BEHAVIOR) {
+      this.addLedString(25, actualPin);
+    }
   }
 
   private updateLedBehaviors() {
@@ -617,6 +672,70 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.ledBehaviors = [...behaviors, ...otherBehaviors];
   }
 
+  private updateLedTypes() {
+    const allTypes = [
+      {
+        label: this.translationService.translate("AE_LED_TYPE_NEOPIXEL"),
+        value: "0",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_WS2811"),
+        value: "1",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_WS2812"),
+        value: "2",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_WS2812B"),
+        value: "3",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_TM1803"),
+        value: "4",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_TM1804"),
+        value: "5",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_TM1809"),
+        value: "6",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_APA104"),
+        value: "7",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_UCS1903"),
+        value: "8",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_UCS1903B"),
+        value: "9",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_GW6205"),
+        value: "10",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_GW6205_400"),
+        value: "11",
+      },
+      {
+        label: this.translationService.translate("AE_LED_TYPE_OTHER"),
+        value: "12",
+      },
+    ];
+
+    if (this.config?.hardwareType === 0) {
+      // Uno/Nano - Only keep NEOPIXEL and OTHER to save Flash/RAM in the sketch
+      this.ledTypes = allTypes.filter((t) => ["0", "12"].includes(t.value));
+    } else {
+      this.ledTypes = allTypes;
+    }
+  }
+
   private getLedBaseTranslationKey(behaviorKey: string): string {
     switch (behaviorKey) {
       case "RGB_LED_BEHAVIOR_HEAT_LEADER_BASE":
@@ -638,20 +757,27 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.requestLedStringDialog.emit();
   }
 
-  addLedString(numLeds: number) {
+  addLedString(numLeds: number, pin: number = 0) {
     if (!this.config) return;
     if (!this.config.ledStrings) this.config.ledStrings = [];
 
+    // Ensure we don't already have a string for this pin
+    if (pin !== 0) {
+      const existing = this.config.ledStrings.find((s) => s.pin === pin);
+      if (existing) return;
+    }
+
     const n = Number(numLeds);
     const newString: LedString = {
-      stringNum: this.config.ledStrings.length,
+      pin: pin,
       leds: new Array(n).fill(
         com.antigravity.RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED,
       ),
       numUsedLeds: 0,
       addressableLeds: 0,
       brightness: 255,
-      yellowFlagFlashRate: 5,
+      ledType: 0,
+      flagFlashRate: 5,
       ledLaneColorOverrides: this.lanes.map(
         (l) => l.background_color || "#ffffff",
       ),
@@ -663,50 +789,51 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.updateArduinoConfig();
   }
 
-  duplicateLedString(index: number, event: Event) {
-    event.stopPropagation();
-    if (!this.config || !this.config.ledStrings) return;
-    const original = this.config.ledStrings[index];
-    const duplicate: LedString = JSON.parse(JSON.stringify(original));
+  getPinLabel(pin: number): string {
+    if (
+      pin === 0 &&
+      (!this.config?.ledStrings ||
+        !this.config.ledStrings.some((s) => s.pin === 0))
+    ) {
+      return "";
+    }
+    const isDigital = pin < 1000;
+    const index = isDigital ? pin : pin - 1000;
+    return (isDigital ? "D" : "A") + index;
+  }
 
-    // Insert after original
-    this.config.ledStrings.splice(index + 1, 0, duplicate);
-    this.ledStringExpanded.splice(index + 1, 0, this.ledStringExpanded[index]);
-    this.updateStringNums();
-    this.saveState();
-    this.updateArduinoConfig();
+  removeLedStringByPin(pin: number) {
+    if (!this.config || !this.config.ledStrings) return;
+    const index = this.config.ledStrings.findIndex((s) => s.pin === pin);
+    if (index !== -1) {
+      this.config.ledStrings.splice(index, 1);
+      this.ledStringExpanded.splice(index, 1);
+      this.saveState();
+      this.updateArduinoConfig();
+    }
   }
 
   removeLedString(index: number, event: Event) {
     event.stopPropagation();
     if (!this.config || !this.config.ledStrings) return;
+
+    // Reset pin behavior if this string was linked to a pin
+    const pin = this.config.ledStrings[index].pin;
+    if (pin !== 0) {
+      const isDigital = pin < 1000;
+      const pinIndex = isDigital ? pin : pin - 1000;
+      const unused = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      if (isDigital) {
+        this.config.digitalIds[pinIndex] = unused;
+      } else {
+        this.config.analogIds[pinIndex] = unused;
+      }
+    }
+
     this.config.ledStrings.splice(index, 1);
     this.ledStringExpanded.splice(index, 1);
-    this.updateStringNums();
     this.saveState();
     this.updateArduinoConfig();
-  }
-
-  onLedStringDropped(event: CdkDragDrop<LedString[]>) {
-    if (!this.config || !this.config.ledStrings) return;
-    moveItemInArray(
-      this.config.ledStrings,
-      event.previousIndex,
-      event.currentIndex,
-    );
-    moveItemInArray(
-      this.ledStringExpanded,
-      event.previousIndex,
-      event.currentIndex,
-    );
-    this.updateStringNums();
-    this.saveState();
-    this.updateArduinoConfig();
-  }
-
-  private updateStringNums() {
-    if (!this.config || !this.config.ledStrings) return;
-    this.config.ledStrings.forEach((s, i) => (s.stringNum = i));
   }
 
   updateLedBehavior(stringIndex: number, ledIndex: number, behavior: any) {
@@ -729,6 +856,96 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   updateLedString() {
     this.updateArduinoConfig();
+  }
+
+  toggleVoltageLink() {
+    this.isVoltageLinked = !this.isVoltageLinked;
+    localStorage.setItem(
+      `rc.arduino-editor.voltage-linked.${this.index}`,
+      this.isVoltageLinked.toString(),
+    );
+  }
+
+  toggleLedStringsLink() {
+    this.isLedStringsLinked = !this.isLedStringsLinked;
+    localStorage.setItem(
+      `rc.arduino-editor.led-strings-linked.${this.index}`,
+      this.isLedStringsLinked.toString(),
+    );
+  }
+
+  onLedStringBrightnessChange(stringIdx: number, val: any) {
+    if (!this.config?.ledStrings) return;
+    const brightness = parseInt(val, 10);
+    this.config.ledStrings[stringIdx].brightness = brightness;
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((ls, i) => {
+        if (i !== stringIdx) ls.brightness = brightness;
+      });
+    }
+    this.updateArduinoConfig();
+  }
+
+  onLedStringLedTypeChange(stringIdx: number, val: any) {
+    if (!this.config?.ledStrings) return;
+    const ledType = parseInt(val, 10);
+    this.config.ledStrings[stringIdx].ledType = ledType;
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((ls, i) => {
+        if (i !== stringIdx) ls.ledType = ledType;
+      });
+    }
+    this.updateArduinoConfig();
+  }
+
+  onLedStringFlashRateChange(stringIdx: number, val: any) {
+    if (!this.config?.ledStrings) return;
+    const rate = parseFloat(val);
+    this.config.ledStrings[stringIdx].flagFlashRate = rate;
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((ls, i) => {
+        if (i !== stringIdx) ls.flagFlashRate = rate;
+      });
+    }
+    this.updateLedString();
+  }
+
+  onLedStringLaneColorChange(
+    stringIdx: number,
+    laneIdx: number,
+    color: string,
+  ) {
+    if (!this.config?.ledStrings) return;
+    const sourceString = this.config.ledStrings[stringIdx];
+
+    // Ensure array is large enough for source string
+    while (sourceString.ledLaneColorOverrides.length <= laneIdx) {
+      sourceString.ledLaneColorOverrides.push("#ffffff");
+    }
+    sourceString.ledLaneColorOverrides[laneIdx] = color;
+
+    if (this.isLedStringsLinked) {
+      this.config.ledStrings.forEach((ls, i) => {
+        if (i !== stringIdx) {
+          if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
+          while (ls.ledLaneColorOverrides.length <= laneIdx) {
+            ls.ledLaneColorOverrides.push("#ffffff");
+          }
+          ls.ledLaneColorOverrides[laneIdx] = color;
+        }
+      });
+    }
+
+    // Use debounce for color changes to prevent re-renders from closing the color picker
+    // We don't call updateLedString() immediately here to avoid UI interruptions during dragging
+    clearTimeout(this.colorDebounceTimer);
+    this.colorDebounceTimer = setTimeout(() => {
+      this.colorDebounceTimer = null;
+      this.updateLedString();
+    }, 400);
   }
 
   private updatePinActions() {
@@ -806,6 +1023,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         }),
         value: `pitinout_${i}`,
       });
+    });
+
+    otherActions.push({
+      label: this.translationService.translate("AE_PIN_LED_RGB_STRING"),
+      value: "led_string",
     });
 
     // Sort other actions alphabetically by label
@@ -1109,5 +1331,17 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   removeInterface(event: Event) {
     event.stopPropagation();
     this.remove.emit();
+  }
+
+  trackByLedString(index: number, ls: LedString): string | number {
+    return ls.pin !== 0 ? ls.pin : index;
+  }
+
+  trackByLed(index: number): number {
+    return index;
+  }
+
+  trackByLane(index: number, lane: Lane): string {
+    return lane ? lane.entity_id : index.toString();
   }
 }

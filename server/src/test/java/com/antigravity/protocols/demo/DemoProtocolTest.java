@@ -263,4 +263,41 @@ public class DemoProtocolTest {
     assertEquals("Should have completed the lap", 1, segmentListener.laps.size());
     assertEquals(5.4, segmentListener.laps.get(0), 0.001);
   }
+
+  @Test
+  public void testInterfaceIndexReporting() {
+    // Create a listener that also tracks interfaceIndex
+    final int[] lastStatusIndex = {-1};
+    final int[] lastLapIndex = {-1};
+    MockProtocolListener indexListener =
+        new MockProtocolListener() {
+          @Override
+          public void onInterfaceStatus(
+              com.antigravity.proto.InterfaceStatus status, int interfaceIndex) {
+            super.onInterfaceStatus(status, interfaceIndex);
+            lastStatusIndex[0] = interfaceIndex;
+          }
+
+          @Override
+          public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
+            super.onLap(lane, lapTime, interfaceId, interfaceIndex);
+            lastLapIndex[0] = interfaceIndex;
+          }
+        };
+
+    TestableDemo indexDemo = new TestableDemo(2, scheduler, new MockRandom(), false);
+    indexDemo.setListener(indexListener);
+    indexDemo.setInterfaceIndex(12);
+    indexDemo.open();
+
+    // Trigger status report (Demo sends it on open via statusScheduler)
+    scheduler.tick();
+    assertEquals("Status interfaceIndex should be 12", 12, lastStatusIndex[0]);
+
+    // Start timer and generate a lap
+    indexDemo.startTimer();
+    indexDemo.advanceTime(1000);
+    scheduler.tick();
+    assertEquals("Lap interfaceIndex should be 12", 12, lastLapIndex[0]);
+  }
 }

@@ -40,7 +40,7 @@ module.exports = function (config) {
   var isAgent = !!process.env.ANTIGRAVITY_AGENT;
 
   var chromeFlags = [
-    isCI ? "--headless=new" : "--headless",
+    isCI || isAgent ? "--headless=new" : "--headless",
     "--no-sandbox",
     "--disable-gpu",
     "--disable-dev-shm-usage",
@@ -90,10 +90,7 @@ module.exports = function (config) {
     ],
     client: {
       jasmine: {
-        // you can add configuration options for Jasmine here
-        // the possible options are listed at https://jasmine.github.io/api/edge/Configuration.html
-        // for example, you can disable the random execution with `random: false`
-        // or set a specific seed with `seed: 4321`
+        random: false,
       },
       clearContext: false, // leave Jasmine Spec Runner output visible in browser
     },

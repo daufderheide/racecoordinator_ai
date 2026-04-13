@@ -55,6 +55,11 @@ export class RaceConnectionService implements OnDestroy {
   );
   raceState$ = this.raceStateSubject.asObservable();
 
+  private raceFlagSubject = new BehaviorSubject<com.antigravity.RaceFlag>(
+    com.antigravity.RaceFlag.UNKNOWN_FLAG,
+  );
+  raceFlag$ = this.raceFlagSubject.asObservable();
+
   // Watchdog variables
   private noStatusWatchdog: any;
   private disconnectedTimeout: any;
@@ -228,6 +233,12 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions.push(
       this.dataService.getRaceState().subscribe((state) => {
         this.raceStateSubject.next(state);
+      }),
+    );
+
+    this.subscriptions.push(
+      this.dataService.getRaceFlag().subscribe((flag) => {
+        this.raceFlagSubject.next(flag);
       }),
     );
 

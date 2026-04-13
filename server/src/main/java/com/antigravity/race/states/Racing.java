@@ -3,13 +3,12 @@ package com.antigravity.race.states;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
-import com.antigravity.proto.CarData;
-import com.antigravity.proto.RaceData;
-import com.antigravity.proto.RaceTime;
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,6 +22,61 @@ public class Racing implements IRaceState {
 
   private Race race;
   private HeatExecutionManager executionManager;
+  private boolean[] previousRefuelingState;
+  private int[] previousFuelLevels;
+  private double previousHeatProgress = -1.0;
+  private RaceFlag previousFlag = RaceFlag.UNKNOWN_FLAG;
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    if (race == null || race.getRaceModel() == null) return RaceFlag.GREEN;
+
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring == null) return RaceFlag.GREEN;
+
+    List<DriverHeatData> heatDrivers = race.getCurrentHeat().getDrivers();
+    if (heatDrivers == null) return RaceFlag.GREEN;
+
+    // Checkured flag if any driver has finished (and race allows finishing)
+    if (scoring.getAllowFinish() != AllowFinish.None) {
+      for (int i = 0; i < heatDrivers.size(); i++) {
+        DriverHeatData hd = heatDrivers.get(i);
+        if (isDriverFinished(i, hd, scoring)) {
+          return RaceFlag.CHECKERED;
+        }
+      }
+    }
+
+    // White flag (1 lap to go) - only for Lap based races
+    if (scoring.getFinishMethod() == FinishMethod.Lap) {
+      long lapsToFinish = scoring.getFinishValue();
+      boolean anyDriverOneLapToGo = false;
+      for (DriverHeatData hd : heatDrivers) {
+        if (hd.getLapCount() == lapsToFinish - 1) {
+          anyDriverOneLapToGo = true;
+          break;
+        }
+      }
+      if (anyDriverOneLapToGo) {
+        return RaceFlag.WHITE;
+      }
+    }
+
+    return RaceFlag.GREEN;
+  }
+
+  private boolean isDriverFinished(int laneIndex, DriverHeatData hd, HeatScoring scoring) {
+    if (scoring == null || hd == null) return false;
+
+    if (scoring.getFinishMethod() == FinishMethod.Lap) {
+      return hd.getLapCount() >= scoring.getFinishValue();
+    } else if (scoring.getFinishMethod() == FinishMethod.Timed) {
+      // For timed races, they are finished if they've crossed the line after time expired
+      // This is tracked by the execution manager
+      return executionManager.getFinishedLanes().contains(laneIndex);
+    }
+    return false;
+  }
 
   @Override
   public void enter(Race race) {
@@ -58,6 +112,11 @@ public class Racing implements IRaceState {
       for (int i = 0; i < laneCount; i++) {
         race.setLanePower(true, i);
       }
+      previousRefuelingState = new boolean[laneCount];
+      previousFuelLevels = new int[laneCount];
+      for (int i = 0; i < laneCount; i++) {
+        previousFuelLevels[i] = -1;
+      }
     }
 
     System.out.println("Racing: Digital fuel enabled: " + executionManager.isDigitalFuelEnabled());
@@ -92,6 +151,22 @@ public class Racing implements IRaceState {
 
               // Handle refueling and fuel usage via the execution manager
               executionManager.processTicker(delta);
+
+              // Check for refueling state changes
+              boolean[] currentRefuelingState = executionManager.getIsRefueling();
+              if (currentRefuelingState != null && previousRefuelingState != null) {
+                for (int i = 0;
+                    i < Math.min(currentRefuelingState.length, previousRefuelingState.length);
+                    i++) {
+                  if (currentRefuelingState[i] != previousRefuelingState[i]) {
+                    race.setRefueling(i, currentRefuelingState[i]);
+                    previousRefuelingState[i] = currentRefuelingState[i];
+                  }
+                }
+              }
+
+              // Check for fuel level changes
+              syncFuelLevels();
 
               // Check finish conditions
               boolean allFinished = false;
@@ -133,13 +208,46 @@ public class Racing implements IRaceState {
                 }
               }
 
+              // Update heat progress
+              if (scoring != null) {
+                double currentProgress = 0;
+                long limit = scoring.getFinishValue();
+                if (limit > 0) {
+                  if (scoring.getFinishMethod() == FinishMethod.Timed) {
+                    currentProgress = Math.min(1.0, (limit - race.getRaceTime()) / (double) limit);
+                  } else {
+                    int maxLaps = 0;
+                    for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
+                      maxLaps = Math.max(maxLaps, driver.getLapCount());
+                    }
+                    currentProgress = Math.min(1.0, (double) maxLaps / limit);
+                  }
+                }
+
+                // Update if changed significantly or at the very end
+                if (Math.abs(currentProgress - previousHeatProgress) >= 0.01
+                    || (currentProgress >= 1.0 && previousHeatProgress < 1.0)) {
+                  race.setHeatProgress(currentProgress);
+                  previousHeatProgress = currentProgress;
+                }
+              }
+
+              // Check for flag changes
+              RaceFlag currentFlag = getFlagType(race);
+              if (currentFlag != previousFlag) {
+                race.broadcastFlag(currentFlag);
+                previousFlag = currentFlag;
+              }
+
               // Broadcast RaceTime message wrapped in RaceData
               // Ensure we don't send negative time for display if finished
               float displayTime = Math.max(0, race.getRaceTime());
 
-              RaceTime raceTimeMsg = RaceTime.newBuilder().setTime(displayTime).build();
+              com.antigravity.proto.RaceTime raceTimeMsg =
+                  com.antigravity.proto.RaceTime.newBuilder().setTime(displayTime).build();
 
-              RaceData raceDataMsg = RaceData.newBuilder().setRaceTime(raceTimeMsg).build();
+              com.antigravity.proto.RaceData raceDataMsg =
+                  com.antigravity.proto.RaceData.newBuilder().setRaceTime(raceTimeMsg).build();
 
               race.broadcast(raceDataMsg);
 
@@ -228,8 +336,8 @@ public class Racing implements IRaceState {
 
     int lane = carData.getLane();
     // Broadcast the CarData to clients
-    CarData.Builder dataBuilder =
-        CarData.newBuilder()
+    com.antigravity.proto.CarData.Builder dataBuilder =
+        com.antigravity.proto.CarData.newBuilder()
             .setLane(carData.getLane())
             .setControllerThrottlePct(carData.getControllerThrottlePCT())
             .setCarThrottlePct(carData.getCarThrottlePCT())
@@ -249,10 +357,40 @@ public class Racing implements IRaceState {
       }
     }
 
-    CarData protoCarData = dataBuilder.build();
-    RaceData raceDataMsg = RaceData.newBuilder().setCarData(protoCarData).build();
+    com.antigravity.proto.CarData protoCarData = dataBuilder.build();
+    com.antigravity.proto.RaceData raceDataMsg =
+        com.antigravity.proto.RaceData.newBuilder().setCarData(protoCarData).build();
 
     race.broadcast(raceDataMsg);
+
+    syncFuelLevels();
+  }
+
+  private void syncFuelLevels() {
+    if (previousFuelLevels == null) {
+      return;
+    }
+    com.antigravity.models.FuelOptions fuelOptions = null;
+    if (executionManager.isAnalogFuelEnabled()) {
+      fuelOptions = race.getRaceModel().getFuelOptions();
+    } else if (executionManager.isDigitalFuelEnabled()) {
+      fuelOptions = race.getRaceModel().getDigitalFuelOptions();
+    }
+
+    if (fuelOptions != null && fuelOptions.isEnabled()) {
+      double capacity = fuelOptions.getCapacity();
+      if (capacity > 0) {
+        List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+        for (int i = 0; i < Math.min(drivers.size(), previousFuelLevels.length); i++) {
+          double currentFuel = drivers.get(i).getDriver().getFuelLevel();
+          int currentPct = (int) ((currentFuel / capacity) * 100.0);
+          if (currentPct != previousFuelLevels[i]) {
+            race.setFuelLevel(i, currentPct);
+            previousFuelLevels[i] = currentPct;
+          }
+        }
+      }
+    }
   }
 
   @Override

@@ -2,6 +2,7 @@ package com.antigravity.race.states;
 
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
@@ -17,6 +18,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class NotStarted implements IRaceState {
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    if (race == null) return RaceFlag.RED;
+
+    double autoStartTime = race.getRaceModel().getAutoStartTime();
+    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+    double elapsed = autoStartTime - race.getAutoStartRemaining();
+
+    if (autoStartWarmupTime > 0
+        && elapsed <= autoStartWarmupTime
+        && race.getAutoStartRemaining() > 0) {
+      return RaceFlag.GREEN_YELLOW;
+    }
+
+    return RaceFlag.RED;
+  }
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;

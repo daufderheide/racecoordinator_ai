@@ -1,5 +1,6 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 import java.time.OffsetDateTime;
@@ -9,6 +10,20 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class HeatOver implements IRaceState {
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    if (race == null) return RaceFlag.RED;
+
+    double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
+    double remaining = race.getAutoAdvanceRemaining();
+
+    if (warmupTime > 0 && remaining > 0 && remaining <= warmupTime) {
+      return RaceFlag.GREEN_YELLOW;
+    }
+
+    return RaceFlag.RED;
+  }
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;

@@ -8,6 +8,7 @@ import { FinishMethod } from "src/app/models/heat_scoring";
 import { com } from "src/app/proto/message";
 import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
+import { RaceFlagService } from "src/app/services/race-flag.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DriverStationComponent } from "./driver-station.component";
@@ -39,12 +40,16 @@ describe("DriverStationComponent", () => {
       "getStandingsUpdate",
       "connectToInterfaceDataSocket",
       "disconnectFromInterfaceDataSocket",
+      "getRaceFlag",
     ]);
     mockDataService.getRaceUpdate.and.returnValue(of({}));
     mockDataService.getRaceTime.and.returnValue(of(0));
     mockDataService.getLaps.and.returnValue(of(null));
     mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.getStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getRaceFlag.and.returnValue(
+      of(com.antigravity.RaceFlag.RED),
+    );
     mockDataService.serverUrl = "http://localhost";
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
@@ -96,6 +101,16 @@ describe("DriverStationComponent", () => {
     mockRaceConnectionService.raceState$ = of(
       com.antigravity.RaceState.UNKNOWN_STATE,
     );
+    mockRaceConnectionService.raceFlag$ = of(com.antigravity.RaceFlag.RED);
+
+    const mockRaceFlagService = jasmine.createSpyObj("RaceFlagService", [
+      "getFlagType",
+      "getFlagColor",
+      "getFlagNameKey",
+    ]);
+    mockRaceFlagService.getFlagType.and.returnValue("red");
+    mockRaceFlagService.getFlagColor.and.returnValue("red");
+    mockRaceFlagService.getFlagNameKey.and.returnValue("RACE_FLAG_RED");
 
     await TestBed.configureTestingModule({
       declarations: [DriverStationComponent, MockTranslatePipe],
@@ -103,6 +118,7 @@ describe("DriverStationComponent", () => {
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
+        { provide: RaceFlagService, useValue: mockRaceFlagService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
         ChangeDetectorRef,

@@ -18,6 +18,7 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.bson.types.ObjectId;
@@ -209,5 +210,154 @@ public class RacingTest {
     racing.onCarData(carData);
 
     // We'd ideally verify the broadcast message contains setRefueling(true)
+  }
+
+  @Test
+  public void testRefuelingStateChange_CallsRaceSetRefueling() throws InterruptedException {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatScoring()).thenReturn(new HeatScoring());
+
+    HeatExecutionManager manager = new HeatExecutionManager(mockRace);
+    manager.initialize(2);
+    when(mockRace.getHeatExecutionManager()).thenReturn(manager);
+
+    Track mockTrack = mock(Track.class);
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes())
+        .thenReturn(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "black", 100)));
+
+    racing.enter(mockRace);
+
+    // Simulate refueling start for Lane 0
+    manager.getIsRefueling()[0] = true;
+
+    // Wait for ticker (runs every 100ms)
+    Thread.sleep(300);
+
+    verify(mockRace).setRefueling(0, true);
+
+    // Simulate refueling stop
+    manager.getIsRefueling()[0] = false;
+    Thread.sleep(300);
+
+    verify(mockRace).setRefueling(0, false);
+
+    racing.exit(mockRace);
+  }
+
+  @Test
+  public void testFuelLevelChange_CallsRaceSetFuelLevel() throws InterruptedException {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatScoring()).thenReturn(new HeatScoring());
+
+    // Analog fuel options with capacity 100
+    com.antigravity.models.AnalogFuelOptions fuelOptions =
+        new com.antigravity.models.AnalogFuelOptions(
+            true, // enabled
+            false, // resetFuelAtHeatStart
+            false, // endHeatOnOutOfFuel
+            100.0, // capacity
+            null, // usageType (defaults to LINEAR)
+            4.0, // usageRate
+            100.0, // startLevel
+            10.0, // refuelRate
+            2.0, // pitStopDelay
+            6.0 // referenceTime
+            );
+    when(mockModel.getFuelOptions()).thenReturn(fuelOptions);
+
+    HeatExecutionManager manager = new HeatExecutionManager(mockRace);
+    manager.initialize(2);
+    when(mockRace.getHeatExecutionManager()).thenReturn(manager);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    List<DriverHeatData> drivers = new ArrayList<>();
+    drivers.add(new DriverHeatData(participants.get(0)));
+    drivers.add(new DriverHeatData(participants.get(1)));
+    when(mockHeat.getDrivers()).thenReturn(drivers);
+
+    Track mockTrack = mock(Track.class);
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes())
+        .thenReturn(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "black", 100)));
+    when(mockTrack.hasDigitalFuel()).thenReturn(false);
+
+    racing.enter(mockRace);
+
+    // Simulate fuel level change for Lane 0
+    drivers.get(0).getDriver().setFuelLevel(50.0); // 50%
+
+    // Wait for ticker (runs every 100ms)
+    Thread.sleep(300);
+
+    verify(mockRace).setFuelLevel(0, 50);
+
+    // Simulate another change
+    drivers.get(0).getDriver().setFuelLevel(25.0); // 25%
+    Thread.sleep(300);
+
+    verify(mockRace).setFuelLevel(0, 25);
+    racing.exit(mockRace);
+  }
+
+  @Test
+  public void testTickerBroadcastsFlagChanges() throws InterruptedException {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    // 3 lap race
+    HeatScoring scoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Lap,
+            3L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.Allow);
+    when(mockModel.getHeatScoring()).thenReturn(scoring);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    DriverHeatData d1 = new DriverHeatData(participants.get(0));
+    when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
+
+    HeatExecutionManager manager = new HeatExecutionManager(mockRace);
+    manager.initialize(1);
+    when(mockRace.getHeatExecutionManager()).thenReturn(manager);
+
+    racing.enter(mockRace);
+
+    // Should broadcast GREEN initially (or within first tick)
+    Thread.sleep(200);
+    verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    // Advance to 2nd lap (limit 3) -> Should be WHITE flag
+    d1.addLap(1.0);
+    d1.addLap(1.0); // Now 2 laps
+    Thread.sleep(200);
+    verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.WHITE);
+
+    // Advance to 3rd lap -> Should be CHECKERED flag
+    d1.addLap(1.0); // Now 3 laps
+    Thread.sleep(200);
+    verify(mockRace).broadcastFlag(com.antigravity.proto.RaceFlag.CHECKERED);
+
+    racing.exit(mockRace);
   }
 }

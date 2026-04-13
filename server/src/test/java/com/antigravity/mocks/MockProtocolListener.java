@@ -24,7 +24,7 @@ public class MockProtocolListener implements ProtocolListener {
     public double time;
     public int interfaceId;
 
-    public MockSegment(int lane, double time, int interfaceId) {
+    public MockSegment(int lane, double time, int interfaceId, int interfaceIndex) {
       this.lane = lane;
       this.time = time;
       this.interfaceId = interfaceId;
@@ -32,24 +32,24 @@ public class MockProtocolListener implements ProtocolListener {
   }
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
+  public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
     laps.add(lapTime);
     lastLane = lane;
     lastLapTime = lapTime;
   }
 
   @Override
-  public void onSegment(int lane, double segmentTime, int interfaceId) {
+  public void onSegment(int lane, double segmentTime, int interfaceId, int interfaceIndex) {
     lastLane = lane;
     lastSegmentTime = segmentTime;
-    segments.add(new MockSegment(lane, segmentTime, interfaceId));
+    segments.add(new MockSegment(lane, segmentTime, interfaceId, interfaceIndex));
   }
 
   @Override
-  public void onCallbutton(int lane) {}
+  public void onCallbutton(int lane, int interfaceIndex) {}
 
   @Override
-  public void onInterfaceStatus(InterfaceStatus status) {
+  public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
     lastStatus = status;
   }
 

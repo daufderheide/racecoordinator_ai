@@ -16,7 +16,7 @@ import com.antigravity.race.ClientSubscriptionManager;
 public class TestInterfaceListener implements ProtocolListener {
 
   @Override
-  public void onLap(int lane, double lapTime, int interfaceId) {
+  public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
     InterfaceEvent event =
         InterfaceEvent.newBuilder()
             .setLap(
@@ -24,13 +24,14 @@ public class TestInterfaceListener implements ProtocolListener {
                     .setLane(lane)
                     .setLapTime(lapTime)
                     .setInterfaceId(interfaceId)
+                    .setInterfaceIndex(interfaceIndex)
                     .build())
             .build();
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
   @Override
-  public void onSegment(int lane, double segmentTime, int interfaceId) {
+  public void onSegment(int lane, double segmentTime, int interfaceId, int interfaceIndex) {
     InterfaceEvent event =
         InterfaceEvent.newBuilder()
             .setSegment(
@@ -38,25 +39,34 @@ public class TestInterfaceListener implements ProtocolListener {
                     .setLane(lane)
                     .setSegmentTime(segmentTime)
                     .setInterfaceId(interfaceId)
+                    .setInterfaceIndex(interfaceIndex)
                     .build())
             .build();
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
   @Override
-  public void onCallbutton(int lane) {
+  public void onCallbutton(int lane, int interfaceIndex) {
     InterfaceEvent event =
         InterfaceEvent.newBuilder()
-            .setCallbutton(CallbuttonEvent.newBuilder().setLane(lane).build())
+            .setCallbutton(
+                CallbuttonEvent.newBuilder()
+                    .setLane(lane)
+                    .setInterfaceIndex(interfaceIndex)
+                    .build())
             .build();
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 
   @Override
-  public void onInterfaceStatus(InterfaceStatus status) {
+  public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
     InterfaceEvent event =
         InterfaceEvent.newBuilder()
-            .setStatus(InterfaceStatusEvent.newBuilder().setStatus(status).build())
+            .setStatus(
+                InterfaceStatusEvent.newBuilder()
+                    .setStatus(status)
+                    .setInterfaceIndex(interfaceIndex)
+                    .build())
             .build();
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }

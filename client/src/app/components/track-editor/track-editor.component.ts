@@ -486,11 +486,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   private isLedStringsEqual(s1: LedString, s2: LedString): boolean {
     if (!s1 || !s2) return s1 === s2;
     if (
-      s1.stringNum !== s2.stringNum ||
+      s1.pin !== s2.pin ||
       s1.numUsedLeds !== s2.numUsedLeds ||
       s1.addressableLeds !== s2.addressableLeds ||
       s1.brightness !== s2.brightness ||
-      s1.yellowFlagFlashRate !== s2.yellowFlagFlashRate
+      s1.flagFlashRate !== s2.flagFlashRate
     ) {
       return false;
     }

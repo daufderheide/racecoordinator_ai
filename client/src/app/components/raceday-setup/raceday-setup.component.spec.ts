@@ -11,6 +11,7 @@ import { AnalyticsService } from "src/app/analytics.service";
 import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
+import { com } from "src/app/proto/message";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -57,6 +58,7 @@ describe("RacedaySetupComponent", () => {
       "setServerAddress",
       "getServerVersion",
       "getServerIp",
+      "getRaceFlag",
     ]);
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
@@ -95,6 +97,9 @@ describe("RacedaySetupComponent", () => {
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of("0.0.0"));
     mockDataService.getServerIp.and.returnValue(of("192.168.1.100"));
+    mockDataService.getRaceFlag.and.returnValue(
+      of(com.antigravity.RaceFlag.RED),
+    );
     mockSettingsService.getSettings.and.returnValue(new Settings());
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     mockTranslationService.translate.and.callFake((key: string) => key);

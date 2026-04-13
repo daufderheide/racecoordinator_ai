@@ -1,14 +1,8 @@
-import { Injectable } from "@angular/core";
-import {
-  AllowFinish,
-  FinishMethod,
-  HeatScoring,
-} from "src/app/models/heat_scoring";
+import { Injectable, OnDestroy } from "@angular/core";
+import { Subscription } from "rxjs";
 import { com } from "src/app/proto/message";
-import { DriverHeatData } from "src/app/race/driver_heat_data";
-import { Heat } from "src/app/race/heat";
 
-import { RaceService } from "./race.service";
+import { RaceConnectionService } from "./race-connection.service";
 
 export type FlagType =
   | "red"
@@ -21,66 +15,43 @@ export type FlagType =
 @Injectable({
   providedIn: "root",
 })
-export class RaceFlagService {
-  constructor(private raceService: RaceService) {}
+export class RaceFlagService implements OnDestroy {
+  private currentFlag: com.antigravity.RaceFlag =
+    com.antigravity.RaceFlag.UNKNOWN_FLAG;
+  private subscription: Subscription;
+
+  constructor(private raceConnectionService: RaceConnectionService) {
+    this.subscription = this.raceConnectionService.raceFlag$.subscribe(
+      (flag) => {
+        this.currentFlag = flag;
+      },
+    );
+  }
+
+  ngOnDestroy() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+  }
 
   /**
-   * Get the current flag type based on race state.
-   * This is shared logic used by both raceday and driver-station components.
+   * Get the current flag type based on the server-provided flag.
    */
-  getFlagType(
-    raceState: com.antigravity.RaceState,
-    hasRacedInCurrentHeat: boolean,
-    isWarmup: boolean,
-    heat?: Heat,
-  ): FlagType {
-    const RS = com.antigravity.RaceState;
-    const race = this.raceService.getRace();
-    const scoring = race?.heat_scoring;
-
-    if (isWarmup) {
-      return "green_yellow";
-    }
-
-    switch (raceState) {
-      case RS.NOT_STARTED:
-      case RS.HEAT_OVER:
-      case RS.RACE_OVER:
-        return "red";
-
-      case RS.STARTING:
-        // Use yellow if heat is in progress (resuming), red if it hasn't started yet
-        return hasRacedInCurrentHeat ? "yellow" : "red";
-
-      case RS.RACING:
-        let flagType: FlagType = "green";
-
-        // Check for White Flag (1 lap to go)
-        if (scoring?.finishMethod === FinishMethod.Lap && heat?.heatDrivers) {
-          const lapsToFinish = scoring.finishValue;
-          const anyDriverOneLapToGo = heat.heatDrivers.some(
-            (d) => d.lapCount === lapsToFinish - 1,
-          );
-          if (anyDriverOneLapToGo) {
-            flagType = "white";
-          }
-        }
-
-        // Checkered flag if any driver has finished (and race allows finishing)
-        if (scoring?.allowFinish !== AllowFinish.AF_NONE && heat?.heatDrivers) {
-          const atLeastOneFinished = heat.heatDrivers.some((d) =>
-            this.isDriverFinished(d, scoring),
-          );
-          if (atLeastOneFinished) {
-            flagType = "checkered";
-          }
-        }
-
-        return flagType;
-
-      case RS.PAUSED:
+  getFlagType(): FlagType {
+    const RF = com.antigravity.RaceFlag;
+    switch (this.currentFlag) {
+      case RF.GREEN:
+        return "green";
+      case RF.YELLOW:
         return "yellow";
-
+      case RF.RED:
+        return "red";
+      case RF.WHITE:
+        return "white";
+      case RF.CHECKERED:
+        return "checkered";
+      case RF.GREEN_YELLOW:
+        return "green_yellow";
       default:
         return "red";
     }
@@ -89,35 +60,19 @@ export class RaceFlagService {
   /**
    * Get the flag color for driver station indicator (simplified version)
    */
-  getFlagColor(
-    raceState: com.antigravity.RaceState,
-    hasRacedInCurrentHeat: boolean,
-    heat?: Heat,
-  ): "red" | "green" | "yellow" | "white" | "checkered" {
-    // Get full flag type and filter to just colors (no green_yellow)
-    const flagType = this.getFlagType(
-      raceState,
-      hasRacedInCurrentHeat,
-      false,
-      heat,
-    );
+  getFlagColor(): "red" | "green" | "yellow" | "white" | "checkered" {
+    const flagType = this.getFlagType();
 
     // Map to simplified color set
     if (flagType === "green_yellow") return "green";
-    return flagType;
+    return flagType as "red" | "green" | "yellow" | "white" | "checkered";
   }
 
-  private isDriverFinished(
-    hd: DriverHeatData,
-    scoring: HeatScoring | null | undefined,
-  ): boolean {
-    if (!scoring || !hd) return false;
-
-    if (scoring.finishMethod === FinishMethod.Lap) {
-      return hd.lapCount >= scoring.finishValue;
-    } else if (scoring.finishMethod === FinishMethod.Timed) {
-      return hd.totalTime >= scoring.finishValue;
-    }
-    return false;
+  /**
+   * Get the translation key for the current flag name.
+   */
+  getFlagNameKey(): string {
+    const flagType = this.getFlagType();
+    return `RACE_FLAG_${flagType.toUpperCase()}`;
   }
 }

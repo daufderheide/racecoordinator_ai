@@ -10,6 +10,7 @@ enum PinBehavior {
   BEHAVIOR_RESERVED = 1;
   BEHAVIOR_CALL_BUTTON = 2;
   BEHAVIOR_RELAY = 3;
+  BEHAVIOR_LED_RGB_STRING = 4;
   BEHAVIOR_LAP_BASE = 1000;
   BEHAVIOR_SEGMENT_BASE = 2000;
   BEHAVIOR_CALL_BUTTON_BASE = 3000;
@@ -37,7 +38,7 @@ enum PinId {
 enum RgbLedBehavior {
   RGB_LED_BEHAVIOR_UNUSED = 0;
   RGB_LED_BEHAVIOR_HEAT_LEADER = 1;
-  RGB_LED_BEHAVIOR_HEAT_TIME = 2;
+  RGB_LED_BEHAVIOR_HEAT_PROGRESS = 2;
   RGB_LED_BEHAVIOR_RACE_STATE_BASE = 1000;
   RGB_LED_BEHAVIOR_HEAT_LEADER_BASE = 2000;
   RGB_LED_BEHAVIOR_COUNTDOWN_BASE = 3000;
@@ -67,13 +68,15 @@ message ArduinoConfig {
 }
 
 message LedString {
-  int32 string_num = 1;
+  reserved 1;
   repeated int32 leds = 2;
   int32 num_used_leds = 3;
   int32 addressable_leds = 4;
   int32 brightness = 5;
-  double yellow_flag_flash_rate = 6;
+  double flag_flash_rate = 6;
   repeated string led_lane_color_overrides = 7;
+  int32 pin = 8;
+  int32 led_type = 9;
 }
 
 message VoltageConfig {

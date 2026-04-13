@@ -37,13 +37,25 @@ class MockDataService {
   initializeInterface(config: any, lanes: number) {
     return of({ success: true });
   }
-  updateInterfaceConfig(config: any) {
+  updateInterfaceConfig(config: any, interfaceIndex: number) {
     return of({ success: true });
   }
   closeInterface() {
     return of({ success: true });
   }
-  setInterfacePinState(pin: number, isDigital: boolean, state: boolean) {
+  setInterfacePinState(
+    pin: number,
+    isDigital: boolean,
+    state: boolean,
+    interfaceIndex: number,
+  ) {
+    return of({ success: true });
+  }
+  setInterfaceRgbLedState(
+    stringIndex: number,
+    leds: any[],
+    interfaceIndex: number,
+  ) {
     return of({ success: true });
   }
 }
@@ -221,7 +233,7 @@ describe("ArduinoEditorComponent", () => {
     fixture.detectChanges();
 
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 512 },
+      analogData: { pin: 0, value: 512, interfaceIndex: 0 },
     });
 
     expect(component.liveVoltages[0]).toBe(512);
@@ -267,13 +279,13 @@ describe("ArduinoEditorComponent", () => {
     fixture.detectChanges();
 
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 400 },
+      analogData: { pin: 0, value: 400, interfaceIndex: 0 },
     });
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 700 },
+      analogData: { pin: 0, value: 700, interfaceIndex: 0 },
     });
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 550 },
+      analogData: { pin: 0, value: 550, interfaceIndex: 0 },
     });
 
     expect(component.maxVoltagesSeen[0]).toBe(700);
@@ -286,10 +298,10 @@ describe("ArduinoEditorComponent", () => {
     fixture.detectChanges();
 
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 900 },
+      analogData: { pin: 0, value: 900, interfaceIndex: 0 },
     });
     mockDataService.interfaceEvents$.next({
-      analogData: { pin: 0, value: 200 },
+      analogData: { pin: 0, value: 200, interfaceIndex: 0 },
     });
 
     expect(component.maxVoltagesSeen[0]).toBe(900);
@@ -413,5 +425,206 @@ describe("ArduinoEditorComponent", () => {
     expect(component.config!.digitalIds[50]).toBe(0); // Should be BEHAVIOR_UNUSED (0)
     expect(component.config!.analogIds[2]).toBe(7000); // Should remain
     expect(component.config!.analogIds[10]).toBe(0); // Should be BEHAVIOR_UNUSED (0)
+  });
+
+  describe("Link State Persistence", () => {
+    function setupComponentWithIndex(idx: number) {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      component.config = makeConfig();
+      component.lanes = [new Lane("l1", "#fff", "#000", 10)];
+      component.index = idx;
+    }
+
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it("should load isVoltageLinked from localStorage on init", () => {
+      localStorage.setItem(`rc.arduino-editor.voltage-linked.0`, "true");
+      setupComponentWithIndex(0);
+      component.isVoltageLinked = false; // Set to different value to verify overwrite
+
+      fixture.detectChanges(); // calls ngOnInit
+
+      expect(component.isVoltageLinked).toBeTrue();
+    });
+
+    it("should load isLedStringsLinked from localStorage on init", () => {
+      localStorage.setItem(`rc.arduino-editor.led-strings-linked.0`, "false");
+      setupComponentWithIndex(0);
+      component.isLedStringsLinked = true; // Set to different value to verify overwrite
+
+      fixture.detectChanges(); // calls ngOnInit
+
+      expect(component.isLedStringsLinked).toBeFalse();
+    });
+
+    it("should save isVoltageLinked to localStorage when toggled", () => {
+      setupComponentWithIndex(0);
+      fixture.detectChanges();
+      component.isVoltageLinked = false;
+
+      component.toggleVoltageLink();
+
+      expect(component.isVoltageLinked).toBeTrue();
+      expect(localStorage.getItem(`rc.arduino-editor.voltage-linked.0`)).toBe(
+        "true",
+      );
+    });
+
+    it("should save isLedStringsLinked to localStorage when toggled", () => {
+      setupComponentWithIndex(0);
+      fixture.detectChanges();
+      component.isLedStringsLinked = true;
+
+      component.toggleLedStringsLink();
+
+      expect(component.isLedStringsLinked).toBeFalse();
+      expect(
+        localStorage.getItem(`rc.arduino-editor.led-strings-linked.0`),
+      ).toBe("false");
+    });
+
+    it("should maintain independent link states for multiple components", () => {
+      localStorage.setItem(`rc.arduino-editor.voltage-linked.0`, "true");
+      localStorage.setItem(`rc.arduino-editor.voltage-linked.1`, "false");
+
+      setupComponentWithIndex(1);
+      fixture.detectChanges();
+
+      expect(component.isVoltageLinked).toBeFalse();
+    });
+  });
+
+  describe("LED String Lifecycle Management", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      component.config = makeConfig();
+      component.lanes = [new Lane("l1", "#fff", "#000", 10)];
+      fixture.detectChanges();
+    });
+
+    it("should add a new LedString when a pin is assigned BEHAVIOR_LED_RGB_STRING", () => {
+      const pinIndex = 5;
+      const rgbBehavior = (com.antigravity.PinBehavior as any)
+        .BEHAVIOR_LED_RGB_STRING;
+      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+
+      expect(component.config!.ledStrings.length).toBe(0);
+
+      component.setPinBehavior(true, pinIndex, rgbBehavior.toString());
+
+      expect(component.config!.ledStrings.length).toBe(1);
+      expect(component.config!.ledStrings[0].pin).toBe(5); // D5
+    });
+
+    it("should remove the LedString when a pin is unassigned from BEHAVIOR_LED_RGB_STRING", () => {
+      const pinIndex = 5;
+      const rgbBehavior = (com.antigravity.PinBehavior as any)
+        .BEHAVIOR_LED_RGB_STRING;
+      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+
+      // 1. Add it
+      component.setPinBehavior(true, pinIndex, rgbBehavior.toString());
+      expect(component.config!.ledStrings.length).toBe(1);
+
+      // 2. Remove it
+      component.setPinBehavior(true, pinIndex, unusedBehavior.toString());
+      expect(component.config!.ledStrings.length).toBe(0);
+    });
+
+    it("should remove only the specific LedString matching the pin", () => {
+      const pinIndex5 = 5;
+      const pinIndex6 = 6;
+      const rgbBehavior = (com.antigravity.PinBehavior as any)
+        .BEHAVIOR_LED_RGB_STRING;
+      const unusedBehavior = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+
+      component.setPinBehavior(true, pinIndex5, rgbBehavior.toString());
+      component.setPinBehavior(true, pinIndex6, rgbBehavior.toString());
+      expect(component.config!.ledStrings.length).toBe(2);
+
+      // Remove pin 5
+      component.setPinBehavior(true, pinIndex5, unusedBehavior.toString());
+
+      expect(component.config!.ledStrings.length).toBe(1);
+      expect(component.config!.ledStrings[0].pin).toBe(6);
+    });
+  });
+
+  describe("LED String Linking Logic", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      component.config = makeConfig();
+      component.lanes = [
+        new Lane("l1", "#ff0000", "#000", 10),
+        new Lane("l2", "#00ff00", "#000", 10),
+      ];
+
+      // Add two strings
+      const rgbBehavior = (com.antigravity.PinBehavior as any)
+        .BEHAVIOR_LED_RGB_STRING;
+      const unused = com.antigravity.PinBehavior.BEHAVIOR_UNUSED;
+      component.setPinBehavior(true, 5, rgbBehavior.toString());
+      component.setPinBehavior(true, 6, rgbBehavior.toString());
+
+      fixture.detectChanges();
+    });
+
+    it("should sync brightness across all strings when linked", () => {
+      component.isLedStringsLinked = true;
+
+      component.onLedStringBrightnessChange(0, 128);
+
+      expect(component.config!.ledStrings[0].brightness).toBe(128);
+      expect(component.config!.ledStrings[1].brightness).toBe(128);
+    });
+
+    it("should NOT sync brightness when unlinked", () => {
+      component.isLedStringsLinked = false;
+
+      component.onLedStringBrightnessChange(0, 128);
+
+      expect(component.config!.ledStrings[0].brightness).toBe(128);
+      expect(component.config!.ledStrings[1].brightness).not.toBe(128);
+    });
+
+    it("should sync update rate across all strings when linked", () => {
+      component.isLedStringsLinked = true;
+
+      component.onLedStringFlashRateChange(0, 60);
+
+      expect(component.config!.ledStrings[0].flagFlashRate).toBe(60);
+      expect(component.config!.ledStrings[1].flagFlashRate).toBe(60);
+    });
+
+    it("should sync color overrides across all strings when linked", () => {
+      component.isLedStringsLinked = true;
+
+      component.onLedStringLaneColorChange(0, 1, "#0000ff"); // String 0, Lane 1 (index 1)
+
+      expect(component.config!.ledStrings[0].ledLaneColorOverrides[1]).toBe(
+        "#0000ff",
+      );
+      expect(component.config!.ledStrings[1].ledLaneColorOverrides[1]).toBe(
+        "#0000ff",
+      );
+    });
+
+    it("should NOT sync color overrides when unlinked", () => {
+      component.isLedStringsLinked = false;
+
+      component.onLedStringLaneColorChange(0, 1, "#0000ff");
+
+      expect(component.config!.ledStrings[0].ledLaneColorOverrides[1]).toBe(
+        "#0000ff",
+      );
+      expect(component.config!.ledStrings[1].ledLaneColorOverrides[1]).not.toBe(
+        "#0000ff",
+      );
+    });
   });
 });

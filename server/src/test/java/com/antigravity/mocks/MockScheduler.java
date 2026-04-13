@@ -67,6 +67,11 @@ public class MockScheduler implements ScheduledExecutorService {
     return true;
   }
 
+  public void reset() {
+    this.commands.clear();
+    this.shutdown = false;
+  }
+
   @Override
   public <T> Future<T> submit(Callable<T> task) {
     return null;

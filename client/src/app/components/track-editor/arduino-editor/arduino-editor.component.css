@@ -159,7 +159,8 @@
   border-color: #38bdf8;
 }
 
-.control-group input[type="number"] {
+.control-group input[type="number"],
+.control-group input[type="text"] {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.3);
   color: #f8fafc;
@@ -173,8 +174,14 @@
   transition: border-color 0.2s;
 }
 
-.control-group input[type="number"]:focus {
+.control-group input[type="number"]:focus,
+.control-group input[type="text"]:focus {
   border-color: #38bdf8;
+}
+
+.control-group input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .com-port-row {
@@ -654,8 +661,6 @@
   font-size: 0.75rem;
   font-weight: bold;
   border-radius: 3px;
-  color: white;
-  text-shadow: 0 0 2px black;
 }
 
 .lane-color-item input[type="color"] {

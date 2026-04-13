@@ -1,6 +1,7 @@
 package com.antigravity.race.states;
 
 import com.antigravity.proto.RaceData;
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceTime;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
@@ -10,6 +11,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Starting implements IRaceState {
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    return race.hasRacedInCurrentHeat() ? RaceFlag.YELLOW : RaceFlag.RED;
+  }
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;
@@ -39,6 +45,10 @@ public class Starting implements IRaceState {
               RaceData raceDataMsg = RaceData.newBuilder().setRaceTime(raceTimeMsg).build();
 
               race.broadcast(raceDataMsg);
+              race.setRaceState(
+                  com.antigravity.proto.RaceState.STARTING,
+                  getFlagType(race),
+                  (double) displayTime);
 
               countdown--;
 

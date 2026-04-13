@@ -1,9 +1,18 @@
 package com.antigravity.protocols;
 
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProtocolDelegate implements IProtocol {
+
+  @Override
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    for (IProtocol protocol : protocols) {
+      protocol.setRaceState(state, flag, countdown);
+    }
+  }
 
   private final List<IProtocol> protocols;
   private final PowerManager powerManager;
@@ -11,13 +20,6 @@ public class ProtocolDelegate implements IProtocol {
   public ProtocolDelegate(List<IProtocol> protocols) {
     this.protocols = protocols;
     this.powerManager = new PowerManager(this);
-  }
-
-  @Override
-  public void setListener(ProtocolListener listener) {
-    for (IProtocol protocol : protocols) {
-      protocol.setListener(listener);
-    }
   }
 
   public List<IProtocol> getProtocols() {
@@ -43,19 +45,10 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
-  public void startTimer() {
+  public void setListener(ProtocolListener listener) {
     for (IProtocol protocol : protocols) {
-      protocol.startTimer();
+      protocol.setListener(listener);
     }
-  }
-
-  @Override
-  public List<PartialTime> stopTimer() {
-    List<PartialTime> allPartialTimes = new ArrayList<>();
-    for (IProtocol protocol : protocols) {
-      allPartialTimes.addAll(protocol.stopTimer());
-    }
-    return allPartialTimes;
   }
 
   @Override
@@ -79,6 +72,32 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
+  public boolean hasMainRelay() {
+    for (IProtocol protocol : protocols) {
+      if (protocol.hasMainRelay()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void startTimer() {
+    for (IProtocol protocol : protocols) {
+      protocol.startTimer();
+    }
+  }
+
+  @Override
+  public List<PartialTime> stopTimer() {
+    List<PartialTime> allPartialTimes = new ArrayList<>();
+    for (IProtocol protocol : protocols) {
+      allPartialTimes.addAll(protocol.stopTimer());
+    }
+    return allPartialTimes;
+  }
+
+  @Override
   public void setMainPower(boolean on) {
     // Don't go directly to the protocols, use the PowerManager instead.
     this.powerManager.setMainPower(on);
@@ -88,16 +107,6 @@ public class ProtocolDelegate implements IProtocol {
   public void setLanePower(boolean on, int lane) {
     // Don't go directly to the protocols, use the PowerManager instead.
     this.powerManager.setLanePower(on, lane);
-  }
-
-  @Override
-  public boolean hasMainRelay() {
-    for (IProtocol protocol : protocols) {
-      if (protocol.hasMainRelay()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Override
@@ -113,5 +122,37 @@ public class ProtocolDelegate implements IProtocol {
     for (IProtocol protocol : protocols) {
       protocol.setHeatStandings(laneIndices);
     }
+  }
+
+  @Override
+  public void setRefueling(int laneIndex, boolean isRefueling) {
+    for (IProtocol protocol : protocols) {
+      protocol.setRefueling(laneIndex, isRefueling);
+    }
+  }
+
+  @Override
+  public void setFuelLevel(int laneIndex, int fuelLevelPct) {
+    for (IProtocol protocol : protocols) {
+      protocol.setFuelLevel(laneIndex, fuelLevelPct);
+    }
+  }
+
+  @Override
+  public void setHeatProgress(double percentage) {
+    for (IProtocol protocol : protocols) {
+      protocol.setHeatProgress(percentage);
+    }
+  }
+
+  @Override
+  public void setInterfaceIndex(int index) {
+    // Usually we don't set index on the delegate itself, but we can set it on children if needed.
+    // However, children are already indexed during creation.
+  }
+
+  @Override
+  public int getInterfaceIndex() {
+    return -1; // Delegate doesn't have a single index
   }
 }

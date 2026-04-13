@@ -15,7 +15,6 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceData;
-import com.antigravity.proto.RaceData.DataCase;
 import com.antigravity.proto.RaceState;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.arduino.ArduinoConfig;
@@ -191,7 +190,7 @@ public class RaceStateTest {
       for (ByteBuffer buf : captured) {
         try {
           RaceData raceData = RaceData.parseFrom(buf);
-          if (raceData.getDataCase() == DataCase.RACE_STATE) {
+          if (raceData.hasRaceState()) {
             capturedStates.append("RaceState:").append(raceData.getRaceState()).append(", ");
             if (raceData.getRaceState() == expectedState) {
               found = true;
@@ -266,11 +265,11 @@ public class RaceStateTest {
     assertTrue(race.getState() instanceof NotStarted);
 
     // Callbutton in NotStarted starts race -> Starting
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof Starting);
 
     // Callbutton in Starting cancels -> NotStarted (because hasn't raced yet)
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof NotStarted);
 
     // Move to Racing manually
@@ -278,11 +277,11 @@ public class RaceStateTest {
     assertTrue(race.getState() instanceof Racing);
 
     // Callbutton in Racing pauses -> Paused
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof Paused);
 
     // Callbutton in Paused resumes -> Starting
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof Starting);
 
     // Move to HeatOver manually
@@ -291,11 +290,11 @@ public class RaceStateTest {
 
     // Callbutton in HeatOver moves to next heat. For this simple race, it ends
     // since there's no more schedule
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof RaceOver);
 
     // Callbutton in RaceOver does nothing (ignored)
-    race.onCallbutton(0);
+    race.onCallbutton(0, 0);
     assertTrue(race.getState() instanceof RaceOver);
   }
 

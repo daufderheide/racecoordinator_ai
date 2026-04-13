@@ -1,9 +1,15 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 
 public class Paused implements IRaceState {
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    return RaceFlag.YELLOW;
+  }
 
   private long pauseStartTimeMillis;
 

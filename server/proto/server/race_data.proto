@@ -18,15 +18,14 @@ option java_multiple_files = true;
 option java_outer_classname = "RaceDataProto";
 
 message RaceData {
-  oneof data {
-    RaceTime race_time = 1;
-    Lap lap = 2;
-    Race race = 3;
-    ReactionTime reaction_time = 4;
-    StandingsUpdate standings_update = 5;
-    OverallStandingsUpdate overall_standings_update = 6;
-     RaceState race_state = 7;
-     CarData car_data = 8;
-     Segment segment = 9;
-   }
+  RaceTime race_time = 1;
+  Lap lap = 2;
+  Race race = 3;
+  ReactionTime reaction_time = 4;
+  StandingsUpdate standings_update = 5;
+  OverallStandingsUpdate overall_standings_update = 6;
+  optional RaceState race_state = 7;
+  CarData car_data = 8;
+  Segment segment = 9;
+  optional RaceFlag flag = 10;
 }

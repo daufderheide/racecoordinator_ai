@@ -1,10 +1,16 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.Race;
 import java.time.OffsetDateTime;
 
 public class RaceOver implements IRaceState {
+
+  @Override
+  public RaceFlag getFlagType(Race race) {
+    return RaceFlag.RED;
+  }
 
   @Override
   public void enter(Race race) {

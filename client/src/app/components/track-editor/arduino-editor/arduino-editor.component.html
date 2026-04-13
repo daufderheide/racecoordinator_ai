@@ -1,11 +1,20 @@
-<div *ngIf="config" class="arduino-config-container" [id]="'arduino-editor-' + index">
-
+<div
+  *ngIf="config"
+  class="arduino-config-container"
+  [id]="'arduino-editor-' + index"
+>
   <div class="config-section">
     <div class="section-header" (click)="toggleSection('arduino')">
-      <span class="expander-icon" [class.collapsed]="!sectionsExpanded.arduino">▼</span>
-      <h1>{{ 'AE_HEADER' | translate }}{{ count > 1 ? ' #' + (index + 1) : '' }}</h1>
+      <span class="expander-icon" [class.collapsed]="!sectionsExpanded.arduino"
+        >▼</span
+      >
+      <h1>
+        {{ "AE_HEADER" | translate }}{{ count > 1 ? " #" + (index + 1) : "" }}
+      </h1>
       <div class="spacer"></div>
-      <button class="action-btn danger small" (click)="removeInterface($event)">X</button>
+      <button class="action-btn danger small" (click)="removeInterface($event)">
+        X
+      </button>
     </div>
 
     <div class="section-content" *ngIf="sectionsExpanded.arduino">
@@ -13,73 +22,155 @@
         <!-- Main Configuration Section -->
         <div class="config-section">
           <div class="section-header" (click)="toggleSection('main')">
-            <span class="expander-icon" [class.collapsed]="!sectionsExpanded.main">▼</span>
-            <h4>{{ 'AE_MAIN_HEADER' | translate }}</h4>
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.main"
+              >▼</span
+            >
+            <h4>{{ "AE_MAIN_HEADER" | translate }}</h4>
           </div>
 
           <div class="section-content" *ngIf="sectionsExpanded.main">
             <div class="config-top-section">
               <div class="board-controls">
                 <div class="control-group">
-                  <label>{{ 'AE_BOARD_TYPE' | translate }}</label>
-                  <select [id]="'arduino-board-type-' + index" [ngModel]="config.hardwareType.toString()"
-                    (ngModelChange)="onHardwareTypeChange(+$event)">
-                    <option value="0">{{ 'AE_BOARD_UNO' | translate }}</option>
-                    <option value="1">{{ 'AE_BOARD_MEGA' | translate }}</option>
+                  <label>{{ "AE_BOARD_TYPE" | translate }}</label>
+                  <select
+                    [id]="'arduino-board-type-' + index"
+                    [ngModel]="config.hardwareType.toString()"
+                    (ngModelChange)="onHardwareTypeChange(+$event)"
+                  >
+                    <option value="0">{{ "AE_BOARD_UNO" | translate }}</option>
+                    <option value="1">{{ "AE_BOARD_MEGA" | translate }}</option>
                   </select>
                 </div>
 
                 <div class="control-group">
-                  <label>{{ 'AE_COM_PORT' | translate }}</label>
+                  <label>{{ "AE_COM_PORT" | translate }}</label>
                   <div class="com-port-row">
-                    <select [id]="'arduino-com-port-' + index" [(ngModel)]="config.commPort"
-                      (change)="updateArduinoConfig()">
-                      <option value="" disabled>{{ 'AE_SELECT_PORT' | translate }}</option>
-                      <option *ngFor="let port of availablePorts" [value]="port">{{ port }}</option>
+                    <select
+                      [id]="'arduino-com-port-' + index"
+                      [(ngModel)]="config.commPort"
+                      (change)="updateArduinoConfig()"
+                    >
+                      <option value="" disabled>
+                        {{ "AE_SELECT_PORT" | translate }}
+                      </option>
+                      <option
+                        *ngFor="let port of availablePorts"
+                        [value]="port"
+                      >
+                        {{ port }}
+                      </option>
                     </select>
-                    <button type="button" [id]="'arduino-status-badge-' + index" class="status-badge"
+                    <button
+                      type="button"
+                      [id]="'arduino-status-badge-' + index"
+                      class="status-badge"
                       [class.connected]="interfaceStatus === 0"
-                      [title]="interfaceStatus === 0 ? 'Connected' : 'Disconnected'">
+                      [title]="
+                        interfaceStatus === 0 ? 'Connected' : 'Disconnected'
+                      "
+                    >
                       <div class="status-dot"></div>
                     </button>
                   </div>
                 </div>
                 <div class="control-group">
-                  <label>{{ 'AE_DEBOUNCE_TIME' | translate }} <span class="unit-lowercase">(µs)</span></label>
-                  <input [id]="'arduino-debounce-' + index" type="number" [ngModel]="config.debounceUs" (ngModelChange)="onDebounceChange($event)" min="0"
-                    step="100">
+                  <label
+                    >{{ "AE_DEBOUNCE_TIME" | translate }}
+                    <span class="unit-lowercase">(µs)</span></label
+                  >
+                  <input
+                    [id]="'arduino-debounce-' + index"
+                    type="number"
+                    [ngModel]="config.debounceUs"
+                    (ngModelChange)="onDebounceChange($event)"
+                    min="0"
+                    step="100"
+                  />
                 </div>
               </div>
 
               <div class="board-preview">
-                <img *ngIf="config.hardwareType == 0" src="assets/images/arduino_uno_board.png"
-                  [alt]="'AE_BOARD_UNO' | translate" class="board-image">
-                <img *ngIf="config.hardwareType == 1" src="assets/images/arduino_mega_board.png"
-                  [alt]="'AE_BOARD_MEGA' | translate" class="board-image">
+                <img
+                  *ngIf="config.hardwareType == 0"
+                  src="assets/images/arduino_uno_board.png"
+                  [alt]="'AE_BOARD_UNO' | translate"
+                  class="board-image"
+                />
+                <img
+                  *ngIf="config.hardwareType == 1"
+                  src="assets/images/arduino_mega_board.png"
+                  [alt]="'AE_BOARD_MEGA' | translate"
+                  class="board-image"
+                />
               </div>
 
               <div class="right-controls">
                 <div class="control-group">
-                  <label>{{ 'AE_LAP_PIN_PIT_BEHAVIOR' | translate }}</label>
-                  <select [id]="'arduino-pit-behavior-' + index" [(ngModel)]="config.lapPinPitBehavior" (change)="updateArduinoConfig()">
-                    <option [value]="0">{{ 'AE_LAP_PIN_PIT_NONE' | translate }}</option>
-                    <option [value]="1">{{ 'AE_LAP_PIN_PIT_IN' | translate }}</option>
-                    <option [value]="2">{{ 'AE_LAP_PIN_PIT_OUT' | translate }}</option>
-                    <option [value]="3">{{ 'AE_LAP_PIN_PIT_IN_OUT' | translate }}</option>
+                  <label>{{ "AE_LAP_PIN_PIT_BEHAVIOR" | translate }}</label>
+                  <select
+                    [id]="'arduino-pit-behavior-' + index"
+                    [(ngModel)]="config.lapPinPitBehavior"
+                    (change)="updateArduinoConfig()"
+                  >
+                    <option [value]="0">
+                      {{ "AE_LAP_PIN_PIT_NONE" | translate }}
+                    </option>
+                    <option [value]="1">
+                      {{ "AE_LAP_PIN_PIT_IN" | translate }}
+                    </option>
+                    <option [value]="2">
+                      {{ "AE_LAP_PIN_PIT_OUT" | translate }}
+                    </option>
+                    <option [value]="3">
+                      {{ "AE_LAP_PIN_PIT_IN_OUT" | translate }}
+                    </option>
                   </select>
                 </div>
                 <div class="control-group">
-                  <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input [id]="'arduino-nc-sensors-' + index" type="checkbox" [ngModel]="config.normallyClosedLaneSensors"
-                      (ngModelChange)="config.normallyClosedLaneSensors = $event; updateArduinoConfig()">
-                    {{ 'AE_NORMALLY_CLOSED_SENSORS' | translate }}
+                  <label
+                    class="checkbox-label"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      cursor: pointer;
+                    "
+                  >
+                    <input
+                      [id]="'arduino-nc-sensors-' + index"
+                      type="checkbox"
+                      [ngModel]="config.normallyClosedLaneSensors"
+                      (ngModelChange)="
+                        config.normallyClosedLaneSensors = $event;
+                        updateArduinoConfig()
+                      "
+                    />
+                    {{ "AE_NORMALLY_CLOSED_SENSORS" | translate }}
                   </label>
                 </div>
                 <div class="control-group">
-                  <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input [id]="'arduino-nc-relays-' + index" type="checkbox" [ngModel]="config.normallyClosedRelays"
-                      (ngModelChange)="config.normallyClosedRelays = $event; updateArduinoConfig()">
-                    {{ 'AE_NORMALLY_CLOSED_RELAYS' | translate }}
+                  <label
+                    class="checkbox-label"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      cursor: pointer;
+                    "
+                  >
+                    <input
+                      [id]="'arduino-nc-relays-' + index"
+                      type="checkbox"
+                      [ngModel]="config.normallyClosedRelays"
+                      (ngModelChange)="
+                        config.normallyClosedRelays = $event;
+                        updateArduinoConfig()
+                      "
+                    />
+                    {{ "AE_NORMALLY_CLOSED_RELAYS" | translate }}
                   </label>
                 </div>
               </div>
@@ -93,20 +184,37 @@
             <!-- Digital Pins Section -->
             <div class="config-section">
               <div class="section-header" (click)="toggleSection('digital')">
-                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.digital">▼</span>
-                <h4>{{ 'AE_DIGITAL_PINS' | translate }}</h4>
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.digital"
+                  >▼</span
+                >
+                <h4>{{ "AE_DIGITAL_PINS" | translate }}</h4>
               </div>
 
               <div class="section-content" *ngIf="sectionsExpanded.digital">
                 <div class="pin-grid">
                   <div *ngFor="let pin of availablePins" class="pin-item">
                     <div class="pin-header">
-                      <label>D{{pin}}</label>
-                      <span [id]="'arduino-digital-status-' + pin" class="status-badge small" [class.connected]="isPinActive(true, pin)"
-                        (click)="togglePinState(true, pin)" style="cursor: pointer;"></span>
+                      <label>D{{ pin }}</label>
+                      <span
+                        [id]="'arduino-digital-status-' + pin"
+                        class="status-badge small"
+                        [class.connected]="isPinActive(true, pin)"
+                        (click)="togglePinState(true, pin)"
+                        style="cursor: pointer"
+                      ></span>
                     </div>
-                    <select [id]="'arduino-digital-selector-' + pin" [ngModel]="getPinAction(true, pin)" (ngModelChange)="setPinAction(true, pin, $event)">
-                      <option *ngFor="let action of digitalPinActions" [value]="action.value">{{ action.label }}
+                    <select
+                      [id]="'arduino-digital-selector-' + pin"
+                      [ngModel]="getPinAction(true, pin)"
+                      (ngModelChange)="setPinAction(true, pin, $event)"
+                    >
+                      <option
+                        *ngFor="let action of digitalPinActions"
+                        [value]="action.value"
+                      >
+                        {{ action.label }}
                       </option>
                     </select>
                   </div>
@@ -117,69 +225,154 @@
             <!-- Analog Pins Section -->
             <div class="config-section">
               <div class="section-header" (click)="toggleSection('analog')">
-                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.analog">▼</span>
-                <h4>{{ 'AE_ANALOG_PINS' | translate }}</h4>
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.analog"
+                  >▼</span
+                >
+                <h4>{{ "AE_ANALOG_PINS" | translate }}</h4>
               </div>
 
               <div class="section-content" *ngIf="sectionsExpanded.analog">
                 <div class="pin-grid">
                   <div *ngFor="let pin of availableAnalogPins" class="pin-item">
                     <div class="pin-header">
-                      <label>A{{pin}}</label>
-                      <span [id]="'arduino-analog-status-' + pin" class="status-badge small" [class.connected]="isPinActive(false, pin)"
-                        (click)="togglePinState(false, pin)" style="cursor: pointer;"></span>
+                      <label>A{{ pin }}</label>
+                      <span
+                        [id]="'arduino-analog-status-' + pin"
+                        class="status-badge small"
+                        [class.connected]="isPinActive(false, pin)"
+                        (click)="togglePinState(false, pin)"
+                        style="cursor: pointer"
+                      ></span>
                     </div>
-                    <select [id]="'arduino-analog-selector-' + pin" [ngModel]="getPinAction(false, pin)" (ngModelChange)="setPinAction(false, pin, $event)">
-                      <option *ngFor="let action of analogPinActions" [value]="action.value">{{ action.label }}</option>
+                    <select
+                      [id]="'arduino-analog-selector-' + pin"
+                      [ngModel]="getPinAction(false, pin)"
+                      (ngModelChange)="setPinAction(false, pin, $event)"
+                    >
+                      <option
+                        *ngFor="let action of analogPinActions"
+                        [value]="action.value"
+                      >
+                        {{ action.label }}
+                      </option>
                     </select>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div *ngIf="getVoltageLanes().length > 0" class="config-section voltage-config-section" [id]="'arduino-voltage-section-' + index">
+            <div
+              *ngIf="getVoltageLanes().length > 0"
+              class="config-section voltage-config-section"
+              [id]="'arduino-voltage-section-' + index"
+            >
               <div class="section-header" (click)="toggleSection('voltage')">
-                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.voltage">▼</span>
-                <h4>{{ 'AE_VOLTAGE_CONFIG_HEADER' | translate }}</h4>
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.voltage"
+                  >▼</span
+                >
+                <h4>{{ "AE_VOLTAGE_CONFIG_HEADER" | translate }}</h4>
               </div>
 
               <div class="section-content" *ngIf="sectionsExpanded.voltage">
-
                 <div
-                  style="display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-bottom: 12px;">
-                  <button [id]="'arduino-voltage-reset-' + index" class="link-toggle-btn" (click)="resetMaxSeenAll()"
-                    title="Reset all tracked max voltage values">
-                    <span class="material-icons" style="font-size: 1.2rem;">undo</span>
-                    <span>{{ 'AE_RESET_MAX_SEEN' | translate }}</span>
+                  style="
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <button
+                    [id]="'arduino-voltage-reset-' + index"
+                    class="link-toggle-btn"
+                    (click)="resetMaxSeenAll()"
+                    title="Reset all tracked max voltage values"
+                  >
+                    <span class="material-icons" style="font-size: 1.2rem"
+                      >undo</span
+                    >
+                    <span>{{ "AE_RESET_MAX_SEEN" | translate }}</span>
                   </button>
                 </div>
 
                 <div class="pin-grid">
-                  <div *ngFor="let lane of getVoltageLanes()" class="pin-item voltage-pin-item">
+                  <div
+                    *ngFor="let lane of getVoltageLanes()"
+                    class="pin-item voltage-pin-item"
+                  >
                     <div class="voltage-lane-header">
-                      <label>{{ 'AE_PIN_VOLTAGE_LANE' | translate:{lane: lane + 1} }}</label>
-                      <span [id]="'arduino-voltage-link-' + index + '-' + lane" class="material-icons clickable-link-icon" [class.linked]="isVoltageLinked"
-                        (click)="isVoltageLinked = !isVoltageLinked"
-                        [title]="isVoltageLinked ? ('AE_LANES_LINKED' | translate) : ('AE_LANES_INDEPENDENT' | translate)">
-                        {{ isVoltageLinked ? 'link' : 'link_off' }}
+                      <label>{{
+                        "AE_PIN_VOLTAGE_LANE" | translate: { lane: lane + 1 }
+                      }}</label>
+                      <span
+                        [id]="'arduino-voltage-link-' + index + '-' + lane"
+                        class="material-icons clickable-link-icon"
+                        [class.linked]="isVoltageLinked"
+                        (click)="toggleVoltageLink()"
+                        [title]="
+                          isVoltageLinked
+                            ? ('AE_LANES_LINKED' | translate)
+                            : ('AE_LANES_INDEPENDENT' | translate)
+                        "
+                      >
+                        {{ isVoltageLinked ? "link" : "link_off" }}
                       </span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-                      <span class="unit-lowercase" style="color: #94a3b8;">{{ 'AE_VOLTAGE_MAX_VAL' | translate }}</span>
-                      <input [id]="'arduino-voltage-max-' + index + '-' + lane" type="number" [ngModel]="getVoltageMax(lane)" (ngModelChange)="setVoltageMax(lane, $event)"
-                        min="0" max="1023"
-                        style="width: 80px; background: rgba(15, 23, 42, 0.8); border: none; color: #cbd5e1; border-radius: 4px; text-align: right;">
+                    <div
+                      style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 5px;
+                      "
+                    >
+                      <span class="unit-lowercase" style="color: #94a3b8">{{
+                        "AE_VOLTAGE_MAX_VAL" | translate
+                      }}</span>
+                      <input
+                        [id]="'arduino-voltage-max-' + index + '-' + lane"
+                        type="number"
+                        [ngModel]="getVoltageMax(lane)"
+                        (ngModelChange)="setVoltageMax(lane, $event)"
+                        min="0"
+                        max="1023"
+                        style="
+                          width: 80px;
+                          background: rgba(15, 23, 42, 0.8);
+                          border: none;
+                          color: #cbd5e1;
+                          border-radius: 4px;
+                          text-align: right;
+                        "
+                      />
                     </div>
                     <div class="live-voltage-container">
-                      <span class="live-label">{{ 'AE_LIVE_VOLTAGE_LABEL' | translate }}:</span>
-                      <span [id]="'arduino-voltage-live-' + index + '-' + lane" class="live-value">{{ getLiveVoltageForLane(lane) }}</span>
+                      <span class="live-label"
+                        >{{ "AE_LIVE_VOLTAGE_LABEL" | translate }}:</span
+                      >
+                      <span
+                        [id]="'arduino-voltage-live-' + index + '-' + lane"
+                        class="live-value"
+                        >{{ getLiveVoltageForLane(lane) }}</span
+                      >
                     </div>
-                    <button [id]="'arduino-voltage-set-max-' + index + '-' + lane" class="set-max-btn" (click)="setMaxToSeen(lane)"
-                      [disabled]="(maxVoltagesSeen[lane] ?? 0) === 0">
-                      <span class="material-icons" style="color: #4ade80; font-size: 1.2rem;">arrow_circle_up</span>
-                      Set Max to: {{
-                      maxVoltagesSeen[lane] ??
-                      0 }}
+                    <button
+                      [id]="'arduino-voltage-set-max-' + index + '-' + lane"
+                      class="set-max-btn"
+                      (click)="setMaxToSeen(lane)"
+                      [disabled]="(maxVoltagesSeen[lane] ?? 0) === 0"
+                    >
+                      <span
+                        class="material-icons"
+                        style="color: #4ade80; font-size: 1.2rem"
+                        >arrow_circle_up</span
+                      >
+                      Set Max to: {{ maxVoltagesSeen[lane] ?? 0 }}
                     </button>
                   </div>
                 </div>
@@ -189,64 +382,184 @@
             <!-- RGB LED Configuration Section -->
             <div class="config-section led-config-section">
               <div class="section-header" (click)="toggleSection('leds')">
-                <span class="expander-icon" [class.collapsed]="!sectionsExpanded.leds">▼</span>
-                <h4>{{ 'AE_RGB_LED_CONFIG' | translate }}</h4>
-                <div class="spacer"></div>
-                <button class="action-btn primary small" (click)="onCreateLedString(); $event.stopPropagation()">
-                  <span class="material-icons">add</span>
-                  {{ 'AE_ADD_LED_STRING' | translate }}
-                </button>
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.leds"
+                  >▼</span
+                >
+                <h4>{{ "AE_RGB_LED_CONFIG" | translate }}</h4>
               </div>
 
               <div class="section-content" *ngIf="sectionsExpanded.leds">
-                <div cdkDropList [cdkDropListData]="config.ledStrings" (cdkDropListDropped)="onLedStringDropped($event)" class="led-strings-list">
-                  <div *ngFor="let ls of config.ledStrings; let i = index" cdkDrag class="led-string-item">
+                <div class="led-strings-list">
+                  <div
+                    *ngFor="
+                      let ls of config.ledStrings;
+                      let i = index;
+                      trackBy: trackByLedString
+                    "
+                    class="led-string-item"
+                  >
                     <div class="led-string-header" (click)="toggleLedString(i)">
-                      <span class="material-icons drag-handle" cdkDragHandle>drag_indicator</span>
-                      <span class="expander-icon" [class.collapsed]="!ledStringExpanded[i]">▼</span>
-                      <span class="ls-label">{{ 'AE_LED_STRING' | translate }} #{{ i + 1 }}</span>
-                      <span class="ls-summary">({{ ls.numUsedLeds }} / {{ ls.leds.length }}) {{ 'AE_LEDS' | translate }}</span>
+                      <span
+                        class="expander-icon"
+                        [class.collapsed]="!ledStringExpanded[i]"
+                        >▼</span
+                      >
+                      <span class="ls-label"
+                        >{{ "AE_LED_STRING" | translate }}
+                        {{ getPinLabel(ls.pin) }}</span
+                      >
+                      <span class="ls-summary"
+                        >({{ ls.numUsedLeds }} / {{ ls.leds.length }})
+                        {{ "AE_LEDS" | translate }}</span
+                      >
+                      <span
+                        class="material-icons clickable-link-icon"
+                        [class.linked]="isLedStringsLinked"
+                        (click)="
+                          toggleLedStringsLink(); $event.stopPropagation()
+                        "
+                        [title]="
+                          isLedStringsLinked
+                            ? ('AE_LANES_LINKED' | translate)
+                            : ('AE_LANES_INDEPENDENT' | translate)
+                        "
+                        style="font-size: 1.2rem; margin-left: 5px"
+                      >
+                        {{ isLedStringsLinked ? "link" : "link_off" }}
+                      </span>
                       <div class="spacer"></div>
                       <div class="ls-actions">
-                        <button class="icon-button" (click)="duplicateLedString(i, $event)" [title]="'GEN_DUPLICATE' | translate">
-                          <span class="material-icons">content_copy</span>
-                        </button>
-                        <button class="icon-button delete" (click)="removeLedString(i, $event)" [title]="'GEN_DELETE' | translate">
+                        <button
+                          class="icon-button delete"
+                          (click)="removeLedString(i, $event)"
+                          [title]="'GEN_DELETE' | translate"
+                        >
                           <span class="material-icons">close</span>
                         </button>
                       </div>
                     </div>
 
-                    <div class="led-string-details" *ngIf="ledStringExpanded[i]">
+                    <div
+                      class="led-string-details"
+                      *ngIf="ledStringExpanded[i]"
+                    >
                       <div class="ls-settings-row">
                         <div class="control-group">
-                          <label>{{ 'AE_BRIGHTNESS' | translate }} [0-255]</label>
-                          <input type="number" [(ngModel)]="ls.brightness" min="0" max="255" (change)="updateLedString()">
+                          <label
+                            >{{ "AE_BRIGHTNESS" | translate }} [0-255]</label
+                          >
+                          <input
+                            type="number"
+                            [ngModel]="ls.brightness"
+                            min="0"
+                            max="255"
+                            (ngModelChange)="
+                              onLedStringBrightnessChange(i, $event)
+                            "
+                          />
                         </div>
                         <div class="control-group">
-                          <label>{{ 'AE_FLASH_RATE' | translate }} (rate/s)</label>
-                          <input type="number" [(ngModel)]="ls.yellowFlagFlashRate" min="0" step="0.1" (change)="updateLedString()">
+                          <label
+                            >{{ "AE_FLASH_RATE" | translate }} (rate/s)</label
+                          >
+                          <input
+                            type="number"
+                            [ngModel]="ls.flagFlashRate"
+                            min="0"
+                            step="0.1"
+                            (ngModelChange)="
+                              onLedStringFlashRateChange(i, $event)
+                            "
+                          />
+                        </div>
+                        <div class="control-group">
+                          <label>{{ "AE_LED_TYPE" | translate }}</label>
+                          <select
+                            [ngModel]="ls.ledType.toString()"
+                            (ngModelChange)="
+                              onLedStringLedTypeChange(i, $event)
+                            "
+                          >
+                            <option
+                              *ngFor="let type of ledTypes"
+                              [value]="type.value"
+                            >
+                              {{ type.label }}
+                            </option>
+                          </select>
                         </div>
                       </div>
 
                       <div class="lane-colors-editor">
-                         <label>{{ 'AE_LANE_COLOR_OVERRIDES' | translate }}</label>
-                         <div class="lane-colors-grid">
-                            <div *ngFor="let lane of lanes; let laneIdx = index" class="lane-color-item">
-                               <div class="lane-tag" [style.background-color]="lane.background_color">L{{ laneIdx + 1 }}</div>
-                               <input type="color" [(ngModel)]="ls.ledLaneColorOverrides[laneIdx]" (change)="updateLedString()">
+                        <label>{{
+                          "AE_LANE_COLOR_OVERRIDES" | translate
+                        }}</label>
+                        <div class="lane-colors-grid">
+                          <div
+                            *ngFor="
+                              let lane of lanes;
+                              let laneIdx = index;
+                              trackBy: trackByLane
+                            "
+                            class="lane-color-item"
+                          >
+                            <div
+                              class="lane-tag"
+                              [style.background-color]="lane.background_color"
+                              [style.color]="lane.foreground_color"
+                            >
+                              L{{ laneIdx + 1 }}
                             </div>
-                         </div>
+                            <input
+                              type="color"
+                              [ngModel]="ls.ledLaneColorOverrides[laneIdx]"
+                              (ngModelChange)="
+                                onLedStringLaneColorChange(i, laneIdx, $event)
+                              "
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       <div class="leds-grid">
-                        <div *ngFor="let led of ls.leds; let ledIdx = index" class="led-item">
-                          <div class="led-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div
+                          *ngFor="
+                            let led of ls.leds;
+                            let ledIdx = index;
+                            trackBy: trackByLed
+                          "
+                          class="led-item"
+                        >
+                          <div
+                            class="led-header"
+                            style="
+                              display: flex;
+                              justify-content: space-between;
+                              align-items: center;
+                            "
+                          >
                             <label>LED {{ ledIdx + 1 }}</label>
-                            <span class="status-badge small" [class.active]="isRgbLedActive(i, ledIdx)" (click)="toggleRgbLed(i, ledIdx)" style="cursor: pointer;"></span>
+                            <span
+                              class="status-badge small"
+                              [class.active]="isRgbLedActive(i, ledIdx)"
+                              (click)="toggleRgbLed(i, ledIdx)"
+                              style="cursor: pointer"
+                            ></span>
                           </div>
-                          <select [ngModel]="ls.leds[ledIdx]?.toString()" (ngModelChange)="updateLedBehavior(i, ledIdx, $event)">
-                            <option *ngFor="let behavior of ledBehaviors" [value]="behavior.value">{{ behavior.label }}</option>
+                          <select
+                            [ngModel]="ls.leds[ledIdx]?.toString()"
+                            (ngModelChange)="
+                              updateLedBehavior(i, ledIdx, $event)
+                            "
+                          >
+                            <option
+                              *ngFor="let behavior of ledBehaviors"
+                              [value]="behavior.value"
+                            >
+                              {{ behavior.label }}
+                            </option>
                           </select>
                         </div>
                       </div>
@@ -261,4 +574,3 @@
     </div>
   </div>
 </div>
-
