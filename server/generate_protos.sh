@@ -175,8 +175,8 @@ elif [ -d "$PROJECT_ROOT/client" ]; then
     CLIENT_PROTO_OUT="$PROJECT_ROOT/client/src/app/proto"
     mkdir -p "$CLIENT_PROTO_OUT"
     pushd "$PROTO_ROOT" > /dev/null
-    npx protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT/message.js" client/*.proto server/*.proto message.proto
-    npx protobufjs-cli pbts -o "$CLIENT_PROTO_OUT/message.d.ts" "$CLIENT_PROTO_OUT/message.js"
+    npx -y -p protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT/message.js" client/*.proto server/*.proto message.proto
+    npx -y -p protobufjs-cli pbts -o "$CLIENT_PROTO_OUT/message.d.ts" "$CLIENT_PROTO_OUT/message.js"
     popd > /dev/null
     echo "Client-side protobuf generation successful."
 fi
