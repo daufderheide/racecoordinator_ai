@@ -15,6 +15,7 @@
     <generated.sources.dir>${build.dist.dir}/generated-sources/protobuf/java</generated.sources.dir>
     <protobuf.java.version>3.25.1</protobuf.java.version>
     <skipProtobuf>true</skipProtobuf>
+    <argLine></argLine>
   </properties>
   <dependencies>
     <dependency>
