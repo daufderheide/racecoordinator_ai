@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Driver;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
@@ -49,6 +50,7 @@ public class HeatStandings {
 
     // Always send an update for all drivers to ensure gaps are refreshed on the
     // client
+    int currentRank = 1;
     for (int i = 0; i < newStandings.size(); i++) {
       String objectId = newStandings.get(i);
       DriverHeatData dhd =
@@ -57,10 +59,13 @@ public class HeatStandings {
               .findFirst()
               .orElse(null);
       if (dhd != null) {
+        boolean isEmpty = dhd.getActualDriver() == Driver.EMPTY_DRIVER;
+        int rank = isEmpty ? 0 : currentRank++;
+
         updateBuilder.addUpdates(
             HeatPositionUpdate.newBuilder()
                 .setObjectId(objectId)
-                .setRank(i + 1)
+                .setRank(rank)
                 .setGapLeader(dhd.getGapLeader())
                 .setGapPosition(dhd.getGapPosition())
                 .build());
@@ -174,7 +179,9 @@ public class HeatStandings {
         comparator = (d1, d2) -> 0;
     }
 
-    return comparator
+    return Comparator.<DriverHeatData, Boolean>comparing(
+            d -> d.getActualDriver() == Driver.EMPTY_DRIVER)
+        .thenComparing(comparator)
         .thenComparing(d -> d.getReactionTime() == 0 ? Double.MAX_VALUE : d.getReactionTime())
         .thenComparing(getTieBreakerComparator());
   }

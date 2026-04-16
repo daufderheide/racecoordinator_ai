@@ -251,8 +251,12 @@ public class Race implements ProtocolListener {
       List<Integer> rankings = new ArrayList<>();
       for (String id : standingsIds) {
         for (int i = 0; i < heatDrivers.size(); i++) {
-          if (heatDrivers.get(i).getObjectId().equals(id)) {
-            rankings.add(i);
+          DriverHeatData dhd = heatDrivers.get(i);
+          if (dhd.getObjectId().equals(id)) {
+            // Only add if not an empty driver
+            if (dhd.getActualDriver() != Driver.EMPTY_DRIVER) {
+              rankings.add(i);
+            }
             break;
           }
         }

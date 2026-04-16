@@ -209,4 +209,34 @@ public class OverallStandingsTest {
     assertEquals(9.0, p2.getAverageLapTime(), 0.001);
     assertEquals(10.0, p1.getAverageLapTime(), 0.001);
   }
+
+  @Test
+  public void testEmptyLaneOverallRanking() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p2); // Empty lane first
+    drivers.add(p1);
+
+    List<Heat> heats = new ArrayList<>();
+    // Heat 1: P1 has 10 laps, P2 (empty) has 0
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 0, 0));
+
+    os.recalculate(drivers, heats);
+
+    // D1 (real) should be rank 1, Empty should be rank 0
+    assertEquals(1, p1.getRank());
+    assertEquals(0, p2.getRank());
+
+    // Verify sorting order in the list (Empty should be at the bottom)
+    assertEquals(p1, drivers.get(0));
+    assertEquals(p2, drivers.get(1));
+  }
 }

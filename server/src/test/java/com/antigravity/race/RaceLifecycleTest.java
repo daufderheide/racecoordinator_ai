@@ -103,8 +103,9 @@ public class RaceLifecycleTest {
     race.changeState(new com.antigravity.race.states.NotStarted());
 
     // Then hardware should be initialized
-    // The test setup has 2 lanes, so we expect standings for both.
-    verify(mockProtocols).setHeatStandings(java.util.Arrays.asList(0, 1));
+    // The test setup has 2 lanes, but only 1 real driver (D1).
+    // The second lane is empty and should be excluded from hardware rankings.
+    verify(mockProtocols).setHeatStandings(java.util.Arrays.asList(0));
     verify(mockProtocols).setHeatProgress(0);
   }
 

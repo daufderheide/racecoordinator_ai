@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Driver;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
@@ -86,31 +87,34 @@ public class OverallStandings {
     drivers.sort(getComparator());
 
     // 4. Assign ranks
+    int currentRank = 1;
     for (int i = 0; i < drivers.size(); i++) {
-      drivers.get(i).setRank(i + 1);
+      RaceParticipant driver = drivers.get(i);
+      boolean isEmpty = driver.getDriver() == Driver.EMPTY_DRIVER;
+      driver.setRank(isEmpty ? 0 : currentRank++);
 
       double rankValue = 0;
       if (overallScoring != null && overallScoring.getRankingMethod() != null) {
         switch (overallScoring.getRankingMethod()) {
           case LAP_COUNT:
-            rankValue = drivers.get(i).getTotalLaps();
+            rankValue = driver.getTotalLaps();
             break;
           case FASTEST_LAP:
-            rankValue = drivers.get(i).getBestLapTime();
+            rankValue = driver.getBestLapTime();
             break;
           case TOTAL_TIME:
-            rankValue = drivers.get(i).getTotalTime();
+            rankValue = driver.getTotalTime();
             break;
           case AVERAGE_LAP:
-            rankValue = drivers.get(i).getAverageLapTime();
+            rankValue = driver.getAverageLapTime();
             break;
           default:
             rankValue = 0;
         }
       } else {
-        rankValue = drivers.get(i).getTotalLaps();
+        rankValue = driver.getTotalLaps();
       }
-      drivers.get(i).setRankValue(rankValue);
+      driver.setRankValue(rankValue);
     }
   }
 
@@ -228,10 +232,8 @@ public class OverallStandings {
       comparator = Comparator.comparingInt(RaceParticipant::getTotalLaps).reversed();
     }
 
-    // Apply Tiebreaker
-    comparator = comparator.thenComparing(getTieBreakerComparator());
-
-    return comparator;
+    return Comparator.<RaceParticipant, Boolean>comparing(p -> p.getDriver() == Driver.EMPTY_DRIVER)
+        .thenComparing(comparator.thenComparing(getTieBreakerComparator()));
   }
 
   private Comparator<RaceParticipant> getTieBreakerComparator() {

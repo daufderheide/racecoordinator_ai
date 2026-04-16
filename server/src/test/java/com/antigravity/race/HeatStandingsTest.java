@@ -249,4 +249,47 @@ public class HeatStandingsTest {
     assertEquals(d2.getObjectId(), results.get(1));
     assertEquals(d3.getObjectId(), results.get(2));
   }
+
+  @Test
+  public void testEmptyLaneRanking() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.addLap(10.0, false);
+
+    DriverHeatData d2 = new DriverHeatData(p2);
+    // Empty lane has no laps
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d2); // Put empty lane first to test sorting
+    data.add(d1);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap,
+                0,
+                HeatRanking.LAP_COUNT,
+                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+
+    List<String> results = standings.getStandings();
+
+    // d1 (real driver) should be first, d2 (empty) should be second
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+
+    // Verify ranks
+    com.antigravity.proto.StandingsUpdate update = standings.updateStandings();
+    assertEquals(2, update.getUpdatesCount());
+
+    for (com.antigravity.proto.HeatPositionUpdate pos : update.getUpdatesList()) {
+      if (pos.getObjectId().equals(d1.getObjectId())) {
+        assertEquals(1, pos.getRank()); // Real driver ranked 1
+      } else if (pos.getObjectId().equals(d2.getObjectId())) {
+        assertEquals(0, pos.getRank()); // Empty lane ranked 0
+      }
+    }
+  }
 }
