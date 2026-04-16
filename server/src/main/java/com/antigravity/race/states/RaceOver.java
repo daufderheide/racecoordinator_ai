@@ -2,7 +2,9 @@ package com.antigravity.race.states;
 
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
+import com.antigravity.service.DatabaseService;
 import java.time.OffsetDateTime;
 
 public class RaceOver implements IRaceState {
@@ -32,6 +34,18 @@ public class RaceOver implements IRaceState {
             .getStatistics()
             .setDurationMillis(System.currentTimeMillis() - heatStart);
       }
+    }
+
+    // Save history and update stats
+    try {
+      DatabaseService dbService = new DatabaseService();
+      com.mongodb.client.MongoDatabase db =
+          ClientSubscriptionManager.getInstance().getDatabaseContext().getDatabase();
+      dbService.saveRaceHistory(db, race);
+      dbService.updateGlobalStatistics(db, race);
+    } catch (Exception e) {
+      System.err.println("Failed to insert race history: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 

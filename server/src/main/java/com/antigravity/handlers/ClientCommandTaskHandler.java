@@ -55,8 +55,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +63,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -836,30 +833,20 @@ public class ClientCommandTaskHandler {
       // Let's assume for now, or check if any protocol is Demo.
       saveData.setDemoMode(race.isDemoMode());
       saveData.setStatistics(race.getStatistics());
-
-      ObjectMapper mapper = getObjectMapper();
-      String json = mapper.writeValueAsString(saveData);
-
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
-      File dir = new File(saveDir);
-      if (!dir.exists() && !dir.mkdirs()) {
-        ctx.status(500).result("Failed to create save directory");
-        return;
-      }
+      saveData.setAutoSave(false);
 
       LocalDateTime now = LocalDateTime.now();
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
       String timestamp = now.format(formatter);
       String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
       raceName = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
-      String filename = timestamp + "_" + raceName + ".json";
-      File file = new File(dir, filename);
-      try (FileWriter writer = new FileWriter(file)) {
-        writer.write(json);
-      }
+      String saveName = timestamp + "_" + raceName + ".json";
+      saveData.setSaveName(saveName);
 
-      ctx.status(200).result("Race saved successfully: " + filename);
+      DatabaseService dbService = new DatabaseService();
+      dbService.saveManualRace(databaseContext.getDatabase(), saveData);
+
+      ctx.status(200).result("Race saved successfully: " + saveName);
     } catch (Exception e) {
       System.err.println("Error saving race: " + e.getMessage());
       e.printStackTrace();
@@ -869,15 +856,12 @@ public class ClientCommandTaskHandler {
 
   void getSavedRaces(Context ctx) {
     try {
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
-      File dir = new File(saveDir);
-      if (!dir.exists()) {
-        ctx.json(new ArrayList<String>());
-        return;
-      }
-      String[] files = dir.list((d, name) -> name.endsWith(".json"));
-      ctx.json(files != null ? Arrays.asList(files) : new ArrayList<String>());
+      DatabaseService dbService = new DatabaseService();
+      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext.getDatabase());
+      List<String> files =
+          saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
+      ObjectMapper mapper = getObjectMapper();
+      ctx.contentType("application/json").result(mapper.writeValueAsString(files));
     } catch (Exception e) {
       System.err.println("Error getting saved races: " + e.getMessage());
       ctx.status(500).result("Error: " + e.getMessage());
@@ -886,14 +870,13 @@ public class ClientCommandTaskHandler {
 
   void deleteSavedRace(Context ctx) {
     try {
-      String filename = ctx.pathParam("filename");
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
-      File saveFile = new File(saveDir, filename);
-      if (saveFile.exists() && saveFile.delete()) {
-        ctx.status(200).result("File deleted: " + filename);
+      String saveName = ctx.pathParam("filename");
+      DatabaseService dbService = new DatabaseService();
+      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), saveName);
+      if (deleted) {
+        ctx.status(200).result("Save deleted: " + saveName);
       } else {
-        ctx.status(404).result("File not found or failed to delete: " + filename);
+        ctx.status(404).result("Save not found or failed to delete: " + saveName);
       }
     } catch (Exception e) {
       System.err.println("Error deleting saved race: " + e.getMessage());
@@ -905,23 +888,19 @@ public class ClientCommandTaskHandler {
   private void loadRace(Context ctx) {
     try {
       Map<String, String> body = ctx.bodyAsClass(HashMap.class);
-      String filename = body.get("filename");
-      if (filename == null) {
+      String saveName = body.get("filename");
+      if (saveName == null) {
         ctx.status(400).result("Filename is required");
         return;
       }
 
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
-      File saveFile = new File(saveDir, filename);
+      DatabaseService dbService = new DatabaseService();
+      RaceSaveData saveData = dbService.getSavedRace(databaseContext.getDatabase(), saveName);
 
-      if (!saveFile.exists()) {
+      if (saveData == null) {
         ctx.status(404).result("Save file not found");
         return;
       }
-
-      ObjectMapper mapper = getObjectMapper();
-      RaceSaveData saveData = mapper.readValue(saveFile, RaceSaveData.class);
 
       // Compare Track
       Track savedTrack = saveData.getTrack();

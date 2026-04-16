@@ -1,9 +1,7 @@
 package com.antigravity.race;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -122,7 +120,6 @@ public class ClientSubscriptionManagerTest {
     com.antigravity.models.Race realModel =
         new com.antigravity.models.Race.Builder()
             .withName("Race")
-            .withTrackEntityId("track1")
             .withEntityId("testRaceId")
             .build();
 
@@ -134,47 +131,49 @@ public class ClientSubscriptionManagerTest {
     when(mockRace.getState()).thenReturn(mockState);
 
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
-    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
-    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+    com.mongodb.client.MongoDatabase mockDatabase = mock(com.mongodb.client.MongoDatabase.class);
+    com.mongodb.client.MongoCollection mockCollection =
+        mock(com.mongodb.client.MongoCollection.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mockDatabase);
+    when(mockDatabase.getCollection(
+            org.mockito.ArgumentMatchers.eq("saved_races"),
+            org.mockito.ArgumentMatchers.eq(com.antigravity.race.RaceSaveData.class)))
+        .thenReturn(mockCollection);
 
     manager.setDatabaseContext(mockDbCtx);
     manager.setShuttingDown(false);
     manager.autoSave(mockRace);
 
-    File saveDir =
-        new File(
-            tempFolder.getAbsolutePath()
-                + File.separator
-                + "testDB"
-                + File.separator
-                + "saved_races");
-    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
-    assertTrue("Auto-save file should be created", expectedFile.exists());
+    verify(mockCollection)
+        .replaceOne(
+            org.mockito.ArgumentMatchers.any(org.bson.conversions.Bson.class),
+            org.mockito.ArgumentMatchers.any(com.antigravity.race.RaceSaveData.class),
+            org.mockito.ArgumentMatchers.any(com.mongodb.client.model.ReplaceOptions.class));
   }
 
   @Test
   public void testDeleteAutoSaveRemovesFile() throws Exception {
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
-    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
-    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+    com.mongodb.client.MongoDatabase mockDatabase = mock(com.mongodb.client.MongoDatabase.class);
+    com.mongodb.client.MongoCollection mockCollection =
+        mock(com.mongodb.client.MongoCollection.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mockDatabase);
+    when(mockDatabase.getCollection(
+            org.mockito.ArgumentMatchers.eq("saved_races"),
+            org.mockito.ArgumentMatchers.eq(com.antigravity.race.RaceSaveData.class)))
+        .thenReturn(mockCollection);
+    com.mongodb.client.result.DeleteResult dr =
+        com.mongodb.client.result.DeleteResult.acknowledged(1);
+    when(mockCollection.deleteOne(
+            org.mockito.ArgumentMatchers.any(org.bson.conversions.Bson.class)))
+        .thenReturn(dr);
 
     manager.setDatabaseContext(mockDbCtx);
 
-    File saveDir =
-        new File(
-            tempFolder.getAbsolutePath()
-                + File.separator
-                + "testDB"
-                + File.separator
-                + "saved_races");
-    saveDir.mkdirs();
-    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
-    expectedFile.createNewFile();
-    assertTrue(expectedFile.exists());
-
     manager.deleteAutoSave("testRaceId");
 
-    assertFalse("Auto-save file should be deleted", expectedFile.exists());
+    verify(mockCollection)
+        .deleteOne(org.mockito.ArgumentMatchers.any(org.bson.conversions.Bson.class));
   }
 
   @Test
@@ -183,7 +182,6 @@ public class ClientSubscriptionManagerTest {
     com.antigravity.models.Race realModel =
         new com.antigravity.models.Race.Builder()
             .withName("Race")
-            .withTrackEntityId("track1")
             .withEntityId("testRaceId")
             .build();
     when(mockRace.getRaceModel()).thenReturn(realModel);
@@ -193,22 +191,22 @@ public class ClientSubscriptionManagerTest {
     when(mockRace.getState()).thenReturn(mockState);
 
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
-    when(mockDbCtx.getCurrentDatabaseName()).thenReturn("testDB");
-    when(mockDbCtx.getDataRoot()).thenReturn(tempFolder.getAbsolutePath() + File.separator);
+    com.mongodb.client.MongoDatabase mockDatabase = mock(com.mongodb.client.MongoDatabase.class);
+    com.mongodb.client.MongoCollection mockCollection =
+        mock(com.mongodb.client.MongoCollection.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mockDatabase);
+    when(mockDatabase.getCollection(
+            org.mockito.ArgumentMatchers.eq("saved_races"),
+            org.mockito.ArgumentMatchers.eq(com.antigravity.race.RaceSaveData.class)))
+        .thenReturn(mockCollection);
+    com.mongodb.client.result.DeleteResult dr =
+        com.mongodb.client.result.DeleteResult.acknowledged(1);
+    when(mockCollection.deleteOne(
+            org.mockito.ArgumentMatchers.any(org.bson.conversions.Bson.class)))
+        .thenReturn(dr);
+
     manager.setDatabaseContext(mockDbCtx);
     manager.setShuttingDown(false);
-
-    File saveDir =
-        new File(
-            tempFolder.getAbsolutePath()
-                + File.separator
-                + "testDB"
-                + File.separator
-                + "saved_races");
-    saveDir.mkdirs();
-    File expectedFile = new File(saveDir, "autosave_testRaceId.json");
-    expectedFile.createNewFile();
-    assertTrue(expectedFile.exists());
 
     manager.setRace(mockRace);
 
@@ -222,8 +220,8 @@ public class ClientSubscriptionManagerTest {
 
     manager.handleRaceSubscription(mockContext, unsubscribeReq); // Triggers checkAndStopRace()
 
-    assertFalse(
-        "Auto-save file should be deleted upon last client disconnect", expectedFile.exists());
+    verify(mockCollection)
+        .deleteOne(org.mockito.ArgumentMatchers.any(org.bson.conversions.Bson.class));
     assertNull("Race should be cleared", manager.getRace());
   }
 }

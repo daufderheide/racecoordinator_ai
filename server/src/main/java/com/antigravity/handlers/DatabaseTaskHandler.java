@@ -2,17 +2,20 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
+import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
+import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.CsvExporter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -76,6 +79,12 @@ public class DatabaseTaskHandler {
     app.get("/api/databases/current", this::getCurrentDatabase);
     app.get("/api/databases/{name}/export", this::exportDatabase);
     app.post("/api/databases/import", this::importDatabase);
+
+    // History Data Endpoints
+    app.get("/api/history/races", this::getRaceHistoryList);
+    app.get("/api/history/races/{id}", this::getRaceHistoryById);
+    app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv);
+    app.get("/api/history/stats", this::getGlobalStatistics);
   }
 
   private MongoCollection<Driver> getDriverCollection() {
@@ -938,5 +947,79 @@ public class DatabaseTaskHandler {
         });
     mapper.registerModule(module);
     return mapper.readValue(body, clazz);
+  }
+
+  private void getRaceHistoryList(Context ctx) {
+    try {
+      DatabaseService dbService = new DatabaseService();
+      List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext.getDatabase());
+      ctx.json(history);
+    } catch (Exception e) {
+      e.printStackTrace();
+      ctx.status(500).result("Error fetching race history list: " + e.getMessage());
+    }
+  }
+
+  private void getRaceHistoryById(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      DatabaseService dbService = new DatabaseService();
+      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
+      if (history == null) {
+        ctx.status(404).result("Race history not found");
+        return;
+      }
+      ctx.json(history);
+    } catch (Exception e) {
+      e.printStackTrace();
+      ctx.status(500).result("Error fetching race history: " + e.getMessage());
+    }
+  }
+
+  private void exportRaceHistoryCsv(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      DatabaseService dbService = new DatabaseService();
+      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext.getDatabase(), id);
+      if (history == null) {
+        ctx.status(404).result("Race history not found");
+        return;
+      }
+
+      com.antigravity.race.Race tempRace =
+          new com.antigravity.race.Race.Builder()
+              .model(history.getModel())
+              .track(history.getTrack())
+              .drivers(history.getDrivers())
+              .heats(history.getHeats())
+              .accumulatedRaceTime(history.getAccumulatedRaceTime())
+              .statistics(history.getStatistics())
+              .build();
+
+      String csvContent = CsvExporter.export(tempRace);
+
+      String raceName =
+          history.getModel() != null ? history.getModel().getName() : "Historical_Race";
+      String filename =
+          raceName.replaceAll("[^a-zA-Z0-9.-]", "_") + "_" + System.currentTimeMillis() + ".csv";
+      ctx.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+      ctx.contentType("text/csv");
+      ctx.result(csvContent);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      ctx.status(500).result("Error exporting race history: " + e.getMessage());
+    }
+  }
+
+  private void getGlobalStatistics(Context ctx) {
+    try {
+      DatabaseService dbService = new DatabaseService();
+      GlobalStatistics stats = dbService.getGlobalStatistics(databaseContext.getDatabase());
+      ctx.json(stats);
+    } catch (Exception e) {
+      e.printStackTrace();
+      ctx.status(500).result("Error fetching global statistics: " + e.getMessage());
+    }
   }
 }

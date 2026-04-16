@@ -5,6 +5,7 @@ import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.service.DatabaseService;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -17,8 +18,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -249,23 +248,13 @@ public class ClientSubscriptionManager {
       saveData.setDemoMode(race.isDemoMode());
       saveData.setStatistics(race.getStatistics());
 
-      ObjectMapper mapper = getObjectMapper();
-      String json = mapper.writeValueAsString(saveData);
-
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
-      File dir = new File(saveDir);
-      if (!dir.exists() && !dir.mkdirs()) {
-        System.err.println("Failed to create save directory for auto-save");
-        return;
-      }
-
+      saveData.setAutoSave(true);
       String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
-      File file = new File(dir, filename);
-      try (FileWriter writer = new FileWriter(file)) {
-        writer.write(json);
-      }
-      System.out.println("Auto-saved race: " + filename);
+      saveData.setSaveName(filename);
+
+      DatabaseService dbService = new DatabaseService();
+      dbService.upsertAutoSave(databaseContext.getDatabase(), saveData);
+      System.out.println("Auto-saved race to database: " + filename);
     } catch (Exception e) {
       System.err.println("Error during auto-save: " + e.getMessage());
     }
@@ -276,12 +265,11 @@ public class ClientSubscriptionManager {
       return;
     }
     try {
-      String dbName = databaseContext.getCurrentDatabaseName();
-      String saveDir = databaseContext.getDataRoot() + dbName + File.separator + "saved_races";
       String filename = "autosave_" + raceId + ".json";
-      File file = new File(saveDir, filename);
-      if (file.exists() && file.delete()) {
-        System.out.println("Deleted auto-save: " + filename);
+      DatabaseService dbService = new DatabaseService();
+      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), filename);
+      if (deleted) {
+        System.out.println("Deleted auto-save from db: " + filename);
       }
     } catch (Exception e) {
       System.err.println("Error deleting auto-save: " + e.getMessage());

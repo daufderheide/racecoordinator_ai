@@ -2,6 +2,7 @@ package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
+import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.FinishMethod;
@@ -10,21 +11,27 @@ import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
+import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
+import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.RaceSaveData;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 public class DatabaseService {
 
@@ -385,5 +392,143 @@ public class DatabaseService {
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
     return new Track("New Track", lanes, configs, null, null);
+  }
+
+  public void saveRaceHistory(MongoDatabase database, com.antigravity.race.Race runtimeRace) {
+    if (runtimeRace == null) return;
+    try {
+      MongoCollection<RaceHistoryRecord> collection =
+          database.getCollection("race_history", RaceHistoryRecord.class);
+      RaceHistoryRecord record = new RaceHistoryRecord();
+      if (runtimeRace.getRaceModel() != null) {
+        record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
+        record.setModel(runtimeRace.getRaceModel());
+      }
+      record.setTrack(runtimeRace.getTrack());
+      record.setDrivers(runtimeRace.getDrivers());
+      record.setHeats(runtimeRace.getHeats());
+      record.setAccumulatedRaceTime(runtimeRace.getRaceTime());
+      record.setStatistics(runtimeRace.getStatistics());
+
+      collection.insertOne(record);
+      System.out.println("Race successfully saved to race_history.");
+    } catch (Exception e) {
+      System.err.println("Failed to save race to history: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  public void updateGlobalStatistics(
+      MongoDatabase database, com.antigravity.race.Race runtimeRace) {
+    if (runtimeRace == null) return;
+    try {
+      MongoCollection<GlobalStatistics> statsCollection =
+          database.getCollection("global_statistics", GlobalStatistics.class);
+      GlobalStatistics stats = statsCollection.find(Filters.eq("singleton_id", "global")).first();
+      if (stats == null) {
+        stats = new GlobalStatistics();
+        statsCollection.insertOne(stats);
+      }
+
+      stats.addRaceCount();
+
+      if (runtimeRace.getStatistics() != null) {
+        stats.addRaceTimeMs(runtimeRace.getStatistics().getDurationMillis());
+      }
+
+      int totalLaps = 0;
+      for (RaceParticipant p : runtimeRace.getDrivers()) {
+        totalLaps += p.getTotalLaps();
+        double bestLap = p.getBestLapTime();
+        if (bestLap > 0 && bestLap < stats.getFastestLapTime()) {
+          stats.setFastestLapTime(bestLap);
+          if (p.getDriver() != null) {
+            stats.setFastestLapDriverName(p.getDriver().getName());
+          }
+          if (runtimeRace.getTrack() != null) {
+            stats.setFastestLapTrackName(runtimeRace.getTrack().getName());
+          }
+        }
+      }
+      stats.addLaps(totalLaps);
+
+      statsCollection.replaceOne(Filters.eq("singleton_id", "global"), stats);
+      System.out.println("Global statistics updated.");
+    } catch (Exception e) {
+      System.err.println("Failed to update global statistics: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  public GlobalStatistics getGlobalStatistics(MongoDatabase database) {
+    MongoCollection<GlobalStatistics> statsCollection =
+        database.getCollection("global_statistics", GlobalStatistics.class);
+    GlobalStatistics stats = statsCollection.find(Filters.eq("singleton_id", "global")).first();
+    if (stats == null) {
+      return new GlobalStatistics();
+    }
+    return stats;
+  }
+
+  public List<RaceHistoryRecord> getRaceHistory(MongoDatabase database) {
+    MongoCollection<RaceHistoryRecord> collection =
+        database.getCollection("race_history", RaceHistoryRecord.class);
+    List<RaceHistoryRecord> history = new ArrayList<>();
+    // You could sort by _id descending to get newest first natively, but BSON
+    // default works for now.
+    collection.find().into(history);
+    return history;
+  }
+
+  public RaceHistoryRecord getRaceHistoryById(MongoDatabase database, String id) {
+    MongoCollection<RaceHistoryRecord> collection =
+        database.getCollection("race_history", RaceHistoryRecord.class);
+    return collection.find(Filters.eq("_id", new ObjectId(id))).first();
+  }
+
+  public void upsertAutoSave(MongoDatabase database, RaceSaveData data) {
+    if (data == null) return;
+    try {
+      MongoCollection<RaceSaveData> collection =
+          database.getCollection("saved_races", RaceSaveData.class);
+      ReplaceOptions options = new ReplaceOptions().upsert(true);
+      collection.replaceOne(Filters.eq("saveName", data.getSaveName()), data, options);
+    } catch (Exception e) {
+      System.err.println("Failed to auto-save race: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  public void saveManualRace(MongoDatabase database, RaceSaveData data) {
+    if (data == null) return;
+    try {
+      MongoCollection<RaceSaveData> collection =
+          database.getCollection("saved_races", RaceSaveData.class);
+      collection.insertOne(data);
+    } catch (Exception e) {
+      System.err.println("Failed to save race manually: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  public List<RaceSaveData> getSavedRaces(MongoDatabase database) {
+    MongoCollection<RaceSaveData> collection =
+        database.getCollection("saved_races", RaceSaveData.class);
+    List<RaceSaveData> saves = new ArrayList<>();
+    collection.find().into(saves);
+    return saves;
+  }
+
+  public RaceSaveData getSavedRace(MongoDatabase database, String saveName) {
+    MongoCollection<RaceSaveData> collection =
+        database.getCollection("saved_races", RaceSaveData.class);
+    return collection.find(Filters.eq("saveName", saveName)).first();
+  }
+
+  public boolean deleteSavedRace(MongoDatabase database, String saveName) {
+    MongoCollection<RaceSaveData> collection =
+        database.getCollection("saved_races", RaceSaveData.class);
+    DeleteResult result = collection.deleteOne(Filters.eq("saveName", saveName));
+    return result.getDeletedCount() > 0;
   }
 }

@@ -88,6 +88,10 @@ public class ClientCommandTaskHandlerTest {
     when(mongoDatabase.getCollection(eq("drivers"), eq(Driver.class))).thenReturn(driverCollection);
     when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class))).thenReturn(trackCollection);
 
+    MongoCollection<RaceSaveData> saveCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("saved_races"), eq(RaceSaveData.class)))
+        .thenReturn(saveCollection);
+
     String tmpDir = System.getProperty("java.io.tmpdir");
     File tempFile = new File(tmpDir, "saved_races_test");
     deleteDirectory(tempFile);
@@ -326,15 +330,7 @@ public class ClientCommandTaskHandlerTest {
     when(race.getState()).thenReturn(new NotStarted());
     HeatScoring heatScoring = new HeatScoring();
     OverallScoring overallScoring = new OverallScoring();
-    Race raceModel =
-        new Race.Builder()
-            .withName("MyTestRace")
-            .withTrackEntityId("track-1")
-            .withHeatRotationType(HeatRotationType.RoundRobin)
-            .withHeatScoring(heatScoring)
-            .withOverallScoring(overallScoring)
-            .withEntityId("race-1")
-            .build();
+    Race raceModel = new Race.Builder().withName("MyTestRace").withEntityId("race-1").build();
     when(race.getRaceModel()).thenReturn(raceModel);
     when(race.getTrack()).thenReturn(new Track("Track1", new ArrayList<>(), "track1", null));
     when(race.getDrivers()).thenReturn(new ArrayList<>());
@@ -347,50 +343,52 @@ public class ClientCommandTaskHandlerTest {
 
     verify(res).setStatus(200);
 
-    File dir = new File(tempDir.toFile(), "testdb/saved_races");
-    assertTrue("Save directory should exist", dir.exists());
-    File[] files = dir.listFiles();
-    assertNotNull("File list should not be null", files);
-    assertEquals(1, files.length);
-    assertTrue(files[0].getName().endsWith("_MyTestRace.json"));
+    // Verify it was inserted into the MongoCollection
+    MongoCollection<RaceSaveData> saveCollection =
+        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
+    org.mockito.ArgumentCaptor<RaceSaveData> captor =
+        org.mockito.ArgumentCaptor.forClass(RaceSaveData.class);
+    verify(saveCollection).insertOne(captor.capture());
 
-    // Read back and verify roundtrip parity
-    ObjectMapper mapper = handler.getObjectMapper();
-    RaceSaveData loaded = mapper.readValue(files[0], RaceSaveData.class);
-    assertNotNull("Loaded saved data should not be null", loaded);
-    assertEquals("MyTestRace", loaded.getModel().getName());
-    assertTrue("Demo mode should be preserved during save/load roundtrip", loaded.isDemoMode());
+    RaceSaveData saved = captor.getValue();
+    assertNotNull(saved);
+    assertTrue(saved.getSaveName().endsWith("_MyTestRace.json"));
+    assertTrue(saved.isDemoMode());
+    assertFalse(saved.isAutoSave());
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testGetSavedRaces_Success() throws Exception {
-    File dir = new File(tempDir.toFile(), "testdb/saved_races");
-    dir.mkdirs();
-    File file = new File(dir, "20260101-120000_MyTestRace.json");
-    file.createNewFile();
+    RaceSaveData data = new RaceSaveData();
+    data.setSaveName("20260101-120000_MyTestRace.json");
 
-    Map<String, String> pathParams = new HashMap<>();
-    pathParams.put("filename", "20260101-120000_MyTestRace.json");
-    try {
-      Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", Map.class);
-      setParams.invoke(ctx, pathParams);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    MongoCollection<RaceSaveData> saveCollection =
+        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
+    FindIterable<RaceSaveData> iterable = mock(FindIterable.class);
+    when(saveCollection.find()).thenReturn(iterable);
+    doAnswer(
+            invocation -> {
+              List<RaceSaveData> list = invocation.getArgument(0);
+              list.add(data);
+              return list;
+            })
+        .when(iterable)
+        .into(any(List.class));
 
-    // Since Context is real, it has written to the mock response.
-    // We just verify it completed without setting error status.
+    handler.getSavedRaces(ctx);
+
     verify(res, never()).sendError(anyInt());
     verify(res, never()).setStatus(eq(500));
   }
 
   @Test
   public void testDeleteSavedRace_Success() throws Exception {
-    File dir = new File(tempDir.toFile(), "testdb/saved_races");
-    dir.mkdirs();
-    File file = new File(dir, "20260101-120001_MyTestRace.json");
-    file.createNewFile();
-    assertTrue(file.exists());
+    MongoCollection<RaceSaveData> saveCollection =
+        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
+    com.mongodb.client.result.DeleteResult dr =
+        com.mongodb.client.result.DeleteResult.acknowledged(1);
+    when(saveCollection.deleteOne(any(Bson.class))).thenReturn(dr);
 
     Map<String, String> pathParams = new HashMap<>();
     pathParams.put("filename", "20260101-120001_MyTestRace.json");
@@ -403,7 +401,8 @@ public class ClientCommandTaskHandlerTest {
 
     handler.deleteSavedRace(ctx);
 
-    assertFalse("File should be deleted", file.exists());
+    verify(res).setStatus(200);
+    verify(saveCollection).deleteOne(any(Bson.class));
   }
 
   @Test

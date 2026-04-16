@@ -61,4 +61,4 @@ if [ "$(uname -m)" = "arm64" ] && [ "$(uname -s)" = "Darwin" ]; then
 else
   BUILD_CACHE=0
 fi
-TMPDIR="$TMPDIR" HOME="$HOME" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=$BUILD_CACHE ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"
+TMPDIR="$TMPDIR" HOME="${REAL_HOME:-$HOME}" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=$BUILD_CACHE ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"
