@@ -2230,12 +2230,12 @@ export class DefaultRacedayComponent
     // If RACING state came, set all lamps to green
     if (state === com.antigravity.RaceState.RACING) {
       this.setAllLampsGo();
-      // Hide overlay after 5 seconds of green lamps
+      // Hide overlay after 1 second of green lamps
       setTimeout(() => {
         if (this.raceState === com.antigravity.RaceState.RACING) {
           this.showCountdownOverlay = false;
         }
-      }, 5000);
+      }, 1000);
     }
   }
 
