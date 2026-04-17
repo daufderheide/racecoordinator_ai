@@ -68,6 +68,13 @@ export class DefaultRacedayComponent
   protected allDrivers: any[] = [];
   protected participants: RaceParticipant[] = [];
 
+  // Countdown Overlay state
+  showCountdownOverlay: boolean = false;
+  countdownLamps: any[] = [];
+  countdownText: string = "";
+  countdownColor: string = "";
+  countdownTotalLamps: number = 0;
+
   // Static record values for now as requested
   // Record values
   protected raceRecordLapNickname: string = "";
@@ -367,9 +374,20 @@ export class DefaultRacedayComponent
     );
 
     this.subscriptions.push(
+      this.raceConnectionService.raceState$.subscribe((state) => {
+        this.handleRaceStateChange(state);
+      }),
+    );
+
+    this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
         this.autoStartRemaining = raceTime.autoStartRemaining || 0;
         this.autoAdvanceRemaining = raceTime.autoAdvanceRemaining || 0;
+
+        // Update countdown overlay if active
+        if (this.showCountdownOverlay) {
+          this.updateCountdownLamps(raceTime.time || 0);
+        }
 
         let time = raceTime.time || 0;
         if (this.autoStartRemaining > 0) {
@@ -731,6 +749,19 @@ export class DefaultRacedayComponent
       this.track = race.track;
       this.loadColumns();
       this.initializeHeat();
+
+      // If we're already in a starting state, re-sync the countdown lamps now that we have duration
+      if (
+        this.raceState === com.antigravity.RaceState.STARTING ||
+        this.raceState === com.antigravity.RaceState.PAUSED
+      ) {
+        const duration =
+          this.raceState === com.antigravity.RaceState.PAUSED
+            ? race.restart_time
+            : race.start_time;
+        this.countdownTotalLamps = Math.ceil(duration || 5.0);
+        this.updateCountdownLamps(this.autoStartRemaining || duration || 5.0);
+      }
     } else {
       console.log("RacedayComponent: Waiting for race data...");
       // Do not throw error, wait for Race
@@ -1470,9 +1501,9 @@ export class DefaultRacedayComponent
     const serverUrl = this.dataService.serverUrl;
     if (!serverUrl || serverUrl.includes("undefined")) return url;
 
-    // Ensure single slash between serverUrl and url
-    const normalizedUrl = url.startsWith("/") ? url : "/" + url;
-    return serverUrl + normalizedUrl;
+    const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
+    const path = url.startsWith("/") ? url : "/" + url;
+    return base + path;
   }
 
   public get isRestartHeatDisabled(): boolean {
@@ -2170,5 +2201,81 @@ export class DefaultRacedayComponent
     };
 
     return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+  }
+
+  private handleRaceStateChange(state: com.antigravity.RaceState) {
+    console.log("RacedayComponent: State changed to:", state);
+    this.raceState = state;
+
+    // Reset overlay if we enter a state that shouldn't show it
+    if (
+      state === com.antigravity.RaceState.NOT_STARTED ||
+      state === com.antigravity.RaceState.UNKNOWN_STATE ||
+      state === com.antigravity.RaceState.HEAT_OVER ||
+      state === com.antigravity.RaceState.RACE_OVER ||
+      state === com.antigravity.RaceState.PAUSED
+    ) {
+      this.showCountdownOverlay = false;
+    }
+
+    // Show overlay for STARTING or RESTARTING
+    if (state === com.antigravity.RaceState.STARTING) {
+      this.showCountdownOverlay = true;
+      // Determine duration based on entry path
+      const duration = this.race?.start_time || 5.0;
+      this.countdownTotalLamps = Math.ceil(duration);
+      this.updateCountdownLamps(duration);
+    }
+
+    // If RACING state came, set all lamps to green
+    if (state === com.antigravity.RaceState.RACING) {
+      this.setAllLampsGo();
+      // Hide overlay after 5 seconds of green lamps
+      setTimeout(() => {
+        if (this.raceState === com.antigravity.RaceState.RACING) {
+          this.showCountdownOverlay = false;
+        }
+      }, 5000);
+    }
+  }
+
+  private updateCountdownLamps(currentTime: number) {
+    if (!this.showCountdownOverlay) return;
+
+    // Red lamps turn on as time ticks down.
+    // e.g. at 5s, 0 on. at 4.9s, 1 on. at 3.9s, 2 on.
+    const onCount = this.countdownTotalLamps - Math.floor(currentTime);
+
+    this.countdownLamps = [];
+    for (let i = 0; i < this.countdownTotalLamps; i++) {
+      const lampState = i < onCount ? "on" : "dim";
+      const url = this.getAssetUrl(
+        lampState === "on" ? "Start Lamp Red" : "Start Lamp Dim",
+      );
+      this.countdownLamps.push({
+        url: url,
+        state: lampState,
+      });
+    }
+
+    this.countdownText = `${Math.ceil(currentTime)}`;
+    this.countdownColor = "lime";
+  }
+
+  private setAllLampsGo() {
+    const url = this.getAssetUrl("Start Lamp Green");
+    this.countdownLamps = Array.from({ length: this.countdownTotalLamps }).map(
+      () => ({
+        url: url,
+        state: "go",
+      }),
+    );
+    this.countdownText = "GO!";
+    this.countdownColor = "lime";
+  }
+
+  private getAssetUrl(name: string): string {
+    const asset = (this.assets || []).find((a) => a.name === name);
+    return asset ? this.getFullUrl(asset.url) : "";
   }
 }

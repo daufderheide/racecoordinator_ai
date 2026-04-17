@@ -1451,4 +1451,82 @@ describe("DefaultRacedayComponent", () => {
       expect(component["heatBestTime"]).toBe(0);
     });
   });
+
+  describe("Countdown Overlay", () => {
+    beforeEach(() => {
+      const mockAssets = [
+        { name: "Start Lamp Red", url: "assets/images/start_red_on.png" },
+        { name: "Start Lamp Dim", url: "assets/images/start_red_dim.png" },
+        { name: "Start Lamp Green", url: "assets/images/start_green.png" },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      fixture.detectChanges();
+    });
+
+    it("should show overlay and calculate lamps in STARTING state", fakeAsync(() => {
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      tick();
+
+      expect(component["showCountdownOverlay"]).toBeTrue();
+      expect(component["countdownTotalLamps"]).toBe(5);
+      expect(component["countdownLamps"].length).toBe(5);
+      // F1 standard: initially all dimmed
+      expect(
+        component["countdownLamps"].every((l) => l.state === "dim"),
+      ).toBeTrue();
+    }));
+
+    it("should update lamp states based on time remaining", fakeAsync(() => {
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      tick();
+
+      // At T=3.2s remaining, 5 - floor(3.2) = 2 lamps should be ON
+      raceTimeSubject.next({ time: 3.2, autoStartRemaining: 3.2 });
+      tick();
+
+      expect(component["countdownLamps"][0].state).toBe("on");
+      expect(component["countdownLamps"][1].state).toBe("on");
+      expect(component["countdownLamps"][2].state).toBe("dim");
+      expect(component["countdownLamps"][3].state).toBe("dim");
+      expect(component["countdownLamps"][4].state).toBe("dim");
+
+      // At 0.5s remaining, 5 - 0 = 5 lamps should be ON
+      raceTimeSubject.next({ time: 0.5, autoStartRemaining: 0.5 });
+      tick();
+      expect(
+        component["countdownLamps"].every((l) => l.state === "on"),
+      ).toBeTrue();
+    }));
+
+    it("should transition to green and hide after 5s when state becomes RACING", fakeAsync(() => {
+      component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      tick();
+
+      raceStateSubject.next(com.antigravity.RaceState.RACING);
+      tick();
+
+      expect(
+        component["countdownLamps"].every((l) => l.state === "go"),
+      ).toBeTrue();
+      expect(component["showCountdownOverlay"]).toBeTrue();
+
+      tick(5000);
+      expect(component["showCountdownOverlay"]).toBeFalse();
+    }));
+
+    it("should hide immediately if state becomes PAUSED during countdown", fakeAsync(() => {
+      raceStateSubject.next(com.antigravity.RaceState.STARTING);
+      tick();
+      expect(component["showCountdownOverlay"]).toBeTrue();
+
+      raceStateSubject.next(com.antigravity.RaceState.PAUSED);
+      tick();
+      expect(component["showCountdownOverlay"]).toBeFalse();
+    }));
+  });
 });

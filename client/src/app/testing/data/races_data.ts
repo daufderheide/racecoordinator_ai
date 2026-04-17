@@ -62,6 +62,10 @@ export const MOCK_RACES = [
     },
     min_lap_time: 1.5,
     drift_time: 0.5,
+    start_time: 5.0,
+    restart_time: 5.0,
+    start_delay: 0.0,
+    restart_delay: 0.0,
   },
   {
     entity_id: "r2",
@@ -82,6 +86,10 @@ export const MOCK_RACES = [
     },
     min_lap_time: 1.5,
     drift_time: 0.5,
+    start_time: 5.0,
+    restart_time: 5.0,
+    start_delay: 0.0,
+    restart_delay: 0.0,
   },
   {
     entity_id: "r3",
@@ -102,6 +110,10 @@ export const MOCK_RACES = [
     },
     min_lap_time: 1.5,
     drift_time: 0.5,
+    start_time: 5.0,
+    restart_time: 5.0,
+    start_delay: 0.0,
+    restart_delay: 0.0,
   },
 ];
 
@@ -157,11 +169,15 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     fuelOptions,
     digitalFuelOptions,
     r.team_options,
-    0, // auto_advance_time
-    0, // auto_start_time
-    0, // auto_advance_warmup_time
-    0, // auto_start_warmup_time
+    r.auto_advance_time ?? 0,
+    r.auto_start_time ?? 0,
+    r.auto_advance_warmup_time ?? 0,
+    r.auto_start_warmup_time ?? 0,
     r.drift_time ?? 0.5,
     r.min_lap_time ?? 1.5,
+    r.start_time ?? 5.0,
+    r.restart_time ?? 5.0,
+    r.start_delay ?? 0.0,
+    r.restart_delay ?? 0.0,
   );
 });

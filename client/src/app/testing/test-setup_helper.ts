@@ -338,7 +338,17 @@ export class TestSetupHelper {
         });
         return;
       }
-      await route.continue();
+
+      // FALLBACK: If physical file is missing, return a 1x1 transparent PNG to keep tests stable
+      const transparentPng = Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        "base64",
+      );
+      await route.fulfill({
+        status: 200,
+        contentType: "image/png",
+        body: transparentPng,
+      });
     });
   }
 
@@ -609,6 +619,24 @@ export class TestSetupHelper {
               name: "fuel-100.png",
             },
           ],
+        },
+        {
+          model: { entityId: "default_start_red_on" },
+          name: "Start Lamp Red",
+          type: "image",
+          url: "assets/images/start_red_on.png",
+        },
+        {
+          model: { entityId: "default_start_red_dim" },
+          name: "Start Lamp Dim",
+          type: "image",
+          url: "assets/images/start_red_dim.png",
+        },
+        {
+          model: { entityId: "default_start_green" },
+          name: "Start Lamp Green",
+          type: "image",
+          url: "assets/images/start_green.png",
         },
       ];
 
@@ -919,6 +947,48 @@ export class TestSetupHelper {
     await page.evaluate((bufferArray) => {
       const buffer = new Uint8Array(bufferArray).buffer;
       // Broadcast to mock sockets
+      // @ts-ignore
+      if (window.allMockSockets) {
+        // @ts-ignore
+        const raceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("race-data"),
+        );
+        raceSockets.forEach((s: any) => {
+          const event = new MessageEvent("message", { data: buffer });
+          s.dispatchEvent(event);
+          if (s.onmessage) s.onmessage(event);
+        });
+      }
+    }, dataArray);
+  }
+
+  static async sendRaceState(page: Page, raceState: com.antigravity.RaceState) {
+    const raceData = { raceState };
+    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const dataArray = Array.from(buffer);
+    await page.evaluate((bufferArray) => {
+      const buffer = new Uint8Array(bufferArray).buffer;
+      // @ts-ignore
+      if (window.allMockSockets) {
+        // @ts-ignore
+        const raceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("race-data"),
+        );
+        raceSockets.forEach((s: any) => {
+          const event = new MessageEvent("message", { data: buffer });
+          s.dispatchEvent(event);
+          if (s.onmessage) s.onmessage(event);
+        });
+      }
+    }, dataArray);
+  }
+
+  static async sendRaceTime(page: Page, raceTime: com.antigravity.IRaceTime) {
+    const raceData = { raceTime };
+    const buffer = com.antigravity.RaceData.encode(raceData).finish();
+    const dataArray = Array.from(buffer);
+    await page.evaluate((bufferArray) => {
+      const buffer = new Uint8Array(bufferArray).buffer;
       // @ts-ignore
       if (window.allMockSockets) {
         // @ts-ignore

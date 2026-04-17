@@ -117,7 +117,7 @@ describe("AssetManagerComponent", () => {
 
     component.setFilterType("image");
     expect(component.filterType).toBe("image");
-    expect(component.filteredAssets.length).toBe(1);
+    expect(component.filteredAssets.length).toBe(4);
     expect(component.filteredAssets[0].type).toBe("image");
 
     component.setFilterType("sound");
@@ -134,7 +134,7 @@ describe("AssetManagerComponent", () => {
     component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
     component.setFilterType("image");
-    expect(component.filteredAssets.length).toBe(1);
+    expect(component.filteredAssets.length).toBe(4);
     expect(component.filteredAssets[0].type).toBe("image");
     expect(
       component.filteredAssets.some((a) => a.type === "image_set"),
@@ -145,8 +145,13 @@ describe("AssetManagerComponent", () => {
     component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
 
     component.filterName = "Red";
-    expect(component.filteredAssets.length).toBe(1);
-    expect(component.filteredAssets[0].name).toBe("RedCar");
+    expect(component.filteredAssets.length).toBe(2);
+    expect(
+      component.filteredAssets.some((a) => a.name === "RedCar"),
+    ).toBeTrue();
+    expect(
+      component.filteredAssets.some((a) => a.name === "Start Lamp Red"),
+    ).toBeTrue();
   });
 
   it("should open delete confirmation modal", () => {

@@ -28,8 +28,25 @@ export const MOCK_ASSETS = [
       { url: "assets/images/fuel_50.png", percentage: 50 },
       { url: "assets/images/fuel_0.png", percentage: 0 },
     ],
-    currentPreviewIndex: 0,
     editMode: false,
     selected: false,
+  },
+  {
+    id: "default_start_red_on",
+    name: "Start Lamp Red",
+    type: "image",
+    url: "assets/images/start_red_on.png",
+  },
+  {
+    id: "default_start_red_dim",
+    name: "Start Lamp Dim",
+    type: "image",
+    url: "assets/images/start_red_dim.png",
+  },
+  {
+    id: "default_start_green",
+    name: "Start Lamp Green",
+    type: "image",
+    url: "assets/images/start_green.png",
   },
 ];

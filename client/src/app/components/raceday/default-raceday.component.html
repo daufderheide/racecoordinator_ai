@@ -19,6 +19,19 @@
   >
   </app-confirmation-modal>
 
+  <div class="countdown-overlay" *ngIf="showCountdownOverlay">
+    <div class="lamps-container">
+      <img
+        *ngFor="let lamp of countdownLamps"
+        [src]="lamp.url"
+        class="start-lamp"
+        [class.on]="lamp.state === 'on'"
+        [class.go]="lamp.state === 'go'"
+        alt="Start Lamp"
+      />
+    </div>
+  </div>
+
   <div
     class="scalable-content"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"

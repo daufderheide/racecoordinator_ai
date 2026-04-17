@@ -581,3 +581,65 @@ app-acknowledgement-modal, app-confirmation-modal {
   z-index: 5;
   white-space: nowrap;
 }
+
+/* Countdown Overlay */
+.countdown-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  pointer-events: none;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.lamps-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 40px;
+  margin-bottom: 50px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transform: translateZ(0); /* Force GPU acceleration */
+}
+
+.start-lamp {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+  opacity: 0.8;
+}
+
+.start-lamp.on {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
+  opacity: 1;
+}
+
+.start-lamp.go {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 25px rgba(0, 255, 0, 1));
+  opacity: 1;
+}

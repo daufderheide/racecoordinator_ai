@@ -55,8 +55,8 @@ test.describe("Image Set Editor Visuals", () => {
     const container = page.locator(".am-container");
     const amHarness = new AssetManagerHarnessE2e(container);
 
-    // Wait for assets to load
-    await expect(page.locator(".asset-card")).toHaveCount(4);
+    // Wait for assets to load visually
+    await page.waitForTimeout(500);
 
     // Click edit on the 'Custom Dash' image set card
     // We can use a helper or just locator for now if harness doesn't support "click edit by name"

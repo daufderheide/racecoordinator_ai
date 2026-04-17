@@ -80,7 +80,7 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.getRecordData.and.returnValue(
     recordDataSubject.asObservable(),
   );
-  mockDataService.serverUrl = "http://localhost";
+  mockDataService.serverUrl = "http://localhost/";
 
   const mockRaceConnectionService = jasmine.createSpyObj(
     "RaceConnectionService",
