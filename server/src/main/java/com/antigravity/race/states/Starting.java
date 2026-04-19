@@ -42,6 +42,7 @@ public class Starting implements IRaceState {
     final int randomTicks =
         delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
 
+    race.setAutoStartRemaining(startTimeVal);
     System.out.println(
         "Starting state: startTimeVal="
             + startTimeVal

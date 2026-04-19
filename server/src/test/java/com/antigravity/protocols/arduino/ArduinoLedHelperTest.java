@@ -809,7 +809,111 @@ public class ArduinoLedHelperTest {
 
     verify(protocol, atLeastOnce()).writeData(captor.capture());
     byte[] data2 = captor.getValue();
-    assertEquals(0, data2[4]); // Black R (swapped)
+    assertEquals(0, data2[4]); // Black R (Yellow turned off)
+  }
+
+  @Test
+  public void testCountdownBehavior() {
+    // Mock time to control Green/Off transition
+    ArduinoLedHelper spyHelper = spy(helper);
+    doReturn(10000L).when(spyHelper).getCurrentTimeMillis();
+
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
+    // LEDs for sequence positions 1, 2, 3, 4, 5
+    ledString.leds = Arrays.asList(base + 1, base + 2, base + 3, base + 4, base + 5);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // 1. Initial State: STARTING, Countdown 5.0
+    // floor(5.0) = 5. Only LED 5 (Index 4, behavior 3005) is ON (5 <= 5)
+    // However, since this is the first update, all 5 LEDs are sent (LED 5 as RED, others as OFF)
+    spyHelper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 5.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(5, data[2]); // First sync sends all 5 LEDs
+    // Find LED 5 (Index 4) and verify it is Red
+    boolean foundRed = false;
+    for (int i = 0; i < 5; i++) {
+      int idx = data[3 + i * 4] & 0xFF;
+      if (idx == 4) {
+        assertEquals((byte) 255, data[4 + i * 4]); // R
+        assertEquals(0, data[5 + i * 4]); // G
+        assertEquals(0, data[6 + i * 4]); // B
+        foundRed = true;
+      } else {
+        assertEquals(0, data[4 + i * 4]); // OFF
+      }
+    }
+    assertTrue("LED 5 should be RED", foundRed);
+
+    // 2. Countdown progresses to 4.0s
+    // floor(4.0) = 4. LEDs 5 and 4 turn ON (4 <= 5 and 4 <= 4)
+    reset(protocol);
+    setupMocks();
+    doReturn(10200L).when(spyHelper).getCurrentTimeMillis();
+    spyHelper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 4.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]); // Index 3 turns ON (Behavior 3004)
+    assertEquals(3, data[3]); // Index 3
+
+    // 3. Countdown progresses to 3.9s
+    // floor(3.9) = 3. LEDs 5, 4, and 3 turn ON (3 <= 5, 4, 3)
+    reset(protocol);
+    setupMocks();
+    doReturn(10250L).when(spyHelper).getCurrentTimeMillis();
+    spyHelper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 3.9);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(1, data[2]); // Index 2 turns ON (Behavior 3003)
+    assertEquals(2, data[3]); // Index 2
+
+    // 4. Countdown progresses to 1.0s
+    // floor(1.0) = 1. All LEDs 1-5 turn RED
+    reset(protocol);
+    setupMocks();
+    doReturn(10300L).when(spyHelper).getCurrentTimeMillis();
+    spyHelper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 1.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    // Index 1, 0 were OFF, now turn ON.
+    assertEquals(2, data[2]);
+
+    // 5. Race Starts: RACING, Flag GREEN
+    reset(protocol);
+    setupMocks();
+    doReturn(10400L).when(spyHelper).getCurrentTimeMillis();
+    spyHelper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(5, data[2]);
+    for (int i = 0; i < 5; i++) {
+      assertEquals(0, data[4 + i * 4]); // R=0
+      assertEquals((byte) 255, data[5 + i * 4]); // G=255
+    }
+
+    // 6. Time passes: 11500ms (> 1s since 10400ms)
+    // All countdown LEDs should turn OFF
+    reset(protocol);
+    setupMocks();
+    doReturn(11500L).when(spyHelper).getCurrentTimeMillis();
+    spyHelper.refreshRaceState();
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+    assertEquals(5, data[2]);
+    for (int i = 0; i < 5; i++) {
+      assertEquals(0, data[4 + i * 4]); // R=0
+      assertEquals(0, data[5 + i * 4]); // G=0
+    }
   }
 
   @Test

@@ -672,7 +672,8 @@ public class Race implements ProtocolListener {
     broadcast(raceData);
 
     if (protocols != null) {
-      protocols.setRaceState(protoState, protoFlag, 0);
+      protocols.setRaceState(
+          protoState, protoFlag, getAutoStartRemaining() + getAutoAdvanceRemaining());
     }
 
     if (previousState != null) {

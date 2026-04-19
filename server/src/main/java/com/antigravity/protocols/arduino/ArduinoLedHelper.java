@@ -30,6 +30,7 @@ public class ArduinoLedHelper {
   private RaceFlag lastFlag = RaceFlag.UNKNOWN_FLAG; // Default to unknown
   private double lastCountdown = 0.0;
   private Double lastHeatProgress = null;
+  private long lastStateChangeTime = 0;
   private final Map<Integer, Double> lastFuelLevels = new HashMap<>();
 
   public ArduinoLedHelper(ArduinoProtocol protocol) {
@@ -137,6 +138,7 @@ public class ArduinoLedHelper {
     lastState = RaceState.UNKNOWN_STATE;
     lastFlag = RaceFlag.UNKNOWN_FLAG;
     lastCountdown = 0.0;
+    lastStateChangeTime = 0;
   }
 
   public void setStringRgbLedValues(int pinId, List<RgbLedState> rgbLeds) {
@@ -224,6 +226,9 @@ public class ArduinoLedHelper {
 
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
     RaceState oldState = this.lastState;
+    if (state != oldState) {
+      lastStateChangeTime = getCurrentTimeMillis();
+    }
     this.lastState = state;
     this.lastFlag = flag;
     this.lastCountdown = countdown;
@@ -342,6 +347,35 @@ public class ArduinoLedHelper {
                     .setG(finalRgb[1])
                     .setB(finalRgb[2])
                     .build());
+            lastLedColors.put(key, currentColor);
+          }
+        } else if (behavior >= RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE
+            && behavior < RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE + 100) {
+          int n = behavior - RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
+          int r = 0;
+          int g = 0;
+          int b = 0;
+
+          if (state == RaceState.STARTING) {
+            // Use floor to ensure we turn on the next LED at the start of the second.
+            // e.g. at 5.0s, floor=5, LED 5 turns on.
+            // at 4.9s, floor=4, LED 5 and 4 turn on.
+            if (Math.floor(countdown) <= (double) n && countdown >= 0) {
+              r = 255;
+            }
+          } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
+            if (now - lastStateChangeTime < 1000) {
+              g = 255;
+            }
+          }
+
+          String key = ledString.pin + "_" + i;
+          long currentColor =
+              ((long) (r & 0xFF) << 16) | ((long) (g & 0xFF) << 8) | (long) (b & 0xFF);
+          Long lastColor = lastLedColors.get(key);
+
+          if (lastColor == null || lastColor != currentColor) {
+            updates.add(RgbLedState.newBuilder().setIndex(i).setR(r).setG(g).setB(b).build());
             lastLedColors.put(key, currentColor);
           }
         }
