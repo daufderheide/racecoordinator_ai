@@ -953,4 +953,152 @@ public class ArduinoLedHelperTest {
     // hasn't changed.
     verify(protocol, never()).writeData(any());
   }
+
+  @Test
+  public void testSetRaceState_Countdown_Thresholds() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE;
+    // LED 0: Race State (5) -> Behavior base + 4
+    // LED 1: Race State (1) -> Behavior base + 0
+    ledString.leds = Arrays.asList(base + 4, base + 0);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    // 1. Countdown at 5.0s -> Both should be OFF (floor(5)=5, and 5 > 4 and 5 > 0)
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 5.0);
+
+    // Initial check: if cache was empty, it might not send updates if they are already 0,
+    // but usually clearLeds() or resetCache() ensures we start clean.
+    // In this case, we check that if it SENT something, it was 0,0,0.
+    verify(protocol, never())
+        .writeData(
+            argThat(data -> data.length > 5 && (data[4] != 0 || data[5] != 0 || data[6] != 0)));
+
+    // 2. Countdown at 4.0s -> LED 0 (base+4) should turn ON (RED)
+    reset(protocol);
+    setupMocks();
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 4.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // Check LED 0 (Index 0)
+    assertEquals(0, data[3]);
+    assertEquals((byte) 0xFF, data[4]); // R=255
+
+    // 3. Countdown at 0.0s -> LED 1 (base+0) should turn ON (RED)
+    reset(protocol);
+    setupMocks();
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 0.0);
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+
+    // Check LED 1 (Index 1)
+    assertEquals(1, data[3]);
+    assertEquals((byte) 0xFF, data[4]); // R=255
+  }
+
+  @Test
+  public void testSetRaceState_Starting_NoFlashNoInterleave() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    // Behavior base + 2 corresponds to YELLOW flag
+    ledString.leds = Arrays.asList(RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE + 2);
+    ledString.flagFlashRate = 1.0;
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Starting with YELLOW flag (restart)
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.YELLOW, 0.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // Should be solid Yellow (R=255, G=255) and NOT interleaved or flashed (i.e., not black)
+    assertEquals(0, data[3]);
+    assertEquals(255, data[4] & 0xFF);
+    assertEquals(255, data[5] & 0xFF);
+  }
+
+  @Test
+  public void testSetRaceState_NotStarted_SendsRed() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds =
+        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Set to NOT_STARTED
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.NOT_STARTED, com.antigravity.proto.RaceFlag.RED, 0.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(255, data[4] & 0xFF); // Red
+    assertEquals(0, data[5] & 0xFF);
+  }
+
+  @Test
+  public void testSetRaceState_NoCachingWhenSerialClosed() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.leds =
+        Collections.singletonList(RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    // 1. Serial closed -> update should NOT be sent and NOT cached
+    when(protocol.isSerialOpen()).thenReturn(false);
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.NOT_STARTED, com.antigravity.proto.RaceFlag.RED, 0);
+    verify(protocol, never()).writeData(any());
+
+    // 2. Serial opened -> should now send the update because it wasn't cached before
+    reset(protocol);
+    when(protocol.isSerialOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+    when(protocol.getLogTime()).thenReturn("12:00:00.000");
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.NOT_STARTED, com.antigravity.proto.RaceFlag.RED, 0);
+    verify(protocol, atLeastOnce()).writeData(any());
+  }
+
+  @Test
+  public void testSetRaceState_Starting_NoInterleave() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE;
+    // Indices 0 and 1 -> Index 1 would usually be interleaved/off for YELLOW
+    ledString.leds = Arrays.asList(base, base + 1);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Starting with YELLOW flag (restart)
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.YELLOW, 0.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+    assertEquals(2, data[2]); // Both LEDs updated
+
+    // LED 1: Yellow (NOT Black/Interleaved)
+    assertEquals(1, data[7]);
+    assertEquals(255, data[8] & 0xFF);
+    assertEquals(255, data[9] & 0xFF);
+  }
 }

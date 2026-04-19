@@ -258,6 +258,10 @@ public class ArduinoLedHelper {
   }
 
   public void refreshRaceState() {
+    if (!protocol.isSerialOpen()) {
+      return;
+    }
+
     ArduinoConfig config = protocol.getConfig();
     if (config.ledStrings == null) {
       return;
@@ -317,6 +321,11 @@ public class ArduinoLedHelper {
               break;
           }
 
+          if (state == com.antigravity.proto.RaceState.STARTING) {
+            isInterleaved = false;
+            canFlash = false;
+          }
+
           if (canFlash && ledString.flagFlashRate > 0) {
             long halfPeriod = (long) (1000.0 / (ledString.flagFlashRate * 2.0));
             boolean toggle = (now / halfPeriod) % 2 != 0;
@@ -330,6 +339,13 @@ public class ArduinoLedHelper {
           int[] finalRgb = rgb1;
           if (isInterleaved && (behavior % 2 != 0)) {
             finalRgb = rgb2;
+          }
+
+          if (state == com.antigravity.proto.RaceState.STARTING) {
+            int n = behavior - raceStateBehavior;
+            if (!(Math.floor(countdown) <= (double) n && countdown >= 0)) {
+              finalRgb = new int[] {0, 0, 0};
+            }
           }
 
           String key = ledString.pin + "_" + i;
