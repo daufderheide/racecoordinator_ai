@@ -360,4 +360,103 @@ public class RacingTest {
 
     racing.exit(mockRace);
   }
+
+  @Test
+  public void testTimedRace_CheckeredFlagAtCounterZero_WithAllowFinish() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    // Timed race with allowFinish enabled
+    HeatScoring scoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L, // 60 seconds
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.Allow);
+    when(mockModel.getHeatScoring()).thenReturn(scoring);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    DriverHeatData d1 = new DriverHeatData(participants.get(0));
+    when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
+
+    // Set race time to 0 (counter reached 0)
+    when(mockRace.getRaceTime()).thenReturn(0L);
+
+    com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.CHECKERED);
+  }
+
+  @Test
+  public void testTimedRace_NoCheckeredFlagBeforeCounterZero_WithAllowFinish() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    // Timed race with allowFinish enabled
+    HeatScoring scoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L, // 60 seconds
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.Allow);
+    when(mockModel.getHeatScoring()).thenReturn(scoring);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    DriverHeatData d1 = new DriverHeatData(participants.get(0));
+    when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
+
+    // Set race time to positive value (counter not reached 0 yet)
+    when(mockRace.getRaceTime()).thenReturn(30L);
+
+    com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
+  }
+
+  @Test
+  public void testTimedRace_NoCheckeredFlagAtCounterZero_WithoutAllowFinish() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    // Timed race with allowFinish disabled
+    HeatScoring scoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L, // 60 seconds
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    when(mockModel.getHeatScoring()).thenReturn(scoring);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    DriverHeatData d1 = new DriverHeatData(participants.get(0));
+    when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
+
+    // Set race time to 0 (counter reached 0)
+    when(mockRace.getRaceTime()).thenReturn(0L);
+
+    com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
+  }
 }
