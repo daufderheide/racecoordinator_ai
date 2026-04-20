@@ -11,6 +11,10 @@ public class RaceOver implements IRaceState {
 
   @Override
   public RaceFlag getFlagType(Race race) {
+    // Show checkered flag at the end of the last heat when finish is not allowed
+    if (race.isLastHeat() && race.getRaceModel().getHeatScoring().getAllowFinish() == com.antigravity.models.HeatScoring.AllowFinish.None) {
+      return RaceFlag.CHECKERED;
+    }
     return RaceFlag.RED;
   }
 

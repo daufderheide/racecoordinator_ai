@@ -154,6 +154,12 @@ export class DriverStationComponent implements OnInit, OnDestroy {
         }
       }),
     );
+
+    this.subscriptions.push(
+      this.raceConnectionService.raceFlag$.subscribe(() => {
+        this.cdr.detectChanges();
+      }),
+    );
   }
 
   ngOnDestroy() {
