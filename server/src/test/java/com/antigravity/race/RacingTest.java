@@ -388,7 +388,7 @@ public class RacingTest {
     when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
 
     // Set race time to 0 (counter reached 0)
-    when(mockRace.getRaceTime()).thenReturn(0L);
+    when(mockRace.getRaceTime()).thenReturn(0.0f);
 
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.CHECKERED);
@@ -421,7 +421,7 @@ public class RacingTest {
     when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
 
     // Set race time to positive value (counter not reached 0 yet)
-    when(mockRace.getRaceTime()).thenReturn(30L);
+    when(mockRace.getRaceTime()).thenReturn(30.0f);
 
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
@@ -454,7 +454,7 @@ public class RacingTest {
     when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
 
     // Set race time to 0 (counter reached 0)
-    when(mockRace.getRaceTime()).thenReturn(0L);
+    when(mockRace.getRaceTime()).thenReturn(0.0f);
 
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
