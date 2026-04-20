@@ -520,4 +520,58 @@ public class RaceStateTest {
 
     modelField.set(race, newModel);
   }
+
+  @Test
+  public void testRaceOver_CheckeredFlagWhenLastHeatAndAllowFinishNone() {
+    RaceOver raceOver = new RaceOver();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockHeatScoring.getAllowFinish()).thenReturn(HeatScoring.AllowFinish.None);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+
+    when(mockRace.isLastHeat()).thenReturn(true);
+
+    com.antigravity.proto.RaceFlag flag = raceOver.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.CHECKERED);
+  }
+
+  @Test
+  public void testRaceOver_RedFlagWhenNotLastHeat() {
+    RaceOver raceOver = new RaceOver();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockHeatScoring.getAllowFinish()).thenReturn(HeatScoring.AllowFinish.None);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+
+    when(mockRace.isLastHeat()).thenReturn(false);
+
+    com.antigravity.proto.RaceFlag flag = raceOver.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.RED);
+  }
+
+  @Test
+  public void testRaceOver_RedFlagWhenAllowFinishEnabled() {
+    RaceOver raceOver = new RaceOver();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    when(mockHeatScoring.getAllowFinish()).thenReturn(HeatScoring.AllowFinish.Allow);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+
+    when(mockRace.isLastHeat()).thenReturn(true);
+
+    com.antigravity.proto.RaceFlag flag = raceOver.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.RED);
+  }
 }
