@@ -41,8 +41,13 @@ public class Racing implements IRaceState {
     List<DriverHeatData> heatDrivers = race.getCurrentHeat().getDrivers();
     if (heatDrivers == null) return RaceFlag.GREEN;
 
-    // Checkured flag if any driver has finished (and race allows finishing)
+    // Checkered flag if any driver has finished (and race allows finishing)
     if (scoring.getAllowFinish() != AllowFinish.None) {
+      // For timed races, show checkered flag immediately when counter reaches 0
+      if (scoring.getFinishMethod() == FinishMethod.Timed && race.getRaceTime() <= 0) {
+        return RaceFlag.CHECKERED;
+      }
+      // For lap-based races, show checkered when any driver finishes
       for (int i = 0; i < heatDrivers.size(); i++) {
         DriverHeatData hd = heatDrivers.get(i);
         if (isDriverFinished(i, hd, scoring)) {
