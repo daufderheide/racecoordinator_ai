@@ -222,4 +222,20 @@ describe("DriverStationComponent", () => {
 
     expect(component["standingsPosition"]).toBe(3);
   });
+
+  it("should trigger change detection when raceFlag$ emits", () => {
+    const raceFlagSubject = new Subject<com.antigravity.RaceFlag>();
+    mockRaceConnectionService.raceFlag$ = raceFlagSubject;
+
+    const mockChangeDetectorRef = TestBed.inject(ChangeDetectorRef);
+    spyOn(mockChangeDetectorRef, "detectChanges");
+
+    fixture.detectChanges();
+
+    // Emit a new flag value
+    raceFlagSubject.next(com.antigravity.RaceFlag.CHECKERED);
+
+    // Verify detectChanges was called
+    expect(mockChangeDetectorRef.detectChanges).toHaveBeenCalled();
+  });
 });
