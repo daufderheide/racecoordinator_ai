@@ -420,6 +420,11 @@ public class RacingTest {
     DriverHeatData d1 = new DriverHeatData(participants.get(0));
     when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
 
+    // Mock execution manager to avoid NullPointerException
+    HeatExecutionManager mockExecutionManager = mock(HeatExecutionManager.class);
+    when(mockExecutionManager.getFinishedLanes()).thenReturn(new java.util.HashSet<>());
+    when(mockRace.getHeatExecutionManager()).thenReturn(mockExecutionManager);
+
     // Set race time to positive value (counter not reached 0 yet)
     when(mockRace.getRaceTime()).thenReturn(30.0f);
 
