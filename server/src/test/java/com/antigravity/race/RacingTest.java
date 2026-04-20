@@ -395,6 +395,9 @@ public class RacingTest {
     // Set race time to 0 (counter reached 0)
     when(mockRace.getRaceTime()).thenReturn(0.0f);
 
+    // Call enter to initialize executionManager in Racing state
+    racing.enter(mockRace);
+
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.CHECKERED);
   }
@@ -432,6 +435,9 @@ public class RacingTest {
 
     // Set race time to positive value (counter not reached 0 yet)
     when(mockRace.getRaceTime()).thenReturn(30.0f);
+
+    // Call enter to initialize executionManager in Racing state
+    racing.enter(mockRace);
 
     com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
     assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
