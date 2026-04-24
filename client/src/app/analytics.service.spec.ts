@@ -36,18 +36,15 @@ describe("AnalyticsService", () => {
         .and.callFake(() => mockSettings),
     };
 
+    const analyticsConfigSubject = new Subject<any>();
     mockDataService = {
       getServerAnalyticsConfig: jasmine
         .createSpy("getServerAnalyticsConfig")
-        .and.returnValue(
-          of({
-            clientId: "test-client-id-123",
-            measurementId: "G-TEST12345",
-          }),
-        ),
+        .and.returnValue(analyticsConfigSubject.asObservable()),
       getRecordData: jasmine
         .createSpy("getRecordData")
         .and.returnValue(of(null)),
+      _analyticsConfigSubject: analyticsConfigSubject, // Expose for testing control
     };
 
     // Create a robust mock for Document that catches createElement and appendChild
@@ -121,6 +118,12 @@ describe("AnalyticsService", () => {
 
       service.initTracking();
 
+      // Resolve config
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
+
       // Should have checked settings
       expect(mockSettingsService.getSettings).toHaveBeenCalled();
 
@@ -144,13 +147,13 @@ describe("AnalyticsService", () => {
 
     it("should NOT inject Google Analytics scripts if measurementId is completely missing/empty", () => {
       mockSettings.shareAnalytics = true;
-      mockDataService.getServerAnalyticsConfig.and.returnValue(
-        of({
-          clientId: "test-client-id-123",
-          measurementId: "", // Explicitly empty
-        }),
-      );
       service.initTracking();
+
+      // Resolve config with empty ID
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "",
+      });
 
       // No script should be appended
       expect(mockDocument.head.appendChild).not.toHaveBeenCalled();
@@ -168,6 +171,10 @@ describe("AnalyticsService", () => {
       mockSettings.shareAnalytics = true;
       spyOn(console, "debug"); // Monitor initialization logs
       service.initTracking();
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
       service.updateOptOutStatus();
       service.updateOptOutStatus();
 
@@ -188,15 +195,29 @@ describe("AnalyticsService", () => {
       // Once initTracking is called, gtag is guaranteed to exist via constructor
       spyOn(window as any, "gtag").and.callThrough();
 
-      // Simulate a router navigation event
+      // Initial navigation while config is still pending
       routerEventsSubject.next(
         new NavigationEnd(1, "/fake-url", "/fake-redirect-url"),
       );
+
+      // gtag should NOT have been called yet for the event
+      expect((window as any).gtag).not.toHaveBeenCalledWith(
+        "event",
+        "page_view",
+        jasmine.any(Object),
+      );
+
+      // Resolve config
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
 
       expect((window as any).gtag).toHaveBeenCalledWith("event", "page_view", {
         page_path: "/fake-redirect-url",
         page_location: jasmine.stringMatching("/fake-redirect-url"),
         page_title: jasmine.any(String),
+        send_to: "G-TEST12345",
       });
     });
 
@@ -215,18 +236,32 @@ describe("AnalyticsService", () => {
   });
 
   describe("trackClick", () => {
-    it("should dispatch custom GA events when tracking is enabled", () => {
+    it("should queue custom GA events until config is loaded", () => {
       mockSettings.shareAnalytics = true;
-      service.initTracking(); // Init to pull settings
+      service.initTracking();
 
       spyOn(window as any, "gtag").and.callThrough();
 
       service.trackClick("btn_demo", { is_demo: true });
 
+      // Should not be called yet
+      expect((window as any).gtag).not.toHaveBeenCalledWith(
+        "event",
+        "btn_demo",
+        jasmine.any(Object),
+      );
+
+      // Resolve config
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
+
       expect((window as any).gtag).toHaveBeenCalledWith("event", "btn_demo", {
         is_demo: true,
         event_category: "engagement",
         event_label: "button_click",
+        send_to: "G-TEST12345",
       });
     });
 

@@ -18,6 +18,8 @@ export class AnalyticsService {
   private metricsEnabled: boolean = false;
   private measurementId: string = "";
   private scriptLoaded: boolean = false;
+  private eventQueue: any[] = [];
+  private configLoaded: boolean = false;
 
   constructor(
     private router: Router,
@@ -133,6 +135,7 @@ export class AnalyticsService {
         // Push config to dataLayer immediately via fallback
         const window = this.document.defaultView as any;
         if (window && typeof window.gtag === "function") {
+          console.info("Analytics: Pushing initial config to dataLayer");
           window.gtag("js", new Date());
           window.gtag("config", this.measurementId, {
             send_page_view: false,
@@ -149,13 +152,16 @@ export class AnalyticsService {
           console.error("Analytics: GTAG library script failed to load.", e);
         this.document.head.appendChild(script1);
 
-        console.info("Analytics: GTAG library script appended to head.");
+        this.configLoaded = true;
+        this.processQueue();
       },
       error: (err) => {
         console.warn(
           "Failed to fetch server tracking ID, falling back to local.",
           err,
         );
+        this.configLoaded = true; // Proceed with whatever we have
+        this.processQueue();
         if (!this.measurementId) return;
 
         // Fallback without client_id
@@ -181,16 +187,30 @@ export class AnalyticsService {
       return;
     }
 
+    if (!this.configLoaded) {
+      console.info(
+        "Analytics: Queueing page view event until config is loaded",
+        { url },
+      );
+      this.eventQueue.push({ type: "page_view", url });
+      return;
+    }
+
     try {
       const window = this.document.defaultView as any;
       const title = this.document.title || "Race Coordinator AI";
       const fullUrl = window ? window.location.origin + url : url;
 
-      console.info("Analytics: Tracking page view", { url, title });
+      console.info("Analytics: Tracking page view", {
+        url,
+        title,
+        measurementId: this.measurementId,
+      });
       gtag("event", "page_view", {
         page_path: url,
         page_location: fullUrl,
         page_title: title,
+        send_to: this.measurementId, // Explicitly send to our measurement ID
       });
     } catch (e) {
       console.warn("Analytics: Error in trackPageView", e);
@@ -201,14 +221,39 @@ export class AnalyticsService {
   public trackClick(eventName: string, params: Record<string, any> = {}) {
     if (!this.metricsEnabled) return;
 
+    if (!this.configLoaded) {
+      console.info("Analytics: Queueing click event until config is loaded", {
+        eventName,
+      });
+      this.eventQueue.push({ type: "click", eventName, params });
+      return;
+    }
+
     try {
       gtag("event", eventName, {
         ...params,
         event_category: "engagement",
         event_label: "button_click",
+        send_to: this.measurementId,
       });
     } catch (e) {
       console.warn("Analytics: Error in trackClick", e);
     }
+  }
+
+  private processQueue() {
+    if (this.eventQueue.length === 0) return;
+    console.info(
+      `Analytics: Processing ${this.eventQueue.length} queued events`,
+    );
+    const queue = [...this.eventQueue];
+    this.eventQueue = [];
+    queue.forEach((event) => {
+      if (event.type === "page_view") {
+        this.trackPageView(event.url);
+      } else if (event.type === "click") {
+        this.trackClick(event.eventName, event.params);
+      }
+    });
   }
 }

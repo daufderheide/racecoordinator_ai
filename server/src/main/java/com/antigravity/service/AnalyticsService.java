@@ -147,6 +147,9 @@ public class AnalyticsService {
         () -> {
           try {
             String jsonPayload = mapper.writeValueAsString(payload);
+            logger.debug("Sending GA telemetry payload: {}", jsonPayload);
+
+            // Use production endpoint
             String urlString =
                 String.format(
                     "https://www.google-analytics.com/mp/collect?measurement_id=%s&api_secret=%s",
@@ -164,28 +167,33 @@ public class AnalyticsService {
             }
 
             int statusCode = conn.getResponseCode();
-            if (statusCode >= 400) {
-              StringBuilder responseBody = new StringBuilder();
-              try (InputStream is = conn.getErrorStream()) {
-                if (is != null) {
-                  byte[] buffer = new byte[1024];
-                  int bytesRead;
-                  while ((bytesRead = is.read(buffer)) != -1) {
-                    responseBody.append(new String(buffer, 0, bytesRead, "utf-8"));
-                  }
+            StringBuilder responseBody = new StringBuilder();
+            try (InputStream is =
+                (statusCode >= 400) ? conn.getErrorStream() : conn.getInputStream()) {
+              if (is != null) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                  responseBody.append(new String(buffer, 0, bytesRead, "utf-8"));
                 }
-              } catch (Exception bodyEx) {
-                responseBody
-                    .append("(could not read error body: ")
-                    .append(bodyEx.getMessage())
-                    .append(")");
               }
+            } catch (Exception bodyEx) {
+              responseBody
+                  .append("(could not read response body: ")
+                  .append(bodyEx.getMessage())
+                  .append(")");
+            }
+
+            if (statusCode >= 400) {
               logger.warn(
                   "Failed to send GA telemetry. Status: {}. Response: {}",
                   statusCode,
                   responseBody);
             } else {
-              logger.debug("Successfully sent GA telemetry. Status: {}", statusCode);
+              logger.debug(
+                  "Successfully sent GA telemetry. Status: {}. Response: {}",
+                  statusCode,
+                  responseBody);
             }
           } catch (Exception e) {
             logger.warn("Error sending GA telemetry: {}", e.getMessage());
