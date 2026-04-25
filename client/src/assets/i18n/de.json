@@ -548,6 +548,7 @@
   "RE_ROTATION_FRIENDLY_ROUND_ROBIN": "Freundliches Round Robin",
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Einzel-Heat",
+  "RE_ROTATION_SINGLE_HEAT_SOLO": "Einzel-Heat (Solo)",
   "RE_HELP_NAME_CONTENT": "Geben Sie einen beschreibenden Namen für Ihr Rennen ein. Dieser Name wird in der gesamten Anwendung angezeigt und hilft, Ihre Rennkonfiguration zu identifizieren.",
   "RE_HELP_TRACK_CONTENT": "Wählen Sie die Strecke, auf der dieses Rennen stattfinden soll. Die Streckenkonfiguration bestimmt die Spuranzahl und die Interface-Einstellungen für das Rennen.",
   "RE_HELP_WELCOME_CONTENT": "Dieser Leitfaden hilft Ihnen dabei, Ihre Rennkonfiguration Schritt für Schritt einzurichten.",

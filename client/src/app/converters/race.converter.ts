@@ -11,6 +11,7 @@ import {
   OverallScoring,
 } from "src/app/models/overall_scoring";
 import { Race } from "src/app/models/race";
+import { TeamOptions } from "src/app/models/team_options";
 import { Track } from "src/app/models/track";
 import { com } from "src/app/proto/message";
 
@@ -32,6 +33,7 @@ export class RaceConverter {
         "",
         "Unknown Race",
         new Track("", "Unknown Track", [], false, []),
+        "RoundRobin",
         new HeatScoring(),
         new OverallScoring(),
       );
@@ -139,11 +141,31 @@ export class RaceConverter {
           objectId || "",
           proto.name || "",
           TrackConverter.fromProto(proto.track!),
+          (() => {
+            const rotationMap = [
+              "RoundRobin",
+              "FriendlyRoundRobin",
+              "EuropeanRoundRobin",
+              "SingleHeat",
+              "SingleHeatSolo",
+            ];
+            return typeof proto.heatRotationType === "number"
+              ? rotationMap[proto.heatRotationType] || "RoundRobin"
+              : proto.heatRotationType || "RoundRobin";
+          })(),
           heatScoring,
           overallScoring,
           fuelOptions,
           digitalFuelOptions,
-          undefined, // team_options
+          p.teamOptions
+            ? new TeamOptions(
+                p.teamOptions.heatLapLimit || 0,
+                p.teamOptions.heatTimeLimit || 0,
+                p.teamOptions.overallLapLimit || 0,
+                p.teamOptions.overallTimeLimit || 0,
+                p.teamOptions.requirePitStopChangeDriver || false,
+              )
+            : new TeamOptions(),
           proto.autoAdvanceTime || 0,
           proto.autoStartTime || 0,
           proto.autoAdvanceWarmupTime || 0,
@@ -178,6 +200,7 @@ export class RaceConverter {
             : p.restart_delay !== undefined
               ? p.restart_delay
               : 0.0,
+          proto.soloLaneIndex || 0,
         );
       },
       () => {

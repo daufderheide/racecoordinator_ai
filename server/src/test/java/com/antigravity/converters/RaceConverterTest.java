@@ -124,4 +124,22 @@ public class RaceConverterTest {
     assertEquals(120.0, proto.getFuelOptions().getCapacity(), 0.001);
     assertEquals(5.0, proto.getFuelOptions().getUsageRate(), 0.001);
   }
+
+  @Test
+  public void testToProto_HeatRotationType() {
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatRotationType(HeatRotationType.SingleHeatSolo)
+            .withSoloLaneIndex(2)
+            .build();
+    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatRotationType.SINGLE_HEAT_SOLO, proto.getHeatRotationType());
+    assertEquals(2, proto.getSoloLaneIndex());
+  }
 }

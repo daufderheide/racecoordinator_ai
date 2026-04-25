@@ -78,3 +78,85 @@
 .driver-number {
   font-weight: bold;
 }
+
+.lane-item.draggable {
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.lane-item.draggable:active {
+  cursor: grabbing;
+}
+
+.lane-content {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle .material-icons {
+  font-size: 18px;
+  user-select: none;
+}
+
+.lane-item.clickable {
+  cursor: pointer;
+}
+
+.lane-item.clickable:hover {
+  background: rgba(0, 255, 255, 0.15) !important;
+  border-color: rgba(0, 255, 255, 0.4);
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: #222;
+  color: #00ffff;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.cdk-drag-placeholder {
+  background: rgba(0, 255, 255, 0.2) !important;
+  border: 2px solid #00ffff !important;
+  border-radius: 4px;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  animation: pulse-placeholder 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-placeholder {
+  0% { transform: scale(0.98); opacity: 0.6; }
+  50% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(0.98); opacity: 0.6; }
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.heat-lanes.cdk-drop-list-dragging .lane-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

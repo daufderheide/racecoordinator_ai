@@ -59,9 +59,17 @@ describe("HeatResultsComponent", () => {
     hd2.addLapTime(2, 10.9, 11.0, 11.0, 10.9);
 
     const mockHeat = new Heat("h1", 1, [hd1, hd2]);
-    const mockRace = new Race("r1", "Race 1", {
-      lanes: [{ background_color: "#ff0000" }, { background_color: "#0000ff" }],
-    } as any);
+    const mockRace = new Race(
+      "r1",
+      "Race 1",
+      {
+        lanes: [
+          { background_color: "#ff0000" },
+          { background_color: "#0000ff" },
+        ],
+      } as any,
+      "RoundRobin",
+    );
 
     mockRaceService.getRace.and.returnValue(mockRace);
     mockRaceService.getCurrentHeat.and.returnValue(mockHeat);

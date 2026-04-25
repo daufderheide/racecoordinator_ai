@@ -26,10 +26,14 @@ export class Race implements Model {
   readonly start_delay: number;
   readonly restart_delay: number;
 
+  readonly heat_rotation_type: string;
+  readonly solo_lane_index: number;
+
   constructor(
     entity_id: string,
     name: string,
     track: Track,
+    heat_rotation_type: string = "RoundRobin",
     heat_scoring: HeatScoring = new HeatScoring(),
     overall_scoring: OverallScoring = new OverallScoring(),
     fuel_options: AnalogFuelOptions = new AnalogFuelOptions(),
@@ -45,10 +49,12 @@ export class Race implements Model {
     restart_time: number = 5.0,
     start_delay: number = 0.0,
     restart_delay: number = 0.0,
+    solo_lane_index: number = 0,
   ) {
     this.entity_id = entity_id;
     this.name = name;
     this.track = track;
+    this.heat_rotation_type = heat_rotation_type;
     this.heat_scoring = heat_scoring;
     this.overall_scoring = overall_scoring;
     this.fuel_options = fuel_options;
@@ -64,6 +70,7 @@ export class Race implements Model {
     this.restart_time = restart_time;
     this.start_delay = start_delay;
     this.restart_delay = restart_delay;
+    this.solo_lane_index = solo_lane_index;
   }
 
   get objectId(): string {

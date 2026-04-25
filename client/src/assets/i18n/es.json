@@ -548,6 +548,7 @@
   "RE_ROTATION_FRIENDLY_ROUND_ROBIN": "Round Robin Amistoso",
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Manga Única",
+  "RE_ROTATION_SINGLE_HEAT_SOLO": "Manga Única (Solo)",
   "RE_HELP_NAME_CONTENT": "Ingrese un nombre descriptivo para su carrera. Este nombre se mostrará en toda la aplicación y ayuda a identificar la configuración de su carrera.",
   "RE_HELP_TRACK_CONTENT": "Seleccione la pista donde se llevará a cabo esta carrera. La configuración de la pista determinará el número de carriles y la configuración de la interfaz para la carrera.",
   "RE_HELP_WELCOME_CONTENT": "Esta guía te ayudará a configurar tu carrera paso a paso.",

@@ -229,6 +229,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             restart_time: race.restart_time ?? 5.0,
             start_delay: race.start_delay ?? 0.0,
             restart_delay: race.restart_delay ?? 0.0,
+            solo_lane_index: race.solo_lane_index ?? 0,
           };
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
@@ -361,6 +362,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_time: 5.0,
       start_delay: 0.0,
       restart_delay: 0.0,
+      solo_lane_index: 0,
       team_options: {
         heat_lap_limit: 0,
         heat_time_limit: 0,
@@ -461,6 +463,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.loadHeats();
   }
 
+  onLaneSelected(laneIndex: number) {
+    if (this.editingRace.solo_lane_index !== laneIndex) {
+      this.editingRace.solo_lane_index = laneIndex;
+      this.captureState();
+      this.loadHeats();
+    }
+  }
+
   onDriverCountChange() {
     console.log("Driver count changed to:", this.driverCount);
     // Update heats when driver count changes
@@ -499,6 +509,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.editingRace.track_entity_id,
         this.editingRace.heat_rotation_type,
         this.driverCount,
+        this.editingRace.solo_lane_index,
       )
       .subscribe({
         next: (response) => {
@@ -1295,6 +1306,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       restart_time: race.restart_time,
       start_delay: race.start_delay,
       restart_delay: race.restart_delay,
+      solo_lane_index: race.solo_lane_index,
       team_options: race.team_options
         ? {
             heat_lap_limit: race.team_options.heat_lap_limit,

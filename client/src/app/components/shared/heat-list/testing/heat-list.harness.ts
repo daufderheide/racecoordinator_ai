@@ -1,37 +1,63 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { HeatListHarnessBase, LaneItemData } from './heat-list.harness.base';
+import { HeatListHarnessBase, LaneItemData } from "./heat-list.harness.base";
 
 export class LaneItemHarness extends ComponentHarness {
   static hostSelector = HeatListHarnessBase.selectors.laneItem;
-  
+
   async getBgColor(): Promise<string> {
-    return await (await this.host()).getCssValue('background-color');
+    return await (await this.host()).getCssValue("background-color");
   }
   async getFgColor(): Promise<string> {
-    return await (await this.host()).getCssValue('color');
+    return await (await this.host()).getCssValue("color");
+  }
+  async click(): Promise<void> {
+    return await (await this.host()).click();
+  }
+  async getLaneNumberLabel(): Promise<string> {
+    return await (
+      await this.locatorFor(HeatListHarnessBase.selectors.laneLabel)()
+    ).text();
+  }
+  async getDriverNumberLabel(): Promise<string> {
+    return await (
+      await this.locatorFor(HeatListHarnessBase.selectors.driverNumber)()
+    ).text();
   }
 }
 
 export class HeatItemHarness extends ComponentHarness {
   static hostSelector = HeatListHarnessBase.selectors.heatItem;
-  
+
   async getLanes(): Promise<LaneItemData[]> {
     const lanes = await this.locatorForAll(LaneItemHarness)();
-    return Promise.all(lanes.map(async l => ({
-      laneNumberLabel: '',
-      driverNumberLabel: '',
-      bgColor: await l.getBgColor(),
-      fgColor: await l.getFgColor()
-    })));
+    return Promise.all(
+      lanes.map(async (l) => ({
+        laneNumberLabel: await l.getLaneNumberLabel(),
+        driverNumberLabel: await l.getDriverNumberLabel(),
+        bgColor: await l.getBgColor(),
+        fgColor: await l.getFgColor(),
+      })),
+    );
+  }
+
+  async getLaneHarnesses(): Promise<LaneItemHarness[]> {
+    return await this.locatorForAll(LaneItemHarness)();
   }
 }
 
-export class HeatListHarness extends ComponentHarness implements HeatListHarnessBase {
+export class HeatListHarness
+  extends ComponentHarness
+  implements HeatListHarnessBase
+{
   static hostSelector = HeatListHarnessBase.hostSelector;
 
-  protected getHeader = this.locatorForOptional(HeatListHarnessBase.selectors.header);
-  protected getHeatItemsRaw = this.locatorForAll(HeatListHarnessBase.selectors.heatItem);
+  protected getHeader = this.locatorForOptional(
+    HeatListHarnessBase.selectors.header,
+  );
+  protected getHeatItemsRaw = this.locatorForAll(
+    HeatListHarnessBase.selectors.heatItem,
+  );
   protected getHeatItemsHarness = this.locatorForAll(HeatItemHarness);
 
   async hasHeader(): Promise<boolean> {
@@ -43,7 +69,9 @@ export class HeatListHarness extends ComponentHarness implements HeatListHarness
     return items.length;
   }
 
-  protected getHeatNumbers = this.locatorForAll(HeatListHarnessBase.selectors.heatNumber);
+  protected getHeatNumbers = this.locatorForAll(
+    HeatListHarnessBase.selectors.heatNumber,
+  );
 
   async getHeatNumberLabel(heatIndex: number): Promise<string> {
     const items = await this.getHeatNumbers();
@@ -56,8 +84,20 @@ export class HeatListHarness extends ComponentHarness implements HeatListHarness
   async getLanesForHeat(heatIndex: number): Promise<LaneItemData[]> {
     const items = await this.getHeatItemsHarness();
     if (heatIndex < 0 || heatIndex >= items.length) {
-        throw new Error(`Heat index ${heatIndex} out of bounds.`);
+      throw new Error(`Heat index ${heatIndex} out of bounds.`);
     }
     return items[heatIndex].getLanes();
+  }
+
+  async clickLane(heatIndex: number, laneIndex: number): Promise<void> {
+    const heatItems = await this.getHeatItemsHarness();
+    if (heatIndex < 0 || heatIndex >= heatItems.length) {
+      throw new Error(`Heat index ${heatIndex} out of bounds.`);
+    }
+    const lanes = await heatItems[heatIndex].getLaneHarnesses();
+    if (laneIndex < 0 || laneIndex >= lanes.length) {
+      throw new Error(`Lane index ${laneIndex} out of bounds.`);
+    }
+    await lanes[laneIndex].click();
   }
 }

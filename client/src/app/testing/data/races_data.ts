@@ -14,6 +14,7 @@ import {
   OverallScoring,
 } from "../../models/overall_scoring";
 import { Race } from "../../models/race";
+import { TeamOptions } from "../../models/team_options";
 import { Track } from "../../models/track";
 
 export const MOCK_RACES = [
@@ -164,11 +165,12 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     r.entity_id,
     r.name,
     new Track(r.track_entity_id || "", "", []),
+    r.heat_rotation_type || "RoundRobin",
     heatScoring,
     overallScoring,
     fuelOptions,
     digitalFuelOptions,
-    r.team_options,
+    r.team_options || new TeamOptions(),
     r.auto_advance_time ?? 0,
     r.auto_start_time ?? 0,
     r.auto_advance_warmup_time ?? 0,
@@ -179,5 +181,6 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     r.restart_time ?? 5.0,
     r.start_delay ?? 0.0,
     r.restart_delay ?? 0.0,
+    r.solo_lane_index || 0,
   );
 });

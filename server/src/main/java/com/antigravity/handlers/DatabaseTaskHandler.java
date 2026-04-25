@@ -576,6 +576,7 @@ public class DatabaseTaskHandler {
               .withRestartTime(race.getRestartTime())
               .withStartDelay(race.getStartDelay())
               .withRestartDelay(race.getRestartDelay())
+              .withSoloLaneIndex(race.getSoloLaneIndex())
               .withEntityId(nextId)
               .build();
     }
@@ -634,6 +635,7 @@ public class DatabaseTaskHandler {
             .withRestartTime(race.getRestartTime())
             .withStartDelay(race.getStartDelay())
             .withRestartDelay(race.getRestartDelay())
+            .withSoloLaneIndex(race.getSoloLaneIndex())
             .withEntityId(id)
             .withId(race.getId())
             .build();
@@ -725,6 +727,7 @@ public class DatabaseTaskHandler {
       raceMap.put("restart_time", race.getRestartTime());
       raceMap.put("start_delay", race.getStartDelay());
       raceMap.put("restart_delay", race.getRestartDelay());
+      raceMap.put("solo_lane_index", race.getSoloLaneIndex());
       response.add(raceMap);
     }
     ctx.json(response);
@@ -816,6 +819,8 @@ public class DatabaseTaskHandler {
     int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
     String trackId = (String) body.get("trackId");
     String rotationType = (String) body.get("rotationType");
+    Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
+    int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
 
     if (driverCount <= 0) {
       ctx.status(400).result("driverCount must be greater than 0");
@@ -869,6 +874,7 @@ public class DatabaseTaskHandler {
             .withAutoStartTime(0.0)
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
+            .withSoloLaneIndex(soloLaneIndex)
             .build();
 
     // Create mock RaceParticipant list

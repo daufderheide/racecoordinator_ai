@@ -178,6 +178,7 @@ describe("RaceEditorComponent", () => {
       "t1",
       "RoundRobin",
       10,
+      0,
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -194,6 +195,7 @@ describe("RaceEditorComponent", () => {
       "t1",
       "RoundRobin",
       10,
+      0,
     );
 
     component.driverCount = 12;
@@ -204,6 +206,7 @@ describe("RaceEditorComponent", () => {
       "t1",
       "RoundRobin",
       12,
+      0,
     );
   }));
 
@@ -977,82 +980,35 @@ describe("RaceEditorComponent", () => {
     }));
 
     it("should show back confirmation when name is invalid (duplicate)", () => {
-      component.editingRace = {
-        entity_id: "1",
-        name: "OriginalName",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-        fuel_options: {
-          enabled: false,
-          reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
-          capacity: 100,
-          usage_type: "LINEAR",
-          usage_rate: 4.0,
-          start_level: 100,
-          refuel_rate: 10,
-          pit_stop_delay: 2.0,
-          reference_time: 6.0,
-        },
-        digital_fuel_options: { enabled: false },
-        team_options: { require_pit_stop_change_driver: false },
-      };
-      component.races = [
-        { entity_id: "1", name: "OriginalName" },
-        { entity_id: "2", name: "TakenName" },
-      ];
-
-      component.editingRace.name = "TakenName";
-
-      // Config is invalid because name is a duplicate
+      component.editingRace.name = "Duplicate Name";
+      component.races = [{ entity_id: "other", name: "Duplicate Name" }];
       expect(component.isConfigValid()).toBeFalse();
     });
 
     it("should show back confirmation when name is empty", () => {
-      component.editingRace = {
-        entity_id: "1",
-        name: "",
-        track_entity_id: "track1",
-        heat_rotation_type: "RoundRobin",
-        heat_scoring: {
-          finish_method: "Lap",
-          finish_value: 10,
-          heat_ranking: "LAP_COUNT",
-          heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        },
-        overall_scoring: {
-          dropped_heats: 0,
-          ranking_method: "LAP_COUNT",
-          tiebreaker: "FASTEST_LAP_TIME",
-        },
-        fuel_options: {
-          enabled: false,
-          reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
-          capacity: 100,
-          usage_type: "LINEAR",
-          usage_rate: 4.0,
-          start_level: 100,
-          refuel_rate: 10,
-          pit_stop_delay: 2.0,
-          reference_time: 6.0,
-        },
-        digital_fuel_options: { enabled: false },
-        team_options: { require_pit_stop_change_driver: false },
-      };
-
+      component.editingRace.name = "";
       expect(component.isConfigValid()).toBeFalse();
     });
+  });
+
+  describe("Solo Lane Selection", () => {
+    it("should update solo_lane_index and refresh heats on lane selection", fakeAsync(() => {
+      component.editingRace.heat_rotation_type = "SingleHeatSolo";
+      component.editingRace.track_entity_id = "t1";
+      component.driverCount = 4;
+      dataService.previewHeats.and.returnValue(of({ heats: [] }));
+      spyOn(component, "captureState");
+
+      component.onLaneSelected(2); // Select Lane 3
+
+      expect(component.editingRace.solo_lane_index).toBe(2);
+      expect(component.captureState).toHaveBeenCalled();
+      expect(dataService.previewHeats).toHaveBeenCalledWith(
+        "t1",
+        "SingleHeatSolo",
+        4,
+        2,
+      );
+    }));
   });
 });

@@ -279,6 +279,80 @@ public class HeatBuilderTest {
   }
 
   @Test
+  public void testSingleHeatSolo() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.SingleHeatSolo);
+    when(raceModel.getSoloLaneIndex()).thenReturn(0);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 3; i++) {
+      participants.add(
+          new RaceParticipant(
+              new Driver(
+                  "D" + i,
+                  "d" + i,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  String.valueOf(i),
+                  null)));
+    }
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+
+    // 3 participants -> 3 heats
+    assertEquals(3, heats.size());
+
+    // Each heat should have 1 driver in Lane 1
+    for (int i = 0; i < 3; i++) {
+      Heat h = heats.get(i);
+      assertEquals(1, countDrivers(h));
+      assertEquals(String.valueOf(i + 1), h.getDrivers().get(0).getActualDriver().getEntityId());
+
+      // Other lanes (index 1, 2, 3) should be empty
+      for (int l = 1; l < 4; l++) {
+        assertEquals(
+            Driver.EMPTY_DRIVER.getEntityId(),
+            h.getDrivers().get(l).getActualDriver().getEntityId());
+      }
+    }
+  }
+
+  @Test
+  public void testSingleHeatSoloWithCustomLane() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.SingleHeatSolo);
+    when(raceModel.getSoloLaneIndex()).thenReturn(2); // Lane 3
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    participants.add(
+        new RaceParticipant(
+            new Driver(
+                "D1", "d1", null, null, null, null, null, null, null, null, null, "1", null)));
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants);
+
+    assertEquals(1, heats.size());
+    Heat h = heats.get(0);
+    assertEquals(1, countDrivers(h));
+
+    // Lane 3 (index 2) should have the driver
+    assertEquals("1", h.getDrivers().get(2).getActualDriver().getEntityId());
+
+    // Other lanes should be empty
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(), h.getDrivers().get(0).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(), h.getDrivers().get(1).getActualDriver().getEntityId());
+    assertEquals(
+        Driver.EMPTY_DRIVER.getEntityId(), h.getDrivers().get(3).getActualDriver().getEntityId());
+  }
+
+  @Test
   public void testSingleHeat_FiveDriversFourLanes() {
     when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.SingleHeat);
 

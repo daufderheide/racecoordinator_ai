@@ -548,6 +548,7 @@
   "RE_ROTATION_FRIENDLY_ROUND_ROBIN": "Vriendelijke Round Robin",
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Enkele Heat",
+  "RE_ROTATION_SINGLE_HEAT_SOLO": "Enkele Heat (Solo)",
   "RE_HELP_NAME_CONTENT": "Voer een beschrijvende naam in voor uw race. Deze naam wordt in de hele applicatie weergegeven en helpt bij het identificeren van uw raceconfiguratie.",
   "RE_HELP_TRACK_CONTENT": "Selecteer de baan waar deze race zal plaatsvinden. De baanconfiguratie bepaalt het aantal banen en de interface-instellingen voor de race.",
   "RE_HELP_WELCOME_CONTENT": "Deze gids helpt u bij het instellen van uw raceconfiguratie stap voor stap.",

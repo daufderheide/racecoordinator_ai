@@ -79,6 +79,10 @@ public class Race extends Model {
   @JsonProperty("restart_delay")
   private final double restartDelay;
 
+  @BsonProperty("solo_lane_index")
+  @JsonProperty("solo_lane_index")
+  private final int soloLaneIndex;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -106,6 +110,7 @@ public class Race extends Model {
       @BsonProperty("restart_time") @JsonProperty("restart_time") Double restartTime,
       @BsonProperty("start_delay") @JsonProperty("start_delay") Double startDelay,
       @BsonProperty("restart_delay") @JsonProperty("restart_delay") Double restartDelay,
+      @BsonProperty("solo_lane_index") @JsonProperty("solo_lane_index") Integer soloLaneIndex,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -131,6 +136,7 @@ public class Race extends Model {
     this.restartTime = restartTime != null ? restartTime : 5.0;
     this.startDelay = startDelay != null ? startDelay : 0.0;
     this.restartDelay = restartDelay != null ? restartDelay : 0.0;
+    this.soloLaneIndex = soloLaneIndex != null ? soloLaneIndex : 0;
   }
 
   public static class Builder {
@@ -153,6 +159,7 @@ public class Race extends Model {
     private double restartTime = 5.0;
     private double startDelay = 0.0;
     private double restartDelay = 0.0;
+    private int soloLaneIndex = 0;
     private String entityId;
     private ObjectId id;
 
@@ -246,6 +253,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withSoloLaneIndex(int soloLaneIndex) {
+      this.soloLaneIndex = soloLaneIndex;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -277,6 +289,7 @@ public class Race extends Model {
           restartTime,
           startDelay,
           restartDelay,
+          soloLaneIndex,
           entityId,
           id);
     }
@@ -352,5 +365,9 @@ public class Race extends Model {
 
   public double getRestartDelay() {
     return restartDelay;
+  }
+
+  public int getSoloLaneIndex() {
+    return soloLaneIndex;
   }
 }

@@ -66,6 +66,9 @@
           <option value="SingleHeat">
             {{ "RE_ROTATION_SINGLE_HEAT" | translate }}
           </option>
+          <option value="SingleHeatSolo">
+            {{ "RE_ROTATION_SINGLE_HEAT_SOLO" | translate }}
+          </option>
         </select>
       </div>
 
@@ -96,6 +99,8 @@
         <app-heat-list
           [heats]="generatedHeats"
           [showHeader]="false"
+          [canDragLanes]="editingRace?.heat_rotation_type === 'SingleHeatSolo'"
+          (laneSelected)="onLaneSelected($event)"
         ></app-heat-list>
       </div>
 

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
@@ -88,6 +89,37 @@ public class DatabaseTaskHandlerTest {
     assertNotNull(created.getTeamOptions());
     assertEquals(10, created.getTeamOptions().getHeatLapLimit());
     assertEquals(true, created.getTeamOptions().isRequirePitStopChangeDriver());
+    verify(raceCollection).insertOne(any(Race.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCreateRace_SoloRotation() {
+    Race raceRequest =
+        new Race.Builder()
+            .withName("Solo Race")
+            .withTrackEntityId("track-1")
+            .withHeatRotationType(HeatRotationType.SingleHeatSolo)
+            .withSoloLaneIndex(3)
+            .withEntityId("new")
+            .build();
+
+    // Mock uniqueness check
+    FindIterable<Race> findIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(findIterable);
+    when(findIterable.first()).thenReturn(null);
+
+    // Mock sequence generation
+    Document counterDoc = new Document("seq", 101);
+    when(countersCollection.findOneAndUpdate(any(Bson.class), any(Bson.class), any()))
+        .thenReturn(counterDoc);
+
+    Race created = handler.createRace(raceRequest);
+
+    assertNotNull(created);
+    assertEquals("101", created.getEntityId());
+    assertEquals(HeatRotationType.SingleHeatSolo, created.getHeatRotationType());
+    assertEquals(3, created.getSoloLaneIndex());
     verify(raceCollection).insertOne(any(Race.class));
   }
 

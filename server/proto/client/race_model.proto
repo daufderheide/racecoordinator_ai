@@ -67,6 +67,14 @@ message TeamOptions {
   bool require_pit_stop_change_driver = 5;
 }
 
+enum HeatRotationType {
+  ROUND_ROBIN = 0;
+  FRIENDLY_ROUND_ROBIN = 1;
+  EUROPEAN_ROUND_ROBIN = 2;
+  SINGLE_HEAT = 3;
+  SINGLE_HEAT_SOLO = 4;
+}
+
 message RaceModel {
   Model model = 1;
   string name = 2;
@@ -86,6 +94,8 @@ message RaceModel {
   double restart_time = 16;
   double start_delay = 17;
   double restart_delay = 18;
+  HeatRotationType heat_rotation_type = 19;
+  int32 solo_lane_index = 20;
 }
 
 enum FuelUsageType {

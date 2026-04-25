@@ -1,6 +1,12 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { NO_ERRORS_SCHEMA } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { TranslationService } from "src/app/services/translation.service";
 
@@ -120,5 +126,49 @@ describe("HeatListComponent", () => {
     component.showHeader = false;
     fixture.detectChanges();
     expect(await harness.hasHeader()).toBeFalse();
+  });
+
+  describe("Solo Rotation", () => {
+    beforeEach(() => {
+      component.canDragLanes = true;
+      component.heats = [
+        {
+          heatNumber: 1,
+          lanes: [
+            { laneNumber: 1, driverNumber: 1 },
+            { laneNumber: 2, driverNumber: null },
+            { laneNumber: 3, driverNumber: null },
+            { laneNumber: 4, driverNumber: null },
+          ],
+        },
+      ];
+      fixture.detectChanges();
+    });
+
+    it("should emit laneSelected when an empty lane is clicked", fakeAsync(() => {
+      spyOn(component.laneSelected, "emit");
+      const laneItems = fixture.debugElement.queryAll(By.css(".lane-item"));
+      laneItems[2].nativeElement.click(); // Click Lane 3
+      tick();
+      expect(component.laneSelected.emit).toHaveBeenCalledWith(2);
+    }));
+
+    it("should not emit laneSelected when the occupied lane is clicked", fakeAsync(() => {
+      spyOn(component.laneSelected, "emit");
+      const laneItems = fixture.debugElement.queryAll(By.css(".lane-item"));
+      laneItems[0].nativeElement.click(); // Click Lane 1 (occupied)
+      tick();
+      expect(component.laneSelected.emit).not.toHaveBeenCalled();
+    }));
+
+    it("should not emit laneSelected when clicking if canDragLanes is false", fakeAsync(() => {
+      component.canDragLanes = false;
+      fixture.detectChanges();
+      spyOn(component.laneSelected, "emit");
+      const laneItems = fixture.debugElement.queryAll(By.css(".lane-item"));
+      laneItems[2].nativeElement.click();
+      tick();
+      expect(component.laneSelected.emit).not.toHaveBeenCalled();
+    }));
   });
 });

@@ -59,4 +59,16 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.drift_time).toBe(0.5);
   });
+
+  it("should map heat rotation type from enum in proto", () => {
+    const mockProto: com.antigravity.IRaceModel = {
+      model: { entityId: "r5" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatRotationType: 4, // SINGLE_HEAT_SOLO
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.heat_rotation_type).toBe("SingleHeatSolo");
+  });
 });

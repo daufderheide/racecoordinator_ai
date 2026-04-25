@@ -124,6 +124,12 @@ public class RaceConverter {
       builder.setRestartTime(race.getRestartTime());
       builder.setStartDelay(race.getStartDelay());
       builder.setRestartDelay(race.getRestartDelay());
+      if (race.getHeatRotationType() != null) {
+        String rotationName =
+            race.getHeatRotationType().name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();
+        builder.setHeatRotationType(com.antigravity.proto.HeatRotationType.valueOf(rotationName));
+      }
+      builder.setSoloLaneIndex(race.getSoloLaneIndex());
       return builder.build();
     }
   }

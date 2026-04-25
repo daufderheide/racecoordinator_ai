@@ -548,6 +548,7 @@
   "RE_ROTATION_FRIENDLY_ROUND_ROBIN": "Friendly Round Robin",
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Single Heat",
+  "RE_ROTATION_SINGLE_HEAT_SOLO": "Single Heat (Solo)",
   "RE_HELP_NAME_CONTENT": "Enter a descriptive name for your race. This name will be displayed throughout the application and helps identify your race configuration.",
   "RE_HELP_TRACK_CONTENT": "Select the track where this race will be held. The track configuration will determine lane count and interface settings for the race.",
   "RE_HELP_WELCOME_CONTENT": "This guide will help you set up your race configuration step by step.",
