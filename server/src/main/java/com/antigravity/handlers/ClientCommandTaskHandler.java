@@ -92,6 +92,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState);
     app.post("/api/close-interface", this::closeInterface);
     app.post("/api/races/current-heat/drivers/{lane}/actual-driver", this::changeActualDriver);
+    app.post("/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}", this::changeLane);
     app.get("/api/serial-ports", this::getSerialPorts);
     app.get("/api/races/current/export-csv", this::exportRaceCsv);
     app.post("/api/save-race", this::saveRace);
@@ -620,6 +621,25 @@ public class ClientCommandTaskHandler {
       System.err.println("Error initializing interface: " + e.getMessage());
       e.printStackTrace();
       ctx.status(500).result("Internal Server Error: " + e.toString());
+    }
+  }
+
+  private void changeLane(Context ctx) {
+    try {
+      int fromLane = Integer.parseInt(ctx.pathParam("fromLane"));
+      int toLane = Integer.parseInt(ctx.pathParam("toLane"));
+
+      com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      race.changeLane(fromLane, toLane);
+      ctx.status(200).result("Lane changed");
+    } catch (Exception e) {
+      System.err.println("Error changing lane: " + e.getMessage());
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }
 

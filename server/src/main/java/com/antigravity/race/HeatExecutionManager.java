@@ -277,6 +277,46 @@ public class HeatExecutionManager {
     }
   }
 
+  public synchronized void changeLane(int from, int to) {
+    if (from < 0 || to < 0 || from >= isRefueling.length || to >= isRefueling.length) {
+      return;
+    }
+
+    // Swap finished state
+    boolean fromFinished = finishedLanes.contains(from);
+    boolean toFinished = finishedLanes.contains(to);
+
+    if (fromFinished) {
+      finishedLanes.remove(from);
+    }
+    if (toFinished) {
+      finishedLanes.remove(to);
+    }
+
+    if (fromFinished) {
+      finishedLanes.add(to);
+    }
+    if (toFinished) {
+      finishedLanes.add(from);
+    }
+
+    // Swap fuel related transient state
+    double tempDelay = refuelDelayRemaining[from];
+    refuelDelayRemaining[from] = refuelDelayRemaining[to];
+    refuelDelayRemaining[to] = tempDelay;
+
+    boolean tempRefueling = isRefueling[from];
+    isRefueling[from] = isRefueling[to];
+    isRefueling[to] = tempRefueling;
+
+    double tempAccumulated = accumulatedRefuelTime[from];
+    accumulatedRefuelTime[from] = accumulatedRefuelTime[to];
+    accumulatedRefuelTime[to] = tempAccumulated;
+
+    System.out.println(
+        "HeatExecutionManager: Swapped transient lane state for lanes " + from + " and " + to);
+  }
+
   public void handlePitDetection(com.antigravity.protocols.CarData carData) {
     FuelOptions fuelOptions = null;
     if (isAnalogFuelEnabled()) {

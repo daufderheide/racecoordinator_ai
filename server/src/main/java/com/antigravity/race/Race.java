@@ -923,6 +923,35 @@ public class Race implements ProtocolListener {
     return !(state instanceof RaceOver);
   }
 
+  public synchronized void changeLane(int fromLane, int toLane) {
+    if (model.getHeatRotationType() != com.antigravity.models.HeatRotationType.SingleHeatSolo) {
+      return;
+    }
+
+    if (currentHeat == null) {
+      return;
+    }
+
+    List<DriverHeatData> drivers = currentHeat.getDrivers();
+    if (fromLane < 0 || fromLane >= drivers.size() || toLane < 0 || toLane >= drivers.size()) {
+      return;
+    }
+
+    // Swap them in the list
+    java.util.Collections.swap(drivers, fromLane, toLane);
+
+    // Swap transient state in execution manager
+    if (executionManager != null) {
+      executionManager.changeLane(fromLane, toLane);
+    }
+
+    // Update lane indices if they are stored in DriverHeatData
+    currentHeat.initializeStandings(model.getHeatScoring());
+
+    // Broadcast the update
+    broadcast(createSnapshot());
+  }
+
   @Override
   public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
     try {

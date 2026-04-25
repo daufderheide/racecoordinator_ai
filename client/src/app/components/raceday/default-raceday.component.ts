@@ -1,3 +1,4 @@
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -322,6 +323,8 @@ export class DefaultRacedayComponent
 
   protected driverRankings = new Map<string, number>();
   protected isInterfaceConnected: boolean = false;
+  protected draggingLane: number | null = null;
+  protected isDragging: boolean = false;
   protected raceState: com.antigravity.RaceState =
     com.antigravity.RaceState.UNKNOWN_STATE;
   protected assets: any[] = [];
@@ -703,7 +706,7 @@ export class DefaultRacedayComponent
     );
 
     const settings = this.settingsService.getSettings();
-    if (settings.sortByStandings) {
+    if (settings.sortByStandings && !this.isDragging) {
       // TODO(aufderheide): Server should 100% control the presentation order.  I'm worried this may cause issues when we do disqualifications and such.
       // Sort a separate copy to determine visual positions
       const ranked = [...this.heat.heatDrivers].sort((a, b) => {
@@ -724,11 +727,65 @@ export class DefaultRacedayComponent
         this.driverVisualPositions.set(hd.laneIndex, i),
       );
     }
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   protected getDriverVisualPosition(hd: DriverHeatData): number {
     return this.driverVisualPositions.get(hd.laneIndex) ?? 0;
+  }
+
+  protected get isSingleHeatSolo(): boolean {
+    // TODO(aufderheide): We should not be looking at a string here.
+    // This needs to be changed to an enum.
+    return this.race?.heat_rotation_type === "SingleHeatSolo";
+  }
+
+  protected onDrop(event: CdkDragDrop<DriverHeatData[]>) {
+    this.draggingLane = null;
+    this.isDragging = false;
+    if (
+      !this.isSingleHeatSolo ||
+      event.previousIndex === event.currentIndex ||
+      !this.sortedHeatDrivers
+    ) {
+      return;
+    }
+
+    const fromHd = event.item.data as DriverHeatData;
+    const toHd = this.sortedHeatDrivers.find(
+      (hd) => this.getDriverVisualPosition(hd) === event.currentIndex,
+    );
+
+    if (!fromHd || !toHd) return;
+
+    this.dataService
+      .changeLane(fromHd.laneIndex, toHd.laneIndex)
+      .subscribe((success) => {
+        if (!success) {
+          console.error("Failed to change lane");
+        }
+      });
+  }
+
+  protected onDragStarted(laneIndex: number) {
+    this.isDragging = true;
+    this.draggingLane = laneIndex;
+    this.cdr.markForCheck();
+  }
+
+  protected onDragOver(laneIndex: number) {
+    if (this.isSingleHeatSolo && this.isDragging) {
+      this.draggingLane = laneIndex;
+    }
+  }
+
+  protected onDragEnded() {
+    this.draggingLane = null;
+    this.isDragging = false;
+  }
+
+  protected isLaneOccupied(hd: DriverHeatData): boolean {
+    return !!hd && !!hd.driver && !Driver.isEmpty(hd.driver);
   }
 
   private detectShortcutKey() {
@@ -2125,8 +2182,12 @@ export class DefaultRacedayComponent
     return labels[baseKey] ?? "UNKNOWN";
   }
 
+  protected trackByIndex(index: number, item: any): number {
+    return index;
+  }
+
   protected trackByDriverId(index: number, hd: DriverHeatData): any {
-    return hd.laneIndex;
+    return `${hd.objectId}-${hd.laneIndex}`;
   }
 
   protected trackByColumn(index: number, col: any): string {

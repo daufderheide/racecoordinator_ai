@@ -336,7 +336,13 @@
         </div>
 
         <!-- Body (Dynamic rows) -->
-        <div class="table-body">
+        <div
+          class="table-body"
+          cdkDropList
+          [cdkDropListData]="sortedHeatDrivers"
+          (cdkDropListDropped)="onDrop($event)"
+          [cdkDropListDisabled]="!isSingleHeatSolo"
+        >
           <div
             *ngFor="
               let hd of sortedHeatDrivers;
@@ -344,10 +350,20 @@
               trackBy: trackByDriverId
             "
             class="table-row"
+            cdkDrag
+            [cdkDragData]="hd"
+            [cdkDragDisabled]="!isSingleHeatSolo || !isLaneOccupied(hd)"
+            [cdkDragPreviewContainer]="'parent'"
+            (cdkDragStarted)="onDragStarted(hd.laneIndex)"
+            (cdkDragEnded)="onDragEnded()"
             [class.highlight]="highlightedDrivers.has(hd.objectId)"
+            [class.drag-over]="draggingLane === hd.laneIndex"
+            (mouseenter)="onDragOver(hd.laneIndex)"
             [style.grid-template-columns]="gridTemplateColumns"
             [style.height.px]="getRowHeight()"
-            [style.z-index]="100 - getDriverVisualPosition(hd)"
+            [style.z-index]="
+              isDragging ? 1000 : 100 - getDriverVisualPosition(hd)
+            "
             [style.transform]="
               'translateY(' +
               getDriverVisualPosition(hd) * (getRowHeight() + 2) +
@@ -441,6 +457,20 @@
                         {{ getDriverStats(hd, tm.entity_id || tm.id) }}
                       </option>
                     </select>
+                  </div>
+
+                  <!-- Drag Handle -->
+                  <div
+                    class="drag-handle"
+                    *ngIf="
+                      isSingleHeatSolo &&
+                      isNameProperty(entry.property) &&
+                      isLaneOccupied(hd)
+                    "
+                    cdkDragHandle
+                    [style.color]="track.lanes[hd.laneIndex]?.foreground_color"
+                  >
+                    <span class="material-icons">drag_indicator</span>
                   </div>
 
                   <!-- Static Text for Individuals or non-name properties -->

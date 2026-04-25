@@ -482,7 +482,14 @@
   top: 0;
   will-change: transform, filter;
   width: 100%;
-  transition: transform 800ms cubic-bezier(0.35, 0, 0.25, 1), filter 150ms ease-out;
+  transition:
+    top 800ms cubic-bezier(0.35, 0, 0.25, 1),
+    transform 800ms cubic-bezier(0.35, 0, 0.25, 1),
+    filter 150ms ease-out;
+}
+
+.table-row.cdk-drag-dragging {
+  transition: none !important;
 }
 
 .table-row.highlight {
@@ -642,4 +649,62 @@ app-acknowledgement-modal, app-confirmation-modal {
   transform: scale(1.2);
   filter: drop-shadow(0 0 25px rgba(0, 255, 0, 1));
   opacity: 1;
+}
+
+/* Drag and Drop Styles */
+.drag-handle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: grab;
+  color: #fff;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.table-row.drag-over {
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.02) !important;
+  z-index: 200 !important;
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  display: grid;
+  background: #1a2332;
+  z-index: 10000;
+  pointer-events: none;
+  top: 0 !important;
+  left: 0 !important;
+  transition: none !important;
+}
+
+.cdk-drag-preview .drag-handle {
+  display: none;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.table-body.cdk-drop-list-dragging .table-row:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

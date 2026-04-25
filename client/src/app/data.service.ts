@@ -1103,17 +1103,29 @@ export class DataService {
   public getRecordData(): Observable<com.antigravity.IRecordData> {
     return this.recordDataSubject.asObservable();
   }
+
   public changeActualDriver(
     lane: number,
     driverId: string,
-  ): Observable<string> {
-    return this.http.post(
-      `${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`,
-      {
-        driverId,
-      },
-      { responseType: "text" },
-    );
+  ): Observable<boolean> {
+    return this.http
+      .post(
+        `${this.baseUrl}/api/races/current-heat/drivers/${lane}/actual-driver`,
+        {
+          driverId,
+        },
+      )
+      .pipe(map(() => true));
+  }
+
+  changeLane(fromLane: number, toLane: number): Observable<boolean> {
+    return this.http
+      .post(
+        `${this.baseUrl}/api/races/current-heat/drivers/${fromLane}/change-lane/${toLane}`,
+        {},
+        { responseType: "text" },
+      )
+      .pipe(map(() => true));
   }
 
   saveRace(): Observable<string> {

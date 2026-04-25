@@ -1,3 +1,4 @@
+import { DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -131,6 +132,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     await TestBed.configureTestingModule({
+      imports: [DragDropModule],
       declarations: [
         DefaultRacedayComponent,
         DefaultRacedayMockAcknowledgementModalComponent,
@@ -1626,6 +1628,74 @@ describe("DefaultRacedayComponent", () => {
         participant: { fuelLevel: 100 },
       } as any);
       expect(imageUrl).toBe("http://localhost/theme/fuel-100.png");
+    });
+  });
+
+  describe("Lane Swapping", () => {
+    beforeEach(() => {
+      // Mock single heat solo race
+      (component as any).race.heat_rotation_type = "SingleHeatSolo";
+      component["heat"] = {
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            objectId: "hd0",
+            driver: { objectId: "d1" },
+            participant: { objectId: "p1" },
+          },
+          {
+            laneIndex: 1,
+            objectId: "hd1",
+            driver: { objectId: "d2" },
+            participant: { objectId: "p2" },
+          },
+        ],
+      } as any;
+      (component as any).sortHeatDrivers();
+    });
+
+    it("should call dataService.changeLane when onDrop is called with valid indices", () => {
+      const fromHd = component["sortedHeatDrivers"][0];
+      const event = {
+        previousIndex: 0,
+        currentIndex: 1,
+        item: { data: fromHd },
+      } as any;
+
+      mockDataService.changeLane.and.returnValue(of(true));
+
+      component["onDrop"](event);
+
+      expect(mockDataService.changeLane).toHaveBeenCalledWith(0, 1);
+    });
+
+    it("should NOT call dataService.changeLane if not a solo race", () => {
+      (component as any).race.heat_rotation_type = "RoundRobin";
+      const fromHd = component["sortedHeatDrivers"][0];
+      const event = {
+        previousIndex: 0,
+        currentIndex: 1,
+        item: { data: fromHd },
+      } as any;
+
+      component["onDrop"](event);
+
+      expect(mockDataService.changeLane).not.toHaveBeenCalled();
+    });
+
+    it("should log error if changeLane fails", () => {
+      spyOn(console, "error");
+      mockDataService.changeLane.and.returnValue(of(false));
+      const fromHd = component["sortedHeatDrivers"][0];
+      const event = {
+        previousIndex: 0,
+        currentIndex: 1,
+        item: { data: fromHd },
+      } as any;
+
+      component["onDrop"](event);
+
+      expect(console.error).toHaveBeenCalledWith("Failed to change lane");
     });
   });
 });
