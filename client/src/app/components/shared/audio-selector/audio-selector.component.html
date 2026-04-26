@@ -2,18 +2,15 @@
   <div class="audio-header">
     <label>{{ label }}</label>
     <div class="toggle-group" *ngIf="!readonly">
-      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">{{ 'AS_OPTION_PRESET' | translate
-        }}</span>
+      <span [class.active]="type === 'preset'" (click)="onTypeChange('preset')">{{ 'AS_OPTION_PRESET' | translate }}</span>
       <span [class.active]="type === 'tts'" (click)="onTypeChange('tts')">{{ 'AS_OPTION_TTS' | translate }}</span>
     </div>
   </div>
 
   <!-- Regular Editing Mode -->
   <div class="audio-controls" *ngIf="!readonly && type === 'preset'">
-    <div class="select-wrapper" (click)="openItemSelector()" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
-      <div class="dm-select trigger-div">
-        {{ selectedAssetName }}
-      </div>
+    <div class="dm-select trigger-div" (click)="openItemSelector()" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+      {{ selectedAssetName }}
     </div>
     <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
   </div>
@@ -21,7 +18,6 @@
   <div class="audio-controls" *ngIf="!readonly && type === 'tts'">
     <input type="text" [ngModel]="text" (ngModelChange)="onTextChange($event)" class="dm-input"
       [placeholder]="'AS_PLACEHOLDER_TEXT' | translate">
-    <button class="btn-play" (click)="play()">▶ {{ 'AS_BTN_PLAY' | translate }}</button>
   </div>
 
   <!-- Readonly Mode -->
