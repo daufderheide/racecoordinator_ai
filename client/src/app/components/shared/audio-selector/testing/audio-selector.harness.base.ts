@@ -4,7 +4,7 @@ export abstract class AudioSelectorHarnessBase {
   static readonly selectors = {
     label: '.audio-header label',
     toggleSpans: '.toggle-group span',
-    selectWrapper: '.select-wrapper',
+    selectWrapper: '.dm-select.trigger-div',
     selectedSoundName: '.dm-select',
     ttsInput: 'input.dm-input',
     playButton: '.btn-play'
