@@ -12,7 +12,7 @@ export const slideInAnimation = trigger("routeAnimations", [
   transition(
     (from, to) => {
       const parts = to?.split(":");
-      return parts[0] === "slide" && parts[1] !== "backward";
+      return parts?.[0] === "slide" && parts?.[1] !== "backward";
     },
     [
       style({ position: "relative" }),
@@ -66,7 +66,7 @@ export const slideInAnimation = trigger("routeAnimations", [
   transition(
     (from, to) => {
       const parts = to?.split(":");
-      return parts[0] === "slide" && parts[1] === "backward";
+      return parts?.[0] === "slide" && parts?.[1] === "backward";
     },
     [
       style({ position: "relative" }),
@@ -120,7 +120,7 @@ export const slideInAnimation = trigger("routeAnimations", [
   transition(
     (from, to) => {
       const parts = to?.split(":");
-      return parts[0] === "zoom" && parts[1] !== "backward";
+      return parts?.[0] === "zoom" && parts?.[1] !== "backward";
     },
     [
       style({ position: "relative" }),
@@ -177,7 +177,7 @@ export const slideInAnimation = trigger("routeAnimations", [
   transition(
     (from, to) => {
       const parts = to?.split(":");
-      return parts[0] === "zoom" && parts[1] === "backward";
+      return parts?.[0] === "zoom" && parts?.[1] === "backward";
     },
     [
       style({ position: "relative" }),
@@ -232,7 +232,7 @@ export const slideInAnimation = trigger("routeAnimations", [
 
   // --- Blur Transition ---
   transition(
-    (from, to) => to?.split(":")[0] === "blur",
+    (from, to) => to?.split(":")?.[0] === "blur",
     [
       style({ position: "relative" }),
       query(
@@ -292,7 +292,7 @@ export const slideInAnimation = trigger("routeAnimations", [
 
   // --- Fade Transition ---
   transition(
-    (from, to) => to?.split(":")[0] === "fade",
+    (from, to) => to?.split(":")?.[0] === "fade",
     [
       style({ position: "relative" }),
       query(

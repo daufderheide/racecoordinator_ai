@@ -71,7 +71,8 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.updatePosition();
+    // Defer to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => this.updatePosition(), 0);
   }
 
   ngOnDestroy() {
