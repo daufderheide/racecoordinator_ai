@@ -45,14 +45,15 @@ public class NotStarted implements IRaceState {
   public void enter(Race race) {
     System.out.println("NotStarted state entered.");
     this.race = race;
+    race.setHasRacedInCurrentHeat(false);
+    race.prepareHeat();
     race.initializeHardwareState();
     this.executionManager = race.getHeatExecutionManager();
-    race.setHasRacedInCurrentHeat(false);
 
     double autoStartTime = race.getRaceModel().getAutoStartTime();
     double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
 
-    if (autoStartTime > 0 && !race.isAutoStartFired() && !race.isFirstHeat()) {
+    if (autoStartTime > 0 && !race.isAutoStartFired()) {
       race.setAutoStartRemaining(autoStartTime);
 
       // Handle initial power state to avoid transient flicker

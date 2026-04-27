@@ -187,11 +187,11 @@ public class Race implements ProtocolListener {
       this.state = new NotStarted();
     }
 
-    this.state.enter(this);
-
     if (builder.heats == null) {
       initializeFuelLevels();
     }
+
+    this.state.enter(this);
 
     loadGlobalRecords();
     broadcastRecords();

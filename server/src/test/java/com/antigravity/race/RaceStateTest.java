@@ -330,15 +330,18 @@ public class RaceStateTest {
   }
 
   @Test
-  public void testAutoStartSkippedOnFirstHeat() throws Exception {
+  public void testAutoStartRunsOnFirstHeat() throws Exception {
     // 1. Setup race with auto-start time
     injectAutoStartTime(10.0);
 
     // 2. State transition to trigger enter()
+    // We transition to Paused first to avoid NotStarted.exit() clearing the timer
+    // set by NotStarted.enter() due to the order in Race.changeState()
+    race.changeState(new Paused());
     race.changeState(new NotStarted());
 
-    // 3. Verify autoStartRemaining is 0 (since it's the first heat)
-    assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+    // 3. Verify autoStartRemaining is 10.0
+    assertEquals(10.0, race.getAutoStartRemaining(), 0.001);
   }
 
   @Test
