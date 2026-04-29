@@ -251,4 +251,82 @@ describe("TeamManagerComponent", () => {
       expect(dataService.deleteTeam).toHaveBeenCalledWith("t1");
     });
   });
+
+  describe("Natural Sorting", () => {
+    it("should sort teams naturally by name", () => {
+      component.teams = [
+        new Team("t10", "Team 10", "", []),
+        new Team("t2", "Team 2", "", []),
+        new Team("t1", "Team 1", "", []),
+        new Team("t20", "Team 20", "", []),
+      ];
+
+      const filteredTeams = component.filteredTeams;
+
+      expect(filteredTeams.map(t => t.name)).toEqual([
+        "Team 1",
+        "Team 2", 
+        "Team 10",
+        "Team 20"
+      ]);
+    });
+
+    it("should maintain natural sort order when filtering", () => {
+      component.teams = [
+        new Team("t10", "Team 10", "", []),
+        new Team("t2", "Team 2", "", []),
+        new Team("test", "Test Team", "", []),
+        new Team("t1", "Team 1", "", []),
+        new Team("t20", "Team 20", "", []),
+      ];
+
+      component.searchQuery = "team"; // This should match all items containing "team"
+
+      const filteredTeams = component.filteredTeams;
+
+      expect(filteredTeams.map(t => t.name)).toEqual([
+        "Team 1",
+        "Team 2", 
+        "Team 10",
+        "Team 20",
+        "Test Team"
+      ]);
+    });
+
+    it("should handle empty names in natural sort", () => {
+      component.teams = [
+        new Team("null", "", "", []),
+        new Team("t10", "Team 10", "", []),
+        new Team("empty", "", "", []),
+        new Team("t2", "Team 2", "", []),
+      ];
+
+      const filteredTeams = component.filteredTeams;
+
+      expect(filteredTeams.map(t => t.name)).toEqual([
+        "",
+        "",
+        "Team 2",
+        "Team 10"
+      ]);
+    });
+
+    it("should sort team names with multiple numeric parts naturally", () => {
+      component.teams = [
+        new Team("t1", "Team A1", "", []),
+        new Team("t2", "Team A10", "", []),
+        new Team("t3", "Team A2", "", []),
+        new Team("t4", "Team B1", "", []),
+      ];
+
+      const filteredTeams = component.filteredTeams;
+
+      expect(filteredTeams.map(t => t.name)).toEqual([
+        "Team A1",
+        "Team A2",
+        "Team A10",
+        "Team B1"
+      ]);
+    });
+  });
 });

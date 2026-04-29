@@ -230,4 +230,65 @@ describe("RaceManagerComponent", () => {
       expect(callArg.track_entity_id).toBeUndefined();
     });
   });
+
+  describe("Natural Sorting", () => {
+    it("should sort races naturally by name", () => {
+      component.races = [
+        { name: "Race 10", entity_id: "r10" },
+        { name: "Race 2", entity_id: "r2" },
+        { name: "Race 1", entity_id: "r1" },
+        { name: "Race 20", entity_id: "r20" },
+      ];
+
+      const filteredRaces = component.filteredRaces;
+
+      expect(filteredRaces.map(r => r.name)).toEqual([
+        "Race 1",
+        "Race 2", 
+        "Race 10",
+        "Race 20"
+      ]);
+    });
+
+    it("should maintain natural sort order when filtering", () => {
+      component.races = [
+        { name: "Race 10", entity_id: "r10" },
+        { name: "Race 2", entity_id: "r2" },
+        { name: "Test Race", entity_id: "test" },
+        { name: "Race 1", entity_id: "r1" },
+        { name: "Race 20", entity_id: "r20" },
+      ];
+
+      component.searchQuery = "race"; // This should match all items containing "race"
+
+      const filteredRaces = component.filteredRaces;
+
+      expect(filteredRaces.map(r => r.name)).toEqual([
+        "Race 1",
+        "Race 2", 
+        "Race 10",
+        "Race 20",
+        "Test Race"
+      ]);
+    });
+
+    it("should handle empty/null names in natural sort", () => {
+      component.races = [
+        { name: null, entity_id: "null" },
+        { name: "Race 10", entity_id: "r10" },
+        { name: "", entity_id: "empty" },
+        { name: "Race 2", entity_id: "r2" },
+      ];
+
+      const filteredRaces = component.filteredRaces;
+
+      // Empty strings come first, then named items in natural order
+      expect(filteredRaces.map(r => r.name || "")).toEqual([
+        "",
+        "",
+        "Race 2",
+        "Race 10"
+      ]);
+    });
+  });
 });

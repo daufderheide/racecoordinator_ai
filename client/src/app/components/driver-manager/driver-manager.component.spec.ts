@@ -231,4 +231,82 @@ describe("DriverManagerComponent", () => {
       expect(component.isConnectionLost).toBeFalse();
     });
   });
+
+  describe("Natural Sorting", () => {
+    it("should sort drivers naturally by name", () => {
+      component.drivers = [
+        new Driver("d10", "Driver 10", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d2", "Driver 2", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d1", "Driver 1", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d20", "Driver 20", "", undefined, { type: "preset" }, { type: "preset" }),
+      ];
+
+      const filteredDrivers = component.filteredDrivers;
+
+      expect(filteredDrivers.map(d => d.name)).toEqual([
+        "Driver 1",
+        "Driver 2", 
+        "Driver 10",
+        "Driver 20"
+      ]);
+    });
+
+    it("should maintain natural sort order when filtering", () => {
+      component.drivers = [
+        new Driver("d10", "Driver 10", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d2", "Driver 2", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("test", "Test Driver", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d1", "Driver 1", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d20", "Driver 20", "", undefined, { type: "preset" }, { type: "preset" }),
+      ];
+
+      component.searchQuery = "driver"; // This should match all items containing "driver"
+
+      const filteredDrivers = component.filteredDrivers;
+
+      expect(filteredDrivers.map(d => d.name)).toEqual([
+        "Driver 1",
+        "Driver 2", 
+        "Driver 10",
+        "Driver 20",
+        "Test Driver"
+      ]);
+    });
+
+    it("should handle empty names in natural sort", () => {
+      component.drivers = [
+        new Driver("null", "", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d10", "Driver 10", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("empty", "", "", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d2", "Driver 2", "", undefined, { type: "preset" }, { type: "preset" }),
+      ];
+
+      const filteredDrivers = component.filteredDrivers;
+
+      expect(filteredDrivers.map(d => d.name)).toEqual([
+        "",
+        "",
+        "Driver 2",
+        "Driver 10"
+      ]);
+    });
+
+    it("should sort by name when nickname is also considered", () => {
+      component.drivers = [
+        new Driver("d10", "Driver 10", "Nick 10", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d2", "Driver 2", "Nick 2", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d1", "Driver 1", "Nick 1", undefined, { type: "preset" }, { type: "preset" }),
+        new Driver("d20", "Driver 20", "Nick 20", undefined, { type: "preset" }, { type: "preset" }),
+      ];
+
+      const filteredDrivers = component.filteredDrivers;
+
+      expect(filteredDrivers.map(d => d.name)).toEqual([
+        "Driver 1",
+        "Driver 2", 
+        "Driver 10",
+        "Driver 20"
+      ]);
+    });
+  });
 });
