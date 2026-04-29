@@ -90,10 +90,28 @@ if ((-not $ServerOnly) -and (Test-Path $CLIENT_DIR)) {
     if (-not (Test-Path $CLIENT_PROTO_OUT)) {
         New-Item -ItemType Directory -Path $CLIENT_PROTO_OUT -Force | Out-Null
     }
-    
-    # Use glob patterns like the shell script does - run from PROTO_ROOT so imports resolve correctly
-    Set-Location $PROTO_ROOT
-    npx -y -p protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT\message.js" client/*.proto server/*.proto message.proto
-    npx -y -p protobufjs-cli pbts -o "$CLIENT_PROTO_OUT\message.d.ts" "$CLIENT_PROTO_OUT\message.js"
-    Write-Host "Client-side protobuf generation successful."
+    $MESSAGE_JS = Join-Path $CLIENT_PROTO_OUT "message.js"
+    if (-not (Test-Path $MESSAGE_JS)) {
+        Write-Host "Generating client-side protobuf files..."
+        
+        # Try to find local pbjs in client node_modules first
+        $PBJS = Join-Path $CLIENT_DIR "node_modules\.bin\pbjs.ps1"
+        $PBTS = Join-Path $CLIENT_DIR "node_modules\.bin\pbts.ps1"
+        
+        # Use glob patterns like the shell script does - run from PROTO_ROOT so imports resolve correctly
+        Set-Location $PROTO_ROOT
+        
+        if (Test-Path $PBJS) {
+            Write-Host "Using local pbjs from client/node_modules..."
+            & $PBJS -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT\message.js" client/*.proto server/*.proto message.proto
+            & $PBTS -o "$CLIENT_PROTO_OUT\message.d.ts" "$CLIENT_PROTO_OUT\message.js"
+        } else {
+            Write-Host "Local pbjs not found, falling back to npx..."
+            npx -y -p protobufjs-cli pbjs -p . -t static-module -w es6 -o "$CLIENT_PROTO_OUT\message.js" client/*.proto server/*.proto message.proto
+            npx -y -p protobufjs-cli pbts -o "$CLIENT_PROTO_OUT\message.d.ts" "$CLIENT_PROTO_OUT\message.js"
+        }
+        Write-Host "Client-side protobuf generation successful."
+    } else {
+        Write-Host "Client-side protos already generated, skipping. (Delete $MESSAGE_JS to force regeneration)" -ForegroundColor Gray
+    }
 }

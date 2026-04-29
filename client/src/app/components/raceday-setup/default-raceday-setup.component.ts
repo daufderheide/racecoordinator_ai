@@ -127,6 +127,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
       action: (event: MouseEvent) => this.toggleOptionsDropdown(event),
     },
     {
+      label: "RDS_MENU_CUMULATIVE_RESULTS",
+      action: (event: MouseEvent) => this.openCumulativeResults(),
+    },
+    {
       label: "RDS_MENU_HELP",
       action: (event: MouseEvent) => this.toggleHelpDropdown(event),
     },
@@ -544,6 +548,33 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   selectRace(race: Race) {
     this.selectedRace = race;
+
+    // Auto-select drivers if the race has them
+    if ((race as any).driver_ids && (race as any).driver_ids.length > 0) {
+      const driverIds = (race as any).driver_ids as string[];
+      const allParticipants = [
+        ...this.selectedParticipants,
+        ...this.unselectedParticipants,
+      ];
+
+      const newSelected: Participant[] = [];
+
+      for (const id of driverIds) {
+        const p = allParticipants.find(
+          (part) => part.entity_id === id && this.isDriver(part),
+        );
+        if (p) {
+          newSelected.push(p);
+        }
+      }
+
+      // Keep others in unselected
+      this.selectedParticipants = newSelected;
+      this.unselectedParticipants = allParticipants
+        .filter((p) => !newSelected.includes(p))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
     this.saveSettings();
     this.closeDropdown();
     this.cdr.detectChanges();
@@ -970,6 +1001,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openDatabaseManager() {
     this.closeFileDropdown();
     this.router.navigate(["/database-manager"]);
+  }
+
+  openCumulativeResults() {
+    this.closeFileDropdown();
+    this.router.navigate(["/cumulative-results"]);
   }
 
   onSearchChange() {
