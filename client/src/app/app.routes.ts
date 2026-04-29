@@ -1,4 +1,5 @@
 import { Routes } from "@angular/router";
+import { CumulativeResultsComponent } from "@app/components/cumulative-results/cumulative-results.component";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
@@ -102,6 +103,11 @@ export const routes: Routes = [
     path: "heat-results",
     component: HeatResultsComponent,
     data: { animation: "HeatResultsPage" },
+  },
+  {
+    path: "cumulative-results",
+    component: CumulativeResultsComponent,
+    data: { animation: "CumulativeResultsPage" },
   },
   { path: "**", redirectTo: "" },
 ];

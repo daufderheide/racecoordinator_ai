@@ -1351,4 +1351,16 @@ export class DataService {
       { userLaps },
     );
   }
+
+  getRaceHistory(isDemo: boolean = false): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.baseUrl}/api/history/races?demo=${isDemo}`,
+    );
+  }
+
+  getRaceHistoryById(id: string, isDemo: boolean = false): Observable<any> {
+    return this.http.get<any>(
+      `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`,
+    );
+  }
 }

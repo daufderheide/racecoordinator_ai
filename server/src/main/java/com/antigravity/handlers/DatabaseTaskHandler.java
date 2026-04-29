@@ -788,6 +788,12 @@ public class DatabaseTaskHandler {
       raceMap.put("restart_on_false_start", race.isRestartOnFalseStart());
       raceMap.put("false_start_lap_penalty", race.getFalseStartLapPenalty());
       raceMap.put("false_start_time_penalty", race.getFalseStartTimePenalty());
+
+      // Fetch driver_ids directly from the document to avoid modifying the Race POJO
+      Document raceDoc = getRaceCollection().find(Filters.eq("entity_id", race.getEntityId()), Document.class).first();
+      if (raceDoc != null && raceDoc.containsKey("driver_ids")) {
+        raceMap.put("driver_ids", raceDoc.get("driver_ids"));
+      }
       response.add(raceMap);
     }
     ctx.json(response);
@@ -819,18 +825,27 @@ public class DatabaseTaskHandler {
       return;
     }
 
-    // Create mock RaceParticipant list
-    List<RaceParticipant> mockDrivers = new ArrayList<>();
+    // Get real drivers from the database
+    List<Driver> realDrivers = new ArrayList<>();
+    getDriverCollection().find().forEach(realDrivers::add);
+
+    // Create RaceParticipant list using real drivers
+    List<RaceParticipant> participants = new ArrayList<>();
     for (int i = 0; i < driverCount; i++) {
-      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
-      mockDrivers.add(new RaceParticipant(mockDriver));
+      Driver driver;
+      if (i < realDrivers.size()) {
+        driver = realDrivers.get(i);
+      } else {
+        driver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
+      }
+      participants.add(new RaceParticipant(driver));
     }
 
     // Create a temporary Race object for heat building
     com.antigravity.race.Race tempRace = // fqn-collision
         new com.antigravity.race.Race.Builder() // fqn-collision
             .model(race)
-            .drivers(mockDrivers)
+            .drivers(participants)
             .track(track)
             .isDemoMode(true) // Use demo mode to avoid protocol initialization
             .build();
