@@ -2119,5 +2119,61 @@ describe("DefaultRacedayComponent", () => {
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_60,
       );
     });
+
+    it("should play halfway audio when a driver reaches halfway lap count in lap-based races", () => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        track: MOCK_TRACKS[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+
+      // Lap 1: nothing
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+
+      // Lap 5: should play
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+
+      // Reset mock to check it doesn't play twice
+      mockThemeService.resolveAudioConfig.calls.reset();
+
+      // Lap 6: should not play again
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 6,
+        lapTime: 1.234,
+        bestLapTime: 1.0,
+      });
+      expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+    });
   });
 });

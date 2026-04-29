@@ -461,6 +461,23 @@ export class DefaultRacedayComponent
             const isBestLap = lap.lapTime === lap.bestLapTime;
             const ttsContext = createTTSContext(driver, driverData);
 
+            // Halfway logic for lap-based races
+            const scoring = this.race?.heat_scoring;
+            if (
+              scoring &&
+              scoring.finishMethod === FinishMethod.Lap &&
+              !this.playedHalfway
+            ) {
+              const totalLaps = scoring.finishValue;
+              const halfwayLaps = totalLaps / 2;
+              if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
+                this.playThemedSound(
+                  THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+                );
+                this.playedHalfway = true;
+              }
+            }
+
             if (
               isBestLap &&
               driver.bestLapAudio.type !== "none" &&
@@ -2367,7 +2384,11 @@ export class DefaultRacedayComponent
       state === com.antigravity.RaceState.PAUSED
     ) {
       this.showCountdownOverlay = false;
-      if (state === com.antigravity.RaceState.NOT_STARTED) {
+      if (
+        state === com.antigravity.RaceState.NOT_STARTED ||
+        state === com.antigravity.RaceState.HEAT_OVER ||
+        state === com.antigravity.RaceState.RACE_OVER
+      ) {
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
       }
