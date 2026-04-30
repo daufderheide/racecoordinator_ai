@@ -73,6 +73,7 @@ public class Race implements ProtocolListener {
   }
 
   private ProtocolDelegate protocols;
+  private List<com.antigravity.protocols.PartialTime> partialTimes;
   private boolean isDemoMode;
   private DemoConfig demoConfig;
   private DatabaseContext databaseContext;
@@ -949,11 +950,13 @@ public class Race implements ProtocolListener {
   }
 
   public void startProtocols() {
-    protocols.startTimer();
+    protocols.startTimer(this.partialTimes);
+    this.partialTimes = null;
   }
 
   public List<PartialTime> stopProtocols() {
-    return protocols.stopTimer();
+    this.partialTimes = protocols.stopTimer();
+    return this.partialTimes;
   }
 
   public void setHeatStandings(List<Integer> laneIndices) {
@@ -1067,6 +1070,7 @@ public class Race implements ProtocolListener {
       resetRaceTime();
 
       initializeHeatExecutionState();
+      this.partialTimes = null;
 
       restoreHeatFuel();
 

@@ -17,4 +17,4 @@ Write-Host "Generating Protos..." -ForegroundColor Cyan
 npm run proto:gen
 
 Write-Host "Starting Client..." -ForegroundColor Green
-npm start
+npm start -- --open

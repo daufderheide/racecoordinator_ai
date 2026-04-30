@@ -89,9 +89,9 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
-  public void startTimer() {
+  public void startTimer(List<PartialTime> partials) {
     for (IProtocol protocol : protocols) {
-      protocol.startTimer();
+      protocol.startTimer(partials);
     }
   }
 
