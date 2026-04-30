@@ -22,7 +22,7 @@ public interface IProtocol {
 
   void setListener(ProtocolListener listener);
 
-  void startTimer();
+  void startTimer(List<PartialTime> partials);
 
   List<PartialTime> stopTimer();
 

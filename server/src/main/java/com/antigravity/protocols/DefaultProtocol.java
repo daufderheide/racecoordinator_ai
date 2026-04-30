@@ -44,7 +44,7 @@ public abstract class DefaultProtocol implements IProtocol {
   }
 
   @Override
-  public void startTimer() {}
+  public void startTimer(List<PartialTime> partials) {}
 
   @Override
   public List<PartialTime> stopTimer() {

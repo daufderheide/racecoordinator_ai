@@ -51,12 +51,12 @@
           <div class="checkbox">
             <span class="material-icons" *ngIf="selectedRaces.has(race._id)" style="font-size: 1rem;">check</span>
           </div>
-          <div class="race-info">
+          <div class="race-info-compact">
             <span class="race-name">{{ race.model?.name }}</span>
-            <span class="race-date">{{ formatDate(race.statistics?.startMillis) }}</span>
-            <div class="race-meta">
-              <span>{{ race.drivers?.length || 0 }} Participants</span>
-            </div>
+            <span class="meta-separator">•</span>
+            <span class="driver-count-inline">{{ race.drivers?.length || 0 }}</span>
+            <span class="meta-separator">•</span>
+            <span class="race-date-inline">{{ formatDate(race.statistics?.startMillis) }}</span>
           </div>
         </div>
         <div class="empty-state" *ngIf="history.length === 0">
@@ -84,10 +84,11 @@
           <thead>
             <tr>
               <th style="width: 80px; text-align: center;">Rank</th>
-              <th>Driver / Team</th>
+              <th style="width: 250px;">Driver / Team</th>
               <th class="points-col" style="width: 100px; text-align: center;">Races</th>
               <th class="points-col" style="width: 120px; text-align: center;">Total Laps</th>
               <th class="points-col" style="width: 120px; text-align: center;">Points</th>
+              <th class="points-col" style="width: 120px; text-align: center;">Total Time</th>
             </tr>
           </thead>
           <tbody>
@@ -107,6 +108,7 @@
               <td class="points-col" style="text-align: center;">{{ entry.racesCount }}</td>
               <td class="points-col laps-col" style="text-align: center;">{{ entry.totalLaps }}</td>
               <td class="points-col" style="text-align: center;">{{ entry.totalPoints | number:'1.0-0' }}</td>
+              <td class="points-col" style="text-align: center;">{{ formatTotalTime(entry.totalTime) }}</td>
             </tr>
           </tbody>
         </table>

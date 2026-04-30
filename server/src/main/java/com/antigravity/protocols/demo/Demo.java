@@ -175,7 +175,7 @@ public class Demo extends DefaultProtocol {
   }
 
   @Override
-  public void startTimer() {
+  public void startTimer(List<PartialTime> partials) {
     if (scheduler != null && !scheduler.isShutdown()) {
       return;
     }
@@ -183,8 +183,18 @@ public class Demo extends DefaultProtocol {
 
     // Restore start times based on elapsed time
     long nowMs = now();
-    for (LaneState state : laneStates) {
-      state.currentLapStartTime = nowMs - state.currentLapElapsedTime;
+    if (partials != null && !partials.isEmpty()) {
+      for (PartialTime pt : partials) {
+        int i = pt.getLaneIndex();
+        if (i >= 0 && i < laneStates.length) {
+          laneStates[i].currentLapElapsedTime = (long) (pt.getLapTime() * 1000);
+          laneStates[i].currentLapStartTime = nowMs - laneStates[i].currentLapElapsedTime;
+        }
+      }
+    } else {
+      for (LaneState state : laneStates) {
+        state.currentLapStartTime = nowMs - state.currentLapElapsedTime;
+      }
     }
 
     Runnable lapGenerator =

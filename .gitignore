@@ -99,6 +99,7 @@ server/src/main/resources/analytics.properties
 
 # Scratch folder for AI scripts
 /scratch/
+scratch/
 
 # IDE and Maven temporary files
 .classpath
@@ -112,3 +113,9 @@ null/
 en_orig.json
 pw-result.json
 
+# Local Tools and Exports
+tools/
+cumulative_standings*
+*.log
+cp.txt
+__pycache__/

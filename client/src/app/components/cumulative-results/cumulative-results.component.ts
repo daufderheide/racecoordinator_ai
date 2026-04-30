@@ -171,7 +171,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportCsv() {
-    const header = ['Rank', 'Driver', 'Races', 'Total Laps', 'Points', 'Best Lap', 'Avg Lap'].join(',');
+    const header = ['Rank', 'Driver', 'Races', 'Total Laps', 'Points', 'Total Time', 'Best Lap', 'Avg Lap'].join(',');
     const rows = this.cumulativeStandings.map((entry, index) => {
       const bestLap = entry.bestLapTime === this.Infinity ? '-' : entry.bestLapTime.toFixed(3);
       const avgLap = entry.averageLapTime.toFixed(3);
@@ -181,6 +181,7 @@ export class CumulativeResultsComponent implements OnInit {
         entry.racesCount,
         entry.totalLaps,
         entry.totalPoints,
+        `"${this.formatTotalTime(entry.totalTime)}"`,
         bestLap,
         avgLap
       ].join(',');
@@ -211,7 +212,8 @@ export class CumulativeResultsComponent implements OnInit {
           th:first-child, td:first-child, 
           th:nth-child(3), td:nth-child(3),
           th:nth-child(4), td:nth-child(4),
-          th:nth-child(5), td:nth-child(5) { 
+          th:nth-child(5), td:nth-child(5),
+          th:nth-child(6), td:nth-child(6) { 
             text-align: center; 
           }
           
@@ -256,8 +258,36 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   formatDate(millis: number | undefined): string {
-    if (!millis) return "Unknown Date";
-    return new Date(millis).toLocaleString();
+    if (!millis) return 'Unknown Date';
+    return new Date(millis).toLocaleString([], { 
+      year: '2-digit', 
+      month: 'numeric', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  }
+
+  formatTotalTime(totalTimeSeconds: number): string {
+    if (!totalTimeSeconds || totalTimeSeconds === 0) return "0.000";
+    const hours = Math.floor(totalTimeSeconds / 3600);
+    const minutes = Math.floor((totalTimeSeconds % 3600) / 60);
+    const seconds = Math.floor(totalTimeSeconds % 60);
+    const ms = Math.floor((totalTimeSeconds % 1) * 1000);
+
+    let timeStr = "";
+    if (hours > 0) {
+      timeStr = hours + ":" + 
+                minutes.toString().padStart(2, '0') + ":" + 
+                seconds.toString().padStart(2, '0');
+    } else if (minutes > 0) {
+      timeStr = minutes + ":" + 
+                seconds.toString().padStart(2, '0');
+    } else {
+      timeStr = seconds.toString();
+    }
+
+    return timeStr + "." + ms.toString().padStart(3, '0');
   }
 
   goBack() {

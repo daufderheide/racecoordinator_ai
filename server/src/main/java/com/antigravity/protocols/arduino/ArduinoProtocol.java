@@ -963,6 +963,28 @@ public class ArduinoProtocol extends DefaultProtocol {
     lastCallButtonState.put(interfaceId, state);
   }
 
+  @Override
+  public void startTimer(List<PartialTime> partials) {
+    if (partials == null) {
+      return;
+    }
+    for (PartialTime pt : partials) {
+      if (pt.getLaneIndex() >= 0 && pt.getLaneIndex() < numLanes) {
+        hwLapTime[pt.getLaneIndex()].add((long) (pt.getLapTime() * 1000 * 1000));
+        hwSegmentTime[pt.getLaneIndex()].add((long) (pt.getSegmentTime() * 1000 * 1000));
+      }
+    }
+  }
+
+  @Override
+  public List<PartialTime> stopTimer() {
+    List<PartialTime> partials = new ArrayList<>();
+    for (int i = 0; i < numLanes; i++) {
+      partials.add(new PartialTime(i, hwLapTime[i].time(), hwSegmentTime[i].time()));
+    }
+    return partials;
+  }
+
   private boolean hasPitInConfigured(int laneIndex) {
     if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN) {
       return true;
