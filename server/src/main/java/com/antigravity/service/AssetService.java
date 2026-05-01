@@ -846,6 +846,12 @@ public class AssetService {
             "Failed to restore default asset " + asset.filename + ": " + e.getMessage());
       }
     }
+
+    // 4. Backfill default theme
+    backfillDefaultTheme();
+
+    // 5. Ensure all themes have the necessary slots
+    backfillThemeSlots();
   }
 
   public void backfillDefaults() {

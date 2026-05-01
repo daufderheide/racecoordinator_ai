@@ -147,6 +147,10 @@ public class DatabaseContext {
       System.err.println("Failed to copy assets: " + e.getMessage());
       e.printStackTrace();
     }
+
+    // Ensure defaults are backfilled after copy
+    MongoDatabase targetDb = mongoClient.getDatabase(targetDbName);
+    new AssetService(targetDb, dataRoot + targetDbName + "/assets").backfillDefaults();
   }
 
   public void deleteDatabase(String dbName) {
@@ -372,6 +376,9 @@ public class DatabaseContext {
         zis.closeEntry();
       }
     }
+
+    // Ensure defaults are backfilled after import
+    new AssetService(db, dataRoot + dbName + "/assets").backfillDefaults();
   }
 
   public static class DatabaseStats {
