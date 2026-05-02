@@ -10,8 +10,8 @@ import {
 } from "@angular/core";
 import { Subscription } from "rxjs";
 import { GuideStep, HelpService } from "src/app/services/help.service";
-import { NgIf, NgStyle, NgClass } from "@angular/common";
-import { AssetPickerComponent } from "../asset-picker/asset-picker.component";
+import { NgStyle, NgClass } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -19,7 +19,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-help-overlay",
   templateUrl: "./help-overlay.component.html",
   styleUrls: ["./help-overlay.component.css"],
-  imports: [NgIf, NgStyle, NgClass, AssetPickerComponent, TranslatePipe],
+  imports: [NgStyle, NgClass, TranslatePipe],
 })
 export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   isVisible = false;

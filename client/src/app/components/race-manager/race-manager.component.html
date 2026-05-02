@@ -25,142 +25,160 @@
   >
   </app-manager-header>
 
-  <div class="content-area" *ngIf="!isLoading">
-    <div class="sidebar-list">
-      <div class="list-container">
-        <div
-          *ngFor="let race of filteredRaces; let i = index"
-          class="list-item"
-          [attr.data-id]="race.entity_id"
-          [class.selected]="race.entity_id === selectedRace?.entity_id"
-          (click)="selectRace(race)"
-          [class.odd]="i % 2 !== 0"
-        >
-          <div class="item-name">{{ race.name }}</div>
-          <div class="item-nickname">
-            {{ race.track?.name || ("GEN_NA" | translate) }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="detail-panel" *ngIf="selectedRace">
-      <div class="detail-header">
-        <h2>{{ selectedRace.name }}</h2>
-      </div>
-      <div class="detail-content">
-        <div
-          class="section-header"
-          (click)="toggleSummary()"
-          style="cursor: pointer"
-        >
-          <span class="expander-icon" [class.collapsed]="!isSummaryExpanded"
-            >▼</span
-          >
-          <h1>{{ "RM_HEADER_SUMMARY" | translate }}</h1>
-        </div>
-        <div class="summary-section" *ngIf="isSummaryExpanded">
-          <div class="summary-grid">
-            <!-- Row 1 -->
-            <div class="summary-item">
-              <span class="summary-label"
-                >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
-              >
-              <span class="summary-value">{{
-                formatEnumDisplay(selectedRace.heat_scoring?.heat_ranking)
-              }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label"
-                >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
-              >
-              <span class="summary-value">{{
-                formatEnumDisplay(selectedRace.heat_scoring?.finish_method)
-              }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label"
-                >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
-              >
-              <span class="summary-value">{{
-                selectedRace.fuel_options?.enabled ||
-                selectedRace.digital_fuel_options?.enabled
-                  ? ("GEN_YES" | translate)
-                  : ("GEN_NO" | translate)
-              }}</span>
-            </div>
-
-            <!-- Row 2 -->
-            <div class="summary-item">
-              <span class="summary-label"
-                >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
-              >
-              <span class="summary-value">{{
-                formatEnumDisplay(selectedRace.overall_scoring?.ranking_method)
-              }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label"
-                >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
-              >
-              <span class="summary-value">{{
-                selectedRace.heat_scoring?.finish_value
-              }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="heat-list-container">
-          <div
-            class="section-header"
-            (click)="toggleHeatList()"
-            style="cursor: pointer"
-          >
-            <span class="expander-icon" [class.collapsed]="!isHeatListExpanded"
-              >▼</span
+  @if (!isLoading) {
+    <div class="content-area">
+      <div class="sidebar-list">
+        <div class="list-container">
+          @for (race of filteredRaces; track race; let i = $index) {
+            <div
+              class="list-item"
+              [attr.data-id]="race.entity_id"
+              [class.selected]="race.entity_id === selectedRace?.entity_id"
+              (click)="selectRace(race)"
+              [class.odd]="i % 2 !== 0"
             >
-            <h1>
-              {{ "RM_HEADER_HEAT_LIST" | translate }} ({{
-                getHeatRotationTypeDisplay(selectedRace.heat_rotation_type)
-              }})
-            </h1>
+              <div class="item-name">{{ race.name }}</div>
+              <div class="item-nickname">
+                {{ race.track?.name || ("GEN_NA" | translate) }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      @if (selectedRace) {
+        <div class="detail-panel">
+          <div class="detail-header">
+            <h2>{{ selectedRace.name }}</h2>
           </div>
-          <div
-            class="section-content"
-            *ngIf="isHeatListExpanded"
-            style="
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              overflow: hidden;
-            "
-          >
-            <!-- Heat Rotation combined with header -->
-            <div class="scrollable-heat-list">
-              <app-heat-list
-                [heats]="generatedHeats"
-                [columns]="4"
-                [showHeader]="false"
-              ></app-heat-list>
+          <div class="detail-content">
+            <div
+              class="section-header"
+              (click)="toggleSummary()"
+              style="cursor: pointer"
+            >
+              <span class="expander-icon" [class.collapsed]="!isSummaryExpanded"
+                >▼</span
+              >
+              <h1>{{ "RM_HEADER_SUMMARY" | translate }}</h1>
+            </div>
+            @if (isSummaryExpanded) {
+              <div class="summary-section">
+                <div class="summary-grid">
+                  <!-- Row 1 -->
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      formatEnumDisplay(selectedRace.heat_scoring?.heat_ranking)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      formatEnumDisplay(
+                        selectedRace.heat_scoring?.finish_method
+                      )
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      selectedRace.fuel_options?.enabled ||
+                      selectedRace.digital_fuel_options?.enabled
+                        ? ("GEN_YES" | translate)
+                        : ("GEN_NO" | translate)
+                    }}</span>
+                  </div>
+                  <!-- Row 2 -->
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      formatEnumDisplay(
+                        selectedRace.overall_scoring?.ranking_method
+                      )
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      selectedRace.heat_scoring?.finish_value
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+            <div class="heat-list-container">
+              <div
+                class="section-header"
+                (click)="toggleHeatList()"
+                style="cursor: pointer"
+              >
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!isHeatListExpanded"
+                  >▼</span
+                >
+                <h1>
+                  {{ "RM_HEADER_HEAT_LIST" | translate }} ({{
+                    getHeatRotationTypeDisplay(selectedRace.heat_rotation_type)
+                  }})
+                </h1>
+              </div>
+              @if (isHeatListExpanded) {
+                <div
+                  class="section-content"
+                  style="
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                  "
+                >
+                  <!-- Heat Rotation combined with header -->
+                  <div class="scrollable-heat-list">
+                    <app-heat-list
+                      [heats]="generatedHeats"
+                      [columns]="4"
+                      [showHeader]="false"
+                    ></app-heat-list>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
-      </div>
+      }
+      @if (!selectedRace && !isLoading) {
+        <div class="detail-panel empty-state">
+          <p>{{ "RM_NO_RACE_SELECTED" | translate }}</p>
+        </div>
+      }
     </div>
-
-    <div class="detail-panel empty-state" *ngIf="!selectedRace && !isLoading">
-      <p>{{ "RM_NO_RACE_SELECTED" | translate }}</p>
-    </div>
-  </div>
+  }
 </div>
 
 <!-- Connection Lost Overlay -->
-<div class="connection-lost-overlay" *ngIf="isConnectionLost">
-  <div class="connection-spinner"></div>
-  <div class="connection-lost-text">{{ "RM_LOST_CONNECTION" | translate }}</div>
-</div>
+@if (isConnectionLost) {
+  <div class="connection-lost-overlay">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">
+      {{ "RM_LOST_CONNECTION" | translate }}
+    </div>
+  </div>
+}
 
 <!-- Loading Overlay -->
-<div class="loader-overlay" *ngIf="isLoading || isSaving">
-  <div class="spinner"></div>
-</div>
+@if (isLoading || isSaving) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}

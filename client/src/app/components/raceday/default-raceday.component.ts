@@ -43,7 +43,7 @@ import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
 import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
-import { NgIf, NgFor, DecimalPipe } from "@angular/common";
+import { DecimalPipe } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
@@ -58,8 +58,6 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   imports: [
     AcknowledgementModalComponent,
     ConfirmationModalComponent,
-    NgIf,
-    NgFor,
     CdkDropList,
     CdkDrag,
     FormsModule,

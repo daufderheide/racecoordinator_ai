@@ -9,25 +9,22 @@ import {
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
 import {} from "src/app/proto/message";
-import { NgIf } from "@angular/common";
 
 @Component({
   standalone: true,
   selector: "app-asset-preview",
   template: `
     <div class="preview-container">
-      <ng-container
-        *ngIf="normalizedType() === 'image' || normalizedType() === 'image_set'"
-      >
+      @if (normalizedType() === "image" || normalizedType() === "image_set") {
         <img [src]="currentUrl()" class="preview-img" [alt]="name()" />
-      </ng-container>
-      <ng-container *ngIf="isSoundType()">
+      }
+      @if (isSoundType()) {
         <img
           src="assets/images/default_audio_icon.png"
           class="preview-icon"
           alt="sound"
         />
-      </ng-container>
+      }
     </div>
   `,
   styles: [
@@ -54,7 +51,7 @@ import { NgIf } from "@angular/common";
       }
     `,
   ],
-  imports: [NgIf],
+  imports: [],
 })
 export class AssetPreviewComponent implements OnDestroy {
   assetId = input<string>();

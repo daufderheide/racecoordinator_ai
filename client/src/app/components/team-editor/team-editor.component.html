@@ -20,140 +20,150 @@
   >
   </app-editor-title>
 
-  <div class="content-split" *ngIf="editingTeam">
-    <!-- LEFT PANEL: TEAM CONFIGURATION -->
-    <div class="editor-panel">
-      <div class="editor-section fixed-header">
-        <h1>{{ "TEM_HEADER_CONFIG" | translate }}</h1>
-      </div>
-
-      <div class="sections-wrapper">
-        <div class="config-section">
-          <div class="config-form">
-            <!-- AVATAR SECTION -->
-            <div id="avatar-selector" class="avatar-column">
-              <app-image-selector
-                [(imageUrl)]="editingTeam.avatarUrl"
-                (imageUrlChange)="captureState()"
-                [assets]="avatarAssets"
-              >
-              </app-image-selector>
-            </div>
-
-            <!-- NAME INPUT -->
-            <div class="editor-section" [class.invalid]="isNameInvalid">
-              <label class="track-name-label">{{
-                "TEM_LABEL_NAME" | translate
-              }}</label>
-              <input
-                id="team-name-input"
-                type="text"
-                [(ngModel)]="editingTeam.name"
-                (ngModelChange)="onInputChange()"
-                class="dm-input"
-                (focus)="onInputFocus()"
-                (blur)="onInputBlur()"
-              />
+  @if (editingTeam) {
+    <div class="content-split">
+      <!-- LEFT PANEL: TEAM CONFIGURATION -->
+      <div class="editor-panel">
+        <div class="editor-section fixed-header">
+          <h1>{{ "TEM_HEADER_CONFIG" | translate }}</h1>
+        </div>
+        <div class="sections-wrapper">
+          <div class="config-section">
+            <div class="config-form">
+              <!-- AVATAR SECTION -->
+              <div id="avatar-selector" class="avatar-column">
+                <app-image-selector
+                  [(imageUrl)]="editingTeam.avatarUrl"
+                  (imageUrlChange)="captureState()"
+                  [assets]="avatarAssets"
+                >
+                </app-image-selector>
+              </div>
+              <!-- NAME INPUT -->
+              <div class="editor-section" [class.invalid]="isNameInvalid">
+                <label class="track-name-label">{{
+                  "TEM_LABEL_NAME" | translate
+                }}</label>
+                <input
+                  id="team-name-input"
+                  type="text"
+                  [(ngModel)]="editingTeam.name"
+                  (ngModelChange)="onInputChange()"
+                  class="dm-input"
+                  (focus)="onInputFocus()"
+                  (blur)="onInputBlur()"
+                />
+              </div>
             </div>
           </div>
         </div>
+        <div class="editor-actions">
+          <div class="spacer"></div>
+        </div>
       </div>
-
-      <div class="editor-actions">
-        <div class="spacer"></div>
+      <!-- RIGHT PANEL: DRIVER SELECTION -->
+      <div class="preview-panel">
+        <!-- ASSIGNED DRIVERS (Drag & Drop) -->
+        <div id="assigned-drivers-section" class="config-section">
+          <div class="section-header">
+            <h1>
+              {{ "TEM_HEADER_MEMBERS" | translate }} ({{
+                assignedDrivers.length
+              }})
+            </h1>
+          </div>
+          <div class="section-content">
+            <div
+              id="assigned-drivers-list"
+              class="driver-list assigned-list"
+              cdkDropList
+              (cdkDropListDropped)="onDriverDrop($any($event))"
+            >
+              @if (assignedDrivers.length === 0) {
+                <div class="empty-list-hint">
+                  Drag drivers here or click below to assign
+                </div>
+              }
+              @for (driver of assignedDrivers; track driver) {
+                <div class="driver-item draggable" cdkDrag>
+                  <div class="drag-handle">☰</div>
+                  <div class="driver-avatar-mini">
+                    <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
+                  </div>
+                  <div class="driver-name">
+                    {{ driver.name }}
+                    @if (driver.nickname) {
+                      <span
+                        class="driver-nickname"
+                        style="
+                          color: #94a3b8;
+                          font-size: 0.85em;
+                          margin-left: 5px;
+                        "
+                        >({{ driver.nickname }})</span
+                      >
+                    }
+                  </div>
+                  <div class="spacer"></div>
+                  <button
+                    class="action-btn danger small"
+                    (click)="removeDriver(driver)"
+                  >
+                    X
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <!-- AVAILABLE DRIVERS -->
+        <div
+          id="available-drivers-section"
+          class="config-section"
+          style="margin-top: 20px"
+        >
+          <div class="section-header">
+            <h1>Available Drivers</h1>
+          </div>
+          <div class="section-content">
+            <div id="available-drivers-list" class="driver-grid">
+              @for (driver of availableDrivers; track driver) {
+                <div
+                  class="driver-item click-assign"
+                  (click)="addDriver(driver)"
+                >
+                  <div class="driver-avatar-mini">
+                    <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
+                  </div>
+                  <div class="driver-name">
+                    {{ driver.name }}
+                    @if (driver.nickname) {
+                      <span
+                        class="driver-nickname"
+                        style="
+                          color: #94a3b8;
+                          font-size: 0.85em;
+                          margin-left: 5px;
+                        "
+                        >({{ driver.nickname }})</span
+                      >
+                    }
+                  </div>
+                  <div class="spacer"></div>
+                  <button class="action-btn small add-list-btn">+</button>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- RIGHT PANEL: DRIVER SELECTION -->
-    <div class="preview-panel">
-      <!-- ASSIGNED DRIVERS (Drag & Drop) -->
-      <div id="assigned-drivers-section" class="config-section">
-        <div class="section-header">
-          <h1>
-            {{ "TEM_HEADER_MEMBERS" | translate }} ({{
-              assignedDrivers.length
-            }})
-          </h1>
-        </div>
-        <div class="section-content">
-          <div
-            id="assigned-drivers-list"
-            class="driver-list assigned-list"
-            cdkDropList
-            (cdkDropListDropped)="onDriverDrop($any($event))"
-          >
-            <div *ngIf="assignedDrivers.length === 0" class="empty-list-hint">
-              Drag drivers here or click below to assign
-            </div>
-            <div
-              class="driver-item draggable"
-              *ngFor="let driver of assignedDrivers"
-              cdkDrag
-            >
-              <div class="drag-handle">☰</div>
-              <div class="driver-avatar-mini">
-                <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
-              </div>
-              <div class="driver-name">
-                {{ driver.name }}
-                <span
-                  class="driver-nickname"
-                  *ngIf="driver.nickname"
-                  style="color: #94a3b8; font-size: 0.85em; margin-left: 5px"
-                  >({{ driver.nickname }})</span
-                >
-              </div>
-              <div class="spacer"></div>
-              <button
-                class="action-btn danger small"
-                (click)="removeDriver(driver)"
-              >
-                X
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AVAILABLE DRIVERS -->
-      <div
-        id="available-drivers-section"
-        class="config-section"
-        style="margin-top: 20px"
-      >
-        <div class="section-header">
-          <h1>Available Drivers</h1>
-        </div>
-        <div class="section-content">
-          <div id="available-drivers-list" class="driver-grid">
-            <div
-              class="driver-item click-assign"
-              *ngFor="let driver of availableDrivers"
-              (click)="addDriver(driver)"
-            >
-              <div class="driver-avatar-mini">
-                <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
-              </div>
-              <div class="driver-name">
-                {{ driver.name }}
-                <span
-                  class="driver-nickname"
-                  *ngIf="driver.nickname"
-                  style="color: #94a3b8; font-size: 0.85em; margin-left: 5px"
-                  >({{ driver.nickname }})</span
-                >
-              </div>
-              <div class="spacer"></div>
-              <button class="action-btn small add-list-btn">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  }
 </div>
 
 <!-- Loading Overlay -->
-<div class="loader-overlay" *ngIf="isLoading || (isSaving && !isAutoSaving)">
-  <div class="spinner"></div>
-</div>
+@if (isLoading || (isSaving && !isAutoSaving)) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}

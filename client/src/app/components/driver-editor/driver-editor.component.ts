@@ -1,4 +1,4 @@
-import { Location, NgIf } from "@angular/common";
+import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -25,7 +25,7 @@ import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor
 import { ImageSelectorComponent } from "../shared/image-selector/image-selector.component";
 import { FormsModule } from "@angular/forms";
 import { AudioSelectorComponent } from "../shared/audio-selector/audio-selector.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -35,11 +35,9 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   styleUrls: ["./driver-editor.component.css"],
   imports: [
     EditorTitleComponent_1,
-    NgIf,
     ImageSelectorComponent,
     FormsModule,
     AudioSelectorComponent,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

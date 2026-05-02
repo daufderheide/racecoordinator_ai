@@ -6,7 +6,7 @@ import {
   CdkDragPlaceholder,
 } from "@angular/cdk/drag-drop";
 import { Component, effect, input, output } from "@angular/core";
-import { NgIf, NgFor } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -15,8 +15,6 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   templateUrl: "./heat-list.component.html",
   styleUrls: ["./heat-list.component.css"],
   imports: [
-    NgIf,
-    NgFor,
     CdkDropList,
     CdkDrag,
     CdkDragHandle,

@@ -28,12 +28,12 @@ import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
-import { NgIf, NgFor, NgClass } from "@angular/common";
+import { NgClass } from "@angular/common";
 import { ToolbarComponent as ToolbarComponent_1 } from "../shared/toolbar/toolbar.component";
 import { FormsModule } from "@angular/forms";
 import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
 import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 type Participant = Driver | Team;
@@ -44,8 +44,6 @@ type Participant = Driver | Team;
   templateUrl: "./default-raceday-setup.component.html",
   styleUrl: "./default-raceday-setup.component.css",
   imports: [
-    NgIf,
-    NgFor,
     ToolbarComponent_1,
     ɵɵCdkScrollable,
     CdkDropList,
@@ -55,7 +53,6 @@ type Participant = Driver | Team;
     NgClass,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

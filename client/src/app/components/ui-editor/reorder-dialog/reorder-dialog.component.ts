@@ -23,7 +23,7 @@ import { debounceTime } from "rxjs/operators";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
 import { TranslationService } from "src/app/services/translation.service";
-import { NgIf, NgFor } from "@angular/common";
+
 import { BackButtonComponent } from "../../shared/back-button/back-button.component";
 import { FormsModule } from "@angular/forms";
 import { ColumnPreviewComponent } from "../column-preview/column-preview.component";
@@ -51,11 +51,9 @@ export interface ReorderDialogResult {
   changeDetection: ChangeDetectionStrategy.Default,
   encapsulation: ViewEncapsulation.None,
   imports: [
-    NgIf,
     BackButtonComponent,
     CdkDropList,
     ɵɵCdkScrollable,
-    NgFor,
     CdkDrag,
     CdkDragHandle,
     FormsModule,
@@ -761,7 +759,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
     this.cancel.emit();
   }
 
-  trackByIndex(index: number): number {
+  trackByIndex(index: number, _row: any): number {
     return index;
   }
 }

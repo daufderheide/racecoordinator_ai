@@ -22,9 +22,11 @@
     <div class="panel stats-panel">
       <div class="panel-header">
         {{ "AM_DATABASE_STATUS" | translate }}
-        <div class="active-db-name" *ngIf="activeDatabaseName">
-          {{ activeDatabaseName }}
-        </div>
+        @if (activeDatabaseName) {
+          <div class="active-db-name">
+            {{ activeDatabaseName }}
+          </div>
+        }
       </div>
 
       <div class="stats-content">
@@ -133,20 +135,24 @@
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
       >
-        <div class="upload-content" *ngIf="!isUploading">
-          <img
-            src="assets/images/am_icon_upload.png"
-            alt="Upload"
-            class="upload-icon"
-          />
-          <div class="upload-btn">{{ "AM_BTN_UPLOAD_NEW" | translate }}</div>
-          <div class="upload-hint">{{ "AM_UPLOAD_HINT" | translate }}</div>
-        </div>
-        <div class="upload-content loading" *ngIf="isUploading">
-          <!-- Simple spinner equivalent -->
-          <div class="spinner"></div>
-          <div class="upload-btn">{{ "AM_UPLOADING" | translate }}</div>
-        </div>
+        @if (!isUploading) {
+          <div class="upload-content">
+            <img
+              src="assets/images/am_icon_upload.png"
+              alt="Upload"
+              class="upload-icon"
+            />
+            <div class="upload-btn">{{ "AM_BTN_UPLOAD_NEW" | translate }}</div>
+            <div class="upload-hint">{{ "AM_UPLOAD_HINT" | translate }}</div>
+          </div>
+        }
+        @if (isUploading) {
+          <div class="upload-content loading">
+            <!-- Simple spinner equivalent -->
+            <div class="spinner"></div>
+            <div class="upload-btn">{{ "AM_UPLOADING" | translate }}</div>
+          </div>
+        }
       </div>
 
       <div class="new-set-zone">
@@ -170,10 +176,12 @@
     <!-- RIGHT PANEL: ASSET LIBRARY -->
     <div class="panel library-panel">
       <!-- Loading Overlay -->
-      <div class="loading-overlay" *ngIf="isLoading">
-        <div class="spinner large-spinner"></div>
-        <div class="loading-text">{{ "AM_LOADING" | translate }}</div>
-      </div>
+      @if (isLoading) {
+        <div class="loading-overlay">
+          <div class="spinner large-spinner"></div>
+          <div class="loading-text">{{ "AM_LOADING" | translate }}</div>
+        </div>
+      }
 
       <div class="panel-header library-header">
         <span>{{ "AM_TITLE_LIBRARY" | translate }}</span>
@@ -240,121 +248,126 @@
 
       <!-- Asset Grid -->
       <div class="asset-grid">
-        <div
-          class="asset-card"
-          *ngFor="let asset of filteredAssets"
-          [class.selected]="asset.selected"
-          [draggable]="asset.type === 'image'"
-          (dragstart)="onAssetDragStart($event, asset)"
-          (click)="toggleSelection(asset, $event)"
-        >
-          <!-- Preview Area -->
-          <div class="asset-preview">
-            <ng-container
-              *ngIf="asset.type === 'image' || asset.type === 'image_set'"
-            >
-              <img
-                [src]="
-                  getAssetImageUrl(asset) ||
-                  'assets/images/am_icon_image_placeholder.png'
-                "
-                class="preview-img"
-                alt="preview"
-                [class.image-set]="asset.type === 'image_set'"
-              />
-            </ng-container>
-            <ng-container
-              *ngIf="asset.type === 'sound' || asset.type === 'audio_set'"
-            >
-              <img
-                src="assets/images/default_audio_icon.png"
-                class="preview-icon"
-                alt="sound"
-              />
-            </ng-container>
-          </div>
-
-          <!-- Name Area -->
-          <div class="asset-info">
-            <!-- Editing Mode -->
-            <div class="edit-mode" *ngIf="asset.editMode">
-              <input
-                type="text"
-                class="name-input"
-                [(ngModel)]="asset.name"
-                (keyup.enter)="saveName(asset.id, asset.name)"
-                autoFocus
-                autocomplete="one-time-code"
-                data-dashlane-ignore="true"
-                data-lpignore="true"
-                data-form-type="other"
-                spellcheck="false"
-                autocorrect="off"
-                autocapitalize="off"
-                name="rename-ignore-field"
-              />
-              <div class="edit-actions">
-                <button
-                  class="btn-save"
-                  (click)="saveName(asset.id, asset.name)"
-                >
-                  {{ "AM_BTN_SAVE" | translate }}
-                </button>
-                <button class="btn-cancel" (click)="cancelEditing(asset.id)">
-                  {{ "AM_BTN_CANCEL" | translate }}
-                </button>
-              </div>
-            </div>
-
-            <!-- View Mode -->
-            <div class="view-mode" *ngIf="!asset.editMode">
-              <div class="asset-name" [title]="asset.name">
-                {{ asset.name }}
-              </div>
-              <div class="asset-actions">
+        @for (asset of filteredAssets; track asset) {
+          <div
+            class="asset-card"
+            [class.selected]="asset.selected"
+            [draggable]="asset.type === 'image'"
+            (dragstart)="onAssetDragStart($event, asset)"
+            (click)="toggleSelection(asset, $event)"
+          >
+            <!-- Preview Area -->
+            <div class="asset-preview">
+              @if (asset.type === "image" || asset.type === "image_set") {
                 <img
-                  *ngIf="asset.type === 'sound'"
-                  src="assets/images/am_icon_play.png"
-                  class="action-icon play"
-                  (click)="$event.stopPropagation(); playAsset(asset)"
-                  title="Play"
-                />
-                <img
-                  src="assets/images/am_icon_edit.png"
-                  class="action-icon"
-                  [class.disabled]="selectedAssets.length > 1"
-                  (click)="
-                    $event.stopPropagation();
-                    selectedAssets.length <= 1 &&
-                      (asset.type === 'image_set'
-                        ? openEditImageSetEditor(asset)
-                        : asset.type === 'audio_set'
-                          ? openEditAudioSetEditor(asset)
-                          : startEditing(asset.id))
+                  [src]="
+                    getAssetImageUrl(asset) ||
+                    'assets/images/am_icon_image_placeholder.png'
                   "
-                  title="Edit"
+                  class="preview-img"
+                  alt="preview"
+                  [class.image-set]="asset.type === 'image_set'"
                 />
+              }
+              @if (asset.type === "sound" || asset.type === "audio_set") {
                 <img
-                  src="assets/images/am_icon_trash.png"
-                  class="action-icon delete"
-                  (click)="$event.stopPropagation(); onDelete(asset.id)"
-                  title="Delete"
+                  src="assets/images/default_audio_icon.png"
+                  class="preview-icon"
+                  alt="sound"
                 />
-              </div>
+              }
+            </div>
+            <!-- Name Area -->
+            <div class="asset-info">
+              <!-- Editing Mode -->
+              @if (asset.editMode) {
+                <div class="edit-mode">
+                  <input
+                    type="text"
+                    class="name-input"
+                    [(ngModel)]="asset.name"
+                    (keyup.enter)="saveName(asset.id, asset.name)"
+                    autoFocus
+                    autocomplete="one-time-code"
+                    data-dashlane-ignore="true"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    spellcheck="false"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    name="rename-ignore-field"
+                  />
+                  <div class="edit-actions">
+                    <button
+                      class="btn-save"
+                      (click)="saveName(asset.id, asset.name)"
+                    >
+                      {{ "AM_BTN_SAVE" | translate }}
+                    </button>
+                    <button
+                      class="btn-cancel"
+                      (click)="cancelEditing(asset.id)"
+                    >
+                      {{ "AM_BTN_CANCEL" | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              <!-- View Mode -->
+              @if (!asset.editMode) {
+                <div class="view-mode">
+                  <div class="asset-name" [title]="asset.name">
+                    {{ asset.name }}
+                  </div>
+                  <div class="asset-actions">
+                    @if (asset.type === "sound") {
+                      <img
+                        src="assets/images/am_icon_play.png"
+                        class="action-icon play"
+                        (click)="$event.stopPropagation(); playAsset(asset)"
+                        title="Play"
+                      />
+                    }
+                    <img
+                      src="assets/images/am_icon_edit.png"
+                      class="action-icon"
+                      [class.disabled]="selectedAssets.length > 1"
+                      (click)="
+                        $event.stopPropagation();
+                        selectedAssets.length <= 1 &&
+                          (asset.type === 'image_set'
+                            ? openEditImageSetEditor(asset)
+                            : asset.type === 'audio_set'
+                              ? openEditAudioSetEditor(asset)
+                              : startEditing(asset.id))
+                      "
+                      title="Edit"
+                    />
+                    <img
+                      src="assets/images/am_icon_trash.png"
+                      class="action-icon delete"
+                      (click)="$event.stopPropagation(); onDelete(asset.id)"
+                      title="Delete"
+                    />
+                  </div>
+                </div>
+              }
             </div>
           </div>
-        </div>
+        }
       </div>
     </div>
   </div>
 
   <!-- Connection Lost Overlay -->
-  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">
-      {{ "RDS_LOST_CONNECTION" | translate }}
+  @if (isConnectionLost) {
+    <div class="connection-lost-overlay">
+      <div class="connection-spinner"></div>
+      <div class="connection-lost-text">
+        {{ "RDS_LOST_CONNECTION" | translate }}
+      </div>
     </div>
-  </div>
+  }
 
   <!-- Image Set Editor -->
   <app-image-set-editor

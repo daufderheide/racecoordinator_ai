@@ -9,11 +9,11 @@ import { forkJoin } from "rxjs";
 import { DataService } from "src/app/data.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { BackButtonComponent } from "../shared/back-button/back-button.component";
-import { NgFor, NgIf, DecimalPipe } from "@angular/common";
+import { DecimalPipe } from "@angular/common";
 import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
 import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
 import { FormsModule } from "@angular/forms";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -23,12 +23,9 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   styleUrls: ["./database-manager.component.css"],
   imports: [
     BackButtonComponent,
-    NgFor,
-    NgIf,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     FormsModule,
-    RacedayComponent,
     DecimalPipe,
     TranslatePipe,
   ],

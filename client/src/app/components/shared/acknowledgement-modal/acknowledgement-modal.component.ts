@@ -1,24 +1,26 @@
 import { Component, input, output } from "@angular/core";
-import { NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
   selector: "app-acknowledgement-modal",
   template: `
-    <div class="modal-backdrop" *ngIf="visible()">
-      <div class="modal-content">
-        <h2 class="modal-title">{{ title() | translate }}</h2>
-        <p class="modal-message">
-          {{ message() | translate: messageParams() }}
-        </p>
-        <div class="modal-actions">
-          <button class="btn-confirm" (click)="onAcknowledge()">
-            {{ buttonText() | translate }}
-          </button>
+    @if (visible()) {
+      <div class="modal-backdrop">
+        <div class="modal-content">
+          <h2 class="modal-title">{{ title() | translate }}</h2>
+          <p class="modal-message">
+            {{ message() | translate: messageParams() }}
+          </p>
+          <div class="modal-actions">
+            <button class="btn-confirm" (click)="onAcknowledge()">
+              {{ buttonText() | translate }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -77,7 +79,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
       }
     `,
   ],
-  imports: [NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class AcknowledgementModalComponent {
   visible = input(false);

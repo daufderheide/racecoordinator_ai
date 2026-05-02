@@ -1,55 +1,62 @@
-<div class="heat-list" *ngIf="heats().length > 0">
-  <div class="heat-list-header" *ngIf="showHeader()">
-    {{ "RM_HEADER_HEAT_LIST" | translate }}
-  </div>
-  <div class="heats-container">
-    <div
-      class="heat-item"
-      *ngFor="let heat of heats(); trackBy: trackByHeatNumber"
-    >
-      <div class="heat-number">
-        {{ "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber } }}
+@if (heats().length > 0) {
+  <div class="heat-list">
+    @if (showHeader()) {
+      <div class="heat-list-header">
+        {{ "RM_HEADER_HEAT_LIST" | translate }}
       </div>
-      <div
-        class="heat-lanes"
-        [style.grid-template-columns]="'repeat(' + columns() + ', 1fr)'"
-        cdkDropList
-        cdkDropListOrientation="horizontal"
-        (cdkDropListDropped)="onDrop($event, heat)"
-      >
-        <div
-          class="lane-item"
-          *ngFor="let lane of heat.lanes; trackBy: trackByLaneNumber"
-          [style.background-color]="lane.backgroundColor"
-          [style.color]="lane.foregroundColor"
-          [class.draggable]="canDragLanes() && isLaneOccupied(lane)"
-          [class.clickable]="canDragLanes() && !isLaneOccupied(lane)"
-          cdkDrag
-          [cdkDragDisabled]="!isLaneOccupied(lane) || !canDragLanes()"
-          (click)="onLaneClick(lane.laneNumber - 1)"
-        >
-          <div class="lane-content">
-            <span class="lane-label"
-              >{{ "RM_LABEL_LANE" | translate }} {{ lane.laneNumber }}:</span
-            >
-            <span class="driver-number">
-              {{
-                !lane.driverNumber
-                  ? ("RD_EMPTY_LANE" | translate)
-                  : ("RM_LABEL_DRIVER" | translate) + " " + lane.driverNumber
-              }}
-            </span>
+    }
+    <div class="heats-container">
+      @for (heat of heats(); track trackByHeatNumber($index, heat)) {
+        <div class="heat-item">
+          <div class="heat-number">
+            {{
+              "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber }
+            }}
           </div>
           <div
-            class="drag-handle"
-            *ngIf="canDragLanes() && isLaneOccupied(lane)"
-            cdkDragHandle
+            class="heat-lanes"
+            [style.grid-template-columns]="'repeat(' + columns() + ', 1fr)'"
+            cdkDropList
+            cdkDropListOrientation="horizontal"
+            (cdkDropListDropped)="onDrop($event, heat)"
           >
-            <span class="material-icons">drag_indicator</span>
+            @for (lane of heat.lanes; track trackByLaneNumber($index, lane)) {
+              <div
+                class="lane-item"
+                [style.background-color]="lane.backgroundColor"
+                [style.color]="lane.foregroundColor"
+                [class.draggable]="canDragLanes() && isLaneOccupied(lane)"
+                [class.clickable]="canDragLanes() && !isLaneOccupied(lane)"
+                cdkDrag
+                [cdkDragDisabled]="!isLaneOccupied(lane) || !canDragLanes()"
+                (click)="onLaneClick(lane.laneNumber - 1)"
+              >
+                <div class="lane-content">
+                  <span class="lane-label"
+                    >{{ "RM_LABEL_LANE" | translate }}
+                    {{ lane.laneNumber }}:</span
+                  >
+                  <span class="driver-number">
+                    {{
+                      !lane.driverNumber
+                        ? ("RD_EMPTY_LANE" | translate)
+                        : ("RM_LABEL_DRIVER" | translate) +
+                          " " +
+                          lane.driverNumber
+                    }}
+                  </span>
+                </div>
+                @if (canDragLanes() && isLaneOccupied(lane)) {
+                  <div class="drag-handle" cdkDragHandle>
+                    <span class="material-icons">drag_indicator</span>
+                  </div>
+                }
+                <div *cdkDragPlaceholder></div>
+              </div>
+            }
           </div>
-          <div *cdkDragPlaceholder></div>
         </div>
-      </div>
+      }
     </div>
   </div>
-</div>
+}

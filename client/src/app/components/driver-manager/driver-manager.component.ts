@@ -24,11 +24,11 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
-import { NgFor, NgIf } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { AudioSelectorComponent } from "../shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 import { AvatarUrlPipe } from "src/app/pipes/avatar-url.pipe";
 
@@ -39,12 +39,9 @@ import { AvatarUrlPipe } from "src/app/pipes/avatar-url.pipe";
   styleUrls: ["./driver-manager.component.css"],
   imports: [
     ManagerHeaderComponent_1,
-    NgFor,
-    NgIf,
     FormsModule,
     AudioSelectorComponent,
     ConfirmationModalComponent,
-    RacedayComponent,
     TranslatePipe,
     AvatarUrlPipe,
   ],

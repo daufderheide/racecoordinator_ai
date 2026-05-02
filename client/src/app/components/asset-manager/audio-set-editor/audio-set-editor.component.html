@@ -1,126 +1,133 @@
-<div
-  class="modal-backdrop"
-  *ngIf="visible()"
-  (dragenter)="onElementDragEnter($event)"
-  (dragover)="onElementDragOver($event)"
-  (dragleave)="onElementDragLeave($event)"
-  (drop)="onElementDrop($event)"
->
+@if (visible()) {
   <div
-    class="drop-overlay"
-    *ngIf="isDragging"
+    class="modal-backdrop"
     (dragenter)="onElementDragEnter($event)"
     (dragover)="onElementDragOver($event)"
     (dragleave)="onElementDragLeave($event)"
     (drop)="onElementDrop($event)"
   >
-    <div class="drop-msg">
-      <span class="material-icons" style="font-size: 3rem; margin-bottom: 1rem"
-        >cloud_upload</span
+    @if (isDragging) {
+      <div
+        class="drop-overlay"
+        (dragenter)="onElementDragEnter($event)"
+        (dragover)="onElementDragOver($event)"
+        (dragleave)="onElementDragLeave($event)"
+        (drop)="onElementDrop($event)"
       >
-      <span>{{ "AM_AUDIO_SET_EDITOR_DROP_OVERLAY" | translate }}</span>
-    </div>
-  </div>
-
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2 class="modal-title">
-      {{
-        (assetId()
-          ? "AM_AUDIO_SET_EDITOR_TITLE_EDIT"
-          : "AM_AUDIO_SET_EDITOR_TITLE_NEW"
-        ) | translate
-      }}
-    </h2>
-
-    <div class="form-group">
-      <label>{{ "AM_AUDIO_SET_EDITOR_NAME" | translate }}</label>
-      <input
-        type="text"
-        [(ngModel)]="name"
-        class="form-input"
-        [placeholder]="'AM_AUDIO_SET_EDITOR_NAME' | translate"
-        autocomplete="one-time-code"
-        data-dashlane-ignore="true"
-        data-lpignore="true"
-        data-form-type="other"
-        name="audioset-title-field"
-        spellcheck="false"
-        autocorrect="off"
-        autocapitalize="off"
-      />
-    </div>
-
-    <div class="entries-header">
-      <div class="header-main">
-        <span>{{ "AM_AUDIO_SET_EDITOR_AUDIO" | translate }}</span>
-        <span class="hint" *ngIf="entries.length === 0">{{
-          "AM_AUDIO_SET_EDITOR_EMPTY" | translate
-        }}</span>
-      </div>
-      <div class="header-actions">
-        <button
-          class="btn-recalc"
-          (click)="recalculateTimes()"
-          [title]="'AM_AUDIO_SET_EDITOR_RECALC' | translate"
-        >
-          <span class="material-icons" style="font-size: 1.2rem">sync</span>
-        </button>
-        <button class="btn-add" (click)="addEntry()">
-          {{ "AM_AUDIO_SET_EDITOR_BTN_ADD" | translate }}
-        </button>
-      </div>
-    </div>
-
-    <div class="entries-list">
-      <div class="entry-item" *ngFor="let entry of entries; let i = index">
-        <div class="entry-selector">
-          <app-audio-selector
-            [url]="entry.url ?? undefined"
-            [fallbackName]="entry.name"
-            [assets]="allAudio()"
-            (urlChange)="
-              entry.url = $event; entry.name = entry.name || entry.url
-            "
-            mode="single"
-            type="preset"
-            label=""
+        <div class="drop-msg">
+          <span
+            class="material-icons"
+            style="font-size: 3rem; margin-bottom: 1rem"
+            >cloud_upload</span
           >
-          </app-audio-selector>
+          <span>{{ "AM_AUDIO_SET_EDITOR_DROP_OVERLAY" | translate }}</span>
         </div>
-        <div class="entry-time">
-          <label>{{ "AM_AUDIO_SET_EDITOR_TIME" | translate }}</label>
-          <input
-            type="number"
-            [(ngModel)]="entry.timeSeconds"
-            min="0"
-            class="time-input"
-          />
-          <span>s</span>
+      </div>
+    }
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">
+        {{
+          (assetId()
+            ? "AM_AUDIO_SET_EDITOR_TITLE_EDIT"
+            : "AM_AUDIO_SET_EDITOR_TITLE_NEW"
+          ) | translate
+        }}
+      </h2>
+      <div class="form-group">
+        <label>{{ "AM_AUDIO_SET_EDITOR_NAME" | translate }}</label>
+        <input
+          type="text"
+          [(ngModel)]="name"
+          class="form-input"
+          [placeholder]="'AM_AUDIO_SET_EDITOR_NAME' | translate"
+          autocomplete="one-time-code"
+          data-dashlane-ignore="true"
+          data-lpignore="true"
+          data-form-type="other"
+          name="audioset-title-field"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+        />
+      </div>
+      <div class="entries-header">
+        <div class="header-main">
+          <span>{{ "AM_AUDIO_SET_EDITOR_AUDIO" | translate }}</span>
+          @if (entries.length === 0) {
+            <span class="hint">{{
+              "AM_AUDIO_SET_EDITOR_EMPTY" | translate
+            }}</span>
+          }
         </div>
+        <div class="header-actions">
+          <button
+            class="btn-recalc"
+            (click)="recalculateTimes()"
+            [title]="'AM_AUDIO_SET_EDITOR_RECALC' | translate"
+          >
+            <span class="material-icons" style="font-size: 1.2rem">sync</span>
+          </button>
+          <button class="btn-add" (click)="addEntry()">
+            {{ "AM_AUDIO_SET_EDITOR_BTN_ADD" | translate }}
+          </button>
+        </div>
+      </div>
+      <div class="entries-list">
+        @for (entry of entries; track entry; let i = $index) {
+          <div class="entry-item">
+            <div class="entry-selector">
+              <app-audio-selector
+                [url]="entry.url ?? undefined"
+                [fallbackName]="entry.name"
+                [assets]="allAudio()"
+                (urlChange)="
+                  entry.url = $event; entry.name = entry.name || entry.url
+                "
+                mode="single"
+                type="preset"
+                label=""
+              >
+              </app-audio-selector>
+            </div>
+            <div class="entry-time">
+              <label>{{ "AM_AUDIO_SET_EDITOR_TIME" | translate }}</label>
+              <input
+                type="number"
+                [(ngModel)]="entry.timeSeconds"
+                min="0"
+                class="time-input"
+              />
+              <span>s</span>
+            </div>
+            <button
+              class="btn-remove"
+              (click)="removeEntry(i)"
+              [title]="'AM_AUDIO_SET_EDITOR_BTN_REMOVE' | translate"
+            >
+              <span class="material-icons" style="font-size: 1.2rem"
+                >delete</span
+              >
+            </button>
+          </div>
+        }
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onCancel()" [disabled]="isSaving">
+          {{ "AM_AUDIO_SET_EDITOR_BTN_CANCEL" | translate }}
+        </button>
         <button
-          class="btn-remove"
-          (click)="removeEntry(i)"
-          [title]="'AM_AUDIO_SET_EDITOR_BTN_REMOVE' | translate"
+          class="btn-save"
+          (click)="onSave()"
+          [disabled]="isSaving || !name || entries.length === 0"
         >
-          <span class="material-icons" style="font-size: 1.2rem">delete</span>
+          @if (!isSaving) {
+            <span>{{ "AM_AUDIO_SET_EDITOR_BTN_SAVE" | translate }}</span>
+          }
+          @if (isSaving) {
+            <div class="spinner small"></div>
+          }
         </button>
       </div>
     </div>
-
-    <div class="modal-actions">
-      <button class="btn-cancel" (click)="onCancel()" [disabled]="isSaving">
-        {{ "AM_AUDIO_SET_EDITOR_BTN_CANCEL" | translate }}
-      </button>
-      <button
-        class="btn-save"
-        (click)="onSave()"
-        [disabled]="isSaving || !name || entries.length === 0"
-      >
-        <span *ngIf="!isSaving">{{
-          "AM_AUDIO_SET_EDITOR_BTN_SAVE" | translate
-        }}</span>
-        <div class="spinner small" *ngIf="isSaving"></div>
-      </button>
-    </div>
   </div>
-</div>
+}

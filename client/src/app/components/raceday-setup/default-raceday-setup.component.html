@@ -1,564 +1,587 @@
-<div
-  class="setup-container"
-  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
-  *ngIf="translationsLoaded"
->
-  <!-- Menu Bar -->
-  <div class="menu-bar">
-    <div
-      class="menu-item-wrapper"
-      *ngFor="let item of menuItems"
-      [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
-      [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
-      [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'"
-      [class.help-menu-container]="item.label === 'RDS_MENU_HELP'"
-    >
-      <div class="menu-item" (click)="item.action($event)">
-        {{ item.label | translate }}
-      </div>
-
-      <!-- Config Dropdown -->
-      <div
-        class="menu-dropdown"
-        *ngIf="item.label === 'RDS_MENU_CONFIG' && isConfigDropdownOpen"
-      >
-        <div class="menu-dropdown-item" (click)="openDriverManager()">
-          {{ "RDS_MENU_DRIVER_MANAGER" | translate }}
-        </div>
-        <div class="menu-dropdown-item" (click)="openTeamManager()">
-          {{ "RDS_MENU_TEAM_MANAGER" | translate }}
-        </div>
-        <hr class="menu-dropdown-divider" />
-        <div class="menu-dropdown-item" (click)="openTrackManager()">
-          {{ "RDS_MENU_TRACK" | translate }}
-        </div>
-        <hr class="menu-dropdown-divider" />
-        <div class="menu-dropdown-item" (click)="openRaceManager()">
-          {{ "RDS_MENU_RACE" | translate }}
-        </div>
-        <div class="menu-dropdown-item disabled">
-          {{ "RDS_MENU_EVENT" | translate }}
-        </div>
+@if (translationsLoaded) {
+  <div
+    class="setup-container"
+    [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+  >
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+      @for (item of menuItems; track item) {
         <div
-          class="menu-dropdown-item disabled"
-          (click)="closeConfigDropdown()"
+          class="menu-item-wrapper"
+          [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
+          [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
+          [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'"
+          [class.help-menu-container]="item.label === 'RDS_MENU_HELP'"
         >
-          {{ "RDS_MENU_SEASON" | translate }}
-        </div>
-      </div>
-
-      <!-- File Dropdown -->
-      <div
-        class="menu-dropdown"
-        *ngIf="item.label === 'RDS_MENU_FILE' && isFileDropdownOpen"
-      >
-        <div class="menu-dropdown-item" (click)="loadSavedRaces()">
-          {{ "RDS_MENU_LOAD_RACE" | translate }}
-        </div>
-        <div class="menu-dropdown-item" (click)="openAssetManager()">
-          {{ "Asset Manager" }}
-        </div>
-        <div class="menu-dropdown-item" (click)="openDatabaseManager()">
-          {{ "Database Manager" }}
-        </div>
-      </div>
-
-      <!-- Options Dropdown -->
-      <div
-        class="menu-dropdown"
-        *ngIf="item.label === 'RDS_MENU_OPTIONS' && isOptionsDropdownOpen"
-      >
-        <div class="menu-dropdown-item" (click)="configureCustomUI()">
-          {{ "RDS_MENU_CUSTOM_UI" | translate }}
-        </div>
-        <div class="menu-dropdown-item" (click)="openServerSettings()">
-          {{ "RDS_MENU_SERVER" | translate }}
-        </div>
-        <div
-          class="menu-dropdown-item has-submenu"
-          (click)="toggleLocalizationDropdown($event)"
-          data-testid="menu-item-localization"
-        >
-          {{ "RDS_MENU_LOCALIZATION" | translate }}
-          <span class="submenu-arrow">▶</span>
-          <div
-            class="menu-dropdown submenu"
-            *ngIf="isLocalizationDropdownOpen"
-            data-testid="submenu-localization"
-          >
-            <div
-              class="menu-dropdown-item"
-              (click)="selectLanguage('')"
-              [class.selected]="!currentLanguage"
-            >
-              {{ getLanguageDisplayName("") }}
-            </div>
-            <div
-              class="menu-dropdown-item"
-              *ngFor="let lang of supportedLanguages"
-              (click)="selectLanguage(lang.code)"
-              [class.selected]="currentLanguage === lang.code"
-            >
-              {{ getLanguageDisplayName(lang.code) }}
-            </div>
+          <div class="menu-item" (click)="item.action($event)">
+            {{ item.label | translate }}
           </div>
-        </div>
-      </div>
-
-      <!-- Help Dropdown -->
-      <div
-        class="menu-dropdown"
-        *ngIf="item.label === 'RDS_MENU_HELP' && isHelpDropdownOpen"
-      >
-        <div class="menu-dropdown-item" (click)="startHelp()">
-          {{ "RDS_MENU_TUTORIAL" | translate }}
-        </div>
-        <hr class="menu-dropdown-divider" />
-        <div class="menu-dropdown-item" (click)="openAbout()">
-          {{ "RDS_HEADER_ABOUT" | translate }}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Header -->
-  <div class="main-header">
-    <div class="logo-text">
-      Race Coordinator <span class="logo-highlight">AI</span>
-    </div>
-
-    <div class="header-right">
-      <app-toolbar
-        [showHelp]="true"
-        [helpSteps]="getHelpSteps()"
-        [helpRecordName]="'racedaySetupWalkthroughSeen'"
-      ></app-toolbar>
-    </div>
-  </div>
-
-  <div class="content-area">
-    <!-- Driver Selection Panel -->
-    <div class="panel driver-panel" id="driver-panel">
-      <div class="panel-header">
-        {{ "RDS_DRIVERS_AVAILABLE" | translate }}
-        <span style="font-size: 12px; color: #888">{{
-          "RDS_SELECTED_COUNT"
-            | translate: { count: selectedParticipants.length }
-        }}</span>
-      </div>
-
-      <!-- Unified List Container -->
-      <div class="driver-action-bar" (selectstart)="preventSelection($event)">
-        <button
-          class="action-btn"
-          (click)="addAllParticipants()"
-          (mousedown)="$event.preventDefault()"
-          tabindex="-1"
-          [title]="'RDS_BTN_ADD_ALL' | translate"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-          </svg>
-          <span class="btn-text">{{ "RDS_BTN_ADD_ALL" | translate }}</span>
-        </button>
-        <button
-          class="action-btn"
-          (click)="removeAllParticipants()"
-          (mousedown)="$event.preventDefault()"
-          tabindex="-1"
-          [title]="'RDS_BTN_REMOVE_ALL' | translate"
-          data-testid="btn-remove-all"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13H5v-2h14v2z" />
-          </svg>
-          <span class="btn-text">{{ "RDS_BTN_REMOVE_ALL" | translate }}</span>
-        </button>
-        <button
-          class="action-btn"
-          (click)="randomizeParticipants()"
-          (mousedown)="$event.preventDefault()"
-          tabindex="-1"
-          [title]="'RDS_BTN_RANDOMIZE' | translate"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
-            />
-          </svg>
-          <span class="btn-text">{{ "RDS_BTN_RANDOMIZE" | translate }}</span>
-        </button>
-      </div>
-      <div
-        class="driver-list-spacer"
-        id="driver-list-target"
-        style="flex: 1; display: flex; flex-direction: column; overflow: hidden"
-      >
-        <ng-container *ngIf="!isRefreshingList">
-          <div
-            class="driver-list-container"
-            #scrollContainer
-            cdkScrollable
-            (selectstart)="preventSelection($event)"
-          >
-            <!-- Drop Zone for Reordering -->
-            <div
-              class="drop-zone"
-              id="selected-list"
-              cdkDropList
-              [cdkDropListData]="selectedParticipants"
-              (cdkDropListDropped)="drop($event)"
-            >
-              <!-- Selected Participants (Draggable) -->
-              <div
-                *ngIf="selectedParticipants.length > 0"
-                class="section-divider"
-              >
-                {{ "RDS_SECTION_RACING" | translate }}
+          <!-- Config Dropdown -->
+          @if (item.label === "RDS_MENU_CONFIG" && isConfigDropdownOpen) {
+            <div class="menu-dropdown">
+              <div class="menu-dropdown-item" (click)="openDriverManager()">
+                {{ "RDS_MENU_DRIVER_MANAGER" | translate }}
               </div>
-
+              <div class="menu-dropdown-item" (click)="openTeamManager()">
+                {{ "RDS_MENU_TEAM_MANAGER" | translate }}
+              </div>
+              <hr class="menu-dropdown-divider" />
+              <div class="menu-dropdown-item" (click)="openTrackManager()">
+                {{ "RDS_MENU_TRACK" | translate }}
+              </div>
+              <hr class="menu-dropdown-divider" />
+              <div class="menu-dropdown-item" (click)="openRaceManager()">
+                {{ "RDS_MENU_RACE" | translate }}
+              </div>
+              <div class="menu-dropdown-item disabled">
+                {{ "RDS_MENU_EVENT" | translate }}
+              </div>
               <div
-                *ngFor="
-                  let participant of selectedParticipants;
-                  let i = index;
-                  trackBy: trackByParticipant
-                "
-                class="driver-item selected"
-                cdkDrag
-                (cdkDragStarted)="onDragStarted($event)"
-                (dblclick)="toggleParticipantSelection(participant, true)"
+                class="menu-dropdown-item disabled"
+                (click)="closeConfigDropdown()"
               >
-                <div
-                  class="checkbox"
-                  (dblclick)="
-                    toggleParticipantSelection(participant, true);
-                    $event.stopPropagation()
-                  "
-                >
-                  <div class="checkbox-icon">✓</div>
-                </div>
-                <div class="driver-seed">({{ i + 1 }})</div>
-                <div class="driver-avatar">
-                  <img
-                    *ngIf="
-                      participant.avatarUrl &&
-                      !imageErrors.has(getParticipantUniqueId(participant))
-                    "
-                    [src]="getParticipantAvatarUrl(participant)"
-                    (error)="onParticipantImageError(participant)"
-                    class="avatar-img"
-                    alt="Avatar"
-                    draggable="false"
-                  />
-                  <!-- Placeholder Avatar -->
-                  <svg
-                    *ngIf="
-                      !participant.avatarUrl ||
-                      imageErrors.has(getParticipantUniqueId(participant))
-                    "
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="#ccc"
+                {{ "RDS_MENU_SEASON" | translate }}
+              </div>
+            </div>
+          }
+          <!-- File Dropdown -->
+          @if (item.label === "RDS_MENU_FILE" && isFileDropdownOpen) {
+            <div class="menu-dropdown">
+              <div class="menu-dropdown-item" (click)="loadSavedRaces()">
+                {{ "RDS_MENU_LOAD_RACE" | translate }}
+              </div>
+              <div class="menu-dropdown-item" (click)="openAssetManager()">
+                {{ "Asset Manager" }}
+              </div>
+              <div class="menu-dropdown-item" (click)="openDatabaseManager()">
+                {{ "Database Manager" }}
+              </div>
+            </div>
+          }
+          <!-- Options Dropdown -->
+          @if (item.label === "RDS_MENU_OPTIONS" && isOptionsDropdownOpen) {
+            <div class="menu-dropdown">
+              <div class="menu-dropdown-item" (click)="configureCustomUI()">
+                {{ "RDS_MENU_CUSTOM_UI" | translate }}
+              </div>
+              <div class="menu-dropdown-item" (click)="openServerSettings()">
+                {{ "RDS_MENU_SERVER" | translate }}
+              </div>
+              <div
+                class="menu-dropdown-item has-submenu"
+                (click)="toggleLocalizationDropdown($event)"
+                data-testid="menu-item-localization"
+              >
+                {{ "RDS_MENU_LOCALIZATION" | translate }}
+                <span class="submenu-arrow">▶</span>
+                @if (isLocalizationDropdownOpen) {
+                  <div
+                    class="menu-dropdown submenu"
+                    data-testid="submenu-localization"
                   >
-                    抽离. driver name and team name.
-                    <path
-                      d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                    />
-                  </svg>
-                </div>
-                <div class="driver-details">
-                  <div class="driver-name">
-                    {{ getLocalizedName(participant) }}
+                    <div
+                      class="menu-dropdown-item"
+                      (click)="selectLanguage('')"
+                      [class.selected]="!currentLanguage"
+                    >
+                      {{ getLanguageDisplayName("") }}
+                    </div>
+                    @for (lang of supportedLanguages; track lang) {
+                      <div
+                        class="menu-dropdown-item"
+                        (click)="selectLanguage(lang.code)"
+                        [class.selected]="currentLanguage === lang.code"
+                      >
+                        {{ getLanguageDisplayName(lang.code) }}
+                      </div>
+                    }
                   </div>
-                  <div class="driver-meta" *ngIf="isDriver(participant)">
-                    {{ getLocalizedNickname(participant) }}
+                }
+              </div>
+            </div>
+          }
+          <!-- Help Dropdown -->
+          @if (item.label === "RDS_MENU_HELP" && isHelpDropdownOpen) {
+            <div class="menu-dropdown">
+              <div class="menu-dropdown-item" (click)="startHelp()">
+                {{ "RDS_MENU_TUTORIAL" | translate }}
+              </div>
+              <hr class="menu-dropdown-divider" />
+              <div class="menu-dropdown-item" (click)="openAbout()">
+                {{ "RDS_HEADER_ABOUT" | translate }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    <!-- Main Header -->
+    <div class="main-header">
+      <div class="logo-text">
+        Race Coordinator <span class="logo-highlight">AI</span>
+      </div>
+      <div class="header-right">
+        <app-toolbar
+          [showHelp]="true"
+          [helpSteps]="getHelpSteps()"
+          [helpRecordName]="'racedaySetupWalkthroughSeen'"
+        ></app-toolbar>
+      </div>
+    </div>
+    <div class="content-area">
+      <!-- Driver Selection Panel -->
+      <div class="panel driver-panel" id="driver-panel">
+        <div class="panel-header">
+          {{ "RDS_DRIVERS_AVAILABLE" | translate }}
+          <span style="font-size: 12px; color: #888">{{
+            "RDS_SELECTED_COUNT"
+              | translate: { count: selectedParticipants.length }
+          }}</span>
+        </div>
+        <!-- Unified List Container -->
+        <div class="driver-action-bar" (selectstart)="preventSelection($event)">
+          <button
+            class="action-btn"
+            (click)="addAllParticipants()"
+            (mousedown)="$event.preventDefault()"
+            tabindex="-1"
+            [title]="'RDS_BTN_ADD_ALL' | translate"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+            </svg>
+            <span class="btn-text">{{ "RDS_BTN_ADD_ALL" | translate }}</span>
+          </button>
+          <button
+            class="action-btn"
+            (click)="removeAllParticipants()"
+            (mousedown)="$event.preventDefault()"
+            tabindex="-1"
+            [title]="'RDS_BTN_REMOVE_ALL' | translate"
+            data-testid="btn-remove-all"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13H5v-2h14v2z" />
+            </svg>
+            <span class="btn-text">{{ "RDS_BTN_REMOVE_ALL" | translate }}</span>
+          </button>
+          <button
+            class="action-btn"
+            (click)="randomizeParticipants()"
+            (mousedown)="$event.preventDefault()"
+            tabindex="-1"
+            [title]="'RDS_BTN_RANDOMIZE' | translate"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
+              />
+            </svg>
+            <span class="btn-text">{{ "RDS_BTN_RANDOMIZE" | translate }}</span>
+          </button>
+        </div>
+        <div
+          class="driver-list-spacer"
+          id="driver-list-target"
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+          "
+        >
+          @if (!isRefreshingList) {
+            <div
+              class="driver-list-container"
+              #scrollContainer
+              cdkScrollable
+              (selectstart)="preventSelection($event)"
+            >
+              <!-- Drop Zone for Reordering -->
+              <div
+                class="drop-zone"
+                id="selected-list"
+                cdkDropList
+                [cdkDropListData]="selectedParticipants"
+                (cdkDropListDropped)="drop($event)"
+              >
+                <!-- Selected Participants (Draggable) -->
+                @if (selectedParticipants.length > 0) {
+                  <div class="section-divider">
+                    {{ "RDS_SECTION_RACING" | translate }}
                   </div>
-                  <div class="driver-meta" *ngIf="isTeam(participant)">
-                    {{ getLocalizedTeamMembers(participant) }}
-                  </div>
-                </div>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-                </svg>
-
-                <!-- Drag Preview -->
-                <div
-                  *cdkDragPreview
-                  class="driver-item selected"
-                  style="width: 380px"
-                >
-                  <div class="checkbox">
-                    <div class="checkbox-icon">✓</div>
-                  </div>
-                  <div class="driver-avatar">
-                    <img
-                      *ngIf="
+                }
+                @for (
+                  participant of selectedParticipants;
+                  track trackByParticipant(i, participant);
+                  let i = $index
+                ) {
+                  <div
+                    class="driver-item selected"
+                    cdkDrag
+                    (cdkDragStarted)="onDragStarted($event)"
+                    (dblclick)="toggleParticipantSelection(participant, true)"
+                  >
+                    <div
+                      class="checkbox"
+                      (dblclick)="
+                        toggleParticipantSelection(participant, true);
+                        $event.stopPropagation()
+                      "
+                    >
+                      <div class="checkbox-icon">✓</div>
+                    </div>
+                    <div class="driver-seed">({{ i + 1 }})</div>
+                    <div class="driver-avatar">
+                      @if (
                         participant.avatarUrl &&
                         !imageErrors.has(getParticipantUniqueId(participant))
-                      "
-                      [src]="getParticipantAvatarUrl(participant)"
-                      (error)="onParticipantImageError(participant)"
-                      class="avatar-img"
-                      alt="Avatar"
-                    />
-                    <!-- Placeholder Avatar -->
-                    <svg
-                      *ngIf="
+                      ) {
+                        <img
+                          [src]="getParticipantAvatarUrl(participant)"
+                          (error)="onParticipantImageError(participant)"
+                          class="avatar-img"
+                          alt="Avatar"
+                          draggable="false"
+                        />
+                      }
+                      <!-- Placeholder Avatar -->
+                      @if (
                         !participant.avatarUrl ||
                         imageErrors.has(getParticipantUniqueId(participant))
-                      "
-                      width="20"
-                      height="20"
+                      ) {
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="#ccc"
+                        >
+                          抽离. driver name and team name.
+                          <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                          />
+                        </svg>
+                      }
+                    </div>
+                    <div class="driver-details">
+                      <div class="driver-name">
+                        {{ getLocalizedName(participant) }}
+                      </div>
+                      @if (isDriver(participant)) {
+                        <div class="driver-meta">
+                          {{ getLocalizedNickname(participant) }}
+                        </div>
+                      }
+                      @if (isTeam(participant)) {
+                        <div class="driver-meta">
+                          {{ getLocalizedTeamMembers(participant) }}
+                        </div>
+                      }
+                    </div>
+                    <svg
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
-                      fill="#ccc"
+                      fill="currentColor"
                     >
-                      抽离. driver name and team name.
-                      <path
-                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                      />
+                      <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
                     </svg>
+                    <!-- Drag Preview -->
+                    <div
+                      *cdkDragPreview
+                      class="driver-item selected"
+                      style="width: 380px"
+                    >
+                      <div class="checkbox">
+                        <div class="checkbox-icon">✓</div>
+                      </div>
+                      <div class="driver-avatar">
+                        @if (
+                          participant.avatarUrl &&
+                          !imageErrors.has(getParticipantUniqueId(participant))
+                        ) {
+                          <img
+                            [src]="getParticipantAvatarUrl(participant)"
+                            (error)="onParticipantImageError(participant)"
+                            class="avatar-img"
+                            alt="Avatar"
+                          />
+                        }
+                        <!-- Placeholder Avatar -->
+                        @if (
+                          !participant.avatarUrl ||
+                          imageErrors.has(getParticipantUniqueId(participant))
+                        ) {
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="#ccc"
+                          >
+                            抽离. driver name and team name.
+                            <path
+                              d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                            />
+                          </svg>
+                        }
+                      </div>
+                      <div class="driver-details">
+                        <div class="driver-name">
+                          {{ getLocalizedName(participant) }}
+                        </div>
+                        @if (isDriver(participant)) {
+                          <div class="driver-meta">
+                            {{ getLocalizedNickname(participant) }}
+                          </div>
+                        }
+                        @if (isTeam(participant)) {
+                          <div class="driver-meta">
+                            {{ getLocalizedTeamMembers(participant) }}
+                          </div>
+                        }
+                      </div>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path
+                          d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                }
+              </div>
+              <!-- Unselected Participants (Static) -->
+              @if (filteredUnselectedParticipants.length > 0) {
+                <div class="section-divider">
+                  {{ "RDS_SECTION_AVAILABLE" | translate }}
+                </div>
+              }
+              @for (
+                participant of filteredUnselectedParticipants;
+                track participant
+              ) {
+                <div
+                  class="driver-item"
+                  (dblclick)="toggleParticipantSelection(participant, false)"
+                >
+                  <div class="checkbox"></div>
+                  <div class="driver-avatar">
+                    @if (
+                      participant.avatarUrl &&
+                      !imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <img
+                        [src]="getParticipantAvatarUrl(participant)"
+                        (error)="onParticipantImageError(participant)"
+                        class="avatar-img"
+                        alt="Avatar"
+                        draggable="false"
+                      />
+                    }
+                    <!-- Placeholder Avatar -->
+                    @if (
+                      !participant.avatarUrl ||
+                      imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="#ccc"
+                      >
+                        抽离. driver name and team name.
+                        <path
+                          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                      </svg>
+                    }
                   </div>
                   <div class="driver-details">
                     <div class="driver-name">
                       {{ getLocalizedName(participant) }}
                     </div>
-                    <div class="driver-meta" *ngIf="isDriver(participant)">
-                      {{ getLocalizedNickname(participant) }}
-                    </div>
-                    <div class="driver-meta" *ngIf="isTeam(participant)">
-                      {{ getLocalizedTeamMembers(participant) }}
-                    </div>
+                    @if (isDriver(participant)) {
+                      <div class="driver-meta">
+                        {{ getLocalizedNickname(participant) }}
+                      </div>
+                    }
+                    @if (isTeam(participant)) {
+                      <div class="driver-meta">
+                        {{ getLocalizedTeamMembers(participant) }}
+                      </div>
+                    }
                   </div>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-                  </svg>
                 </div>
-              </div>
+              }
             </div>
-
-            <!-- Unselected Participants (Static) -->
-            <div
-              *ngIf="filteredUnselectedParticipants.length > 0"
-              class="section-divider"
-            >
-              {{ "RDS_SECTION_AVAILABLE" | translate }}
-            </div>
-
-            <div
-              *ngFor="let participant of filteredUnselectedParticipants"
-              class="driver-item"
-              (dblclick)="toggleParticipantSelection(participant, false)"
-            >
-              <div class="checkbox"></div>
-              <div class="driver-avatar">
-                <img
-                  *ngIf="
-                    participant.avatarUrl &&
-                    !imageErrors.has(getParticipantUniqueId(participant))
-                  "
-                  [src]="getParticipantAvatarUrl(participant)"
-                  (error)="onParticipantImageError(participant)"
-                  class="avatar-img"
-                  alt="Avatar"
-                  draggable="false"
-                />
-                <!-- Placeholder Avatar -->
-                <svg
-                  *ngIf="
-                    !participant.avatarUrl ||
-                    imageErrors.has(getParticipantUniqueId(participant))
-                  "
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="#ccc"
-                >
-                  抽离. driver name and team name.
-                  <path
-                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                  />
-                </svg>
-              </div>
-              <div class="driver-details">
-                <div class="driver-name">
-                  {{ getLocalizedName(participant) }}
-                </div>
-                <div class="driver-meta" *ngIf="isDriver(participant)">
-                  {{ getLocalizedNickname(participant) }}
-                </div>
-                <div class="driver-meta" *ngIf="isTeam(participant)">
-                  {{ getLocalizedTeamMembers(participant) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
-      </div>
-
-      <div class="search-bar">
-        <div class="search-wrapper">
-          <input
-            type="text"
-            class="search-input driver-search"
-            [placeholder]="'RDS_SEARCH_DRIVERS' | translate"
-            [(ngModel)]="driverSearchQuery"
-            (ngModelChange)="onSearchChange()"
-          />
-          <svg
-            class="search-icon"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path
-              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+          }
+        </div>
+        <div class="search-bar">
+          <div class="search-wrapper">
+            <input
+              type="text"
+              class="search-input driver-search"
+              [placeholder]="'RDS_SEARCH_DRIVERS' | translate"
+              [(ngModel)]="driverSearchQuery"
+              (ngModelChange)="onSearchChange()"
             />
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <!-- Race Configuration Panel -->
-    <div class="panel race-panel">
-      <div class="quick-start-grid">
-        <div
-          *ngFor="let race of quickStartRaces; let i = index"
-          class="race-card"
-          id="race-card-{{ i }}"
-          [class.active]="selectedRace?.entity_id === race.entity_id"
-          [ngClass]="getRaceCardBackgroundClass(i)"
-          (click)="selectRace(race)"
-        >
-          <div class="card-content">
-            <div class="card-title">{{ race.name }}</div>
-            <div class="card-btn">Select</div>
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
           </div>
         </div>
       </div>
-
-      <div class="race-selection-title">
-        {{ "RDS_SECTION_ALL_RACES" | translate }}
-      </div>
-      <div class="all-races-selector">
-        <div class="search-wrapper">
-          <input
-            type="text"
-            class="search-input race-search"
-            [placeholder]="'RDS_SEARCH_RACES' | translate"
-            [(ngModel)]="raceSearchQuery"
-            (ngModelChange)="onSearchChange()"
-          />
-          <svg
-            class="search-icon"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path
-              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-            />
-          </svg>
-        </div>
-        <div class="custom-dropdown-container">
-          <div class="dropdown-trigger" (click)="toggleDropdown($event)">
-            <span class="selected-value">{{
-              selectedRace?.name || "Select a Race"
-            }}</span>
-            <div class="dropdown-arrow" [class.open]="isDropdownOpen">▼</div>
-          </div>
-          <div class="dropdown-menu" *ngIf="isDropdownOpen">
+      <!-- Race Configuration Panel -->
+      <div class="panel race-panel">
+        <div class="quick-start-grid">
+          @for (race of quickStartRaces; track race; let i = $index) {
             <div
-              class="dropdown-item"
-              *ngFor="let race of filteredRaces"
+              class="race-card"
+              id="race-card-{{ i }}"
+              [class.active]="selectedRace?.entity_id === race.entity_id"
+              [ngClass]="getRaceCardBackgroundClass(i)"
               (click)="selectRace(race)"
-              [class.selected]="selectedRace?.entity_id === race.entity_id"
             >
-              {{ race.name }}
+              <div class="card-content">
+                <div class="card-title">{{ race.name }}</div>
+                <div class="card-btn">Select</div>
+              </div>
             </div>
+          }
+        </div>
+        <div class="race-selection-title">
+          {{ "RDS_SECTION_ALL_RACES" | translate }}
+        </div>
+        <div class="all-races-selector">
+          <div class="search-wrapper">
+            <input
+              type="text"
+              class="search-input race-search"
+              [placeholder]="'RDS_SEARCH_RACES' | translate"
+              [(ngModel)]="raceSearchQuery"
+              (ngModelChange)="onSearchChange()"
+            />
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
+          </div>
+          <div class="custom-dropdown-container">
+            <div class="dropdown-trigger" (click)="toggleDropdown($event)">
+              <span class="selected-value">{{
+                selectedRace?.name || "Select a Race"
+              }}</span>
+              <div class="dropdown-arrow" [class.open]="isDropdownOpen">▼</div>
+            </div>
+            @if (isDropdownOpen) {
+              <div class="dropdown-menu">
+                @for (race of filteredRaces; track race) {
+                  <div
+                    class="dropdown-item"
+                    (click)="selectRace(race)"
+                    [class.selected]="
+                      selectedRace?.entity_id === race.entity_id
+                    "
+                  >
+                    {{ race.name }}
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
-      </div>
-
-      <div class="action-footer" id="race-controls">
-        <button
-          class="btn-start"
-          (click)="startRace(false)"
-          [disabled]="selectedParticipants.length === 0"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
-          </svg>
-          {{ "RDS_BTN_START_RACE" | translate }}
-        </button>
-        <button
-          class="btn-demo"
-          (click)="startRace(true)"
-          [disabled]="selectedParticipants.length === 0"
-        >
-          <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Load Race Modal -->
-<div class="modal-overlay" *ngIf="showLoadRaceModal">
-  <div class="modal-content load-race-modal">
-    <div class="modal-header">
-      <h2>{{ "RDS_LOAD_RACE_TITLE" | translate }}</h2>
-      <button class="close-btn" (click)="closeLoadRaceModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <p>{{ "RDS_SELECT_RACE_TO_LOAD" | translate }}</p>
-      <div class="saved-races-list">
-        <div
-          *ngFor="let file of savedRaces"
-          class="saved-race-item"
-          [class.selected]="selectedSavedRace === file"
-          (click)="selectSavedRace(file)"
-        >
-          <span class="race-file-name">{{ file }}</span>
+        <div class="action-footer" id="race-controls">
           <button
-            class="delete-saved-btn"
-            (click)="deleteSavedRace($event, file)"
-            title="Delete Save"
+            class="btn-start"
+            (click)="startRace(false)"
+            [disabled]="selectedParticipants.length === 0"
           >
-            &times;
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
+            </svg>
+            {{ "RDS_BTN_START_RACE" | translate }}
+          </button>
+          <button
+            class="btn-demo"
+            (click)="startRace(true)"
+            [disabled]="selectedParticipants.length === 0"
+          >
+            <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
           </button>
         </div>
       </div>
-      <div *ngIf="savedRaces.length === 0" class="no-saved-races">
-        No saved races found.
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="modal-btn cancel" (click)="closeLoadRaceModal()">
-        {{ "RDS_BTN_CANCEL" | translate }}
-      </button>
-      <button
-        class="modal-btn confirm"
-        [disabled]="!selectedSavedRace"
-        (click)="confirmLoadRace()"
-      >
-        {{ "RDS_LOAD" | translate }}
-      </button>
     </div>
   </div>
-</div>
+}
+
+<!-- Load Race Modal -->
+@if (showLoadRaceModal) {
+  <div class="modal-overlay">
+    <div class="modal-content load-race-modal">
+      <div class="modal-header">
+        <h2>{{ "RDS_LOAD_RACE_TITLE" | translate }}</h2>
+        <button class="close-btn" (click)="closeLoadRaceModal()">
+          &times;
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>{{ "RDS_SELECT_RACE_TO_LOAD" | translate }}</p>
+        <div class="saved-races-list">
+          @for (file of savedRaces; track file) {
+            <div
+              class="saved-race-item"
+              [class.selected]="selectedSavedRace === file"
+              (click)="selectSavedRace(file)"
+            >
+              <span class="race-file-name">{{ file }}</span>
+              <button
+                class="delete-saved-btn"
+                (click)="deleteSavedRace($event, file)"
+                title="Delete Save"
+              >
+                &times;
+              </button>
+            </div>
+          }
+        </div>
+        @if (savedRaces.length === 0) {
+          <div class="no-saved-races">No saved races found.</div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn cancel" (click)="closeLoadRaceModal()">
+          {{ "RDS_BTN_CANCEL" | translate }}
+        </button>
+        <button
+          class="modal-btn confirm"
+          [disabled]="!selectedSavedRace"
+          (click)="confirmLoadRace()"
+        >
+          {{ "RDS_LOAD" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Auto Save Prompt Modal -->
 <app-confirmation-modal

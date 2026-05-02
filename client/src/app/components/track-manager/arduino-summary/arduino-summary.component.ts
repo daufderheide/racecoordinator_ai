@@ -4,7 +4,7 @@ import { ArduinoConfig } from "src/app/models/track";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { PinBehavior } from "src/app/proto/antigravity";
-import { NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -12,7 +12,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-arduino-summary",
   templateUrl: "./arduino-summary.component.html",
   styleUrls: ["./arduino-summary.component.css"],
-  imports: [NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class ArduinoSummaryComponent {
   config = input<ArduinoConfig>();

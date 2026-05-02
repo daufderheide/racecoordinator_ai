@@ -5,7 +5,7 @@ import {
   CdkDrag,
   CdkDragHandle,
 } from "@angular/cdk/drag-drop";
-import { Location, NgIf, NgFor } from "@angular/common";
+import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -39,7 +39,7 @@ import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor
 import { FormsModule } from "@angular/forms";
 import { ArduinoEditorComponent as ArduinoEditorComponent_1 } from "./arduino-editor/arduino-editor.component";
 import { InputDialogComponent } from "../shared/input-dialog/input-dialog.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -50,14 +50,11 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   imports: [
     EditorTitleComponent_1,
     FormsModule,
-    NgIf,
     CdkDropList,
-    NgFor,
     CdkDrag,
     CdkDragHandle,
     ArduinoEditorComponent_1,
     InputDialogComponent,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

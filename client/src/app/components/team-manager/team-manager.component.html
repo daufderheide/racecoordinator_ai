@@ -28,109 +28,123 @@
   <div class="content-area">
     <div class="sidebar-list">
       <div class="list-container">
-        <div
-          *ngFor="let team of filteredTeams; let i = index"
-          class="list-item"
-          [class.selected]="team.entity_id === selectedTeam?.entity_id"
-          (click)="selectTeam(team)"
-          [class.odd]="i % 2 !== 0"
-        >
-          <div class="item-name">{{ team.name }}</div>
-        </div>
+        @for (team of filteredTeams; track team; let i = $index) {
+          <div
+            class="list-item"
+            [class.selected]="team.entity_id === selectedTeam?.entity_id"
+            (click)="selectTeam(team)"
+            [class.odd]="i % 2 !== 0"
+          >
+            <div class="item-name">{{ team.name }}</div>
+          </div>
+        }
       </div>
     </div>
 
-    <div class="detail-panel" *ngIf="selectedTeam">
-      <div class="detail-header">
-        <h2>{{ selectedTeam.name }}</h2>
-      </div>
-      <div class="detail-content">
-        <div class="avatar-preview-container" *ngIf="selectedTeam.avatarUrl">
-          <div class="avatar-preview-large">
-            <img [src]="selectedTeam.avatarUrl | avatarUrl" alt="Team Avatar" />
-          </div>
+    @if (selectedTeam) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ selectedTeam.name }}</h2>
         </div>
-
-        <div
-          class="config-header"
-          style="
-            margin-top: 20px;
-            font-size: 1.5rem;
-            color: #38bdf8;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
-            padding-bottom: 5px;
-          "
-        >
-          {{ "TMM_LABEL_MEMBERS" | translate }}
-        </div>
-        <div
-          class="member-count-display"
-          style="font-size: 1.2rem; color: #94a3b8; margin-top: 10px"
-        >
-          {{ selectedTeam.driverIds.length }} Drivers
-        </div>
-
-        <div
-          class="team-drivers-list"
-          style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px"
-        >
+        <div class="detail-content">
+          @if (selectedTeam.avatarUrl) {
+            <div class="avatar-preview-container">
+              <div class="avatar-preview-large">
+                <img
+                  [src]="selectedTeam.avatarUrl | avatarUrl"
+                  alt="Team Avatar"
+                />
+              </div>
+            </div>
+          }
           <div
-            class="driver-badge"
-            *ngFor="let driver of getDriversForTeam(selectedTeam)"
+            class="config-header"
             style="
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              background: rgba(56, 189, 248, 0.1);
-              padding: 8px 12px;
-              border-radius: 20px;
-              border: 1px solid rgba(56, 189, 248, 0.2);
+              margin-top: 20px;
+              font-size: 1.5rem;
+              color: #38bdf8;
+              border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+              padding-bottom: 5px;
             "
           >
-            <div
-              class="driver-avatar-micro"
-              style="
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                overflow: hidden;
-              "
-            >
-              <img
-                [src]="driver.avatarUrl | avatarUrl"
-                alt="A"
-                style="width: 100%; height: 100%; object-fit: cover"
-              />
-            </div>
-            <span class="driver-name-micro" style="font-weight: 600">{{
-              driver.name
-            }}</span>
-            <span
-              class="driver-nickname-micro"
-              *ngIf="driver.nickname"
-              style="color: #94a3b8; font-size: 0.9em"
-              >({{ driver.nickname }})</span
-            >
+            {{ "TMM_LABEL_MEMBERS" | translate }}
+          </div>
+          <div
+            class="member-count-display"
+            style="font-size: 1.2rem; color: #94a3b8; margin-top: 10px"
+          >
+            {{ selectedTeam.driverIds.length }} Drivers
+          </div>
+          <div
+            class="team-drivers-list"
+            style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px"
+          >
+            @for (driver of getDriversForTeam(selectedTeam); track driver) {
+              <div
+                class="driver-badge"
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  background: rgba(56, 189, 248, 0.1);
+                  padding: 8px 12px;
+                  border-radius: 20px;
+                  border: 1px solid rgba(56, 189, 248, 0.2);
+                "
+              >
+                <div
+                  class="driver-avatar-micro"
+                  style="
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                  "
+                >
+                  <img
+                    [src]="driver.avatarUrl | avatarUrl"
+                    alt="A"
+                    style="width: 100%; height: 100%; object-fit: cover"
+                  />
+                </div>
+                <span class="driver-name-micro" style="font-weight: 600">{{
+                  driver.name
+                }}</span>
+                @if (driver.nickname) {
+                  <span
+                    class="driver-nickname-micro"
+                    style="color: #94a3b8; font-size: 0.9em"
+                    >({{ driver.nickname }})</span
+                  >
+                }
+              </div>
+            }
           </div>
         </div>
       </div>
-    </div>
+    }
 
-    <div class="detail-panel empty-state" *ngIf="!selectedTeam && !isLoading">
-      <p>{{ "TMM_NO_TEAM_SELECTED" | translate }}</p>
-    </div>
+    @if (!selectedTeam && !isLoading) {
+      <div class="detail-panel empty-state">
+        <p>{{ "TMM_NO_TEAM_SELECTED" | translate }}</p>
+      </div>
+    }
   </div>
 </div>
 
 <!-- Connection Lost Overlay -->
-<div class="connection-lost-overlay" *ngIf="isConnectionLost">
-  <div class="connection-spinner"></div>
-  <div class="connection-lost-text">
-    {{ "TMM_LOST_CONNECTION" | translate }}
+@if (isConnectionLost) {
+  <div class="connection-lost-overlay">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">
+      {{ "TMM_LOST_CONNECTION" | translate }}
+    </div>
   </div>
-</div>
+}
 
 <!-- Loading Overlay -->
-<div class="loader-overlay" *ngIf="isLoading || isSaving">
-  <div class="spinner"></div>
-</div>
+@if (isLoading || isSaving) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}

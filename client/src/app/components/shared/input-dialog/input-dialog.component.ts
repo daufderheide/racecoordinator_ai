@@ -1,43 +1,45 @@
 import { Component, effect, input, output, signal } from "@angular/core";
-import { NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
   selector: "app-input-dialog",
   template: `
-    <div class="modal-backdrop" *ngIf="visible()">
-      <div class="modal-content">
-        <h2 class="modal-title">{{ title() | translate }}</h2>
-        <p class="modal-message" *ngIf="message()">
-          {{ message() | translate }}
-        </p>
-
-        <div class="input-container">
-          <input
-            [type]="type()"
-            [value]="inputValue()"
-            (input)="onInputChange($event)"
-            [placeholder]="placeholder() | translate"
-            (keyup.enter)="onConfirm()"
-            autoFocus
-          />
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn-cancel" (click)="onCancel()">
-            {{ cancelText() | translate }}
-          </button>
-          <button
-            class="btn-confirm"
-            (click)="onConfirm()"
-            [disabled]="isInvalid()"
-          >
-            {{ confirmText() | translate }}
-          </button>
+    @if (visible()) {
+      <div class="modal-backdrop">
+        <div class="modal-content">
+          <h2 class="modal-title">{{ title() | translate }}</h2>
+          @if (message()) {
+            <p class="modal-message">
+              {{ message() | translate }}
+            </p>
+          }
+          <div class="input-container">
+            <input
+              [type]="type()"
+              [value]="inputValue()"
+              (input)="onInputChange($event)"
+              [placeholder]="placeholder() | translate"
+              (keyup.enter)="onConfirm()"
+              autoFocus
+            />
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" (click)="onCancel()">
+              {{ cancelText() | translate }}
+            </button>
+            <button
+              class="btn-confirm"
+              (click)="onConfirm()"
+              [disabled]="isInvalid()"
+            >
+              {{ confirmText() | translate }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -127,7 +129,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
       }
     `,
   ],
-  imports: [NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class InputDialogComponent {
   visible = input(false);

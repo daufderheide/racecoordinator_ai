@@ -1,159 +1,173 @@
 <div class="toolbar-container">
   <!-- Activate -->
-  <button
-    *ngIf="showActivate()"
-    id="activate-item-btn"
-    class="toolbar-btn ghost"
-    (click)="onActivate()"
-    [disabled]="isSaving() || disabledActivate()"
-    [title]="'TEM_BTN_ACTIVATE' | translate"
-  >
-    <span class="material-icons">{{
-      disabledActivate() ? "check_circle" : "check_circle_outline"
-    }}</span>
-  </button>
+  @if (showActivate()) {
+    <button
+      id="activate-item-btn"
+      class="toolbar-btn ghost"
+      (click)="onActivate()"
+      [disabled]="isSaving() || disabledActivate()"
+      [title]="'TEM_BTN_ACTIVATE' | translate"
+    >
+      <span class="material-icons">{{
+        disabledActivate() ? "check_circle" : "check_circle_outline"
+      }}</span>
+    </button>
+  }
 
   <!-- Undo -->
-  <button
-    *ngIf="showUndo()"
-    id="undo-btn"
-    class="toolbar-btn undo"
-    (click)="undo()"
-    [disabled]="!canUndo"
-    [title]="'DE_TOOLTIP_UNDO' | translate"
-  >
-    <span class="material-icons">undo</span>
-  </button>
+  @if (showUndo()) {
+    <button
+      id="undo-btn"
+      class="toolbar-btn undo"
+      (click)="undo()"
+      [disabled]="!canUndo"
+      [title]="'DE_TOOLTIP_UNDO' | translate"
+    >
+      <span class="material-icons">undo</span>
+    </button>
+  }
 
   <!-- Redo -->
-  <button
-    *ngIf="showRedo()"
-    id="redo-btn"
-    class="toolbar-btn redo"
-    (click)="redo()"
-    [disabled]="!canRedo"
-    [title]="'DE_TOOLTIP_REDO' | translate"
-  >
-    <span class="material-icons">redo</span>
-  </button>
+  @if (showRedo()) {
+    <button
+      id="redo-btn"
+      class="toolbar-btn redo"
+      (click)="redo()"
+      [disabled]="!canRedo"
+      [title]="'DE_TOOLTIP_REDO' | translate"
+    >
+      <span class="material-icons">redo</span>
+    </button>
+  }
 
   <!-- Edit -->
-  <button
-    *ngIf="showEdit()"
-    id="edit-track-btn"
-    class="toolbar-btn ghost"
-    (click)="onEdit()"
-    [disabled]="isSaving() || disabledEdit()"
-    [title]="'TM_EDIT' | translate"
-  >
-    <span class="material-icons">edit</span>
-  </button>
+  @if (showEdit()) {
+    <button
+      id="edit-track-btn"
+      class="toolbar-btn ghost"
+      (click)="onEdit()"
+      [disabled]="isSaving() || disabledEdit()"
+      [title]="'TM_EDIT' | translate"
+    >
+      <span class="material-icons">edit</span>
+    </button>
+  }
 
   <!-- Copy -->
-  <button
-    *ngIf="showCopy()"
-    id="copy-item-btn"
-    class="toolbar-btn info"
-    (click)="onCopy()"
-    [disabled]="isSaving() || disabledCopy()"
-    [title]="'TEM_BTN_SAVE_AS_NEW' | translate"
-  >
-    <span class="material-icons">content_copy</span>
-  </button>
+  @if (showCopy()) {
+    <button
+      id="copy-item-btn"
+      class="toolbar-btn info"
+      (click)="onCopy()"
+      [disabled]="isSaving() || disabledCopy()"
+      [title]="'TEM_BTN_SAVE_AS_NEW' | translate"
+    >
+      <span class="material-icons">content_copy</span>
+    </button>
+  }
 
   <!-- Add -->
-  <button
-    *ngIf="showAdd()"
-    id="add-item-btn"
-    class="toolbar-btn info"
-    (click)="onAdd()"
-    [disabled]="isSaving() || disabledAdd()"
-    [title]="'TM_CREATE_NEW' | translate"
-  >
-    <span class="material-icons">add</span>
-  </button>
+  @if (showAdd()) {
+    <button
+      id="add-item-btn"
+      class="toolbar-btn info"
+      (click)="onAdd()"
+      [disabled]="isSaving() || disabledAdd()"
+      [title]="'TM_CREATE_NEW' | translate"
+    >
+      <span class="material-icons">add</span>
+    </button>
+  }
 
   <!-- Delete -->
-  <button
-    *ngIf="showDelete()"
-    id="delete-track-btn"
-    class="toolbar-btn danger"
-    (click)="onDelete()"
-    [disabled]="isSaving() || disabledDelete()"
-    [title]="'TM_DELETE' | translate"
-  >
-    <span class="delete-x">X</span>
-  </button>
+  @if (showDelete()) {
+    <button
+      id="delete-track-btn"
+      class="toolbar-btn danger"
+      (click)="onDelete()"
+      [disabled]="isSaving() || disabledDelete()"
+      [title]="'TM_DELETE' | translate"
+    >
+      <span class="delete-x">X</span>
+    </button>
+  }
 
   <div class="spacer"></div>
 
   <div class="toolbar-utility-group">
     <!-- Google Analytics Toggle -->
-    <button
-      *ngIf="showAnalytics()"
-      id="analytics-btn"
-      class="toolbar-btn analytics"
-      (click)="onToggleAnalytics()"
-      [title]="
-        (isAnalyticsEnabled()
-          ? 'RDS_DISABLE_ANALYTICS'
-          : 'RDS_ENABLE_ANALYTICS'
-        ) | translate
-      "
-    >
-      <div class="analytics-icon-wrapper">
-        <svg viewBox="0 0 24 24" class="analytics-svg">
-          <rect x="2" y="16.5" width="5" height="5" rx="2.5" fill="#E37400" />
-          <rect
-            x="9.5"
-            y="10"
-            width="5"
-            height="11.5"
-            rx="2.5"
-            fill="#E37400"
-          />
-          <rect x="17" y="3" width="5" height="18.5" rx="2.5" fill="#F9AB00" />
-        </svg>
-        <!-- Prohibited Overlay (Circle with slash) -->
-        <svg
-          *ngIf="!isAnalyticsEnabled()"
-          viewBox="0 0 24 24"
-          class="prohibited-svg"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="#ff4444"
-            stroke-width="2"
-            fill="none"
-          />
-          <line
-            x1="4.93"
-            y1="4.93"
-            x2="19.07"
-            y2="19.07"
-            stroke="#ff4444"
-            stroke-width="2"
-          />
-        </svg>
-      </div>
-    </button>
+    @if (showAnalytics()) {
+      <button
+        id="analytics-btn"
+        class="toolbar-btn analytics"
+        (click)="onToggleAnalytics()"
+        [title]="
+          (isAnalyticsEnabled()
+            ? 'RDS_DISABLE_ANALYTICS'
+            : 'RDS_ENABLE_ANALYTICS'
+          ) | translate
+        "
+      >
+        <div class="analytics-icon-wrapper">
+          <svg viewBox="0 0 24 24" class="analytics-svg">
+            <rect x="2" y="16.5" width="5" height="5" rx="2.5" fill="#E37400" />
+            <rect
+              x="9.5"
+              y="10"
+              width="5"
+              height="11.5"
+              rx="2.5"
+              fill="#E37400"
+            />
+            <rect
+              x="17"
+              y="3"
+              width="5"
+              height="18.5"
+              rx="2.5"
+              fill="#F9AB00"
+            />
+          </svg>
+          <!-- Prohibited Overlay (Circle with slash) -->
+          @if (!isAnalyticsEnabled()) {
+            <svg viewBox="0 0 24 24" class="prohibited-svg">
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="#ff4444"
+                stroke-width="2"
+                fill="none"
+              />
+              <line
+                x1="4.93"
+                y1="4.93"
+                x2="19.07"
+                y2="19.07"
+                stroke="#ff4444"
+                stroke-width="2"
+              />
+            </svg>
+          }
+        </div>
+      </button>
+    }
 
     <!-- Help -->
-    <button
-      *ngIf="showHelp()"
-      id="help-track-btn"
-      class="toolbar-btn help"
-      (click)="onHelp()"
-      [title]="'RDS_MENU_TUTORIAL' | translate"
-    >
-      <svg viewBox="0 0 24 24" class="help-svg">
-        <path
-          d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
-        />
-      </svg>
-    </button>
+    @if (showHelp()) {
+      <button
+        id="help-track-btn"
+        class="toolbar-btn help"
+        (click)="onHelp()"
+        [title]="'RDS_MENU_TUTORIAL' | translate"
+      >
+        <svg viewBox="0 0 24 24" class="help-svg">
+          <path
+            d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
+          />
+        </svg>
+      </button>
+    }
   </div>
 </div>
 

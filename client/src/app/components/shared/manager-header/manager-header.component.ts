@@ -3,7 +3,7 @@ import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.comp
 import { Settings } from "src/app/models/settings";
 import { GuideStep } from "src/app/services/help.service";
 import { BackButtonComponent } from "../back-button/back-button.component";
-import { NgIf } from "@angular/common";
+
 import { ToolbarComponent as ToolbarComponent_1 } from "../toolbar/toolbar.component";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
@@ -12,7 +12,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-manager-header",
   templateUrl: "./manager-header.component.html",
   styleUrls: ["./manager-header.component.css"],
-  imports: [BackButtonComponent, NgIf, ToolbarComponent_1, TranslatePipe],
+  imports: [BackButtonComponent, ToolbarComponent_1, TranslatePipe],
 })
 export class ManagerHeaderComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;

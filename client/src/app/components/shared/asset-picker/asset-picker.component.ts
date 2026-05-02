@@ -9,7 +9,7 @@ import {
 import { DataService } from "src/app/data.service";
 
 import { IAssetMessage } from "src/app/proto/antigravity";
-import { NgIf, NgFor } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { AssetPreviewComponent } from "../asset-preview/asset-preview.component";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
@@ -24,7 +24,7 @@ export interface AssetPickerData {
   selector: "app-asset-picker",
   templateUrl: "./asset-picker.component.html",
   styleUrl: "./asset-picker.component.css",
-  imports: [NgIf, FormsModule, NgFor, AssetPreviewComponent, TranslatePipe],
+  imports: [FormsModule, AssetPreviewComponent, TranslatePipe],
 })
 export class AssetPickerComponent implements OnInit {
   visible = input(false);

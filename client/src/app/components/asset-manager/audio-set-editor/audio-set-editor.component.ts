@@ -13,10 +13,10 @@ import { DataService } from "src/app/data.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { IAssetMessage, ISaveAudioSetEntry } from "src/app/proto/antigravity";
-import { NgIf, NgFor } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { AudioSelectorComponent } from "../../shared/audio-selector/audio-selector.component";
-import { RacedayComponent } from "../../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -24,14 +24,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-audio-set-editor",
   templateUrl: "./audio-set-editor.component.html",
   styleUrls: ["./audio-set-editor.component.css"],
-  imports: [
-    NgIf,
-    FormsModule,
-    NgFor,
-    AudioSelectorComponent,
-    RacedayComponent,
-    TranslatePipe,
-  ],
+  imports: [FormsModule, AudioSelectorComponent, TranslatePipe],
 })
 export class AudioSetEditorComponent implements OnInit, OnDestroy {
   visible = input(false);

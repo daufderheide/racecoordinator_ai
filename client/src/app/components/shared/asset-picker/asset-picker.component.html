@@ -1,78 +1,79 @@
-<div class="modal-backdrop" *ngIf="visible()">
-  <div class="asset-picker-container">
-    <div class="picker-header">
-      <h2>{{ "UE_SELECT_ASSET" | translate }}</h2>
-      <div class="search-box">
-        <input
-          type="text"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          [placeholder]="'UE_SEARCH_ASSETS' | translate"
-        />
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path
-            d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+@if (visible()) {
+  <div class="modal-backdrop">
+    <div class="asset-picker-container">
+      <div class="picker-header">
+        <h2>{{ "UE_SELECT_ASSET" | translate }}</h2>
+        <div class="search-box">
+          <input
+            type="text"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            [placeholder]="'UE_SEARCH_ASSETS' | translate"
           />
-        </svg>
-      </div>
-    </div>
-
-    <div class="picker-content" [class.loading]="isLoading()">
-      <div *ngIf="isLoading()" class="spinner-container">
-        <div class="spinner"></div>
-      </div>
-
-      <div
-        *ngIf="!isLoading() && filteredAssets().length === 0"
-        class="no-assets"
-      >
-        <p>{{ "UE_NO_ASSETS_FOUND" | translate }}</p>
-      </div>
-
-      <div
-        *ngIf="!isLoading() && filteredAssets().length > 0"
-        class="asset-grid"
-      >
-        <div
-          *ngFor="let asset of filteredAssets()"
-          class="asset-item"
-          [class.selected]="selectedAssetId() === asset.model?.entityId"
-          (click)="selectAsset(asset)"
-          (dblclick)="confirm()"
-        >
-          <div class="asset-preview">
-            <app-asset-preview
-              [type]="
-                asset.type === 'IMAGE'
-                  ? 'image'
-                  : asset.type === 'IMAGE_SET'
-                    ? 'image_set'
-                    : 'audio'
-              "
-              [assetId]="asset.model?.entityId || undefined"
-              [imageUrl]="getAssetUrl(asset)"
-              [name]="asset.name || ''"
-              [images]="asset.images || undefined"
-              [animate]="true"
-            >
-            </app-asset-preview>
-          </div>
-          <div class="asset-name" [title]="asset.name">{{ asset.name }}</div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+          </svg>
         </div>
       </div>
-    </div>
-
-    <div class="picker-footer">
-      <button class="btn btn-secondary" (click)="cancel()">
-        {{ "GEN_CANCEL" | translate }}
-      </button>
-      <button
-        class="btn btn-primary"
-        [disabled]="!selectedAssetId()"
-        (click)="confirm()"
-      >
-        {{ "GEN_SELECT" | translate }}
-      </button>
+      <div class="picker-content" [class.loading]="isLoading()">
+        @if (isLoading()) {
+          <div class="spinner-container">
+            <div class="spinner"></div>
+          </div>
+        }
+        @if (!isLoading() && filteredAssets().length === 0) {
+          <div class="no-assets">
+            <p>{{ "UE_NO_ASSETS_FOUND" | translate }}</p>
+          </div>
+        }
+        @if (!isLoading() && filteredAssets().length > 0) {
+          <div class="asset-grid">
+            @for (asset of filteredAssets(); track asset) {
+              <div
+                class="asset-item"
+                [class.selected]="selectedAssetId() === asset.model?.entityId"
+                (click)="selectAsset(asset)"
+                (dblclick)="confirm()"
+              >
+                <div class="asset-preview">
+                  <app-asset-preview
+                    [type]="
+                      asset.type === 'IMAGE'
+                        ? 'image'
+                        : asset.type === 'IMAGE_SET'
+                          ? 'image_set'
+                          : 'audio'
+                    "
+                    [assetId]="asset.model?.entityId || undefined"
+                    [imageUrl]="getAssetUrl(asset)"
+                    [name]="asset.name || ''"
+                    [images]="asset.images || undefined"
+                    [animate]="true"
+                  >
+                  </app-asset-preview>
+                </div>
+                <div class="asset-name" [title]="asset.name">
+                  {{ asset.name }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <div class="picker-footer">
+        <button class="btn btn-secondary" (click)="cancel()">
+          {{ "GEN_CANCEL" | translate }}
+        </button>
+        <button
+          class="btn btn-primary"
+          [disabled]="!selectedAssetId()"
+          (click)="confirm()"
+        >
+          {{ "GEN_SELECT" | translate }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
+}

@@ -25,10 +25,10 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
-import { NgIf } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { AboutDialogComponent } from "../shared/about-dialog/about-dialog.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
@@ -60,13 +60,7 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
   selector: "app-raceday-setup",
   templateUrl: "./raceday-setup.component.html",
   styleUrl: "./raceday-setup.component.css",
-  imports: [
-    NgIf,
-    FormsModule,
-    AboutDialogComponent,
-    RacedayComponent,
-    TranslatePipe,
-  ],
+  imports: [FormsModule, AboutDialogComponent, TranslatePipe],
 })
 export class RacedaySetupComponent implements OnInit, OnDestroy {
   @ViewChild("container", { read: ViewContainerRef, static: true })

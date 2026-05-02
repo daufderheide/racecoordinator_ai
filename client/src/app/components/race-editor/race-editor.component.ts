@@ -1,4 +1,4 @@
-import { Location, NgIf, NgFor } from "@angular/common";
+import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -18,7 +18,7 @@ import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/a
 import { EditorTitleComponent } from "../shared/editor-title/editor-title.component";
 import { FormsModule } from "@angular/forms";
 import { HeatListComponent } from "../shared/heat-list/heat-list.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -29,11 +29,8 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   imports: [
     AcknowledgementModalComponent,
     EditorTitleComponent,
-    NgIf,
     FormsModule,
     HeatListComponent,
-    NgFor,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

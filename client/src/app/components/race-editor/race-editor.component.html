@@ -26,1217 +26,1290 @@
   >
   </app-editor-title>
 
-  <div class="content-split" *ngIf="!isLoading">
-    <!-- Editor Panel (Left) -->
-    <div class="editor-panel">
-      <div
-        id="race-name-section"
-        class="editor-section fixed-header"
-        [class.invalid]="isNameInvalid"
-      >
-        <label class="section-label">{{ "RM_LABEL_NAME" | translate }}</label>
-        <input
-          id="race-name-input"
-          type="text"
-          [(ngModel)]="editingRace.name"
-          (ngModelChange)="onInputChange()"
-          (focus)="onInputFocus()"
-          (blur)="onInputBlur()"
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
-        />
-      </div>
-
-      <div class="editor-section">
-        <label>{{ "RM_LABEL_HEAT_ROTATION" | translate }}</label>
-        <select
-          [(ngModel)]="editingRace.heat_rotation_type"
-          (ngModelChange)="onRotationTypeChange()"
+  @if (!isLoading) {
+    <div class="content-split">
+      <!-- Editor Panel (Left) -->
+      <div class="editor-panel">
+        <div
+          id="race-name-section"
+          class="editor-section fixed-header"
+          [class.invalid]="isNameInvalid"
         >
-          <option value="RoundRobin">
-            {{ "RE_ROTATION_ROUND_ROBIN" | translate }}
-          </option>
-          <option value="FriendlyRoundRobin">
-            {{ "RE_ROTATION_FRIENDLY_ROUND_ROBIN" | translate }}
-          </option>
-          <option value="EuropeanRoundRobin">
-            {{ "RE_ROTATION_EUROPEAN_ROUND_ROBIN" | translate }}
-          </option>
-          <option value="SingleHeat">
-            {{ "RE_ROTATION_SINGLE_HEAT" | translate }}
-          </option>
-          <option value="SingleHeatSolo">
-            {{ "RE_ROTATION_SINGLE_HEAT_SOLO" | translate }}
-          </option>
-        </select>
+          <label class="section-label">{{ "RM_LABEL_NAME" | translate }}</label>
+          <input
+            id="race-name-input"
+            type="text"
+            [(ngModel)]="editingRace.name"
+            (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+          />
+        </div>
+        <div class="editor-section">
+          <label>{{ "RM_LABEL_HEAT_ROTATION" | translate }}</label>
+          <select
+            [(ngModel)]="editingRace.heat_rotation_type"
+            (ngModelChange)="onRotationTypeChange()"
+          >
+            <option value="RoundRobin">
+              {{ "RE_ROTATION_ROUND_ROBIN" | translate }}
+            </option>
+            <option value="FriendlyRoundRobin">
+              {{ "RE_ROTATION_FRIENDLY_ROUND_ROBIN" | translate }}
+            </option>
+            <option value="EuropeanRoundRobin">
+              {{ "RE_ROTATION_EUROPEAN_ROUND_ROBIN" | translate }}
+            </option>
+            <option value="SingleHeat">
+              {{ "RE_ROTATION_SINGLE_HEAT" | translate }}
+            </option>
+            <option value="SingleHeatSolo">
+              {{ "RE_ROTATION_SINGLE_HEAT_SOLO" | translate }}
+            </option>
+          </select>
+        </div>
+        <div class="heat-list-section">
+          <div class="heat-list-header">
+            <h3>{{ "RE_HEAT_LIST_HEADER" | translate }}</h3>
+            <div class="driver-count-inline">
+              <label>
+                {{ "RE_LABEL_DRIVER_COUNT" | translate }}
+                <span
+                  class="tooltip-icon"
+                  [attr.data-tooltip]="'RE_DRIVER_COUNT_HINT' | translate"
+                  >ⓘ</span
+                >
+              </label>
+              <input
+                type="number"
+                [(ngModel)]="driverCount"
+                (ngModelChange)="loadHeats()"
+                min="1"
+                max="100"
+                autocomplete="off"
+                data-lpignore="true"
+                data-form-type="other"
+              />
+            </div>
+          </div>
+          <app-heat-list
+            [heats]="generatedHeats"
+            [showHeader]="false"
+            [canDragLanes]="
+              editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
+              editingRace?.heat_rotation_type === 'SingleHeat'
+            "
+            (laneSelected)="onLaneSelected($event)"
+          ></app-heat-list>
+        </div>
+        <div class="editor-actions">
+          <div class="spacer"></div>
+        </div>
       </div>
-
-      <div class="heat-list-section">
-        <div class="heat-list-header">
-          <h3>{{ "RE_HEAT_LIST_HEADER" | translate }}</h3>
-          <div class="driver-count-inline">
-            <label>
-              {{ "RE_LABEL_DRIVER_COUNT" | translate }}
+      <!-- Config Panel (Right) -->
+      <div class="preview-panel">
+        <div class="sections-wrapper">
+          <!-- General Section -->
+          <div id="general-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('general')">
               <span
-                class="tooltip-icon"
-                [attr.data-tooltip]="'RE_DRIVER_COUNT_HINT' | translate"
-                >ⓘ</span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.general"
+                >▼</span
               >
-            </label>
-            <input
-              type="number"
-              [(ngModel)]="driverCount"
-              (ngModelChange)="loadHeats()"
-              min="1"
-              max="100"
-              autocomplete="off"
-              data-lpignore="true"
-              data-form-type="other"
-            />
-          </div>
-        </div>
-        <app-heat-list
-          [heats]="generatedHeats"
-          [showHeader]="false"
-          [canDragLanes]="
-            editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
-            editingRace?.heat_rotation_type === 'SingleHeat'
-          "
-          (laneSelected)="onLaneSelected($event)"
-        ></app-heat-list>
-      </div>
-
-      <div class="editor-actions">
-        <div class="spacer"></div>
-      </div>
-    </div>
-
-    <!-- Config Panel (Right) -->
-    <div class="preview-panel">
-      <div class="sections-wrapper">
-        <!-- General Section -->
-        <div id="general-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('general')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.general"
-              >▼</span
-            >
-            <h1>{{ "RE_GENERAL_HEADER" | translate }}</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.general">
-            <div class="config-row wrap">
-              <div class="editor-section">
-                <label>{{ "RM_LABEL_TRACK" | translate }}</label>
-                <select
-                  id="track-select"
-                  [(ngModel)]="editingRace.track_entity_id"
-                  (ngModelChange)="captureState()"
-                >
-                  <option value="">-- Select Track --</option>
-                  <option
-                    *ngFor="let track of tracks"
-                    [value]="track.entity_id"
-                  >
-                    {{ track.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="editor-section">
-                <label>
-                  {{ "RE_MIN_LAP_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.min_lap_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="0.0"
-                  class="min-lap-time-input"
-                  data-testid="min-lap-time-input"
-                />
-              </div>
-
-              <div class="editor-section">
-                <label>
-                  {{ "RE_DRIFT_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.drift_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="0.0"
-                  class="drift-time-input"
-                  data-testid="drift-time-input"
-                />
-              </div>
+              <h1>{{ "RE_GENERAL_HEADER" | translate }}</h1>
             </div>
-
-            <div class="config-row">
-              <div class="editor-section">
-                <label>
-                  {{ "RE_START_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.start_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="5.0"
-                  class="start-time-input"
-                  data-testid="start-time-input"
-                />
-              </div>
-              <div class="editor-section">
-                <label>
-                  {{ "RE_RESTART_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.restart_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="5.0"
-                  class="restart-time-input"
-                  data-testid="restart-time-input"
-                />
-              </div>
-            </div>
-
-            <div class="config-row">
-              <div class="editor-section">
-                <label>
-                  {{ "RE_START_DELAY" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.start_delay"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="0.0"
-                  class="start-delay-input"
-                  data-testid="start-delay-input"
-                />
-              </div>
-              <div class="editor-section">
-                <label>
-                  {{ "RE_RESTART_DELAY" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.restart_delay"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="0.1"
-                  placeholder="0.0"
-                  class="restart-delay-input"
-                  data-testid="restart-delay-input"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Scoring Section -->
-        <div id="scoring-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('scoring')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.scoring"
-              >▼</span
-            >
-            <h1>Scoring</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.scoring">
-            <div class="scoring-layout">
-              <!-- Heat Scoring Section -->
-              <div class="scoring-column">
-                <h2 class="config-header">
-                  {{ "RE_HEAT_SCORING_HEADER" | translate }}
-                </h2>
-
-                <div class="config-section">
-                  <label>{{ "RE_HEAT_RANKING" | translate }}</label>
-                  <select
-                    [(ngModel)]="editingRace.heat_scoring.heat_ranking"
-                    (ngModelChange)="captureState()"
-                  >
-                    <option value="LAP_COUNT">Lap Count</option>
-                    <option value="FASTEST_LAP">Fastest Lap</option>
-                    <option value="TOTAL_TIME">Total Time</option>
-                  </select>
+            @if (sectionsExpanded.general) {
+              <div class="section-content">
+                <div class="config-row wrap">
+                  <div class="editor-section">
+                    <label>{{ "RM_LABEL_TRACK" | translate }}</label>
+                    <select
+                      id="track-select"
+                      [(ngModel)]="editingRace.track_entity_id"
+                      (ngModelChange)="captureState()"
+                    >
+                      <option value="">-- Select Track --</option>
+                      @for (track of tracks; track track) {
+                        <option [value]="track.entity_id">
+                          {{ track.name }}
+                        </option>
+                      }
+                    </select>
+                  </div>
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_MIN_LAP_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.min_lap_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      class="min-lap-time-input"
+                      data-testid="min-lap-time-input"
+                    />
+                  </div>
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_DRIFT_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.drift_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      class="drift-time-input"
+                      data-testid="drift-time-input"
+                    />
+                  </div>
                 </div>
-
-                <div class="config-section">
-                  <label>{{ "RE_HEAT_TIEBREAKER" | translate }}</label>
-                  <select
-                    [(ngModel)]="
-                      editingRace.heat_scoring.heat_ranking_tiebreaker
+                <div class="config-row">
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_START_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.start_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="5.0"
+                      class="start-time-input"
+                      data-testid="start-time-input"
+                    />
+                  </div>
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_RESTART_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.restart_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="5.0"
+                      class="restart-time-input"
+                      data-testid="restart-time-input"
+                    />
+                  </div>
+                </div>
+                <div class="config-row">
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_START_DELAY" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.start_delay"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      class="start-delay-input"
+                      data-testid="start-delay-input"
+                    />
+                  </div>
+                  <div class="editor-section">
+                    <label>
+                      {{ "RE_RESTART_DELAY" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.restart_delay"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="0.1"
+                      placeholder="0.0"
+                      class="restart-delay-input"
+                      data-testid="restart-delay-input"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <!-- Scoring Section -->
+          <div id="scoring-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('scoring')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.scoring"
+                >▼</span
+              >
+              <h1>Scoring</h1>
+            </div>
+            @if (sectionsExpanded.scoring) {
+              <div class="section-content">
+                <div class="scoring-layout">
+                  <!-- Heat Scoring Section -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "RE_HEAT_SCORING_HEADER" | translate }}
+                    </h2>
+                    <div class="config-section">
+                      <label>{{ "RE_HEAT_RANKING" | translate }}</label>
+                      <select
+                        [(ngModel)]="editingRace.heat_scoring.heat_ranking"
+                        (ngModelChange)="captureState()"
+                      >
+                        <option value="LAP_COUNT">Lap Count</option>
+                        <option value="FASTEST_LAP">Fastest Lap</option>
+                        <option value="TOTAL_TIME">Total Time</option>
+                      </select>
+                    </div>
+                    <div class="config-section">
+                      <label>{{ "RE_HEAT_TIEBREAKER" | translate }}</label>
+                      <select
+                        [(ngModel)]="
+                          editingRace.heat_scoring.heat_ranking_tiebreaker
+                        "
+                        (ngModelChange)="captureState()"
+                      >
+                        <option value="FASTEST_LAP_TIME">
+                          Fastest Lap Time
+                        </option>
+                        <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
+                        <option value="AVERAGE_LAP_TIME">
+                          Average Lap Time
+                        </option>
+                      </select>
+                    </div>
+                    <div class="config-row">
+                      @if (editingRace.heat_scoring.finish_method === "Lap") {
+                        <div class="config-section">
+                          <label>{{ "RE_LAP_COUNT" | translate }}</label>
+                          <input
+                            type="number"
+                            [(ngModel)]="editingRace.heat_scoring.finish_value"
+                            (ngModelChange)="captureState()"
+                            min="1"
+                            max="999"
+                          />
+                        </div>
+                      }
+                      @if (editingRace.heat_scoring.finish_method === "Timed") {
+                        <div class="config-section">
+                          <label>{{ "RE_TIME_SECONDS" | translate }}</label>
+                          <input
+                            type="number"
+                            [(ngModel)]="editingRace.heat_scoring.finish_value"
+                            (ngModelChange)="captureState()"
+                            min="1"
+                            max="3600"
+                          />
+                        </div>
+                      }
+                      <div class="config-section">
+                        <label>{{ "RE_FINISH_METHOD" | translate }}</label>
+                        <select
+                          [(ngModel)]="editingRace.heat_scoring.finish_method"
+                          (ngModelChange)="captureState()"
+                        >
+                          <option value="Lap">Lap</option>
+                          <option value="Timed">Timed</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="config-section">
+                      <label>{{ "RE_ALLOW_FINISH" | translate }}</label>
+                      <select
+                        [(ngModel)]="editingRace.heat_scoring.allow_finish"
+                        (ngModelChange)="captureState()"
+                      >
+                        <option value="None">
+                          {{ "RE_AF_NONE" | translate }}
+                        </option>
+                        <option value="Allow">
+                          {{ "RE_AF_ALLOW" | translate }}
+                        </option>
+                        <option value="SingleLap">
+                          {{ "RE_AF_SINGLE_LAP" | translate }}
+                        </option>
+                        <option value="NoneAutoSegments">
+                          {{ "RE_AF_NONE_AUTO_SEGMENTS" | translate }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- Overall Scoring Section -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "RE_OVERALL_SCORING_HEADER" | translate }}
+                    </h2>
+                    <div class="config-section">
+                      <label>{{ "RE_OVERALL_RANKING" | translate }}</label>
+                      <select
+                        [(ngModel)]="editingRace.overall_scoring.ranking_method"
+                        (ngModelChange)="captureState()"
+                      >
+                        <option value="LAP_COUNT">Lap Count</option>
+                        <option value="FASTEST_LAP">Fastest Lap</option>
+                        <option value="TOTAL_TIME">Total Time</option>
+                        <option value="AVERAGE_LAP">Average Lap</option>
+                      </select>
+                    </div>
+                    <div class="config-section">
+                      <label>{{ "RE_OVERALL_TIEBREAKER" | translate }}</label>
+                      <select
+                        [(ngModel)]="editingRace.overall_scoring.tiebreaker"
+                        (ngModelChange)="captureState()"
+                      >
+                        <option value="FASTEST_LAP_TIME">
+                          Fastest Lap Time
+                        </option>
+                        <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
+                        <option value="AVERAGE_LAP_TIME">
+                          Average Lap Time
+                        </option>
+                        <option value="TOTAL_TIME">Total Time</option>
+                      </select>
+                    </div>
+                    <div class="config-section">
+                      <label>{{ "RE_DROPPED_HEATS" | translate }}</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="editingRace.overall_scoring.dropped_heats"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        max="10"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <!-- Heats Section -->
+          <div id="heats-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('heats')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.heats"
+                >▼</span
+              >
+              <h1>{{ "RE_HEATS_HEADER" | translate }}</h1>
+            </div>
+            @if (sectionsExpanded.heats) {
+              <div class="section-content">
+                <div class="config-row">
+                  <div class="config-section">
+                    <label>{{ "RE_AUTO_ADVANCE_TIME" | translate }}</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.auto_advance_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                  <div class="config-section">
+                    <label>
+                      {{ "RE_AUTO_ADVANCE_WARMUP_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.auto_advance_warmup_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      [max]="editingRace.auto_advance_time || 0"
+                      step="1"
+                    />
+                  </div>
+                </div>
+                <div class="config-row">
+                  <div class="config-section">
+                    <label>{{ "RE_AUTO_START_TIME" | translate }}</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.auto_start_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      step="1"
+                    />
+                  </div>
+                  <div class="config-section">
+                    <label>
+                      {{ "RE_AUTO_START_WARMUP_TIME" | translate }}
+                    </label>
+                    <input
+                      type="number"
+                      [(ngModel)]="editingRace.auto_start_warmup_time"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      [max]="editingRace.auto_start_time || 0"
+                      step="1"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <!-- Analog Fuel Section -->
+          <div id="analog-fuel-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('fuel_analog')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.fuel_analog"
+                >▼</span
+              >
+              <h1>{{ "RE_ANALOG_FUEL_HEADER" | translate }}</h1>
+            </div>
+            @if (sectionsExpanded.fuel_analog) {
+              <div class="section-content">
+                <div class="fuel-config-section">
+                  <div class="config-row fuel-enabled-row">
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="hasDigitalFuel"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.fuel_options.enabled"
+                          (ngModelChange)="captureState()"
+                          [disabled]="hasDigitalFuel"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">{{
+                          "RE_FUEL_ENABLED" | translate
+                        }}</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div
+                    class="fuel-options-grid"
+                    [class.options-disabled]="
+                      hasDigitalFuel || !editingRace.fuel_options.enabled
                     "
-                    (ngModelChange)="captureState()"
                   >
-                    <option value="FASTEST_LAP_TIME">Fastest Lap Time</option>
-                    <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
-                    <option value="AVERAGE_LAP_TIME">Average Lap Time</option>
-                  </select>
-                </div>
-                <div class="config-row">
-                  <div
-                    class="config-section"
-                    *ngIf="editingRace.heat_scoring.finish_method === 'Lap'"
-                  >
-                    <label>{{ "RE_LAP_COUNT" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.heat_scoring.finish_value"
-                      (ngModelChange)="captureState()"
-                      min="1"
-                      max="999"
-                    />
-                  </div>
-                  <div
-                    class="config-section"
-                    *ngIf="editingRace.heat_scoring.finish_method === 'Timed'"
-                  >
-                    <label>{{ "RE_TIME_SECONDS" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.heat_scoring.finish_value"
-                      (ngModelChange)="captureState()"
-                      min="1"
-                      max="3600"
-                    />
-                  </div>
-
-                  <div class="config-section">
-                    <label>{{ "RE_FINISH_METHOD" | translate }}</label>
-                    <select
-                      [(ngModel)]="editingRace.heat_scoring.finish_method"
-                      (ngModelChange)="captureState()"
-                    >
-                      <option value="Lap">Lap</option>
-                      <option value="Timed">Timed</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="config-section">
-                  <label>{{ "RE_ALLOW_FINISH" | translate }}</label>
-                  <select
-                    [(ngModel)]="editingRace.heat_scoring.allow_finish"
-                    (ngModelChange)="captureState()"
-                  >
-                    <option value="None">{{ "RE_AF_NONE" | translate }}</option>
-                    <option value="Allow">
-                      {{ "RE_AF_ALLOW" | translate }}
-                    </option>
-                    <option value="SingleLap">
-                      {{ "RE_AF_SINGLE_LAP" | translate }}
-                    </option>
-                    <option value="NoneAutoSegments">
-                      {{ "RE_AF_NONE_AUTO_SEGMENTS" | translate }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Overall Scoring Section -->
-              <div class="scoring-column">
-                <h2 class="config-header">
-                  {{ "RE_OVERALL_SCORING_HEADER" | translate }}
-                </h2>
-
-                <div class="config-section">
-                  <label>{{ "RE_OVERALL_RANKING" | translate }}</label>
-                  <select
-                    [(ngModel)]="editingRace.overall_scoring.ranking_method"
-                    (ngModelChange)="captureState()"
-                  >
-                    <option value="LAP_COUNT">Lap Count</option>
-                    <option value="FASTEST_LAP">Fastest Lap</option>
-                    <option value="TOTAL_TIME">Total Time</option>
-                    <option value="AVERAGE_LAP">Average Lap</option>
-                  </select>
-                </div>
-
-                <div class="config-section">
-                  <label>{{ "RE_OVERALL_TIEBREAKER" | translate }}</label>
-                  <select
-                    [(ngModel)]="editingRace.overall_scoring.tiebreaker"
-                    (ngModelChange)="captureState()"
-                  >
-                    <option value="FASTEST_LAP_TIME">Fastest Lap Time</option>
-                    <option value="MEDIAN_LAP_TIME">Median Lap Time</option>
-                    <option value="AVERAGE_LAP_TIME">Average Lap Time</option>
-                    <option value="TOTAL_TIME">Total Time</option>
-                  </select>
-                </div>
-
-                <div class="config-section">
-                  <label>{{ "RE_DROPPED_HEATS" | translate }}</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="editingRace.overall_scoring.dropped_heats"
-                    (ngModelChange)="captureState()"
-                    min="0"
-                    max="10"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Heats Section -->
-        <div id="heats-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('heats')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.heats"
-              >▼</span
-            >
-            <h1>{{ "RE_HEATS_HEADER" | translate }}</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.heats">
-            <div class="config-row">
-              <div class="config-section">
-                <label>{{ "RE_AUTO_ADVANCE_TIME" | translate }}</label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.auto_advance_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="1"
-                />
-              </div>
-              <div class="config-section">
-                <label>
-                  {{ "RE_AUTO_ADVANCE_WARMUP_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.auto_advance_warmup_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  [max]="editingRace.auto_advance_time || 0"
-                  step="1"
-                />
-              </div>
-            </div>
-            <div class="config-row">
-              <div class="config-section">
-                <label>{{ "RE_AUTO_START_TIME" | translate }}</label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.auto_start_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  step="1"
-                />
-              </div>
-              <div class="config-section">
-                <label>
-                  {{ "RE_AUTO_START_WARMUP_TIME" | translate }}
-                </label>
-                <input
-                  type="number"
-                  [(ngModel)]="editingRace.auto_start_warmup_time"
-                  (ngModelChange)="captureState()"
-                  min="0"
-                  [max]="editingRace.auto_start_time || 0"
-                  step="1"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Analog Fuel Section -->
-        <div id="analog-fuel-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('fuel_analog')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.fuel_analog"
-              >▼</span
-            >
-            <h1>{{ "RE_ANALOG_FUEL_HEADER" | translate }}</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.fuel_analog">
-            <div class="fuel-config-section">
-              <div class="config-row fuel-enabled-row">
-                <div class="config-section checkbox-section">
-                  <label
-                    class="checkbox-container"
-                    [class.disabled]="hasDigitalFuel"
-                  >
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="editingRace.fuel_options.enabled"
-                      (ngModelChange)="captureState()"
-                      [disabled]="hasDigitalFuel"
-                    />
-                    <span class="checkmark"></span>
-                    <span class="checkbox-label">{{
-                      "RE_FUEL_ENABLED" | translate
-                    }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <div
-                class="fuel-options-grid"
-                [class.options-disabled]="
-                  hasDigitalFuel || !editingRace.fuel_options.enabled
-                "
-              >
-                <div class="config-row">
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
-                    <select
-                      [(ngModel)]="editingRace.fuel_options.usage_type"
-                      (ngModelChange)="captureState()"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    >
-                      <option value="LINEAR">
-                        {{ "RE_FUEL_USAGE_LINEAR" | translate }}
-                      </option>
-                      <option value="QUADRATIC">
-                        {{ "RE_FUEL_USAGE_QUADRATIC" | translate }}
-                      </option>
-                      <option value="CUBIC">
-                        {{ "RE_FUEL_USAGE_CUBIC" | translate }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.usage_rate"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="0.1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_REFERENCE_TIME" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.reference_time"
-                      (ngModelChange)="captureState()"
-                      step="1"
-                      min="1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.capacity"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.start_level"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      max="100"
-                      step="1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.refuel_rate"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="0.1"
-                      [disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="config-section checkbox-section">
-                    <label
-                      class="checkbox-container"
-                      [class.disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="
-                          editingRace.fuel_options.reset_fuel_at_heat_start
-                        "
-                        (ngModelChange)="captureState()"
-                        [disabled]="
-                          hasDigitalFuel || !editingRace.fuel_options.enabled
-                        "
-                      />
-                      <span class="checkmark"></span>
-                      <span class="checkbox-label">{{
-                        "RE_RESET_FUEL_AT_START" | translate
-                      }}</span>
-                    </label>
-                  </div>
-                  <div class="config-section checkbox-section">
-                    <label
-                      class="checkbox-container"
-                      [class.disabled]="
-                        hasDigitalFuel || !editingRace.fuel_options.enabled
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="
-                          editingRace.fuel_options.end_heat_on_out_of_fuel
-                        "
-                        (ngModelChange)="captureState()"
-                        [disabled]="
-                          hasDigitalFuel || !editingRace.fuel_options.enabled
-                        "
-                      />
-                      <span class="checkmark"></span>
-                      <span class="checkbox-label">{{
-                        "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
-                      }}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Fuel Graphs -->
-              <div
-                class="fuel-graphs-container"
-                *ngIf="editingRace.fuel_options.enabled"
-              >
-                <!-- Graph 1: Fuel Usage -->
-                <div class="fuel-graph-section">
-                  <div class="graph-header">
-                    <span class="graph-title"
-                      >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} (2s -
-                      15s)</span
-                    >
-                  </div>
-                  <div class="graph-body">
-                    <div class="y-axis-labels">
-                      <span *ngFor="let label of getFuelUsageYLabels()">{{
-                        label
-                      }}</span>
-                    </div>
-                    <div class="y-axis-label">FUEL USED</div>
-                    <div class="graph-svg-wrapper">
-                      <svg
-                        viewBox="0 0 400 150"
-                        preserveAspectRatio="none"
-                        class="fuel-graph"
-                        (mousemove)="onGraphMouseMove($event, 'usage')"
-                        (mouseleave)="onGraphMouseLeave()"
-                      >
-                        <line x1="0" y1="0" x2="0" y2="150" class="axis" />
-                        <line x1="0" y1="150" x2="400" y2="150" class="axis" />
-                        <line
-                          *ngFor="let h of [37.5, 75, 112.5]"
-                          x1="0"
-                          [attr.y1]="h"
-                          x2="400"
-                          [attr.y2]="h"
-                          class="grid"
-                        />
-                        <line
-                          *ngFor="let v of [100, 200, 300]"
-                          [attr.x1]="v"
-                          y1="0"
-                          [attr.x2]="v"
-                          y2="150"
-                          class="grid"
-                        />
-                        <path
-                          [attr.d]="getFuelUsagePath()"
-                          class="usage-path"
-                        />
-                        <g
-                          *ngIf="hoveredPoint && hoveredPoint.type === 'usage'"
-                        >
-                          <line
-                            [attr.x1]="hoveredPoint.svgX"
-                            y1="0"
-                            [attr.x2]="hoveredPoint.svgX"
-                            y2="150"
-                            class="hover-line"
-                          />
-                          <circle
-                            [attr.cx]="hoveredPoint.svgX"
-                            [attr.cy]="hoveredPoint.svgY"
-                            r="6"
-                            class="hover-point"
-                          />
-                        </g>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="x-axis-labels">
-                    <span>2s</span><span>5.25s</span><span>8.5s</span
-                    ><span>11.75s</span><span>15s</span>
-                  </div>
-                </div>
-
-                <!-- Graph 2: Time to Pit -->
-                <div class="fuel-graph-section">
-                  <div class="graph-header">
-                    <span class="graph-title">{{
-                      "RE_FUEL_GRAPH_PIT_TITLE" | translate
-                    }}</span>
-                  </div>
-                  <div class="graph-body">
-                    <div class="y-axis-labels">
-                      <span>15s</span><span>11.75s</span><span>8.5s</span
-                      ><span>5.25s</span><span>2s</span>
-                    </div>
-                    <div class="y-axis-label">
-                      {{ "RE_FUEL_GRAPH_LAP_TIME" | translate }}
-                    </div>
-                    <div class="graph-svg-wrapper">
-                      <svg
-                        viewBox="0 0 400 150"
-                        preserveAspectRatio="none"
-                        class="fuel-graph"
-                        (mousemove)="onGraphMouseMove($event, 'pit')"
-                        (mouseleave)="onGraphMouseLeave()"
-                      >
-                        <line x1="0" y1="0" x2="0" y2="150" class="axis" />
-                        <line x1="0" y1="150" x2="400" y2="150" class="axis" />
-                        <line
-                          *ngFor="let h of [37.5, 75, 112.5]"
-                          x1="0"
-                          [attr.y1]="h"
-                          x2="400"
-                          [attr.y2]="h"
-                          class="grid"
-                        />
-                        <line
-                          *ngFor="let v of [100, 200, 300]"
-                          [attr.x1]="v"
-                          y1="0"
-                          [attr.x2]="v"
-                          y2="150"
-                          class="grid"
-                        />
-                        <path [attr.d]="getPitGraphPath()" class="usage-path" />
-                        <g *ngIf="hoveredPoint && hoveredPoint.type === 'pit'">
-                          <circle
-                            [attr.cx]="hoveredPoint.svgX"
-                            [attr.cy]="hoveredPoint.svgY"
-                            r="6"
-                            class="hover-point"
-                          />
-                        </g>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="x-axis-labels">
-                    <span *ngFor="let label of getPitGraphXLabels()">{{
-                      label
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Digital Fuel Section -->
-        <div id="digital-fuel-outer-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('fuel_digital')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.fuel_digital"
-              >▼</span
-            >
-            <h1>{{ "RE_DIGITAL_FUEL_HEADER" | translate }}</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.fuel_digital">
-            <div class="fuel-config-section" id="digital-fuel-section">
-              <div class="config-row fuel-enabled-row">
-                <div class="config-section checkbox-section">
-                  <label
-                    class="checkbox-container"
-                    [class.disabled]="!hasDigitalFuel"
-                  >
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="editingRace.digital_fuel_options.enabled"
-                      (ngModelChange)="captureState()"
-                      id="digital-fuel-enabled-checkbox"
-                      [disabled]="!hasDigitalFuel"
-                    />
-                    <span class="checkmark"></span>
-                    <span
-                      class="checkbox-label"
-                      id="digital-fuel-enabled-label"
-                      >{{ "RE_DIGITAL_FUEL_ENABLED" | translate }}</span
-                    >
-                  </label>
-                </div>
-              </div>
-
-              <div
-                class="fuel-options-grid"
-                [class.options-disabled]="
-                  !hasDigitalFuel || !editingRace.digital_fuel_options.enabled
-                "
-              >
-                <div class="config-row">
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
-                    <select
-                      [(ngModel)]="editingRace.digital_fuel_options.usage_type"
-                      (ngModelChange)="captureState()"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    >
-                      <option value="LINEAR">
-                        {{ "RE_FUEL_USAGE_LINEAR" | translate }}
-                      </option>
-                      <option value="QUADRATIC">
-                        {{ "RE_FUEL_USAGE_QUADRATIC" | translate }}
-                      </option>
-                      <option value="CUBIC">
-                        {{ "RE_FUEL_USAGE_CUBIC" | translate }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.digital_fuel_options.usage_rate"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="0.1"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.digital_fuel_options.capacity"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="1"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.digital_fuel_options.start_level"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      max="100"
-                      step="1"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.digital_fuel_options.refuel_rate"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="1"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    />
-                  </div>
-                  <div class="config-section">
-                    <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="
-                        editingRace.digital_fuel_options.pit_stop_delay
-                      "
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      step="0.1"
-                      [disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="config-section checkbox-section">
-                    <label
-                      class="checkbox-container"
-                      [class.disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="
-                          editingRace.digital_fuel_options
-                            .reset_fuel_at_heat_start
-                        "
-                        (ngModelChange)="captureState()"
-                        [disabled]="
-                          !hasDigitalFuel ||
-                          !editingRace.digital_fuel_options.enabled
-                        "
-                      />
-                      <span class="checkmark"></span>
-                      <span class="checkbox-label">{{
-                        "RE_RESET_FUEL_AT_START" | translate
-                      }}</span>
-                    </label>
-                  </div>
-                  <div class="config-section checkbox-section">
-                    <label
-                      class="checkbox-container"
-                      [class.disabled]="
-                        !hasDigitalFuel ||
-                        !editingRace.digital_fuel_options.enabled
-                      "
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="
-                          editingRace.digital_fuel_options
-                            .end_heat_on_out_of_fuel
-                        "
-                        (ngModelChange)="captureState()"
-                        [disabled]="
-                          !hasDigitalFuel ||
-                          !editingRace.digital_fuel_options.enabled
-                        "
-                      />
-                      <span class="checkmark"></span>
-                      <span class="checkbox-label">{{
-                        "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
-                      }}</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Digital Fuel Graphs -->
-              <div
-                class="fuel-graphs-container"
-                *ngIf="editingRace.digital_fuel_options.enabled"
-              >
-                <!-- Digital Graph 1: Fuel Usage -->
-                <div class="fuel-graph-section">
-                  <div class="graph-header">
-                    <span class="graph-title">{{
-                      "RE_DIGITAL_FUEL_GRAPH_USAGE_TITLE" | translate
-                    }}</span>
-                  </div>
-                  <div class="graph-body">
-                    <div class="y-axis-labels">
-                      <span *ngFor="let label of getDigitalUsageYLabels()">{{
-                        label
-                      }}</span>
-                    </div>
-                    <div class="y-axis-label">
-                      {{ "RE_DIGITAL_FUEL_USAGE_PER_SEC" | translate }}
-                    </div>
-                    <div class="graph-svg-wrapper">
-                      <svg
-                        viewBox="0 0 400 150"
-                        preserveAspectRatio="none"
-                        class="fuel-graph"
-                        (mousemove)="onDigitalGraphMouseMove($event, 'usage')"
-                        (mouseleave)="onGraphMouseLeave()"
-                      >
-                        <line x1="0" y1="0" x2="0" y2="150" class="axis" />
-                        <line x1="0" y1="150" x2="400" y2="150" class="axis" />
-                        <line
-                          *ngFor="let h of [37.5, 75, 112.5]"
-                          x1="0"
-                          [attr.y1]="h"
-                          x2="400"
-                          [attr.y2]="h"
-                          class="grid"
-                        />
-                        <line
-                          *ngFor="let v of [100, 200, 300]"
-                          [attr.x1]="v"
-                          y1="0"
-                          [attr.x2]="v"
-                          y2="150"
-                          class="grid"
-                        />
-                        <path
-                          [attr.d]="getDigitalUsagePath()"
-                          class="usage-path"
-                        />
-                        <g
-                          *ngIf="
-                            hoveredPoint &&
-                            hoveredPoint.type === 'digital_usage'
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
+                        <select
+                          [(ngModel)]="editingRace.fuel_options.usage_type"
+                          (ngModelChange)="captureState()"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
                           "
                         >
-                          <line
-                            [attr.x1]="hoveredPoint.svgX"
-                            y1="0"
-                            [attr.x2]="hoveredPoint.svgX"
-                            y2="150"
-                            class="hover-line"
-                          />
-                          <circle
-                            [attr.cx]="hoveredPoint.svgX"
-                            [attr.cy]="hoveredPoint.svgY"
-                            r="6"
-                            class="hover-point"
-                          />
-                        </g>
-                      </svg>
-                    </div>
-                  </div>
-                  <div class="x-axis-labels">
-                    <span>0%</span><span>25%</span><span>50%</span
-                    ><span>75%</span><span>100%</span>
-                  </div>
-                </div>
-
-                <!-- Digital Graph 2: Time to Empty -->
-                <div class="fuel-graph-section">
-                  <div class="graph-header">
-                    <span class="graph-title">{{
-                      "RE_DIGITAL_FUEL_GRAPH_PIT_TITLE" | translate
-                    }}</span>
-                  </div>
-                  <div class="graph-body">
-                    <div class="y-axis-labels">
-                      <span>100%</span><span>75%</span><span>50%</span
-                      ><span>25%</span><span>0%</span>
-                    </div>
-                    <div class="y-axis-label">
-                      {{ "RE_DIGITAL_FUEL_THROTTLE" | translate }}
-                    </div>
-                    <div class="graph-svg-wrapper">
-                      <svg
-                        viewBox="0 0 400 150"
-                        preserveAspectRatio="none"
-                        class="fuel-graph"
-                        (mousemove)="onDigitalGraphMouseMove($event, 'pit')"
-                        (mouseleave)="onGraphMouseLeave()"
-                      >
-                        <line x1="0" y1="0" x2="0" y2="150" class="axis" />
-                        <line x1="0" y1="150" x2="400" y2="150" class="axis" />
-                        <line
-                          *ngFor="let h of [37.5, 75, 112.5]"
-                          x1="0"
-                          [attr.y1]="h"
-                          x2="400"
-                          [attr.y2]="h"
-                          class="grid"
+                          <option value="LINEAR">
+                            {{ "RE_FUEL_USAGE_LINEAR" | translate }}
+                          </option>
+                          <option value="QUADRATIC">
+                            {{ "RE_FUEL_USAGE_QUADRATIC" | translate }}
+                          </option>
+                          <option value="CUBIC">
+                            {{ "RE_FUEL_USAGE_CUBIC" | translate }}
+                          </option>
+                        </select>
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.usage_rate"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="0.1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
                         />
-                        <line
-                          *ngFor="let v of [100, 200, 300]"
-                          [attr.x1]="v"
-                          y1="0"
-                          [attr.x2]="v"
-                          y2="150"
-                          class="grid"
+                      </div>
+                      <div class="config-section">
+                        <label>{{
+                          "RE_FUEL_REFERENCE_TIME" | translate
+                        }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.reference_time"
+                          (ngModelChange)="captureState()"
+                          step="1"
+                          min="1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
                         />
-                        <path
-                          [attr.d]="getDigitalPitPath()"
-                          class="usage-path"
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.capacity"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
                         />
-                        <g
-                          *ngIf="
-                            hoveredPoint && hoveredPoint.type === 'digital_pit'
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.start_level"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          max="100"
+                          step="1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.refuel_rate"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
+                        />
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="0.1"
+                          [disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="config-section checkbox-section">
+                        <label
+                          class="checkbox-container"
+                          [class.disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
                           "
                         >
-                          <circle
-                            [attr.cx]="hoveredPoint.svgX"
-                            [attr.cy]="hoveredPoint.svgY"
-                            r="6"
-                            class="hover-point"
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.fuel_options.reset_fuel_at_heat_start
+                            "
+                            (ngModelChange)="captureState()"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
                           />
-                        </g>
-                      </svg>
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_RESET_FUEL_AT_START" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                      <div class="config-section checkbox-section">
+                        <label
+                          class="checkbox-container"
+                          [class.disabled]="
+                            hasDigitalFuel || !editingRace.fuel_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.fuel_options.end_heat_on_out_of_fuel
+                            "
+                            (ngModelChange)="captureState()"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
+                          }}</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
-                  <div class="x-axis-labels">
-                    <span *ngFor="let label of getDigitalPitXLabels()">{{
-                      label
-                    }}</span>
-                  </div>
+                  <!-- Fuel Graphs -->
+                  @if (editingRace.fuel_options.enabled) {
+                    <div class="fuel-graphs-container">
+                      <!-- Graph 1: Fuel Usage -->
+                      <div class="fuel-graph-section">
+                        <div class="graph-header">
+                          <span class="graph-title"
+                            >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} (2s -
+                            15s)</span
+                          >
+                        </div>
+                        <div class="graph-body">
+                          <div class="y-axis-labels">
+                            @for (label of getFuelUsageYLabels(); track label) {
+                              <span>{{ label }}</span>
+                            }
+                          </div>
+                          <div class="y-axis-label">FUEL USED</div>
+                          <div class="graph-svg-wrapper">
+                            <svg
+                              viewBox="0 0 400 150"
+                              preserveAspectRatio="none"
+                              class="fuel-graph"
+                              (mousemove)="onGraphMouseMove($event, 'usage')"
+                              (mouseleave)="onGraphMouseLeave()"
+                            >
+                              <line
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="150"
+                                class="axis"
+                              />
+                              <line
+                                x1="0"
+                                y1="150"
+                                x2="400"
+                                y2="150"
+                                class="axis"
+                              />
+                              @for (h of [37.5, 75, 112.5]; track h) {
+                                <line
+                                  x1="0"
+                                  [attr.y1]="h"
+                                  x2="400"
+                                  [attr.y2]="h"
+                                  class="grid"
+                                />
+                              }
+                              @for (v of [100, 200, 300]; track v) {
+                                <line
+                                  [attr.x1]="v"
+                                  y1="0"
+                                  [attr.x2]="v"
+                                  y2="150"
+                                  class="grid"
+                                />
+                              }
+                              <path
+                                [attr.d]="getFuelUsagePath()"
+                                class="usage-path"
+                              />
+                              @if (
+                                hoveredPoint && hoveredPoint.type === "usage"
+                              ) {
+                                <g>
+                                  <line
+                                    [attr.x1]="hoveredPoint.svgX"
+                                    y1="0"
+                                    [attr.x2]="hoveredPoint.svgX"
+                                    y2="150"
+                                    class="hover-line"
+                                  />
+                                  <circle
+                                    [attr.cx]="hoveredPoint.svgX"
+                                    [attr.cy]="hoveredPoint.svgY"
+                                    r="6"
+                                    class="hover-point"
+                                  />
+                                </g>
+                              }
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="x-axis-labels">
+                          <span>2s</span><span>5.25s</span><span>8.5s</span
+                          ><span>11.75s</span><span>15s</span>
+                        </div>
+                      </div>
+                      <!-- Graph 2: Time to Pit -->
+                      <div class="fuel-graph-section">
+                        <div class="graph-header">
+                          <span class="graph-title">{{
+                            "RE_FUEL_GRAPH_PIT_TITLE" | translate
+                          }}</span>
+                        </div>
+                        <div class="graph-body">
+                          <div class="y-axis-labels">
+                            <span>15s</span><span>11.75s</span><span>8.5s</span
+                            ><span>5.25s</span><span>2s</span>
+                          </div>
+                          <div class="y-axis-label">
+                            {{ "RE_FUEL_GRAPH_LAP_TIME" | translate }}
+                          </div>
+                          <div class="graph-svg-wrapper">
+                            <svg
+                              viewBox="0 0 400 150"
+                              preserveAspectRatio="none"
+                              class="fuel-graph"
+                              (mousemove)="onGraphMouseMove($event, 'pit')"
+                              (mouseleave)="onGraphMouseLeave()"
+                            >
+                              <line
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="150"
+                                class="axis"
+                              />
+                              <line
+                                x1="0"
+                                y1="150"
+                                x2="400"
+                                y2="150"
+                                class="axis"
+                              />
+                              @for (h of [37.5, 75, 112.5]; track h) {
+                                <line
+                                  x1="0"
+                                  [attr.y1]="h"
+                                  x2="400"
+                                  [attr.y2]="h"
+                                  class="grid"
+                                />
+                              }
+                              @for (v of [100, 200, 300]; track v) {
+                                <line
+                                  [attr.x1]="v"
+                                  y1="0"
+                                  [attr.x2]="v"
+                                  y2="150"
+                                  class="grid"
+                                />
+                              }
+                              <path
+                                [attr.d]="getPitGraphPath()"
+                                class="usage-path"
+                              />
+                              @if (
+                                hoveredPoint && hoveredPoint.type === "pit"
+                              ) {
+                                <g>
+                                  <circle
+                                    [attr.cx]="hoveredPoint.svgX"
+                                    [attr.cy]="hoveredPoint.svgY"
+                                    r="6"
+                                    class="hover-point"
+                                  />
+                                </g>
+                              }
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="x-axis-labels">
+                          @for (label of getPitGraphXLabels(); track label) {
+                            <span>{{ label }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               </div>
+            }
+          </div>
+          <!-- Digital Fuel Section -->
+          <div id="digital-fuel-outer-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('fuel_digital')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.fuel_digital"
+                >▼</span
+              >
+              <h1>{{ "RE_DIGITAL_FUEL_HEADER" | translate }}</h1>
             </div>
+            @if (sectionsExpanded.fuel_digital) {
+              <div class="section-content">
+                <div class="fuel-config-section" id="digital-fuel-section">
+                  <div class="config-row fuel-enabled-row">
+                    <div class="config-section checkbox-section">
+                      <label
+                        class="checkbox-container"
+                        [class.disabled]="!hasDigitalFuel"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.digital_fuel_options.enabled"
+                          (ngModelChange)="captureState()"
+                          id="digital-fuel-enabled-checkbox"
+                          [disabled]="!hasDigitalFuel"
+                        />
+                        <span class="checkmark"></span>
+                        <span
+                          class="checkbox-label"
+                          id="digital-fuel-enabled-label"
+                          >{{ "RE_DIGITAL_FUEL_ENABLED" | translate }}</span
+                        >
+                      </label>
+                    </div>
+                  </div>
+                  <div
+                    class="fuel-options-grid"
+                    [class.options-disabled]="
+                      !hasDigitalFuel ||
+                      !editingRace.digital_fuel_options.enabled
+                    "
+                  >
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
+                        <select
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.usage_type
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        >
+                          <option value="LINEAR">
+                            {{ "RE_FUEL_USAGE_LINEAR" | translate }}
+                          </option>
+                          <option value="QUADRATIC">
+                            {{ "RE_FUEL_USAGE_QUADRATIC" | translate }}
+                          </option>
+                          <option value="CUBIC">
+                            {{ "RE_FUEL_USAGE_CUBIC" | translate }}
+                          </option>
+                        </select>
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.usage_rate
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="0.1"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        />
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.capacity
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="1"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.start_level
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          max="100"
+                          step="1"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        />
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.refuel_rate
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="1"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        />
+                      </div>
+                      <div class="config-section">
+                        <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.pit_stop_delay
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          step="0.1"
+                          [disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="config-section checkbox-section">
+                        <label
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.digital_fuel_options
+                                .reset_fuel_at_heat_start
+                            "
+                            (ngModelChange)="captureState()"
+                            [disabled]="
+                              !hasDigitalFuel ||
+                              !editingRace.digital_fuel_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_RESET_FUEL_AT_START" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                      <div class="config-section checkbox-section">
+                        <label
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !hasDigitalFuel ||
+                            !editingRace.digital_fuel_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.digital_fuel_options
+                                .end_heat_on_out_of_fuel
+                            "
+                            (ngModelChange)="captureState()"
+                            [disabled]="
+                              !hasDigitalFuel ||
+                              !editingRace.digital_fuel_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Digital Fuel Graphs -->
+                  @if (editingRace.digital_fuel_options.enabled) {
+                    <div class="fuel-graphs-container">
+                      <!-- Digital Graph 1: Fuel Usage -->
+                      <div class="fuel-graph-section">
+                        <div class="graph-header">
+                          <span class="graph-title">{{
+                            "RE_DIGITAL_FUEL_GRAPH_USAGE_TITLE" | translate
+                          }}</span>
+                        </div>
+                        <div class="graph-body">
+                          <div class="y-axis-labels">
+                            @for (
+                              label of getDigitalUsageYLabels();
+                              track label
+                            ) {
+                              <span>{{ label }}</span>
+                            }
+                          </div>
+                          <div class="y-axis-label">
+                            {{ "RE_DIGITAL_FUEL_USAGE_PER_SEC" | translate }}
+                          </div>
+                          <div class="graph-svg-wrapper">
+                            <svg
+                              viewBox="0 0 400 150"
+                              preserveAspectRatio="none"
+                              class="fuel-graph"
+                              (mousemove)="
+                                onDigitalGraphMouseMove($event, 'usage')
+                              "
+                              (mouseleave)="onGraphMouseLeave()"
+                            >
+                              <line
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="150"
+                                class="axis"
+                              />
+                              <line
+                                x1="0"
+                                y1="150"
+                                x2="400"
+                                y2="150"
+                                class="axis"
+                              />
+                              @for (h of [37.5, 75, 112.5]; track h) {
+                                <line
+                                  x1="0"
+                                  [attr.y1]="h"
+                                  x2="400"
+                                  [attr.y2]="h"
+                                  class="grid"
+                                />
+                              }
+                              @for (v of [100, 200, 300]; track v) {
+                                <line
+                                  [attr.x1]="v"
+                                  y1="0"
+                                  [attr.x2]="v"
+                                  y2="150"
+                                  class="grid"
+                                />
+                              }
+                              <path
+                                [attr.d]="getDigitalUsagePath()"
+                                class="usage-path"
+                              />
+                              @if (
+                                hoveredPoint &&
+                                hoveredPoint.type === "digital_usage"
+                              ) {
+                                <g>
+                                  <line
+                                    [attr.x1]="hoveredPoint.svgX"
+                                    y1="0"
+                                    [attr.x2]="hoveredPoint.svgX"
+                                    y2="150"
+                                    class="hover-line"
+                                  />
+                                  <circle
+                                    [attr.cx]="hoveredPoint.svgX"
+                                    [attr.cy]="hoveredPoint.svgY"
+                                    r="6"
+                                    class="hover-point"
+                                  />
+                                </g>
+                              }
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="x-axis-labels">
+                          <span>0%</span><span>25%</span><span>50%</span
+                          ><span>75%</span><span>100%</span>
+                        </div>
+                      </div>
+                      <!-- Digital Graph 2: Time to Empty -->
+                      <div class="fuel-graph-section">
+                        <div class="graph-header">
+                          <span class="graph-title">{{
+                            "RE_DIGITAL_FUEL_GRAPH_PIT_TITLE" | translate
+                          }}</span>
+                        </div>
+                        <div class="graph-body">
+                          <div class="y-axis-labels">
+                            <span>100%</span><span>75%</span><span>50%</span
+                            ><span>25%</span><span>0%</span>
+                          </div>
+                          <div class="y-axis-label">
+                            {{ "RE_DIGITAL_FUEL_THROTTLE" | translate }}
+                          </div>
+                          <div class="graph-svg-wrapper">
+                            <svg
+                              viewBox="0 0 400 150"
+                              preserveAspectRatio="none"
+                              class="fuel-graph"
+                              (mousemove)="
+                                onDigitalGraphMouseMove($event, 'pit')
+                              "
+                              (mouseleave)="onGraphMouseLeave()"
+                            >
+                              <line
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="150"
+                                class="axis"
+                              />
+                              <line
+                                x1="0"
+                                y1="150"
+                                x2="400"
+                                y2="150"
+                                class="axis"
+                              />
+                              @for (h of [37.5, 75, 112.5]; track h) {
+                                <line
+                                  x1="0"
+                                  [attr.y1]="h"
+                                  x2="400"
+                                  [attr.y2]="h"
+                                  class="grid"
+                                />
+                              }
+                              @for (v of [100, 200, 300]; track v) {
+                                <line
+                                  [attr.x1]="v"
+                                  y1="0"
+                                  [attr.x2]="v"
+                                  y2="150"
+                                  class="grid"
+                                />
+                              }
+                              <path
+                                [attr.d]="getDigitalPitPath()"
+                                class="usage-path"
+                              />
+                              @if (
+                                hoveredPoint &&
+                                hoveredPoint.type === "digital_pit"
+                              ) {
+                                <g>
+                                  <circle
+                                    [attr.cx]="hoveredPoint.svgX"
+                                    [attr.cy]="hoveredPoint.svgY"
+                                    r="6"
+                                    class="hover-point"
+                                  />
+                                </g>
+                              }
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="x-axis-labels">
+                          @for (label of getDigitalPitXLabels(); track label) {
+                            <span>{{ label }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           </div>
-        </div>
-
-        <!-- Team Options Section -->
-        <div id="team-options-section" class="config-section">
-          <div class="section-header" (click)="toggleSection('team')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded.team"
-              >▼</span
-            >
-            <h1>Team Options</h1>
-          </div>
-
-          <div class="section-content" *ngIf="sectionsExpanded.team">
-            <div class="scoring-layout">
-              <div class="scoring-column">
-                <div
-                  class="config-section checkbox-section"
-                  style="margin-bottom: 15px"
-                >
-                  <label class="checkbox-container">
-                    <input
-                      type="checkbox"
-                      [(ngModel)]="
-                        editingRace.team_options.require_pit_stop_change_driver
-                      "
-                      (ngModelChange)="captureState()"
-                    />
-                    <span class="checkmark"></span>
-                    <span class="checkbox-label"
-                      >Require Pit Stop to Change Driver</span
+          <!-- Team Options Section -->
+          <div id="team-options-section" class="config-section">
+            <div class="section-header" (click)="toggleSection('team')">
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.team"
+                >▼</span
+              >
+              <h1>Team Options</h1>
+            </div>
+            @if (sectionsExpanded.team) {
+              <div class="section-content">
+                <div class="scoring-layout">
+                  <div class="scoring-column">
+                    <div
+                      class="config-section checkbox-section"
+                      style="margin-bottom: 15px"
                     >
-                  </label>
-                </div>
-
-                <div class="config-row">
-                  <div class="editor-section">
-                    <label>Heat Lap Limit</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.team_options.heat_lap_limit"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div class="editor-section">
-                    <label>Heat Time Limit (seconds)</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.team_options.heat_time_limit"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <div class="editor-section">
-                    <label>Overall Lap Limit</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.team_options.overall_lap_limit"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div class="editor-section">
-                    <label>Overall Time Limit (seconds)</label>
-                    <input
-                      type="number"
-                      [(ngModel)]="editingRace.team_options.overall_time_limit"
-                      (ngModelChange)="captureState()"
-                      min="0"
-                      placeholder="0"
-                    />
+                      <label class="checkbox-container">
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="
+                            editingRace.team_options
+                              .require_pit_stop_change_driver
+                          "
+                          (ngModelChange)="captureState()"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label"
+                          >Require Pit Stop to Change Driver</span
+                        >
+                      </label>
+                    </div>
+                    <div class="config-row">
+                      <div class="editor-section">
+                        <label>Heat Lap Limit</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.team_options.heat_lap_limit"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>Heat Time Limit (seconds)</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="editingRace.team_options.heat_time_limit"
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div class="config-row">
+                      <div class="editor-section">
+                        <label>Overall Lap Limit</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.team_options.overall_lap_limit
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>Overall Time Limit (seconds)</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.team_options.overall_time_limit
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            }
           </div>
         </div>
       </div>
     </div>
-  </div>
+  }
 
   <!-- Loading Overlay -->
-  <div class="loader-overlay" *ngIf="isLoading || (isSaving && !isAutoSaving)">
-    <div class="spinner"></div>
-  </div>
+  @if (isLoading || (isSaving && !isAutoSaving)) {
+    <div class="loader-overlay">
+      <div class="spinner"></div>
+    </div>
+  }
 </div>

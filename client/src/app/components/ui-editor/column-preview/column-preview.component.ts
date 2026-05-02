@@ -6,7 +6,7 @@ import {
 } from "@angular/core";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { ColumnVisibility } from "src/app/models/settings";
-import { NgFor, NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 // TODO(aufderheide): This may be the third time this list appears in code
@@ -41,7 +41,7 @@ const PREVIEW_LABELS: { [key: string]: string } = {
   templateUrl: "./column-preview.component.html",
   styleUrls: ["./column-preview.component.css"],
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [NgFor, NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class ColumnPreviewComponent {
   resizingColumnKey = input<string | null>(null);

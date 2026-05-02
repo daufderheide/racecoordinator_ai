@@ -1,188 +1,196 @@
-<div class="modal-backdrop" *ngIf="visible()">
-  <div class="reorder-modal large-modal">
-    <div class="modal-header">
-      <app-back-button
-        [label]="'UE_BTN_BACK' | translate"
-        (back)="onCancel()"
-      ></app-back-button>
-      <h2 class="title">
-        {{ "UE_REORDER_DIALOG_TITLE" | translate }} -
-        <span class="screen-name">{{ screenName }}</span>
-      </h2>
-      <div class="header-buttons">
-        <button
-          class="btn-icon"
-          (click)="undo()"
-          [disabled]="!canUndo()"
-          [title]="'TOOLBAR_HELP_UNDO_TITLE' | translate"
-        >
-          ↶
-        </button>
-        <button
-          class="btn-icon"
-          (click)="redo()"
-          [disabled]="!canRedo()"
-          [title]="'TOOLBAR_HELP_REDO_TITLE' | translate"
-        >
-          ↷
-        </button>
-      </div>
-    </div>
-
-    <div class="modal-body">
-      <div class="enhanced-dialog-layout">
-        <!-- Panel 1: Available Values -->
-        <div class="values-sidebar">
-          <label class="section-label">{{
-            "UE_LABEL_AVAILABLE_VALUES" | translate
-          }}</label>
-          <div
-            cdkDropList
-            [cdkDropListData]="availableValues"
-            class="value-pool"
-            [cdkDropListConnectedTo]="cachedDropListIds"
-            cdkScrollable
+@if (visible()) {
+  <div class="modal-backdrop">
+    <div class="reorder-modal large-modal">
+      <div class="modal-header">
+        <app-back-button
+          [label]="'UE_BTN_BACK' | translate"
+          (back)="onCancel()"
+        ></app-back-button>
+        <h2 class="title">
+          {{ "UE_REORDER_DIALOG_TITLE" | translate }} -
+          <span class="screen-name">{{ screenName }}</span>
+        </h2>
+        <div class="header-buttons">
+          <button
+            class="btn-icon"
+            (click)="undo()"
+            [disabled]="!canUndo()"
+            [title]="'TOOLBAR_HELP_UNDO_TITLE' | translate"
           >
+            ↶
+          </button>
+          <button
+            class="btn-icon"
+            (click)="redo()"
+            [disabled]="!canRedo()"
+            [title]="'TOOLBAR_HELP_REDO_TITLE' | translate"
+          >
+            ↷
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="enhanced-dialog-layout">
+          <!-- Panel 1: Available Values -->
+          <div class="values-sidebar">
+            <label class="section-label">{{
+              "UE_LABEL_AVAILABLE_VALUES" | translate
+            }}</label>
             <div
-              class="value-chip"
-              *ngFor="let val of availableValues; trackBy: trackByKey"
-              cdkDrag
-              [cdkDragData]="val.key"
+              cdkDropList
+              [cdkDropListData]="availableValues"
+              class="value-pool"
+              [cdkDropListConnectedTo]="cachedDropListIds"
+              cdkScrollable
             >
-              {{ val.label | translate }}
+              @for (val of availableValues; track trackByKey($index, val)) {
+                <div class="value-chip" cdkDrag [cdkDragData]="val.key">
+                  {{ val.label | translate }}
+                </div>
+              }
             </div>
           </div>
-        </div>
-
-        <!-- Panel 2: Column Slots -->
-        <div class="slots-container" cdkScrollable>
-          <label class="section-label">{{
-            "UE_LABEL_COLUMN_SLOTS" | translate
-          }}</label>
-          <div
-            cdkDropList
-            class="slot-list"
-            (cdkDropListDropped)="dropColumn($event)"
-          >
+          <!-- Panel 2: Column Slots -->
+          <div class="slots-container" cdkScrollable>
+            <label class="section-label">{{
+              "UE_LABEL_COLUMN_SLOTS" | translate
+            }}</label>
             <div
-              class="slot-item"
-              *ngFor="let slot of columnSlots; trackBy: trackByKey"
-              cdkDrag
+              cdkDropList
+              class="slot-list"
+              (cdkDropListDropped)="dropColumn($event)"
             >
-              <div class="slot-header">
-                <div class="drag-handle" cdkDragHandle>
-                  <span class="material-icons">open_with</span>
-                </div>
-                <div class="slot-title">
-                  {{ getColumnLabel(slot.key) | translate }}
-                </div>
-                <div class="visibility-selector">
-                  <select
-                    class="visibility-select"
-                    [(ngModel)]="columnVisibility[slot.key]"
-                    (change)="markChanges()"
-                  >
-                    <option *ngFor="let opt of visibilityOptions" [value]="opt">
-                      {{ "UE_VISIBILITY_" + opt | translate }}
-                    </option>
-                  </select>
-                </div>
-                <button class="remove-btn" (click)="removeColumn(slot.key)">
-                  <span class="material-icons">delete</span>
-                </button>
-              </div>
-
-              <!-- 3x3 Anchor Grid -->
-              <div class="anchor-grid-editor">
-                <div
-                  class="grid-row"
-                  *ngFor="let row of [0, 1, 2]; trackBy: trackByIndex"
-                >
-                  <div
-                    class="grid-cell"
-                    *ngFor="let col of [0, 1, 2]; trackBy: trackByIndex"
-                    [id]="
-                      'slot-' + slot.key + '-' + anchorOptions[row * 3 + col]
-                    "
-                    [attr.data-anchor]="anchorOptions[row * 3 + col]"
-                    cdkDropList
-                    (cdkDropListDropped)="
-                      onValueDrop(
-                        slot.key,
-                        anchorOptions[row * 3 + col],
-                        $event.item.data
-                      )
-                    "
-                  >
-                    <div
-                      class="cell-content"
-                      *ngIf="
-                        columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]
-                      "
-                    >
-                      <span class="cell-label">{{
-                        getLabel(
-                          columnLayouts[slot.key][anchorOptions[row * 3 + col]]!
-                        ) | translate
-                      }}</span>
-                      <button
-                        class="clear-btn"
-                        (click)="
-                          clearAnchor(slot.key, anchorOptions[row * 3 + col])
-                        "
+              @for (slot of columnSlots; track trackByKey($index, slot)) {
+                <div class="slot-item" cdkDrag>
+                  <div class="slot-header">
+                    <div class="drag-handle" cdkDragHandle>
+                      <span class="material-icons">open_with</span>
+                    </div>
+                    <div class="slot-title">
+                      {{ getColumnLabel(slot.key) | translate }}
+                    </div>
+                    <div class="visibility-selector">
+                      <select
+                        class="visibility-select"
+                        [(ngModel)]="columnVisibility[slot.key]"
+                        (change)="markChanges()"
                       >
-                        <span class="material-icons">clear</span>
-                      </button>
+                        @for (opt of visibilityOptions; track opt) {
+                          <option [value]="opt">
+                            {{ "UE_VISIBILITY_" + opt | translate }}
+                          </option>
+                        }
+                      </select>
                     </div>
-                    <div
-                      class="cell-placeholder-wrapper"
-                      *ngIf="
-                        !columnLayouts[slot.key]?.[anchorOptions[row * 3 + col]]
-                      "
-                    >
-                      <div class="cell-placeholder">
-                        {{
-                          "UE_ANCHOR_" + anchorOptions[row * 3 + col]
-                            | translate
-                        }}
+                    <button class="remove-btn" (click)="removeColumn(slot.key)">
+                      <span class="material-icons">delete</span>
+                    </button>
+                  </div>
+                  <!-- 3x3 Anchor Grid -->
+                  <div class="anchor-grid-editor">
+                    @for (row of [0, 1, 2]; track trackByIndex($index, row)) {
+                      <div class="grid-row">
+                        @for (
+                          col of [0, 1, 2];
+                          track trackByIndex($index, col)
+                        ) {
+                          <div
+                            class="grid-cell"
+                            [id]="
+                              'slot-' +
+                              slot.key +
+                              '-' +
+                              anchorOptions[row * 3 + col]
+                            "
+                            [attr.data-anchor]="anchorOptions[row * 3 + col]"
+                            cdkDropList
+                            (cdkDropListDropped)="
+                              onValueDrop(
+                                slot.key,
+                                anchorOptions[row * 3 + col],
+                                $event.item.data
+                              )
+                            "
+                          >
+                            @if (
+                              columnLayouts[slot.key]?.[
+                                anchorOptions[row * 3 + col]
+                              ]
+                            ) {
+                              <div class="cell-content">
+                                <span class="cell-label">{{
+                                  getLabel(
+                                    columnLayouts[slot.key][
+                                      anchorOptions[row * 3 + col]
+                                    ]!
+                                  ) | translate
+                                }}</span>
+                                <button
+                                  class="clear-btn"
+                                  (click)="
+                                    clearAnchor(
+                                      slot.key,
+                                      anchorOptions[row * 3 + col]
+                                    )
+                                  "
+                                >
+                                  <span class="material-icons">clear</span>
+                                </button>
+                              </div>
+                            }
+                            @if (
+                              !columnLayouts[slot.key]?.[
+                                anchorOptions[row * 3 + col]
+                              ]
+                            ) {
+                              <div class="cell-placeholder-wrapper">
+                                <div class="cell-placeholder">
+                                  {{
+                                    "UE_ANCHOR_" + anchorOptions[row * 3 + col]
+                                      | translate
+                                  }}
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
                       </div>
-                    </div>
+                    }
                   </div>
                 </div>
-              </div>
+              }
             </div>
           </div>
-        </div>
-
-        <!-- Panel 3: Lane Preview -->
-        <div class="preview-panel">
-          <label class="section-label">{{
-            "UE_REORDER_DIALOG_PREVIEW" | translate
-          }}</label>
-          <app-column-preview
-            [columnSlots]="columnSlots"
-            [columnLayouts]="columnLayouts"
-            [columnVisibility]="columnVisibility"
-          ></app-column-preview>
-          <p class="hint">{{ "UE_REORDER_HINT" | translate }}</p>
-          <button
-            class="btn btn-danger btn-reset-defaults"
-            (click)="onReset()"
-            [disabled]="isResetDisabled"
-          >
-            {{ "UE_BTN_RESET_DEFAULTS" | translate }}
-          </button>
-          <!-- Blank Slot for adding new columns -->
-          <div
-            id="slot-add-new"
-            class="slot-add-blank"
-            cdkDropList
-            (cdkDropListDropped)="onAddColumnDrop($event)"
-          >
-            <div class="add-placeholder-wrapper">
-              <div class="add-placeholder">
-                <span class="material-icons">add_circle_outline</span>
-                <span>{{ "UE_HINT_DROP_TO_ADD_COLUMN" | translate }}</span>
+          <!-- Panel 3: Lane Preview -->
+          <div class="preview-panel">
+            <label class="section-label">{{
+              "UE_REORDER_DIALOG_PREVIEW" | translate
+            }}</label>
+            <app-column-preview
+              [columnSlots]="columnSlots"
+              [columnLayouts]="columnLayouts"
+              [columnVisibility]="columnVisibility"
+            ></app-column-preview>
+            <p class="hint">{{ "UE_REORDER_HINT" | translate }}</p>
+            <button
+              class="btn btn-danger btn-reset-defaults"
+              (click)="onReset()"
+              [disabled]="isResetDisabled"
+            >
+              {{ "UE_BTN_RESET_DEFAULTS" | translate }}
+            </button>
+            <!-- Blank Slot for adding new columns -->
+            <div
+              id="slot-add-new"
+              class="slot-add-blank"
+              cdkDropList
+              (cdkDropListDropped)="onAddColumnDrop($event)"
+            >
+              <div class="add-placeholder-wrapper">
+                <div class="add-placeholder">
+                  <span class="material-icons">add_circle_outline</span>
+                  <span>{{ "UE_HINT_DROP_TO_ADD_COLUMN" | translate }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -190,4 +198,4 @@
       </div>
     </div>
   </div>
-</div>
+}

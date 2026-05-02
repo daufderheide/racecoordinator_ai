@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, input, output } from "@angular/core";
 import { DataService } from "src/app/data.service";
-import { NgIf } from "@angular/common";
+
 import { AssetPreviewComponent } from "../asset-preview/asset-preview.component";
 import { ItemSelectorComponent } from "../item-selector/item-selector.component";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
@@ -10,7 +10,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-image-selector",
   templateUrl: "./image-selector.component.html",
   styleUrl: "./image-selector.component.css",
-  imports: [NgIf, AssetPreviewComponent, ItemSelectorComponent, TranslatePipe],
+  imports: [AssetPreviewComponent, ItemSelectorComponent, TranslatePipe],
 })
 export class ImageSelectorComponent {
   label = input<string>();

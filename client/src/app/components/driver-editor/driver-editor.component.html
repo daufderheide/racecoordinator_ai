@@ -19,151 +19,155 @@
   >
   </app-editor-title>
 
-  <div class="content-split" *ngIf="!isLoading && editingDriver">
-    <!-- Left Panel: Driver Config -->
-    <div class="editor-panel">
-      <!-- Avatar Section -->
-      <div id="driver-avatar-section" class="editor-section">
-        <app-image-selector
-          [(imageUrl)]="editingDriver.avatarUrl"
-          (imageUrlChange)="captureState()"
-          [assets]="avatarAssets"
-          [size]="'large'"
-        >
-        </app-image-selector>
-      </div>
-
-      <!-- Name Section -->
-      <div
-        id="driver-name-section"
-        class="editor-section"
-        [class.invalid]="isNameInvalid"
-      >
-        <label class="section-label">{{ "RDS_LABEL_NAME" | translate }}</label>
-        <input
-          id="driver-name-input"
-          type="text"
-          [(ngModel)]="editingDriver.name"
-          (ngModelChange)="onInputChange()"
-          (focus)="onInputFocus()"
-          (blur)="onInputBlur()"
-          class="dm-input"
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
-          name="driverNameInput"
-        />
-      </div>
-
-      <!-- Nickname Section -->
-      <div
-        id="driver-nickname-section"
-        class="editor-section"
-        [class.invalid]="isNicknameInvalid"
-      >
-        <label class="section-label">{{
-          "RDS_LABEL_NICKNAME" | translate
-        }}</label>
-        <input
-          id="driver-nickname-input"
-          type="text"
-          [(ngModel)]="editingDriver.nickname"
-          (ngModelChange)="onInputChange()"
-          (focus)="onInputFocus()"
-          (blur)="onInputBlur()"
-          class="dm-input"
-          autocomplete="off"
-          data-lpignore="true"
-          data-form-type="other"
-          name="driverNicknameInput"
-        />
-      </div>
-
-      <div class="editor-actions">
-        <div class="spacer"></div>
-      </div>
-    </div>
-
-    <!-- Right Panel: Audio Config -->
-    <div class="preview-panel">
-      <div class="config-section">
-        <div class="section-header" (click)="toggleSection('audio')">
-          <span
-            class="expander-icon"
-            [class.collapsed]="!sectionsExpanded.audio"
-            >▼</span
+  @if (!isLoading && editingDriver) {
+    <div class="content-split">
+      <!-- Left Panel: Driver Config -->
+      <div class="editor-panel">
+        <!-- Avatar Section -->
+        <div id="driver-avatar-section" class="editor-section">
+          <app-image-selector
+            [(imageUrl)]="editingDriver.avatarUrl"
+            (imageUrlChange)="captureState()"
+            [assets]="avatarAssets"
+            [size]="'large'"
           >
-          <h1>{{ "DE_HEADER_AUDIO_CONFIG" | translate }}</h1>
+          </app-image-selector>
         </div>
-
-        <div class="section-content" *ngIf="sectionsExpanded.audio">
-          <div class="audio-sections-row">
-            <div class="audio-section">
-              <app-audio-selector
-                *ngIf="editingDriver.lapAudio"
-                [label]="'DE_LABEL_LAP_SOUNDS' | translate"
-                [assets]="soundAssets"
-                [type]="editingDriver.lapAudio.type"
-                (typeChange)="
-                  editingDriver.lapAudio.type = $event; captureState()
-                "
-                [url]="editingDriver.lapAudio.url"
-                (urlChange)="
-                  onInputChange(); editingDriver.lapAudio.url = $event
-                "
-                [text]="editingDriver.lapAudio.text"
-                (textChange)="
-                  onInputChange(); editingDriver.lapAudio.text = $event
-                "
-                [backButtonRoute]="'/driver-editor'"
-                [backButtonQueryParams]="{ id: editingDriver.entity_id }"
-                [context]="ttsContext"
-              >
-              </app-audio-selector>
-            </div>
-
-            <div class="audio-section">
-              <app-audio-selector
-                *ngIf="editingDriver.bestLapAudio"
-                [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
-                [assets]="soundAssets"
-                [type]="editingDriver.bestLapAudio.type"
-                (typeChange)="
-                  editingDriver.bestLapAudio.type = $event; captureState()
-                "
-                [url]="editingDriver.bestLapAudio.url"
-                (urlChange)="
-                  onInputChange(); editingDriver.bestLapAudio.url = $event
-                "
-                [text]="editingDriver.bestLapAudio.text"
-                (textChange)="
-                  onInputChange(); editingDriver.bestLapAudio.text = $event
-                "
-                [backButtonRoute]="'/driver-editor'"
-                [backButtonQueryParams]="{ id: editingDriver.entity_id }"
-                [context]="ttsContext"
-              >
-              </app-audio-selector>
-            </div>
+        <!-- Name Section -->
+        <div
+          id="driver-name-section"
+          class="editor-section"
+          [class.invalid]="isNameInvalid"
+        >
+          <label class="section-label">{{
+            "RDS_LABEL_NAME" | translate
+          }}</label>
+          <input
+            id="driver-name-input"
+            type="text"
+            [(ngModel)]="editingDriver.name"
+            (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            class="dm-input"
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+            name="driverNameInput"
+          />
+        </div>
+        <!-- Nickname Section -->
+        <div
+          id="driver-nickname-section"
+          class="editor-section"
+          [class.invalid]="isNicknameInvalid"
+        >
+          <label class="section-label">{{
+            "RDS_LABEL_NICKNAME" | translate
+          }}</label>
+          <input
+            id="driver-nickname-input"
+            type="text"
+            [(ngModel)]="editingDriver.nickname"
+            (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            class="dm-input"
+            autocomplete="off"
+            data-lpignore="true"
+            data-form-type="other"
+            name="driverNicknameInput"
+          />
+        </div>
+        <div class="editor-actions">
+          <div class="spacer"></div>
+        </div>
+      </div>
+      <!-- Right Panel: Audio Config -->
+      <div class="preview-panel">
+        <div class="config-section">
+          <div class="section-header" (click)="toggleSection('audio')">
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.audio"
+              >▼</span
+            >
+            <h1>{{ "DE_HEADER_AUDIO_CONFIG" | translate }}</h1>
           </div>
+          @if (sectionsExpanded.audio) {
+            <div class="section-content">
+              <div class="audio-sections-row">
+                <div class="audio-section">
+                  @if (editingDriver.lapAudio) {
+                    <app-audio-selector
+                      [label]="'DE_LABEL_LAP_SOUNDS' | translate"
+                      [assets]="soundAssets"
+                      [type]="editingDriver.lapAudio.type"
+                      (typeChange)="
+                        editingDriver.lapAudio.type = $event; captureState()
+                      "
+                      [url]="editingDriver.lapAudio.url"
+                      (urlChange)="
+                        onInputChange(); editingDriver.lapAudio.url = $event
+                      "
+                      [text]="editingDriver.lapAudio.text"
+                      (textChange)="
+                        onInputChange(); editingDriver.lapAudio.text = $event
+                      "
+                      [backButtonRoute]="'/driver-editor'"
+                      [backButtonQueryParams]="{ id: editingDriver.entity_id }"
+                      [context]="ttsContext"
+                    >
+                    </app-audio-selector>
+                  }
+                </div>
+                <div class="audio-section">
+                  @if (editingDriver.bestLapAudio) {
+                    <app-audio-selector
+                      [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
+                      [assets]="soundAssets"
+                      [type]="editingDriver.bestLapAudio.type"
+                      (typeChange)="
+                        editingDriver.bestLapAudio.type = $event; captureState()
+                      "
+                      [url]="editingDriver.bestLapAudio.url"
+                      (urlChange)="
+                        onInputChange(); editingDriver.bestLapAudio.url = $event
+                      "
+                      [text]="editingDriver.bestLapAudio.text"
+                      (textChange)="
+                        onInputChange();
+                        editingDriver.bestLapAudio.text = $event
+                      "
+                      [backButtonRoute]="'/driver-editor'"
+                      [backButtonQueryParams]="{ id: editingDriver.entity_id }"
+                      [context]="ttsContext"
+                    >
+                    </app-audio-selector>
+                  }
+                </div>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>
-  </div>
+  }
 
   <!-- Loading Overlay -->
-  <div
-    class="loader-overlay"
-    *ngIf="isLoading || (isSaving && !isAutoSaving) || isUploading"
-  >
-    <div class="spinner"></div>
-  </div>
+  @if (isLoading || (isSaving && !isAutoSaving) || isUploading) {
+    <div class="loader-overlay">
+      <div class="spinner"></div>
+    </div>
+  }
 
   <!-- Connection Lost Overlay -->
-  <div class="connection-lost-overlay" *ngIf="isConnectionLost">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">
-      {{ "RDS_LOST_CONNECTION" | translate }}
+  @if (isConnectionLost) {
+    <div class="connection-lost-overlay">
+      <div class="connection-spinner"></div>
+      <div class="connection-lost-text">
+        {{ "RDS_LOST_CONNECTION" | translate }}
+      </div>
     </div>
-  </div>
+  }
 </div>

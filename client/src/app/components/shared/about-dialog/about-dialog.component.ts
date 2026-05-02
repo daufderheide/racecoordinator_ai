@@ -1,41 +1,45 @@
 import { Component, input, output } from "@angular/core";
-import { NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
   selector: "app-about-dialog",
   template: `
-    <div class="modal-backdrop" *ngIf="visible()">
-      <div class="modal-content">
-        <h2 class="modal-title">{{ "RDS_ABOUT_TITLE" | translate }}</h2>
-        <div class="version-info">
-          <p>
-            {{
-              "RDS_ABOUT_CLIENT_VERSION"
-                | translate: { version: clientVersion() }
-            }}
-          </p>
-          <p>
-            {{
-              "RDS_ABOUT_SERVER_VERSION"
-                | translate: { version: serverVersion() }
-            }}
-          </p>
-          <p *ngIf="serverIp()">
-            {{
-              "RDS_ABOUT_SERVER_ADDRESS"
-                | translate: { ip: serverIp(), port: serverPort() }
-            }}
-          </p>
-        </div>
-        <div class="modal-actions">
-          <button class="btn-confirm" (click)="onClose()">
-            {{ "RDS_ABOUT_CLOSE" | translate }}
-          </button>
+    @if (visible()) {
+      <div class="modal-backdrop">
+        <div class="modal-content">
+          <h2 class="modal-title">{{ "RDS_ABOUT_TITLE" | translate }}</h2>
+          <div class="version-info">
+            <p>
+              {{
+                "RDS_ABOUT_CLIENT_VERSION"
+                  | translate: { version: clientVersion() }
+              }}
+            </p>
+            <p>
+              {{
+                "RDS_ABOUT_SERVER_VERSION"
+                  | translate: { version: serverVersion() }
+              }}
+            </p>
+            @if (serverIp()) {
+              <p>
+                {{
+                  "RDS_ABOUT_SERVER_ADDRESS"
+                    | translate: { ip: serverIp(), port: serverPort() }
+                }}
+              </p>
+            }
+          </div>
+          <div class="modal-actions">
+            <button class="btn-confirm" (click)="onClose()">
+              {{ "RDS_ABOUT_CLOSE" | translate }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -99,7 +103,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
       }
     `,
   ],
-  imports: [NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class AboutDialogComponent {
   visible = input(false);

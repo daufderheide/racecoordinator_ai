@@ -1,31 +1,29 @@
 import { Component, input, output } from "@angular/core";
-import { NgIf } from "@angular/common";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
   selector: "app-confirmation-modal",
   template: `
-    <div
-      id="confirmation-modal-backdrop"
-      class="modal-backdrop"
-      *ngIf="visible()"
-    >
-      <div id="confirmation-modal-content" class="modal-content">
-        <h2 class="modal-title">{{ title() | translate }}</h2>
-        <p class="modal-message">
-          {{ message() | translate: messageParams() }}
-        </p>
-        <div class="modal-actions">
-          <button class="btn-cancel" (click)="onCancel()">
-            {{ cancelText() | translate }}
-          </button>
-          <button class="btn-confirm" (click)="onConfirm()">
-            {{ confirmText() | translate }}
-          </button>
+    @if (visible()) {
+      <div id="confirmation-modal-backdrop" class="modal-backdrop">
+        <div id="confirmation-modal-content" class="modal-content">
+          <h2 class="modal-title">{{ title() | translate }}</h2>
+          <p class="modal-message">
+            {{ message() | translate: messageParams() }}
+          </p>
+          <div class="modal-actions">
+            <button class="btn-cancel" (click)="onCancel()">
+              {{ cancelText() | translate }}
+            </button>
+            <button class="btn-confirm" (click)="onConfirm()">
+              {{ confirmText() | translate }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -91,7 +89,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
       }
     `,
   ],
-  imports: [NgIf, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class ConfirmationModalComponent {
   visible = input(false);

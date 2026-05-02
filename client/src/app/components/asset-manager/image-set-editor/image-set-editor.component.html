@@ -1,122 +1,127 @@
-<div
-  class="modal-backdrop"
-  *ngIf="visible()"
-  (dragenter)="onElementDragEnter($event)"
-  (dragover)="onElementDragOver($event)"
-  (dragleave)="onElementDragLeave($event)"
-  (drop)="onElementDrop($event)"
->
+@if (visible()) {
   <div
-    class="drop-overlay"
-    *ngIf="isDragging"
+    class="modal-backdrop"
     (dragenter)="onElementDragEnter($event)"
     (dragover)="onElementDragOver($event)"
     (dragleave)="onElementDragLeave($event)"
     (drop)="onElementDrop($event)"
   >
-    <div class="drop-msg">
-      <span class="material-icons" style="font-size: 3rem; margin-bottom: 1rem"
-        >cloud_upload</span
+    @if (isDragging) {
+      <div
+        class="drop-overlay"
+        (dragenter)="onElementDragEnter($event)"
+        (dragover)="onElementDragOver($event)"
+        (dragleave)="onElementDragLeave($event)"
+        (drop)="onElementDrop($event)"
       >
-      <span>{{ "AM_SET_EDITOR_DROP_OVERLAY" | translate }}</span>
-    </div>
-  </div>
-
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2 class="modal-title">
-      {{
-        (assetId() ? "AM_SET_EDITOR_TITLE_EDIT" : "AM_SET_EDITOR_TITLE_NEW")
-          | translate
-      }}
-    </h2>
-
-    <div class="form-group">
-      <label>{{ "AM_SET_EDITOR_NAME" | translate }}</label>
-      <input
-        type="text"
-        [(ngModel)]="name"
-        class="form-input"
-        [placeholder]="'AM_SET_EDITOR_NAME' | translate"
-        autocomplete="one-time-code"
-        data-dashlane-ignore="true"
-        data-lpignore="true"
-        data-form-type="other"
-        name="imageset-title-field"
-        spellcheck="false"
-        autocorrect="off"
-        autocapitalize="off"
-      />
-    </div>
-
-    <div class="entries-header">
-      <div class="header-main">
-        <span>{{ "AM_SET_EDITOR_IMAGES" | translate }}</span>
-        <span class="hint" *ngIf="entries.length === 0">{{
-          "AM_SET_EDITOR_EMPTY" | translate
-        }}</span>
-      </div>
-      <div class="header-actions">
-        <button
-          class="btn-recalc"
-          (click)="recalculatePercentages()"
-          [title]="'AM_SET_EDITOR_RECALC' | translate"
-        >
-          <span class="material-icons" style="font-size: 1.2rem">sync</span>
-        </button>
-        <button class="btn-add" (click)="addEntry()">
-          {{ "AM_SET_EDITOR_BTN_ADD" | translate }}
-        </button>
-      </div>
-    </div>
-
-    <div class="entries-list">
-      <div class="entry-item" *ngFor="let entry of entries; let i = index">
-        <div class="entry-preview">
-          <app-image-selector
-            [imageUrl]="entry.url ?? undefined"
-            [assets]="allImages()"
-            (imageUrlChange)="
-              entry.url = $event; entry.name = entry.name || entry.url
-            "
-            size="small"
+        <div class="drop-msg">
+          <span
+            class="material-icons"
+            style="font-size: 3rem; margin-bottom: 1rem"
+            >cloud_upload</span
           >
-          </app-image-selector>
+          <span>{{ "AM_SET_EDITOR_DROP_OVERLAY" | translate }}</span>
         </div>
-        <div class="entry-percent">
-          <label>{{ "AM_SET_EDITOR_PERCENT" | translate }}</label>
-          <input
-            type="number"
-            [(ngModel)]="entry.percentage"
-            min="0"
-            max="100"
-            class="percent-input"
-          />
-          <span>%</span>
+      </div>
+    }
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h2 class="modal-title">
+        {{
+          (assetId() ? "AM_SET_EDITOR_TITLE_EDIT" : "AM_SET_EDITOR_TITLE_NEW")
+            | translate
+        }}
+      </h2>
+      <div class="form-group">
+        <label>{{ "AM_SET_EDITOR_NAME" | translate }}</label>
+        <input
+          type="text"
+          [(ngModel)]="name"
+          class="form-input"
+          [placeholder]="'AM_SET_EDITOR_NAME' | translate"
+          autocomplete="one-time-code"
+          data-dashlane-ignore="true"
+          data-lpignore="true"
+          data-form-type="other"
+          name="imageset-title-field"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+        />
+      </div>
+      <div class="entries-header">
+        <div class="header-main">
+          <span>{{ "AM_SET_EDITOR_IMAGES" | translate }}</span>
+          @if (entries.length === 0) {
+            <span class="hint">{{ "AM_SET_EDITOR_EMPTY" | translate }}</span>
+          }
         </div>
+        <div class="header-actions">
+          <button
+            class="btn-recalc"
+            (click)="recalculatePercentages()"
+            [title]="'AM_SET_EDITOR_RECALC' | translate"
+          >
+            <span class="material-icons" style="font-size: 1.2rem">sync</span>
+          </button>
+          <button class="btn-add" (click)="addEntry()">
+            {{ "AM_SET_EDITOR_BTN_ADD" | translate }}
+          </button>
+        </div>
+      </div>
+      <div class="entries-list">
+        @for (entry of entries; track entry; let i = $index) {
+          <div class="entry-item">
+            <div class="entry-preview">
+              <app-image-selector
+                [imageUrl]="entry.url ?? undefined"
+                [assets]="allImages()"
+                (imageUrlChange)="
+                  entry.url = $event; entry.name = entry.name || entry.url
+                "
+                size="small"
+              >
+              </app-image-selector>
+            </div>
+            <div class="entry-percent">
+              <label>{{ "AM_SET_EDITOR_PERCENT" | translate }}</label>
+              <input
+                type="number"
+                [(ngModel)]="entry.percentage"
+                min="0"
+                max="100"
+                class="percent-input"
+              />
+              <span>%</span>
+            </div>
+            <button
+              class="btn-remove"
+              (click)="removeEntry(i)"
+              [title]="'UE_BTN_REMOVE_IMAGE' | translate"
+            >
+              <span class="material-icons" style="font-size: 1.2rem"
+                >delete</span
+              >
+            </button>
+          </div>
+        }
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onCancel()" [disabled]="isSaving">
+          {{ "AM_SET_EDITOR_BTN_CANCEL" | translate }}
+        </button>
         <button
-          class="btn-remove"
-          (click)="removeEntry(i)"
-          [title]="'UE_BTN_REMOVE_IMAGE' | translate"
+          class="btn-save"
+          (click)="onSave()"
+          [disabled]="isSaving || !name || entries.length === 0"
         >
-          <span class="material-icons" style="font-size: 1.2rem">delete</span>
+          @if (!isSaving) {
+            <span>{{ "AM_SET_EDITOR_BTN_SAVE" | translate }}</span>
+          }
+          @if (isSaving) {
+            <div class="spinner small"></div>
+          }
         </button>
       </div>
     </div>
-
-    <div class="modal-actions">
-      <button class="btn-cancel" (click)="onCancel()" [disabled]="isSaving">
-        {{ "AM_SET_EDITOR_BTN_CANCEL" | translate }}
-      </button>
-      <button
-        class="btn-save"
-        (click)="onSave()"
-        [disabled]="isSaving || !name || entries.length === 0"
-      >
-        <span *ngIf="!isSaving">{{
-          "AM_SET_EDITOR_BTN_SAVE" | translate
-        }}</span>
-        <div class="spinner small" *ngIf="isSaving"></div>
-      </button>
-    </div>
   </div>
-</div>
+}

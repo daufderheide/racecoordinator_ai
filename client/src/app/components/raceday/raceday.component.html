@@ -1,8 +1,12 @@
 <ng-container #container></ng-container>
-<div *ngIf="isLoading" class="loading-overlay">
-  <div class="spinner"></div>
-  <p>Loading Raceday...</p>
-</div>
-<div *ngIf="error" class="error-message">
-  {{ error }}
-</div>
+@if (isLoading) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading Raceday...</p>
+  </div>
+}
+@if (error) {
+  <div class="error-message">
+    {{ error }}
+  </div>
+}

@@ -95,7 +95,7 @@ module.exports = {
         "@angular-eslint/template/label-has-associated-control": "off",
         "@angular-eslint/template/eqeqeq": "off",
         "@angular-eslint/template/alt-text": "off",
-        "@angular-eslint/template/prefer-control-flow": "off"
+        "@angular-eslint/template/prefer-control-flow": "error"
       }
     },
     {

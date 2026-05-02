@@ -4,7 +4,7 @@ import {
   CdkDropList,
   CdkDrag,
 } from "@angular/cdk/drag-drop";
-import { Location, NgIf, NgFor } from "@angular/common";
+import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -30,7 +30,7 @@ import { TranslationService } from "src/app/services/translation.service";
 import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "../shared/image-selector/image-selector.component";
 import { FormsModule } from "@angular/forms";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -40,13 +40,10 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   styleUrls: ["./team-editor.component.css"],
   imports: [
     EditorTitleComponent_1,
-    NgIf,
     ImageSelectorComponent,
     FormsModule,
     CdkDropList,
-    NgFor,
     CdkDrag,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

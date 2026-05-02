@@ -15,20 +15,23 @@
   <div class="content-area">
     <div class="sidebar-list">
       <div class="list-container">
-        <div
-          *ngFor="let db of databases; let i = index"
-          class="list-item"
-          [class.selected]="
-            selectedDatabase && db.name === selectedDatabase.name
-          "
-          [class.odd]="i % 2 !== 0"
-          (click)="selectDatabase(db)"
-        >
-          <div class="item-name">{{ db.name }}</div>
-          <div class="active-bagde" *ngIf="db.name === currentDatabaseName">
-            {{ "DBM_BADGE_ACTIVE" | translate }}
+        @for (db of databases; track db; let i = $index) {
+          <div
+            class="list-item"
+            [class.selected]="
+              selectedDatabase && db.name === selectedDatabase.name
+            "
+            [class.odd]="i % 2 !== 0"
+            (click)="selectDatabase(db)"
+          >
+            <div class="item-name">{{ db.name }}</div>
+            @if (db.name === currentDatabaseName) {
+              <div class="active-bagde">
+                {{ "DBM_BADGE_ACTIVE" | translate }}
+              </div>
+            }
           </div>
-        </div>
+        }
       </div>
       <div class="list-actions">
         <button
@@ -46,122 +49,135 @@
       </div>
     </div>
 
-    <div class="detail-panel" *ngIf="selectedDatabase">
-      <div class="detail-header">
-        <h2>{{ selectedDatabase.name }}</h2>
-      </div>
-
-      <div class="detail-content">
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_DRIVERS" | translate }}</span>
-            <span class="value">{{ selectedDatabase.driverCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_TEAMS" | translate }}</span>
-            <span class="value">{{ selectedDatabase.teamCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_TRACKS" | translate }}</span>
-            <span class="value">{{ selectedDatabase.trackCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_RACES" | translate }}</span>
-            <span class="value">{{ selectedDatabase.raceCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_ASSETS" | translate }}</span>
-            <span class="value">{{ selectedDatabase.assetCount }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_RACE_RECORDS" | translate }}</span>
-            <span class="value"
-              >{{ selectedDatabase.raceRecordCount }} ({{
-                selectedDatabase.raceRecordSizeBytes / 1024 / 1024
-                  | number: "1.2-2"
-              }}
-              MB)</span
-            >
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_SAVED_RACES" | translate }}</span>
-            <span class="value"
-              >{{ selectedDatabase.savedRaceCount }} ({{
-                selectedDatabase.savedRaceSizeBytes / 1024 / 1024
-                  | number: "1.2-2"
-              }}
-              MB)</span
-            >
-          </div>
-          <div class="stat-item">
-            <span class="label">{{ "DBM_STAT_SIZE" | translate }}</span>
-            <span class="value"
-              >{{
-                selectedDatabase.sizeBytes / 1024 / 1024 | number: "1.2-2"
-              }}
-              MB</span
-            >
-          </div>
+    @if (selectedDatabase) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ selectedDatabase.name }}</h2>
         </div>
-
-        <p class="hint" *ngIf="selectedDatabase.name !== currentDatabaseName">
-          {{ "DBM_HINT_SWITCH" | translate }}
-        </p>
-      </div>
-
-      <div class="detail-actions">
-        <button
-          class="action-btn success"
-          (click)="useDatabase()"
-          [disabled]="selectedDatabase.name === currentDatabaseName"
-        >
-          {{ "DBM_BTN_USE" | translate }}
-        </button>
-        <button class="btn-action" (click)="exportDatabase()">
-          <span class="material-icons" style="font-size: 1.2rem">download</span>
-          {{ "DBM_BTN_EXPORT" | translate }}
-        </button>
-        <button
-          class="btn-action"
-          (click)="copyDatabase()"
-          [disabled]="!selectedDatabase"
-        >
-          <span class="material-icons" style="font-size: 1.2rem"
-            >content_copy</span
+        <div class="detail-content">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_DRIVERS" | translate }}</span>
+              <span class="value">{{ selectedDatabase.driverCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_TEAMS" | translate }}</span>
+              <span class="value">{{ selectedDatabase.teamCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_TRACKS" | translate }}</span>
+              <span class="value">{{ selectedDatabase.trackCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_RACES" | translate }}</span>
+              <span class="value">{{ selectedDatabase.raceCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_ASSETS" | translate }}</span>
+              <span class="value">{{ selectedDatabase.assetCount }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="label">{{
+                "DBM_STAT_RACE_RECORDS" | translate
+              }}</span>
+              <span class="value"
+                >{{ selectedDatabase.raceRecordCount }} ({{
+                  selectedDatabase.raceRecordSizeBytes / 1024 / 1024
+                    | number: "1.2-2"
+                }}
+                MB)</span
+              >
+            </div>
+            <div class="stat-item">
+              <span class="label">{{
+                "DBM_STAT_SAVED_RACES" | translate
+              }}</span>
+              <span class="value"
+                >{{ selectedDatabase.savedRaceCount }} ({{
+                  selectedDatabase.savedRaceSizeBytes / 1024 / 1024
+                    | number: "1.2-2"
+                }}
+                MB)</span
+              >
+            </div>
+            <div class="stat-item">
+              <span class="label">{{ "DBM_STAT_SIZE" | translate }}</span>
+              <span class="value"
+                >{{
+                  selectedDatabase.sizeBytes / 1024 / 1024 | number: "1.2-2"
+                }}
+                MB</span
+              >
+            </div>
+          </div>
+          @if (selectedDatabase.name !== currentDatabaseName) {
+            <p class="hint">
+              {{ "DBM_HINT_SWITCH" | translate }}
+            </p>
+          }
+        </div>
+        <div class="detail-actions">
+          <button
+            class="action-btn success"
+            (click)="useDatabase()"
+            [disabled]="selectedDatabase.name === currentDatabaseName"
           >
-          {{ "DBM_BTN_COPY" | translate }}
-        </button>
-        <button
-          class="btn-action btn-danger"
-          (click)="deleteDatabase()"
-          [disabled]="
-            !selectedDatabase || selectedDatabase.name === currentDatabaseName
-          "
-        >
-          <span class="material-icons" style="font-size: 1.2rem">delete</span>
-          {{ "DBM_BTN_DELETE" | translate }}
-        </button>
-        <button
-          class="btn-action btn-danger"
-          (click)="resetDatabase()"
-          [disabled]="selectedDatabase.name !== currentDatabaseName"
-        >
-          <span class="material-icons" style="font-size: 1.2rem">warning</span>
-          {{ "DBM_BTN_RESET" | translate }}
-        </button>
+            {{ "DBM_BTN_USE" | translate }}
+          </button>
+          <button class="btn-action" (click)="exportDatabase()">
+            <span class="material-icons" style="font-size: 1.2rem"
+              >download</span
+            >
+            {{ "DBM_BTN_EXPORT" | translate }}
+          </button>
+          <button
+            class="btn-action"
+            (click)="copyDatabase()"
+            [disabled]="!selectedDatabase"
+          >
+            <span class="material-icons" style="font-size: 1.2rem"
+              >content_copy</span
+            >
+            {{ "DBM_BTN_COPY" | translate }}
+          </button>
+          <button
+            class="btn-action btn-danger"
+            (click)="deleteDatabase()"
+            [disabled]="
+              !selectedDatabase || selectedDatabase.name === currentDatabaseName
+            "
+          >
+            <span class="material-icons" style="font-size: 1.2rem">delete</span>
+            {{ "DBM_BTN_DELETE" | translate }}
+          </button>
+          <button
+            class="btn-action btn-danger"
+            (click)="resetDatabase()"
+            [disabled]="selectedDatabase.name !== currentDatabaseName"
+          >
+            <span class="material-icons" style="font-size: 1.2rem"
+              >warning</span
+            >
+            {{ "DBM_BTN_RESET" | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (!selectedDatabase) {
+      <div class="detail-panel empty-state">
+        <p>{{ "DBM_HINT_SELECT" | translate }}</p>
+      </div>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="loading-overlay">
+      <div class="progress-bar-container">
+        <div class="progress-bar-value"></div>
       </div>
     </div>
-
-    <div class="detail-panel empty-state" *ngIf="!selectedDatabase">
-      <p>{{ "DBM_HINT_SELECT" | translate }}</p>
-    </div>
-  </div>
-
-  <div class="loading-overlay" *ngIf="loading">
-    <div class="progress-bar-container">
-      <div class="progress-bar-value"></div>
-    </div>
-  </div>
+  }
 </div>
 
 <input
@@ -195,40 +211,42 @@
 </app-acknowledgement-modal>
 
 <!-- Custom Input Modal -->
-<div class="modal-backdrop" *ngIf="showInputModal">
-  <div class="modal-content">
-    <h2 class="modal-title">{{ inputModalTitle | translate }}</h2>
-    <p class="modal-message">
-      {{ inputModalMessage | translate: inputModalParams }}
-    </p>
-    <div class="input-container">
-      <input
-        type="text"
-        [(ngModel)]="inputValue"
-        (keyup.enter)="onInputConfirm()"
-        autoFocus
-        [class.invalid]="inputValue && !isNameUnique(inputValue)"
-      />
-      <div
-        class="error-msg"
-        [style.visibility]="
-          inputValue && !isNameUnique(inputValue) ? 'visible' : 'hidden'
-        "
-      >
-        {{ "DBM_ERR_EXISTS" | translate }}
+@if (showInputModal) {
+  <div class="modal-backdrop">
+    <div class="modal-content">
+      <h2 class="modal-title">{{ inputModalTitle | translate }}</h2>
+      <p class="modal-message">
+        {{ inputModalMessage | translate: inputModalParams }}
+      </p>
+      <div class="input-container">
+        <input
+          type="text"
+          [(ngModel)]="inputValue"
+          (keyup.enter)="onInputConfirm()"
+          autoFocus
+          [class.invalid]="inputValue && !isNameUnique(inputValue)"
+        />
+        <div
+          class="error-msg"
+          [style.visibility]="
+            inputValue && !isNameUnique(inputValue) ? 'visible' : 'hidden'
+          "
+        >
+          {{ "DBM_ERR_EXISTS" | translate }}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="onCancelInput()">
+          {{ "RDS_BTN_CANCEL" | translate }}
+        </button>
+        <button
+          class="btn-confirm"
+          (click)="onInputConfirm()"
+          [disabled]="!inputValue || !isNameUnique(inputValue)"
+        >
+          {{ "ACK_MODAL_BTN_OK" | translate }}
+        </button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" (click)="onCancelInput()">
-        {{ "RDS_BTN_CANCEL" | translate }}
-      </button>
-      <button
-        class="btn-confirm"
-        (click)="onInputConfirm()"
-        [disabled]="!inputValue || !isNameUnique(inputValue)"
-      >
-        {{ "ACK_MODAL_BTN_OK" | translate }}
-      </button>
-    </div>
   </div>
-</div>
+}

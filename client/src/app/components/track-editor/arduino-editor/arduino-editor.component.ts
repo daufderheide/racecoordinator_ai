@@ -23,7 +23,7 @@ import {
 import { TranslationService } from "src/app/services/translation.service";
 
 import { PinBehavior, RgbLedBehavior } from "src/app/proto/antigravity";
-import { NgIf, NgFor } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
@@ -37,7 +37,7 @@ interface PinAction {
   selector: "app-arduino-editor",
   templateUrl: "./arduino-editor.component.html",
   styleUrls: ["./arduino-editor.component.css"],
-  imports: [NgIf, FormsModule, NgFor, TranslatePipe],
+  imports: [FormsModule, TranslatePipe],
 })
 export class ArduinoEditorComponent implements OnInit, OnDestroy {
   config = model<ArduinoConfig>();
@@ -1616,7 +1616,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     return ls.pin !== 0 ? ls.pin : index;
   }
 
-  trackByLed(index: number): number {
+  trackByLed(index: number, _led: any): number {
     return index;
   }
 

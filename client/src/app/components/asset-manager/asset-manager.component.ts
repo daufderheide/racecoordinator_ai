@@ -24,7 +24,7 @@ import {
   ISaveImageSetEntry,
 } from "src/app/proto/antigravity";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
-import { NgIf, NgFor } from "@angular/common";
+
 import { FormsModule } from "@angular/forms";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
@@ -52,9 +52,7 @@ export interface AssetView {
   styleUrls: ["./asset-manager.component.css"],
   imports: [
     ManagerHeaderComponent_1,
-    NgIf,
     FormsModule,
-    NgFor,
     ImageSetEditorComponent,
     AudioSetEditorComponent,
     ConfirmationModalComponent,

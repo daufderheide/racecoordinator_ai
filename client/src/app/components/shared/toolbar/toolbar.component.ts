@@ -12,7 +12,7 @@ import { Settings } from "src/app/models/settings";
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
-import { NgIf } from "@angular/common";
+
 import { AcknowledgementModalComponent } from "../acknowledgement-modal/acknowledgement-modal.component";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
@@ -21,7 +21,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   selector: "app-toolbar",
   templateUrl: "./toolbar.component.html",
   styleUrls: ["./toolbar.component.css"],
-  imports: [NgIf, AcknowledgementModalComponent, TranslatePipe],
+  imports: [AcknowledgementModalComponent, TranslatePipe],
 })
 export class ToolbarComponent implements OnInit {
   showAdd = input(false);

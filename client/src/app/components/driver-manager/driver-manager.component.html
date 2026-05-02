@@ -19,103 +19,113 @@
   <div class="content-area">
     <div class="sidebar-list">
       <div class="list-container">
-        <div
-          *ngFor="let driver of filteredDrivers; let i = index"
-          #driverRow
-          [attr.data-id]="driver.entity_id"
-          class="list-item"
-          [class.selected]="driver.entity_id === selectedDriver?.entity_id"
-          (click)="selectDriver(driver)"
-          [class.odd]="i % 2 !== 0"
-        >
-          <div class="item-name">{{ driver.name }}</div>
-          <div class="item-nickname">{{ driver.nickname }}</div>
-        </div>
+        @for (driver of filteredDrivers; track driver; let i = $index) {
+          <div
+            #driverRow
+            [attr.data-id]="driver.entity_id"
+            class="list-item"
+            [class.selected]="driver.entity_id === selectedDriver?.entity_id"
+            (click)="selectDriver(driver)"
+            [class.odd]="i % 2 !== 0"
+          >
+            <div class="item-name">{{ driver.name }}</div>
+            <div class="item-nickname">{{ driver.nickname }}</div>
+          </div>
+        }
       </div>
     </div>
 
-    <div class="detail-panel" *ngIf="selectedDriver">
-      <div class="detail-header">
-        <h2>{{ selectedDriver.name }}</h2>
-      </div>
-      <div class="detail-content">
-        <div class="avatar-preview-container" *ngIf="editingDriver">
-          <div class="avatar-preview-large">
-            <img
-              [src]="editingDriver.avatarUrl | avatarUrl"
-              alt="Avatar Large"
-            />
-          </div>
+    @if (selectedDriver) {
+      <div class="detail-panel">
+        <div class="detail-header">
+          <h2>{{ selectedDriver.name }}</h2>
         </div>
-
-        <div class="config-header">{{ "DM_HEADER_CONFIG" | translate }}</div>
-
-        <div class="config-form" *ngIf="editingDriver">
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ "DM_LABEL_NAME" | translate }}</label>
-              <input
-                type="text"
-                [(ngModel)]="editingDriver.name"
-                class="dm-input"
-                readonly
-              />
+        <div class="detail-content">
+          @if (editingDriver) {
+            <div class="avatar-preview-container">
+              <div class="avatar-preview-large">
+                <img
+                  [src]="editingDriver.avatarUrl | avatarUrl"
+                  alt="Avatar Large"
+                />
+              </div>
             </div>
-
-            <div class="form-group">
-              <label>{{ "DM_LABEL_NICKNAME" | translate }}</label>
-              <input
-                type="text"
-                [(ngModel)]="editingDriver.nickname"
-                class="dm-input"
-                readonly
-              />
+          }
+          <div class="config-header">{{ "DM_HEADER_CONFIG" | translate }}</div>
+          @if (editingDriver) {
+            <div class="config-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>{{ "DM_LABEL_NAME" | translate }}</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="editingDriver.name"
+                    class="dm-input"
+                    readonly
+                  />
+                </div>
+                <div class="form-group">
+                  <label>{{ "DM_LABEL_NICKNAME" | translate }}</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="editingDriver.nickname"
+                    class="dm-input"
+                    readonly
+                  />
+                </div>
+              </div>
+              <div class="form-group">
+                <app-audio-selector
+                  [label]="'DM_LABEL_LAP_SOUND' | translate"
+                  [type]="editingDriver.lapAudio.type"
+                  [url]="editingDriver.lapAudio.url"
+                  [text]="editingDriver.lapAudio.text"
+                  [assets]="soundAssets"
+                  [readonly]="true"
+                >
+                </app-audio-selector>
+              </div>
+              <div class="form-group">
+                <app-audio-selector
+                  [label]="'DM_LABEL_BEST_LAP_SOUND' | translate"
+                  [type]="editingDriver.bestLapAudio.type"
+                  [url]="editingDriver.bestLapAudio.url"
+                  [text]="editingDriver.bestLapAudio.text"
+                  [assets]="soundAssets"
+                  [readonly]="true"
+                >
+                </app-audio-selector>
+              </div>
             </div>
-          </div>
-
-          <div class="form-group">
-            <app-audio-selector
-              [label]="'DM_LABEL_LAP_SOUND' | translate"
-              [type]="editingDriver.lapAudio.type"
-              [url]="editingDriver.lapAudio.url"
-              [text]="editingDriver.lapAudio.text"
-              [assets]="soundAssets"
-              [readonly]="true"
-            >
-            </app-audio-selector>
-          </div>
-
-          <div class="form-group">
-            <app-audio-selector
-              [label]="'DM_LABEL_BEST_LAP_SOUND' | translate"
-              [type]="editingDriver.bestLapAudio.type"
-              [url]="editingDriver.bestLapAudio.url"
-              [text]="editingDriver.bestLapAudio.text"
-              [assets]="soundAssets"
-              [readonly]="true"
-            >
-            </app-audio-selector>
-          </div>
+          }
         </div>
       </div>
-    </div>
+    }
 
-    <div class="detail-panel empty-state" *ngIf="!selectedDriver && !isLoading">
-      <p>{{ "DM_NO_DRIVER_SELECTED" | translate }}</p>
-    </div>
+    @if (!selectedDriver && !isLoading) {
+      <div class="detail-panel empty-state">
+        <p>{{ "DM_NO_DRIVER_SELECTED" | translate }}</p>
+      </div>
+    }
   </div>
 </div>
 
 <!-- Connection Lost Overlay -->
-<div class="connection-lost-overlay" *ngIf="isConnectionLost">
-  <div class="connection-spinner"></div>
-  <div class="connection-lost-text">{{ "DM_LOST_CONNECTION" | translate }}</div>
-</div>
+@if (isConnectionLost) {
+  <div class="connection-lost-overlay">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">
+      {{ "DM_LOST_CONNECTION" | translate }}
+    </div>
+  </div>
+}
 
 <!-- Loading Overlay -->
-<div class="loader-overlay" *ngIf="isLoading || isSaving">
-  <div class="spinner"></div>
-</div>
+@if (isLoading || isSaving) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}
 
 <app-confirmation-modal
   [visible]="showDeleteConfirmation"

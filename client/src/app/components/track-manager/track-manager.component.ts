@@ -14,9 +14,9 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
-import { NgFor, NgIf } from "@angular/common";
+
 import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.component";
-import { RacedayComponent } from "../raceday/raceday.component";
+
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
@@ -27,10 +27,7 @@ import { TranslatePipe } from "src/app/pipes/translate.pipe";
   imports: [
     ConfirmationModalComponent,
     ManagerHeaderComponent_1,
-    NgFor,
-    NgIf,
     ArduinoSummaryComponent,
-    RacedayComponent,
     TranslatePipe,
   ],
 })

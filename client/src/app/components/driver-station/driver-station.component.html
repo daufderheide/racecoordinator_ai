@@ -14,10 +14,12 @@
       ></div>
     </div>
     <div class="thermometer-label">
-      <span *ngIf="finishMethod === 'Timed'">{{ time | number: "1.0-0" }}</span>
-      <span *ngIf="finishMethod === 'Lap'">{{
-        finishValue - (driverData?.lapCount || 0)
-      }}</span>
+      @if (finishMethod === "Timed") {
+        <span>{{ time | number: "1.0-0" }}</span>
+      }
+      @if (finishMethod === "Lap") {
+        <span>{{ finishValue - (driverData?.lapCount || 0) }}</span>
+      }
     </div>
   </div>
 
@@ -31,9 +33,11 @@
         <span class="value nickname-value">{{
           driverData?.driver?.nickname
         }}</span>
-        <span *ngIf="driverData?.participant?.team" class="team-name">{{
-          driverData?.participant?.team?.name
-        }}</span>
+        @if (driverData?.participant?.team) {
+          <span class="team-name">{{
+            driverData?.participant?.team?.name
+          }}</span>
+        }
       </div>
     </div>
     <div class="data-row rank-row">
@@ -101,16 +105,18 @@
   </div>
 
   <!-- Column 3: Fuel Thermometer (Conditional) -->
-  <div class="column thermometer-column fuel-column" *ngIf="isFuelRace">
-    <div class="thermometer-container">
-      <div
-        class="thermometer-fill"
-        [style.height.%]="fuelPercentage"
-        [style.background-color]="foregroundColor"
-      ></div>
+  @if (isFuelRace) {
+    <div class="column thermometer-column fuel-column">
+      <div class="thermometer-container">
+        <div
+          class="thermometer-fill"
+          [style.height.%]="fuelPercentage"
+          [style.background-color]="foregroundColor"
+        ></div>
+      </div>
+      <div class="thermometer-label">
+        <span>{{ fuelPercentage | number: "1.0-0" }}%</span>
+      </div>
     </div>
-    <div class="thermometer-label">
-      <span>{{ fuelPercentage | number: "1.0-0" }}%</span>
-    </div>
-  </div>
+  }
 </div>

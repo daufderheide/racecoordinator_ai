@@ -1,65 +1,71 @@
-<div class="modal-backdrop" *ngIf="visible()" (click)="onClose()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <app-back-button
-        *ngIf="backButtonRoute()"
-        [route]="backButtonRoute()!"
-        [queryParams]="backButtonQueryParams()"
-        [label]="backButtonLabel() || 'IS_BTN_BACK'"
-        (back)="onBack()"
-      ></app-back-button>
-      <div class="modal-title">
-        {{ title() || ("IS_TITLE_SELECT_ITEM" | translate) }}
-      </div>
-      <div class="search-container">
-        <input
-          type="text"
-          [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
-          [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
-          class="search-input"
-        />
-      </div>
-    </div>
-
-    <div class="modal-body">
-      <div class="item-grid" *ngIf="filteredItems().length > 0">
-        <div
-          class="item-card"
-          *ngFor="let item of filteredItems()"
-          (click)="onSelect(item)"
-        >
-          <div class="item-preview">
-            <app-asset-preview
-              [type]="item.type || itemType()"
-              [assetId]="item.id || item.entity_id || item.model?.entityId"
-              [imageUrl]="item.url"
-              [name]="item.name || ''"
-              [images]="item.images || undefined"
-              [animate]="true"
-            >
-            </app-asset-preview>
-            <button
-              *ngIf="
-                itemType() === 'sound' ||
-                itemType() === 'audio' ||
-                itemType() === 'audio_set'
-              "
-              class="play-preview"
-              (click)="onPlay($event, item)"
-              [title]="'IS_BTN_PLAY' | translate"
-            >
-              ▶
-            </button>
-          </div>
-          <div class="item-name">{{ item.name }}</div>
+@if (visible()) {
+  <div class="modal-backdrop" (click)="onClose()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        @if (backButtonRoute()) {
+          <app-back-button
+            [route]="backButtonRoute()!"
+            [queryParams]="backButtonQueryParams()"
+            [label]="backButtonLabel() || 'IS_BTN_BACK'"
+            (back)="onBack()"
+          ></app-back-button>
+        }
+        <div class="modal-title">
+          {{ title() || ("IS_TITLE_SELECT_ITEM" | translate) }}
+        </div>
+        <div class="search-container">
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
+            class="search-input"
+          />
         </div>
       </div>
-
-      <div class="no-items" *ngIf="filteredItems().length === 0">
-        <div class="no-items-icon">🔍</div>
-        <div class="no-items-text">{{ "IS_MSG_NO_ITEMS" | translate }}</div>
+      <div class="modal-body">
+        @if (filteredItems().length > 0) {
+          <div class="item-grid">
+            @for (item of filteredItems(); track item) {
+              <div class="item-card" (click)="onSelect(item)">
+                <div class="item-preview">
+                  <app-asset-preview
+                    [type]="item.type || itemType()"
+                    [assetId]="
+                      item.id || item.entity_id || item.model?.entityId
+                    "
+                    [imageUrl]="item.url"
+                    [name]="item.name || ''"
+                    [images]="item.images || undefined"
+                    [animate]="true"
+                  >
+                  </app-asset-preview>
+                  @if (
+                    itemType() === "sound" ||
+                    itemType() === "audio" ||
+                    itemType() === "audio_set"
+                  ) {
+                    <button
+                      class="play-preview"
+                      (click)="onPlay($event, item)"
+                      [title]="'IS_BTN_PLAY' | translate"
+                    >
+                      ▶
+                    </button>
+                  }
+                </div>
+                <div class="item-name">{{ item.name }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (filteredItems().length === 0) {
+          <div class="no-items">
+            <div class="no-items-icon">🔍</div>
+            <div class="no-items-text">{{ "IS_MSG_NO_ITEMS" | translate }}</div>
+          </div>
+        }
       </div>
     </div>
   </div>
-</div>
+}
