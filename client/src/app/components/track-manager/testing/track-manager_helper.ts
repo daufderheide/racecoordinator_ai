@@ -25,6 +25,10 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     "closeInterface",
     "updateTrack",
     "initializeInterface",
+    "getSerialPorts",
+    "updateInterfaceConfig",
+    "setInterfacePinState",
+    "setInterfaceRgbLedState",
   ]);
 
   mock.getTracks.and.callFake(() =>
@@ -42,6 +46,10 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
   mock.getRaceState.and.returnValue(of(0)); // RaceState.NOT_STARTED
   mock.closeInterface.and.returnValue(of({ success: true }));
   mock.initializeInterface.and.returnValue(of({ success: true }));
+  mock.getSerialPorts.and.returnValue(of(["COM1", "COM2"]));
+  mock.updateInterfaceConfig.and.returnValue(of({ success: true }));
+  mock.setInterfacePinState.and.returnValue(of({ success: true }));
+  mock.setInterfaceRgbLedState.and.returnValue(of({ success: true }));
 
   return Object.assign(mock, overrides);
 }

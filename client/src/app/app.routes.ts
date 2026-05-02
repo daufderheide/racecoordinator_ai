@@ -1,5 +1,4 @@
-import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
+import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "src/app/components/asset-manager/asset-manager.component";
 import { DatabaseManagerComponent } from "src/app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "src/app/components/driver-editor/driver-editor.component";
@@ -19,7 +18,7 @@ import { UIEditorComponent } from "src/app/components/ui-editor/ui-editor.compon
 import { DirtyCheckGuard } from "src/app/guards/dirty-check.guard";
 import { RacedayGuard } from "src/app/guards/raceday.guard";
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: "", redirectTo: "raceday-setup", pathMatch: "full" },
   {
     path: "raceday",
@@ -106,9 +105,3 @@ const routes: Routes = [
   },
   { path: "**", redirectTo: "" },
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule],
-})
-export class AppRoutingModule {}

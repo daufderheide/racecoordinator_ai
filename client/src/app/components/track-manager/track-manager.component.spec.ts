@@ -28,7 +28,6 @@ import { TrackManagerComponent } from "./track-manager.component";
 @Component({
   selector: "app-back-button",
   template: "",
-  standalone: false,
 })
 class MockBackButtonComponent {
   @Input() targetUrl?: string;
@@ -60,11 +59,7 @@ describe("TrackManagerComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [
-        TrackManagerComponent,
-        TranslatePipe,
-        MockBackButtonComponent,
-      ],
+      imports: [TrackManagerComponent, TranslatePipe, MockBackButtonComponent],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useValue: createTrackManagerDataServiceMock() },

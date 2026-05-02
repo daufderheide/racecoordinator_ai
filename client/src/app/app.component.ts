@@ -1,5 +1,10 @@
 import { Component, OnInit } from "@angular/core";
-import { ChildrenOutletContexts, NavigationEnd, Router } from "@angular/router";
+import {
+  ChildrenOutletContexts,
+  NavigationEnd,
+  Router,
+  RouterOutlet,
+} from "@angular/router";
 import { filter } from "rxjs/operators";
 import { slideInAnimation } from "src/app/utils/animations";
 
@@ -8,8 +13,10 @@ import { DataService } from "./data.service";
 import { NavigationService } from "./services/navigation.service";
 import { SettingsService } from "./services/settings.service";
 import { ThemeService } from "./services/theme.service";
+import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 
 @Component({
+  standalone: true,
   selector: "app-root",
   template: `
     <div
@@ -31,7 +38,7 @@ import { ThemeService } from "./services/theme.service";
       }
     `,
   ],
-  standalone: false,
+  imports: [RouterOutlet, HelpOverlayComponent],
 })
 export class AppComponent implements OnInit {
   private navigationCounter = 0;

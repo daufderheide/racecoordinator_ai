@@ -66,7 +66,7 @@ module.exports = {
           }
         ],
         "@angular-eslint/prefer-inject": "off",
-        "@angular-eslint/prefer-standalone": "off"
+        "@angular-eslint/prefer-standalone": "error"
       },
       "plugins": [
         "@typescript-eslint",

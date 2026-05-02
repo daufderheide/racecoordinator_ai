@@ -1,13 +1,17 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
+import { of } from "rxjs";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { EditorTitleComponent } from "./editor-title.component";
 import { EditorTitleHarness } from "./testing/editor-title.harness";
 
-@Component({ selector: "app-back-button", template: "", standalone: false })
+@Component({
+  selector: "app-back-button",
+  template: "",
+})
 class MockBackButtonComponent {
   @Input() route: string = "";
   @Input() queryParams: any = {};
@@ -20,7 +24,6 @@ class MockBackButtonComponent {
 @Component({
   selector: "app-toolbar",
   template: '<button id="help-track-btn" (click)="help.emit()">Help</button>',
-  standalone: false,
 })
 class MockToolbarComponent {
   @Input() showUndo: boolean = true;
@@ -41,7 +44,7 @@ class MockToolbarComponent {
 }
 
 import { Pipe, PipeTransform } from "@angular/core";
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -63,7 +66,7 @@ describe("EditorTitleComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         EditorTitleComponent,
         MockBackButtonComponent,
         MockToolbarComponent,
@@ -72,6 +75,17 @@ describe("EditorTitleComponent", () => {
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: TranslationService, useValue: mockTranslationService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParams: of({}),
+            snapshot: {
+              queryParamMap: {
+                get: jasmine.createSpy("get").and.returnValue(null),
+              },
+            },
+          },
+        },
       ],
     }).compileComponents();
   });

@@ -10,12 +10,16 @@ import {
 } from "@angular/core";
 import { Subscription } from "rxjs";
 import { GuideStep, HelpService } from "src/app/services/help.service";
+import { NgIf, NgStyle, NgClass } from "@angular/common";
+import { AssetPickerComponent } from "../asset-picker/asset-picker.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-help-overlay",
   templateUrl: "./help-overlay.component.html",
   styleUrls: ["./help-overlay.component.css"],
-  standalone: false,
+  imports: [NgIf, NgStyle, NgClass, AssetPickerComponent, TranslatePipe],
 })
 export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   isVisible = false;

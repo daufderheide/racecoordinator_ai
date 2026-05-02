@@ -14,12 +14,15 @@ import { RaceFlagService } from "src/app/services/race-flag.service";
 import { createTTSContext, playSound } from "src/app/utils/audio";
 
 import { RaceState } from "src/app/proto/antigravity";
+import { NgIf, DecimalPipe } from "@angular/common";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-driver-station",
   templateUrl: "./driver-station.component.html",
   styleUrls: ["./driver-station.component.css"],
-  standalone: false,
+  imports: [NgIf, DecimalPipe, TranslatePipe],
 })
 export class DriverStationComponent implements OnInit, OnDestroy {
   // ... existing code ...

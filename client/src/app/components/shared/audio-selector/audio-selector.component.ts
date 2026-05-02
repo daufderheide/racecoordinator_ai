@@ -8,12 +8,17 @@ import {
 import { DataService } from "src/app/data.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { mockTTSContext, playSound } from "src/app/utils/audio";
+import { NgIf } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ItemSelectorComponent } from "../item-selector/item-selector.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-audio-selector",
   templateUrl: "./audio-selector.component.html",
   styleUrls: ["./audio-selector.component.css"],
-  standalone: false,
+  imports: [NgIf, FormsModule, ItemSelectorComponent, TranslatePipe],
 })
 export class AudioSelectorComponent {
   @Input() label: string = "Audio";

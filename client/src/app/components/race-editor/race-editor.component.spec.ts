@@ -65,8 +65,7 @@ describe("RaceEditorComponent", () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [FormsModule],
-      declarations: [RaceEditorComponent, TranslatePipe],
+      imports: [FormsModule, RaceEditorComponent, TranslatePipe],
       providers: [
         { provide: DataService, useValue: createRaceManagerDataServiceMock() },
         { provide: Router, useValue: mockRouter },

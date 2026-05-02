@@ -27,7 +27,7 @@ describe("AboutDialogComponent", () => {
     translationServiceSpy.getTranslationsLoaded.and.returnValue(of(true));
 
     await TestBed.configureTestingModule({
-      declarations: [AboutDialogComponent, TranslatePipe],
+      imports: [AboutDialogComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: translationServiceSpy },
       ],

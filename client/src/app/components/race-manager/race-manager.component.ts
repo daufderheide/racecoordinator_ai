@@ -21,12 +21,27 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
+import { NgIf, NgFor } from "@angular/common";
+import { HeatListComponent } from "../shared/heat-list/heat-list.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-race-manager",
   templateUrl: "./race-manager.component.html",
   styleUrls: ["./race-manager.component.css"],
-  standalone: false,
+  imports: [
+    ConfirmationModalComponent,
+    ManagerHeaderComponent_1,
+    NgIf,
+    NgFor,
+    HeatListComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class RaceManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
@@ -68,7 +83,9 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
               .includes(query)),
       );
     }
-    return filtered.sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
+    return filtered.sort((a, b) =>
+      naturalSortCompare(a.name || "", b.name || ""),
+    );
   }
 
   // Connection Monitoring

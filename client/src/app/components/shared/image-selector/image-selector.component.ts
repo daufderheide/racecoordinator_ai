@@ -6,12 +6,17 @@ import {
   Output,
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
+import { NgIf } from "@angular/common";
+import { AssetPreviewComponent } from "../asset-preview/asset-preview.component";
+import { ItemSelectorComponent } from "../item-selector/item-selector.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-image-selector",
   templateUrl: "./image-selector.component.html",
   styleUrl: "./image-selector.component.css",
-  standalone: false,
+  imports: [NgIf, AssetPreviewComponent, ItemSelectorComponent, TranslatePipe],
 })
 export class ImageSelectorComponent {
   @Input() label?: string;

@@ -10,12 +10,16 @@ import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.comp
 import { UndoManager } from "src/app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "src/app/models/settings";
 import { GuideStep } from "src/app/services/help.service";
+import { BackButtonComponent } from "../back-button/back-button.component";
+import { ToolbarComponent as ToolbarComponent_1 } from "../toolbar/toolbar.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  standalone: false,
+  imports: [BackButtonComponent, ToolbarComponent_1, TranslatePipe],
 })
 export class EditorTitleComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;

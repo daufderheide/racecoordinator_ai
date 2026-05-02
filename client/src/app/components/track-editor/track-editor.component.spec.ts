@@ -37,7 +37,7 @@ import { createTrackManagerDataServiceMock } from "../track-manager/testing/trac
 @Component({
   selector: "app-back-button",
   template: "",
-  standalone: false,
+  imports: [FormsModule, DragDropModule],
 })
 class MockBackButtonComponent {
   @Input() targetUrl?: string;
@@ -51,7 +51,7 @@ class MockBackButtonComponent {
 @Component({
   selector: "app-undo-redo-controls",
   template: "",
-  standalone: false,
+  imports: [FormsModule, DragDropModule],
 })
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
@@ -62,7 +62,7 @@ import { EventEmitter, Output } from "@angular/core";
 @Component({
   selector: "app-editor-title",
   template: "",
-  standalone: false,
+  imports: [FormsModule, DragDropModule],
 })
 class MockEditorTitleComponent {
   @Input() titleKey: string = "";
@@ -133,14 +133,15 @@ describe("TrackEditorComponent", () => {
       mockActivatedRoute.queryParamsSubject.asObservable();
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
+        DragDropModule,
         TrackEditorComponent,
         TranslatePipe,
         MockBackButtonComponent,
         MockUndoRedoControlsComponent,
         MockEditorTitleComponent,
       ],
-      imports: [FormsModule, DragDropModule],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: DataService, useValue: createTrackManagerDataServiceMock() },
@@ -149,12 +150,18 @@ describe("TrackEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: HelpService,
-          useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
-            isVisible$: of(false),
-            currentStep$: of(null),
-            hasNext$: of(false),
-            hasPrevious$: of(false),
-          }),
+          useFactory: () => {
+            const isVisible$ = new BehaviorSubject<boolean>(false);
+            return {
+              isVisible$,
+              currentStep$: of(null),
+              hasNext$: of(false),
+              hasPrevious$: of(false),
+              startGuide: jasmine
+                .createSpy("startGuide")
+                .and.callFake(() => isVisible$.next(true)),
+            };
+          },
         },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
@@ -505,13 +512,15 @@ describe("TrackEditorComponent", () => {
       expect(helpService.startGuide).toHaveBeenCalled();
     });
 
-    it("should expand lanes section if collapsed during help", () => {
+    it("should expand lanes section if collapsed during help", fakeAsync(() => {
       component.sectionsExpanded.lanes = false;
       component.lanes = [new Lane("l1", "white", "black", 100)];
 
       component.startHelp();
+      tick();
+      fixture.detectChanges();
 
       expect(component.sectionsExpanded.lanes).toBeTrue();
-    });
+    }));
   });
 });

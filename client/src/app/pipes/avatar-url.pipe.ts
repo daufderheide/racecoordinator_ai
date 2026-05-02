@@ -2,9 +2,9 @@ import { Pipe, PipeTransform } from "@angular/core";
 import { DataService } from "src/app/data.service";
 
 @Pipe({
+  standalone: true,
   name: "avatarUrl",
   pure: true,
-  standalone: false,
 })
 export class AvatarUrlPipe implements PipeTransform {
   constructor(private dataService: DataService) {}

@@ -23,6 +23,13 @@ import {
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
 } from "src/app/proto/antigravity";
+import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
+import { NgIf, NgFor } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
+import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 // Interface matching the mock/view needs, mapped from Protobuf
 export interface AssetView {
@@ -39,10 +46,20 @@ export interface AssetView {
 }
 
 @Component({
+  standalone: true,
   selector: "app-asset-manager",
   templateUrl: "./asset-manager.component.html",
   styleUrls: ["./asset-manager.component.css"],
-  standalone: false,
+  imports: [
+    ManagerHeaderComponent_1,
+    NgIf,
+    FormsModule,
+    NgFor,
+    ImageSetEditorComponent,
+    AudioSetEditorComponent,
+    ConfirmationModalComponent,
+    TranslatePipe,
+  ],
 })
 export class AssetManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;

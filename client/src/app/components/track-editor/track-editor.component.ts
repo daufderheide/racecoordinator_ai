@@ -1,5 +1,11 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
-import { Location } from "@angular/common";
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+} from "@angular/cdk/drag-drop";
+import { Location, NgIf, NgFor } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -29,12 +35,31 @@ import { PinBehavior, RgbLedBehavior } from "src/app/proto/antigravity";
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor-title/editor-title.component";
+import { FormsModule } from "@angular/forms";
+import { ArduinoEditorComponent as ArduinoEditorComponent_1 } from "./arduino-editor/arduino-editor.component";
+import { InputDialogComponent } from "../shared/input-dialog/input-dialog.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-track-editor",
   templateUrl: "./track-editor.component.html",
   styleUrls: ["./track-editor.component.css"],
-  standalone: false,
+  imports: [
+    EditorTitleComponent_1,
+    FormsModule,
+    NgIf,
+    CdkDropList,
+    NgFor,
+    CdkDrag,
+    CdkDragHandle,
+    ArduinoEditorComponent_1,
+    InputDialogComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class TrackEditorComponent implements OnInit, OnDestroy {
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
@@ -45,6 +70,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
+  helpSteps: GuideStep[] = [];
 
   scale: number = 1;
   isLoading: boolean = true;
@@ -132,6 +158,25 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.route.queryParamMap.subscribe(() => {
         this.loadData();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.helpService.isVisible$.subscribe((visible) => {
+        if (visible) {
+          setTimeout(() => {
+            this.ensureSectionsExpandedForHelp();
+            this.updateHelpSteps();
+          });
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.helpService.isVisible$.subscribe((visible) => {
+        if (visible) {
+          setTimeout(() => this.ensureSectionsExpandedForHelp());
+        }
       }),
     );
 
@@ -340,6 +385,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = false;
+    this.updateHelpSteps();
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
@@ -565,7 +611,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
   }
 
-  getHelpSteps(): GuideStep[] {
+  updateHelpSteps() {
     const steps: GuideStep[] = [
       {
         title: this.translationService.translate("TE_HELP_WELCOME_TITLE"),
@@ -643,24 +689,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       },
     ];
 
-    // Ensure lanes section is expanded if we are going to highlight items inside it
-    if (
-      this.sectionsExpanded &&
-      !this.sectionsExpanded.lanes &&
-      this.lanes?.length > 0
-    ) {
-      this.sectionsExpanded.lanes = true;
-      this.cdr.detectChanges();
-    }
-
     // Add Arduino help steps if there are any configured
     if (this.arduinoConfigs?.length > 0 && this.arduinoEditors?.length > 0) {
-      // Ensure interfaces section is expanded
-      if (this.sectionsExpanded && !this.sectionsExpanded.interfaces) {
-        this.sectionsExpanded.interfaces = true;
-        this.cdr.detectChanges();
-      }
-
       // Collect steps from the first Arduino editor
       const firstArduino = this.arduinoEditors.first;
       if (firstArduino) {
@@ -668,11 +698,38 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    return steps;
+    this.helpSteps = steps;
+  }
+
+  private ensureSectionsExpandedForHelp() {
+    let changed = false;
+    // Ensure lanes section is expanded if we are going to highlight items inside it
+    if (
+      this.sectionsExpanded &&
+      !this.sectionsExpanded.lanes &&
+      this.lanes?.length > 0
+    ) {
+      this.sectionsExpanded.lanes = true;
+      changed = true;
+    }
+
+    // Add Arduino help steps if there are any configured
+    if (this.arduinoConfigs?.length > 0) {
+      // Ensure interfaces section is expanded
+      if (this.sectionsExpanded && !this.sectionsExpanded.interfaces) {
+        this.sectionsExpanded.interfaces = true;
+        changed = true;
+      }
+    }
+
+    if (changed && !this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
   }
 
   startHelp() {
-    this.helpService.startGuide(this.getHelpSteps());
+    this.updateHelpSteps();
+    this.helpService.startGuide(this.helpSteps);
   }
 
   onInputFocus() {

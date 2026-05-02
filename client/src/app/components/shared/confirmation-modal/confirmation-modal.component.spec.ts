@@ -1,55 +1,54 @@
-import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { Pipe, PipeTransform } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
+import { Pipe, PipeTransform } from "@angular/core";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { ConfirmationModalComponent } from './confirmation-modal.component';
-import { ConfirmationModalHarness } from './testing/confirmation-modal.harness';
+import { ConfirmationModalComponent } from "./confirmation-modal.component";
+import { ConfirmationModalHarness } from "./testing/confirmation-modal.harness";
 
-@Pipe({
-  name: 'translate',
-  standalone: false
-})
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return `TRANSLATED_${value}`;
   }
 }
 
-describe('ConfirmationModalComponent', () => {
+describe("ConfirmationModalComponent", () => {
   let component: ConfirmationModalComponent;
   let fixture: ComponentFixture<ConfirmationModalComponent>;
   let harness: ConfirmationModalHarness;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ConfirmationModalComponent, MockTranslatePipe]
-    })
-      .compileComponents();
+      imports: [ConfirmationModalComponent, MockTranslatePipe],
+    }).compileComponents();
   });
 
   beforeEach(async () => {
     fixture = TestBed.createComponent(ConfirmationModalComponent);
     component = fixture.componentInstance;
-    harness = await TestbedHarnessEnvironment.harnessForFixture(fixture, ConfirmationModalHarness);
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      ConfirmationModalHarness,
+    );
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it("should create", () => {
     expect(component).toBeTruthy();
   });
 
-  it('should not be visible by default', async () => {
+  it("should not be visible by default", async () => {
     expect(component.visible).toBeFalse();
     expect(await harness.isVisible()).toBeFalse();
   });
 
-  it('should be visible when visible input is true', async () => {
+  it("should be visible when visible input is true", async () => {
     component.visible = true;
     expect(await harness.isVisible()).toBeTrue();
   });
 
-  it('should emit cancel event on cancel click', async () => {
-    spyOn(component.cancel, 'emit');
+  it("should emit cancel event on cancel click", async () => {
+    spyOn(component.cancel, "emit");
     component.visible = true;
 
     await harness.clickCancel();
@@ -57,8 +56,8 @@ describe('ConfirmationModalComponent', () => {
     expect(component.cancel.emit).toHaveBeenCalled();
   });
 
-  it('should emit confirm event on confirm click', async () => {
-    spyOn(component.confirm, 'emit');
+  it("should emit confirm event on confirm click", async () => {
+    spyOn(component.confirm, "emit");
     component.visible = true;
 
     await harness.clickConfirm();

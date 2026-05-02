@@ -29,10 +29,7 @@ import {
 
 import { AssetManagerComponent } from "./asset-manager.component";
 
-@Pipe({
-  name: "translate",
-  standalone: false,
-})
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -67,8 +64,7 @@ describe("AssetManagerComponent", () => {
     mockConnectionMonitor.checkConnection.and.returnValue(of(true));
 
     await TestBed.configureTestingModule({
-      declarations: [AssetManagerComponent, MockTranslatePipe],
-      imports: [FormsModule],
+      imports: [FormsModule, AssetManagerComponent, MockTranslatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },

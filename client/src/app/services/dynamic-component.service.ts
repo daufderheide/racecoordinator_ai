@@ -15,7 +15,6 @@ import {
 } from "@angular/common";
 import { Component, Injectable, Type } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { SharedModule } from "src/app/components/shared/shared.module";
 
 @Injectable({
   providedIn: "root",
@@ -51,7 +50,6 @@ export class DynamicComponentService {
       standalone: true,
       imports: [
         CommonModule,
-        SharedModule,
         NgIf,
         NgFor,
         NgClass,
@@ -64,7 +62,6 @@ export class DynamicComponentService {
         ScrollingModule,
         FormsModule,
         ReactiveFormsModule,
-        // Add other common modules here as needed for future compatibility
       ],
     })(DynamicComponent);
   }

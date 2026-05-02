@@ -1,11 +1,24 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { Router } from "@angular/router";
+import { NgIf, NgFor } from "@angular/common";
+import { BackButtonComponent } from "../back-button/back-button.component";
+import { FormsModule } from "@angular/forms";
+import { AssetPreviewComponent } from "../asset-preview/asset-preview.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-item-selector",
-  standalone: false,
   templateUrl: "./item-selector.component.html",
   styleUrls: ["./item-selector.component.css"],
+  imports: [
+    NgIf,
+    BackButtonComponent,
+    FormsModule,
+    NgFor,
+    AssetPreviewComponent,
+    TranslatePipe,
+  ],
 })
 export class ItemSelectorComponent {
   @Input() visible = false;

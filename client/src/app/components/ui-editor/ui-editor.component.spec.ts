@@ -15,7 +15,7 @@ import {
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { delay, of } from "rxjs";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { DataService } from "src/app/data.service";
@@ -28,7 +28,11 @@ import { TranslationService } from "src/app/services/translation.service";
 
 import { UIEditorComponent } from "./ui-editor.component";
 
-@Component({ selector: "app-image-selector", template: "", standalone: false })
+@Component({
+  selector: "app-image-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
@@ -44,7 +48,11 @@ class MockImageSelectorComponent {
   @Output() uploadFinished = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-asset-preview", template: "", standalone: false })
+@Component({
+  selector: "app-asset-preview",
+  template: "",
+  imports: [FormsModule],
+})
 class MockAssetPreviewComponent {
   @Input() assetId?: string;
   @Input() type: string = "image";
@@ -54,14 +62,22 @@ class MockAssetPreviewComponent {
   @Input() animate: boolean = true;
 }
 
-@Component({ selector: "app-editor-title", template: "", standalone: false })
+@Component({
+  selector: "app-editor-title",
+  template: "",
+  imports: [FormsModule],
+})
 class MockEditorTitleComponent {
   @Input() titleKey: string = "";
   @Input() backRoute: string = "";
   @Input() undoManager: any;
 }
 
-@Component({ selector: "app-column-preview", template: "", standalone: false })
+@Component({
+  selector: "app-column-preview",
+  template: "",
+  imports: [FormsModule],
+})
 class MockColumnPreviewComponent {
   @Input() columnSlots: any[] = [];
   @Input() columnLayouts: any = {};
@@ -69,7 +85,11 @@ class MockColumnPreviewComponent {
   @Input() columnVisibility: any = {};
 }
 
-@Component({ selector: "app-toolbar", template: "", standalone: false })
+@Component({
+  selector: "app-toolbar",
+  template: "",
+  imports: [FormsModule],
+})
 class MockToolbarComponent {
   @Input() showAdd = false;
   @Input() showEdit = false;
@@ -98,7 +118,7 @@ class MockToolbarComponent {
 @Component({
   selector: "app-confirmation-modal",
   template: "",
-  standalone: false,
+  imports: [FormsModule],
 })
 class MockConfirmationModalComponent {
   @Input() visible = false;
@@ -110,7 +130,11 @@ class MockConfirmationModalComponent {
   @Output() cancel = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<void>();
 }
-@Component({ selector: "app-reorder-dialog", template: "", standalone: false })
+@Component({
+  selector: "app-reorder-dialog",
+  template: "",
+  imports: [FormsModule],
+})
 class MockReorderDialogComponent {
   @Input() visible: boolean = false;
   @Input() data: any;
@@ -118,7 +142,11 @@ class MockReorderDialogComponent {
   @Output() cancel = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-audio-selector", template: "", standalone: false })
+@Component({
+  selector: "app-audio-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockAudioSelectorComponent {
   @Input() label: string = "";
   @Input() assets: any[] = [];
@@ -133,7 +161,7 @@ class MockAudioSelectorComponent {
   @Output() textChange = new EventEmitter<string>();
 }
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     if (value === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
@@ -184,6 +212,14 @@ describe("UIEditorComponent", () => {
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
+    const mockActivatedRoute = {
+      queryParams: of({}),
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
+    };
     mockTranslationService.translate.and.callFake((key: string) => {
       if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
       if (key === "UE_LABEL_COPY_SUFFIX") return " (Copy)";
@@ -235,7 +271,8 @@ describe("UIEditorComponent", () => {
     mockThemeService.resolveAssetId.and.returnValue(null);
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
         UIEditorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
@@ -247,7 +284,6 @@ describe("UIEditorComponent", () => {
         MockTranslatePipe,
         MockAudioSelectorComponent,
       ],
-      imports: [FormsModule],
       providers: [
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: FileSystemService, useValue: mockFileSystem },
@@ -255,6 +291,7 @@ describe("UIEditorComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ThemeService, useValue: mockThemeService },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
     }).compileComponents();
   });

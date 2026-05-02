@@ -9,7 +9,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { HelpOverlayComponent } from "src/app/components/shared/help-overlay/help-overlay.component";
@@ -46,7 +46,7 @@ import {
 @Component({
   selector: "app-toolbar",
   template: "",
-  standalone: false,
+  imports: [FormsModule, DragDropModule],
 })
 class MockToolbarComponent {
   @Input() showAdd = false;
@@ -132,9 +132,19 @@ describe("DefaultRacedaySetupComponent", () => {
 
     mockHelpService = createRacedaySetupHelpServiceMock();
 
+    const mockActivatedRoute = {
+      queryParams: of({}),
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
+    };
+
     TestBed.configureTestingModule({
-      imports: [FormsModule, DragDropModule],
-      declarations: [
+      imports: [
+        FormsModule,
+        DragDropModule,
         DefaultRacedaySetupComponent,
         TranslatePipe,
         HelpOverlayComponent,
@@ -146,6 +156,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: Router, useValue: mockRouter },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },

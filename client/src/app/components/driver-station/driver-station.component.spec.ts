@@ -16,10 +16,7 @@ import { DriverStationComponent } from "./driver-station.component";
 
 import { RaceFlag, RaceState } from "src/app/proto/antigravity";
 
-@Pipe({
-  name: "translate",
-  standalone: false,
-})
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -112,7 +109,7 @@ describe("DriverStationComponent", () => {
     mockRaceFlagService.getFlagNameKey.and.returnValue("RACE_FLAG_RED");
 
     await TestBed.configureTestingModule({
-      declarations: [DriverStationComponent, MockTranslatePipe],
+      imports: [DriverStationComponent, MockTranslatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: RaceService, useValue: mockRaceService },

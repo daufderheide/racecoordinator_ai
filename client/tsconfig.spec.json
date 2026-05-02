@@ -20,5 +20,6 @@
     "src/**/*_helper.ts",
     "src/**/*.d.ts",
     "playwright.config.ts"
-  ]
+  ],
+  "exclude": []
 }

@@ -1,6 +1,7 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ActivatedRoute } from "@angular/router";
 import { of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
 import { TranslatePipe } from "src/app/pipes/translate.pipe";
@@ -38,11 +39,22 @@ describe("ManagerHeaderComponent", () => {
     analyticsServiceSpy.isEnabled.and.returnValue(true);
 
     await TestBed.configureTestingModule({
-      declarations: [ManagerHeaderComponent, TranslatePipe],
+      imports: [ManagerHeaderComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: translationServiceSpy },
         { provide: HelpService, useValue: helpServiceSpy },
         { provide: AnalyticsService, useValue: analyticsServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParams: of({}),
+            snapshot: {
+              queryParamMap: {
+                get: jasmine.createSpy("get").and.returnValue(null),
+              },
+            },
+          },
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

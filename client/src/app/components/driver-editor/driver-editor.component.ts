@@ -1,4 +1,4 @@
-import { Location } from "@angular/common";
+import { Location, NgIf } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -21,12 +21,27 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "src/app/utils/audio";
+import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor-title/editor-title.component";
+import { ImageSelectorComponent } from "../shared/image-selector/image-selector.component";
+import { FormsModule } from "@angular/forms";
+import { AudioSelectorComponent } from "../shared/audio-selector/audio-selector.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-driver-editor",
   templateUrl: "./driver-editor.component.html",
   styleUrls: ["./driver-editor.component.css"],
-  standalone: false,
+  imports: [
+    EditorTitleComponent_1,
+    NgIf,
+    ImageSelectorComponent,
+    FormsModule,
+    AudioSelectorComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class DriverEditorComponent implements OnInit, OnDestroy {
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;

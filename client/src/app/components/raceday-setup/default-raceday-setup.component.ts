@@ -1,4 +1,11 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  ɵɵCdkScrollable,
+  CdkDropList,
+  CdkDrag,
+  CdkDragPreview,
+} from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -22,14 +29,36 @@ import { RaceService } from "src/app/services/race.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
+import { NgIf, NgFor, NgClass } from "@angular/common";
+import { ToolbarComponent as ToolbarComponent_1 } from "../shared/toolbar/toolbar.component";
+import { FormsModule } from "@angular/forms";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 type Participant = Driver | Team;
 
 @Component({
+  standalone: true,
   selector: "app-default-raceday-setup",
   templateUrl: "./default-raceday-setup.component.html",
   styleUrl: "./default-raceday-setup.component.css",
-  standalone: false,
+  imports: [
+    NgIf,
+    NgFor,
+    ToolbarComponent_1,
+    ɵɵCdkScrollable,
+    CdkDropList,
+    CdkDrag,
+    CdkDragPreview,
+    FormsModule,
+    NgClass,
+    ConfirmationModalComponent,
+    AcknowledgementModalComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;

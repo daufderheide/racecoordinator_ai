@@ -50,7 +50,7 @@ describe("HelpOverlayComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [HelpOverlayComponent, TranslatePipe],
+      imports: [HelpOverlayComponent, TranslatePipe],
       providers: [
         { provide: HelpService, useValue: helpServiceMock },
         { provide: TranslationService, useValue: translationServiceMock },

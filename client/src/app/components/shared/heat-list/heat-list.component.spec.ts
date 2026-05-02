@@ -26,7 +26,7 @@ describe("HeatListComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      declarations: [HeatListComponent, TranslatePipe],
+      imports: [HeatListComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: mockTranslationService },
       ],

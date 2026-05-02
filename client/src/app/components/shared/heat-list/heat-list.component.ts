@@ -1,4 +1,10 @@
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+  CdkDragPlaceholder,
+} from "@angular/cdk/drag-drop";
 import {
   Component,
   EventEmitter,
@@ -7,12 +13,23 @@ import {
   Output,
   SimpleChanges,
 } from "@angular/core";
+import { NgIf, NgFor } from "@angular/common";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-heat-list",
   templateUrl: "./heat-list.component.html",
   styleUrls: ["./heat-list.component.css"],
-  standalone: false,
+  imports: [
+    NgIf,
+    NgFor,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
+    CdkDragPlaceholder,
+    TranslatePipe,
+  ],
 })
 export class HeatListComponent implements OnChanges {
   @Input() heats: any[] = [];

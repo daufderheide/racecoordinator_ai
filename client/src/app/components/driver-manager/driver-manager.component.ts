@@ -23,12 +23,31 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
+import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
+import { NgFor, NgIf } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { AudioSelectorComponent } from "../shared/audio-selector/audio-selector.component";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { AvatarUrlPipe } from "src/app/pipes/avatar-url.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-driver-manager",
   templateUrl: "./driver-manager.component.html",
   styleUrls: ["./driver-manager.component.css"],
-  standalone: false,
+  imports: [
+    ManagerHeaderComponent_1,
+    NgFor,
+    NgIf,
+    FormsModule,
+    AudioSelectorComponent,
+    ConfirmationModalComponent,
+    RacedayComponent,
+    TranslatePipe,
+    AvatarUrlPipe,
+  ],
 })
 export class DriverManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
@@ -53,7 +72,9 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
           (d.nickname && d.nickname.toLowerCase().includes(query)),
       );
     }
-    return filtered.sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
+    return filtered.sort((a, b) =>
+      naturalSortCompare(a.name || "", b.name || ""),
+    );
   }
 
   // Connection Monitoring

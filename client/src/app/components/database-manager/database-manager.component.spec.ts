@@ -75,8 +75,7 @@ describe("DatabaseManagerComponent", () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [DatabaseManagerComponent, TranslatePipe],
-      imports: [FormsModule],
+      imports: [FormsModule, DatabaseManagerComponent, TranslatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: Router, useValue: mockRouter },

@@ -2,6 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { DataService } from "src/app/data.service";
 
 import { IAssetMessage } from "src/app/proto/antigravity";
+import { NgIf, NgFor } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { AssetPreviewComponent } from "../asset-preview/asset-preview.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 export interface AssetPickerData {
   currentAssetId?: string;
@@ -9,10 +13,11 @@ export interface AssetPickerData {
 }
 
 @Component({
+  standalone: true,
   selector: "app-asset-picker",
   templateUrl: "./asset-picker.component.html",
   styleUrl: "./asset-picker.component.css",
-  standalone: false,
+  imports: [NgIf, FormsModule, NgFor, AssetPreviewComponent, TranslatePipe],
 })
 export class AssetPickerComponent implements OnInit {
   @Input() visible: boolean = false;

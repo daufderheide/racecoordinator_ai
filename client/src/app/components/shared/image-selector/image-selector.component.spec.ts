@@ -20,7 +20,10 @@ import { DataService } from "src/app/data.service";
 import { ImageSelectorComponent } from "./image-selector.component";
 import { ImageSelectorHarness } from "./testing/image-selector.harness";
 
-@Component({ selector: "app-item-selector", template: "", standalone: false })
+@Component({
+  selector: "app-item-selector",
+  template: "",
+})
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
@@ -32,7 +35,10 @@ class MockItemSelectorComponent {
   @Output() close = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-asset-preview", template: "", standalone: false })
+@Component({
+  selector: "app-asset-preview",
+  template: "",
+})
 class MockAssetPreviewComponent {
   @Input() assetId?: string;
   @Input() type: string = "image";
@@ -42,14 +48,14 @@ class MockAssetPreviewComponent {
   @Input() animate: boolean = true;
 }
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({ name: "avatarUrl", standalone: false })
+@Pipe({ name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -66,7 +72,7 @@ describe("ImageSelectorComponent", () => {
     mockDataService = jasmine.createSpyObj("DataService", ["uploadAsset"]);
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ImageSelectorComponent,
         MockItemSelectorComponent,
         MockAssetPreviewComponent,

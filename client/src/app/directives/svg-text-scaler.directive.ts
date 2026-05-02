@@ -9,8 +9,8 @@ import {
 } from "@angular/core";
 
 @Directive({
+  standalone: true,
   selector: "[appSvgTextScaler]",
-  standalone: false,
 })
 export class SvgTextScalerDirective
   implements OnChanges, AfterViewInit, OnDestroy

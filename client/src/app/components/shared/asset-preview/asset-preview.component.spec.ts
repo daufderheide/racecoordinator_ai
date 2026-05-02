@@ -21,7 +21,7 @@ describe("AssetPreviewComponent", () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [AssetPreviewComponent],
+      imports: [AssetPreviewComponent],
       providers: [{ provide: DataService, useValue: spy }, ChangeDetectorRef],
     }).compileComponents();
 

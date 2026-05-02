@@ -1,5 +1,10 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
-import { Location } from "@angular/common";
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  CdkDropList,
+  CdkDrag,
+} from "@angular/cdk/drag-drop";
+import { Location, NgIf, NgFor } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -22,12 +27,28 @@ import {
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { EditorTitleComponent as EditorTitleComponent_1 } from "../shared/editor-title/editor-title.component";
+import { ImageSelectorComponent } from "../shared/image-selector/image-selector.component";
+import { FormsModule } from "@angular/forms";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-team-editor",
   templateUrl: "./team-editor.component.html",
   styleUrls: ["./team-editor.component.css"],
-  standalone: false,
+  imports: [
+    EditorTitleComponent_1,
+    NgIf,
+    ImageSelectorComponent,
+    FormsModule,
+    CdkDropList,
+    NgFor,
+    CdkDrag,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class TeamEditorComponent implements OnInit, OnDestroy {
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;

@@ -23,6 +23,7 @@ import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { DefaultRacedayComponent } from "./default-raceday.component";
+import { NgIf } from "@angular/common";
 
 // Base class for custom components to extend, providing common services
 class CustomRacedayBaseComponent extends DefaultRacedayComponent {
@@ -54,10 +55,11 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
 }
 
 @Component({
+  standalone: true,
   selector: "app-raceday",
   templateUrl: "./raceday.component.html",
   styleUrls: ["./raceday.component.css"],
-  standalone: false,
+  imports: [NgIf],
 })
 export class RacedayComponent implements OnInit, CanComponentDeactivate {
   @ViewChild("container", { read: ViewContainerRef, static: true })

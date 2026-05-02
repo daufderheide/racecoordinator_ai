@@ -18,7 +18,11 @@ import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 // Mock Child Components
-@Component({ selector: "app-back-button", template: "", standalone: false })
+@Component({
+  selector: "app-back-button",
+  template: "",
+  imports: [FormsModule],
+})
 class MockBackButtonComponent {
   @Input() route: string | null = null;
   @Input() queryParams: any = {};
@@ -28,7 +32,11 @@ class MockBackButtonComponent {
   @Input() confirmMessage: string = "";
 }
 
-@Component({ selector: "app-audio-selector", template: "", standalone: false })
+@Component({
+  selector: "app-audio-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockAudioSelectorComponent {
   @Input() label: string = "";
   @Input() type: any;
@@ -43,7 +51,11 @@ class MockAudioSelectorComponent {
   @Input() context: any;
 }
 
-@Component({ selector: "app-image-selector", template: "", standalone: false })
+@Component({
+  selector: "app-image-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
@@ -54,7 +66,11 @@ class MockImageSelectorComponent {
   @Output() uploadFinished = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-item-selector", template: "", standalone: false })
+@Component({
+  selector: "app-item-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
@@ -69,13 +85,17 @@ class MockItemSelectorComponent {
 @Component({
   selector: "app-undo-redo-controls",
   template: "",
-  standalone: false,
+  imports: [FormsModule],
 })
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
-@Component({ selector: "app-editor-title", template: "", standalone: false })
+@Component({
+  selector: "app-editor-title",
+  template: "",
+  imports: [FormsModule],
+})
 class MockEditorTitleComponent {
   @Input() titleKey: string = "";
   @Input() backRoute: string = "";
@@ -101,7 +121,11 @@ class MockEditorTitleComponent {
   @Output() delete = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-help-overlay", template: "", standalone: false })
+@Component({
+  selector: "app-help-overlay",
+  template: "",
+  imports: [FormsModule],
+})
 class MockHelpOverlayComponent {
   @Input() steps: any[] = [];
   @Input() showHelp: boolean = false;
@@ -124,14 +148,14 @@ import {
 import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({ name: "avatarUrl", standalone: false })
+@Pipe({ name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -165,7 +189,8 @@ describe("DriverEditorComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
         DriverEditorComponent,
         MockBackButtonComponent,
         MockAudioSelectorComponent,
@@ -177,7 +202,6 @@ describe("DriverEditorComponent", () => {
         MockTranslatePipe,
         MockAvatarUrlPipe,
       ],
-      imports: [FormsModule],
       providers: [
         {
           provide: DataService,

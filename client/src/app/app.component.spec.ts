@@ -9,6 +9,7 @@ import { AppComponent } from "./app.component";
 import { DataService } from "./data.service";
 import { NavigationService } from "./services/navigation.service";
 import { SettingsService } from "./services/settings.service";
+import { ThemeService } from "./services/theme.service";
 
 import { RaceFlag } from "src/app/proto/antigravity";
 
@@ -51,12 +52,19 @@ describe("AppComponent", () => {
 
     const mockContexts = jasmine.createSpyObj("ChildrenOutletContexts", [
       "getContext",
+      "onChildOutletCreated",
+      "onChildOutletDestroyed",
     ]);
 
     mockNavigationService = jasmine.createSpyObj("NavigationService", [
       "getDirection",
     ]);
     mockNavigationService.getDirection.and.returnValue("forward");
+
+    const mockThemeService = jasmine.createSpyObj("ThemeService", [
+      "initialize",
+    ]);
+    mockThemeService.initialize.and.returnValue(Promise.resolve());
 
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
@@ -66,8 +74,7 @@ describe("AppComponent", () => {
     });
 
     await TestBed.configureTestingModule({
-      declarations: [AppComponent],
-      imports: [NoopAnimationsModule],
+      imports: [NoopAnimationsModule, AppComponent],
       providers: [
         { provide: Router, useValue: mockRouter },
         { provide: DataService, useValue: mockDataService },
@@ -75,6 +82,7 @@ describe("AppComponent", () => {
         { provide: NavigationService, useValue: mockNavigationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: ChildrenOutletContexts, useValue: mockContexts },
+        { provide: ThemeService, useValue: mockThemeService },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();

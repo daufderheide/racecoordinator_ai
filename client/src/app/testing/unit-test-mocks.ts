@@ -76,6 +76,9 @@ export const mockTranslationService = {
   getSupportedLanguages: jasmine
     .createSpy("getSupportedLanguages")
     .and.returnValue([]),
+  getCurrentLanguage: jasmine
+    .createSpy("getCurrentLanguage")
+    .and.returnValue(of("en")),
 };
 
 export const mockRouter = {
@@ -153,6 +156,7 @@ export function resetMocks() {
   mockTranslationService.setLanguage.and.stub();
   mockTranslationService.getBrowserLanguage.and.returnValue("en");
   mockTranslationService.getSupportedLanguages.and.returnValue([]);
+  mockTranslationService.getCurrentLanguage.and.returnValue(of("en"));
 
   // Restore default behaviors for mockRouter
   mockRouter.navigate.and.stub();

@@ -6,10 +6,15 @@
     "types": []
   },
   "files": [
-    "src/main.ts",
-    "src/app/app.module.ts"
+    "src/main.ts"
   ],
   "include": [
+    "src/**/*.ts",
     "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*_test.ts",
+    "src/**/testing/**/*"
   ]
 }

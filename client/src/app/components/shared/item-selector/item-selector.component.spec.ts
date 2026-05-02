@@ -6,20 +6,14 @@ import { FormsModule } from "@angular/forms";
 import { ItemSelectorComponent } from "./item-selector.component";
 import { ItemSelectorHarness } from "./testing/item-selector.harness";
 
-@Pipe({
-  name: "avatarUrl",
-  standalone: false,
-})
+@Pipe({ name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({
-  name: "translate",
-  standalone: false,
-})
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -27,7 +21,11 @@ class MockTranslatePipe implements PipeTransform {
 }
 
 import { Component, Input } from "@angular/core";
-@Component({ selector: "app-asset-preview", template: "", standalone: false })
+@Component({
+  selector: "app-asset-preview",
+  template: "",
+  imports: [FormsModule],
+})
 class MockAssetPreviewComponent {
   @Input() assetId?: string;
   @Input() type: string = "image";
@@ -44,13 +42,13 @@ describe("ItemSelectorComponent", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
         ItemSelectorComponent,
         MockAvatarUrlPipe,
         MockTranslatePipe,
         MockAssetPreviewComponent,
       ],
-      imports: [FormsModule],
     }).compileComponents();
   });
 

@@ -1,12 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input } from "@angular/core";
 
-import { UndoManager } from './undo-manager';
+import { UndoManager } from "./undo-manager";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
-  selector: 'app-undo-redo-controls',
-  templateUrl: './undo-redo-controls.component.html',
-  styleUrls: ['./undo-redo-controls.component.css'],
-  standalone: false
+  standalone: true,
+  selector: "app-undo-redo-controls",
+  templateUrl: "./undo-redo-controls.component.html",
+  styleUrls: ["./undo-redo-controls.component.css"],
+  imports: [TranslatePipe],
 })
 export class UndoRedoControlsComponent {
   @Input() manager?: UndoManager<any>;

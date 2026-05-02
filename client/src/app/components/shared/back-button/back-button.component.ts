@@ -10,12 +10,15 @@ import {
   ConnectionMonitorService,
   ConnectionState,
 } from "src/app/services/connection-monitor.service";
+import { ConfirmationModalComponent } from "../confirmation-modal/confirmation-modal.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-back-button",
   templateUrl: "./back-button.component.html",
   styleUrls: ["./back-button.component.css"],
-  standalone: false,
+  imports: [ConfirmationModalComponent, TranslatePipe],
 })
 export class BackButtonComponent {
   @Input() label: string = "BACK";

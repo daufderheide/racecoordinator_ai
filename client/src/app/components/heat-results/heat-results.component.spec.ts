@@ -10,7 +10,7 @@ import { RaceConnectionService } from "src/app/services/race-connection.service"
 
 import { HeatResultsComponent } from "./heat-results.component";
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -75,7 +75,7 @@ describe("HeatResultsComponent", () => {
     mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
 
     await TestBed.configureTestingModule({
-      declarations: [HeatResultsComponent, MockTranslatePipe],
+      imports: [HeatResultsComponent, MockTranslatePipe],
       providers: [
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },

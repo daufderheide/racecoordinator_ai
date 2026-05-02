@@ -8,7 +8,11 @@ import { TranslationService } from "src/app/services/translation.service";
 import { AudioSelectorComponent } from "./audio-selector.component";
 import { AudioSelectorHarness } from "./testing/audio-selector.harness";
 
-@Component({ selector: "app-item-selector", template: "", standalone: false })
+@Component({
+  selector: "app-item-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
@@ -20,7 +24,7 @@ class MockItemSelectorComponent {
 }
 
 import { Pipe, PipeTransform } from "@angular/core";
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -56,12 +60,12 @@ describe("AudioSelectorComponent", () => {
     mockDataService.serverUrl = "http://localhost:8080";
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
         AudioSelectorComponent,
         MockItemSelectorComponent,
         MockTranslatePipe,
       ],
-      imports: [FormsModule],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },

@@ -16,7 +16,11 @@ import { TranslationService } from "src/app/services/translation.service";
 
 import { ImageSetEditorComponent } from "./image-set-editor.component";
 
-@Component({ selector: "app-image-selector", template: "", standalone: false })
+@Component({
+  selector: "app-image-selector",
+  template: "",
+  imports: [FormsModule],
+})
 class MockImageSelectorComponent {
   @Input() imageUrl?: string;
   @Input() assets: any[] = [];
@@ -24,7 +28,7 @@ class MockImageSelectorComponent {
   @Output() imageUrlChange = new EventEmitter<string>();
 }
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -45,8 +49,8 @@ describe("ImageSetEditorComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      imports: [FormsModule],
-      declarations: [
+      imports: [
+        FormsModule,
         ImageSetEditorComponent,
         MockImageSelectorComponent,
         MockTranslatePipe,

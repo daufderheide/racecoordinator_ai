@@ -18,14 +18,18 @@ import {
   ReorderDialogData,
 } from "./reorder-dialog.component";
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Component({ selector: "app-column-preview", template: "", standalone: false })
+@Component({
+  selector: "app-column-preview",
+  template: "",
+  imports: [DragDropModule],
+})
 class MockColumnPreviewComponent {
   @Input() columnSlots: any[] = [];
   @Input() columnLayouts: any = {};
@@ -58,12 +62,12 @@ describe("ReorderDialogComponent", () => {
     mockTranslationService.translate.and.callFake((key) => key);
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        DragDropModule,
         ReorderDialogComponent,
         MockTranslatePipe,
         MockColumnPreviewComponent,
       ],
-      imports: [DragDropModule],
       providers: [
         { provide: TranslationService, useValue: mockTranslationService },
         ChangeDetectorRef,

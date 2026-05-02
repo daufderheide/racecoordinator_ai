@@ -21,8 +21,7 @@ describe("AudioSetEditorComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      imports: [FormsModule],
-      declarations: [AudioSetEditorComponent],
+      imports: [FormsModule, AudioSetEditorComponent],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },

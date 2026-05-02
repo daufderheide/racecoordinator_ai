@@ -46,14 +46,22 @@ import { createTeamManagerDataServiceMock } from "../team-manager/testing/team-m
 import { TeamEditorComponent } from "./team-editor.component";
 
 // Mock Child Components
-@Component({ selector: "app-back-button", template: "", standalone: false })
+@Component({
+  selector: "app-back-button",
+  template: "",
+  imports: [FormsModule, DragDropModule],
+})
 class MockBackButtonComponent {
   @Input() route: string | null = null;
   @Input() queryParams: any = {};
   @Input() label: string = "";
 }
 
-@Component({ selector: "app-image-selector", template: "", standalone: false })
+@Component({
+  selector: "app-image-selector",
+  template: "",
+  imports: [FormsModule, DragDropModule],
+})
 class MockImageSelectorComponent {
   @Input() label?: string;
   @Input() imageUrl?: string;
@@ -64,7 +72,11 @@ class MockImageSelectorComponent {
   @Output() uploadFinished = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-item-selector", template: "", standalone: false })
+@Component({
+  selector: "app-item-selector",
+  template: "",
+  imports: [FormsModule, DragDropModule],
+})
 class MockItemSelectorComponent {
   @Input() items: any[] = [];
   @Input() visible: boolean = false;
@@ -79,13 +91,17 @@ class MockItemSelectorComponent {
 @Component({
   selector: "app-undo-redo-controls",
   template: "",
-  standalone: false,
+  imports: [FormsModule, DragDropModule],
 })
 class MockUndoRedoControlsComponent {
   @Input() manager: any;
 }
 
-@Component({ selector: "app-editor-title", template: "", standalone: false })
+@Component({
+  selector: "app-editor-title",
+  template: "",
+  imports: [FormsModule, DragDropModule],
+})
 class MockEditorTitleComponent {
   @Input() titleKey: string = "";
   @Input() backRoute: string = "";
@@ -110,17 +126,21 @@ class MockEditorTitleComponent {
   @Output() delete = new EventEmitter<void>();
 }
 
-@Component({ selector: "app-help-overlay", template: "", standalone: false })
+@Component({
+  selector: "app-help-overlay",
+  template: "",
+  imports: [FormsModule, DragDropModule],
+})
 class MockHelpOverlayComponent {}
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({ name: "avatarUrl", standalone: false })
+@Pipe({ name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -158,7 +178,9 @@ describe("TeamEditorComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
+        DragDropModule,
         TeamEditorComponent,
         MockBackButtonComponent,
         MockItemSelectorComponent,
@@ -169,7 +191,6 @@ describe("TeamEditorComponent", () => {
         MockTranslatePipe,
         MockAvatarUrlPipe,
       ],
-      imports: [FormsModule, DragDropModule],
       providers: [
         { provide: DataService, useValue: createTeamManagerDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },

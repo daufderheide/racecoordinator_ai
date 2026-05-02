@@ -8,7 +8,6 @@ import {
 } from "@angular/core/testing";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
-import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import { Settings } from "src/app/models/settings";
 
@@ -111,7 +110,6 @@ describe("RacedaySetupComponent", () => {
       .and.returnValue([]);
 
     TestBed.configureTestingModule({
-      declarations: [RacedaySetupComponent],
       providers: [
         { provide: FileSystemService, useValue: mockFileSystemService },
         {
@@ -139,7 +137,7 @@ describe("RacedaySetupComponent", () => {
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
-      imports: [SharedModule],
+      imports: [RacedaySetupComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedaySetupComponent);

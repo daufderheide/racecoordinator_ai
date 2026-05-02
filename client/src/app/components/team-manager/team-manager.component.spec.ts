@@ -9,7 +9,6 @@ import {
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "src/app/analytics.service";
-import { SharedModule } from "src/app/components/shared/shared.module";
 import { DataService } from "src/app/data.service";
 import {} from "src/app/models/driver";
 import { Team } from "src/app/models/team";
@@ -72,8 +71,7 @@ describe("TeamManagerComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [TeamManagerComponent],
-      imports: [SharedModule],
+      imports: [TeamManagerComponent],
       providers: [
         { provide: DataService, useValue: createTeamManagerDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -132,8 +130,7 @@ describe("TeamManagerComponent", () => {
       mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t2");
 
       TestBed.configureTestingModule({
-        declarations: [TeamManagerComponent, AvatarUrlPipe],
-        imports: [SharedModule],
+        imports: [TeamManagerComponent, AvatarUrlPipe],
         providers: [
           {
             provide: DataService,

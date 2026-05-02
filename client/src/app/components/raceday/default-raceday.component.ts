@@ -1,4 +1,9 @@
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+} from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -36,15 +41,32 @@ import { RaceState } from "src/app/proto/antigravity";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
+import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { NgIf, NgFor, DecimalPipe } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 /**
  * The raceday component is the main component for the raceday screen.
  */
 @Component({
+  standalone: true,
   selector: "app-default-raceday",
   templateUrl: "./default-raceday.component.html",
   styleUrls: ["./default-raceday.component.css"],
-  standalone: false,
+  imports: [
+    AcknowledgementModalComponent,
+    ConfirmationModalComponent,
+    NgIf,
+    NgFor,
+    CdkDropList,
+    CdkDrag,
+    FormsModule,
+    CdkDragHandle,
+    DecimalPipe,
+    TranslatePipe,
+  ],
 })
 export class DefaultRacedayComponent
   implements OnInit, OnDestroy, CanComponentDeactivate

@@ -15,7 +15,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { DataService } from "src/app/data.service";
 import { AllowFinish, FinishMethod } from "src/app/models/heat_scoring";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
@@ -25,20 +25,14 @@ import { SettingsService } from "src/app/services/settings.service";
 import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 
-@Pipe({
-  name: "translate",
-  standalone: false,
-})
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Directive({
-  selector: "[appSvgTextScaler]",
-  standalone: false,
-})
+@Directive({ selector: "[appSvgTextScaler]" })
 class MockSvgTextScalerDirective {
   @Input() maxWidth: number = 0;
   @Input() scaleToFit: boolean = false;
@@ -52,7 +46,7 @@ import * as _audio from "src/app/utils/audio";
 @Component({
   selector: "app-acknowledgement-modal",
   template: "",
-  standalone: false,
+  imports: [DragDropModule],
 })
 class DefaultRacedayMockAcknowledgementModalComponent {
   @Input() visible: boolean = false;
@@ -65,7 +59,7 @@ class DefaultRacedayMockAcknowledgementModalComponent {
 @Component({
   selector: "app-confirmation-modal",
   template: "",
-  standalone: false,
+  imports: [DragDropModule],
 })
 class DefaultRacedayMockConfirmationModalComponent {
   @Input() visible: boolean = false;
@@ -159,9 +153,18 @@ describe("DefaultRacedayComponent", () => {
       },
     });
 
+    const mockActivatedRoute = {
+      queryParams: of({}),
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
+    };
+
     await TestBed.configureTestingModule({
-      imports: [DragDropModule],
-      declarations: [
+      imports: [
+        DragDropModule,
         DefaultRacedayComponent,
         DefaultRacedayMockAcknowledgementModalComponent,
         DefaultRacedayMockConfirmationModalComponent,
@@ -189,6 +192,7 @@ describe("DefaultRacedayComponent", () => {
           ]),
         },
         { provide: Router, useValue: mockRouter },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
         ChangeDetectorRef,
       ],
     }).compileComponents();

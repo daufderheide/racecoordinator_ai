@@ -21,12 +21,27 @@ import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { naturalSortCompare } from "src/app/utils/sorting.utils";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "../shared/manager-header/manager-header.component";
+import { NgFor, NgIf } from "@angular/common";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
+import { AvatarUrlPipe } from "src/app/pipes/avatar-url.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-team-manager",
   templateUrl: "./team-manager.component.html",
   styleUrls: ["./team-manager.component.css"],
-  standalone: false,
+  imports: [
+    ConfirmationModalComponent,
+    ManagerHeaderComponent_1,
+    NgFor,
+    NgIf,
+    RacedayComponent,
+    TranslatePipe,
+    AvatarUrlPipe,
+  ],
 })
 export class TeamManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
@@ -46,7 +61,9 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         (t) => t.name && t.name.toLowerCase().includes(query),
       );
     }
-    return filtered.sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
+    return filtered.sort((a, b) =>
+      naturalSortCompare(a.name || "", b.name || ""),
+    );
   }
 
   // Connection Monitoring

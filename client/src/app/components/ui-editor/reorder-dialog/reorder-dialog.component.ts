@@ -1,4 +1,11 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  moveItemInArray,
+  CdkDropList,
+  ɵɵCdkScrollable,
+  CdkDrag,
+  CdkDragHandle,
+} from "@angular/cdk/drag-drop";
 import {
   ApplicationRef,
   ChangeDetectionStrategy,
@@ -16,6 +23,11 @@ import { debounceTime } from "rxjs/operators";
 import { AnchorPoint } from "src/app/components/raceday/column_definition";
 import { ColumnVisibility, Settings } from "src/app/models/settings";
 import { TranslationService } from "src/app/services/translation.service";
+import { NgIf, NgFor } from "@angular/common";
+import { BackButtonComponent } from "../../shared/back-button/back-button.component";
+import { FormsModule } from "@angular/forms";
+import { ColumnPreviewComponent } from "../column-preview/column-preview.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -32,12 +44,24 @@ export interface ReorderDialogResult {
 }
 
 @Component({
+  standalone: true,
   selector: "app-reorder-dialog",
   templateUrl: "./reorder-dialog.component.html",
   styleUrls: ["./reorder-dialog.component.css"],
-  standalone: false,
   changeDetection: ChangeDetectionStrategy.Default,
   encapsulation: ViewEncapsulation.None,
+  imports: [
+    NgIf,
+    BackButtonComponent,
+    CdkDropList,
+    ɵɵCdkScrollable,
+    NgFor,
+    CdkDrag,
+    CdkDragHandle,
+    FormsModule,
+    ColumnPreviewComponent,
+    TranslatePipe,
+  ],
 })
 export class ReorderDialogComponent implements OnInit, OnDestroy {
   private _visible = false;

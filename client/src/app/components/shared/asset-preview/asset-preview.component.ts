@@ -8,8 +8,10 @@ import {
 } from "@angular/core";
 import { DataService } from "src/app/data.service";
 import {} from "src/app/proto/message";
+import { NgIf } from "@angular/common";
 
 @Component({
+  standalone: true,
   selector: "app-asset-preview",
   template: `
     <div class="preview-container">
@@ -51,7 +53,7 @@ import {} from "src/app/proto/message";
       }
     `,
   ],
-  standalone: false,
+  imports: [NgIf],
 })
 export class AssetPreviewComponent implements OnInit, OnDestroy, OnChanges {
   @Input() assetId?: string;

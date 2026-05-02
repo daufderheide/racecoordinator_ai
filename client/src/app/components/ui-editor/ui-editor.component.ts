@@ -23,6 +23,17 @@ import { SettingsService } from "src/app/services/settings.service";
 import { ThemeService } from "src/app/services/theme.service";
 import { TranslationService } from "src/app/services/translation.service";
 import { mockTTSContext } from "src/app/utils/audio";
+import { EditorTitleComponent } from "../shared/editor-title/editor-title.component";
+import { NgIf, NgFor, NgTemplateOutlet } from "@angular/common";
+import { ColumnPreviewComponent } from "./column-preview/column-preview.component";
+import { FormsModule } from "@angular/forms";
+import { ImageSelectorComponent } from "../shared/image-selector/image-selector.component";
+import { AudioSelectorComponent } from "../shared/audio-selector/audio-selector.component";
+import { ToolbarComponent } from "../shared/toolbar/toolbar.component";
+import { ReorderDialogComponent } from "./reorder-dialog/reorder-dialog.component";
+import { ConfirmationModalComponent } from "../shared/confirmation-modal/confirmation-modal.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 export interface UIEditorState {
   settings: Settings;
@@ -30,10 +41,25 @@ export interface UIEditorState {
 }
 
 @Component({
+  standalone: true,
   selector: "app-ui-editor",
   templateUrl: "./ui-editor.component.html",
   styleUrl: "./ui-editor.component.css",
-  standalone: false,
+  imports: [
+    EditorTitleComponent,
+    NgIf,
+    ColumnPreviewComponent,
+    FormsModule,
+    ImageSelectorComponent,
+    NgFor,
+    AudioSelectorComponent,
+    ToolbarComponent,
+    NgTemplateOutlet,
+    ReorderDialogComponent,
+    ConfirmationModalComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;

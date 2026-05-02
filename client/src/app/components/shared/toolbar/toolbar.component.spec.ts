@@ -24,7 +24,6 @@ import { ToolbarComponent } from "./toolbar.component";
 @Component({
   selector: "app-help-overlay",
   template: "",
-  standalone: false,
 })
 class MockHelpOverlayComponent {}
 
@@ -71,7 +70,7 @@ describe("ToolbarComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         ToolbarComponent,
         TranslatePipe,
         AcknowledgementModalComponent,

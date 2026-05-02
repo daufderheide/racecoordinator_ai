@@ -5,6 +5,8 @@ import { Heat } from "src/app/race/heat";
 import { RaceService } from "src/app/services/race.service";
 import { RaceConnectionService } from "src/app/services/race-connection.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { NgFor, DecimalPipe } from "@angular/common";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 interface GraphPoint {
   x: number;
@@ -23,10 +25,11 @@ interface DriverLine {
 }
 
 @Component({
+  standalone: true,
   selector: "app-heat-results",
   templateUrl: "./heat-results.component.html",
   styleUrls: ["./heat-results.component.css"],
-  standalone: false,
+  imports: [NgFor, DecimalPipe, TranslatePipe],
 })
 export class HeatResultsComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];

@@ -13,12 +13,16 @@ import { Settings } from "src/app/models/settings";
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { NgIf } from "@angular/common";
+import { AcknowledgementModalComponent } from "../acknowledgement-modal/acknowledgement-modal.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-toolbar",
   templateUrl: "./toolbar.component.html",
   styleUrls: ["./toolbar.component.css"],
-  standalone: false,
+  imports: [NgIf, AcknowledgementModalComponent, TranslatePipe],
 })
 export class ToolbarComponent implements OnInit {
   @Input() showAdd = false;

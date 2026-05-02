@@ -18,7 +18,7 @@ describe("ArduinoSummaryComponent", () => {
     translationService = new TranslationServiceMock();
 
     await TestBed.configureTestingModule({
-      declarations: [ArduinoSummaryComponent, TranslatePipe],
+      imports: [ArduinoSummaryComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: translationService },
       ],

@@ -97,8 +97,7 @@ describe("ArduinoEditorComponent", () => {
     mockDataService = new MockDataService();
 
     await TestBed.configureTestingModule({
-      declarations: [ArduinoEditorComponent, TranslatePipe],
-      imports: [FormsModule],
+      imports: [FormsModule, ArduinoEditorComponent, TranslatePipe],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
         { provide: TranslationService, useValue: translationService },

@@ -1,4 +1,4 @@
-import { Location } from "@angular/common";
+import { Location, NgIf, NgFor } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -14,12 +14,28 @@ import { Track } from "src/app/models/track";
 import { GuideStep, HelpService } from "src/app/services/help.service";
 import { SettingsService } from "src/app/services/settings.service";
 import { TranslationService } from "src/app/services/translation.service";
+import { AcknowledgementModalComponent } from "../shared/acknowledgement-modal/acknowledgement-modal.component";
+import { EditorTitleComponent } from "../shared/editor-title/editor-title.component";
+import { FormsModule } from "@angular/forms";
+import { HeatListComponent } from "../shared/heat-list/heat-list.component";
+import { RacedayComponent } from "../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-race-editor",
   templateUrl: "./race-editor.component.html",
   styleUrls: ["./race-editor.component.css"],
-  standalone: false,
+  imports: [
+    AcknowledgementModalComponent,
+    EditorTitleComponent,
+    NgIf,
+    FormsModule,
+    HeatListComponent,
+    NgFor,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class RaceEditorComponent implements OnInit, OnDestroy {
   editingRace: any;

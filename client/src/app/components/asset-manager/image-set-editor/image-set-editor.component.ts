@@ -14,12 +14,25 @@ import { DataService } from "src/app/data.service";
 import { TranslationService } from "src/app/services/translation.service";
 
 import { IAssetMessage, ISaveImageSetEntry } from "src/app/proto/antigravity";
+import { NgIf, NgFor } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ImageSelectorComponent } from "../../shared/image-selector/image-selector.component";
+import { RacedayComponent } from "../../raceday/raceday.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-image-set-editor",
   templateUrl: "./image-set-editor.component.html",
   styleUrls: ["./image-set-editor.component.css"],
-  standalone: false,
+  imports: [
+    NgIf,
+    FormsModule,
+    NgFor,
+    ImageSelectorComponent,
+    RacedayComponent,
+    TranslatePipe,
+  ],
 })
 export class ImageSetEditorComponent implements OnInit, OnChanges {
   @Input() visible = false;

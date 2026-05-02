@@ -6,7 +6,7 @@ import { DataService } from "src/app/data.service";
 
 import { AssetPickerComponent } from "./asset-picker.component";
 
-@Pipe({ name: "translate", standalone: false })
+@Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
@@ -14,7 +14,11 @@ class MockTranslatePipe implements PipeTransform {
 }
 
 import { Component, Input } from "@angular/core";
-@Component({ selector: "app-asset-preview", template: "", standalone: false })
+@Component({
+  selector: "app-asset-preview",
+  template: "",
+  imports: [FormsModule],
+})
 class MockAssetPreviewComponent {
   @Input() assetId?: string;
   @Input() type: string = "image";
@@ -49,12 +53,12 @@ describe("AssetPickerComponent", () => {
     mockDataService.getAssetUrl.and.callFake((id: string) => `url-${id}`);
 
     await TestBed.configureTestingModule({
-      declarations: [
+      imports: [
+        FormsModule,
         AssetPickerComponent,
         MockTranslatePipe,
         MockAssetPreviewComponent,
       ],
-      imports: [FormsModule],
       providers: [{ provide: DataService, useValue: mockDataService }],
     }).compileComponents();
   });

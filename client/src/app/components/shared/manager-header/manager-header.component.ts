@@ -8,12 +8,17 @@ import {
 import { ToolbarComponent } from "src/app/components/shared/toolbar/toolbar.component";
 import { Settings } from "src/app/models/settings";
 import { GuideStep } from "src/app/services/help.service";
+import { BackButtonComponent } from "../back-button/back-button.component";
+import { NgIf } from "@angular/common";
+import { ToolbarComponent as ToolbarComponent_1 } from "../toolbar/toolbar.component";
+import { TranslatePipe } from "src/app/pipes/translate.pipe";
 
 @Component({
+  standalone: true,
   selector: "app-manager-header",
   templateUrl: "./manager-header.component.html",
   styleUrls: ["./manager-header.component.css"],
-  standalone: false,
+  imports: [BackButtonComponent, NgIf, ToolbarComponent_1, TranslatePipe],
 })
 export class ManagerHeaderComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
