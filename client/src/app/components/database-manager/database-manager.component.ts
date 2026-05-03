@@ -13,6 +13,7 @@ import { BackButtonComponent } from "@app/components/shared/back-button/back-but
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 @Component({
@@ -60,6 +61,7 @@ export class DatabaseManagerComponent implements OnInit {
     private settingsService: SettingsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit(): void {
@@ -110,7 +112,7 @@ export class DatabaseManagerComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Error loading initial data", err);
+        this.logger.error("Error loading initial data", err);
         this.openAck("DBM_TITLE", "DBM_ERR_LOAD_INFO");
         this.loading = false;
       },
@@ -144,7 +146,7 @@ export class DatabaseManagerComponent implements OnInit {
         this.cdr.detectChanges(); // Ensure data updates render immediately
       },
       error: (err) => {
-        console.error("Error loading databases", err);
+        this.logger.error("Error loading databases", err);
         this.openAck("DBM_TITLE", "DBM_ERR_LOAD_LIST");
         this.loading = false;
       },
@@ -175,7 +177,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error("Error switching database", err);
+            this.logger.error("Error switching database", err);
             this.openAck("DBM_TITLE", "DBM_ERR_SWITCH");
             this.loading = false;
           },
@@ -200,7 +202,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error("Error creating database", err);
+            this.logger.error("Error creating database", err);
             this.loading = false;
             if (err.status === 409) {
               this.openAck("DBM_TITLE", "DBM_ERR_EXISTS");
@@ -235,7 +237,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases(); // toggle loading off in here
           },
           error: (err) => {
-            console.error("Error copying database", err);
+            this.logger.error("Error copying database", err);
             this.loading = false;
             if (err.status === 409) {
               this.openAck("DBM_TITLE", "DBM_ERR_EXISTS");
@@ -279,7 +281,7 @@ export class DatabaseManagerComponent implements OnInit {
                 this.loadDatabases(); // toggle loading off in here
               },
               error: (err) => {
-                console.error("Error resetting database", err);
+                this.logger.error("Error resetting database", err);
                 this.openAck("DBM_TITLE", "DBM_ERR_RESET");
                 this.loading = false;
               },
@@ -314,7 +316,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases();
           },
           error: (err) => {
-            console.error("Error deleting database", err);
+            this.logger.error("Error deleting database", err);
             this.loading = false;
             this.openAck("DBM_TITLE", "DBM_ERR_DELETE");
             this.cdr.detectChanges();
@@ -361,7 +363,7 @@ export class DatabaseManagerComponent implements OnInit {
             this.loadDatabases();
           },
           error: (err) => {
-            console.error("Error importing database", err);
+            this.logger.error("Error importing database", err);
             this.loading = false;
             this.openAck("DBM_TITLE", "DBM_ERR_IMPORT");
             this.cdr.detectChanges();

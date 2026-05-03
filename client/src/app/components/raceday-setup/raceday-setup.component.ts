@@ -23,6 +23,7 @@ import {
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -39,6 +40,7 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
     @Inject(SettingsService) settingsService: SettingsService,
     @Inject(FileSystemService) fileSystem: FileSystemService,
     @Inject(HelpService) helpService: HelpService,
+    @Inject(LoggerService) logger: LoggerService,
   ) {
     super(
       dataService,
@@ -49,6 +51,7 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
       settingsService,
       fileSystem,
       helpService,
+      logger,
     );
   }
 }
@@ -102,6 +105,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     private settingsService: SettingsService,
     private translationService: TranslationService,
     private connectionMonitor: ConnectionMonitorService,
+    private logger: LoggerService,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -191,7 +195,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       }
       this.cdr.detectChanges();
     } catch (e: any) {
-      console.error(
+      this.logger.error(
         "Failed to load custom component, falling back to default",
         e,
       );
@@ -236,7 +240,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   handleConnectionLoss() {
-    console.warn("Connection lost, starting retry sequence...");
+    this.logger.warn("Connection lost, starting retry sequence...");
     this.isConnectionLost = true;
     this.retryStartTime = Date.now();
     this.cdr.detectChanges();
@@ -246,7 +250,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   handleConnectionRestored() {
-    console.log("Connection restored!");
+    this.logger.info("Connection restored!");
     this.isConnectionLost = false;
     this.refreshServerInfo();
     this.cdr.detectChanges();
@@ -258,7 +262,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     // If we are still lost after 5 seconds, reset UI
     this.retryTimeout = setTimeout(() => {
       if (this.isConnectionLost) {
-        console.warn("Connection retry timed out. Resetting to splash screen.");
+        this.logger.warn(
+          "Connection retry timed out. Resetting to splash screen.",
+        );
         this.resetToSplash();
       }
       this.retryTimeout = null;
@@ -293,7 +299,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.warn("Failed to fetch server version", err);
+        this.logger.warn("Failed to fetch server version", err);
       },
     });
 
@@ -303,7 +309,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.warn("Failed to fetch server IP", err);
+        this.logger.warn("Failed to fetch server IP", err);
       },
     });
   }
@@ -425,7 +431,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         );
       } catch (e) {
         // CSS is optional
-        console.log("No custom CSS found or could not be read");
+        this.logger.debug("No custom CSS found or could not be read");
       }
 
       let tsCode = "";
@@ -434,7 +440,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           "raceday-setup.component.ts",
         );
       } catch (e) {
-        console.log("No custom TS found");
+        this.logger.debug("No custom TS found");
       }
 
       // Create Custom Component Class

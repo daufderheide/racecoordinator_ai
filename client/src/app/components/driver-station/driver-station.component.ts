@@ -10,6 +10,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -43,6 +44,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     private raceConnectionService: RaceConnectionService,
     private raceFlagService: RaceFlagService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit() {
@@ -95,6 +97,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
                 driver.bestLapAudio.text,
                 this.dataService.serverUrl,
                 ttsContext,
+                this.logger,
               );
             } else if (
               driver.lapAudio.url ||
@@ -106,6 +109,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
                 driver.lapAudio.text,
                 this.dataService.serverUrl,
                 ttsContext,
+                this.logger,
               );
             }
           }

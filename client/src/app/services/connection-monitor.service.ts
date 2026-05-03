@@ -3,6 +3,8 @@ import { BehaviorSubject, interval, Observable, of, Subscription } from "rxjs";
 import { catchError, map, switchMap, timeout } from "rxjs/operators";
 import { DataService } from "@app/data.service";
 
+import { LoggerService } from "./logger.service";
+
 export enum ConnectionState {
   CONNECTED = "CONNECTED",
   DISCONNECTED = "DISCONNECTED",
@@ -26,7 +28,10 @@ export class ConnectionMonitorService implements OnDestroy {
   private readonly CHECK_INTERVAL_MS = 5000;
   private readonly TIMEOUT_MS = 3000;
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private logger: LoggerService,
+  ) {}
 
   ngOnDestroy() {
     this.stopMonitoring();
@@ -65,14 +70,14 @@ export class ConnectionMonitorService implements OnDestroy {
       timeout(this.TIMEOUT_MS),
       map(() => {
         if (this.connectionStateSubject.value !== ConnectionState.CONNECTED) {
-          console.log("Connection restored!");
+          this.logger.info("Connection restored!");
           this.connectionStateSubject.next(ConnectionState.CONNECTED);
         }
         return true;
       }),
       catchError((err) => {
         if (this.connectionStateSubject.value === ConnectionState.CONNECTED) {
-          console.warn("Connection lost in monitor", err);
+          this.logger.warn("Connection lost in monitor", err);
           this.connectionStateSubject.next(ConnectionState.DISCONNECTED);
         }
         return of(false);

@@ -7,6 +7,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
 import com.antigravity.handlers.ClientCommandTaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
+import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -429,6 +430,7 @@ public class App {
       new DatabaseTaskHandler(databaseContext, app);
       new AssetTaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
+      new SettingsTaskHandler(app);
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));

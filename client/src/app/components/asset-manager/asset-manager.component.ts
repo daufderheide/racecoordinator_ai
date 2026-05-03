@@ -22,6 +22,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext, playSound } from "@app/utils/audio";
@@ -96,6 +97,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {}
 
   activeDatabaseName: string = "";
@@ -110,15 +112,15 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   loadActiveDatabase() {
     this.dataService.getCurrentDatabase().subscribe({
       next: (stats) => {
-        console.log("AssetManager: Loaded active database stats:", stats);
+        this.logger.debug("AssetManager: Loaded active database stats:", stats);
         if (stats && stats.name) {
           this.activeDatabaseName = stats.name;
           this.cdr.detectChanges();
         } else {
-          console.warn("AssetManager: Stats or name missing in response");
+          this.logger.warn("AssetManager: Stats or name missing in response");
         }
       },
-      error: (err) => console.error("Failed to load active database", err),
+      error: (err) => this.logger.error("Failed to load active database", err),
     });
   }
 
@@ -175,7 +177,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
       if (Date.now() - startTime > 5000) {
         clearInterval(intervalId);
-        console.warn(
+        this.logger.warn(
           "Connection retry timed out. Navigating to splash screen.",
         );
         this.router.navigate(["/raceday-setup"]);
@@ -218,7 +220,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error("Failed to list assets", err);
+        this.logger.error("Failed to list assets", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
@@ -456,13 +458,13 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
         forkJoin(uploadObservables).subscribe({
           next: () => {
-            console.log("All uploads successful");
+            this.logger.info("All uploads successful");
             this.loadAssets();
             this.isUploading = false;
             this.cdr.detectChanges();
           },
           error: (err) => {
-            console.error("One or more uploads failed", err);
+            this.logger.error("One or more uploads failed", err);
             this.isUploading = false;
             this.cdr.detectChanges();
           },
@@ -556,6 +558,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         "",
         this.dataService.serverUrl,
         playContext,
+        this.logger,
       );
     }
   }
@@ -571,7 +574,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
           this.onCancelDelete();
         },
         error: (err) => {
-          console.error("One or more deletes failed", err);
+          this.logger.error("One or more deletes failed", err);
           this.loadAssets(); // Reload to see what's left
           this.onCancelDelete();
         },
@@ -608,7 +611,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
           asset.name = newName; // Optimistic update or reload
           this.loadAssets();
         },
-        error: (err) => console.error("Rename failed", err),
+        error: (err) => this.logger.error("Rename failed", err),
       });
     }
   }

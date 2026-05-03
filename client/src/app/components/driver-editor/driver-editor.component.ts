@@ -23,6 +23,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
@@ -89,6 +90,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     private location: Location,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<Driver>(
       {
@@ -194,7 +196,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error("Failed to load data", err);
+        this.logger.error("Failed to load data", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
@@ -547,7 +549,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         this.refreshDriverList();
       },
       error: (err) => {
-        console.error("Failed to save driver", err);
+        this.logger.error("Failed to save driver", err);
         if (!isAutoSave) {
           if (err.status === 409) {
             alert(
@@ -594,7 +596,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
         );
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Failed to refresh driver list", err),
+      error: (err) => this.logger.error("Failed to refresh driver list", err),
     });
   }
 
@@ -608,7 +610,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
           this.onBack();
         },
         error: (err) => {
-          console.error("Failed to delete driver", err);
+          this.logger.error("Failed to delete driver", err);
           this.isSaving = false;
         },
       });

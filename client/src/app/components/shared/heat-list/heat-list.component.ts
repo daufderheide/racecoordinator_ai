@@ -7,6 +7,7 @@ import {
 } from "@angular/cdk/drag-drop";
 import { Component, effect, input, output } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   standalone: true,
@@ -28,11 +29,15 @@ export class HeatListComponent {
   canDragLanes = input(false);
   laneSelected = output<number>();
 
-  constructor() {
+  constructor(private logger: LoggerService) {
     effect(() => {
       const h = this.heats();
-      console.log("HeatListComponent received new heats:", h?.length, "heats");
-      console.log("Heats data:", h);
+      this.logger.debug(
+        "HeatListComponent received new heats:",
+        h?.length,
+        "heats",
+      );
+      this.logger.debug("Heats data:", h);
     });
   }
 

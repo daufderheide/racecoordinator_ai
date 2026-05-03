@@ -37,7 +37,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
 import {} from "@app/proto/message";
 import { GuideStep, HelpService } from "@app/services/help.service";
-import { SettingsService } from "@app/services/settings.service";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ArduinoEditorComponent as ArduinoEditorComponent_1 } from "./arduino-editor/arduino-editor.component";
@@ -105,7 +105,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private location: Location,
     private helpService: HelpService,
-    private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<Track>(
       {
@@ -147,7 +147,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         const savedSections = JSON.parse(saved);
         this.sectionsExpanded = { ...this.sectionsExpanded, ...savedSections };
       } catch (e) {
-        console.error("Failed to parse saved sections", e);
+        this.logger.error("Failed to parse saved sections", e);
       }
     }
 
@@ -192,8 +192,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.dataService.disconnectFromInterfaceDataSocket();
     this.subscriptions.push(
       this.dataService.closeInterface().subscribe({
-        next: () => console.log("Interface closed successfully"),
-        error: (err) => console.error("Error closing interface", err),
+        next: () => this.logger.debug("Interface closed successfully"),
+        error: (err) => this.logger.error("Error closing interface", err),
       }),
     );
     this.subscriptions.forEach((s) => s.unsubscribe());
@@ -295,7 +295,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
                   this.initializeEditingState();
                 },
                 error: (err) => {
-                  console.error("Failed to load factory settings", err);
+                  this.logger.error("Failed to load factory settings", err);
                   // Fallback default
                   this.editingTrack = new Track(
                     "new",
@@ -318,7 +318,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
               // Deep copy for editing
               this.editingTrack = this.cloneTrack(found);
             } else {
-              console.error("Track not found");
+              this.logger.error("Track not found");
               this.router.navigate(["/track-manager"]);
               return;
             }
@@ -327,7 +327,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           this.initializeEditingState();
         },
         error: (err) => {
-          console.error("Failed to load tracks", err);
+          this.logger.error("Failed to load tracks", err);
           this.isLoading = false;
           if (!this.isDestroyed) {
             this.cdr.detectChanges();
@@ -398,21 +398,21 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response) => {
             if (!response.success) {
-              console.warn(
+              this.logger.warn(
                 `Failed to initialize interfaces: ${response.message}`,
               );
             } else {
-              console.log("Interfaces initialized successfully");
+              this.logger.info("Interfaces initialized successfully");
             }
           },
           error: (err) => {
-            console.error("Error calling initializeInterface", err);
+            this.logger.error("Error calling initializeInterface", err);
           },
         });
     } else {
       this.dataService.closeInterface().subscribe({
-        next: () => console.log("Interface closed successfully"),
-        error: (err) => console.error("Error closing interface", err),
+        next: () => this.logger.debug("Interface closed successfully"),
+        error: (err) => this.logger.error("Error closing interface", err),
       });
     }
   }
@@ -1292,7 +1292,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
-          console.error("Failed to save track", err);
+          this.logger.error("Failed to save track", err);
           if (!this.isDestroyed) {
             if (err.status === 409) {
               if (!isAutoSave)

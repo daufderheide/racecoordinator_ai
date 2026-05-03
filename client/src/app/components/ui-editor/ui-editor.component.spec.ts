@@ -15,6 +15,7 @@ import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { FileSystemService } from "@app/services/file-system.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -293,6 +294,10 @@ describe("UIEditorComponent", () => {
         { provide: ThemeService, useValue: mockThemeService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        {
+          provide: LoggerService,
+          useValue: jasmine.createSpyObj("LoggerService", ["error"]),
+        },
       ],
     }).compileComponents();
   });
@@ -544,7 +549,7 @@ describe("UIEditorComponent", () => {
     });
 
     it("should handle localStorage errors gracefully when toggling", () => {
-      spyOn(console, "error");
+      const logger = TestBed.inject(LoggerService);
       (localStorage.setItem as jasmine.Spy).and.throwError(
         "QuotaExceededError",
       );
@@ -554,7 +559,7 @@ describe("UIEditorComponent", () => {
 
       // State should still toggle locally even if save fails
       expect(component.sectionsExpanded["layout"]).toBe(!initialLayout);
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 

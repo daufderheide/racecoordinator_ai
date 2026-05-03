@@ -3,6 +3,8 @@ export interface TTSDriverData {
   nickname: string;
 }
 
+import { LoggerService } from "@app/services/logger.service";
+
 export interface TTSLapData {
   lastLapTime: number;
   bestLapTime: number;
@@ -21,6 +23,7 @@ export function playSound(
   text: string | undefined,
   serverUrl: string,
   data?: any,
+  logger?: LoggerService,
 ): void {
   if (type === "none") return;
   if (type === "preset" && url) {
@@ -29,17 +32,19 @@ export function playSound(
     if (url.startsWith("/")) {
       playableUrl = `${serverUrl}${url}`;
     }
-    console.log("Playing audio from URL:", playableUrl);
+    if (logger) logger.info("Playing audio from URL:", playableUrl);
     const audio = new Audio(playableUrl);
-    audio.play().catch((err) => console.error("Error playing sound", err));
+    audio.play().catch((err) => {
+      if (logger) logger.error("Error playing sound", err);
+    });
   } else if (type === "tts" && text) {
     let interpolatedText = text;
     if (data) {
       interpolatedText = interpolate(text, data);
     }
 
-    if (!(window as any).SUPPRESS_AUDIO_LOGS) {
-      console.log("Playing TTS:", interpolatedText);
+    if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
+      logger.info("Playing TTS:", interpolatedText);
     }
     if (window.speechSynthesis) {
       // Cancel any current speech
@@ -47,10 +52,10 @@ export function playSound(
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
       window.speechSynthesis.speak(utterance);
     } else {
-      console.warn("Text-to-speech not supported in this browser.");
+      if (logger) logger.warn("Text-to-speech not supported in this browser.");
     }
   } else {
-    console.log("No sound to play (missing type, url, or text)");
+    if (logger) logger.info("No sound to play (missing type, url, or text)");
   }
 }
 

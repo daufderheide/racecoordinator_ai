@@ -13,6 +13,7 @@ import { DataService } from "@app/data.service";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -48,6 +49,7 @@ export class TrackManagerComponent implements OnInit {
     private route: ActivatedRoute,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {}
 
   toggleLaneSummary() {
@@ -132,7 +134,7 @@ export class TrackManagerComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Failed to load tracks", err);
+        this.logger.error("Failed to load tracks", err);
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -175,13 +177,13 @@ export class TrackManagerComponent implements OnInit {
             });
           },
           error: (err) => {
-            console.error("Failed to create new track", err);
+            this.logger.error("Failed to create new track", err);
             this.isSaving = false;
           },
         });
       },
       error: (err) => {
-        console.error("Failed to get factory settings", err);
+        this.logger.error("Failed to get factory settings", err);
         this.isSaving = false;
       },
     });
@@ -223,7 +225,7 @@ export class TrackManagerComponent implements OnInit {
         this.loadTracks();
       },
       error: (err) => {
-        console.error("Failed to delete track", err);
+        this.logger.error("Failed to delete track", err);
         this.isSaving = false;
       },
     });

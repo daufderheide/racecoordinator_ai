@@ -63,6 +63,7 @@ import {
   VoltageConfig as ProtoVoltageConfig,
   VoltageConfig,
 } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 @Injectable({
@@ -98,6 +99,7 @@ export class DataService {
     private http: HttpClient,
     private settingsService: SettingsService,
     private ngZone: NgZone,
+    private logger: LoggerService,
   ) {
     const settings = this.settingsService.getSettings();
     if (settings.serverIp) {
@@ -134,6 +136,14 @@ export class DataService {
     return this.http.get(`${this.baseUrl}/api/server-ip`, {
       responseType: "text",
     });
+  }
+
+  setServerLogLevel(level: string): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/api/settings/log-level?level=${level}`,
+      {},
+      { responseType: "text" },
+    );
   }
 
   createDriver(driver: any): Observable<any> {
@@ -947,7 +957,7 @@ export class DataService {
     ) {
       this.sendRaceSubscriptionRequest(subscribe);
     } else {
-      console.warn(
+      this.logger.warn(
         "Race Data WebSocket not open. Triggering connection check and queuing subscription.",
       );
       // If we are completely disconnected, rely on the reconnect loop or trigger one now
@@ -968,7 +978,7 @@ export class DataService {
     });
     const buffer = RaceSubscriptionRequest.encode(request).finish();
     this.raceDataSocket.send(buffer);
-    console.log(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
+    this.logger.info(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
 
   public connectToRaceDataSocket() {
@@ -989,12 +999,12 @@ export class DataService {
     }
 
     const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
-    console.log(`Attempting to connect to WebSocket: ${wsUrl}`);
+    this.logger.debug(`Attempting to connect to WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
 
     this.raceDataSocket.onopen = () => {
-      console.log("Connected to Race Data WebSocket");
+      this.logger.info("Connected to Race Data WebSocket");
       // If we had pending subscriptions or state, we might need to resend.
       if (this.shouldSubscribeToRaceData) {
         this.sendRaceSubscriptionRequest(true);
@@ -1023,11 +1033,11 @@ export class DataService {
             this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
           }
           if (raceData.raceState) {
-            console.log("WS: Received RaceState", raceData.raceState);
+            this.logger.debug("WS: Received RaceState", raceData.raceState);
             this.raceStateSubject.next(raceData.raceState);
           }
           if (raceData.race) {
-            console.log("WS: Received Race", raceData.race);
+            this.logger.debug("WS: Received Race", raceData.race);
             this.raceUpdateSubject.next(raceData.race);
             if (raceData.race.state) {
               this.raceStateSubject.next(raceData.race.state);
@@ -1043,20 +1053,22 @@ export class DataService {
             this.segmentSubject.next(raceData.segment);
           }
           if (raceData.flag) {
-            console.log("WS: Received RaceFlag", raceData.flag);
+            this.logger.debug("WS: Received RaceFlag", raceData.flag);
             this.flagSubject.next(raceData.flag);
           }
           if (raceData.recordData) {
             this.recordDataSubject.next(raceData.recordData);
           }
         } catch (e) {
-          console.error("Error parsing race data message", e);
+          this.logger.error("Error parsing race data message", e);
         }
       });
     };
 
     this.raceDataSocket.onclose = () => {
-      console.log("Race Data WebSocket closed. Reconnecting in 2 seconds...");
+      this.logger.info(
+        "Race Data WebSocket closed. Reconnecting in 2 seconds...",
+      );
       this.raceDataSocket = undefined;
       setTimeout(() => {
         this.connectToRaceDataSocket();
@@ -1064,7 +1076,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onerror = (err) => {
-      console.warn("Race Data WebSocket error", err);
+      this.logger.warn("Race Data WebSocket error", err);
       // onerror often followed by onclose, so we rely on onclose for retry
     };
   }
@@ -1085,12 +1097,12 @@ export class DataService {
     }
 
     const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/interface-data`;
-    console.log(`Connecting to Interface WebSocket: ${wsUrl}`);
+    this.logger.debug(`Connecting to Interface WebSocket: ${wsUrl}`);
     this.interfaceDataSocket = new WebSocket(wsUrl);
     this.interfaceDataSocket.binaryType = "arraybuffer";
 
     this.interfaceDataSocket.onopen = () => {
-      console.log("Connected to Interface WebSocket");
+      this.logger.info("Connected to Interface WebSocket");
     };
 
     this.interfaceDataSocket.onmessage = (event) => {
@@ -1110,7 +1122,7 @@ export class DataService {
               uint8Array[i] = binaryString.charCodeAt(i);
             }
           } catch (e) {
-            console.error(
+            this.logger.error(
               "Failed to decode Base64 WebSocket message. Data was:",
               data,
               e,
@@ -1118,7 +1130,7 @@ export class DataService {
             return;
           }
         } else {
-          console.warn(
+          this.logger.warn(
             "Received unknown data type from Interface WebSocket",
             typeof data,
           );
@@ -1128,12 +1140,12 @@ export class DataService {
         const msg = InterfaceEvent.decode(uint8Array);
         this.interfaceEventSubject.next(msg);
       } catch (e) {
-        console.error("Error decoding Interface WebSocket message", e);
+        this.logger.error("Error decoding Interface WebSocket message", e);
       }
     };
 
     this.interfaceDataSocket.onclose = () => {
-      console.log("Interface Data WebSocket closed.");
+      this.logger.info("Interface Data WebSocket closed.");
       this.interfaceDataSocket = undefined;
     };
   }

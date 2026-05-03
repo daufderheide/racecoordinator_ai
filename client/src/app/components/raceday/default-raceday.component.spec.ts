@@ -18,6 +18,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { DataService } from "@app/data.service";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { ColumnVisibility, Settings } from "@app/models/settings";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -114,6 +115,7 @@ describe("DefaultRacedayComponent", () => {
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
+  let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
 
@@ -144,6 +146,13 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+
+    mockLogger = jasmine.createSpyObj("LoggerService", [
+      "debug",
+      "info",
+      "warn",
+      "error",
+    ]);
 
     mockAudioInstance.play.calls.reset();
 
@@ -195,6 +204,7 @@ describe("DefaultRacedayComponent", () => {
         },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: LoggerService, useValue: mockLogger },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -1778,7 +1788,6 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should log error if changeLane fails", () => {
-      spyOn(console, "error");
       mockDataService.changeLane.and.returnValue(of(false));
       const fromHd = component["sortedHeatDrivers"][0];
       const event = {
@@ -1789,7 +1798,7 @@ describe("DefaultRacedayComponent", () => {
 
       component["onDrop"](event);
 
-      expect(console.error).toHaveBeenCalledWith("Failed to change lane");
+      expect(mockLogger.error).toHaveBeenCalledWith("Failed to change lane");
     });
 
     it("should call dataService.changeLane for SingleHeat in NOT_STARTED state", () => {

@@ -30,6 +30,7 @@ import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FileSystemService } from "@app/services/file-system.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -102,10 +103,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
   isHelpDropdownOpen: boolean = false;
+  isLogDropdownOpen: boolean = false;
+  isClientLogOpen: boolean = false;
+  isServerLogOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
 
   supportedLanguages: { code: string; nameKey: string }[] = [];
+  logLevels = ["DEBUG", "INFO", "WARN", "ERROR"];
   currentLanguage: string = "";
+  currentClientLogLevel: string = "INFO";
+  currentServerLogLevel: string = "INFO";
   menuItems = [
     {
       label: "RDS_MENU_FILE",
@@ -134,6 +141,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private settingsService: SettingsService,
     private fileSystem: FileSystemService,
     private helpService: HelpService,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit() {
@@ -240,7 +248,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Error loading initial data", err),
+      error: (err) => this.logger.error("Error loading initial data", err),
     });
 
     this.translationService.getTranslationsLoaded().subscribe((loaded) => {
@@ -256,6 +264,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
         return nameA.localeCompare(nameB);
       });
     this.currentLanguage = this.settingsService.getSettings().language;
+    this.currentClientLogLevel =
+      this.settingsService.getSettings().clientLogLevel || "INFO";
+    this.currentServerLogLevel =
+      this.settingsService.getSettings().serverLogLevel || "INFO";
   }
 
   @HostListener("window:resize")
@@ -588,7 +600,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           this.proceedWithStart(isDemo);
         },
         error: (err) => {
-          console.error("Failed to check for auto-save:", err);
+          this.logger.error("Failed to check for auto-save:", err);
           this.proceedWithStart(isDemo);
         },
       });
@@ -600,7 +612,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (this.autoSaveFileToLoad) {
       this.dataService.loadRace(this.autoSaveFileToLoad).subscribe({
         next: () => this.router.navigate(["/raceday"]),
-        error: (err) => console.error("Failed to load auto-save:", err),
+        error: (err) => this.logger.error("Failed to load auto-save:", err),
       });
     }
   }
@@ -609,7 +621,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.showAutoSavePrompt = false;
     if (this.autoSaveFileToLoad) {
       this.dataService.deleteSavedRace(this.autoSaveFileToLoad).subscribe({
-        error: (err) => console.error("Failed to delete auto-save:", err),
+        error: (err) => this.logger.error("Failed to delete auto-save:", err),
       });
     }
     this.proceedWithStart(this.pendingIsDemo);
@@ -668,7 +680,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
             this.cdr.detectChanges();
           }
         },
-        error: (err) => console.error(err),
+        error: (err) => this.logger.error("Failed to initialize race", err),
       });
   }
 
@@ -722,7 +734,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
     const translated = this.translationService.translate(
       "RDS_START_RACE_TOOLTIP",
     );
-    console.log("DEBUG: getStartRaceTooltip returning:", translated);
     return translated;
   }
 
@@ -771,12 +782,47 @@ export class DefaultRacedaySetupComponent implements OnInit {
   toggleLocalizationDropdown(event: Event) {
     event.stopPropagation();
     this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
+    if (this.isLocalizationDropdownOpen) {
+      this.isLogDropdownOpen = false;
+    }
+    this.cdr.detectChanges();
+  }
+  toggleLogDropdown(event: Event) {
+    event.stopPropagation();
+    this.isLogDropdownOpen = !this.isLogDropdownOpen;
+    if (this.isLogDropdownOpen) {
+      this.isLocalizationDropdownOpen = false;
+    } else {
+      this.isClientLogOpen = false;
+      this.isServerLogOpen = false;
+    }
+    this.cdr.detectChanges();
+  }
+
+  toggleClientLogDropdown(event: Event) {
+    event.stopPropagation();
+    this.isClientLogOpen = !this.isClientLogOpen;
+    if (this.isClientLogOpen) {
+      this.isServerLogOpen = false;
+    }
+    this.cdr.detectChanges();
+  }
+
+  toggleServerLogDropdown(event: Event) {
+    event.stopPropagation();
+    this.isServerLogOpen = !this.isServerLogOpen;
+    if (this.isServerLogOpen) {
+      this.isClientLogOpen = false;
+    }
     this.cdr.detectChanges();
   }
 
   closeOptionsDropdown() {
     this.isOptionsDropdownOpen = false;
     this.isLocalizationDropdownOpen = false;
+    this.isLogDropdownOpen = false;
+    this.isClientLogOpen = false;
+    this.isServerLogOpen = false;
   }
 
   selectLanguage(code: string) {
@@ -797,6 +843,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
     const lang = this.supportedLanguages.find((l) => l.code === code);
     return lang ? this.translationService.translate(lang.nameKey) : code;
+  }
+  setClientLogLevel(level: string) {
+    const settings = this.settingsService.getSettings();
+    settings.clientLogLevel = level;
+    this.settingsService.saveSettings(settings);
+    this.currentClientLogLevel = level;
+    this.logger.setLevel(level as any);
+    this.closeOptionsDropdown();
+  }
+  setServerLogLevel(level: string) {
+    const settings = this.settingsService.getSettings();
+    settings.serverLogLevel = level;
+    this.settingsService.saveSettings(settings);
+    this.currentServerLogLevel = level;
+    // TODO: Send to server via API
+    this.dataService.setServerLogLevel(level).subscribe({
+      next: () => this.logger.info(`Server log level set to ${level}`),
+      error: (err) => this.logger.error("Failed to set server log level", err),
+    });
+    this.closeOptionsDropdown();
   }
 
   configureCustomUI() {

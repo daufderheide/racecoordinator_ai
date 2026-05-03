@@ -98,6 +98,57 @@
                   </div>
                 }
               </div>
+              <div
+                class="menu-dropdown-item has-submenu"
+                (click)="toggleLogDropdown($event)"
+              >
+                {{ "RDS_MENU_LOG_LEVELS" | translate }}
+                <span class="submenu-arrow">▶</span>
+                @if (isLogDropdownOpen) {
+                  <div class="menu-dropdown submenu">
+                    <div
+                      class="menu-dropdown-item has-submenu"
+                      (click)="toggleClientLogDropdown($event)"
+                    >
+                      {{ "RDS_LOG_CLIENT" | translate }}
+                      <span class="submenu-arrow">▶</span>
+                      @if (isClientLogOpen) {
+                        <div class="menu-dropdown submenu right-side">
+                          @for (level of logLevels; track level) {
+                            <div
+                              class="menu-dropdown-item"
+                              (click)="setClientLogLevel(level)"
+                              [class.selected]="currentClientLogLevel === level"
+                            >
+                              {{ "LOG_LEVEL_" + level | translate }}
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <div
+                      class="menu-dropdown-item has-submenu"
+                      (click)="toggleServerLogDropdown($event)"
+                    >
+                      {{ "RDS_LOG_SERVER" | translate }}
+                      <span class="submenu-arrow">▶</span>
+                      @if (isServerLogOpen) {
+                        <div class="menu-dropdown submenu right-side">
+                          @for (level of logLevels; track level) {
+                            <div
+                              class="menu-dropdown-item"
+                              (click)="setServerLogLevel(level)"
+                              [class.selected]="currentServerLogLevel === level"
+                            >
+                              {{ "LOG_LEVEL_" + level | translate }}
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
           }
           <!-- Help Dropdown -->

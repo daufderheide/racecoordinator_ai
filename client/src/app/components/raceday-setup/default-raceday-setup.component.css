@@ -109,6 +109,23 @@
   pointer-events: none;
 }
 
+.menu-dropdown-item.has-submenu.static {
+  cursor: default;
+}
+.menu-dropdown-item.has-submenu.static:hover {
+  background-color: transparent;
+  color: #fff;
+}
+.menu-dropdown.submenu.right-side {
+  top: 0;
+  left: 100%;
+  margin-left: 2px;
+}
+.menu-dropdown-item.selected {
+  background-color: rgba(0, 168, 255, 0.2);
+  color: #00a8ff;
+}
+
 .menu-dropdown-item:hover {
   background: rgba(0, 240, 255, 0.2);
   color: #00f0ff;

@@ -22,6 +22,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -74,6 +75,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {}
 
   drivers: Driver[] = [];
@@ -146,7 +148,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Failed to load data", err);
+        this.logger.error("Failed to load data", err);
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -183,7 +185,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   }
 
   selectTeam(team: Team) {
-    console.log("Selecting team:", team);
+    this.logger.debug("Selecting team:", team);
     this.selectedTeam = team;
     this.editingTeam = new Team(team.entity_id, team.name, team.avatarUrl, [
       ...team.driverIds,
@@ -198,9 +200,12 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   }
 
   updateTeam() {
-    console.log("Update team clicked. Selected Team:", this.selectedTeam);
+    this.logger.debug("Update team clicked. Selected Team:", this.selectedTeam);
     if (!this.selectedTeam) return;
-    console.log("Navigating to editor with ID:", this.selectedTeam.entity_id);
+    this.logger.debug(
+      "Navigating to editor with ID:",
+      this.selectedTeam.entity_id,
+    );
     this.router.navigate(["/team-editor"], {
       queryParams: { id: this.selectedTeam.entity_id },
     });
@@ -227,7 +232,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         });
       },
       error: (err: any) => {
-        console.error("Failed to create new team", err);
+        this.logger.error("Failed to create new team", err);
         this.isSaving = false;
       },
     });
@@ -271,7 +276,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.loadData();
       },
       error: (err) => {
-        console.error("Failed to delete team", err);
+        this.logger.error("Failed to delete team", err);
         this.isSaving = false;
       },
     });

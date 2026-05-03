@@ -113,6 +113,14 @@ export const mockSettingsService = {
   saveSettings: jasmine.createSpy("saveSettings"),
 };
 
+export const mockLoggerService = jasmine.createSpyObj("LoggerService", [
+  "debug",
+  "info",
+  "warn",
+  "error",
+  "log",
+]);
+
 /**
  * Resets all shared mock spies and subjects to their default state.
  */
@@ -123,6 +131,7 @@ export function resetMocks() {
     mockRouter,
     mockAnalyticsService,
     mockSettingsService,
+    mockLoggerService,
   ];
 
   mocks.forEach((mock) => {
@@ -175,4 +184,11 @@ export function resetMocks() {
   // Restore default behaviors for mockSettingsService
   mockSettingsService.getSettings.and.callFake(() => createDefaultSettings());
   mockSettingsService.saveSettings.and.stub();
+
+  // Restore default behaviors for mockLoggerService
+  mockLoggerService.debug.and.stub();
+  mockLoggerService.info.and.stub();
+  mockLoggerService.warn.and.stub();
+  mockLoggerService.error.and.stub();
+  mockLoggerService.log.and.stub();
 }

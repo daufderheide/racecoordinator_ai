@@ -36,6 +36,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { FlagType, RaceFlagService } from "@app/services/race-flag.service";
@@ -332,6 +333,7 @@ export class DefaultRacedayComponent
     private raceConnectionService: RaceConnectionService,
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
+    private logger: LoggerService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -502,6 +504,7 @@ export class DefaultRacedayComponent
                 driver.bestLapAudio.text,
                 this.dataService.serverUrl,
                 ttsContext,
+                this.logger,
               );
             } else if (
               driver.lapAudio.type !== "none" &&
@@ -514,6 +517,7 @@ export class DefaultRacedayComponent
                 driver.lapAudio.text,
                 this.dataService.serverUrl,
                 ttsContext,
+                this.logger,
               );
             }
 
@@ -810,7 +814,7 @@ export class DefaultRacedayComponent
       .changeLane(fromHd.laneIndex, toHd.laneIndex)
       .subscribe((success) => {
         if (!success) {
-          console.error("Failed to change lane");
+          this.logger.error("Failed to change lane");
         }
       });
   }
@@ -851,12 +855,12 @@ export class DefaultRacedayComponent
   }
 
   private loadRaceData() {
-    console.log("RacedayComponent: Loading race data...");
+    this.logger.debug("RacedayComponent: Loading race data...");
 
     const race = this.raceService.getRace();
     if (race) {
-      console.log("RacedayComponent: using selected race:", race);
-      console.log(
+      this.logger.debug("RacedayComponent: using selected race:", race);
+      this.logger.debug(
         "RacedayComponent: Race tracks/lanes:",
         race.track,
         race.track?.lanes,
@@ -879,7 +883,7 @@ export class DefaultRacedayComponent
         this.updateCountdownLamps(this.autoStartRemaining || duration || 5.0);
       }
     } else {
-      console.log("RacedayComponent: Waiting for race data...");
+      this.logger.debug("RacedayComponent: Waiting for race data...");
       // Do not throw error, wait for Race
     }
   }
@@ -1138,7 +1142,10 @@ export class DefaultRacedayComponent
   }
 
   toggleMenu() {
-    console.log("Toggling Race Director menu. Current state:", this.isMenuOpen);
+    this.logger.debug(
+      "Toggling Race Director menu. Current state:",
+      this.isMenuOpen,
+    );
     this.isMenuOpen = !this.isMenuOpen;
     this.isFileMenuOpen = false; // Close other menus
     this.isLanesMenuOpen = false;
@@ -1146,7 +1153,10 @@ export class DefaultRacedayComponent
   }
 
   toggleFileMenu() {
-    console.log("Toggling File menu. Current state:", this.isFileMenuOpen);
+    this.logger.debug(
+      "Toggling File menu. Current state:",
+      this.isFileMenuOpen,
+    );
     this.isFileMenuOpen = !this.isFileMenuOpen;
     this.isMenuOpen = false; // Close other menus
     this.isLanesMenuOpen = false;
@@ -1157,7 +1167,10 @@ export class DefaultRacedayComponent
   isDriversStationOpen = false;
 
   toggleLanesMenu() {
-    console.log("Toggling Lanes menu. Current state:", this.isLanesMenuOpen);
+    this.logger.debug(
+      "Toggling Lanes menu. Current state:",
+      this.isLanesMenuOpen,
+    );
     this.isLanesMenuOpen = !this.isLanesMenuOpen;
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
@@ -1165,7 +1178,7 @@ export class DefaultRacedayComponent
   }
 
   toggleDriversStationMenu() {
-    console.log(
+    this.logger.debug(
       "Toggling Drivers Station menu. Current state:",
       this.isDriversStationOpen,
     );
@@ -1186,18 +1199,18 @@ export class DefaultRacedayComponent
     if (action === "EDIT_LAPS" && this.isEditLapsDisabled) return;
 
     this.isMenuOpen = false;
-    console.log("Menu Action Selected:", action);
+    this.logger.debug("Menu Action Selected:", action);
     if (action === "START_RESUME") {
       this.dataService.startRace().subscribe(
         (success) => {
           if (success) {
-            console.log("Race start command sent successfully");
+            this.logger.debug("Race start command sent successfully");
           } else {
-            console.error("Failed to send race start command");
+            this.logger.error("Failed to send race start command");
           }
         },
         (error) => {
-          console.error("Error starting race:", error);
+          this.logger.error("Error starting race:", error);
         },
       );
     } else if (action === "PAUSE" || action === "ABORT_TIMERS") {
@@ -1216,70 +1229,70 @@ export class DefaultRacedayComponent
       obs.subscribe(
         (success) => {
           if (success) {
-            console.log(`${action} command sent successfully`);
+            this.logger.debug(`${action} command sent successfully`);
             // Immediate UI feedback: clear timers if aborting
             if (action === "ABORT_TIMERS") {
               this.autoStartRemaining = 0;
               this.autoAdvanceRemaining = 0;
             }
           } else {
-            console.error(`Failed to send ${action} command`);
+            this.logger.error(`Failed to send ${action} command`);
           }
         },
         (error) => {
-          console.error(`Error processing ${action}:`, error);
+          this.logger.error(`Error processing ${action}:`, error);
         },
       );
     } else if (action === "NEXT_HEAT") {
       this.dataService.nextHeat().subscribe(
         (success) => {
           if (success) {
-            console.log("Next heat command sent successfully");
+            this.logger.debug("Next heat command sent successfully");
           } else {
-            console.error("Failed to send next heat command");
+            this.logger.error("Failed to send next heat command");
           }
         },
         (error) => {
-          console.error("Error moving to next heat:", error);
+          this.logger.error("Error moving to next heat:", error);
         },
       );
     } else if (action === "RESTART_HEAT") {
       this.dataService.restartHeat().subscribe(
         (success) => {
           if (success) {
-            console.log("Restart heat command sent successfully");
+            this.logger.debug("Restart heat command sent successfully");
           } else {
-            console.error("Failed to send restart heat command");
+            this.logger.error("Failed to send restart heat command");
           }
         },
         (error) => {
-          console.error("Error restarting heat:", error);
+          this.logger.error("Error restarting heat:", error);
         },
       );
     } else if (action === "SKIP_HEAT") {
       this.dataService.skipHeat().subscribe(
         (success) => {
           if (success) {
-            console.log("Skip heat command sent successfully");
+            this.logger.debug("Skip heat command sent successfully");
           } else {
-            console.error("Failed to send skip heat command");
+            this.logger.error("Failed to send skip heat command");
           }
         },
         (error) => {
-          console.error("Error skipping heat:", error);
+          this.logger.error("Error skipping heat:", error);
         },
       );
     } else if (action === "DEFER_HEAT") {
       this.dataService.deferHeat().subscribe(
         (success) => {
           if (success) {
-            console.log("Defer heat command sent successfully");
+            this.logger.debug("Defer heat command sent successfully");
           } else {
-            console.error("Failed to send defer heat command");
+            this.logger.error("Failed to send defer heat command");
           }
         },
         (error) => {
-          console.error("Error deferring heat:", error);
+          this.logger.error("Error deferring heat:", error);
         },
       );
     }
@@ -1299,7 +1312,7 @@ export class DefaultRacedayComponent
   }
 
   onFileMenuSelect(action: string) {
-    console.log("File menu action:", action);
+    this.logger.debug("File menu action:", action);
     // Assuming 'activeMenu' is a property that controls which menu is open.
     // If not defined, it might need to be added to the class properties.
     // For now, we'll assume it exists or is intended to be added.
@@ -1353,23 +1366,23 @@ export class DefaultRacedayComponent
           const writable = await handle.createWritable();
           await writable.write(csvData);
           await writable.close();
-          console.log("CSV Exported successfully");
+          this.logger.debug("CSV Exported successfully");
         },
         error: (err: any) => {
-          console.error("Failed to export CSV", err);
+          this.logger.error("Failed to export CSV", err);
         },
       });
     } catch (err: any) {
       if (err.name === "AbortError") {
-        console.log("User cancelled save");
+        this.logger.debug("User cancelled save");
         return;
       }
-      console.error("Save error", err);
+      this.logger.error("Save error", err);
     }
   }
 
   onLaneMenuSelect(laneIndex: number) {
-    console.log("Lane selected for Driver Station:", laneIndex);
+    this.logger.debug("Lane selected for Driver Station:", laneIndex);
     this.isLanesMenuOpen = false; // Close menu
     this.isDriversStationOpen = false;
 
@@ -1579,7 +1592,7 @@ export class DefaultRacedayComponent
     if (url) {
       // Check if it's a dead asset reference (e.g. after a DB reset)
       if (url.startsWith("/api/") && !url.includes("filename=")) {
-        console.warn(`Flag URL appears to be a dead reference: ${url}`);
+        this.logger.warn(`Flag URL appears to be a dead reference: ${url}`);
         return url; // Still return it, let the backend handle it
       }
       return url;
@@ -1615,14 +1628,14 @@ export class DefaultRacedayComponent
 
     if (defaultAsset) {
       const finalUrl = this.getFullUrl(defaultAsset.url);
-      console.log(
+      this.logger.debug(
         `Flag resolution for ${flagType}: Using default asset: ${defaultAsset.name} -> ${finalUrl}`,
       );
       return finalUrl;
     }
 
     // 4. Ultimate fallback
-    console.warn(
+    this.logger.warn(
       `Flag resolution for ${flagType}: No asset found, using ultimate fallback.`,
     );
     return "assets/images/crossed_racing_flags.png";
@@ -2286,10 +2299,10 @@ export class DefaultRacedayComponent
     const lane = hd.laneIndex;
     this.dataService.changeActualDriver(lane, driverId).subscribe({
       next: () => {
-        console.log(`Teammate changed for lane ${lane} to ${driverId}`);
+        this.logger.debug(`Teammate changed for lane ${lane} to ${driverId}`);
       },
       error: (err) => {
-        console.error(`Error changing teammate for lane ${lane}:`, err);
+        this.logger.error(`Error changing teammate for lane ${lane}:`, err);
         this.ackModalTitle = "RD_ERR_DRIVER_CHANGE_TITLE";
         this.ackModalMessage = err.error || "RD_ERR_DRIVER_CHANGE_MESSAGE";
         this.showAckModal = true;
@@ -2379,7 +2392,7 @@ export class DefaultRacedayComponent
     }
 
     const previousState = this.raceState;
-    console.log(
+    this.logger.debug(
       "RacedayComponent: State changed from",
       previousState,
       "to:",
@@ -2524,6 +2537,8 @@ export class DefaultRacedayComponent
         this.getFullUrl(entry.url),
         undefined,
         this.dataService.serverUrl,
+        undefined,
+        this.logger,
       );
     }
   }
@@ -2548,7 +2563,7 @@ export class DefaultRacedayComponent
         }
       },
       (error) => {
-        console.error("Error updating user laps:", error);
+        this.logger.error("Error updating user laps:", error);
       },
     );
   }
@@ -2609,6 +2624,8 @@ export class DefaultRacedayComponent
         playableUrl,
         config.text,
         this.dataService.serverUrl,
+        undefined,
+        this.logger,
       );
     }
   }

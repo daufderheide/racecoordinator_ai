@@ -15,6 +15,8 @@ import {
 } from "@angular/core/testing";
 import { of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
+import { LoggerService } from "@app/services/logger.service";
+import { mockLoggerService } from "@app/testing/unit-test-mocks";
 
 import { ImageSelectorComponent } from "./image-selector.component";
 import { ImageSelectorHarness } from "./testing/image-selector.harness";
@@ -82,6 +84,7 @@ describe("ImageSelectorComponent", () => {
       ],
       providers: [
         { provide: DataService, useValue: mockDataService },
+        { provide: LoggerService, useValue: mockLoggerService },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -177,7 +180,7 @@ describe("ImageSelectorComponent", () => {
     mockDataService.uploadAsset.and.returnValue(
       throwError(() => new Error("Upload failed")),
     );
-    spyOn(console, "error");
+    const logger = TestBed.inject(LoggerService);
     spyOn(component.uploadFinished, "emit");
 
     spyOn(window as any, "FileReader").and.callFake(function () {
@@ -206,6 +209,7 @@ describe("ImageSelectorComponent", () => {
 
     expect(component.isUploading).toBeFalse();
     expect(component.uploadFinished.emit).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalled();
   }));
 
   it("should open and close selector", async () => {

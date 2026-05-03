@@ -1,15 +1,26 @@
 import { TestBed } from "@angular/core/testing";
 import { Settings } from "@app/models/settings";
+import { LoggerService } from "@app/services/logger.service";
 
 import { SettingsService } from "./settings.service";
 
 describe("SettingsService", () => {
   let service: SettingsService;
+  let mockLogger: any;
 
   beforeEach(() => {
     localStorage.clear();
+    mockLogger = {
+      error: jasmine.createSpy("error"),
+      info: jasmine.createSpy("info"),
+      debug: jasmine.createSpy("debug"),
+      warn: jasmine.createSpy("warn"),
+    };
     TestBed.configureTestingModule({
-      providers: [SettingsService],
+      providers: [
+        SettingsService,
+        { provide: LoggerService, useValue: mockLogger },
+      ],
     });
     service = TestBed.inject(SettingsService);
   });
@@ -47,11 +58,10 @@ describe("SettingsService", () => {
   });
 
   it("should handle corrupt JSON in localStorage", () => {
-    spyOn(console, "error");
     localStorage.setItem("racecoordinator_settings", "invalid-json");
     const settings = service.getSettings();
     expect(settings).toBeDefined();
     expect(settings.language).toBe("");
-    expect(console.error).toHaveBeenCalled();
+    expect(mockLogger.error).toHaveBeenCalled();
   });
 });

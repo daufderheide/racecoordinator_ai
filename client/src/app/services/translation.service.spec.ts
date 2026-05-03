@@ -5,6 +5,7 @@ import {
 import { TestBed } from "@angular/core/testing";
 import { Settings } from "@app/models/settings";
 
+import { LoggerService } from "./logger.service";
 import { SettingsService } from "./settings.service";
 import { TranslationService } from "./translation.service";
 
@@ -19,11 +20,19 @@ describe("TranslationService", () => {
       "saveSettings",
     ]);
 
+    const loggerSpy = jasmine.createSpyObj("LoggerService", [
+      "info",
+      "warn",
+      "error",
+      "debug",
+    ]);
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         TranslationService,
         { provide: SettingsService, useValue: spy },
+        { provide: LoggerService, useValue: loggerSpy },
       ],
     });
 
@@ -131,6 +140,10 @@ describe("TranslationService", () => {
     });
   });
 
+  function getLoggerSpy(): jasmine.SpyObj<LoggerService> {
+    return TestBed.inject(LoggerService) as jasmine.SpyObj<LoggerService>;
+  }
+
   it("should fallback to English if browser language is not supported", () => {
     // Mock navigator.language to an unsupported language
     spyOnProperty(navigator, "language", "get").and.returnValue("ja-JP");
@@ -149,7 +162,6 @@ describe("TranslationService", () => {
   });
 
   it("should handle translation load failure and fallback to English", () => {
-    spyOn(console, "error");
     settingsServiceSpy.getSettings.and.returnValue(
       Object.assign(new Settings(), { language: "fr" }),
     );
@@ -161,7 +173,7 @@ describe("TranslationService", () => {
     );
     req.error(new ErrorEvent("Network error"));
 
-    expect(console.error).toHaveBeenCalled();
+    expect(getLoggerSpy().error).toHaveBeenCalled();
 
     // Should then try to load 'en'
     const fallbackReq = httpMock.expectOne((request) =>

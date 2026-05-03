@@ -13,6 +13,7 @@ import { AudioSelectorComponent } from "@app/components/shared/audio-selector/au
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IAssetMessage, ISaveAudioSetEntry } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 @Component({
@@ -44,10 +45,11 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {
     effect(() => {
       if (this.visible()) {
-        console.log("AudioSetEditor: Opening modal, resetting form");
+        this.logger.debug("AudioSetEditor: Opening modal, resetting form");
         this.resetForm();
         this.dragCounter = 0;
         this.isDragging = false;
@@ -117,7 +119,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
   @HostListener("window:drop", ["$event"])
   onDrop(event: DragEvent) {
     if (!this.visible()) return;
-    console.log("AudioSetEditor: window:drop caught (bubbled)");
+    this.logger.debug("AudioSetEditor: window:drop caught (bubbled)");
     this.handleDropEvent(event);
   }
 
@@ -148,7 +150,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
   }
 
   onElementDrop(event: DragEvent) {
-    console.log("AudioSetEditor: element:drop triggered");
+    this.logger.debug("AudioSetEditor: element:drop triggered");
     event.preventDefault();
     event.stopPropagation();
     this.handleDropEvent(event);
@@ -161,14 +163,16 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
 
     if (event.dataTransfer) {
       if (event.dataTransfer.files.length > 0) {
-        console.log(
+        this.logger.debug(
           `AudioSetEditor: Processing ${event.dataTransfer.files.length} files`,
         );
         this.handleFiles(event.dataTransfer.files);
       } else {
         const url = event.dataTransfer.getData("text/plain");
         if (url && (url.startsWith("http") || url.startsWith("/assets/"))) {
-          console.log(`AudioSetEditor: Processing internal asset URL: ${url}`);
+          this.logger.debug(
+            `AudioSetEditor: Processing internal asset URL: ${url}`,
+          );
           this.handleInternalDrop(url);
         }
       }
@@ -199,7 +203,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
         f.name.endsWith(".wav"),
     );
     if (fileArray.length === 0) {
-      console.warn("AudioSetEditor: No audio files found in drop");
+      this.logger.warn("AudioSetEditor: No audio files found in drop");
       return;
     }
 
@@ -244,7 +248,9 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
   }
 
   addDroppedEntries(newEntries: ISaveAudioSetEntry[]) {
-    console.log(`AudioSetEditor: Adding ${newEntries.length} entries to list`);
+    this.logger.debug(
+      `AudioSetEditor: Adding ${newEntries.length} entries to list`,
+    );
     this.entries = [...this.entries, ...newEntries];
     this.recalculateTimes();
     this.cdr.detectChanges();
@@ -320,7 +326,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isSaving = false;
-          console.error("Failed to save audio set", err);
+          this.logger.error("Failed to save audio set", err);
           alert("Error: " + err.message);
         },
       });

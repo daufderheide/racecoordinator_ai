@@ -29,6 +29,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -88,6 +89,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     private location: Location,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<Team>(
       {
@@ -168,9 +170,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   loadData() {
     const idParam = this.route.snapshot.queryParamMap.get("id");
-    console.log("TeamEditor loadData. ID param:", idParam);
+    this.logger.debug("TeamEditor loadData. ID param:", idParam);
     if (!idParam) {
-      console.warn("No ID provided, redirecting to manager");
+      this.logger.warn("No ID provided, redirecting to manager");
       // Redirect back to manager instead of throwing
       this.router.navigate(["/team-manager"]);
       return;
@@ -206,7 +208,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error("Failed to load data", err);
+        this.logger.error("Failed to load data", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges();
@@ -319,20 +321,20 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   private autoSaveTeam() {
-    console.log("autoSaveTeam triggered");
+    this.logger.debug("autoSaveTeam triggered");
     if (!this.editingTeam) {
-      console.log("autoSaveTeam: no editingTeam");
+      this.logger.debug("autoSaveTeam: no editingTeam");
       return;
     }
     if (this.isNameInvalid) {
-      console.log("autoSaveTeam: name invalid");
+      this.logger.debug("autoSaveTeam: name invalid");
       return;
     }
     if (this.isSaving) {
-      console.log("autoSaveTeam: isSaving is true");
+      this.logger.debug("autoSaveTeam: isSaving is true");
       return;
     }
-    console.log("autoSaveTeam Triggering updateTeam");
+    this.logger.debug("autoSaveTeam Triggering updateTeam");
     this.updateTeam(false, true);
   }
 
@@ -432,7 +434,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Failed to save team", err);
+        this.logger.error("Failed to save team", err);
         if (!isAutoSave) {
           alert(
             this.translationService.translate("TM_ERROR_SAVE_FAILED") +

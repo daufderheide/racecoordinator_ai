@@ -22,6 +22,7 @@ import {
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 interface PinAction {
@@ -81,6 +82,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     public translationService: TranslationService,
+    private logger: LoggerService,
   ) {
     effect(() => {
       // Re-run refreshLanes when lanes change
@@ -110,7 +112,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         const parsed = JSON.parse(savedSections);
         this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
       } catch (e) {
-        console.error("Failed to parse saved sections", e);
+        this.logger.error("Failed to parse saved sections", e);
       }
     }
 
@@ -151,7 +153,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
             });
           }
         } catch (e) {
-          console.error("Failed to parse saved led strings", e);
+          this.logger.error("Failed to parse saved led strings", e);
         }
       }
     }
@@ -285,7 +287,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         this.availablePorts = ports;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error("Failed to fetch ports", err),
+      error: (err) => this.logger.error("Failed to fetch ports", err),
     });
   }
 
@@ -328,15 +330,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       this.dataService.updateInterfaceConfig(config, this.index()).subscribe({
         next: (response) => {
           if (!response.success) {
-            console.warn(
+            this.logger.warn(
               `Failed to update interface config: ${response.message}`,
             );
           } else {
-            console.log("Interface config updated successfully");
+            this.logger.info("Interface config updated successfully");
           }
         },
         error: (err) => {
-          console.error("Error calling updateInterfaceConfig", err);
+          this.logger.error("Error calling updateInterfaceConfig", err);
         },
       });
     }
@@ -395,12 +397,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       this.dataService.updateInterfaceConfig(config, this.index()).subscribe({
         next: (response) => {
           if (!response.success) {
-            console.warn(
+            this.logger.warn(
               `Failed to update interface config: ${response.message}`,
             );
           }
         },
-        error: (err) => console.error("Error updating interface config", err),
+        error: (err) =>
+          this.logger.error("Error updating interface config", err),
       });
     }
   }
@@ -434,10 +437,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (resp) => {
           if (!resp.success) {
-            console.error("Failed to set RGB LED state:", resp.message);
+            this.logger.error("Failed to set RGB LED state:", resp.message);
           }
         },
-        error: (err) => console.error("Error setting RGB LED state:", err),
+        error: (err) => this.logger.error("Error setting RGB LED state:", err),
       });
   }
 
@@ -507,14 +510,14 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response) => {
             if (!response.success) {
-              console.warn("Failed to set pin state", response.message);
+              this.logger.warn("Failed to set pin state", response.message);
               // Revert state on failure
               this.pinState[key] = currentState;
               this.cdr.detectChanges();
             }
           },
           error: (err) => {
-            console.error("Error setting pin state", err);
+            this.logger.error("Error setting pin state", err);
             // Revert state on failure
             this.pinState[key] = currentState;
             this.cdr.detectChanges();
@@ -804,7 +807,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // Enforce maximum LED strings per board to match Arduino sketch memory limits
     const maxStrings = config.hardwareType === 0 ? 5 : 8;
     if (config.ledStrings.length >= maxStrings) {
-      console.warn(
+      this.logger.warn(
         `Maximum number of LED strings (${maxStrings}) reached for this board.`,
       );
       return;

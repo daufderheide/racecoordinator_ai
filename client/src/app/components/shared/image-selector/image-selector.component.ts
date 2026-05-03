@@ -3,6 +3,7 @@ import { AssetPreviewComponent } from "@app/components/shared/asset-preview/asse
 import { ItemSelectorComponent } from "@app/components/shared/item-selector/item-selector.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   standalone: true,
@@ -34,6 +35,7 @@ export class ImageSelectorComponent {
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {}
 
   onDragOver(event: DragEvent) {
@@ -89,7 +91,7 @@ export class ImageSelectorComponent {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error("Image upload failed", err);
+          this.logger.error("Image upload failed", err);
           this.isUploading = false;
           this.pendingPreview = null;
           this.uploadFinished.emit();

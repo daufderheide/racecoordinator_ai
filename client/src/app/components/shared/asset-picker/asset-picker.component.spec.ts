@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
+import { LoggerService } from "@app/services/logger.service";
+import { mockLoggerService } from "@app/testing/unit-test-mocks";
 
 import { AssetPickerComponent } from "./asset-picker.component";
 
@@ -60,7 +62,10 @@ describe("AssetPickerComponent", () => {
         MockTranslatePipe,
         MockAssetPreviewComponent,
       ],
-      providers: [{ provide: DataService, useValue: mockDataService }],
+      providers: [
+        { provide: DataService, useValue: mockDataService },
+        { provide: LoggerService, useValue: mockLoggerService },
+      ],
     }).compileComponents();
   });
 

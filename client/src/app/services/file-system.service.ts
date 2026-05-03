@@ -118,6 +118,30 @@ export class FileSystemService {
     return file.text();
   }
 
+  async appendToFile(filename: string, content: string): Promise<void> {
+    const handle = await this.getCustomDirectoryHandle();
+    if (!handle) return; // Silent fail if no directory configured
+
+    const permission = await this.verifyPermission(handle, true);
+    if (!permission) return;
+
+    try {
+      const fileHandle = await handle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable({
+        keepExistingData: true,
+      });
+
+      // Seek to the end to append
+      const file = await fileHandle.getFile();
+      await writable.seek(file.size);
+
+      await writable.write(content);
+      await writable.close();
+    } catch (err) {
+      console.error(`Error appending to file ${filename}:`, err);
+    }
+  }
+
   private async verifyPermission(
     handle: FileSystemDirectoryHandle,
     readWrite: boolean,

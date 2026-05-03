@@ -23,6 +23,7 @@ import {
   RaceState,
 } from "@app/proto/antigravity";
 
+import { LoggerService } from "./logger.service";
 import { RaceService } from "./race.service";
 
 @Injectable({
@@ -94,11 +95,12 @@ export class RaceConnectionService implements OnDestroy {
   constructor(
     private dataService: DataService,
     private raceService: RaceService,
+    private logger: LoggerService,
   ) {}
 
   connect() {
     this.connectionCount++;
-    console.log(
+    this.logger.debug(
       `RaceConnectionService: Connection count incremented to ${this.connectionCount}`,
     );
     if (this.connectionCount === 1) {
@@ -108,7 +110,7 @@ export class RaceConnectionService implements OnDestroy {
 
   disconnect() {
     this.connectionCount--;
-    console.log(
+    this.logger.debug(
       `RaceConnectionService: Connection count decremented to ${this.connectionCount}`,
     );
     if (this.connectionCount <= 0) {
@@ -305,7 +307,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private processRaceUpdate(update: IRace) {
-    console.log(
+    this.logger.debug(
       "RaceConnectionService: processRaceUpdate called with:",
       update,
     );

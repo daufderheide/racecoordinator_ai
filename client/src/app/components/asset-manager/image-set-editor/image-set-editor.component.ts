@@ -12,6 +12,7 @@ import { ImageSelectorComponent } from "@app/components/shared/image-selector/im
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IAssetMessage, ISaveImageSetEntry } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 @Component({
@@ -42,10 +43,11 @@ export class ImageSetEditorComponent implements OnInit {
     private dataService: DataService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {
     effect(() => {
       if (this.visible()) {
-        console.log("ImageSetEditor: Opening modal, resetting form");
+        this.logger.debug("ImageSetEditor: Opening modal, resetting form");
         this.resetForm();
         this.dragCounter = 0;
         this.isDragging = false;
@@ -106,7 +108,7 @@ export class ImageSetEditorComponent implements OnInit {
   onDrop(event: DragEvent) {
     if (!this.visible()) return;
     // If it reached window, it means it wasn't caught and stopped by the element handlers
-    console.log("ImageSetEditor: window:drop caught (bubbled)");
+    this.logger.debug("ImageSetEditor: window:drop caught (bubbled)");
     this.handleDropEvent(event);
   }
 
@@ -138,7 +140,7 @@ export class ImageSetEditorComponent implements OnInit {
   }
 
   onElementDrop(event: DragEvent) {
-    console.log("ImageSetEditor: element:drop triggered");
+    this.logger.debug("ImageSetEditor: element:drop triggered");
     event.preventDefault();
     event.stopPropagation();
     this.handleDropEvent(event);
@@ -151,7 +153,7 @@ export class ImageSetEditorComponent implements OnInit {
 
     if (event.dataTransfer) {
       if (event.dataTransfer.files.length > 0) {
-        console.log(
+        this.logger.debug(
           `ImageSetEditor: Processing ${event.dataTransfer.files.length} files`,
         );
         this.handleFiles(event.dataTransfer.files);
@@ -159,7 +161,9 @@ export class ImageSetEditorComponent implements OnInit {
         // Check for internal drags (e.g. from library)
         const url = event.dataTransfer.getData("text/plain");
         if (url && (url.startsWith("http") || url.startsWith("/assets/"))) {
-          console.log(`ImageSetEditor: Processing internal asset URL: ${url}`);
+          this.logger.debug(
+            `ImageSetEditor: Processing internal asset URL: ${url}`,
+          );
           this.handleInternalDrop(url);
         }
       }
@@ -188,7 +192,7 @@ export class ImageSetEditorComponent implements OnInit {
       f.type.startsWith("image/"),
     );
     if (fileArray.length === 0) {
-      console.warn("ImageSetEditor: No image files found in drop");
+      this.logger.warn("ImageSetEditor: No image files found in drop");
       return;
     }
 
@@ -229,7 +233,9 @@ export class ImageSetEditorComponent implements OnInit {
   }
 
   addDroppedEntries(newEntries: ISaveImageSetEntry[]) {
-    console.log(`ImageSetEditor: Adding ${newEntries.length} entries to list`);
+    this.logger.debug(
+      `ImageSetEditor: Adding ${newEntries.length} entries to list`,
+    );
     // Add new entries to existing list
     this.entries = [...this.entries, ...newEntries];
     this.recalculatePercentages();
@@ -332,7 +338,7 @@ export class ImageSetEditorComponent implements OnInit {
         },
         error: (err) => {
           this.isSaving = false;
-          console.error("Failed to save image set", err);
+          this.logger.error("Failed to save image set", err);
           alert("Error: " + err.message);
         },
       });

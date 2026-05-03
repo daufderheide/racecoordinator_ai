@@ -17,6 +17,7 @@ import {
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { TranslationServiceMock } from "@app/testing/translation-service.mock";
 
@@ -100,6 +101,15 @@ describe("ArduinoEditorComponent", () => {
       providers: [
         { provide: TranslationService, useValue: translationService },
         { provide: DataService, useValue: mockDataService },
+        {
+          provide: LoggerService,
+          useValue: jasmine.createSpyObj("LoggerService", [
+            "debug",
+            "info",
+            "warn",
+            "error",
+          ]),
+        },
       ],
     }).compileComponents();
 

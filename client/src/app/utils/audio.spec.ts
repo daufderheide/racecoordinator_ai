@@ -7,6 +7,7 @@ describe("playSound Utility", () => {
   let _originalSpeechSynthesis: any;
 
   const SERVER_URL = "http://localhost:8080";
+  let mockLogger: any;
 
   beforeAll(() => {
     // Mock SpeechSynthesisUtterance if it doesn't exist (e.g. in some text environments)
@@ -45,6 +46,13 @@ describe("playSound Utility", () => {
       writable: true,
       configurable: true,
     });
+
+    mockLogger = {
+      debug: jasmine.createSpy("debug"),
+      info: jasmine.createSpy("info"),
+      warn: jasmine.createSpy("warn"),
+      error: jasmine.createSpy("error"),
+    };
   });
 
   describe("Preset Audio", () => {
@@ -66,16 +74,15 @@ describe("playSound Utility", () => {
 
     it("should catch play errors", async () => {
       const path = "/error.mp3";
-      const errorSpy = spyOn(console, "error");
       mockAudioInstance.play.and.returnValue(Promise.reject("Play error"));
 
-      playSound("preset", path, undefined, SERVER_URL);
+      playSound("preset", path, undefined, SERVER_URL, undefined, mockLogger);
 
       // Wait for promise resolution
       await Promise.resolve();
 
       expect(mockAudioInstance.play).toHaveBeenCalled();
-      expect(errorSpy).toHaveBeenCalledWith(
+      expect(mockLogger.error).toHaveBeenCalledWith(
         "Error playing sound",
         "Play error",
       );
@@ -106,11 +113,10 @@ describe("playSound Utility", () => {
         writable: true,
         configurable: true,
       });
-      const warnSpy = spyOn(console, "warn");
 
-      playSound("tts", undefined, "Hello", SERVER_URL);
+      playSound("tts", undefined, "Hello", SERVER_URL, undefined, mockLogger);
 
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(mockLogger.warn).toHaveBeenCalledWith(
         "Text-to-speech not supported in this browser.",
       );
     });

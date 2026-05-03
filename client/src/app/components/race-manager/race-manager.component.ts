@@ -22,6 +22,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -97,6 +98,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     private connectionMonitor: ConnectionMonitorService,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit() {
@@ -161,7 +163,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Failed to load races", err);
+        this.logger.error("Failed to load races", err);
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -173,7 +175,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error("Failed to load tracks", err);
+        this.logger.error("Failed to load tracks", err);
       },
     });
   }
@@ -213,7 +215,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges(); // Trigger change detection to update UI
       },
       error: (err) => {
-        console.error("Failed to generate heats", err);
+        this.logger.error("Failed to generate heats", err);
         this.generatedHeats = [];
       },
     });
@@ -255,7 +257,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         this.loadData();
       },
       error: (err) => {
-        console.error("Failed to delete race", err);
+        this.logger.error("Failed to delete race", err);
         this.isSaving = false;
       },
     });
@@ -328,7 +330,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        console.error("Failed to create new race", err);
+        this.logger.error("Failed to create new race", err);
         this.isSaving = false;
       },
     });

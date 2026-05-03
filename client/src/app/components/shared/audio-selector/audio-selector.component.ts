@@ -9,6 +9,7 @@ import { FormsModule } from "@angular/forms";
 import { ItemSelectorComponent } from "@app/components/shared/item-selector/item-selector.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext, playSound } from "@app/utils/audio";
 
@@ -110,6 +111,7 @@ export class AudioSelectorComponent {
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
+    private logger: LoggerService,
   ) {}
 
   onTypeChange(newType: "preset" | "tts" | "none" | "audio_set") {
@@ -171,6 +173,7 @@ export class AudioSelectorComponent {
       "",
       this.dataService.serverUrl,
       playContext,
+      this.logger,
     );
   }
 
@@ -215,7 +218,7 @@ export class AudioSelectorComponent {
       try {
         await this.playUrl(entry.url);
       } catch (e) {
-        console.error("Error playing audio set entry", e);
+        this.logger.error("Error playing audio set entry", e);
       }
     }
     this.isPlaying = false;
@@ -301,7 +304,7 @@ export class AudioSelectorComponent {
         const asset = JSON.parse(data);
         this.onAssetSelected(asset);
       } catch (e) {
-        console.error("Failed to parse dropped asset data", e);
+        this.logger.error("Failed to parse dropped asset data", e);
       }
     }
   }

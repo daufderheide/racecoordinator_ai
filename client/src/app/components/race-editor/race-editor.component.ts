@@ -17,6 +17,7 @@ import { FuelUsageType } from "@app/models/fuel_options";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -111,7 +112,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         JSON.stringify(this.sectionsExpanded),
       );
     } catch (e) {
-      console.error("Error saving expander state", e);
+      this.logger.error("Error saving expander state", e);
     }
   }
 
@@ -128,7 +129,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
       }
     } catch (e) {
-      console.error("Error loading expander state", e);
+      this.logger.error("Error loading expander state", e);
     }
   }
 
@@ -146,6 +147,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     private location: Location,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<any>(
       {
@@ -293,8 +295,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
-      error: (err: any) => {
-        console.error("Failed to load race", err);
+      error: (error: any) => {
+        this.logger.error("Failed to load race", error);
         this.isLoading = false;
       },
     });
@@ -318,8 +320,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
-      error: (err) => {
-        console.error("Failed to load tracks", err);
+      error: (error: any) => {
+        this.logger.error("Failed to load tracks", error);
       },
     });
   }
@@ -467,7 +469,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   onRotationTypeChange() {
-    console.log(
+    this.logger.debug(
       "Rotation type changed to:",
       this.editingRace?.heat_rotation_type,
     );
@@ -485,13 +487,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   onDriverCountChange() {
-    console.log("Driver count changed to:", this.driverCount);
+    this.logger.debug("Driver count changed to:", this.driverCount);
     // Update heats when driver count changes
     this.loadHeats();
   }
 
   loadHeats() {
-    console.log(
+    this.logger.debug(
       "loadHeats called - entity_id:",
       this.editingRace?.entity_id,
       "driverCount:",
@@ -509,14 +511,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       !this.editingRace.track_entity_id ||
       !this.editingRace.heat_rotation_type
     ) {
-      console.log("Clearing heats - missing required data");
+      this.logger.debug("Clearing heats - missing required data");
       this.generatedHeats = [];
       return;
     }
 
     // Always use preview endpoint to show heats based on current form values
     // This allows users to see heat changes before saving the race
-    console.log("Calling previewHeats with current form values");
+    this.logger.debug("Calling previewHeats with current form values");
     this.dataService
       .previewHeats(
         this.editingRace.track_entity_id,
@@ -526,13 +528,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          console.log("Preview heats response:", response);
+          this.logger.debug("Preview heats response:", response);
           this.generatedHeats = [...(response.heats || [])]; // Force new array reference
           this.cdr.markForCheck();
           this.cdr.detectChanges();
         },
-        error: (err) => {
-          console.error("Failed to preview heats", err);
+        error: (error: any) => {
+          this.logger.error("Failed to preview heats", error);
           this.generatedHeats = [];
           this.cdr.detectChanges();
         },
@@ -584,12 +586,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             this.onBack();
           }
         },
-        error: (err) => {
-          console.error("Failed to create race", err);
+        error: (error: any) => {
+          this.logger.error("Failed to create race", error);
           if (!isAutoSave)
             this.showError(
               "Error Creating Race",
-              err.error || err.message || "Unknown error",
+              error.error || error.message || "Unknown error",
             );
           this.isSaving = false;
           this.isAutoSaving = false;
@@ -615,12 +617,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
               this.onBack();
             }
           },
-          error: (err) => {
-            console.error("Failed to update race", err);
+          error: (error: any) => {
+            this.logger.error("Failed to update race", error);
             if (!isAutoSave)
               this.showError(
                 "Error Updating Race",
-                err.error || err.message || "Unknown error",
+                error.error || error.message || "Unknown error",
               );
             this.isSaving = false;
             this.isAutoSaving = false;
@@ -659,11 +661,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           replaceUrl: true,
         });
       },
-      error: (err) => {
-        console.error("Failed to save as new race", err);
+      error: (error: any) => {
+        this.logger.error("Failed to save as new race", error);
         this.showError(
           "Error Saving Race",
-          err.error || err.message || "Unknown error",
+          error.error || error.message || "Unknown error",
         );
         this.isSaving = false;
         // Reload races to update duplicate detection
@@ -683,8 +685,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       next: (races) => {
         this.races = races;
       },
-      error: (err) => {
-        console.error("Failed to load races", err);
+      error: (error: any) => {
+        this.logger.error("Failed to load races", error);
         this.races = [];
       },
     });

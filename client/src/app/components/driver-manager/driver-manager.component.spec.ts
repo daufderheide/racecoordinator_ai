@@ -16,6 +16,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -25,6 +26,7 @@ import {
 import { MOCK_TEAMS as _MOCK_TEAMS } from "@app/testing/data/teams_data";
 import {
   mockAnalyticsService,
+  mockLoggerService,
   mockRouter,
   mockSettingsService,
   mockTranslationService,
@@ -89,6 +91,7 @@ describe("DriverManagerComponent", () => {
         },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: LoggerService, useValue: mockLoggerService },
         ChangeDetectorRef,
       ],
     }).compileComponents();

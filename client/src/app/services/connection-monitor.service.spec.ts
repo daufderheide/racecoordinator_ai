@@ -12,6 +12,7 @@ import {
   ConnectionMonitorService,
   ConnectionState,
 } from "./connection-monitor.service";
+import { LoggerService } from "./logger.service";
 
 describe("ConnectionMonitorService", () => {
   let service: ConnectionMonitorService;
@@ -21,15 +22,21 @@ describe("ConnectionMonitorService", () => {
     mockDataService.getDrivers.calls.reset();
     mockDataService.getDrivers.and.returnValue(of([]));
 
+    const mockLogger = {
+      info: jasmine.createSpy("info"),
+      warn: jasmine.createSpy("warn"),
+      error: jasmine.createSpy("error"),
+      debug: jasmine.createSpy("debug"),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         ConnectionMonitorService,
         { provide: DataService, useValue: mockDataService },
+        { provide: LoggerService, useValue: mockLogger },
       ],
     });
     service = TestBed.inject(ConnectionMonitorService);
-    spyOn(console, "warn");
-    spyOn(console, "error");
   });
 
   it("should be created", () => {

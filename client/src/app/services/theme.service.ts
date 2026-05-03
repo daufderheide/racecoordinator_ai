@@ -4,6 +4,7 @@ import { DataService } from "@app/data.service";
 import { AudioConfig } from "@app/models/driver";
 import {} from "@app/models/settings";
 import { Theme } from "@app/models/theme";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 /**
@@ -29,6 +30,7 @@ export class ThemeService {
   constructor(
     private dataService: DataService,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {}
 
   /**
@@ -39,7 +41,7 @@ export class ThemeService {
     try {
       this.themes = await firstValueFrom(this.dataService.getThemes());
     } catch (e) {
-      console.error("ThemeService: Failed to fetch themes", e);
+      this.logger.error("ThemeService: Failed to fetch themes", e);
       this.themes = [];
     }
 
@@ -220,7 +222,7 @@ export class ThemeService {
     try {
       this.themes = await firstValueFrom(this.dataService.getThemes());
     } catch (e) {
-      console.error("ThemeService: Failed to refresh themes", e);
+      this.logger.error("ThemeService: Failed to refresh themes", e);
     }
 
     // Re-validate active theme

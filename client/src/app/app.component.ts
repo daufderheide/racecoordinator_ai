@@ -11,6 +11,8 @@ import { slideInAnimation } from "@app/utils/animations";
 import { AnalyticsService } from "./analytics.service";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 import { DataService } from "./data.service";
+import { FileSystemService } from "./services/file-system.service";
+import { LoggerService } from "./services/logger.service";
 import { NavigationService } from "./services/navigation.service";
 import { SettingsService } from "./services/settings.service";
 import { ThemeService } from "./services/theme.service";
@@ -52,19 +54,42 @@ export class AppComponent implements OnInit {
     private settingsService: SettingsService,
     private navigationService: NavigationService,
     private themeService: ThemeService,
+    private logger: LoggerService,
+    private fileSystemService: FileSystemService,
   ) {}
 
   ngOnInit() {
-    console.log("AppComponent: Initializing application...");
+    this.logger.info("AppComponent: Initializing application...");
+
+    // Initialize file logging if a handle is available
+    this.fileSystemService.getCustomDirectoryHandle().then((handle) => {
+      if (handle) {
+        this.logger.registerFileLogging(this.fileSystemService);
+        this.logger.info("AppComponent: File logging registered");
+      }
+    });
+
     this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
 
+    // Initialize log levels from settings
+    const settings = this.settingsService.getSettings();
+    if (settings.clientLogLevel) {
+      this.logger.setLevel(settings.clientLogLevel as any);
+    }
+    if (settings.serverLogLevel) {
+      this.dataService.setServerLogLevel(settings.serverLogLevel).subscribe({
+        error: (err) =>
+          this.logger.error("Failed to initialize server log level", err),
+      });
+    }
+
     this.themeService.initialize().then(() => {
-      console.log("AppComponent: ThemeService initialized");
+      this.logger.debug("AppComponent: ThemeService initialized");
     });
 
     this.dataService.getRaceUpdate().subscribe((_update) => {
-      console.log("AppComponent: Received Race Update");
+      this.logger.debug("AppComponent: Received Race Update");
       // Removed forced navigation to /raceday to allow other components to handle updates
     });
 

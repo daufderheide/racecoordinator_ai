@@ -17,6 +17,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -33,6 +34,7 @@ describe("RacedaySetupComponent", () => {
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
+  let mockLoggerService: jasmine.SpyObj<LoggerService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
@@ -75,6 +77,13 @@ describe("RacedaySetupComponent", () => {
       "initTracking",
       "updateOptOutStatus",
       "trackClick",
+    ]);
+    mockLoggerService = jasmine.createSpyObj("LoggerService", [
+      "debug",
+      "info",
+      "warn",
+      "error",
+      "log",
     ]);
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
@@ -134,6 +143,7 @@ describe("RacedaySetupComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: LoggerService, useValue: mockLoggerService },
       ],
       imports: [RacedaySetupComponent],
     }).compileComponents();

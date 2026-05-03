@@ -19,6 +19,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InitializeRaceResponse, Race } from "@app/proto/antigravity";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -28,6 +29,7 @@ import { createDefaultSettings } from "@app/testing/data/settings_data";
 import { MOCK_TEAMS as _MOCK_TEAMS } from "@app/testing/data/teams_data";
 import {
   mockAnalyticsService,
+  mockLoggerService,
   mockRouter,
   mockSettingsService,
   mockTranslationService,
@@ -160,6 +162,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
+        { provide: LoggerService, useValue: mockLoggerService },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();

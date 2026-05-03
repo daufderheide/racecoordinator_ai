@@ -15,6 +15,7 @@ import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
+import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -37,6 +38,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
     @Inject(ThemeService) themeService: ThemeService,
+    @Inject(LoggerService) logger: LoggerService,
   ) {
     super(
       el,
@@ -49,6 +51,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       raceConnectionService,
       cdr,
       themeService,
+      logger,
     );
   }
 }
@@ -74,6 +77,7 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     private injector: Injector,
     private cdr: ChangeDetectorRef,
     private dynamicComponentService: DynamicComponentService,
+    private logger: LoggerService,
   ) {}
 
   async ngOnInit() {
@@ -98,7 +102,7 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
         this.loadDefaultComponent();
       }
     } catch (e: any) {
-      console.error(
+      this.logger.error(
         "Failed to load custom raceday component, falling back to default",
         e,
       );
@@ -135,14 +139,14 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
       try {
         css = await this.fileSystem.getCustomFile("raceday.component.css");
       } catch (e) {
-        console.log("No custom CSS found for raceday");
+        this.logger.debug("No custom CSS found for raceday");
       }
 
       let tsCode = "";
       try {
         tsCode = await this.fileSystem.getCustomFile("raceday.component.ts");
       } catch (e) {
-        console.log("No custom TS found for raceday");
+        this.logger.debug("No custom TS found for raceday");
       }
 
       const baseClass = CustomRacedayBaseComponent;

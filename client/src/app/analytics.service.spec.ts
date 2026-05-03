@@ -3,6 +3,7 @@ import { TestBed } from "@angular/core/testing";
 import { NavigationEnd, Router } from "@angular/router";
 import { of, Subject } from "rxjs";
 import { Settings } from "@app/models/settings";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 import { AnalyticsService } from "./analytics.service";
@@ -16,6 +17,7 @@ describe("AnalyticsService", () => {
   let routerEventsSubject: Subject<any>;
   let mockSettings: Settings;
   let mockDataService: any;
+  let mockLoggerService: any;
 
   beforeEach(() => {
     // Ensure global gtag and dataLayer are clean before each test
@@ -47,6 +49,13 @@ describe("AnalyticsService", () => {
       _analyticsConfigSubject: analyticsConfigSubject, // Expose for testing control
     };
 
+    mockLoggerService = {
+      debug: jasmine.createSpy("debug"),
+      info: jasmine.createSpy("info"),
+      warn: jasmine.createSpy("warn"),
+      error: jasmine.createSpy("error"),
+    };
+
     // Create a robust mock for Document that catches createElement and appendChild
     const mockHead = {
       appendChild: jasmine.createSpy("appendChild"),
@@ -73,6 +82,7 @@ describe("AnalyticsService", () => {
         { provide: Router, useValue: mockRouter },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: DataService, useValue: mockDataService },
+        { provide: LoggerService, useValue: mockLoggerService },
         { provide: DOCUMENT, useValue: mockDocument },
       ],
     });
@@ -169,7 +179,6 @@ describe("AnalyticsService", () => {
 
     it("should only inject scripts once even if called multiple times", () => {
       mockSettings.shareAnalytics = true;
-      spyOn(console, "debug"); // Monitor initialization logs
       service.initTracking();
       mockDataService._analyticsConfigSubject.next({
         clientId: "test-client-id-123",
@@ -180,7 +189,7 @@ describe("AnalyticsService", () => {
 
       // Even after 3 updates, it should only create/append 1 script total
       expect(mockDocument.head.appendChild).toHaveBeenCalledTimes(1);
-      expect(console.debug).toHaveBeenCalledWith(
+      expect(mockLoggerService.debug).toHaveBeenCalledWith(
         jasmine.stringMatching("Analytics: updateOptOutStatus called"),
         jasmine.any(Object),
       );

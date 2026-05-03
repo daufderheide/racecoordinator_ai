@@ -3,6 +3,7 @@ import { of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
 import { ThemeService } from "./theme.service";
@@ -11,6 +12,7 @@ describe("ThemeService", () => {
   let service: ThemeService;
   let dataServiceSpy: jasmine.SpyObj<DataService>;
   let settingsServiceSpy: jasmine.SpyObj<SettingsService>;
+  let loggerSpy: jasmine.SpyObj<LoggerService>;
 
   const mockThemes: Theme[] = [
     {
@@ -41,12 +43,19 @@ describe("ThemeService", () => {
       "getSettings",
       "saveSettings",
     ]);
+    const lSpy = jasmine.createSpyObj("LoggerService", [
+      "info",
+      "warn",
+      "error",
+      "debug",
+    ]);
 
     TestBed.configureTestingModule({
       providers: [
         ThemeService,
         { provide: DataService, useValue: dataSpy },
         { provide: SettingsService, useValue: settingsSpy },
+        { provide: LoggerService, useValue: lSpy },
       ],
     });
 
@@ -55,6 +64,7 @@ describe("ThemeService", () => {
     settingsServiceSpy = TestBed.inject(
       SettingsService,
     ) as jasmine.SpyObj<SettingsService>;
+    loggerSpy = TestBed.inject(LoggerService) as jasmine.SpyObj<LoggerService>;
 
     dataServiceSpy.getThemes.and.returnValue(of(mockThemes));
     settingsServiceSpy.getSettings.and.returnValue(new Settings());
@@ -111,23 +121,21 @@ describe("ThemeService", () => {
   });
 
   it("should handle initialization failure", async () => {
-    spyOn(console, "error");
     dataServiceSpy.getThemes.and.returnValue(
       throwError(() => new Error("Failed")),
     );
     await service.initialize();
     expect(service.isInitialized()).toBeTrue(); // Still marked as initialized but with empty themes
     expect(service.getThemes().length).toBe(0);
-    expect(console.error).toHaveBeenCalled();
+    expect(loggerSpy.error).toHaveBeenCalled();
   });
 
   it("should handle refresh failure", async () => {
-    spyOn(console, "error");
     dataServiceSpy.getThemes.and.returnValue(
       throwError(() => new Error("Refresh Failed")),
     );
     await service.refresh();
-    expect(console.error).toHaveBeenCalled();
+    expect(loggerSpy.error).toHaveBeenCalled();
   });
 
   it("should duplicate theme and refresh", async () => {

@@ -7,10 +7,12 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_DATABASES } from "@app/testing/data/databases_data";
 import {
   mockDataService,
+  mockLoggerService,
   mockRouter,
   mockTranslationService,
   resetMocks,
@@ -84,6 +86,7 @@ describe("DatabaseManagerComponent", () => {
           useValue: { snapshot: { paramMap: { get: () => null } } },
         },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: LoggerService, useValue: mockLoggerService },
         ChangeDetectorRef,
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -117,7 +120,6 @@ describe("DatabaseManagerComponent", () => {
   });
 
   it("should handle error during initial load", () => {
-    spyOn(console, "error");
     dataService.getDatabases.and.returnValue(
       throwError(() => new Error("Error")),
     );
@@ -125,6 +127,7 @@ describe("DatabaseManagerComponent", () => {
     expect(component.loading).toBeFalse();
     expect(component.showAckModal).toBeTrue();
     expect(component.ackModalMessage).toBe("DBM_ERR_LOAD_INFO");
+    expect(mockLoggerService.error).toHaveBeenCalled();
   });
 
   it("should select a database", () => {
@@ -158,7 +161,6 @@ describe("DatabaseManagerComponent", () => {
     });
 
     it("should handle error during switch", () => {
-      spyOn(console, "error");
       dataService.switchDatabase.and.returnValue(
         throwError(() => new Error("Error")),
       );
@@ -169,6 +171,7 @@ describe("DatabaseManagerComponent", () => {
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe("DBM_ERR_SWITCH");
+      expect(mockLoggerService.error).toHaveBeenCalled();
     });
   });
 
@@ -190,7 +193,6 @@ describe("DatabaseManagerComponent", () => {
     });
 
     it("should handle general error during creation", () => {
-      spyOn(console, "error");
       dataService.createDatabase.and.returnValue(
         throwError(() => new Error("Error")),
       );
@@ -202,10 +204,10 @@ describe("DatabaseManagerComponent", () => {
       expect(component.loading).toBeFalse();
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalMessage).toBe("DBM_ERR_CREATE");
+      expect(mockLoggerService.error).toHaveBeenCalled();
     });
 
     it("should handle conflict error during creation", () => {
-      spyOn(console, "error");
       dataService.createDatabase.and.returnValue(
         throwError(() => ({ status: 409 })),
       );
@@ -253,7 +255,6 @@ describe("DatabaseManagerComponent", () => {
     });
 
     it("should handle conflict error (409)", () => {
-      spyOn(console, "error");
       dataService.copyDatabase.and.returnValue(
         throwError(() => ({ status: 409 })),
       );
@@ -388,7 +389,6 @@ describe("DatabaseManagerComponent", () => {
   });
 
   it("should handle error during import", () => {
-    spyOn(console, "error");
     dataService.importDatabase.and.returnValue(
       throwError(() => new Error("Error")),
     );
@@ -400,6 +400,7 @@ describe("DatabaseManagerComponent", () => {
     expect(component.loading).toBeFalse();
     expect(component.showAckModal).toBeTrue();
     expect(component.ackModalMessage).toBe("DBM_ERR_IMPORT");
+    expect(mockLoggerService.error).toHaveBeenCalled();
   });
 
   it("should handle success during import", () => {

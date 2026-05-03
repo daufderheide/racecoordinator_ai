@@ -2,6 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, Observable } from "rxjs";
 
+import { LoggerService } from "./logger.service";
 import { SettingsService } from "./settings.service";
 
 @Injectable({
@@ -16,6 +17,7 @@ export class TranslationService {
   constructor(
     private http: HttpClient,
     private settingsService: SettingsService,
+    private logger: LoggerService,
   ) {
     // Load from settings if available, otherwise detect browser language
     const settings = this.settingsService.getSettings();
@@ -41,11 +43,13 @@ export class TranslationService {
    * Load translations for a specific language
    */
   loadTranslations(language: string): void {
-    console.log(`TranslationService: Loading translations for ${language}...`);
+    this.logger.info(
+      `TranslationService: Loading translations for ${language}...`,
+    );
     this.translationsLoaded.next(false);
     this.http.get(`assets/i18n/${language}.json?t=${Date.now()}`).subscribe({
       next: (data: any) => {
-        console.log(
+        this.logger.info(
           `TranslationService: Loaded translations for ${language}:`,
           data,
         );
@@ -60,7 +64,7 @@ export class TranslationService {
         });
       },
       error: (error: any) => {
-        console.error(
+        this.logger.error(
           `Failed to load translations for language: ${language}`,
           error,
         );
@@ -82,7 +86,11 @@ export class TranslationService {
     // return the key itself.
     const val = this.translations[key];
     if (val === undefined) {
-      // console.warn(`Translation missing for key: ${key}. keys loaded: ${Object.keys(this.translations).length}`);
+      this.logger.debug(
+        `Translation missing for key: ${key}. keys loaded: ${
+          Object.keys(this.translations).length
+        }`,
+      );
     }
     let translation = val || key;
 

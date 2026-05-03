@@ -11,6 +11,7 @@ import { AssetPreviewComponent } from "@app/components/shared/asset-preview/asse
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IAssetMessage } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 
 export interface AssetPickerData {
   currentAssetId?: string;
@@ -36,7 +37,10 @@ export class AssetPickerComponent implements OnInit {
   searchQuery = signal("");
   selectedAssetId = signal<string | null>(null);
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private logger: LoggerService,
+  ) {}
 
   ngOnInit() {
     this.selectedAssetId.set(this.currentAssetId());
@@ -59,7 +63,7 @@ export class AssetPickerComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error("Failed to load assets", err);
+        this.logger.error("Failed to load assets", err);
         this.isLoading.set(false);
       },
     });

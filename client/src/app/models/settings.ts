@@ -24,6 +24,8 @@ export class Settings {
   language: string = "";
   shareAnalytics: boolean = true;
   pageTransition: string = "slide";
+  clientLogLevel: string = "INFO";
+  serverLogLevel: string = "INFO";
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;

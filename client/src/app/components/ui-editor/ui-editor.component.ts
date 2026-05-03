@@ -27,6 +27,7 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FileSystemService } from "@app/services/file-system.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -160,6 +161,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private router: Router,
     public themeService: ThemeService,
     private translationService: TranslationService,
+    private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<UIEditorState>(
       {
@@ -321,7 +323,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         }
       },
       error: (err) => {
-        console.error("Failed to load UI editor data", err);
+        this.logger.error("Failed to load UI editor data", err);
         this.isLoading = false;
         // Provide empty defaults if loading failed to prevent template crashes
         this.isLoading = false;
@@ -552,7 +554,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         }, 500);
       },
       error: (err) => {
-        console.error("Auto-save failed", err);
+        this.logger.error("Auto-save failed", err);
         this.isAutoSaving = false;
         this.isSaving = false;
         if (!this.isDestroyed) {
@@ -641,7 +643,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         JSON.stringify(this.sectionsExpanded),
       );
     } catch (e) {
-      console.error("Error saving expander state", e);
+      this.logger.error("Error saving expander state", e);
     }
   }
 
@@ -655,7 +657,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         };
       }
     } catch (e) {
-      console.error("Error loading expander state", e);
+      this.logger.error("Error loading expander state", e);
     }
   }
 
@@ -696,7 +698,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  get ttsContext(): any {
+  /**
+   * Provides mock context data for previewing Text-to-Speech in the editor.
+   * This is only used for the UI Editor's preview functionality.
+   */
+  get previewTTSContext(): any {
     return mockTTSContext();
   }
 
@@ -880,7 +886,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.toggleThemeSection(created.entity_id, false);
       this.captureState();
     } catch (e) {
-      console.error("Failed to create theme from default", e);
+      this.logger.error("Failed to create theme from default", e);
       alert(this.translationService.translate("UE_ERROR_CREATE_FAILED"));
     }
   }
@@ -906,7 +912,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.refreshDisplayProperties();
       this.captureState();
     } catch (e) {
-      console.error("Failed to duplicate theme", e);
+      this.logger.error("Failed to duplicate theme", e);
       alert(this.translationService.translate("UE_ERROR_DUPLICATE_FAILED"));
     }
   }

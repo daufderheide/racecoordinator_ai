@@ -18,6 +18,7 @@ import { Settings } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { HelpService } from "@app/services/help.service";
+import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -26,6 +27,7 @@ import {
 } from "@app/testing/data/tracks_data";
 import {
   mockAnalyticsService,
+  mockLoggerService,
   mockRouter,
   mockSettingsService,
   mockTranslationService,
@@ -166,6 +168,7 @@ describe("TrackEditorComponent", () => {
         },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: LoggerService, useValue: mockLoggerService },
       ],
     }).compileComponents();
 
@@ -272,7 +275,6 @@ describe("TrackEditorComponent", () => {
   });
 
   it("should stay on page and keep original ID when save as new fails", () => {
-    spyOn(console, "error");
     dataService.createTrack.and.returnValue(
       throwError(() => ({ status: 409, error: "Conflict" })),
     );
@@ -285,10 +287,10 @@ describe("TrackEditorComponent", () => {
     expect(component.editingTrack?.entity_id).toBe(originalTrackId);
     expect(component.isSaving).toBeFalse();
     expect(window.alert).toHaveBeenCalled();
+    expect(mockLoggerService.error).toHaveBeenCalled();
   });
 
   it("should handle save error", () => {
-    spyOn(console, "error");
     spyOn(window, "alert");
     dataService.updateTrack.and.returnValue(
       throwError(() => ({ status: 500 })),
@@ -298,6 +300,7 @@ describe("TrackEditorComponent", () => {
 
     expect(window.alert).toHaveBeenCalledWith("TE_ERROR_SAVE_FAILED");
     expect(component.isSaving).toBeFalse();
+    expect(mockLoggerService.error).toHaveBeenCalled();
   });
 
   it("should check for unsaved changes (dirty state)", fakeAsync(() => {
@@ -437,7 +440,6 @@ describe("TrackEditorComponent", () => {
     }));
 
     it("should remain dirty after an auto-save fails due to duplicate name (server error 409)", fakeAsync(() => {
-      spyOn(console, "error");
       dataService.updateTrack.and.returnValue(
         throwError(() => ({ status: 409 })),
       );
@@ -450,6 +452,7 @@ describe("TrackEditorComponent", () => {
 
       expect(dataService.updateTrack).toHaveBeenCalled();
       expect(component.isDirtyState()).toBeTrue();
+      expect(mockLoggerService.error).toHaveBeenCalled();
     }));
 
     it("should preserve undo/redo history and rebase it after Duplicate", () => {
