@@ -443,6 +443,9 @@ public class DatabaseService {
       record.setHeats(runtimeRace.getHeats());
       record.setAccumulatedRaceTime(runtimeRace.getRaceTime());
       record.setStatistics(runtimeRace.getStatistics());
+      if (runtimeRace.getRaceModel() != null) {
+        record.setCarClass(runtimeRace.getRaceModel().getCarClass());
+      }
 
       collection.insertOne(record);
       logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());

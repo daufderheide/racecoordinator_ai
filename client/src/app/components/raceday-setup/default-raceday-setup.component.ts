@@ -1004,8 +1004,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   openCumulativeResults() {
-    this.closeFileDropdown();
-    this.router.navigate(["/cumulative-results"]);
+    this.saveSettings();
+    this.router.navigate(["/analytics"]);
   }
 
   onSearchChange() {

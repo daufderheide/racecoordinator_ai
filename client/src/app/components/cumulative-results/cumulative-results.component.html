@@ -6,7 +6,7 @@
         <span>Back</span>
       </div>
       <div class="title-section">
-        <h1>Cumulative Standings</h1>
+        <h1>Analytics</h1>
       </div>
     </div>
 
@@ -34,6 +34,30 @@
     </div>
   </div>
 
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label>Track Database:</label>
+      <select [(ngModel)]="selectedDatabaseFilter" (change)="onFilterChange()">
+        <option value="">All Databases</option>
+        <option *ngFor="let db of availableDatabases" [value]="db">{{ db }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Track:</label>
+      <select [(ngModel)]="selectedTrackFilter" (change)="onFilterChange()">
+        <option value="">All Tracks</option>
+        <option *ngFor="let track of availableTracks" [value]="track">{{ track }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Car Class:</label>
+      <select [(ngModel)]="selectedCarClassFilter" (change)="onFilterChange()">
+        <option value="">All Classes</option>
+        <option *ngFor="let carClass of availableCarClasses" [value]="carClass">{{ carClass }}</option>
+      </select>
+    </div>
+  </div>
+
   <div class="main-content">
     <!-- Race History Panel -->
     <div class="history-panel">
@@ -43,7 +67,7 @@
       </div>
       <div class="list-container" *ngIf="!isLoading; else loadingState">
         <div 
-          *ngFor="let race of history" 
+          *ngFor="let race of filteredHistory" 
           class="race-item" 
           [class.selected]="selectedRaces.has(race._id)"
           (click)="toggleRaceSelection(race._id)"
@@ -59,7 +83,7 @@
             <span class="race-date-inline">{{ formatDate(race.statistics?.startMillis) }}</span>
           </div>
         </div>
-        <div class="empty-state" *ngIf="history.length === 0">
+        <div class="empty-state" *ngIf="filteredHistory.length === 0">
           <span class="material-icons">event_busy</span>
           <p>No race history found</p>
         </div>
@@ -92,7 +116,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let entry of cumulativeStandings; let i = index" [class]="'rank-' + (i + 1)">
+            <tr *ngFor="let entry of cumulativeStandings; let i = index" [class]="'rank-' + (i + 1) + ' clickable-row'" (click)="openDriverCard(entry)">
               <td style="text-align: center;">
                 <div class="rank-badge" style="margin: 0 auto;">{{ i + 1 }}</div>
               </td>
@@ -116,7 +140,7 @@
       <ng-template #noRacesSelected>
         <div class="empty-state">
           <span class="material-icons">info</span>
-          <p>Select races from the list to view cumulative standings</p>
+          <p>Select races from the list to view analytics</p>
         </div>
       </ng-template>
     </div>
@@ -130,3 +154,75 @@
   </div>
 </ng-template>
 
+<!-- Driver Card Modal -->
+<div class="driver-card-overlay" *ngIf="selectedDriverStats" (click)="closeDriverCard()">
+  <div class="driver-card" (click)="$event.stopPropagation()">
+    <div class="driver-card-header">
+      <img [src]="getAvatarUrl(selectedDriverStats.avatarUrl)" class="driver-card-avatar" alt="Avatar">
+      <div class="driver-card-title">
+        <h2>{{ selectedDriverStats.name }}</h2>
+        <span class="driver-card-nickname" *ngIf="selectedDriverStats.nickname">"{{ selectedDriverStats.nickname }}"</span>
+      </div>
+      <button class="close-btn" (click)="closeDriverCard()">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    
+    <div class="driver-card-body">
+      <div class="stat-grid">
+        <div class="stat-box">
+          <span class="stat-label">Total Wins</span>
+          <span class="stat-value">{{ selectedDriverStats.totalWins }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Heat Wins</span>
+          <span class="stat-value">{{ selectedDriverStats.heatWins }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Fastest Laps</span>
+          <span class="stat-value">{{ selectedDriverStats.fastestLapsCount }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Median Lap</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.medianLap > 0">{{ selectedDriverStats.medianLap | number:'1.3-3' }}</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.medianLap === 0">-</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Total Races</span>
+          <span class="stat-value">{{ selectedDriverStats.totalRaces }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Heats on Track</span>
+          <span class="stat-value">{{ selectedDriverStats.heatsOnTrack }}</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Avg Race Rank</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.averageRacePlacing > 0">{{ selectedDriverStats.averageRacePlacing | number:'1.1-1' }}</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.averageRacePlacing === 0">-</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Avg Heat Rank</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.averageHeatPlacing > 0">{{ selectedDriverStats.averageHeatPlacing | number:'1.1-1' }}</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.averageHeatPlacing === 0">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="driver-card-footer">
+      <div class="card-actions">
+        <button (click)="exportDriverCsv()" class="card-action-btn">
+          <span class="material-icons">description</span>
+          CSV
+        </button>
+        <button (click)="exportDriverHtml()" class="card-action-btn">
+          <span class="material-icons">html</span>
+          HTML
+        </button>
+        <button (click)="exportDriverPng()" class="card-action-btn">
+          <span class="material-icons">image</span>
+          PNG
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -1103,9 +1104,21 @@ public class DatabaseTaskHandler {
     try {
       boolean isDemo = "true".equals(ctx.queryParam("demo"));
       DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceHistoryRecord> history =
-          dbService.getRaceHistory(databaseContext.getDatabase(), isDemo);
-      ctx.json(history);
+      List<RaceHistoryRecord> allHistory = new ArrayList<>();
+      
+      List<String> dbs = databaseContext.listDatabases();
+      for (String dbName : dbs) {
+        if ("admin".equals(dbName) || "local".equals(dbName) || "config".equals(dbName)) {
+          continue;
+        }
+        MongoDatabase db = databaseContext.getMongoClient().getDatabase(dbName);
+        List<RaceHistoryRecord> history = dbService.getRaceHistory(db, isDemo);
+        for (RaceHistoryRecord record : history) {
+          record.setDatabaseName(dbName);
+        }
+        allHistory.addAll(history);
+      }
+      ctx.json(allHistory);
     } catch (Exception e) {
       e.printStackTrace();
       ctx.status(500).result("Error fetching race history list: " + e.getMessage());
