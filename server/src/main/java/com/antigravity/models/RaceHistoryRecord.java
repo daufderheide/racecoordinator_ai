@@ -45,6 +45,14 @@ public class RaceHistoryRecord {
   @JsonProperty("statistics")
   private RaceStatistics statistics;
 
+  @BsonProperty("database_name")
+  @JsonProperty("database_name")
+  private String databaseName;
+
+  @BsonProperty("car_class")
+  @JsonProperty("car_class")
+  private String carClass;
+
   public RaceHistoryRecord() {}
 
   @BsonCreator
@@ -59,7 +67,9 @@ public class RaceHistoryRecord {
       @BsonProperty("heats") @JsonProperty("heats") List<Heat> heats,
       @BsonProperty("accumulatedRaceTime") @JsonProperty("accumulatedRaceTime")
           float accumulatedRaceTime,
-      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics) {
+      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics,
+      @BsonProperty("database_name") @JsonProperty("database_name") String databaseName,
+      @BsonProperty("car_class") @JsonProperty("car_class") String carClass) {
     this.id = id;
     this.originalEntityId = originalEntityId;
     this.model = model;
@@ -68,6 +78,8 @@ public class RaceHistoryRecord {
     this.heats = heats;
     this.accumulatedRaceTime = accumulatedRaceTime;
     this.statistics = statistics;
+    this.databaseName = databaseName;
+    this.carClass = carClass;
   }
 
   public ObjectId getId() {
@@ -132,5 +144,21 @@ public class RaceHistoryRecord {
 
   public void setStatistics(RaceStatistics statistics) {
     this.statistics = statistics;
+  }
+
+  public String getDatabaseName() {
+    return databaseName;
+  }
+
+  public void setDatabaseName(String databaseName) {
+    this.databaseName = databaseName;
+  }
+
+  public String getCarClass() {
+    return carClass;
+  }
+
+  public void setCarClass(String carClass) {
+    this.carClass = carClass;
   }
 }

@@ -132,6 +132,10 @@ public class Race extends Model {
   @JsonAlias("falseStartTimePenalty")
   private final double falseStartTimePenalty;
 
+  @BsonProperty("car_class")
+  @JsonProperty("car_class")
+  private final String carClass;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -214,6 +218,7 @@ public class Race extends Model {
           @JsonProperty("false_start_time_penalty")
           @JsonAlias("falseStartTimePenalty")
           Double falseStartTimePenalty,
+      @BsonProperty("car_class") @JsonProperty("car_class") String carClass,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -250,6 +255,7 @@ public class Race extends Model {
     this.restartOnFalseStart = restartOnFalseStart != null ? restartOnFalseStart : false;
     this.falseStartLapPenalty = falseStartLapPenalty != null ? falseStartLapPenalty : 0.0;
     this.falseStartTimePenalty = falseStartTimePenalty != null ? falseStartTimePenalty : 0.0;
+    this.carClass = carClass;
   }
 
   public static class Builder {
@@ -282,6 +288,7 @@ public class Race extends Model {
     private boolean restartOnFalseStart = false;
     private double falseStartLapPenalty = 0.0;
     private double falseStartTimePenalty = 0.0;
+    private String carClass;
     private String entityId;
     private ObjectId id;
 
@@ -459,6 +466,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCarClass(String carClass) {
+      this.carClass = carClass;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -500,6 +512,7 @@ public class Race extends Model {
           restartOnFalseStart,
           falseStartLapPenalty,
           falseStartTimePenalty,
+          carClass,
           entityId,
           id);
     }
@@ -624,5 +637,9 @@ public class Race extends Model {
   @BsonProperty("false_start_time_penalty")
   public double getFalseStartTimePenalty() {
     return falseStartTimePenalty;
+  }
+
+  public String getCarClass() {
+    return carClass;
   }
 }

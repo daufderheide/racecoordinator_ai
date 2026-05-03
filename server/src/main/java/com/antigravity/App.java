@@ -188,7 +188,7 @@ public class App {
 
       MongoClientSettings settings =
           MongoClientSettings.builder()
-              .applyConnectionString(new ConnectionString("mongodb://localhost:" + MONGO_PORT))
+              .applyConnectionString(new ConnectionString("mongodb://127.0.0.1:" + MONGO_PORT))
               .codecRegistry(pojoCodecRegistry)
               .applyToClusterSettings(b -> b.serverSelectionTimeout(30000, TimeUnit.MILLISECONDS))
               .build();
@@ -604,7 +604,7 @@ public class App {
                   Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
               .withNet(
                   Start.to(Net.class)
-                      .initializedWith(Net.of("localhost", MONGO_PORT, false))) // Use IPv4
+                      .initializedWith(Net.of("127.0.0.1", MONGO_PORT, false))) // Use IPv4
               .withProcessOutput(
                   Start.to(ProcessOutput.class)
                       .initializedWith(

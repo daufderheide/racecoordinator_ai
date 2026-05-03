@@ -19,4 +19,6 @@ export interface RaceHistoryRecord {
     yellowFlagCount: number;
     restartCount: number;
   };
+  database_name?: string;
+  car_class?: string;
 }

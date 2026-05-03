@@ -454,6 +454,7 @@
   "RDS_LOST_CONNECTION": "Lost connection with server",
   "RDS_MENU_ASSETS": "Assets",
   "RDS_MENU_CONFIG": "Manage",
+  "RDS_MENU_CUMULATIVE_RESULTS": "Analytics",
   "RDS_MENU_CUSTOM_UI": "Customize UI",
   "RDS_MENU_DATABASES": "Databases",
   "RDS_MENU_DRIVER": "Driver",

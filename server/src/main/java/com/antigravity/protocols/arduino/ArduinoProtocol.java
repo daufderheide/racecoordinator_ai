@@ -347,24 +347,7 @@ public class ArduinoProtocol extends DefaultProtocol {
             TimeUnit.MILLISECONDS);
   }
 
-  @Override
-  public void startTimer() {
-    sendTimeReset();
-    for (int i = 0; i < numLanes; i++) {
-      hwLapTime[i].reset();
-      hwSegmentTime[i].reset();
-    }
-    hwReset = 1;
-  }
 
-  @Override
-  public List<PartialTime> stopTimer() {
-    List<PartialTime> partialTimes = new ArrayList<>();
-    for (int i = 0; i < numLanes; i++) {
-      partialTimes.add(new PartialTime(i, hwLapTime[i].time(), hwSegmentTime[i].time()));
-    }
-    return partialTimes;
-  }
 
   public void updateConfig(ArduinoConfig newConfig) {
     boolean commPortChanged = !Objects.equals(this.config.commPort, newConfig.commPort);
@@ -972,6 +955,13 @@ public class ArduinoProtocol extends DefaultProtocol {
 
   @Override
   public void startTimer(List<PartialTime> partials) {
+    sendTimeReset();
+    for (int i = 0; i < numLanes; i++) {
+      hwLapTime[i].reset();
+      hwSegmentTime[i].reset();
+    }
+    hwReset = 1;
+
     if (partials == null) {
       return;
     }
@@ -981,15 +971,6 @@ public class ArduinoProtocol extends DefaultProtocol {
         hwSegmentTime[pt.getLaneIndex()].add((long) (pt.getSegmentTime() * 1000 * 1000));
       }
     }
-  }
-
-  @Override
-  public List<PartialTime> stopTimer() {
-    List<PartialTime> partials = new ArrayList<>();
-    for (int i = 0; i < numLanes; i++) {
-      partials.add(new PartialTime(i, hwLapTime[i].time(), hwSegmentTime[i].time()));
-    }
-    return partials;
   }
 
   private boolean hasPitInConfigured(int laneIndex) {

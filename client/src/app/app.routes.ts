@@ -105,9 +105,9 @@ export const routes: Routes = [
     data: { animation: "HeatResultsPage" },
   },
   {
-    path: "cumulative-results",
+    path: "analytics",
     component: CumulativeResultsComponent,
-    data: { animation: "CumulativeResultsPage" },
+    data: { animation: "AnalyticsPage" },
   },
   { path: "**", redirectTo: "" },
 ];

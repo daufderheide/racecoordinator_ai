@@ -63,6 +63,10 @@ public class DatabaseContext {
     return currentDatabaseName;
   }
 
+  public MongoClient getMongoClient() {
+    return mongoClient;
+  }
+
   public ServerConfigService getConfigService() {
     return configService;
   }
