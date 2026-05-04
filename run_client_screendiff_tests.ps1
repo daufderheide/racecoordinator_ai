@@ -1,7 +1,7 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
-# Configuration
-$ProjectRoot = $PSScriptRoot
+# Resolve project root even when invoked via Start-Process
+$ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
 $ClientDir = Join-Path $ProjectRoot "client"
 $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-visual"
 
@@ -19,7 +19,7 @@ if ($args -contains "--sync-only") {
     exit 0
 }
 
-Write-Host "--- 🔹 Running Client Visual Tests (PowerShell) 🔹 ---" -ForegroundColor Cyan
+Write-Host "--- Running Client Visual Tests ---" -ForegroundColor Cyan
 
 # Sync current source and configuration to isolated directory
 Write-Host "Syncing source to $IsolatedDir..." -ForegroundColor Gray
@@ -42,7 +42,7 @@ Set-Location $IsolatedDir
 # Ensure dependencies are installed in isolated directory
 if (-not (Test-Path "node_modules")) {
     Write-Host "Installing/Updating dependencies in $IsolatedDir..." -ForegroundColor Yellow
-    npm install --no-package-lock --loglevel error
+    npm install --no-package-lock --legacy-peer-deps --ignore-scripts --loglevel error
 }
 
 # Find/Install Playwright browsers in isolated directory

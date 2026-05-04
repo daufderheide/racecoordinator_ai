@@ -1,7 +1,7 @@
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
-# Configuration
-$ProjectRoot = $PSScriptRoot
+# Resolve project root even when invoked via Start-Process
+$ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
 $ClientDir = Join-Path $ProjectRoot "client"
 $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-unit"
 
@@ -9,7 +9,7 @@ if (-not (Test-Path $IsolatedDir)) {
     New-Item -ItemType Directory -Path $IsolatedDir -Force | Out-Null
 }
 
-Write-Host "--- 🔹 Running Client Unit Tests (PowerShell) 🔹 ---" -ForegroundColor Cyan
+Write-Host "--- Running Client Unit Tests ---" -ForegroundColor Cyan
 
 # Sync current source and configuration to isolated directory
 Write-Host "Syncing source to $IsolatedDir..." -ForegroundColor Gray

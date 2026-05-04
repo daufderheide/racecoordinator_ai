@@ -79,9 +79,12 @@ if ($PROTO_FILES.Count -eq 0) {
 
 Write-Host "Protobuf compilation successful."
 
+# Check for --server-only flag
+$ServerOnly = $args -contains "--server-only"
+
 # Generate Client-side Protos (JavaScript/TypeScript)
 $CLIENT_DIR = Join-Path $PROJECT_ROOT "client"
-if (Test-Path $CLIENT_DIR) {
+if ((-not $ServerOnly) -and (Test-Path $CLIENT_DIR)) {
     Write-Host "Generating client-side protobuf files..."
     $CLIENT_PROTO_OUT = Join-Path $CLIENT_DIR "src\app\proto"
     if (-not (Test-Path $CLIENT_PROTO_OUT)) {
