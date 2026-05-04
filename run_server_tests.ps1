@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$ProjectRoot = $PSScriptRoot
+$ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
 $ServerDir = Join-Path $ProjectRoot "server"
 $ServerTmp = Join-Path $ServerDir "target_tmp"
 $ServerBuildDir = Join-Path $ServerTmp "target_test"
@@ -15,9 +15,9 @@ if (-not (Test-Path $ServerTmp)) {
 
 # Pre-create all directories maven needs to avoid EPERM errors
 $DirsToCreate = @(
-    Join-Path $ServerBuildDir "generated-sources\protobuf\java",
-    Join-Path $ServerBuildDir "classes",
-    Join-Path $ServerBuildDir "test-classes"
+    (Join-Path $ServerBuildDir "generated-sources\protobuf\java")
+    (Join-Path $ServerBuildDir "classes")
+    (Join-Path $ServerBuildDir "test-classes")
 )
 
 foreach ($dir in $DirsToCreate) {
@@ -43,14 +43,21 @@ $env:PROTO_DEST_DIR = $ServerBuildDir
 $env:npm_config_cache = Join-Path $ServerTmp "npm_cache"
 $env:EMBEDDED_MONGO_ARTIFACTS = Join-Path $ServerTmp ".embedmongo"
 
+# Ensure all temp directories are on the same drive to avoid cross-drive file move issues
+$env:TEMP = $ServerTmp
+$env:TMP = $ServerTmp
+
 # JVM optimization for faster startup in tests
 $env:MAVEN_OPTS = "-XX:TieredStopAtLevel=1 -Djdk.attach.allowAttachSelf=true --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
-mvn test $args `
-  -Dbuild.dist.dir="$ServerBuildDir" `
-  -DskipProtobuf=true `
-  -DforkCount="$ForkCount" `
-  -DreuseForks="$ReuseForks" `
-  -Djava.io.tmpdir="$ServerTmp" `
-  -Dde.flapdoodle.embed.mongo.artifacts="$ServerTmp\.embedmongo" `
-  -Dmaven.repo.local="$ServerDir\.m2\repository"
+$MvnArgs = @("test") + $args + @(
+    "-Dbuild.dist.dir=$ServerBuildDir"
+    "-DskipProtobuf=true"
+    "-DforkCount=$ForkCount"
+    "-DreuseForks=$ReuseForks"
+    "-Djava.io.tmpdir=$ServerTmp"
+    "-Dde.flapdoodle.embed.mongo.artifacts=$ServerTmp\.embedmongo"
+    "-Dmaven.repo.local=$ServerDir\.m2\repository"
+)
+
+& mvn @MvnArgs
