@@ -19,17 +19,26 @@
         <span class="material-icons">clear</span>
         Clear
       </button>
-      <button (click)="exportCsv()" [disabled]="cumulativeStandings.length === 0">
+      <button
+        (click)="exportCsv()"
+        [disabled]="cumulativeStandings.length === 0"
+      >
         <span class="material-icons">description</span>
         CSV
       </button>
-      <button (click)="exportHtml()" [disabled]="cumulativeStandings.length === 0">
+      <button
+        (click)="exportHtml()"
+        [disabled]="cumulativeStandings.length === 0"
+      >
         <span class="material-icons">html</span>
         HTML
       </button>
-      <button (click)="exportPng()" [disabled]="cumulativeStandings.length === 0">
-        <span class="material-icons">image</span>
-        PNG
+      <button
+        (click)="exportDetailedReport()"
+        [disabled]="selectedRaces.size === 0"
+      >
+        <span class="material-icons">summarize</span>
+        Detailed Report
       </button>
     </div>
   </div>
@@ -39,22 +48,57 @@
       <label>Track Database:</label>
       <select [(ngModel)]="selectedDatabaseFilter" (change)="onFilterChange()">
         <option value="">All Databases</option>
-        <option *ngFor="let db of availableDatabases" [value]="db">{{ db }}</option>
+        <option *ngFor="let db of availableDatabases" [value]="db">
+          {{ db }}
+        </option>
       </select>
     </div>
     <div class="filter-group">
       <label>Track:</label>
       <select [(ngModel)]="selectedTrackFilter" (change)="onFilterChange()">
         <option value="">All Tracks</option>
-        <option *ngFor="let track of availableTracks" [value]="track">{{ track }}</option>
+        <option *ngFor="let track of availableTracks" [value]="track">
+          {{ track }}
+        </option>
       </select>
     </div>
     <div class="filter-group">
       <label>Car Class:</label>
       <select [(ngModel)]="selectedCarClassFilter" (change)="onFilterChange()">
         <option value="">All Classes</option>
-        <option *ngFor="let carClass of availableCarClasses" [value]="carClass">{{ carClass }}</option>
+        <option *ngFor="let carClass of availableCarClasses" [value]="carClass">
+          {{ carClass }}
+        </option>
       </select>
+    </div>
+    <div
+      class="filter-group"
+      style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 20px;
+        margin-left: 10px;
+      "
+      (click)="toggleDemoData()"
+    >
+      <input
+        type="checkbox"
+        [checked]="showDemoData"
+        style="
+          width: 18px;
+          height: 18px;
+          margin: 0;
+          cursor: pointer;
+          accent-color: #3b82f6;
+        "
+      />
+      <label
+        style="margin: 0; cursor: pointer; font-weight: 500; color: #3b82f6"
+        >Demo Mode</label
+      >
     </div>
   </div>
 
@@ -63,24 +107,35 @@
     <div class="history-panel">
       <div class="panel-header">
         <span>Race History</span>
-        <span class="material-icons" style="opacity: 0.5; font-size: 1.2rem;">history</span>
+        <span class="material-icons" style="opacity: 0.5; font-size: 1.2rem"
+          >history</span
+        >
       </div>
       <div class="list-container" *ngIf="!isLoading; else loadingState">
-        <div 
-          *ngFor="let race of filteredHistory" 
-          class="race-item" 
+        <div
+          *ngFor="let race of filteredHistory"
+          class="race-item"
           [class.selected]="selectedRaces.has(race._id)"
           (click)="toggleRaceSelection(race._id)"
         >
           <div class="checkbox">
-            <span class="material-icons" *ngIf="selectedRaces.has(race._id)" style="font-size: 1rem;">check</span>
+            <span
+              class="material-icons"
+              *ngIf="selectedRaces.has(race._id)"
+              style="font-size: 1rem"
+              >check</span
+            >
           </div>
           <div class="race-info-compact">
             <span class="race-name">{{ race.model?.name }}</span>
             <span class="meta-separator">•</span>
-            <span class="driver-count-inline">{{ race.drivers?.length || 0 }}</span>
+            <span class="driver-count-inline">{{
+              race.drivers?.length || 0
+            }}</span>
             <span class="meta-separator">•</span>
-            <span class="race-date-inline">{{ formatDate(race.statistics?.startMillis) }}</span>
+            <span class="race-date-inline">{{
+              formatDate(race.statistics?.startMillis)
+            }}</span>
           </div>
         </div>
         <div class="empty-state" *ngIf="filteredHistory.length === 0">
@@ -95,44 +150,79 @@
       <div class="standings-header">
         <h2>Standings Breakdown</h2>
         <div class="sort-controls">
-          <span class="material-icons" style="font-size: 1.1rem; opacity: 0.6;">sort</span>
-          <select [(ngModel)]="sortMode" (change)="calculateCumulativeStandings()" class="sort-select">
+          <span class="material-icons" style="font-size: 1.1rem; opacity: 0.6"
+            >sort</span
+          >
+          <select
+            [(ngModel)]="sortMode"
+            (change)="calculateCumulativeStandings()"
+            class="sort-select"
+          >
             <option value="points">By Points (Tiebreak Laps)</option>
             <option value="laps">By Laps (Tiebreak Points)</option>
           </select>
         </div>
       </div>
 
-      <div class="table-container" *ngIf="selectedRaces.size > 0; else noRacesSelected">
+      <div
+        class="table-container"
+        *ngIf="selectedRaces.size > 0; else noRacesSelected"
+      >
         <table class="standings-table">
           <thead>
             <tr>
-              <th style="width: 80px; text-align: center;">Rank</th>
-              <th style="width: 250px;">Driver / Team</th>
-              <th class="points-col" style="width: 100px; text-align: center;">Races</th>
-              <th class="points-col" style="width: 120px; text-align: center;">Total Laps</th>
-              <th class="points-col" style="width: 120px; text-align: center;">Points</th>
-              <th class="points-col" style="width: 120px; text-align: center;">Total Time</th>
+              <th style="width: 80px; text-align: center">Rank</th>
+              <th style="width: 250px">Driver / Team</th>
+              <th class="points-col" style="width: 100px; text-align: center">
+                Races
+              </th>
+              <th class="points-col" style="width: 120px; text-align: center">
+                Total Laps
+              </th>
+              <th class="points-col" style="width: 120px; text-align: center">
+                Points
+              </th>
+              <th class="points-col" style="width: 120px; text-align: center">
+                Total Time
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let entry of cumulativeStandings; let i = index" [class]="'rank-' + (i + 1) + ' clickable-row'" (click)="openDriverCard(entry)">
-              <td style="text-align: center;">
-                <div class="rank-badge" style="margin: 0 auto;">{{ i + 1 }}</div>
+            <tr
+              *ngFor="let entry of cumulativeStandings; let i = index"
+              [class]="'rank-' + (i + 1) + ' clickable-row'"
+              (click)="openDriverCard(entry)"
+            >
+              <td style="text-align: center">
+                <div class="rank-badge" style="margin: 0 auto">{{ i + 1 }}</div>
               </td>
               <td>
                 <div class="driver-info">
-                  <img [src]="getAvatarUrl(entry.avatarUrl)" class="driver-avatar" alt="">
+                  <img
+                    [src]="getAvatarUrl(entry.avatarUrl)"
+                    class="driver-avatar"
+                    alt=""
+                  />
                   <div class="driver-name">
                     {{ entry.name }}
-                    <span class="driver-nickname" *ngIf="entry.nickname">({{ entry.nickname }})</span>
+                    <span class="driver-nickname" *ngIf="entry.nickname"
+                      >({{ entry.nickname }})</span
+                    >
                   </div>
                 </div>
               </td>
-              <td class="points-col" style="text-align: center;">{{ entry.racesCount }}</td>
-              <td class="points-col laps-col" style="text-align: center;">{{ entry.totalLaps }}</td>
-              <td class="points-col" style="text-align: center;">{{ entry.totalPoints | number:'1.0-0' }}</td>
-              <td class="points-col" style="text-align: center;">{{ formatTotalTime(entry.totalTime) }}</td>
+              <td class="points-col" style="text-align: center">
+                {{ entry.racesCount }}
+              </td>
+              <td class="points-col laps-col" style="text-align: center">
+                {{ entry.totalLaps }}
+              </td>
+              <td class="points-col" style="text-align: center">
+                {{ entry.totalPoints | number: "1.0-0" }}
+              </td>
+              <td class="points-col" style="text-align: center">
+                {{ formatTotalTime(entry.totalTime) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -155,19 +245,29 @@
 </ng-template>
 
 <!-- Driver Card Modal -->
-<div class="driver-card-overlay" *ngIf="selectedDriverStats" (click)="closeDriverCard()">
+<div
+  class="driver-card-overlay"
+  *ngIf="selectedDriverStats"
+  (click)="closeDriverCard()"
+>
   <div class="driver-card" (click)="$event.stopPropagation()">
     <div class="driver-card-header">
-      <img [src]="getAvatarUrl(selectedDriverStats.avatarUrl)" class="driver-card-avatar" alt="Avatar">
+      <img
+        [src]="getAvatarUrl(selectedDriverStats.avatarUrl)"
+        class="driver-card-avatar"
+        alt="Avatar"
+      />
       <div class="driver-card-title">
         <h2>{{ selectedDriverStats.name }}</h2>
-        <span class="driver-card-nickname" *ngIf="selectedDriverStats.nickname">"{{ selectedDriverStats.nickname }}"</span>
+        <span class="driver-card-nickname" *ngIf="selectedDriverStats.nickname"
+          >"{{ selectedDriverStats.nickname }}"</span
+        >
       </div>
       <button class="close-btn" (click)="closeDriverCard()">
         <span class="material-icons">close</span>
       </button>
     </div>
-    
+
     <div class="driver-card-body">
       <div class="stat-grid">
         <div class="stat-box">
@@ -180,12 +280,18 @@
         </div>
         <div class="stat-box">
           <span class="stat-label">Fastest Laps</span>
-          <span class="stat-value">{{ selectedDriverStats.fastestLapsCount }}</span>
+          <span class="stat-value">{{
+            selectedDriverStats.fastestLapsCount
+          }}</span>
         </div>
         <div class="stat-box">
           <span class="stat-label">Median Lap</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.medianLap > 0">{{ selectedDriverStats.medianLap | number:'1.3-3' }}</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.medianLap === 0">-</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.medianLap > 0">{{
+            selectedDriverStats.medianLap | number: "1.3-3"
+          }}</span>
+          <span class="stat-value" *ngIf="selectedDriverStats.medianLap === 0"
+            >-</span
+          >
         </div>
         <div class="stat-box">
           <span class="stat-label">Total Races</span>
@@ -197,13 +303,33 @@
         </div>
         <div class="stat-box">
           <span class="stat-label">Avg Race Rank</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.averageRacePlacing > 0">{{ selectedDriverStats.averageRacePlacing | number:'1.1-1' }}</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.averageRacePlacing === 0">-</span>
+          <span
+            class="stat-value"
+            *ngIf="selectedDriverStats.averageRacePlacing > 0"
+            >{{
+              selectedDriverStats.averageRacePlacing | number: "1.1-1"
+            }}</span
+          >
+          <span
+            class="stat-value"
+            *ngIf="selectedDriverStats.averageRacePlacing === 0"
+            >-</span
+          >
         </div>
         <div class="stat-box">
           <span class="stat-label">Avg Heat Rank</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.averageHeatPlacing > 0">{{ selectedDriverStats.averageHeatPlacing | number:'1.1-1' }}</span>
-          <span class="stat-value" *ngIf="selectedDriverStats.averageHeatPlacing === 0">-</span>
+          <span
+            class="stat-value"
+            *ngIf="selectedDriverStats.averageHeatPlacing > 0"
+            >{{
+              selectedDriverStats.averageHeatPlacing | number: "1.1-1"
+            }}</span
+          >
+          <span
+            class="stat-value"
+            *ngIf="selectedDriverStats.averageHeatPlacing === 0"
+            >-</span
+          >
         </div>
       </div>
     </div>

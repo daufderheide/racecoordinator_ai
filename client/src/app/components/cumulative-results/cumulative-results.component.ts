@@ -37,14 +37,14 @@ export interface DriverDetailedStats {
   selector: "app-cumulative-results",
   templateUrl: "./cumulative-results.component.html",
   styleUrls: ["./cumulative-results.component.css"],
-  standalone: false
+  standalone: false,
 })
 export class CumulativeResultsComponent implements OnInit {
   history: RaceHistoryRecord[] = [];
   selectedRaces: Set<string> = new Set();
-  selectedTrackFilter: string = '';
-  selectedCarClassFilter: string = '';
-  selectedDatabaseFilter: string = '';
+  selectedTrackFilter: string = "";
+  selectedCarClassFilter: string = "";
+  selectedDatabaseFilter: string = "";
   availableTracks: string[] = [];
   availableCarClasses: string[] = [];
   availableDatabases: string[] = [];
@@ -53,15 +53,16 @@ export class CumulativeResultsComponent implements OnInit {
   isLoading = true;
   Infinity = Infinity;
   // Sorting mode: 'points' (default) or 'laps'
-  sortMode: 'points' | 'laps' = 'points';
+  sortMode: "points" | "laps" = "points";
   selectedDriverStats: DriverDetailedStats | null = null;
+  showDemoData: boolean = false;
 
   constructor(
     private dataService: DataService,
     private settingsService: SettingsService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -69,10 +70,9 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   /** Load race history from backend and restore any persisted selection */
-  private loadHistory() {
+  loadHistory() {
     this.isLoading = true;
-    const isDemo = false;
-    this.dataService.getRaceHistory(isDemo).subscribe({
+    this.dataService.getRaceHistory(this.showDemoData).subscribe({
       next: (data) => {
         this.history = data.sort((a, b) => {
           const timeA = a.statistics?.startMillis || 0;
@@ -88,8 +88,13 @@ export class CumulativeResultsComponent implements OnInit {
         console.error("Error loading race history:", err);
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
+  }
+
+  toggleDemoData() {
+    this.showDemoData = !this.showDemoData;
+    this.loadHistory();
   }
 
   toggleRaceSelection(raceId: string) {
@@ -103,7 +108,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   selectAll() {
-    this.filteredHistory.forEach(r => this.selectedRaces.add(r._id));
+    this.filteredHistory.forEach((r) => this.selectedRaces.add(r._id));
     this.saveSelectedRaces();
     this.calculateCumulativeStandings();
   }
@@ -115,10 +120,15 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   get filteredHistory(): RaceHistoryRecord[] {
-    return this.history.filter(r => {
-      const matchTrack = !this.selectedTrackFilter || r.track?.name === this.selectedTrackFilter;
-      const matchCarClass = !this.selectedCarClassFilter || r.car_class === this.selectedCarClassFilter;
-      const matchDatabase = !this.selectedDatabaseFilter || r.database_name === this.selectedDatabaseFilter;
+    return this.history.filter((r) => {
+      const matchTrack =
+        !this.selectedTrackFilter || r.track?.name === this.selectedTrackFilter;
+      const matchCarClass =
+        !this.selectedCarClassFilter ||
+        r.car_class === this.selectedCarClassFilter;
+      const matchDatabase =
+        !this.selectedDatabaseFilter ||
+        r.database_name === this.selectedDatabaseFilter;
       return matchTrack && matchCarClass && matchDatabase;
     });
   }
@@ -128,7 +138,7 @@ export class CumulativeResultsComponent implements OnInit {
     const carClasses = new Set<string>();
     const databases = new Set<string>();
 
-    this.history.forEach(r => {
+    this.history.forEach((r) => {
       if (r.track && r.track.name) tracks.add(r.track.name);
       if (r.car_class) carClasses.add(r.car_class);
       if (r.database_name) databases.add(r.database_name);
@@ -149,10 +159,10 @@ export class CumulativeResultsComponent implements OnInit {
     this.isCalculating = true;
     const driverMap = new Map<string, DriverTotal>();
     this.filteredHistory
-      .filter(r => this.selectedRaces.has(r._id))
-      .forEach(race => {
+      .filter((r) => this.selectedRaces.has(r._id))
+      .forEach((race) => {
         if (!race.drivers) return;
-        race.drivers.forEach(p => {
+        race.drivers.forEach((p) => {
           const driverId = p.driver?.entity_id || p.objectId;
           if (!driverMap.has(driverId)) {
             driverMap.set(driverId, {
@@ -165,7 +175,7 @@ export class CumulativeResultsComponent implements OnInit {
               racesCount: 0,
               bestLapTime: Infinity,
               averageLapTime: 0,
-              totalTime: 0
+              totalTime: 0,
             });
           }
           const total = driverMap.get(driverId)!;
@@ -180,14 +190,14 @@ export class CumulativeResultsComponent implements OnInit {
       });
 
     this.cumulativeStandings = Array.from(driverMap.values())
-      .map(total => {
+      .map((total) => {
         if (total.totalLaps > 0) {
           total.averageLapTime = total.totalTime / total.totalLaps;
         }
         return total;
       })
       .sort((a, b) => {
-        if (this.sortMode === 'points') {
+        if (this.sortMode === "points") {
           if (b.totalPoints !== a.totalPoints) {
             return b.totalPoints - a.totalPoints;
           }
@@ -207,27 +217,266 @@ export class CumulativeResultsComponent implements OnInit {
   /** Persist selected race IDs to localStorage */
   private saveSelectedRaces() {
     const ids = Array.from(this.selectedRaces);
-    localStorage.setItem('cumulative_selected_races', JSON.stringify(ids));
+    localStorage.setItem("cumulative_selected_races", JSON.stringify(ids));
   }
 
   /** Load persisted selection and recalculate */
   private applyStoredSelection() {
-    const stored = localStorage.getItem('cumulative_selected_races');
+    const stored = localStorage.getItem("cumulative_selected_races");
     if (stored) {
       try {
         const ids: string[] = JSON.parse(stored);
-        ids.forEach(id => this.selectedRaces.add(id));
+        ids.forEach((id) => this.selectedRaces.add(id));
       } catch (e) {
-        console.warn('Failed to parse stored race selection', e);
+        console.warn("Failed to parse stored race selection", e);
       }
     }
     this.calculateCumulativeStandings();
   }
 
+  exportDetailedReport() {
+    const selectedRaces = this.history.filter((r) =>
+      this.selectedRaces.has(r._id),
+    );
+    if (selectedRaces.length === 0) return;
+
+    let reportHtml = `
+      <html>
+      <head>
+        <title>Detailed Race Report</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.4; color: #333; }
+          .race-header { border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
+          .header-row { display: flex; gap: 40px; margin-bottom: 5px; font-weight: 600; }
+          .segment-section { margin-top: 30px; }
+          .segment-title { font-size: 1.2rem; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 5px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; font-weight: bold; }
+          .num { text-align: center; }
+          .time { text-align: right; font-family: monospace; }
+        </style>
+      </head>
+      <body>
+    `;
+
+    selectedRaces.forEach((race) => {
+      const trackName = race.track?.name || "Unknown Track";
+      const d = new Date(race.statistics?.startMillis || 0);
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const dateStr = race.statistics?.startMillis
+        ? `${months[d.getMonth()]}-${d.getDate().toString().padStart(2, "0")}-${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`
+        : "Unknown Date";
+      const carClass = race.car_class || "N/A";
+      const segLength = race.model?.heat_scoring?.finishValue || 0;
+      const finishMethod = race.model?.heat_scoring?.finishMethod || "Lap";
+      const descr = race.model?.name || "";
+
+      reportHtml += `
+        <div class="race-header">
+          <div class="header-row">
+            <span>Track: ${trackName}</span>
+          </div>
+          <div class="header-row">
+            <span>Date: ${dateStr}</span>
+            <span>Class: ${carClass}</span>
+          </div>
+          <div class="header-row">
+            <span>Segment Length (${finishMethod}s): ${segLength}</span>
+            <span>Descr: ${descr}</span>
+          </div>
+        </div>
+      `;
+
+      if (race.heats && race.heats.length > 0) {
+        // Initialize cumulative stats for this race
+        const cumulative = new Map<
+          string,
+          { laps: number; points: number; time: number }
+        >();
+
+        race.heats.forEach((heat, heatIdx) => {
+          reportHtml += `<div class="segment-section">`;
+          reportHtml += `<div class="segment-title">Segment #${heatIdx + 1}</div>`;
+          reportHtml += `<table><thead><tr>
+            <th>Name</th>
+            <th>Lane</th>
+            <th class="num">Avg Lap</th>
+            <th class="num">Fastest Lap</th>
+            <th class="num">Median Lap</th>
+            <th class="num">Seg Laps</th>
+            <th class="num">Seg Place</th>
+            <th class="num">Total Laps</th>
+            <th class="num">Seg Points</th>
+            <th class="num">Race Place</th>
+            <th class="num">Total Points</th>
+            <th class="time">Total Run Time</th>
+            <th class="time">Seg Run Time</th>
+          </tr></thead><tbody>`;
+
+          const heatDrivers = heat.drivers || [];
+          // Calculate heat ranking for "Seg Place"
+          const rankedHeatDrivers = [...heatDrivers].sort((a, b) => {
+            const lapsA = a.driver?.totalLaps || 0;
+            const lapsB = b.driver?.totalLaps || 0;
+            if (lapsA !== lapsB) return lapsB - lapsA;
+            return (a.driver?.totalTime || 0) - (b.driver?.totalTime || 0);
+          });
+
+          // Pre-update cumulative stats for "Race Place" calculation
+          heatDrivers.forEach((hd: any) => {
+            const driverId =
+              hd.driver?.driver?.entity_id || hd.driver?.objectId;
+            if (!cumulative.has(driverId))
+              cumulative.set(driverId, { laps: 0, points: 0, time: 0 });
+            const c = cumulative.get(driverId)!;
+            c.laps += hd.driver?.totalLaps || 0;
+            c.time += hd.driver?.totalTime || 0;
+            c.points += hd.driver?.rankValue || 0;
+          });
+
+          // Calculate current overall rank for "Race Place"
+          const allDriversInRace = Array.from(cumulative.keys());
+          const overallRanked = [...allDriversInRace].sort((aId, bId) => {
+            const ca = cumulative.get(aId)!;
+            const cb = cumulative.get(bId)!;
+            if (ca.points !== cb.points) return cb.points - ca.points;
+            if (ca.laps !== cb.laps) return cb.laps - ca.laps;
+            return ca.time - cb.time;
+          });
+
+          heatDrivers.forEach((hd: any, hdIdx: number) => {
+            const driverId =
+              hd.driver?.driver?.entity_id || hd.driver?.objectId;
+            const name = hd.driver?.driver?.name || "Unknown";
+            const laneName = this.getLaneName(hdIdx, race.track);
+            const avgLap = hd.driver?.averageLapTime?.toFixed(3) || "0.000";
+            const fastLap = hd.driver?.bestLapTime?.toFixed(3) || "0.000";
+            const medLap = hd.driver?.medianLapTime?.toFixed(3) || "0.000";
+            const segLaps = hd.driver?.totalLaps || 0;
+            const segPlace =
+              rankedHeatDrivers.findIndex((rhd) => rhd === hd) + 1;
+            const c = cumulative.get(driverId)!;
+            const totalLaps = c.laps;
+            const segPoints = hd.driver?.rankValue || 0;
+            const racePlace = overallRanked.indexOf(driverId) + 1;
+            const totalPoints = c.points;
+            const totalRunTime = this.formatTotalTime(c.time);
+            const segRunTime = this.formatTotalTime(hd.driver?.totalTime || 0);
+
+            reportHtml += `<tr>
+              <td>${name}</td>
+              <td>${laneName}</td>
+              <td class="num">${avgLap}</td>
+              <td class="num">${fastLap}</td>
+              <td class="num">${medLap}</td>
+              <td class="num">${segLaps}</td>
+              <td class="num">${segPlace}</td>
+              <td class="num">${totalLaps}</td>
+              <td class="num">${segPoints}</td>
+              <td class="num">${racePlace}</td>
+              <td class="num">${totalPoints}</td>
+              <td class="time">${totalRunTime}</td>
+              <td class="time">${segRunTime}</td>
+            </tr>`;
+          });
+
+          reportHtml += `</tbody></table></div>`;
+        });
+      } else if (race.drivers && race.drivers.length > 0) {
+        // Fallback to final results if no heats available
+        reportHtml += `<div class="segment-section">`;
+        reportHtml += `<div class="segment-title">Final Results (Segment data unavailable)</div>`;
+        reportHtml += `<table><thead><tr>
+          <th>Name</th>
+          <th>Rank</th>
+          <th class="num">Avg Lap</th>
+          <th class="num">Fastest Lap</th>
+          <th class="num">Median Lap</th>
+          <th class="num">Total Laps</th>
+          <th class="num">Points</th>
+          <th class="time">Total Run Time</th>
+        </tr></thead><tbody>`;
+
+        const sortedDrivers = [...race.drivers].sort((a, b) => a.rank - b.rank);
+        sortedDrivers.forEach((p) => {
+          const name = p.driver?.name || "Unknown";
+          const avgLap = p.averageLapTime?.toFixed(3) || "0.000";
+          const fastLap = p.bestLapTime?.toFixed(3) || "0.000";
+          const medLap = p.medianLapTime?.toFixed(3) || "0.000";
+          const totalLaps = p.totalLaps || 0;
+          const rank = p.rank || 0;
+          const points = (p as any).rankValue || 0;
+          const totalTime = this.formatTotalTime(p.totalTime || 0);
+
+          reportHtml += `<tr>
+            <td>${name}</td>
+            <td class="num">${rank}</td>
+            <td class="num">${avgLap}</td>
+            <td class="num">${fastLap}</td>
+            <td class="num">${medLap}</td>
+            <td class="num">${totalLaps}</td>
+            <td class="num">${points}</td>
+            <td class="time">${totalTime}</td>
+          </tr>`;
+        });
+        reportHtml += `</tbody></table></div>`;
+      } else {
+        reportHtml += `<p>No race data available for this record.</p>`;
+      }
+      reportHtml += `<hr style="margin: 40px 0; border: 0; border-top: 2px dashed #ccc;">`;
+    });
+
+    reportHtml += `</body></html>`;
+    this.downloadFile(reportHtml, "detailed_race_report.html", "text/html");
+  }
+
+  private getLaneName(index: number, track: any): string {
+    if (track && track.lanes && track.lanes[index]) {
+      const lane = track.lanes[index];
+      const color = lane.background_color?.toLowerCase() || "";
+      if (color === "#00ff00" || color === "green") return "Green";
+      if (color === "#ff0000" || color === "red") return "Red";
+      if (color === "#0000ff" || color === "blue") return "Blue";
+      if (color === "#ffff00" || color === "yellow") return "Yellow";
+      if (color === "#ffffff" || color === "white") return "White";
+      if (color === "#000000" || color === "black") return "Black";
+      if (color === "#ffa500" || color === "orange") return "Orange";
+      if (color === "#800080" || color === "purple") return "Purple";
+      return lane.background_color || `Lane ${index + 1}`;
+    }
+    return `Lane ${index + 1}`;
+  }
+
   exportCsv() {
-    const header = ['Rank', 'Driver', 'Races', 'Total Laps', 'Points', 'Total Time', 'Best Lap', 'Avg Lap'].join(',');
+    const header = [
+      "Rank",
+      "Driver",
+      "Races",
+      "Total Laps",
+      "Points",
+      "Total Time",
+      "Best Lap",
+      "Avg Lap",
+    ].join(",");
     const rows = this.cumulativeStandings.map((entry, index) => {
-      const bestLap = entry.bestLapTime === this.Infinity ? '-' : entry.bestLapTime.toFixed(3);
+      const bestLap =
+        entry.bestLapTime === this.Infinity
+          ? "-"
+          : entry.bestLapTime.toFixed(3);
       const avgLap = entry.averageLapTime.toFixed(3);
       return [
         index + 1,
@@ -237,15 +486,16 @@ export class CumulativeResultsComponent implements OnInit {
         entry.totalPoints,
         `"${this.formatTotalTime(entry.totalTime)}"`,
         bestLap,
-        avgLap
-      ].join(',');
+        avgLap,
+      ].join(",");
     });
-    const csvContent = [header, ...rows].join('\n');
-    this.downloadFile(csvContent, 'analytics.csv', 'text/csv');
+    const csvContent = [header, ...rows].join("\n");
+    this.downloadFile(csvContent, "analytics.csv", "text/csv");
   }
 
   exportHtml() {
-    const tableHtml = document.querySelector('.standings-table')?.outerHTML || '';
+    const tableHtml =
+      document.querySelector(".standings-table")?.outerHTML || "";
     const htmlContent = `
       <html>
       <head>
@@ -282,19 +532,19 @@ export class CumulativeResultsComponent implements OnInit {
       </body>
       </html>
     `;
-    this.downloadFile(htmlContent, 'analytics.html', 'text/html');
+    this.downloadFile(htmlContent, "analytics.html", "text/html");
   }
 
   exportPng() {
-    const tableEl = document.querySelector('.standings-panel') as HTMLElement;
+    const tableEl = document.querySelector(".standings-panel") as HTMLElement;
     if (tableEl) {
-      import('html2canvas').then(m => {
+      import("html2canvas").then((m) => {
         const h2c = m.default || m;
         (h2c as any)(tableEl).then((canvas: HTMLCanvasElement) => {
-          const imgData = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
+          const imgData = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
           link.href = imgData;
-          link.download = 'analytics.png';
+          link.download = "analytics.png";
           link.click();
         });
       });
@@ -304,7 +554,7 @@ export class CumulativeResultsComponent implements OnInit {
   private downloadFile(content: string, filename: string, mimeType: string) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = filename;
     link.click();
@@ -312,13 +562,13 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   formatDate(millis: number | undefined): string {
-    if (!millis) return 'Unknown Date';
-    return new Date(millis).toLocaleString([], { 
-      year: '2-digit', 
-      month: 'numeric', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    if (!millis) return "Unknown Date";
+    return new Date(millis).toLocaleString([], {
+      year: "2-digit",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   }
 
@@ -331,17 +581,19 @@ export class CumulativeResultsComponent implements OnInit {
 
     let timeStr = "";
     if (hours > 0) {
-      timeStr = hours + ":" + 
-                minutes.toString().padStart(2, '0') + ":" + 
-                seconds.toString().padStart(2, '0');
+      timeStr =
+        hours +
+        ":" +
+        minutes.toString().padStart(2, "0") +
+        ":" +
+        seconds.toString().padStart(2, "0");
     } else if (minutes > 0) {
-      timeStr = minutes + ":" + 
-                seconds.toString().padStart(2, '0');
+      timeStr = minutes + ":" + seconds.toString().padStart(2, "0");
     } else {
       timeStr = seconds.toString();
     }
 
-    return timeStr + "." + ms.toString().padStart(3, '0');
+    return timeStr + "." + ms.toString().padStart(3, "0");
   }
 
   goBack() {
@@ -370,18 +622,22 @@ export class CumulativeResultsComponent implements OnInit {
       totalRaces: 0,
       heatsOnTrack: 0,
       averageRacePlacing: 0,
-      averageHeatPlacing: 0
+      averageHeatPlacing: 0,
     };
 
-    const selectedRaceRecords = this.filteredHistory.filter(r => this.selectedRaces.has(r._id));
-    
+    const selectedRaceRecords = this.filteredHistory.filter((r) =>
+      this.selectedRaces.has(r._id),
+    );
+
     let raceRanks: number[] = [];
     let heatRanks: number[] = [];
     let medianLaps: number[] = [];
-    
-    selectedRaceRecords.forEach(race => {
+
+    selectedRaceRecords.forEach((race) => {
       // Find driver in this race
-      const driverPart = race.drivers?.find(d => (d.driver?.entity_id || d.objectId) === driverId);
+      const driverPart = race.drivers?.find(
+        (d) => (d.driver?.entity_id || d.objectId) === driverId,
+      );
       if (!driverPart) return;
 
       stats.totalRaces++;
@@ -400,7 +656,7 @@ export class CumulativeResultsComponent implements OnInit {
       let isFastest = true;
       let myBest = driverPart.bestLapTime;
       if (myBest > 0 && myBest !== this.Infinity) {
-        race.drivers?.forEach(other => {
+        race.drivers?.forEach((other) => {
           if (other.bestLapTime > 0 && other.bestLapTime < myBest) {
             isFastest = false;
           }
@@ -412,33 +668,40 @@ export class CumulativeResultsComponent implements OnInit {
 
       // Process Heats (if available, otherwise fallback to race stats)
       if (race.heats && race.heats.length > 0) {
-        race.heats.forEach(heat => {
+        race.heats.forEach((heat) => {
           const heatDrivers = heat.drivers || [];
-          const heatDriver = heatDrivers.find((hd: any) => 
-            hd.driver?.driver?.entity_id === driverId || hd.driver?.objectId === driverId
+          const heatDriver = heatDrivers.find(
+            (hd: any) =>
+              hd.driver?.driver?.entity_id === driverId ||
+              hd.driver?.objectId === driverId,
           );
           if (heatDriver) {
-             stats.heatsOnTrack++;
-             // Compute heat rank by sorting heat drivers by laps desc, time asc
-             const sortedHeatDrivers = [...heatDrivers].sort((a: any, b: any) => {
-               const lapsA = a.driver?.totalLaps || 0;
-               const lapsB = b.driver?.totalLaps || 0;
-               if (lapsA !== lapsB) return lapsB - lapsA;
-               const timeA = a.driver?.totalTime || 0;
-               const timeB = b.driver?.totalTime || 0;
-               return timeA - timeB;
-             });
-             
-             const rank = sortedHeatDrivers.findIndex((hd: any) => 
-               hd.driver?.driver?.entity_id === driverId || hd.driver?.objectId === driverId
-             ) + 1;
-             
-             if (rank > 0) {
-               heatRanks.push(rank);
-               if (rank === 1) {
-                 stats.heatWins++;
-               }
-             }
+            stats.heatsOnTrack++;
+            // Compute heat rank by sorting heat drivers by laps desc, time asc
+            const sortedHeatDrivers = [...heatDrivers].sort(
+              (a: any, b: any) => {
+                const lapsA = a.driver?.totalLaps || 0;
+                const lapsB = b.driver?.totalLaps || 0;
+                if (lapsA !== lapsB) return lapsB - lapsA;
+                const timeA = a.driver?.totalTime || 0;
+                const timeB = b.driver?.totalTime || 0;
+                return timeA - timeB;
+              },
+            );
+
+            const rank =
+              sortedHeatDrivers.findIndex(
+                (hd: any) =>
+                  hd.driver?.driver?.entity_id === driverId ||
+                  hd.driver?.objectId === driverId,
+              ) + 1;
+
+            if (rank > 0) {
+              heatRanks.push(rank);
+              if (rank === 1) {
+                stats.heatWins++;
+              }
+            }
           }
         });
       } else {
@@ -450,18 +713,20 @@ export class CumulativeResultsComponent implements OnInit {
     });
 
     if (raceRanks.length > 0) {
-      stats.averageRacePlacing = raceRanks.reduce((a, b) => a + b, 0) / raceRanks.length;
+      stats.averageRacePlacing =
+        raceRanks.reduce((a, b) => a + b, 0) / raceRanks.length;
     }
     if (heatRanks.length > 0) {
-      stats.averageHeatPlacing = heatRanks.reduce((a, b) => a + b, 0) / heatRanks.length;
+      stats.averageHeatPlacing =
+        heatRanks.reduce((a, b) => a + b, 0) / heatRanks.length;
     }
     if (medianLaps.length > 0) {
       medianLaps.sort((a, b) => a - b);
       const mid = Math.floor(medianLaps.length / 2);
       if (medianLaps.length % 2 === 0) {
-         stats.medianLap = (medianLaps[mid - 1] + medianLaps[mid]) / 2;
+        stats.medianLap = (medianLaps[mid - 1] + medianLaps[mid]) / 2;
       } else {
-         stats.medianLap = medianLaps[mid];
+        stats.medianLap = medianLaps[mid];
       }
     }
 
@@ -471,23 +736,29 @@ export class CumulativeResultsComponent implements OnInit {
   exportDriverCsv() {
     if (!this.selectedDriverStats) return;
     const s = this.selectedDriverStats;
-    const header = 'Stat,Value';
+    const header = "Stat,Value";
     const rows = [
-      ['Driver', s.name],
-      ['Nickname', s.nickname || '-'],
-      ['Total Wins', s.totalWins],
-      ['Heat Wins', s.heatWins],
-      ['Fastest Laps', s.fastestLapsCount],
-      ['Median Lap', s.medianLap > 0 ? s.medianLap.toFixed(3) : '-'],
-      ['Total Races', s.totalRaces],
-      ['Heats on Track', s.heatsOnTrack],
-      ['Avg Race Rank', s.averageRacePlacing > 0 ? s.averageRacePlacing.toFixed(1) : '-'],
-      ['Avg Heat Rank', s.averageHeatPlacing > 0 ? s.averageHeatPlacing.toFixed(1) : '-']
-    ].map(r => r.join(','));
-    
-    const csvContent = [header, ...rows].join('\n');
-    const filename = `stats_${s.name.replace(/\s+/g, '_').toLowerCase()}.csv`;
-    this.downloadFile(csvContent, filename, 'text/csv');
+      ["Driver", s.name],
+      ["Nickname", s.nickname || "-"],
+      ["Total Wins", s.totalWins],
+      ["Heat Wins", s.heatWins],
+      ["Fastest Laps", s.fastestLapsCount],
+      ["Median Lap", s.medianLap > 0 ? s.medianLap.toFixed(3) : "-"],
+      ["Total Races", s.totalRaces],
+      ["Heats on Track", s.heatsOnTrack],
+      [
+        "Avg Race Rank",
+        s.averageRacePlacing > 0 ? s.averageRacePlacing.toFixed(1) : "-",
+      ],
+      [
+        "Avg Heat Rank",
+        s.averageHeatPlacing > 0 ? s.averageHeatPlacing.toFixed(1) : "-",
+      ],
+    ].map((r) => r.join(","));
+
+    const csvContent = [header, ...rows].join("\n");
+    const filename = `stats_${s.name.replace(/\s+/g, "_").toLowerCase()}.csv`;
+    this.downloadFile(csvContent, filename, "text/csv");
   }
 
   exportDriverHtml() {
@@ -516,46 +787,46 @@ export class CumulativeResultsComponent implements OnInit {
             <img src="${this.getAvatarUrl(s.avatarUrl)}" class="avatar">
             <div>
               <h1>${s.name}</h1>
-              ${s.nickname ? `<span class="nickname">"${s.nickname}"</span>` : ''}
+              ${s.nickname ? `<span class="nickname">"${s.nickname}"</span>` : ""}
             </div>
           </div>
           <div class="grid">
             <div class="stat-box"><span class="label">Total Wins</span><span class="value">${s.totalWins}</span></div>
             <div class="stat-box"><span class="label">Heat Wins</span><span class="value">${s.heatWins}</span></div>
             <div class="stat-box"><span class="label">Fastest Laps</span><span class="value">${s.fastestLapsCount}</span></div>
-            <div class="stat-box"><span class="label">Median Lap</span><span class="value">${s.medianLap > 0 ? s.medianLap.toFixed(3) : '-'}</span></div>
+            <div class="stat-box"><span class="label">Median Lap</span><span class="value">${s.medianLap > 0 ? s.medianLap.toFixed(3) : "-"}</span></div>
             <div class="stat-box"><span class="label">Total Races</span><span class="value">${s.totalRaces}</span></div>
             <div class="stat-box"><span class="label">Heats on Track</span><span class="value">${s.heatsOnTrack}</span></div>
-            <div class="stat-box"><span class="label">Avg Race Rank</span><span class="value">${s.averageRacePlacing > 0 ? s.averageRacePlacing.toFixed(1) : '-'}</span></div>
-            <div class="stat-box"><span class="label">Avg Heat Rank</span><span class="value">${s.averageHeatPlacing > 0 ? s.averageHeatPlacing.toFixed(1) : '-'}</span></div>
+            <div class="stat-box"><span class="label">Avg Race Rank</span><span class="value">${s.averageRacePlacing > 0 ? s.averageRacePlacing.toFixed(1) : "-"}</span></div>
+            <div class="stat-box"><span class="label">Avg Heat Rank</span><span class="value">${s.averageHeatPlacing > 0 ? s.averageHeatPlacing.toFixed(1) : "-"}</span></div>
           </div>
         </div>
       </body>
       </html>
     `;
-    const filename = `stats_${s.name.replace(/\s+/g, '_').toLowerCase()}.html`;
-    this.downloadFile(htmlContent, filename, 'text/html');
+    const filename = `stats_${s.name.replace(/\s+/g, "_").toLowerCase()}.html`;
+    this.downloadFile(htmlContent, filename, "text/html");
   }
 
   exportDriverPng() {
     if (!this.selectedDriverStats) return;
-    const cardEl = document.querySelector('.driver-card') as HTMLElement;
+    const cardEl = document.querySelector(".driver-card") as HTMLElement;
     if (cardEl) {
-      import('html2canvas').then(m => {
+      import("html2canvas").then((m) => {
         const h2c = m.default || m;
         // Temporarily hide close button for cleaner capture
-        const closeBtn = cardEl.querySelector('.close-btn') as HTMLElement;
-        if (closeBtn) closeBtn.style.display = 'none';
-        
+        const closeBtn = cardEl.querySelector(".close-btn") as HTMLElement;
+        if (closeBtn) closeBtn.style.display = "none";
+
         (h2c as any)(cardEl, {
-          backgroundColor: '#1e1e2f',
-          scale: 2 // Higher quality
+          backgroundColor: "#1e1e2f",
+          scale: 2, // Higher quality
         }).then((canvas: HTMLCanvasElement) => {
-          if (closeBtn) closeBtn.style.display = 'flex';
-          const imgData = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
+          if (closeBtn) closeBtn.style.display = "flex";
+          const imgData = canvas.toDataURL("image/png");
+          const link = document.createElement("a");
           link.href = imgData;
-          link.download = `stats_${this.selectedDriverStats!.name.replace(/\s+/g, '_').toLowerCase()}.png`;
+          link.download = `stats_${this.selectedDriverStats!.name.replace(/\s+/g, "_").toLowerCase()}.png`;
           link.click();
         });
       });
