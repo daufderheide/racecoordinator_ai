@@ -1312,4 +1312,73 @@ public class ArduinoLedHelperTest {
     }
     assertEquals(4, onCount0);
   }
+
+  @Test
+  public void testSetRaceState_Countdown_Green_MoreLedsThanSeconds() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
+    // 5 LEDs defined (n=0..4)
+    ledString.leds = Arrays.asList(base, base + 1, base + 2, base + 3, base + 4);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // 1. Initial 3s countdown
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 3.0);
+
+    // 2. Transition to RACING/GREEN
+    reset(protocol);
+    setupMocks();
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // The packet should contain 3 LEDs (n=0, 1, 2)
+    int numInPacket = data[2] & 0xFF;
+    assertEquals(3, numInPacket);
+
+    // Verify all 3 in the packet are green (G=255)
+    for (int i = 0; i < numInPacket; i++) {
+      assertEquals(255, data[5 + i * 4] & 0xFF);
+    }
+  }
+
+  @Test
+  public void testSetRaceState_Countdown_Green_FewerLedsThanSeconds() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE_VALUE;
+    // 3 LEDs defined (n=0..2)
+    ledString.leds = Arrays.asList(base, base + 1, base + 2);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // 1. Initial 5s countdown
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.RED, 5.0);
+
+    // 2. Transition to RACING/GREEN
+    reset(protocol);
+    setupMocks();
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // All 3 LEDs should be in the packet and green (min of 3 defined and 5 seconds)
+    int numInPacket = data[2] & 0xFF;
+    assertEquals(3, numInPacket);
+
+    for (int i = 0; i < numInPacket; i++) {
+      assertEquals(255, data[5 + i * 4] & 0xFF);
+    }
+  }
 }

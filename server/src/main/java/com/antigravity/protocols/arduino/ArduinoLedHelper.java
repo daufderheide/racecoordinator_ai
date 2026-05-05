@@ -409,6 +409,11 @@ public class ArduinoLedHelper {
             if (!shouldBeOn) {
               finalRgb = new int[] {0, 0, 0};
             }
+          } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
+            int n = behavior - raceStateBehavior;
+            if (startingDuration > 0 && n >= startingDuration) {
+              finalRgb = new int[] {0, 0, 0};
+            }
           }
 
           String key = ledString.pin + "_" + i;
@@ -449,7 +454,9 @@ public class ArduinoLedHelper {
             }
           } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
             if (now - lastStateChangeTime < 1000) {
-              g = 255;
+              if (startingDuration == 0 || n < startingDuration) {
+                g = 255;
+              }
             }
           }
 
