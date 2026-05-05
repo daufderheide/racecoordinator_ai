@@ -14,7 +14,7 @@ export default defineConfig({
   timeout: 120000,
   /* Retry on CI only */
   retries: process.env["CI"] ? 2 : 0,
-  workers: process.env["CI"] ? 1 : "100%",
+  workers: parseInt(process.env["PWTEST_WORKERS"] || "") || (process.env["CI"] ? 1 : "100%"),
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ["html"],
