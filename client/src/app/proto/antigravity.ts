@@ -14,7 +14,6 @@ export import DeferHeatRequest = _proto_com.antigravity.DeferHeatRequest;
 export import DeferHeatResponse = _proto_com.antigravity.DeferHeatResponse;
 export import DeleteAssetRequest = _proto_com.antigravity.DeleteAssetRequest;
 export import DeleteAssetResponse = _proto_com.antigravity.DeleteAssetResponse;
-export import DemoPinId = _proto_com.antigravity.PinId;
 export import DigitalFuelOptions = _proto_com.antigravity.DigitalFuelOptions;
 export import DriverHeatData = _proto_com.antigravity.DriverHeatData;
 export import DriverModel = _proto_com.antigravity.DriverModel;
