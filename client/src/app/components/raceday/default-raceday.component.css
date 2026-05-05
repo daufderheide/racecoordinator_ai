@@ -510,23 +510,38 @@
 }
 
 /* Anchor Alignment Classes */
-.anchor-top-left      { position: absolute; top: 5px;    left: 5px;   text-align: left;   font-size: 24px; }
-.anchor-top-center    { position: absolute; top: 5px;    left: 50%;   transform: translateX(-50%); text-align: center; font-size: 24px; }
-.anchor-top-right     { position: absolute; top: 5px;    right: 5px;  text-align: right;  font-size: 24px; }
+.anchor-top-left      { position: absolute; top: 0;    left: 0;   display: flex; align-items: flex-start; justify-content: flex-start; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
+.anchor-top-center    { position: absolute; top: 0;    left: 50%; transform: translateX(-50%); display: flex; align-items: flex-start; justify-content: center; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
+.anchor-top-right     { position: absolute; top: 0;    right: 0;  display: flex; align-items: flex-start; justify-content: flex-end; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
 
-.anchor-center-left   { position: absolute; top: 50%;   left: 5px;   transform: translateY(-50%); text-align: left;   font-size: 54px; }
-.anchor-center-center { position: absolute; top: 50%;   left: 50%;   transform: translate(-50%, -50%); text-align: center; font-size: 54px; width: 100%; font-weight: bold;}
-.anchor-center-right  { position: absolute; top: 50%;   right: 5px;  transform: translateY(-50%); text-align: right;  font-size: 54px; }
+.anchor-center-left   { position: absolute; top: 0;     left: 0;   display: flex; align-items: center; justify-content: flex-start; font-size: 54px; width: 33%; height: 100%; padding: 2px; box-sizing: border-box; }
+.anchor-center-center { position: absolute; top: 0;     left: 0;   display: flex; align-items: center; justify-content: center; text-align: center; font-size: 54px; font-weight: bold; width: 100%; height: 100%; }
+.anchor-center-right  { position: absolute; top: 0;     right: 0;  display: flex; align-items: center; justify-content: flex-end; font-size: 54px; width: 33%; height: 100%; padding: 2px; box-sizing: border-box; }
 
-.anchor-bottom-left   { position: absolute; bottom: 5px; left: 5px;   text-align: left;   font-size: 24px; }
-.anchor-bottom-center { position: absolute; bottom: 5px; left: 50%;   transform: translateX(-50%); text-align: center; font-size: 24px; }
-.anchor-bottom-right  { position: absolute; bottom: 5px; right: 5px;  text-align: right;  font-size: 24px; }
+.anchor-bottom-left   { position: absolute; bottom: 0; left: 0;   display: flex; align-items: flex-end; justify-content: flex-start; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
+.anchor-bottom-center { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; align-items: flex-end; justify-content: center; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
+.anchor-bottom-right  { position: absolute; bottom: 0; right: 0;  display: flex; align-items: flex-end; justify-content: flex-end; font-size: 24px; width: 33%; height: 33%; padding: 2px; box-sizing: border-box; }
 
 .body-cell img {
   max-height: 80%;
   max-width: 90%;
   object-fit: contain;
 }
+
+/* Specific scaling for corner/edge anchors to fit in their 1/3 area */
+.body-cell [class*="anchor-"]:not(.anchor-center-center) img {
+  width: 100%;
+  height: 100%;
+}
+
+.anchor-top-left img      { object-position: left top; }
+.anchor-top-center img    { object-position: center top; }
+.anchor-top-right img     { object-position: right top; }
+.anchor-center-left img   { object-position: left center; }
+.anchor-center-right img  { object-position: right center; }
+.anchor-bottom-left img   { object-position: left bottom; }
+.anchor-bottom-center img { object-position: center bottom; }
+.anchor-bottom-right img  { object-position: right bottom; }
 
 .teammate-select {
   background: transparent !important;
