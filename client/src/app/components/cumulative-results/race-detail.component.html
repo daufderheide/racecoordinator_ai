@@ -1,0 +1,116 @@
+<div class="detail-container" *ngIf="!isLoading; else loading">
+  <div *ngIf="race; else notFound">
+    <div class="header">
+      <div class="header-left">
+        <button class="back-btn" (click)="goBack()">
+          <span class="material-icons">arrow_back</span>
+          Back
+        </button>
+        <div class="title-section">
+          <h1>{{ race.model?.name }}</h1>
+          <div class="subtitle">
+            <span>{{ formatDate(race.statistics?.startMillis) }}</span>
+            <span class="separator">•</span>
+            <span>{{ race.track?.name }}</span>
+            <span class="separator">•</span>
+            <span>{{ race.car_class || 'No Class' }}</span>
+            <span class="separator">•</span>
+            <span class="target-badge">{{ 
+              race.model?.heat_scoring?.finishMethod === 'Lap' ? 
+              race.model?.heat_scoring?.finishValue + ' Laps' : 
+              (race.model?.heat_scoring?.finishValue | number:'1.0-0') + 's' 
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="heat-selector" *ngIf="race.heats && race.heats.length > 0">
+        <label>Select Segment:</label>
+        <select [ngModel]="selectedHeatIndex" (ngModelChange)="onHeatChange($event)" class="heat-dropdown">
+          <option *ngFor="let heat of race.heats; let i = index" [value]="i">
+            Segment #{{ i + 1 }}{{ i === race.heats.length - 1 ? ' / FINAL Standings' : '' }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="content" *ngIf="currentHeat; else noHeats">
+      <div class="table-container">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th class="pos-col">Pos</th>
+              <th class="driver-col">Driver</th>
+              <th class="laps-col">Seg Laps</th>
+              <th class="total-laps-col">Race Total</th>
+              <th class="time-col">Race Time</th>
+              <th class="fastest-col">Fastest</th>
+              <th class="avg-col">Average</th>
+              <th class="median-col">Median</th>
+              <th class="points-col">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sd of segmentDrivers; let i = index" [class.sitout-row]="sd.isSitout">
+              <td class="pos-cell">{{ i + 1 }}</td>
+              <td class="driver-cell">
+                <div class="driver-info">
+                  <img [src]="getAvatarUrl(sd.driver?.avatarUrl)" class="avatar-sm">
+                  <div class="name-info">
+                    <span class="name">{{ sd.driver?.name }}</span>
+                    <span class="nickname" *ngIf="sd.driver?.nickname">{{ sd.driver?.nickname }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="value-cell laps-val">
+                <span *ngIf="!sd.isSitout">{{ sd.heatData?.totalLaps }}</span>
+                <span *ngIf="sd.isSitout" class="sitout-text">SITOUT</span>
+              </td>
+              <td class="value-cell cumulative-laps">{{ getCumulativeLaps(sd.driver?.entity_id || sd.driver?.objectId) }}</td>
+              <td class="value-cell mono">
+                {{ formatTotalTime(cumulativeTimeMap.get(sd.driver?.entity_id || sd.driver?.objectId) || 0) }}
+              </td>
+              <td class="value-cell highlight mono">
+                <span *ngIf="!sd.isSitout">{{ sd.heatData?.bestLapTime | number:'1.3-3' }}</span>
+                <span *ngIf="sd.isSitout" class="dash">-</span>
+              </td>
+              <td class="value-cell mono">
+                <span *ngIf="!sd.isSitout">{{ sd.heatData?.averageLapTime | number:'1.3-3' }}</span>
+                <span *ngIf="sd.isSitout" class="dash">-</span>
+              </td>
+              <td class="value-cell mono">
+                <span *ngIf="!sd.isSitout">{{ sd.heatData?.medianLapTime | number:'1.3-3' }}</span>
+                <span *ngIf="sd.isSitout" class="dash">-</span>
+              </td>
+              <td class="value-cell points-cell">
+                {{ cumulativePointsMap.get(sd.driver?.entity_id || sd.driver?.objectId) || 0 }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #noHeats>
+      <div class="empty-state">
+        <span class="material-icons">info</span>
+        <p>No segment data available for this race.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <ng-template #notFound>
+    <div class="empty-state">
+      <span class="material-icons">error_outline</span>
+      <p>Race not found or failed to load.</p>
+      <button class="back-btn" (click)="goBack()">Return to Analytics</button>
+    </div>
+  </ng-template>
+</div>
+
+<ng-template #loading>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading race details...</p>
+  </div>
+</ng-template>

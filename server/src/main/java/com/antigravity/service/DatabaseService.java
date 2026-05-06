@@ -559,6 +559,18 @@ public class DatabaseService {
     return collection.find(Filters.eq("_id", new ObjectId(id))).first();
   }
 
+  public boolean deleteRaceHistoryById(MongoDatabase database, String id, boolean isDemo) {
+    try {
+      MongoCollection<RaceHistoryRecord> collection =
+          database.getCollection(getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
+      DeleteResult result = collection.deleteOne(Filters.eq("_id", new ObjectId(id)));
+      return result.getDeletedCount() > 0;
+    } catch (Exception e) {
+      System.err.println("Failed to delete race history record " + id + ": " + e.getMessage());
+      return false;
+    }
+  }
+
   public void upsertAutoSave(MongoDatabase database, RaceSaveData data) {
     if (data == null) {
       return;

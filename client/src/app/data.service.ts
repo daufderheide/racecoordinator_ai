@@ -1335,8 +1335,20 @@ export class DataService {
   }
 
   getRaceHistoryById(id: string, isDemo: boolean = false): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`);
+  }
+
+  deleteRaceHistory(id: string, isDemo: boolean = false, database?: string): Observable<any> {
+    let url = `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`;
+    if (database) {
+      url += `&database=${database}`;
+    }
+    return this.http.delete<any>(url);
+  }
+
+  getGlobalStatistics(isDemo: boolean = false): Observable<any> {
     return this.http.get<any>(
-      `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`,
+      `${this.baseUrl}/api/history/races/statistics?demo=${isDemo}`,
     );
   }
 }

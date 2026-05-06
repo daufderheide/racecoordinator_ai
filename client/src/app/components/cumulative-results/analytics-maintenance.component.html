@@ -1,0 +1,70 @@
+<div class="maintenance-container">
+  <div class="header">
+    <div class="title-group">
+      <h1>Race History Maintenance</h1>
+      <p class="subtitle">Delete unwanted or test race records from the database</p>
+    </div>
+    <div class="actions">
+      <button class="btn-secondary" (click)="goBack()">
+        <span class="icon">←</span> Back to Analytics
+      </button>
+      <button class="btn-mode" [class.demo]="isDemoMode" (click)="toggleDemoMode()">
+        {{ isDemoMode ? 'Demo Records' : 'Live Records' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="control-bar">
+    <div class="stats">
+      <span class="count">{{ history.length }}</span> Total Records
+      <span class="selected" *ngIf="selectedRaces.size > 0">({{ selectedRaces.size }} Selected)</span>
+    </div>
+    <div class="bulk-actions">
+      <button class="btn-delete" [disabled]="selectedRaces.size === 0" (click)="deleteSelected()">
+        Delete Selected
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container" [class.loading]="loading">
+    <table *ngIf="history.length > 0; else noData">
+      <thead>
+        <tr>
+          <th class="checkbox-col">
+            <input type="checkbox" [checked]="selectedRaces.size === history.length && history.length > 0" (change)="toggleAll()">
+          </th>
+          <th>Race Name</th>
+          <th>Track</th>
+          <th>Date & Time</th>
+          <th>Drivers</th>
+          <th *ngIf="!isDemoMode">Database</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let race of history" [class.selected]="selectedRaces.has(race._id)" (click)="toggleSelection(race._id)">
+          <td>
+            <input type="checkbox" [checked]="selectedRaces.has(race._id)" (click)="$event.stopPropagation()">
+          </td>
+          <td class="race-name">{{ race.model?.name || 'Unnamed Race' }}</td>
+          <td>{{ race.track?.name || 'Unknown Track' }}</td>
+          <td class="date-col">{{ formatDate(race.statistics?.startMillis) }}</td>
+          <td>{{ race.drivers?.length || 0 }}</td>
+          <td *ngIf="!isDemoMode"><span class="db-badge">{{ race.databaseName }}</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noData>
+      <div class="empty-state">
+        <div class="empty-icon">🗂️</div>
+        <h3>No records found</h3>
+        <p>There are no {{ isDemoMode ? 'demo' : 'live' }} race records to manage.</p>
+      </div>
+    </ng-template>
+
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="spinner"></div>
+      <span>Updating Records...</span>
+    </div>
+  </div>
+</div>

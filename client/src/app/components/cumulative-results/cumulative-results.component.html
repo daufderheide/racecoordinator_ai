@@ -40,6 +40,10 @@
         <span class="material-icons">summarize</span>
         Detailed Report
       </button>
+      <button class="maintenance-btn" (click)="goToMaintenance()">
+        <span class="material-icons">settings_backup_restore</span>
+        Maintenance
+      </button>
     </div>
   </div>
 
@@ -102,9 +106,14 @@
     </div>
   </div>
 
-  <div class="main-content">
+  <div
+    class="main-content"
+    (mousemove)="onMouseMove($event)"
+    (mouseup)="onMouseUp()"
+    (mouseleave)="onMouseUp()"
+  >
     <!-- Race History Panel -->
-    <div class="history-panel">
+    <div class="history-panel" [style.width.px]="sidebarWidth">
       <div class="panel-header">
         <span>Race History</span>
         <span class="material-icons" style="opacity: 0.5; font-size: 1.2rem"
@@ -117,6 +126,7 @@
           class="race-item"
           [class.selected]="selectedRaces.has(race._id)"
           (click)="toggleRaceSelection(race._id)"
+          (dblclick)="onRaceDoubleClick(race._id)"
         >
           <div class="checkbox">
             <span
@@ -126,16 +136,32 @@
               >check</span
             >
           </div>
-          <div class="race-info-compact">
-            <span class="race-name">{{ race.model?.name }}</span>
-            <span class="meta-separator">•</span>
-            <span class="driver-count-inline">{{
-              race.drivers?.length || 0
-            }}</span>
-            <span class="meta-separator">•</span>
-            <span class="race-date-inline">{{
-              formatDate(race.statistics?.startMillis)
-            }}</span>
+          <div class="race-info-detailed">
+            <div class="race-date-time-block">
+              <span class="race-date-primary">{{
+                formatDateOnly(race.statistics?.startMillis)
+              }}</span>
+              <span class="race-time-secondary">{{
+                formatTime(race.statistics?.startMillis)
+              }}</span>
+            </div>
+
+            <div class="race-main-details">
+              <span class="race-name-inline">{{ race.model?.name }}</span>
+              <span class="meta-separator">•</span>
+              <div class="race-meta-inline">
+                <span class="race-track-name">{{
+                  race.track?.name || "Unknown Track"
+                }}</span>
+                <span class="race-tag-compact" *ngIf="race.car_class">{{
+                  race.car_class
+                }}</span>
+                <span class="meta-separator">•</span>
+                <span class="driver-count-inline"
+                  >{{ race.drivers?.length || 0 }}d</span
+                >
+              </div>
+            </div>
           </div>
         </div>
         <div class="empty-state" *ngIf="filteredHistory.length === 0">
@@ -143,6 +169,11 @@
           <p>No race history found</p>
         </div>
       </div>
+    </div>
+
+    <!-- Horizontal Resizer -->
+    <div class="resizer" (mousedown)="onResizeStart($event)">
+      <div class="resizer-handle"></div>
     </div>
 
     <!-- Standings Table Panel -->

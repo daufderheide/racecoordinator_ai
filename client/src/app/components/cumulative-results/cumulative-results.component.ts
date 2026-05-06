@@ -53,9 +53,11 @@ export class CumulativeResultsComponent implements OnInit {
   isLoading = true;
   Infinity = Infinity;
   // Sorting mode: 'points' (default) or 'laps'
-  sortMode: "points" | "laps" = "points";
+  sortMode: "laps" | "points" = "laps";
   selectedDriverStats: DriverDetailedStats | null = null;
   showDemoData: boolean = false;
+  sidebarWidth: number = 550;
+  private isResizing = false;
 
   constructor(
     private dataService: DataService,
@@ -74,10 +76,21 @@ export class CumulativeResultsComponent implements OnInit {
     this.isLoading = true;
     this.dataService.getRaceHistory(this.showDemoData).subscribe({
       next: (data) => {
-        this.history = data.sort((a, b) => {
+        console.log("CumulativeResultsComponent: First race raw data sample:", data[0]);
+        // 1. Sort the raw data first to ensure stable indices for fallback IDs
+        const sortedData = data.sort((a, b) => {
           const timeA = a.statistics?.startMillis || 0;
           const timeB = b.statistics?.startMillis || 0;
           return timeB - timeA;
+        });
+
+        // 2. Map with index-based IDs for uniqueness
+        this.history = sortedData.map((r, index) => {
+          const id = this.getNormalizedId(r._id, r);
+          return {
+            ...r,
+            _id: id || `fallback-${index}-${r.statistics?.startMillis || 0}`
+          };
         });
         this.updateFilterOptions();
         this.applyStoredSelection();
@@ -97,14 +110,60 @@ export class CumulativeResultsComponent implements OnInit {
     this.loadHistory();
   }
 
-  toggleRaceSelection(raceId: string) {
-    if (this.selectedRaces.has(raceId)) {
-      this.selectedRaces.delete(raceId);
+  toggleRaceSelection(raceId: any) {
+    const id = this.getNormalizedId(raceId);
+    console.log("CumulativeResultsComponent: Toggling selection for ID:", id);
+    if (this.selectedRaces.has(id)) {
+      this.selectedRaces.delete(id);
     } else {
-      this.selectedRaces.add(raceId);
+      this.selectedRaces.add(id);
     }
     this.saveSelectedRaces();
     this.calculateCumulativeStandings();
+  }
+
+  onRaceDoubleClick(raceId: any) {
+    const id = this.getNormalizedId(raceId);
+    console.log("CumulativeResultsComponent: Double clicked race:", id);
+
+    if (id) {
+      this.router.navigate(["/analytics/race", id], { 
+        queryParams: { demo: this.showDemoData } 
+      });
+    } else {
+      console.error("CumulativeResultsComponent: Could not determine race ID for navigation");
+    }
+  }
+
+  private getNormalizedId(id: any, fallback?: any): string {
+    // 1. Try to find a known unique string ID first
+    let bestId = "";
+    
+    if (typeof id === 'string' && id.length > 5) {
+      bestId = id;
+    } else if (fallback?.entity_id) {
+      bestId = fallback.entity_id;
+    } else if (id?.$oid) {
+      bestId = id.$oid;
+    } else if (id?.id && typeof id.id === 'string') {
+      bestId = id.id;
+    } else if (fallback?._id && typeof fallback._id === 'string') {
+      bestId = fallback._id;
+    }
+    
+    if (bestId) return bestId;
+
+    // 2. Fallback to object stringification if no string ID found
+    if (id && typeof id === 'object') {
+      const str = JSON.stringify(id);
+      // If it looks like a generic timestamp object, it's probably not unique enough
+      if (str.includes("timestamp") && str.length < 50) {
+        return ""; // Force fallback-index logic in loadHistory
+      }
+      return str;
+    }
+    
+    return id ? String(id) : "";
   }
 
   selectAll() {
@@ -201,12 +260,18 @@ export class CumulativeResultsComponent implements OnInit {
           if (b.totalPoints !== a.totalPoints) {
             return b.totalPoints - a.totalPoints;
           }
-          return b.totalLaps - a.totalLaps;
+          if (b.totalLaps !== a.totalLaps) {
+            return b.totalLaps - a.totalLaps;
+          }
+          return a.totalTime - b.totalTime;
         } else {
           if (b.totalLaps !== a.totalLaps) {
             return b.totalLaps - a.totalLaps;
           }
-          return b.totalPoints - a.totalPoints;
+          if (b.totalPoints !== a.totalPoints) {
+            return b.totalPoints - a.totalPoints;
+          }
+          return a.totalTime - b.totalTime;
         }
       });
 
@@ -305,12 +370,41 @@ export class CumulativeResultsComponent implements OnInit {
         // Initialize cumulative stats for this race
         const cumulative = new Map<
           string,
-          { laps: number; points: number; time: number }
+          { laps: number; points: number; time: number; name: string }
         >();
+
+        // 1. Pre-collect ALL unique drivers in this race
+        const allDriverIds = new Set<string>();
+        if (race.drivers) {
+          race.drivers.forEach((d: any) => {
+            const driverObj = d.driver || d;
+            const id = driverObj?.entity_id || d.objectId || d._id;
+            if (id) {
+              allDriverIds.add(id);
+              if (!cumulative.has(id)) {
+                cumulative.set(id, { laps: 0, points: 0, time: 0, name: driverObj.name || "Unknown" });
+              }
+            }
+          });
+        }
+        race.heats.forEach((h: any) => {
+          h.drivers?.forEach((hd: any) => {
+            const participant = hd.driver;
+            const driverObj = participant?.driver || participant || hd;
+            const id = driverObj?.entity_id || participant?.objectId || hd.objectId;
+            if (id) {
+              allDriverIds.add(id);
+              if (!cumulative.has(id)) {
+                cumulative.set(id, { laps: 0, points: 0, time: 0, name: driverObj.name || "Unknown" });
+              }
+            }
+          });
+        });
 
         race.heats.forEach((heat, heatIdx) => {
           reportHtml += `<div class="segment-section">`;
-          reportHtml += `<div class="segment-title">Segment #${heatIdx + 1}</div>`;
+          const isFinal = heatIdx === race.heats.length - 1;
+          reportHtml += `<div class="segment-title">Segment #${heatIdx + 1}${isFinal ? " / FINAL Standings" : ""}</div>`;
           reportHtml += `<table><thead><tr>
             <th>Name</th>
             <th>Lane</th>
@@ -327,58 +421,53 @@ export class CumulativeResultsComponent implements OnInit {
             <th class="time">Seg Run Time</th>
           </tr></thead><tbody>`;
 
-          const heatDrivers = heat.drivers || [];
-          // Calculate heat ranking for "Seg Place"
-          const rankedHeatDrivers = [...heatDrivers].sort((a, b) => {
-            const lapsA = a.driver?.totalLaps || 0;
-            const lapsB = b.driver?.totalLaps || 0;
-            if (lapsA !== lapsB) return lapsB - lapsA;
-            return (a.driver?.totalTime || 0) - (b.driver?.totalTime || 0);
+          const currentHeatDrivers = heat.drivers || [];
+          
+          // Pre-update cumulative stats for this heat
+          currentHeatDrivers.forEach((hd: any) => {
+            const driverObj = hd.driver?.driver || hd.driver;
+            const id = driverObj?.entity_id || hd.driver?.objectId || hd.objectId;
+            if (id && cumulative.has(id)) {
+              const c = cumulative.get(id)!;
+              c.laps += hd.driver?.totalLaps || 0;
+              c.time += hd.driver?.totalTime || 0;
+              c.points += hd.driver?.rankValue || 0;
+            }
           });
 
-          // Pre-update cumulative stats for "Race Place" calculation
-          heatDrivers.forEach((hd: any) => {
-            const driverId =
-              hd.driver?.driver?.entity_id || hd.driver?.objectId;
-            if (!cumulative.has(driverId))
-              cumulative.set(driverId, { laps: 0, points: 0, time: 0 });
-            const c = cumulative.get(driverId)!;
-            c.laps += hd.driver?.totalLaps || 0;
-            c.time += hd.driver?.totalTime || 0;
-            c.points += hd.driver?.rankValue || 0;
-          });
-
-          // Calculate current overall rank for "Race Place"
-          const allDriversInRace = Array.from(cumulative.keys());
-          const overallRanked = [...allDriversInRace].sort((aId, bId) => {
+          // Sort ALL drivers by cumulative standings
+          const sortedAllDrivers = Array.from(allDriverIds).sort((aId, bId) => {
             const ca = cumulative.get(aId)!;
             const cb = cumulative.get(bId)!;
-            if (ca.points !== cb.points) return cb.points - ca.points;
             if (ca.laps !== cb.laps) return cb.laps - ca.laps;
+            if (ca.points !== cb.points) return cb.points - ca.points;
             return ca.time - cb.time;
           });
 
-          heatDrivers.forEach((hd: any, hdIdx: number) => {
-            const driverId =
-              hd.driver?.driver?.entity_id || hd.driver?.objectId;
-            const name = hd.driver?.driver?.name || "Unknown";
-            const laneName = this.getLaneName(hdIdx, race.track);
-            const avgLap = hd.driver?.averageLapTime?.toFixed(3) || "0.000";
-            const fastLap = hd.driver?.bestLapTime?.toFixed(3) || "0.000";
-            const medLap = hd.driver?.medianLapTime?.toFixed(3) || "0.000";
-            const segLaps = hd.driver?.totalLaps || 0;
-            const segPlace =
-              rankedHeatDrivers.findIndex((rhd) => rhd === hd) + 1;
+          sortedAllDrivers.forEach((driverId, rowIndex) => {
             const c = cumulative.get(driverId)!;
+            const hd = currentHeatDrivers.find((hDriver: any) => {
+              const hDriverObj = hDriver.driver?.driver || hDriver.driver;
+              const hId = hDriverObj?.entity_id || hDriver.driver?.objectId || hDriver.objectId;
+              return hId === driverId;
+            });
+
+            const isSitout = !hd;
+            const laneName = hd ? this.getLaneName(currentHeatDrivers.indexOf(hd), race.track) : "SITOUT";
+            const avgLap = hd?.driver?.averageLapTime?.toFixed(3) || "-";
+            const fastLap = hd?.driver?.bestLapTime?.toFixed(3) || "-";
+            const medLap = hd?.driver?.medianLapTime?.toFixed(3) || "-";
+            const segLaps = hd?.driver?.totalLaps ?? "SITOUT";
+            const segPlace = hd ? currentHeatDrivers.sort((a: any, b: any) => (b.driver?.totalLaps || 0) - (a.driver?.totalLaps || 0)).indexOf(hd) + 1 : "-";
             const totalLaps = c.laps;
-            const segPoints = hd.driver?.rankValue || 0;
-            const racePlace = overallRanked.indexOf(driverId) + 1;
+            const segPoints = hd?.driver?.rankValue || 0;
+            const racePlace = rowIndex + 1;
             const totalPoints = c.points;
             const totalRunTime = this.formatTotalTime(c.time);
-            const segRunTime = this.formatTotalTime(hd.driver?.totalTime || 0);
+            const segRunTime = this.formatTotalTime(hd?.driver?.totalTime || 0);
 
-            reportHtml += `<tr>
-              <td>${name}</td>
+            reportHtml += `<tr style="${isSitout ? "opacity: 0.6; background-color: #f9f9f9;" : ""}">
+              <td>${c.name}</td>
               <td>${laneName}</td>
               <td class="num">${avgLap}</td>
               <td class="num">${fastLap}</td>
@@ -572,6 +661,23 @@ export class CumulativeResultsComponent implements OnInit {
     });
   }
 
+  formatDateOnly(millis: number | undefined): string {
+    if (!millis) return "Unknown Date";
+    return new Date(millis).toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      year: "2-digit",
+    });
+  }
+
+  formatTime(millis: number | undefined): string {
+    if (!millis) return "";
+    return new Date(millis).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
   formatTotalTime(totalTimeSeconds: number): string {
     if (!totalTimeSeconds || totalTimeSeconds === 0) return "0.000";
     const hours = Math.floor(totalTimeSeconds / 3600);
@@ -598,6 +704,27 @@ export class CumulativeResultsComponent implements OnInit {
 
   goBack() {
     this.router.navigate(["/raceday-setup"]);
+  }
+
+  goToMaintenance() {
+    this.router.navigate(["/analytics/maintenance"]);
+  }
+
+  onResizeStart(event: MouseEvent) {
+    this.isResizing = true;
+    event.preventDefault();
+  }
+
+  onMouseMove(event: MouseEvent) {
+    if (!this.isResizing) return;
+    const newWidth = event.clientX - 24; // 24px padding/offset compensation
+    if (newWidth > 300 && newWidth < 1000) {
+      this.sidebarWidth = newWidth;
+    }
+  }
+
+  onMouseUp() {
+    this.isResizing = false;
   }
 
   getAvatarUrl(url: string | undefined): string {

@@ -88,9 +88,9 @@ public class DatabaseTaskHandler {
     app.get("/api/databases/{name}/export", this::exportDatabase);
     app.post("/api/databases/import", this::importDatabase);
 
-    // History Data Endpoints
     app.get("/api/history/races", this::getRaceHistoryList);
     app.get("/api/history/races/{id}", this::getRaceHistoryById);
+    app.delete("/api/history/races/{id}", this::handleDeleteRaceHistory);
     app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv);
     app.get("/api/history/stats", this::getGlobalStatistics);
   }
@@ -1103,10 +1103,12 @@ public class DatabaseTaskHandler {
   private void getRaceHistoryList(Context ctx) {
     try {
       boolean isDemo = "true".equals(ctx.queryParam("demo"));
+      System.out.println("Fetching race history list. Demo Mode: " + isDemo);
       DatabaseService dbService = DatabaseService.getInstance();
       List<RaceHistoryRecord> allHistory = new ArrayList<>();
       
       List<String> dbs = databaseContext.listDatabases();
+      System.out.println("Found databases: " + String.join(", ", dbs));
       for (String dbName : dbs) {
         if ("admin".equals(dbName) || "local".equals(dbName) || "config".equals(dbName)) {
           continue;
@@ -1334,5 +1336,26 @@ public class DatabaseTaskHandler {
       result.add(new CustomRotation(numDrivers, heats));
     }
     return result;
+  }
+
+  private void handleDeleteRaceHistory(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      boolean isDemo = "true".equals(ctx.queryParam("demo"));
+      String dbName = ctx.queryParam("database");
+      
+      MongoDatabase db = dbName != null ? databaseContext.getMongoClient().getDatabase(dbName) : databaseContext.getDatabase();
+      DatabaseService dbService = DatabaseService.getInstance();
+      
+      boolean deleted = dbService.deleteRaceHistoryById(db, id, isDemo);
+      if (deleted) {
+        ctx.status(204);
+      } else {
+        ctx.status(404).result("Race history not found");
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      ctx.status(500).result("Error deleting race history: " + e.getMessage());
+    }
   }
 }
