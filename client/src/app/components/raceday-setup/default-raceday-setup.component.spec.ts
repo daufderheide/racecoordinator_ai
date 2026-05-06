@@ -602,4 +602,192 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.errorMessage).toContain("Team Alpha");
     expect(component.errorMessage).toContain("Team Beta");
   }));
+
+  describe("Natural Sorting", () => {
+    it("should sort participants naturally using naturalSortParticipants method", () => {
+      const participants = [
+        { entity_id: "d1", name: "Driver 10" } as any,
+        { entity_id: "d2", name: "Driver 1" } as any,
+        { entity_id: "d3", name: "Driver 2" } as any,
+        { entity_id: "d4", name: "Alice" } as any,
+        { entity_id: "d5", name: "Driver 20" } as any,
+      ];
+
+      const sorted = participants.sort((a, b) => 
+        (component as any).naturalSortParticipants(a, b)
+      );
+
+      expect(sorted.map(p => p.name)).toEqual([
+        "Alice", "Driver 1", "Driver 2", "Driver 10", "Driver 20"
+      ]);
+    });
+
+    it("should sort teams naturally using naturalSortParticipants method", () => {
+      const teams = [
+        { entity_id: "t1", name: "Team 10" } as any,
+        { entity_id: "t2", name: "Team 1" } as any,
+        { entity_id: "t3", name: "Team 2" } as any,
+        { entity_id: "t4", name: "Alpha Team" } as any,
+      ];
+
+      const sorted = teams.sort((a, b) => 
+        (component as any).naturalSortParticipants(a, b)
+      );
+
+      expect(sorted.map(p => p.name)).toEqual([
+        "Alpha Team", "Team 1", "Team 2", "Team 10"
+      ]);
+    });
+
+    it("should handle mixed drivers and teams naturally", () => {
+      const participants = [
+        { entity_id: "t1", name: "Team 10" } as any,
+        { entity_id: "d1", name: "Driver 1" } as any,
+        { entity_id: "t2", name: "Team 2" } as any,
+        { entity_id: "d2", name: "Driver 10" } as any,
+      ];
+
+      const sorted = participants.sort((a, b) => 
+        (component as any).naturalSortParticipants(a, b)
+      );
+
+      expect(sorted.map(p => p.name)).toEqual([
+        "Driver 1", "Driver 10", "Team 2", "Team 10"
+      ]);
+    });
+
+    it("should sort unselected participants naturally on initial load", fakeAsync(() => {
+      // Create mock data with driver names that need natural sorting
+      const mockDrivers = [
+        { entity_id: "d1", name: "Driver 10", nickname: "Driver 10" },
+        { entity_id: "d2", name: "Driver 1", nickname: "Driver 1" },
+        { entity_id: "d3", name: "Driver 2", nickname: "Driver 2" },
+        { entity_id: "d4", name: "Alice", nickname: "Alice" },
+        { entity_id: "d5", name: "Driver 20", nickname: "Driver 20" },
+      ];
+      
+      mockDataService.getDrivers.and.returnValue(of(mockDrivers));
+      mockDataService.getTeams.and.returnValue(of([]));
+      mockDataService.getRaces.and.returnValue(of([]));
+
+      // Re-initialize component to trigger ngOnInit with new data
+      component.ngOnInit();
+      flush();
+      fixture.detectChanges();
+
+      // Verify unselected participants are naturally sorted
+      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
+        "Alice", "Driver 1", "Driver 2", "Driver 10", "Driver 20"
+      ]);
+    }));
+
+    it("should maintain natural sorting when moving participants from selected to unselected", fakeAsync(() => {
+      // Setup initial state with unsorted participants
+      component.unselectedParticipants = [
+        { entity_id: "d1", name: "Driver 10" } as any,
+        { entity_id: "d2", name: "Driver 1" } as any,
+        { entity_id: "d3", name: "Driver 2" } as any,
+      ];
+      component.selectedParticipants = [];
+
+      // Select a participant (moving from unselected to selected)
+      const participantToSelect = component.unselectedParticipants[1]; // "Driver 1"
+      component.toggleParticipantSelection(participantToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      // Verify unselected participants remain naturally sorted
+      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
+        "Driver 10", "Driver 2"
+      ]);
+
+      // Unselect the participant (moving back to unselected)
+      component.toggleParticipantSelection(participantToSelect, true);
+      flush();
+      fixture.detectChanges();
+
+      // Verify unselected participants are naturally sorted again
+      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
+        "Driver 1", "Driver 2", "Driver 10"
+      ]);
+    }));
+
+    it("should maintain natural sorting when removing all participants", fakeAsync(() => {
+      // Setup initial state with selected participants
+      component.selectedParticipants = [
+        { entity_id: "d1", name: "Driver 10" } as any,
+        { entity_id: "d2", name: "Driver 1" } as any,
+        { entity_id: "d3", name: "Driver 2" } as any,
+      ];
+      component.unselectedParticipants = [];
+
+      // Remove all participants
+      component.removeAllParticipants();
+      flush();
+      fixture.detectChanges();
+
+      // Verify unselected participants are naturally sorted
+      expect(component.unselectedParticipants.map(p => p.name)).toEqual([
+        "Driver 1", "Driver 2", "Driver 10"
+      ]);
+      expect(component.selectedParticipants.length).toBe(0);
+    }));
+
+    it("should handle empty and undefined names in natural sorting", () => {
+      const participants = [
+        { entity_id: "d1", name: "" } as any,
+        { entity_id: "d2", name: undefined } as any,
+        { entity_id: "d3", name: "Driver 1" } as any,
+        { entity_id: "d4", name: null } as any,
+      ];
+
+      const sorted = participants.sort((a, b) => 
+        (component as any).naturalSortParticipants(a, b)
+      );
+
+      // Empty/undefined/null names should come first, then alphabetically
+      expect(sorted.map(p => p.name || "")).toEqual([
+        "", "", "", "Driver 1"
+      ]);
+    });
+
+    it("should handle complex alphanumeric names naturally", () => {
+      const participants = [
+        { entity_id: "d1", name: "Driver v1.2.10" } as any,
+        { entity_id: "d2", name: "Driver v1.2.2" } as any,
+        { entity_id: "d3", name: "Driver v1.10.1" } as any,
+        { entity_id: "d4", name: "Driver v1.2.3" } as any,
+      ];
+
+      const sorted = participants.sort((a, b) => 
+        (component as any).naturalSortParticipants(a, b)
+      );
+
+      expect(sorted.map(p => p.name)).toEqual([
+        "Driver v1.2.2", "Driver v1.2.3", "Driver v1.2.10", "Driver v1.10.1"
+      ]);
+    });
+
+    it("should preserve natural sorting after search filter is cleared", () => {
+      // Setup with naturally sorted participants
+      component.unselectedParticipants = [
+        { entity_id: "d1", name: "Alice" } as any,
+        { entity_id: "d2", name: "Driver 1" } as any,
+        { entity_id: "d3", name: "Driver 2" } as any,
+        { entity_id: "d4", name: "Driver 10" } as any,
+      ];
+
+      // Apply search filter
+      component.driverSearchQuery = "Driver";
+      expect(component.filteredUnselectedParticipants.map(p => p.name)).toEqual([
+        "Driver 1", "Driver 2", "Driver 10"
+      ]);
+
+      // Clear search filter
+      component.driverSearchQuery = "";
+      expect(component.filteredUnselectedParticipants.map(p => p.name)).toEqual([
+        "Alice", "Driver 1", "Driver 2", "Driver 10"
+      ]);
+    });
+  });
 });

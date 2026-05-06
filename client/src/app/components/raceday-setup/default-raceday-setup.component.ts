@@ -243,7 +243,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           }
         }
         this.unselectedParticipants = Array.from(participantMap.values()).sort(
-          (a, b) => a.name.localeCompare(b.name),
+          (a, b) => this.naturalSortParticipants(a, b),
         );
 
         this.cdr.detectChanges();
@@ -373,7 +373,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
         this.unselectedParticipants = [
           ...this.unselectedParticipants,
           participant,
-        ].sort((a, b) => a.name.localeCompare(b.name));
+        ].sort((a, b) => this.naturalSortParticipants(a, b));
       } else {
         // Was unselected, now selecting
         this.unselectedParticipants = this.unselectedParticipants.filter(
@@ -403,7 +403,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.unselectedParticipants = [
         ...this.unselectedParticipants,
         ...this.selectedParticipants,
-      ].sort((a, b) => a.name.localeCompare(b.name));
+      ].sort((a, b) => this.naturalSortParticipants(a, b));
       this.selectedParticipants = [];
     });
   }
