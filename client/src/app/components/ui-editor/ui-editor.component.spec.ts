@@ -1947,9 +1947,14 @@ describe("UIEditorComponent", () => {
         By.css("app-acknowledgement-modal"),
       );
       expect(modal).toBeTruthy();
-      expect(modal.componentInstance.visible()).toBeTrue();
-      expect(modal.componentInstance.title()).toBe("GEN_SUCCESS");
-      expect(modal.componentInstance.message()).toBe("UE_SUCCESS_DUPLICATE");
+      
+      // Verify component properties are set correctly
+      expect(component.showSuccessModal).toBeTrue();
+      expect(component.successModalTitle).toBe("GEN_SUCCESS");
+      expect(component.successModalMessage).toBe("UE_SUCCESS_DUPLICATE");
+      expect(component.successModalParams).toEqual({
+        name: "Test Theme (Copy)",
+      });
     }));
   });
 });
