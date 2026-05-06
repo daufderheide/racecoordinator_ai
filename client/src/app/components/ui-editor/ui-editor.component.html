@@ -82,14 +82,15 @@
             >
 <h1>{{ "UE_HEADER_FLAGS" | translate }}</h1>
                         </div>
+          @if (sectionsExpanded[theme.entity_id]) {
           <div
             class="section-content"
-            @if="sectionsExpanded[theme.entity_id]"
           >
             <ng-container
               *ngTemplateOutlet="themeContent; context: { theme: theme }"
             ></ng-container>
           </div>
+        }
           @if (sectionsExpanded["flags"]) {
             <div class="section-content">
               <div class="panel flags-panel">
