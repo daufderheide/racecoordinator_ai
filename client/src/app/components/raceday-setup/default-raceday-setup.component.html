@@ -42,6 +42,10 @@
               >
                 {{ "RDS_MENU_SEASON" | translate }}
               </div>
+              <hr class="menu-dropdown-divider" />
+              <div class="menu-dropdown-item" (click)="openAssetManager()">
+                {{ "RDS_MENU_ASSETS" | translate }}
+              </div>
             </div>
           }
           <!-- File Dropdown -->
@@ -49,9 +53,6 @@
             <div class="menu-dropdown">
               <div class="menu-dropdown-item" (click)="loadSavedRaces()">
                 {{ "RDS_MENU_LOAD_RACE" | translate }}
-              </div>
-              <div class="menu-dropdown-item" (click)="openAssetManager()">
-                {{ "Asset Manager" }}
               </div>
               <div class="menu-dropdown-item" (click)="openDatabaseManager()">
                 {{ "Database Manager" }}
