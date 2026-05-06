@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { NgTemplateOutlet } from "@angular/common";
+import { CommonModule, NgTemplateOutlet } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -39,6 +39,8 @@ import { deepCopy } from "@app/utils/clone.utils";
 
 import { ColumnPreviewComponent } from "./column-preview/column-preview.component";
 import { ReorderDialogComponent } from "./reorder-dialog/reorder-dialog.component";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { NO_ERRORS_SCHEMA } from "@angular/core";
 
 export interface UIEditorState {
   settings: Settings;
@@ -51,6 +53,7 @@ export interface UIEditorState {
   templateUrl: "./ui-editor.component.html",
   styleUrl: "./ui-editor.component.css",
   imports: [
+    CommonModule,
     EditorTitleComponent,
     ColumnPreviewComponent,
     FormsModule,
@@ -61,7 +64,9 @@ export interface UIEditorState {
     ReorderDialogComponent,
     ConfirmationModalComponent,
     TranslatePipe,
+    AcknowledgementModalComponent,
   ],
+  schemas: [NO_ERRORS_SCHEMA],
 })
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;
@@ -106,6 +111,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
+  
+  // Success modal properties
+  showSuccessModal = false;
+  successModalTitle = '';
+  successModalMessage = '';
+  successModalParams: any = {};
+  private themeToCollapseAfterSuccess: string | null = null;
 
   showDeleteConfirm = false;
   themeToDelete: Theme | null = null;
@@ -692,7 +704,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.saveExpanderState();
   }
 
-  toggleThemeSection(themeId: string, activate = true) {
+  toggleThemeSection(themeId: string, activate = false) {
     const wasExpanded = !!this.sectionsExpanded[themeId];
 
     // Collapse all theme sections
@@ -703,7 +715,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!wasExpanded) {
       // Expand
       this.sectionsExpanded[themeId] = true;
-      if (activate) {
+      // Only activate if not already active to prevent recursion
+      if (activate && this.editingSettings.activeThemeId !== themeId) {
         this.onThemeSelected(themeId);
       }
     }
@@ -960,6 +973,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       // Expand the new theme without activating it
       this.toggleThemeSection(created.entity_id, false);
       this.captureState();
+      
+      // Show success message using RCAI modal
+      this.successModalTitle = "GEN_SUCCESS";
+      this.successModalMessage = "UE_SUCCESS_CREATE";
+      this.successModalParams = { name: created.name };
+      this.showSuccessModal = true;
     } catch (e) {
       this.logger.error("Failed to create theme from default", e);
       alert(this.translationService.translate("UE_ERROR_CREATE_FAILED"));
@@ -985,7 +1004,28 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       );
       this.editingState.themes = [...this.editingState.themes, created];
       this.refreshDisplayProperties();
+      
+      // Preserve current active theme - do not activate the new theme
+      const currentActiveThemeId = this.editingSettings.activeThemeId;
+      
+      // Always keep new theme collapsed
+      this.sectionsExpanded[created.entity_id] = false;
+      
+      // Collapse original theme after success modal
+      this.themeToCollapseAfterSuccess = theme.entity_id;
+      
+      this.saveExpanderState();
+      
+      // Ensure the new theme is not activated
+      this.editingSettings.activeThemeId = currentActiveThemeId;
+      
       this.captureState();
+      
+      // Show success message using RCAI modal
+      this.successModalTitle = "GEN_SUCCESS";
+      this.successModalMessage = "UE_SUCCESS_DUPLICATE";
+      this.successModalParams = { name: created.name };
+      this.showSuccessModal = true;
     } catch (e) {
       this.logger.error("Failed to duplicate theme", e);
       alert(this.translationService.translate("UE_ERROR_DUPLICATE_FAILED"));
@@ -1043,6 +1083,20 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onCancelDeleteTheme() {
     this.showDeleteConfirm = false;
     this.themeToDelete = null;
+  }
+
+  onSuccessModalAcknowledge() {
+    this.showSuccessModal = false;
+    this.successModalTitle = '';
+    this.successModalMessage = '';
+    this.successModalParams = {};
+    
+    // Collapse the original theme after successful duplication
+    if (this.themeToCollapseAfterSuccess) {
+      this.sectionsExpanded[this.themeToCollapseAfterSuccess] = false;
+      this.saveExpanderState();
+      this.themeToCollapseAfterSuccess = null;
+    }
   }
 
   onDetachTheme() {

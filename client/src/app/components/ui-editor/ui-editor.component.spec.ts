@@ -132,6 +132,19 @@ class MockConfirmationModalComponent {
   confirm = output<void>();
 }
 @Component({
+  selector: "app-acknowledgement-modal",
+  standalone: true,
+  template: "",
+  imports: [FormsModule],
+})
+class MockAcknowledgementModalComponent {
+  visible = input<boolean>(false);
+  title = input<string>("");
+  message = input<string>("");
+  messageParams = input<any>({});
+  acknowledge = output<void>();
+}
+@Component({
   selector: "app-reorder-dialog",
   standalone: true,
   template: "",
@@ -286,6 +299,7 @@ describe("UIEditorComponent", () => {
         MockAssetPreviewComponent,
         MockToolbarComponent,
         MockConfirmationModalComponent,
+        MockAcknowledgementModalComponent,
         MockTranslatePipe,
         MockAudioSelectorComponent,
       ],
@@ -1759,5 +1773,183 @@ describe("UIEditorComponent", () => {
       const result = await promise;
       expect(result).toBeTrue();
     });
+  });
+
+  describe("success modal functionality", () => {
+    it("should show success modal after duplicating a theme", fakeAsync(() => {
+      const originalTheme = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Original Theme",
+        slots: {},
+      } as Theme;
+      const duplicatedTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Original Theme (Copy)",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [originalTheme];
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(duplicatedTheme),
+      );
+
+      component.onDuplicateTheme(originalTheme);
+      flush();
+
+      expect(component.showSuccessModal).toBeTrue();
+      expect(component.successModalTitle).toBe("GEN_SUCCESS");
+      expect(component.successModalMessage).toBe("UE_SUCCESS_DUPLICATE");
+      expect(component.successModalParams).toEqual({
+        name: "Original Theme (Copy)",
+      });
+    }));
+
+    it("should show success modal after creating a new theme", fakeAsync(() => {
+      const defaultTheme = {
+        entity_id: "t1",
+        is_default: true,
+        name: "Default",
+        slots: {},
+      } as Theme;
+      const newTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "RaceCoordinator AI (Copy)",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [defaultTheme];
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+
+      mockThemeService.duplicateTheme.and.returnValue(Promise.resolve(newTheme));
+
+      component.createNewTheme();
+      flush();
+
+      expect(component.showSuccessModal).toBeTrue();
+      expect(component.successModalTitle).toBe("GEN_SUCCESS");
+      expect(component.successModalMessage).toBe("UE_SUCCESS_CREATE");
+      expect(component.successModalParams).toEqual({
+        name: "RaceCoordinator AI (Copy)",
+      });
+    }));
+
+    it("should collapse original theme after acknowledging success modal", fakeAsync(() => {
+      const originalTheme = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Original Theme",
+        slots: {},
+      } as Theme;
+      const duplicatedTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Original Theme (Copy)",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [originalTheme];
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+      component.sectionsExpanded["t1"] = true;
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(duplicatedTheme),
+      );
+
+      component.onDuplicateTheme(originalTheme);
+      flush();
+
+      // Before acknowledgment, original theme should still be expanded
+      expect(component.sectionsExpanded["t1"]).toBeTrue();
+      expect((component as any).themeToCollapseAfterSuccess).toBe("t1");
+
+      // Acknowledge the success modal
+      component.onSuccessModalAcknowledge();
+
+      // After acknowledgment, original theme should be collapsed
+      expect(component.sectionsExpanded["t1"]).toBeFalse();
+      expect((component as any).themeToCollapseAfterSuccess).toBeNull();
+      expect(component.showSuccessModal).toBeFalse();
+    }));
+
+    it("should preserve active theme during duplication", fakeAsync(() => {
+      const activeTheme = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Active Theme",
+        slots: {},
+      } as Theme;
+      const duplicatedTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Active Theme (Copy)",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [activeTheme];
+      component.refreshDisplayProperties();
+      component.editingSettings.activeThemeId = "t1";
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(duplicatedTheme),
+      );
+
+      component.onDuplicateTheme(activeTheme);
+      flush();
+
+      // Active theme should remain the same
+      expect(component.editingSettings.activeThemeId).toBe("t1");
+      expect(mockThemeService.setActiveTheme).not.toHaveBeenCalledWith("t2");
+    }));
+
+    it("should hide success modal on acknowledge", () => {
+      component.showSuccessModal = true;
+      component.successModalTitle = "GEN_SUCCESS";
+      component.successModalMessage = "UE_SUCCESS_DUPLICATE";
+      component.successModalParams = { name: "Test Theme" };
+
+      component.onSuccessModalAcknowledge();
+
+      expect(component.showSuccessModal).toBeFalse();
+      expect(component.successModalTitle).toBe("");
+      expect(component.successModalMessage).toBe("");
+      expect(component.successModalParams).toEqual({});
+    });
+
+    it("should render acknowledgement modal component when success modal is shown", fakeAsync(() => {
+      const theme = {
+        entity_id: "t1",
+        is_default: false,
+        name: "Test Theme",
+        slots: {},
+      } as Theme;
+      const duplicatedTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Test Theme (Copy)",
+        slots: {},
+      } as Theme;
+      component.editingState.themes = [theme];
+      component.refreshDisplayProperties();
+
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(duplicatedTheme),
+      );
+
+      component.onDuplicateTheme(theme);
+      flush();
+      fixture.detectChanges();
+
+      const modal = fixture.debugElement.query(
+        By.css("app-acknowledgement-modal"),
+      );
+      expect(modal).toBeTruthy();
+      expect(modal.componentInstance.visible()).toBeTrue();
+      expect(modal.componentInstance.title()).toBe("GEN_SUCCESS");
+      expect(modal.componentInstance.message()).toBe("UE_SUCCESS_DUPLICATE");
+    }));
   });
 });
