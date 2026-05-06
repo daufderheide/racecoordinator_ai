@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   effect,
+  HostListener,
   input,
   model,
   OnDestroy,
@@ -28,6 +29,12 @@ import { TranslationService } from "@app/services/translation.service";
 interface PinAction {
   label: string;
   value: string;
+}
+
+interface PinGroup {
+  key: string;
+  label: string;
+  actions: PinAction[];
 }
 
 @Component({
@@ -58,7 +65,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     voltage: true,
     leds: true,
   };
-  ledBehaviors: PinAction[] = [];
+  ledBehaviors: PinGroup[] = [];
   liveVoltages: { [key: number]: number | undefined } = {};
   maxVoltagesSeen: { [key: number]: number | undefined } = {};
   isVoltageLinked: boolean = false;
@@ -67,6 +74,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   activeRgbLedStates: { [key: string]: boolean } = {};
   ledTypes: PinAction[] = [];
   colorOrders: PinAction[] = [];
+
+  // Custom Dropdown State
+  openPinDropdown: string | null = null;
+  groupsCollapsed: { [key: string]: boolean } = {}; // key is PinGroup.key
 
   private interfaceEventsSubscription?: Subscription;
   private portPollingSubscription?: Subscription;
@@ -113,6 +124,18 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         this.sectionsExpanded = { ...this.sectionsExpanded, ...parsed };
       } catch (e) {
         this.logger.error("Failed to parse saved sections", e);
+      }
+    }
+
+    // Load collapsed groups
+    const savedGroups = localStorage.getItem(
+      `rc.arduino-editor.groups-collapsed.${this.index()}`,
+    );
+    if (savedGroups) {
+      try {
+        this.groupsCollapsed = JSON.parse(savedGroups);
+      } catch (e) {
+        this.logger.error("Failed to parse saved groups", e);
       }
     }
 
@@ -527,12 +550,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   // Pin Action Logic
-  digitalPinActions: PinAction[] = [];
-  analogPinActions: PinAction[] = [];
+  digitalPinActions: PinGroup[] = [];
+  analogPinActions: PinGroup[] = [];
 
   getPinAction(isDigital: boolean, pinIndex: number): string {
     const val = this.getPinBehavior(isDigital, pinIndex);
     if (val === PinBehavior.BEHAVIOR_UNUSED || val === -1) return "";
+    if (val === PinBehavior.BEHAVIOR_RESERVED) return "reserved";
     if (val === PinBehavior.BEHAVIOR_CALL_BUTTON) return "master_call";
     if (val === PinBehavior.BEHAVIOR_RELAY) return "master_relay";
 
@@ -651,65 +675,165 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   private updateLedBehaviors() {
-    const behaviors: PinAction[] = [];
+    const lanes = this.lanes();
+    const groups: PinGroup[] = [];
 
-    // Add Unused first
-    behaviors.push({
+    // 1. General Group
+    const generalActions: PinAction[] = [];
+    generalActions.push({
       label: this.translationService.translate("AE_PIN_UNUSED"),
       value: RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString(),
     });
+    generalActions.push({
+      label: this.translationService.translate(
+        "RGB_LED_BEHAVIOR_HEAT_PROGRESS",
+      ),
+      value: RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS.toString(),
+    });
+    groups.push({ key: "", label: "", actions: generalActions });
 
-    const otherBehaviors: PinAction[] = [];
-    // Map all RgbLedBehavior except UNUSED
-    Object.keys(RgbLedBehavior).forEach((key) => {
-      const val = (RgbLedBehavior as any)[key];
-      if (
-        typeof val === "number" &&
-        val !== RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED
-      ) {
-        if (key === "RGB_LED_BEHAVIOR_RACE_STATE_BASE") {
-          for (let i = 1; i <= 5; i++) {
-            otherBehaviors.push({
-              label: this.translationService.translate(
-                "AE_LED_BEHAVIOR_RACE_STATE",
-                { index: i },
-              ),
-              value: (val + i - 1).toString(),
-            });
-          }
-        } else if (key === "RGB_LED_BEHAVIOR_COUNTDOWN_BASE") {
-          for (let i = 1; i <= 5; i++) {
-            otherBehaviors.push({
-              label: this.translationService.translate(
-                "AE_LED_BEHAVIOR_COUNTDOWN",
-                { index: i },
-              ),
-              value: (val + i - 1).toString(),
-            });
-          }
-        } else if (key.endsWith("_BASE")) {
-          const translationKey = this.getLedBaseTranslationKey(key);
-          this.lanes().forEach((_, i) => {
-            otherBehaviors.push({
-              label: this.translationService.translate(translationKey, {
-                lane: i + 1,
-              }),
-              value: (val + i).toString(),
-            });
-          });
-        } else {
-          otherBehaviors.push({
-            label: this.translationService.translate(key),
-            value: val.toString(),
-          });
-        }
-      }
+    // 2. Leader Group
+    const leaderActions: PinAction[] = [];
+    lanes.forEach((_, i) => {
+      leaderActions.push({
+        label: this.translationService.translate(
+          "AE_LED_BEHAVIOR_HEAT_LEADER_LANE",
+          { lane: i + 1 },
+        ),
+        value: (
+          RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER_BASE + i
+        ).toString(),
+      });
+    });
+    groups.push({
+      key: "AE_LED_GROUP_LEADER",
+      label: this.translationService.translate("AE_LED_GROUP_LEADER"),
+      actions: leaderActions,
     });
 
-    // Sort alphabetically
-    otherBehaviors.sort((a, b) => a.label.localeCompare(b.label));
+    // 3. Fuel Group
+    const fuelActions: PinAction[] = [];
+    lanes.forEach((_, i) => {
+      fuelActions.push({
+        label: this.translationService.translate(
+          "AE_LED_BEHAVIOR_FUEL_LEVEL_LANE",
+          { lane: i + 1 },
+        ),
+        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_FUEL_LEVEL_BASE + i).toString(),
+      });
+    });
+    groups.push({
+      key: "AE_LED_GROUP_FUEL",
+      label: this.translationService.translate("AE_LED_GROUP_FUEL"),
+      actions: fuelActions,
+    });
 
-    this.ledBehaviors = [...behaviors, ...otherBehaviors];
+    // 4. Refueling Group
+    const refuelActions: PinAction[] = [];
+    lanes.forEach((_, i) => {
+      refuelActions.push({
+        label: this.translationService.translate(
+          "AE_LED_BEHAVIOR_REFUELING_LANE",
+          { lane: i + 1 },
+        ),
+        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_REFUELING_BASE + i).toString(),
+      });
+    });
+    groups.push({
+      key: "AE_LED_GROUP_REFUELING",
+      label: this.translationService.translate("AE_LED_GROUP_REFUELING"),
+      actions: refuelActions,
+    });
+
+    // 5. Lap Indicator Group
+    const lapIndActions: PinAction[] = [];
+    lanes.forEach((_, i) => {
+      lapIndActions.push({
+        label: this.translationService.translate(
+          "AE_LED_BEHAVIOR_LAP_INDICATOR_LANE",
+          { lane: i + 1 },
+        ),
+        value: (
+          RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_INDICATOR_BASE + i
+        ).toString(),
+      });
+    });
+    groups.push({
+      key: "AE_LED_GROUP_LAP_INDICATOR",
+      label: this.translationService.translate("AE_LED_GROUP_LAP_INDICATOR"),
+      actions: lapIndActions,
+    });
+
+    // 6. Lap Sensor Group
+    const lapSensActions: PinAction[] = [];
+    lanes.forEach((_, i) => {
+      lapSensActions.push({
+        label: this.translationService.translate(
+          "AE_LED_BEHAVIOR_LAP_SENSOR_LANE",
+          { lane: i + 1 },
+        ),
+        value: (RgbLedBehavior.RGB_LED_BEHAVIOR_LAP_SENSOR_BASE + i).toString(),
+      });
+    });
+    groups.push({
+      key: "AE_LED_GROUP_LAP_SENSOR",
+      label: this.translationService.translate("AE_LED_GROUP_LAP_SENSOR"),
+      actions: lapSensActions,
+    });
+
+    // 7. Race State Group
+    const stateActions: PinAction[] = [];
+    for (let i = 1; i <= 5; i++) {
+      stateActions.push({
+        label: this.translationService.translate("AE_LED_BEHAVIOR_RACE_STATE", {
+          index: i,
+        }),
+        value: (
+          RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE +
+          i -
+          1
+        ).toString(),
+      });
+    }
+    groups.push({
+      key: "AE_LED_GROUP_RACE_STATE",
+      label: this.translationService.translate("AE_LED_GROUP_RACE_STATE"),
+      actions: stateActions,
+    });
+
+    // 8. Countdown Group
+    const countActions: PinAction[] = [];
+    for (let i = 1; i <= 5; i++) {
+      countActions.push({
+        label: this.translationService.translate("AE_LED_BEHAVIOR_COUNTDOWN", {
+          index: i,
+        }),
+        value: (
+          RgbLedBehavior.RGB_LED_BEHAVIOR_COUNTDOWN_BASE +
+          i -
+          1
+        ).toString(),
+      });
+    }
+    groups.push({
+      key: "AE_LED_GROUP_COUNTDOWN",
+      label: this.translationService.translate("AE_LED_GROUP_COUNTDOWN"),
+      actions: countActions,
+    });
+
+    // Sort each group's actions alphabetically by label
+    groups.forEach((g) => {
+      g.actions.sort((a, b) => a.label.localeCompare(b.label));
+    });
+
+    // Sort groups alphabetically by label, but keep the "None" group (empty key) first
+    groups.sort((a, b) => {
+      if (a.key === "") return -1;
+      if (b.key === "") return 1;
+      return a.label.localeCompare(b.label);
+    });
+
+    this.ledBehaviors = groups;
   }
 
   private updateLedTypes() {
@@ -1074,137 +1198,195 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   private updatePinActions() {
-    const actions: PinAction[] = [];
+    const lanes = this.lanes();
 
-    // 1. Unused
-    actions.push({
-      label: this.translationService.translate("AE_PIN_UNUSED"),
-      value: "",
-    });
+    const createGroups = (includeVoltage: boolean): PinGroup[] => {
+      const groups: PinGroup[] = [];
 
-    // 2. Reserved
-    actions.push({
-      label: this.translationService.translate("AE_PIN_RESERVED"),
-      value: "reserved",
-    });
-
-    // 3. Others (to be sorted alphabetically)
-    const otherActions: PinAction[] = [];
-
-    // Master Call
-    otherActions.push({
-      label: this.translationService.translate("AE_PIN_MASTER_CALL"),
-      value: "master_call",
-    });
-
-    // Per-lane actions
-    this.lanes().forEach((_, i) => {
-      // Call Button
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_CALL_BUTTON_LANE", {
-          lane: i + 1,
-        }),
-        value: `call_${i}`,
+      // 1. None Group (Unused, Reserved)
+      groups.push({
+        key: "",
+        label: "",
+        actions: [
+          {
+            label: this.translationService.translate("AE_PIN_UNUSED"),
+            value: "",
+          },
+          {
+            label: this.translationService.translate("AE_PIN_RESERVED"),
+            value: "reserved",
+          },
+        ],
       });
-      // Lap
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_LAP_LANE", {
-          lane: i + 1,
-        }),
-        value: `lap_${i}`,
+
+      // 2. Callbutton Group
+      const callActions: PinAction[] = [];
+      callActions.push({
+        label: this.translationService.translate("AE_PIN_MASTER_CALL"),
+        value: "master_call",
       });
-      // Segment
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_SEGMENT_LANE", {
-          lane: i + 1,
-        }),
-        value: `segment_${i}`,
+      lanes.forEach((_, i) => {
+        callActions.push({
+          label: this.translationService.translate("AE_PIN_CALL_BUTTON_LANE", {
+            lane: i + 1,
+          }),
+          value: `call_${i}`,
+        });
       });
-      // Relay
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_RELAY_LANE", {
-          lane: i + 1,
-        }),
-        value: `relay_${i}`,
+      groups.push({
+        key: "AE_BEHAVIOR_GROUP_CALLBUTTON",
+        label: this.translationService.translate(
+          "AE_BEHAVIOR_GROUP_CALLBUTTON",
+        ),
+        actions: callActions,
       });
-      // Pit In
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_PIT_IN_LANE", {
-          lane: i + 1,
-        }),
-        value: `pitin_${i}`,
+
+      // 3. Relay Group
+      const relayActions: PinAction[] = [];
+      relayActions.push({
+        label: this.translationService.translate("AE_PIN_RELAY"),
+        value: "master_relay",
       });
-      // Pit Out
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_PIT_OUT_LANE", {
-          lane: i + 1,
-        }),
-        value: `pitout_${i}`,
+      lanes.forEach((_, i) => {
+        relayActions.push({
+          label: this.translationService.translate("AE_PIN_RELAY_LANE", {
+            lane: i + 1,
+          }),
+          value: `relay_${i}`,
+        });
       });
-      // Pit In/Out
-      otherActions.push({
-        label: this.translationService.translate("AE_PIN_PIT_IN_OUT_LANE", {
-          lane: i + 1,
-        }),
-        value: `pitinout_${i}`,
+      groups.push({
+        key: "AE_BEHAVIOR_GROUP_RELAY",
+        label: this.translationService.translate("AE_BEHAVIOR_GROUP_RELAY"),
+        actions: relayActions,
       });
-    });
 
-    otherActions.push({
-      label: this.translationService.translate("AE_PIN_LED_RGB_STRING"),
-      value: "led_string",
-    });
-
-    // Sort other actions alphabetically by label
-    otherActions.sort((a, b) => a.label.localeCompare(b.label));
-
-    // Relay (Master)
-    otherActions.push({
-      label: this.translationService.translate("AE_PIN_RELAY"),
-      value: "master_relay",
-    });
-
-    // Re-sort after adding relays
-    otherActions.sort((a, b) => a.label.localeCompare(b.label));
-
-    // Combine for digital
-    this.digitalPinActions = [...actions, ...otherActions];
-
-    // Add Voltage Level for analog only
-    const analogOnlyActions: PinAction[] = [];
-    this.lanes().forEach((_, i) => {
-      analogOnlyActions.push({
-        label: this.translationService.translate("AE_PIN_VOLTAGE_LANE", {
-          lane: i + 1,
-        }),
-        value: `voltage_${i}`,
+      // 4. Pit Group
+      const pitActions: PinAction[] = [];
+      lanes.forEach((_, i) => {
+        pitActions.push({
+          label: this.translationService.translate("AE_PIN_PIT_IN_LANE", {
+            lane: i + 1,
+          }),
+          value: `pitin_${i}`,
+        });
+        pitActions.push({
+          label: this.translationService.translate("AE_PIN_PIT_OUT_LANE", {
+            lane: i + 1,
+          }),
+          value: `pitout_${i}`,
+        });
+        pitActions.push({
+          label: this.translationService.translate("AE_PIN_PIT_IN_OUT_LANE", {
+            lane: i + 1,
+          }),
+          value: `pitinout_${i}`,
+        });
       });
-    });
-    analogOnlyActions.sort((a, b) => a.label.localeCompare(b.label));
+      if (pitActions.length > 0) {
+        groups.push({
+          key: "AE_BEHAVIOR_GROUP_PIT",
+          label: this.translationService.translate("AE_BEHAVIOR_GROUP_PIT"),
+          actions: pitActions,
+        });
+      }
 
-    // Combine for analog
-    this.analogPinActions = [...actions, ...otherActions, ...analogOnlyActions];
-    // Re-sort analog if needed, but usually we want voltage at the end or intermixed?
-    // Let's re-sort the whole thing to keep it clean.
-    this.analogPinActions.sort((a, b) => {
-      if (a.value === "" || a.value === "reserved") return -1;
-      if (b.value === "" || b.value === "reserved") return 1;
-      return a.label.localeCompare(b.label);
-    });
+      // 5. Lap Group
+      const lapActions: PinAction[] = [];
+      lanes.forEach((_, i) => {
+        lapActions.push({
+          label: this.translationService.translate("AE_PIN_LAP_LANE", {
+            lane: i + 1,
+          }),
+          value: `lap_${i}`,
+        });
+      });
+      if (lapActions.length > 0) {
+        groups.push({
+          key: "AE_BEHAVIOR_GROUP_LAP",
+          label: this.translationService.translate("AE_BEHAVIOR_GROUP_LAP"),
+          actions: lapActions,
+        });
+      }
 
-    // Also re-sort digital for consistency
-    this.digitalPinActions.sort((a, b) => {
-      if (a.value === "" || a.value === "reserved") return -1;
-      if (b.value === "" || b.value === "reserved") return 1;
-      return a.label.localeCompare(b.label);
-    });
+      // 6. Segment Group
+      const segmentActions: PinAction[] = [];
+      lanes.forEach((_, i) => {
+        segmentActions.push({
+          label: this.translationService.translate("AE_PIN_SEGMENT_LANE", {
+            lane: i + 1,
+          }),
+          value: `segment_${i}`,
+        });
+      });
+      if (segmentActions.length > 0) {
+        groups.push({
+          key: "AE_BEHAVIOR_GROUP_SEGMENT",
+          label: this.translationService.translate("AE_BEHAVIOR_GROUP_SEGMENT"),
+          actions: segmentActions,
+        });
+      }
+
+      // 7. Voltage Group (Analog only)
+      if (includeVoltage) {
+        const voltageActions: PinAction[] = [];
+        lanes.forEach((_, i) => {
+          voltageActions.push({
+            label: this.translationService.translate("AE_PIN_VOLTAGE_LANE", {
+              lane: i + 1,
+            }),
+            value: `voltage_${i}`,
+          });
+        });
+        if (voltageActions.length > 0) {
+          groups.push({
+            key: "AE_BEHAVIOR_GROUP_VOLTAGE",
+            label: this.translationService.translate(
+              "AE_BEHAVIOR_GROUP_VOLTAGE",
+            ),
+            actions: voltageActions,
+          });
+        }
+      }
+
+      // 8. Other Group
+      groups.push({
+        key: "AE_BEHAVIOR_GROUP_OTHER",
+        label: this.translationService.translate("AE_BEHAVIOR_GROUP_OTHER"),
+        actions: [
+          {
+            label: this.translationService.translate("AE_PIN_LED_RGB_STRING"),
+            value: "led_string",
+          },
+        ],
+      });
+
+      // Sort each group's actions alphabetically by label (except the 'None' group)
+      groups.forEach((g) => {
+        if (g.key !== "") {
+          g.actions.sort((a, b) => a.label.localeCompare(b.label));
+        }
+      });
+
+      // Sort groups alphabetically by label, but keep the "None" group (empty key) first
+      groups.sort((a, b) => {
+        if (a.key === "") return -1;
+        if (b.key === "") return 1;
+        return a.label.localeCompare(b.label);
+      });
+
+      return groups;
+    };
+
+    this.digitalPinActions = createGroups(false);
+    this.analogPinActions = createGroups(true);
   }
 
-  getFilteredActions(isDigital: boolean, pin: number): PinAction[] {
-    const actions = isDigital ? this.digitalPinActions : this.analogPinActions;
+  getFilteredActions(isDigital: boolean, pin: number): PinGroup[] {
+    const groups = isDigital ? this.digitalPinActions : this.analogPinActions;
     const config = this.config();
     if (!config) {
-      return actions;
+      return groups;
     }
 
     let canLed = true;
@@ -1219,17 +1401,23 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
 
     if (canLed) {
-      return actions;
+      return groups;
     }
 
     // If the pin currently HAS led_string assigned, we should keep it in the list
     // so the user can see it and change it.
     const currentAction = this.getPinAction(isDigital, pin);
     if (currentAction === "led_string") {
-      return actions;
+      return groups;
     }
 
-    return actions.filter((a) => a.value !== "led_string");
+    // Filter out led_string from the groups
+    return groups
+      .map((g) => ({
+        ...g,
+        actions: g.actions.filter((a) => a.value !== "led_string"),
+      }))
+      .filter((g) => g.actions.length > 0);
   }
 
   private refreshLanes() {
@@ -1484,6 +1672,66 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       `rc.arduino-editor.led-strings.${this.index()}`,
       JSON.stringify(this.ledStringExpanded),
     );
+    localStorage.setItem(
+      `rc.arduino-editor.groups-collapsed.${this.index()}`,
+      JSON.stringify(this.groupsCollapsed),
+    );
+  }
+
+  togglePinDropdown(pinKey: string, event: Event) {
+    event.stopPropagation();
+    if (this.openPinDropdown === pinKey) {
+      this.openPinDropdown = null;
+    } else {
+      this.openPinDropdown = pinKey;
+    }
+  }
+
+  isPinDropdownOpen(pinKey: string): boolean {
+    return this.openPinDropdown === pinKey;
+  }
+
+  toggleGroupCollapse(groupKey: string, event: Event) {
+    event.stopPropagation();
+    this.groupsCollapsed[groupKey] = !this.isGroupCollapsed(groupKey);
+    this.saveState();
+  }
+
+  isGroupCollapsed(groupKey: string): boolean {
+    if (!groupKey) return false; // None group
+    const val = this.groupsCollapsed[groupKey];
+    return val !== false; // Default to true (collapsed)
+  }
+
+  getCurrentActionLabel(isDigital: boolean, pin: number): string {
+    const actionValue = this.getPinAction(isDigital, pin);
+    const actions = isDigital ? this.digitalPinActions : this.analogPinActions;
+    for (const group of actions) {
+      const action = group.actions.find((a) => a.value === actionValue);
+      if (action) return action.label;
+    }
+    return this.translationService.translate("AE_PIN_UNUSED");
+  }
+
+  selectPinAction(isDigital: boolean, pin: number, actionValue: string) {
+    this.setPinAction(isDigital, pin, actionValue);
+    this.openPinDropdown = null;
+  }
+
+  getLedActionLabel(value: string | number | undefined): string {
+    const valStr = value?.toString();
+    if (!valStr || valStr === "0")
+      return this.translationService.translate("AE_PIN_UNUSED");
+    for (const group of this.ledBehaviors) {
+      const action = group.actions.find((a) => a.value === valStr);
+      if (action) return action.label;
+    }
+    return valStr;
+  }
+
+  @HostListener("document:click")
+  closeDropdowns() {
+    this.openPinDropdown = null;
   }
 
   getHelpSteps(): any[] {

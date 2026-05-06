@@ -212,20 +212,105 @@
                                 style="cursor: pointer"
                               ></span>
                             </div>
-                            <select
-                              [id]="'arduino-digital-selector-' + pin"
-                              [ngModel]="getPinAction(true, pin)"
-                              (ngModelChange)="setPinAction(true, pin, $event)"
-                            >
-                              @for (
-                                action of getFilteredActions(true, pin);
-                                track action
-                              ) {
-                                <option [value]="action.value">
-                                  {{ action.label }}
-                                </option>
+                            <div class="custom-dropdown-container pin-selector">
+                              <div
+                                class="dropdown-trigger"
+                                [class.open]="
+                                  isPinDropdownOpen('digital-' + pin)
+                                "
+                                (click)="
+                                  togglePinDropdown('digital-' + pin, $event)
+                                "
+                              >
+                                <span class="selected-value">{{
+                                  getCurrentActionLabel(true, pin)
+                                }}</span>
+                                <div
+                                  class="dropdown-arrow"
+                                  [class.open]="
+                                    isPinDropdownOpen('digital-' + pin)
+                                  "
+                                >
+                                  ▼
+                                </div>
+                              </div>
+                              @if (isPinDropdownOpen("digital-" + pin)) {
+                                <div
+                                  class="dropdown-menu"
+                                  (click)="$event.stopPropagation()"
+                                >
+                                  @for (
+                                    group of getFilteredActions(true, pin);
+                                    track group.key
+                                  ) {
+                                    @if (group.label) {
+                                      <div
+                                        class="group-header"
+                                        (click)="
+                                          toggleGroupCollapse(group.key, $event)
+                                        "
+                                      >
+                                        <span
+                                          class="expander-icon"
+                                          [class.collapsed]="
+                                            isGroupCollapsed(group.key)
+                                          "
+                                          >▼</span
+                                        >
+                                        {{ group.label }}
+                                      </div>
+                                      @if (!isGroupCollapsed(group.key)) {
+                                        <div class="group-items">
+                                          @for (
+                                            action of group.actions;
+                                            track action.value
+                                          ) {
+                                            <div
+                                              class="dropdown-item"
+                                              [class.selected]="
+                                                getPinAction(true, pin) ===
+                                                action.value
+                                              "
+                                              (click)="
+                                                selectPinAction(
+                                                  true,
+                                                  pin,
+                                                  action.value
+                                                )
+                                              "
+                                            >
+                                              {{ action.label }}
+                                            </div>
+                                          }
+                                        </div>
+                                      }
+                                    } @else {
+                                      @for (
+                                        action of group.actions;
+                                        track action.value
+                                      ) {
+                                        <div
+                                          class="dropdown-item"
+                                          [class.selected]="
+                                            getPinAction(true, pin) ===
+                                            action.value
+                                          "
+                                          (click)="
+                                            selectPinAction(
+                                              true,
+                                              pin,
+                                              action.value
+                                            )
+                                          "
+                                        >
+                                          {{ action.label }}
+                                        </div>
+                                      }
+                                    }
+                                  }
+                                </div>
                               }
-                            </select>
+                            </div>
                           </div>
                         }
                       </div>
@@ -257,20 +342,105 @@
                                 style="cursor: pointer"
                               ></span>
                             </div>
-                            <select
-                              [id]="'arduino-analog-selector-' + pin"
-                              [ngModel]="getPinAction(false, pin)"
-                              (ngModelChange)="setPinAction(false, pin, $event)"
-                            >
-                              @for (
-                                action of getFilteredActions(false, pin);
-                                track action
-                              ) {
-                                <option [value]="action.value">
-                                  {{ action.label }}
-                                </option>
+                            <div class="custom-dropdown-container pin-selector">
+                              <div
+                                class="dropdown-trigger"
+                                [class.open]="
+                                  isPinDropdownOpen('analog-' + pin)
+                                "
+                                (click)="
+                                  togglePinDropdown('analog-' + pin, $event)
+                                "
+                              >
+                                <span class="selected-value">{{
+                                  getCurrentActionLabel(false, pin)
+                                }}</span>
+                                <div
+                                  class="dropdown-arrow"
+                                  [class.open]="
+                                    isPinDropdownOpen('analog-' + pin)
+                                  "
+                                >
+                                  ▼
+                                </div>
+                              </div>
+                              @if (isPinDropdownOpen("analog-" + pin)) {
+                                <div
+                                  class="dropdown-menu"
+                                  (click)="$event.stopPropagation()"
+                                >
+                                  @for (
+                                    group of getFilteredActions(false, pin);
+                                    track group.key
+                                  ) {
+                                    @if (group.label) {
+                                      <div
+                                        class="group-header"
+                                        (click)="
+                                          toggleGroupCollapse(group.key, $event)
+                                        "
+                                      >
+                                        <span
+                                          class="expander-icon"
+                                          [class.collapsed]="
+                                            isGroupCollapsed(group.key)
+                                          "
+                                          >▼</span
+                                        >
+                                        {{ group.label }}
+                                      </div>
+                                      @if (!isGroupCollapsed(group.key)) {
+                                        <div class="group-items">
+                                          @for (
+                                            action of group.actions;
+                                            track action.value
+                                          ) {
+                                            <div
+                                              class="dropdown-item"
+                                              [class.selected]="
+                                                getPinAction(false, pin) ===
+                                                action.value
+                                              "
+                                              (click)="
+                                                selectPinAction(
+                                                  false,
+                                                  pin,
+                                                  action.value
+                                                )
+                                              "
+                                            >
+                                              {{ action.label }}
+                                            </div>
+                                          }
+                                        </div>
+                                      }
+                                    } @else {
+                                      @for (
+                                        action of group.actions;
+                                        track action.value
+                                      ) {
+                                        <div
+                                          class="dropdown-item"
+                                          [class.selected]="
+                                            getPinAction(false, pin) ===
+                                            action.value
+                                          "
+                                          (click)="
+                                            selectPinAction(
+                                              false,
+                                              pin,
+                                              action.value
+                                            )
+                                          "
+                                        >
+                                          {{ action.label }}
+                                        </div>
+                                      }
+                                    }
+                                  }
+                                </div>
                               }
-                            </select>
+                            </div>
                           </div>
                         }
                       </div>
@@ -633,21 +803,131 @@
                                           style="cursor: pointer"
                                         ></span>
                                       </div>
-                                      <select
-                                        [ngModel]="ls.leds[ledIdx]?.toString()"
-                                        (ngModelChange)="
-                                          updateLedBehavior(i, ledIdx, $event)
-                                        "
+                                      <div
+                                        class="custom-dropdown-container led-selector"
                                       >
-                                        @for (
-                                          behavior of ledBehaviors;
-                                          track behavior
+                                        <div
+                                          class="dropdown-trigger"
+                                          [class.open]="
+                                            isPinDropdownOpen(
+                                              'led-' + i + '-' + ledIdx
+                                            )
+                                          "
+                                          (click)="
+                                            togglePinDropdown(
+                                              'led-' + i + '-' + ledIdx,
+                                              $event
+                                            )
+                                          "
+                                        >
+                                          <span class="selected-value">{{
+                                            getLedActionLabel(ls.leds[ledIdx])
+                                          }}</span>
+                                          <div
+                                            class="dropdown-arrow"
+                                            [class.open]="
+                                              isPinDropdownOpen(
+                                                'led-' + i + '-' + ledIdx
+                                              )
+                                            "
+                                          >
+                                            ▼
+                                          </div>
+                                        </div>
+                                        @if (
+                                          isPinDropdownOpen(
+                                            "led-" + i + "-" + ledIdx
+                                          )
                                         ) {
-                                          <option [value]="behavior.value">
-                                            {{ behavior.label }}
-                                          </option>
+                                          <div
+                                            class="dropdown-menu"
+                                            (click)="$event.stopPropagation()"
+                                          >
+                                            @for (
+                                              group of ledBehaviors;
+                                              track group.key
+                                            ) {
+                                              @if (group.label) {
+                                                <div
+                                                  class="group-header"
+                                                  (click)="
+                                                    toggleGroupCollapse(
+                                                      group.key,
+                                                      $event
+                                                    )
+                                                  "
+                                                >
+                                                  <span
+                                                    class="expander-icon"
+                                                    [class.collapsed]="
+                                                      isGroupCollapsed(
+                                                        group.key
+                                                      )
+                                                    "
+                                                    >▼</span
+                                                  >
+                                                  {{ group.label }}
+                                                </div>
+                                                @if (
+                                                  !isGroupCollapsed(group.key)
+                                                ) {
+                                                  <div class="group-items">
+                                                    @for (
+                                                      action of group.actions;
+                                                      track action.value
+                                                    ) {
+                                                      <div
+                                                        class="dropdown-item"
+                                                        [class.selected]="
+                                                          ls.leds[
+                                                            ledIdx
+                                                          ]?.toString() ===
+                                                          action.value
+                                                        "
+                                                        (click)="
+                                                          updateLedBehavior(
+                                                            i,
+                                                            ledIdx,
+                                                            action.value
+                                                          );
+                                                          openPinDropdown = null
+                                                        "
+                                                      >
+                                                        {{ action.label }}
+                                                      </div>
+                                                    }
+                                                  </div>
+                                                }
+                                              } @else {
+                                                @for (
+                                                  action of group.actions;
+                                                  track action.value
+                                                ) {
+                                                  <div
+                                                    class="dropdown-item"
+                                                    [class.selected]="
+                                                      ls.leds[
+                                                        ledIdx
+                                                      ]?.toString() ===
+                                                      action.value
+                                                    "
+                                                    (click)="
+                                                      updateLedBehavior(
+                                                        i,
+                                                        ledIdx,
+                                                        action.value
+                                                      );
+                                                      openPinDropdown = null
+                                                    "
+                                                  >
+                                                    {{ action.label }}
+                                                  </div>
+                                                }
+                                              }
+                                            }
+                                          </div>
                                         }
-                                      </select>
+                                      </div>
                                     </div>
                                   }
                                 </div>

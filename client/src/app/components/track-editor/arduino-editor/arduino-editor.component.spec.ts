@@ -175,15 +175,15 @@ describe("ArduinoEditorComponent", () => {
   });
 
   it("should include Voltage Level Lane 1 only in analog actions", () => {
-    const voltageAction = component.analogPinActions.find(
-      (a) => a.value === "voltage_0",
-    );
+    const voltageAction = component.analogPinActions
+      .flatMap((g) => g.actions)
+      .find((a) => a.value === "voltage_0");
     expect(voltageAction).toBeTruthy();
     expect(voltageAction!.label).toBe("AE_PIN_VOLTAGE_LANE");
 
-    const digitalVoltageAction = component.digitalPinActions.find(
-      (a) => a.value === "voltage_0",
-    );
+    const digitalVoltageAction = component.digitalPinActions
+      .flatMap((g) => g.actions)
+      .find((a) => a.value === "voltage_0");
     expect(digitalVoltageAction).toBeUndefined();
   });
 
@@ -195,15 +195,12 @@ describe("ArduinoEditorComponent", () => {
     ]);
     fixture.detectChanges();
 
-    const voltage0 = component.analogPinActions.find(
-      (a) => a.value === "voltage_0",
+    const allAnalogActions = component.analogPinActions.flatMap(
+      (g) => g.actions,
     );
-    const voltage1 = component.analogPinActions.find(
-      (a) => a.value === "voltage_1",
-    );
-    const voltage2 = component.analogPinActions.find(
-      (a) => a.value === "voltage_2",
-    );
+    const voltage0 = allAnalogActions.find((a) => a.value === "voltage_0");
+    const voltage1 = allAnalogActions.find((a) => a.value === "voltage_1");
+    const voltage2 = allAnalogActions.find((a) => a.value === "voltage_2");
 
     expect(voltage0).toBeTruthy();
     expect(voltage1).toBeTruthy();
@@ -214,9 +211,9 @@ describe("ArduinoEditorComponent", () => {
     // Initial lanes: 2
     expect(component.lanes().length).toBe(2);
 
-    const heatLeaderLanes = component.ledBehaviors.filter((b) =>
-      b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"),
-    );
+    const heatLeaderLanes = component.ledBehaviors
+      .flatMap((g) => g.actions)
+      .filter((b) => b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"));
     expect(heatLeaderLanes.length).toBe(2);
 
     // Change lanes to 4
@@ -228,9 +225,9 @@ describe("ArduinoEditorComponent", () => {
     ]);
     fixture.detectChanges();
 
-    const updatedHeatLeaderLanes = component.ledBehaviors.filter((b) =>
-      b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"),
-    );
+    const updatedHeatLeaderLanes = component.ledBehaviors
+      .flatMap((g) => g.actions)
+      .filter((b) => b.label.includes("AE_LED_BEHAVIOR_HEAT_LEADER_LANE"));
     expect(updatedHeatLeaderLanes.length).toBe(4);
   });
 
@@ -875,19 +872,27 @@ describe("ArduinoEditorComponent", () => {
       fixture.detectChanges();
 
       // Digital 2 is valid
-      const digitalActions = component.getFilteredActions(true, 2);
+      const digitalActions = component
+        .getFilteredActions(true, 2)
+        .flatMap((g: any) => g.actions);
       expect(digitalActions.find((a) => a.value === "led_string")).toBeTruthy();
 
       // Digital 4 is invalid
-      const digitalInvalid = component.getFilteredActions(true, 4);
+      const digitalInvalid = component
+        .getFilteredActions(true, 4)
+        .flatMap((g: any) => g.actions);
       expect(digitalInvalid.find((a) => a.value === "led_string")).toBeFalsy();
 
       // Analog A5 is valid
-      const analogValid = component.getFilteredActions(false, 5);
+      const analogValid = component
+        .getFilteredActions(false, 5)
+        .flatMap((g: any) => g.actions);
       expect(analogValid.find((a) => a.value === "led_string")).toBeTruthy();
 
       // Analog A6 is invalid
-      const analogInvalid = component.getFilteredActions(false, 6);
+      const analogInvalid = component
+        .getFilteredActions(false, 6)
+        .flatMap((g: any) => g.actions);
       expect(analogInvalid.find((a) => a.value === "led_string")).toBeFalsy();
     });
 
@@ -905,23 +910,33 @@ describe("ArduinoEditorComponent", () => {
       fixture.detectChanges();
 
       // Digital 22 is valid
-      const digitalValid = component.getFilteredActions(true, 22);
+      const digitalValid = component
+        .getFilteredActions(true, 22)
+        .flatMap((g: any) => g.actions);
       expect(digitalValid.find((a) => a.value === "led_string")).toBeTruthy();
 
       // Digital 23 is invalid
-      const digitalInvalid1 = component.getFilteredActions(true, 23);
+      const digitalInvalid1 = component
+        .getFilteredActions(true, 23)
+        .flatMap((g: any) => g.actions);
       expect(digitalInvalid1.find((a) => a.value === "led_string")).toBeFalsy();
 
       // Digital 54 is invalid
-      const digitalInvalid2 = component.getFilteredActions(true, 54);
+      const digitalInvalid2 = component
+        .getFilteredActions(true, 54)
+        .flatMap((g: any) => g.actions);
       expect(digitalInvalid2.find((a) => a.value === "led_string")).toBeFalsy();
 
       // Analog A14 is valid
-      const analogValid = component.getFilteredActions(false, 14);
+      const analogValid = component
+        .getFilteredActions(false, 14)
+        .flatMap((g: any) => g.actions);
       expect(analogValid.find((a) => a.value === "led_string")).toBeTruthy();
 
       // Analog A13 is invalid
-      const analogInvalid = component.getFilteredActions(false, 13);
+      const analogInvalid = component
+        .getFilteredActions(false, 13)
+        .flatMap((g: any) => g.actions);
       expect(analogInvalid.find((a) => a.value === "led_string")).toBeFalsy();
     });
 
@@ -990,6 +1005,117 @@ describe("ArduinoEditorComponent", () => {
         "3",
         "12",
       ]);
+    });
+  });
+
+  describe("Collapsible Groups and Dropdowns", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput("config", makeConfig());
+      fixture.componentRef.setInput("lanes", [
+        new Lane("l1", "#fff", "#ff0000", 10),
+        new Lane("l2", "#fff", "#00ff00", 10),
+      ]);
+      fixture.detectChanges();
+      localStorage.clear();
+    });
+
+    it("should generate a grouped action structure", () => {
+      const digitalGroups = component.digitalPinActions;
+      expect(digitalGroups.length).toBeGreaterThan(1);
+      expect(digitalGroups[0].actions.length).toBeGreaterThan(0);
+      expect(digitalGroups[0].key).toBe(""); // None group
+    });
+
+    it("should toggle pin dropdowns", () => {
+      const pinKey = "digital-2";
+      const event = new MouseEvent("click");
+      spyOn(event, "stopPropagation");
+
+      component.togglePinDropdown(pinKey, event);
+      expect(component.isPinDropdownOpen(pinKey)).toBeTrue();
+      expect(event.stopPropagation).toHaveBeenCalled();
+
+      component.togglePinDropdown(pinKey, event);
+      expect(component.isPinDropdownOpen(pinKey)).toBeFalse();
+    });
+
+    it("should close dropdowns on document click", () => {
+      component.openPinDropdown = "digital-2";
+      document.dispatchEvent(new MouseEvent("click"));
+      expect(component.openPinDropdown).toBeNull();
+    });
+
+    it("should toggle group collapse and save to localStorage", () => {
+      const groupKey = "AE_BEHAVIOR_GROUP_PIT";
+      const event = new MouseEvent("click");
+      spyOn(event, "stopPropagation");
+      spyOn(component as any, "saveState").and.callThrough();
+
+      // Default is collapsed (true)
+      expect(component.isGroupCollapsed(groupKey)).toBeTrue();
+
+      component.toggleGroupCollapse(groupKey, event);
+      expect(component.isGroupCollapsed(groupKey)).toBeFalse();
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect((component as any).saveState).toHaveBeenCalled();
+      expect(
+        localStorage.getItem(
+          `rc.arduino-editor.groups-collapsed.${component.index()}`,
+        ),
+      ).toContain(`"${groupKey}":false`);
+    });
+
+    it("should return the correct label for current action", () => {
+      component.setPinAction(true, 4, "master_call");
+      expect(component.getCurrentActionLabel(true, 4)).toBe(
+        "AE_PIN_MASTER_CALL",
+      );
+
+      component.setPinAction(true, 5, "reserved");
+      expect(component.getCurrentActionLabel(true, 5)).toBe("AE_PIN_RESERVED");
+
+      component.setPinAction(true, 6, "");
+      expect(component.getCurrentActionLabel(true, 6)).toBe("AE_PIN_UNUSED");
+    });
+
+    it("should select a pin action and close the dropdown", () => {
+      component.openPinDropdown = "digital-2";
+      component.selectPinAction(true, 2, "master_call");
+
+      expect(component.getPinAction(true, 2)).toBe("master_call");
+      expect(component.openPinDropdown).toBeNull();
+    });
+
+    it("should sort groups and actions alphabetically, keeping None first", () => {
+      const groups = component.digitalPinActions;
+
+      // 1. None group must be first
+      expect(groups[0].key).toBe("");
+
+      // 2. Others should be sorted alphabetically
+      const labels = groups.slice(1).map((g) => g.label);
+      const sortedLabels = [...labels].sort((a, b) => a.localeCompare(b));
+      expect(labels).toEqual(sortedLabels);
+
+      // 3. Actions within a group should be sorted (except None group)
+      const callGroup = groups.find(
+        (g) => g.key === "AE_BEHAVIOR_GROUP_CALLBUTTON",
+      );
+      expect(callGroup).toBeTruthy();
+      const actionLabels = callGroup!.actions.map((a) => a.label);
+      const sortedActionLabels = [...actionLabels].sort((a, b) =>
+        a.localeCompare(b),
+      );
+      expect(actionLabels).toEqual(sortedActionLabels);
+    });
+
+    it("should keep Unused and Reserved in order in the None group", () => {
+      const noneGroup = component.digitalPinActions.find((g) => g.key === "");
+      expect(noneGroup).toBeTruthy();
+      expect(noneGroup!.actions[0].value).toBe(""); // Unused
+      expect(noneGroup!.actions[1].value).toBe("reserved"); // Reserved
     });
   });
 });

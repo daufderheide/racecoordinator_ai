@@ -351,14 +351,152 @@
   box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
 }
 
-.pin-item select {
+/* Custom Dropdown Styles */
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-trigger {
   width: 100%;
   background: rgba(15, 23, 42, 0.8);
-  border: none;
+  border: 1px solid rgba(148, 163, 184, 0.1);
   color: #cbd5e1;
-  font-size: 1rem;
-  padding: 4px;
-  border-radius: 2px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  min-height: 32px;
+}
+
+.dropdown-trigger:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.dropdown-trigger.open {
+  border-color: #38bdf8;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.selected-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85%;
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+  color: #38bdf8;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.dropdown-item.selected {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.group-header {
+  padding: 8px 12px;
+  background: rgba(30, 41, 59, 0.5);
+  color: #38bdf8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.05);
+}
+
+.group-header:first-child {
+  border-top: none;
+}
+
+.group-header:hover {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.group-header .expander-icon {
+  font-size: 0.6rem;
+  transition: transform 0.2s;
+}
+
+.group-header .expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.group-items {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.group-items .dropdown-item {
+  padding-left: 28px;
+}
+
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+/* Ensure dropdowns on the right don't overflow the container */
+.pin-grid .pin-item:nth-child(3n) .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+/* Specific adjustments for LED selectors */
+.led-selector .dropdown-menu {
+  width: 300px;
 }
 
 /* Enlarged Voltage Configuration Items */
