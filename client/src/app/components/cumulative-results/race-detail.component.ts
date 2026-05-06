@@ -30,12 +30,17 @@ export class RaceDetailComponent implements OnInit {
 
   ngOnInit() {
     console.log("RaceDetailComponent: ngOnInit called");
-    this.route.params.subscribe(params => {
-      this.raceId = params['id'];
-      const isDemo = this.route.snapshot.queryParamMap.get('demo') === 'true';
-      
-      console.log("RaceDetailComponent: Captured raceId:", this.raceId, "isDemo:", isDemo);
-      
+    this.route.params.subscribe((params) => {
+      this.raceId = params["id"];
+      const isDemo = this.route.snapshot.queryParamMap.get("demo") === "true";
+
+      console.log(
+        "RaceDetailComponent: Captured raceId:",
+        this.raceId,
+        "isDemo:",
+        isDemo,
+      );
+
       if (this.raceId) {
         this.loadRaceDetails(this.raceId, isDemo);
       } else {
@@ -46,15 +51,22 @@ export class RaceDetailComponent implements OnInit {
 
   loadRaceDetails(id: string, isDemo: boolean) {
     this.isLoading = true;
-    
+
     // If ID looks like a client-side fallback or a serialized object, go straight to Load All
     if (id.startsWith("fallback-") || id.includes("{") || id.includes(":")) {
-      console.log("RaceDetailComponent: ID looks complex or fallback, using Load All strategy directly.");
+      console.log(
+        "RaceDetailComponent: ID looks complex or fallback, using Load All strategy directly.",
+      );
       this.loadAllFallback(id);
       return;
     }
 
-    console.log("RaceDetailComponent: Fast load attempt (Direct Lookup). ID:", id, "Demo:", isDemo);
+    console.log(
+      "RaceDetailComponent: Fast load attempt (Direct Lookup). ID:",
+      id,
+      "Demo:",
+      isDemo,
+    );
     this.dataService.getRaceHistoryById(id, isDemo).subscribe({
       next: (race) => {
         if (race && race._id) {
@@ -65,14 +77,19 @@ export class RaceDetailComponent implements OnInit {
           this.cdr.detectChanges();
           console.log("RaceDetailComponent: Direct lookup success");
         } else {
-          console.warn("RaceDetailComponent: Not found via direct lookup, trying secondary mode...");
+          console.warn(
+            "RaceDetailComponent: Not found via direct lookup, trying secondary mode...",
+          );
           this.tryAlternateMode(id, isDemo);
         }
       },
       error: (err) => {
-        console.warn("RaceDetailComponent: Direct lookup error, trying secondary mode...", err);
+        console.warn(
+          "RaceDetailComponent: Direct lookup error, trying secondary mode...",
+          err,
+        );
         this.tryAlternateMode(id, isDemo);
-      }
+      },
     });
   }
 
@@ -91,7 +108,7 @@ export class RaceDetailComponent implements OnInit {
           this.loadAllFallback(id);
         }
       },
-      error: () => this.loadAllFallback(id)
+      error: () => this.loadAllFallback(id),
     });
   }
 
@@ -119,14 +136,14 @@ export class RaceDetailComponent implements OnInit {
             error: () => {
               this.isLoading = false;
               this.cdr.detectChanges();
-            }
+            },
           });
         }
       },
       error: () => {
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -148,31 +165,31 @@ export class RaceDetailComponent implements OnInit {
   private getNormalizedId(id: any, fallback?: any, index?: number): string {
     // Priority 1: Real unique string IDs
     let bestId = "";
-    if (typeof id === 'string' && id.length > 5) {
+    if (typeof id === "string" && id.length > 5) {
       bestId = id;
     } else if (fallback?.entity_id) {
       bestId = fallback.entity_id;
     } else if (id?.$oid) {
       bestId = id.$oid;
-    } else if (id?.id && typeof id.id === 'string') {
+    } else if (id?.id && typeof id.id === "string") {
       bestId = id.id;
-    } else if (fallback?._id && typeof fallback._id === 'string') {
+    } else if (fallback?._id && typeof fallback._id === "string") {
       bestId = fallback._id;
     }
-    
+
     if (bestId) return bestId;
 
     // Priority 2: Serialized object if not a generic timestamp
-    if (id && typeof id === 'object') {
+    if (id && typeof id === "object") {
       const str = JSON.stringify(id);
       if (!(str.includes("timestamp") && str.length < 50)) {
         return str;
       }
     }
-    
+
     // Priority 3: Fallback ID matching the list logic (index-based)
     const timestamp = fallback?.statistics?.startMillis || 0;
-    return `fallback-${index !== undefined ? index : 'unknown'}-${timestamp}`;
+    return `fallback-${index !== undefined ? index : "unknown"}-${timestamp}`;
   }
 
   get currentHeat() {
@@ -187,10 +204,12 @@ export class RaceDetailComponent implements OnInit {
 
   prepareSegmentDrivers() {
     if (!this.race) {
-      console.warn("RaceDetailComponent: No race data available for prepareSegmentDrivers");
+      console.warn(
+        "RaceDetailComponent: No race data available for prepareSegmentDrivers",
+      );
       return;
     }
-    
+
     if (!this.race.heats || this.race.heats.length === 0) {
       console.warn("RaceDetailComponent: Race has no heats/segments!");
       return;
@@ -198,33 +217,45 @@ export class RaceDetailComponent implements OnInit {
 
     const currentHeat = this.race.heats[this.selectedHeatIndex];
     if (!currentHeat) {
-      console.warn("RaceDetailComponent: No heat data for index:", this.selectedHeatIndex, "Heats length:", this.race.heats.length);
+      console.warn(
+        "RaceDetailComponent: No heat data for index:",
+        this.selectedHeatIndex,
+        "Heats length:",
+        this.race.heats.length,
+      );
       return;
     }
 
-    console.log("RaceDetailComponent: Preparing drivers for Segment #", this.selectedHeatIndex + 1);
+    console.log(
+      "RaceDetailComponent: Preparing drivers for Segment #",
+      this.selectedHeatIndex + 1,
+    );
     console.log("RaceDetailComponent: Raw Heat Drivers:", currentHeat.drivers);
 
     // 1. Get all unique drivers in the entire race
     const allDrivers = new Map<string, any>();
-    
+
     // Check main drivers list first (RaceParticipant array)
     if (this.race.drivers && this.race.drivers.length > 0) {
-      console.log("RaceDetailComponent: Found race.drivers list. Count:", this.race.drivers.length);
+      console.log(
+        "RaceDetailComponent: Found race.drivers list. Count:",
+        this.race.drivers.length,
+      );
       this.race.drivers.forEach((d: any) => {
         const driverObj = d.driver || d;
         const id = driverObj?.entity_id || d.objectId || d._id;
         if (id) allDrivers.set(id, driverObj);
       });
     }
-    
+
     // Supplement from ALL heats
     this.race.heats.forEach((h, idx) => {
       if (h.drivers) {
         h.drivers.forEach((hd: any) => {
           const participant = hd.driver;
           const driverObj = participant?.driver || participant || hd;
-          const id = driverObj?.entity_id || participant?.objectId || hd.objectId;
+          const id =
+            driverObj?.entity_id || participant?.objectId || hd.objectId;
           if (id && !allDrivers.has(id)) {
             allDrivers.set(id, driverObj);
           }
@@ -232,7 +263,10 @@ export class RaceDetailComponent implements OnInit {
       }
     });
 
-    console.log("RaceDetailComponent: Total unique drivers discovered:", allDrivers.size);
+    console.log(
+      "RaceDetailComponent: Total unique drivers discovered:",
+      allDrivers.size,
+    );
 
     // 2. Map current heat drivers for easy lookup
     const participatingDrivers = new Map<string, any>();
@@ -244,31 +278,34 @@ export class RaceDetailComponent implements OnInit {
     });
 
     // 3. Build the final list
-    this.segmentDrivers = Array.from(allDrivers.values()).map(d => {
+    this.segmentDrivers = Array.from(allDrivers.values()).map((d) => {
       const id = d.entity_id || d.objectId || d._id;
       const heatData = participatingDrivers.get(id);
       return {
         driver: d,
         heatData: heatData, // RaceParticipant
-        isSitout: !heatData
+        isSitout: !heatData,
       };
     });
 
-    console.log("RaceDetailComponent: Final segment drivers list size:", this.segmentDrivers.length);
+    console.log(
+      "RaceDetailComponent: Final segment drivers list size:",
+      this.segmentDrivers.length,
+    );
 
     // 4. Sort: By Cumulative Laps, then Cumulative Points, then Cumulative Time
     this.segmentDrivers.sort((a, b) => {
       const idA = a.driver?.entity_id || a.driver?.objectId || a.driver?._id;
       const idB = b.driver?.entity_id || b.driver?.objectId || b.driver?._id;
-      
+
       const lapsA = this.cumulativeLapsMap.get(idA) || 0;
       const lapsB = this.cumulativeLapsMap.get(idB) || 0;
       if (lapsA !== lapsB) return lapsB - lapsA;
-      
+
       const pointsA = this.cumulativePointsMap.get(idA) || 0;
       const pointsB = this.cumulativePointsMap.get(idB) || 0;
       if (pointsA !== pointsB) return pointsB - pointsA;
-      
+
       const timeA = this.cumulativeTimeMap.get(idA) || Infinity;
       const timeB = this.cumulativeTimeMap.get(idB) || Infinity;
       return timeA - timeB;
@@ -279,25 +316,29 @@ export class RaceDetailComponent implements OnInit {
     this.cumulativeLapsMap.clear();
     this.cumulativePointsMap.clear();
     this.cumulativeTimeMap.clear();
-    
+
     if (!this.race || !this.race.heats) return;
 
     // We need to calculate for ALL drivers in the race, not just the ones in currentHeat
     const allDriverIds = new Set<string>();
-    this.race.heats.forEach(h => h.drivers?.forEach((hd: any) => {
-      const id = hd.driver?.driver?.entity_id || hd.driver?.objectId;
-      if (id) allDriverIds.add(id);
-    }));
+    this.race.heats.forEach((h) =>
+      h.drivers?.forEach((hd: any) => {
+        const id = hd.driver?.driver?.entity_id || hd.driver?.objectId;
+        if (id) allDriverIds.add(id);
+      }),
+    );
 
-    allDriverIds.forEach(driverId => {
+    allDriverIds.forEach((driverId) => {
       let totalLaps = 0;
       let totalPoints = 0;
       let totalTime = 0;
-      
+
       for (let i = 0; i <= this.selectedHeatIndex; i++) {
         const heat = this.race?.heats[i];
-        const driverInHeat = heat?.drivers?.find((d: any) => 
-          (d.driver?.driver?.entity_id === driverId) || (d.driver?.objectId === driverId)
+        const driverInHeat = heat?.drivers?.find(
+          (d: any) =>
+            d.driver?.driver?.entity_id === driverId ||
+            d.driver?.objectId === driverId,
         );
         if (driverInHeat && driverInHeat.driver) {
           totalLaps += driverInHeat.driver.totalLaps || 0;
@@ -305,7 +346,7 @@ export class RaceDetailComponent implements OnInit {
           totalTime += driverInHeat.driver.totalTime || 0;
         }
       }
-      
+
       this.cumulativeLapsMap.set(driverId, totalLaps);
       this.cumulativePointsMap.set(driverId, totalPoints);
       this.cumulativeTimeMap.set(driverId, totalTime);
@@ -313,7 +354,7 @@ export class RaceDetailComponent implements OnInit {
   }
 
   getCumulativeLaps(driverId: string | undefined): number {
-    return driverId ? (this.cumulativeLapsMap.get(driverId) || 0) : 0;
+    return driverId ? this.cumulativeLapsMap.get(driverId) || 0 : 0;
   }
 
   goBack() {
@@ -329,7 +370,7 @@ export class RaceDetailComponent implements OnInit {
     if (!totalTimeSeconds || totalTimeSeconds === 0) return "0.000";
     const minutes = Math.floor(totalTimeSeconds / 60);
     const seconds = Math.floor(totalTimeSeconds % 60);
-    const ms = Math.floor((totalTimeSeconds % 1) * 1000);
+    const ms = Math.round((totalTimeSeconds % 1) * 1000);
     return `${minutes}:${seconds.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
   }
 
