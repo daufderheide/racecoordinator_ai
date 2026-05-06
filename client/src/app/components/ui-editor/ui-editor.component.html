@@ -84,7 +84,7 @@
                         </div>
           <div
             class="section-content"
-            *ngIf="sectionsExpanded[theme.entity_id]"
+            @if="sectionsExpanded[theme.entity_id]"
           >
             <ng-container
               *ngTemplateOutlet="themeContent; context: { theme: theme }"
