@@ -355,9 +355,12 @@ export class CumulativeResultsComponent implements OnInit {
       const finishMethod = race.model?.heat_scoring?.finishMethod || "Lap";
       const descr = race.model?.name || "";
 
+      const geolocation = race.geolocation || race.track?.geolocation || "N/A";
+
       reportHtml += `
         <div class="race-header">
           <div class="header-row">
+            <span>Race: ${race.model?.name || "Unknown Race"}</span>
             <span>Track: ${trackName}</span>
           </div>
           <div class="header-row">
@@ -365,8 +368,11 @@ export class CumulativeResultsComponent implements OnInit {
             <span>Class: ${carClass}</span>
           </div>
           <div class="header-row">
+            <span>Geolocation: ${geolocation}</span>
+          </div>
+          <div class="header-row">
             <span>Segment Length (${finishMethod}s): ${segLength}</span>
-            <span>Descr: ${descr}</span>
+            <span>Description: ${descr}</span>
           </div>
         </div>
       `;
@@ -580,6 +586,33 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportCsv() {
+    const selectedRaces = this.history.filter(r => this.selectedRaces.has(r._id));
+    const raceNames = selectedRaces.map(r => r.model?.name || "Unknown").join("; ");
+    const tracks = Array.from(new Set(selectedRaces.map(r => r.track?.name || "Unknown"))).join("; ");
+    const carClasses = Array.from(new Set(selectedRaces.map(r => r.car_class || "N/A"))).join("; ");
+    const geolocations = Array.from(new Set(selectedRaces.map(r => r.geolocation || r.track?.geolocation || "N/A"))).join("; ");
+    
+    let dateRange = "N/A";
+    if (selectedRaces.length > 0) {
+      const startMillis = Math.min(...selectedRaces.map(r => r.statistics?.startMillis || Infinity));
+      const endMillis = Math.max(...selectedRaces.map(r => r.statistics?.startMillis || -Infinity));
+      if (startMillis !== Infinity) {
+        dateRange = this.formatDateOnly(startMillis);
+        if (endMillis !== -Infinity && endMillis !== startMillis) {
+          dateRange += " to " + this.formatDateOnly(endMillis);
+        }
+      }
+    }
+
+    const metadata = [
+      ["Date Range", `"${dateRange}"`],
+      ["Races", `"${raceNames}"`],
+      ["Tracks", `"${tracks}"`],
+      ["Car Classes", `"${carClasses}"`],
+      ["Geolocations", `"${geolocations}"`],
+      []
+    ].map(r => r.join(",")).join("\n");
+
     const header = [
       "Rank",
       "Driver",
@@ -607,20 +640,41 @@ export class CumulativeResultsComponent implements OnInit {
         avgLap,
       ].join(",");
     });
-    const csvContent = [header, ...rows].join("\n");
+    const csvContent = metadata + [header, ...rows].join("\n");
     this.downloadFile(csvContent, "analytics.csv", "text/csv");
   }
 
   exportHtml() {
+    const selectedRaces = this.history.filter(r => this.selectedRaces.has(r._id));
+    const raceNames = selectedRaces.map(r => r.model?.name || "Unknown").join(", ");
+    const tracks = Array.from(new Set(selectedRaces.map(r => r.track?.name || "Unknown"))).join(", ");
+    const carClasses = Array.from(new Set(selectedRaces.map(r => r.car_class || "N/A"))).join(", ");
+    const geolocations = Array.from(new Set(selectedRaces.map(r => r.geolocation || r.track?.geolocation || "N/A"))).join(", ");
+
+    let dateRange = "N/A";
+    if (selectedRaces.length > 0) {
+      const startMillis = Math.min(...selectedRaces.map(r => r.statistics?.startMillis || Infinity));
+      const endMillis = Math.max(...selectedRaces.map(r => r.statistics?.startMillis || -Infinity));
+      if (startMillis !== Infinity) {
+        dateRange = this.formatDateOnly(startMillis);
+        if (endMillis !== -Infinity && endMillis !== startMillis) {
+          dateRange += " to " + this.formatDateOnly(endMillis);
+        }
+      }
+    }
+
     const tableHtml =
       document.querySelector(".standings-table")?.outerHTML || "";
     const htmlContent = `
       <html>
       <head>
-        <title>Analytics</title>
+        <title>Analytics Report</title>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff; color: #333; padding: 20px; }
-          h1 { color: #1e1e2f; text-align: center; margin-bottom: 30px; }
+          h1 { color: #1e1e2f; text-align: center; margin-bottom: 20px; }
+          .metadata-box { max-width: 1000px; margin: 0 auto 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; }
+          .metadata-row { display: flex; gap: 30px; margin-bottom: 8px; font-size: 0.9rem; }
+          .metadata-label { font-weight: 700; min-width: 100px; color: #666; }
           table { border-collapse: collapse; width: 100%; max-width: 1000px; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
           th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
           th { background-color: #f8f9fa; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: #666; letter-spacing: 0.05em; }
@@ -645,7 +699,14 @@ export class CumulativeResultsComponent implements OnInit {
         </style>
       </head>
       <body>
-        <h1>Analytics</h1>
+        <h1>Cumulative Analytics Report</h1>
+        <div class="metadata-box">
+          <div class="metadata-row"><span class="metadata-label">Date Range:</span> <span>${dateRange}</span></div>
+          <div class="metadata-row"><span class="metadata-label">Races:</span> <span>${raceNames}</span></div>
+          <div class="metadata-row"><span class="metadata-label">Tracks:</span> <span>${tracks}</span></div>
+          <div class="metadata-row"><span class="metadata-label">Car Classes:</span> <span>${carClasses}</span></div>
+          <div class="metadata-row"><span class="metadata-label">Geolocations:</span> <span>${geolocations}</span></div>
+        </div>
         ${tableHtml}
       </body>
       </html>

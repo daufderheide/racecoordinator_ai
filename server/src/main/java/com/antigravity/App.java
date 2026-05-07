@@ -309,17 +309,26 @@ public class App {
 
       logger.info("Connected to MongoDB successfully.");
 
-      logger.info("Starting database backfill loop...");
-      // Backfill defaults for all databases
-      for (String dbName : databaseContext.listDatabases()) {
-        if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
-          continue;
+      logger.info("Starting database backfill loop in the background...");
+      final String finalAppDataDir = appDataDir;
+      new Thread(() -> {
+        long backfillStartTime = System.currentTimeMillis();
+        try {
+          List<String> databasesToBackfill = databaseContext.listDatabases();
+          for (String dbName : databasesToBackfill) {
+            if (dbName.equals("admin") || dbName.equals("local") || dbName.equals("config")) {
+              continue;
+            }
+            logger.info("Background Backfill: Starting for database: {}", dbName);
+            MongoDatabase db = mongoClient.getDatabase(dbName);
+            new AssetService(db, finalAppDataDir + File.separator + dbName + File.separator + "assets")
+                .backfillDefaults();
+          }
+          logger.info("Background Backfill: Complete ({}ms)", System.currentTimeMillis() - backfillStartTime);
+        } catch (Exception e) {
+          logger.error("Background Backfill: Error during backfill", e);
         }
-        logger.info("Backfilling default assets for database: {}", dbName);
-        MongoDatabase db = mongoClient.getDatabase(dbName);
-        new AssetService(db, appDataDir + File.separator + dbName + File.separator + "assets")
-            .backfillDefaults();
-      }
+      }, "DatabaseBackfillThread").start();
 
       // Determine client path once
       String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
@@ -363,6 +372,9 @@ public class App {
                         });
                     mapper.registerModule(module);
                     config.jsonMapper(new JavalinJackson(mapper));
+                    config.requestLogger((ctx, ms) -> {
+                      logger.info("HTTP Request: {} {} from {} ({}ms)", ctx.method(), ctx.path(), ctx.ip(), ms);
+                    });
                   })
               .start(7070);
       logger.info("Javalin started successfully.");

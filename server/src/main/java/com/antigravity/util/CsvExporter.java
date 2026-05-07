@@ -177,6 +177,7 @@ public class CsvExporter {
     if (track != null) {
       sb.append("#Property,Value\n");
       sb.append("Name,").append(escape(track.getName())).append("\n");
+      sb.append("Geolocation,").append(escape(track.getGeolocation())).append("\n");
       sb.append("Lanes,").append(track.getLanes().size()).append("\n");
       sb.append("\n");
 
@@ -200,6 +201,7 @@ public class CsvExporter {
     sb.append("#Property,Value\n");
     if (race.getRaceModel() != null) {
       sb.append("Name,").append(escape(race.getRaceModel().getName())).append("\n");
+      sb.append("Car Class,").append(escape(race.getRaceModel().getCarClass())).append("\n");
 
       AnalogFuelOptions fuel = race.getRaceModel().getFuelOptions();
       if (fuel != null && fuel.isEnabled()) {

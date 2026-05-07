@@ -1,8 +1,11 @@
 $ErrorActionPreference = "Stop"
 
 # Setup Java Environment
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
-$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+$PotentialJavaHome = "$PSScriptRoot\tools\jdk\jdk-21.0.3+9"
+if (Test-Path $PotentialJavaHome) {
+    $env:JAVA_HOME = $PotentialJavaHome
+    $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+}
 
 $SERVER_DIR = "$PSScriptRoot\server"
 $BUILD_DIR = "target_generated"
@@ -20,7 +23,9 @@ Set-Location $SERVER_DIR
 # Find mvn.cmd
 $MvnCmd = Get-Command mvn.cmd -ErrorAction SilentlyContinue
 if ($null -eq $MvnCmd) {
+    # Try common installation paths if not in PATH
     $CommonPaths = @(
+        "$PSScriptRoot\tools\maven\apache-maven-*\bin\mvn.cmd",
         "C:\Maven\apache-maven-*\bin\mvn.cmd",
         "C:\Program Files\apache-maven-*\bin\mvn.cmd",
         "C:\maven\bin\mvn.cmd"
@@ -32,7 +37,11 @@ if ($null -eq $MvnCmd) {
     Write-Warning "mvn.cmd not found in PATH or common locations. Falling back to 'mvn'."
     $MvnExecutable = "mvn"
 } else {
-    $MvnExecutable = "mvn.cmd"
+    if ($MvnCmd -is [System.IO.FileInfo]) {
+        $MvnExecutable = $MvnCmd.FullName
+    } else {
+        $MvnExecutable = "mvn.cmd"
+    }
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"

@@ -21,4 +21,5 @@ export interface RaceHistoryRecord {
   };
   database_name?: string;
   car_class?: string;
+  geolocation?: string;
 }

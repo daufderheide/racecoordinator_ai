@@ -53,6 +53,10 @@ public class RaceHistoryRecord {
   @JsonProperty("car_class")
   private String carClass;
 
+  @BsonProperty("geolocation")
+  @JsonProperty("geolocation")
+  private String geolocation;
+
   public RaceHistoryRecord() {}
 
   @BsonCreator
@@ -69,7 +73,8 @@ public class RaceHistoryRecord {
           float accumulatedRaceTime,
       @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics,
       @BsonProperty("database_name") @JsonProperty("database_name") String databaseName,
-      @BsonProperty("car_class") @JsonProperty("car_class") String carClass) {
+      @BsonProperty("car_class") @JsonProperty("car_class") String carClass,
+      @BsonProperty("geolocation") @JsonProperty("geolocation") String geolocation) {
     this.id = id;
     this.originalEntityId = originalEntityId;
     this.model = model;
@@ -80,6 +85,7 @@ public class RaceHistoryRecord {
     this.statistics = statistics;
     this.databaseName = databaseName;
     this.carClass = carClass;
+    this.geolocation = geolocation;
   }
 
   public ObjectId getId() {
@@ -154,11 +160,15 @@ public class RaceHistoryRecord {
     this.databaseName = databaseName;
   }
 
-  public String getCarClass() {
-    return carClass;
-  }
-
   public void setCarClass(String carClass) {
     this.carClass = carClass;
+  }
+
+  public String getGeolocation() {
+    return geolocation;
+  }
+
+  public void setGeolocation(String geolocation) {
+    this.geolocation = geolocation;
   }
 }

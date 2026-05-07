@@ -446,6 +446,9 @@ public class DatabaseService {
       if (runtimeRace.getRaceModel() != null) {
         record.setCarClass(runtimeRace.getRaceModel().getCarClass());
       }
+      if (runtimeRace.getTrack() != null) {
+        record.setGeolocation(runtimeRace.getTrack().getGeolocation());
+      }
 
       collection.insertOne(record);
       logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());

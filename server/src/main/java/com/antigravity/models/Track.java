@@ -23,6 +23,7 @@ public class Track extends Model {
   private final int numTrackSections;
   private final List<Lane> lanes;
   private final List<ArduinoConfig> arduinoConfigs;
+  private final String geolocation;
 
   @BsonCreator
   @JsonCreator
@@ -33,6 +34,7 @@ public class Track extends Model {
       @BsonProperty("lanes") @JsonProperty("lanes") List<Lane> lanes,
       @BsonProperty("arduino_configs") @JsonProperty("arduino_configs")
           List<ArduinoConfig> arduinoConfigs,
+      @BsonProperty("geolocation") @JsonProperty("geolocation") String geolocation,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -43,10 +45,7 @@ public class Track extends Model {
         arduinoConfigs != null
             ? Collections.unmodifiableList(arduinoConfigs)
             : Collections.emptyList();
-  }
-
-  public Track(String name, List<Lane> lanes, String entityId, ObjectId id) {
-    this(name, 100, lanes, null, entityId, id);
+    this.geolocation = geolocation;
   }
 
   public Track(
@@ -55,12 +54,25 @@ public class Track extends Model {
       List<ArduinoConfig> arduinoConfigs,
       String entityId,
       ObjectId id) {
-    this(name, 100, lanes, arduinoConfigs, entityId, id);
+    this(name, lanes, arduinoConfigs, null, entityId, id);
+  }
+
+  public Track(String name, List<Lane> lanes, String entityId, ObjectId id) {
+    this(name, 100, lanes, null, null, entityId, id);
+  }
+
+  public Track(
+      String name,
+      List<Lane> lanes,
+      List<ArduinoConfig> arduinoConfigs,
+      String entityId,
+      ObjectId id) {
+    this(name, 100, lanes, arduinoConfigs, null, entityId, id);
   }
 
   // Legacy constructor or convenience
   public Track(String name, List<Lane> lanes) {
-    this(name, 100, lanes, null, null, null);
+    this(name, 100, lanes, null, null, null, null);
   }
 
   public String getName() {
@@ -71,6 +83,10 @@ public class Track extends Model {
   @BsonProperty("num_track_sections")
   public int getNumTrackSections() {
     return numTrackSections;
+  }
+
+  public String getGeolocation() {
+    return geolocation;
   }
 
   @JsonProperty("has_digital_fuel")
@@ -182,6 +198,7 @@ public class Track extends Model {
         this.numTrackSections,
         this.lanes,
         syncedConfigs,
+        this.geolocation,
         this.getEntityId(),
         this.getId());
   }
