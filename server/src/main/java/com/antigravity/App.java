@@ -81,7 +81,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.16";
+  public static final String SERVER_VERSION = "0.0.0.17";
 
   public static void main(String[] args) {
     try {
