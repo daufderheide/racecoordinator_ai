@@ -686,6 +686,10 @@ public class AssetService {
     // 2. Clear DB
     collection.drop();
 
+    // 3. Clear themes collection to remove all user-created themes
+    MongoCollection<Document> themes = database.getCollection("themes");
+    themes.drop();
+
     // 3. Restore defaults
     List<ImageSetEntry> fuelImages = new ArrayList<>();
     long fuelTotalSize = 0;
@@ -1324,8 +1328,9 @@ public class AssetService {
     // Migration: Remove any legacy theme document.
     themes.deleteOne(Filters.eq("entity_id", themeId));
 
-    if (themes.find(Filters.eq("entity_id", themeId)).first() != null) {
-      return; // Already exists with proper ObjectId
+    // Check if default theme already exists by name to prevent duplicates
+    if (themes.find(Filters.eq("name", "RaceCoordinator AI")).first() != null) {
+      return; // Already exists with proper name
     }
 
     Document slots = new Document();
