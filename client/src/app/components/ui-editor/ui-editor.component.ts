@@ -250,7 +250,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         // Dynamic columns for image sets
         const imageSetColumns = result.assets
-          .filter((a: any) => a.type === "image_set")
+          .filter((a: any) => a.type === "image_set" && a.name !== "Fuel Gauge")
           .map((a: any) => ({
             key: `imageset_${a.model?.entityId}`,
             label: a.name || "AM_UNKNOWN_ASSET",
