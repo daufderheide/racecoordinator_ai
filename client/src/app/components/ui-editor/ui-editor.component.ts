@@ -496,7 +496,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.sortByStandings === b.sortByStandings &&
       a.highlightRowOnLap === b.highlightRowOnLap &&
       a.pageTransition === b.pageTransition &&
+      a.activeThemeId === b.activeThemeId &&
+      a.lampRedOn === b.lampRedOn &&
+      a.lampRedDim === b.lampRedDim &&
+      a.lampGreen === b.lampGreen &&
+      a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
+      JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
       JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility)
     );
@@ -529,68 +535,82 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, 500);
   }
 
-  private autoSaveState() {
-    if (this.isLoading) return;
-    if (this.isSaving) return;
-    if (!this.hasChanges()) return;
-
-    // Don't auto-save if any theme name is invalid
-    if (this.isAnyThemeNameInvalid()) return;
-
-    this.isAutoSaving = true;
-    this.isSaving = true;
-
-    // 1. Save Settings
-    this.settingsService.saveSettings(this.editingSettings);
-
-    // 2. Save changed Themes
-    const savePromises = [];
-    for (const theme of this.displayThemes) {
-      if (!theme.is_default) {
-        savePromises.push(this.dataService.updateTheme(theme.entity_id, theme));
+  private autoSaveState(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.isLoading || this.isSaving || !this.hasChanges() || this.isAnyThemeNameInvalid()) {
+        resolve();
+        return;
       }
-    }
 
-    // Use of(null) if no themes to save, to ensure the sequence completes
-    const obs = savePromises.length > 0 ? forkJoin(savePromises) : of([null]);
+      this.isAutoSaving = true;
+      this.isSaving = true;
 
-    obs.subscribe({
-      next: () => {
-        this.undoManager.resetTracking(this.editingState);
-        // If the active theme changed, refresh ThemeService
-        const activeTheme = this.themeService.getActiveTheme();
-        if (
-          activeTheme &&
-          this.displayThemes.find((t) => t.entity_id === activeTheme.entity_id)
-        ) {
-          this.themeService.refresh();
+      // 1. Save Settings
+      this.settingsService.saveSettings(this.editingSettings);
+
+      // 2. Save changed Themes
+      const savePromises = [];
+      for (const theme of this.displayThemes) {
+        if (!theme.is_default) {
+          savePromises.push(this.dataService.updateTheme(theme.entity_id, theme));
         }
+      }
 
-        setTimeout(() => {
+      const obs = savePromises.length > 0 ? forkJoin(savePromises) : of([null]);
+
+      obs.subscribe({
+        next: () => {
+          this.undoManager.resetTracking(this.editingState);
+          const activeTheme = this.themeService.getActiveTheme();
+          if (activeTheme && this.displayThemes.find(t => t.entity_id === activeTheme.entity_id)) {
+            this.themeService.refresh();
+          }
+
+          setTimeout(() => {
+            this.isAutoSaving = false;
+            this.isSaving = false;
+            if (!this.isDestroyed) {
+              this.cdr.markForCheck();
+            }
+            resolve();
+          }, 500);
+        },
+        error: (err) => {
+          this.logger.error("Auto-save failed", err);
           this.isAutoSaving = false;
           this.isSaving = false;
           if (!this.isDestroyed) {
+            if (err.status !== 409) {
+              alert(this.translationService.translate("UE_ERROR_SAVE_FAILED"));
+            }
             this.cdr.markForCheck();
           }
-        }, 500);
-      },
-      error: (err) => {
-        this.logger.error("Auto-save failed", err);
-        this.isAutoSaving = false;
-        this.isSaving = false;
-        if (!this.isDestroyed) {
-          if (err.status === 409) {
-            // Silently fail as requested, the UI will highlight the error
-          } else {
-            alert(this.translationService.translate("UE_ERROR_SAVE_FAILED"));
-          }
-          this.cdr.markForCheck();
+          reject(err);
         }
-      },
+      });
     });
   }
 
-  confirmDiscard(): Promise<boolean> {
+  async confirmDiscard(): Promise<boolean> {
+    // Flush any pending debounced changes in the undo manager
+    this.undoManager.commitState();
+
+    if (!this.hasChanges()) {
+      return true;
+    }
+
+    // If changes are saveable, try to auto-save before showing the modal
+    if (!this.isAnyThemeNameInvalid()) {
+      try {
+        await this.autoSaveState();
+        if (!this.hasChanges()) {
+          return true; // Successfully saved, allow navigation
+        }
+      } catch (e) {
+        this.logger.error("Final auto-save failed before navigation", e);
+      }
+    }
+
     this.showDiscardConfirm = true;
     this.cdr.markForCheck();
     return new Promise((resolve) => {
