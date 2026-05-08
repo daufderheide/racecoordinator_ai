@@ -835,8 +835,10 @@ public class Race implements ProtocolListener {
         break;
       case GREEN:
       case WHITE:
-      case CHECKERED:
         setMainPower(true);
+        break;
+      case CHECKERED:
+        setMainPower(false);
         break;
       default:
         break;
