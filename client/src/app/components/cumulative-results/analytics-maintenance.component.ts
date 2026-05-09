@@ -1,13 +1,17 @@
 import { Component, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+
 import { DataService } from "../../data.service";
 
 @Component({
   selector: "app-analytics-maintenance",
   templateUrl: "./analytics-maintenance.component.html",
   styleUrls: ["./analytics-maintenance.component.css"],
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule],
 })
 export class AnalyticsMaintenanceComponent implements OnInit {
   history: any[] = [];
@@ -114,7 +118,7 @@ export class AnalyticsMaintenanceComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(["/analytics"]);
+    this.router.navigate(["/history"]);
   }
 
   formatDate(millis: number | undefined): string {

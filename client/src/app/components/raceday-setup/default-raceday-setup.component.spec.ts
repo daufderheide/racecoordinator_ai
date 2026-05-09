@@ -11,7 +11,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { HelpOverlayComponent } from "@app/components/shared/help-overlay/help-overlay.component";
 import { DataService } from "@app/data.service";
 import { Settings as _Settings } from "@app/models/settings";

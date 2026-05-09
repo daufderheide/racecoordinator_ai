@@ -3,7 +3,7 @@ import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute } from "@angular/router";
 import { of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -17,7 +17,7 @@ describe("ManagerHeaderComponent", () => {
   let harness: ManagerHeaderHarness;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
   let helpServiceSpy: jasmine.SpyObj<HelpService>;
-  let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
+  let AnalyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(async () => {
     translationServiceSpy = jasmine.createSpyObj("TranslationService", [
@@ -31,19 +31,19 @@ describe("ManagerHeaderComponent", () => {
     helpServiceSpy.hasNext$ = of(false);
     helpServiceSpy.hasPrevious$ = of(false);
 
-    analyticsServiceSpy = jasmine.createSpyObj("AnalyticsService", [
+    AnalyticsServiceSpy = jasmine.createSpyObj("AnalyticsService", [
       "isEnabled",
       "toggleAnalytics",
     ]);
-    analyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
-    analyticsServiceSpy.isEnabled.and.returnValue(true);
+    AnalyticsServiceSpy.toggleAnalytics.and.returnValue(of({ success: true }));
+    AnalyticsServiceSpy.isEnabled.and.returnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [ManagerHeaderComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: translationServiceSpy },
         { provide: HelpService, useValue: helpServiceSpy },
-        { provide: AnalyticsService, useValue: analyticsServiceSpy },
+        { provide: AnalyticsService, useValue: AnalyticsServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: {

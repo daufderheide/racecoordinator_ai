@@ -11,7 +11,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";

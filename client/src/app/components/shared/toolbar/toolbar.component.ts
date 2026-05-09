@@ -6,7 +6,7 @@ import {
   output,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -266,7 +266,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   onToggleAnalytics() {
-    this.analyticsService.toggleAnalytics().subscribe((result) => {
+    this.analyticsService.toggleAnalytics().subscribe((result: any) => {
       if (!result.success && result.titleKey && result.messageKey) {
         this.analyticsModalTitle = this.translationService.translate(
           result.titleKey,

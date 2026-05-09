@@ -54,20 +54,11 @@ public class Track extends Model {
       List<ArduinoConfig> arduinoConfigs,
       String entityId,
       ObjectId id) {
-    this(name, lanes, arduinoConfigs, null, entityId, id);
+    this(name, 100, lanes, arduinoConfigs, null, entityId, id);
   }
 
   public Track(String name, List<Lane> lanes, String entityId, ObjectId id) {
     this(name, 100, lanes, null, null, entityId, id);
-  }
-
-  public Track(
-      String name,
-      List<Lane> lanes,
-      List<ArduinoConfig> arduinoConfigs,
-      String entityId,
-      ObjectId id) {
-    this(name, 100, lanes, arduinoConfigs, null, entityId, id);
   }
 
   // Legacy constructor or convenience

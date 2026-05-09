@@ -1,13 +1,16 @@
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { DataService } from "src/app/data.service";
-import { RaceHistoryRecord } from "src/app/models/race_history_record";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { DataService } from "@app/data.service";
+import { RaceHistoryRecord } from "@app/models/race_history_record";
 
 @Component({
   selector: "app-race-detail",
   templateUrl: "./race-detail.component.html",
   styleUrls: ["./race-detail.component.css"],
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule],
 })
 export class RaceDetailComponent implements OnInit {
   raceId: string | null = null;
@@ -44,7 +47,7 @@ export class RaceDetailComponent implements OnInit {
       if (this.raceId) {
         this.loadRaceDetails(this.raceId, isDemo);
       } else {
-        this.router.navigate(["/analytics"]);
+        this.router.navigate(["/history"]);
       }
     });
   }
@@ -358,7 +361,7 @@ export class RaceDetailComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(["/analytics"]);
+    this.router.navigate(["/history"]);
   }
 
   formatDate(millis: number | undefined): string {

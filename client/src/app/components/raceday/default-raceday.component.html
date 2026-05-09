@@ -406,13 +406,13 @@
                   <div
                     class="body-cell"
                     [style.background]="
-                      track?.lanes?.[hd.laneIndex]?.background_color
+                      track.lanes?.[hd.laneIndex]?.background_color
                     "
                     [style.border-left-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      track.lanes?.[hd.laneIndex]?.foreground_color
                     "
                     [style.border-right-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      track.lanes?.[hd.laneIndex]?.foreground_color
                     "
                     (click)="onCellClick(hd, col, $event)"
                   >

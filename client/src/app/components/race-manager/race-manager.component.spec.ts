@@ -4,7 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { Router } from "@angular/router";
 import { of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";

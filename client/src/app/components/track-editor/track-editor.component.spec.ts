@@ -11,7 +11,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { Lane } from "@app/models/lane";
 import { Settings } from "@app/models/settings";

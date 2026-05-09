@@ -2,7 +2,7 @@ import { Component, input, NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import {} from "@app/models/settings";
 import { Track } from "@app/models/track";

@@ -8,7 +8,7 @@ import {
 import { filter } from "rxjs/operators";
 import { slideInAnimation } from "@app/utils/animations";
 
-import { AnalyticsService } from "./analytics.service";
+import { AnalyticsService } from "./services/analytics.service";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 import { DataService } from "./data.service";
 import { FileSystemService } from "./services/file-system.service";

@@ -69,7 +69,7 @@ public class Race implements ProtocolListener {
   }
 
   private ProtocolDelegate protocols;
-  private List<com.antigravity.protocols.PartialTime> partialTimes;
+  private List<PartialTime> partialTimes;
   private boolean isDemoMode;
   private DatabaseContext databaseContext;
 

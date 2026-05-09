@@ -6,11 +6,11 @@ import { Settings } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
-import { TheDataService } from "./analytics.service";
+import { AnalyticsService } from "./analytics.service";
 import { DataService } from "./data.service";
 
-describe("TheDataService", () => {
-  let service: TheDataService;
+describe("AnalyticsService", () => {
+  let service: AnalyticsService;
   let mockRouter: any;
   let mockSettingsService: any;
   let mockDocument: any;
@@ -78,7 +78,7 @@ describe("TheDataService", () => {
     };
     TestBed.configureTestingModule({
       providers: [
-        TheDataService,
+        AnalyticsService,
         { provide: Router, useValue: mockRouter },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: DataService, useValue: mockDataService },
@@ -87,7 +87,7 @@ describe("TheDataService", () => {
       ],
     });
 
-    service = TestBed.inject(TheDataService);
+    service = TestBed.inject(AnalyticsService);
   });
 
   afterEach(() => {

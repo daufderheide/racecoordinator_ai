@@ -7,7 +7,7 @@ import {
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";

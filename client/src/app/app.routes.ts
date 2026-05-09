@@ -16,8 +16,6 @@ import { TeamManagerComponent } from "@app/components/team-manager/team-manager.
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { TrackManagerComponent } from "@app/components/track-manager/track-manager.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
-import { AnalyticsMaintenanceComponent } from "@app/components/cumulative-results/analytics-maintenance.component";
-import { RaceDetailComponent } from "@app/components/cumulative-results/race-detail.component";
 import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
 import { RacedayGuard } from "@app/guards/raceday.guard";
 
@@ -107,19 +105,22 @@ export const routes: Routes = [
     data: { animation: "HeatResultsPage" },
   },
   {
-    path: "analytics/maintenance",
+    path: "history/maintenance",
     component: AnalyticsMaintenanceComponent,
     data: { animation: "AnalyticsMaintenancePage" },
   },
   {
-    path: "analytics/race/:id",
+    path: "history/race/:id",
     component: RaceDetailComponent,
     data: { animation: "RaceDetailPage" },
   },
   {
-    path: "analytics",
+    path: "history",
     component: CumulativeResultsComponent,
     data: { animation: "AnalyticsPage" },
   },
+  { path: "analytics", redirectTo: "history" },
+  { path: "analytics/maintenance", redirectTo: "history/maintenance" },
+  { path: "analytics/race/:id", redirectTo: "history/race/:id" },
   { path: "**", redirectTo: "" },
 ];

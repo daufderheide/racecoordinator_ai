@@ -6,7 +6,7 @@ import { catchError, filter, map } from "rxjs/operators";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
-import { DataService } from "./data.service";
+import { DataService } from "@app/data.service";
 
 // Declare standard gtag function
 declare const gtag: Function;
@@ -117,7 +117,7 @@ export class AnalyticsService {
     this.scriptLoaded = true;
 
     this.dataService.getServerAnalyticsConfig().subscribe({
-      next: (config) => {
+      next: (config: any) => {
         this.logger.info("Analytics: Received config from server", {
           measurementId: !!config.measurementId,
           clientId: !!config.clientId,
@@ -167,7 +167,7 @@ export class AnalyticsService {
         this.configLoaded = true;
         this.processQueue();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.logger.warn(
           "Failed to fetch server tracking ID, falling back to local.",
           err,

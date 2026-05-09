@@ -1,11 +1,11 @@
 import { TestBed } from "@angular/core/testing";
-import { AnalyticsService } from "@app/analytics.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 
 import { GuideStep, HelpService } from "./help.service";
 
 describe("HelpService", () => {
   let service: HelpService;
-  let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
+  let AnalyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj("AnalyticsService", ["trackClick"]);
@@ -14,7 +14,7 @@ describe("HelpService", () => {
       providers: [HelpService, { provide: AnalyticsService, useValue: spy }],
     });
     service = TestBed.inject(HelpService);
-    analyticsServiceSpy = TestBed.inject(
+    AnalyticsServiceSpy = TestBed.inject(
       AnalyticsService,
     ) as jasmine.SpyObj<AnalyticsService>;
   });
@@ -29,7 +29,7 @@ describe("HelpService", () => {
       { title: "Step 2", content: "Content 2" },
     ];
     service.startGuide(steps);
-    expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+    expect(AnalyticsServiceSpy.trackClick).toHaveBeenCalledWith(
       "help_started",
       { guide_name: "Step 1" },
     );
@@ -41,10 +41,10 @@ describe("HelpService", () => {
       { title: "Step 2", content: "Content 2" },
     ];
     service.startGuide(steps);
-    analyticsServiceSpy.trackClick.calls.reset();
+    AnalyticsServiceSpy.trackClick.calls.reset();
 
     service.endGuide();
-    expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+    expect(AnalyticsServiceSpy.trackClick).toHaveBeenCalledWith(
       "help_ended_early",
       {
         guide_name: "Step 1",
@@ -61,10 +61,10 @@ describe("HelpService", () => {
     ];
     service.startGuide(steps);
     service.nextStep(); // moves to Step 2, index 1 (the last step)
-    analyticsServiceSpy.trackClick.calls.reset();
+    AnalyticsServiceSpy.trackClick.calls.reset();
 
     service.endGuide();
-    expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+    expect(AnalyticsServiceSpy.trackClick).toHaveBeenCalledWith(
       "help_completed",
       { guide_name: "Step 1" },
     );
@@ -77,10 +77,10 @@ describe("HelpService", () => {
     ];
     service.startGuide(steps);
     service.nextStep(); // Move to Step 2
-    analyticsServiceSpy.trackClick.calls.reset();
+    AnalyticsServiceSpy.trackClick.calls.reset();
 
     service.nextStep(); // Calling next on the last step ends the guide
-    expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+    expect(AnalyticsServiceSpy.trackClick).toHaveBeenCalledWith(
       "help_completed",
       { guide_name: "Step 1" },
     );

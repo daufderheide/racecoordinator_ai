@@ -7,18 +7,18 @@
           Back
         </button>
         <div class="title-section">
-          <h1>{{ race.model?.name }}</h1>
+          <h1>{{ race.model.name }}</h1>
           <div class="subtitle">
-            <span>{{ formatDate(race.statistics?.startMillis) }}</span>
+            <span>{{ formatDate(race.statistics.startMillis) }}</span>
             <span class="separator">•</span>
-            <span>{{ race.track?.name }}</span>
+            <span>{{ race.track.name }}</span>
             <span class="separator">•</span>
             <span>{{ race.car_class || 'No Class' }}</span>
             <span class="separator">•</span>
             <span class="target-badge">{{ 
-              race.model?.heat_scoring?.finishMethod === 'Lap' ? 
-              race.model?.heat_scoring?.finishValue + ' Laps' : 
-              (race.model?.heat_scoring?.finishValue | number:'1.0-0') + 's' 
+              race.model.heat_scoring.finishMethod === 'Lap' ? 
+              race.model.heat_scoring.finishValue + ' Laps' : 
+              (race.model.heat_scoring.finishValue | number:'1.0-0') + 's' 
             }}</span>
           </div>
         </div>

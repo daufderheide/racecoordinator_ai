@@ -240,7 +240,7 @@ public class DatabaseService {
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
     Track track =
-        new Track("The Heights", 100, lanes, configs, getNextSequence(database, "tracks"), null);
+        new Track("The Heights", 100, lanes, configs, null, getNextSequence(database, "tracks"), null);
 
     trackCollection.insertOne(track);
     logger.info("Tracks reset.");
@@ -420,7 +420,7 @@ public class DatabaseService {
     ArduinoConfig config = new ArduinoConfig();
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
-    return new Track("New Track", 100, lanes, configs, null, null);
+    return new Track("New Track", 100, lanes, configs, null, null, null);
   }
 
   public void saveRaceHistory(

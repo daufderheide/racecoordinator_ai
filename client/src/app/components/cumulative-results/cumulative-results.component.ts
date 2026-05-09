@@ -130,7 +130,7 @@ export class CumulativeResultsComponent implements OnInit {
     console.log("CumulativeResultsComponent: Double clicked race:", id);
 
     if (id) {
-      this.router.navigate(["/analytics/race", id], {
+      this.router.navigate(["/history/race", id], {
         queryParams: { demo: this.showDemoData },
       });
     } else {
@@ -797,7 +797,7 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   goToMaintenance() {
-    this.router.navigate(["/analytics/maintenance"]);
+    this.router.navigate(["/history/maintenance"]);
   }
 
   onResizeStart(event: MouseEvent) {
