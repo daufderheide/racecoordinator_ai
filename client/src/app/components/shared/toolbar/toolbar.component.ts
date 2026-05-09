@@ -6,11 +6,11 @@ import {
   output,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";

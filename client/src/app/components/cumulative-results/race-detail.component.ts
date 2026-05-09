@@ -1,7 +1,7 @@
-import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
 import { CommonModule } from "@angular/common";
+import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
 import { DataService } from "@app/data.service";
 import { RaceHistoryRecord } from "@app/models/race_history_record";
 
@@ -252,7 +252,7 @@ export class RaceDetailComponent implements OnInit {
     }
 
     // Supplement from ALL heats
-    this.race.heats.forEach((h, idx) => {
+    this.race.heats.forEach((h) => {
       if (h.drivers) {
         h.drivers.forEach((hd: any) => {
           const participant = hd.driver;

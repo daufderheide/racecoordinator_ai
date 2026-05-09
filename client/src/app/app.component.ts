@@ -8,9 +8,9 @@ import {
 import { filter } from "rxjs/operators";
 import { slideInAnimation } from "@app/utils/animations";
 
-import { AnalyticsService } from "./services/analytics.service";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 import { DataService } from "./data.service";
+import { AnalyticsService } from "./services/analytics.service";
 import { FileSystemService } from "./services/file-system.service";
 import { LoggerService } from "./services/logger.service";
 import { NavigationService } from "./services/navigation.service";

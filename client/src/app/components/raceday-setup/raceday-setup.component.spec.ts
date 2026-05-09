@@ -7,10 +7,10 @@ import {
   tick,
 } from "@angular/core/testing";
 import { BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
 import { RaceFlag } from "@app/proto/antigravity";
+import { AnalyticsService } from "@app/services/analytics.service";
 import {
   ConnectionMonitorService,
   ConnectionState,

@@ -51,14 +51,14 @@ class MockAssetPreviewComponent {
   animate = input<boolean>(true);
 }
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({ name: "avatarUrl" })
+@Pipe({ standalone: true,name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;

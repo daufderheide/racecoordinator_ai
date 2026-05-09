@@ -6,7 +6,7 @@ import { TranslationService } from "@app/services/translation.service";
 import { InputDialogComponent } from "./input-dialog.component";
 import { InputDialogHarness } from "./testing/input-dialog.harness";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return `TRANSLATED_${value}`;

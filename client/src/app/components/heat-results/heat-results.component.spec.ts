@@ -10,7 +10,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 
 import { HeatResultsComponent } from "./heat-results.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

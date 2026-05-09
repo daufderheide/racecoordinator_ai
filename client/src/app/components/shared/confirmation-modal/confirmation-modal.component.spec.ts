@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ConfirmationModalComponent } from "./confirmation-modal.component";
 import { ConfirmationModalHarness } from "./testing/confirmation-modal.harness";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return `TRANSLATED_${value}`;

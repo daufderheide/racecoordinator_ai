@@ -25,7 +25,7 @@ class MockItemSelectorComponent {
 }
 
 import { Pipe, PipeTransform } from "@angular/core";
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

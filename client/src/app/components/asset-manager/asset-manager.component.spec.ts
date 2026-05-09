@@ -9,8 +9,8 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
+import { AnalyticsService } from "@app/services/analytics.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -29,7 +29,7 @@ import {
 
 import { AssetManagerComponent } from "./asset-manager.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

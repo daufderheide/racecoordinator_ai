@@ -11,12 +11,12 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { HelpOverlayComponent } from "@app/components/shared/help-overlay/help-overlay.component";
 import { DataService } from "@app/data.service";
 import { Settings as _Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InitializeRaceResponse, Race } from "@app/proto/antigravity";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";

@@ -3,8 +3,8 @@ import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute } from "@angular/router";
 import { of } from "rxjs";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 

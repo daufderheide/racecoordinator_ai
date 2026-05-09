@@ -11,12 +11,12 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
-import { AnalyticsService } from "@app/services/analytics.service";
 import { DataService } from "@app/data.service";
 import { FuelUsageType } from "@app/models/fuel_options";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AnalyticsService } from "@app/services/analytics.service";
 import { HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";

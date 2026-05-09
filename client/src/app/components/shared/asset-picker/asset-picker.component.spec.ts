@@ -8,7 +8,7 @@ import { mockLoggerService } from "@app/testing/unit-test-mocks";
 
 import { AssetPickerComponent } from "./asset-picker.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

@@ -6,7 +6,7 @@ import { Router } from "@angular/router";
 import { BackButtonComponent } from "./back-button.component";
 import { BackButtonHarness } from "./testing/back-button.harness";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

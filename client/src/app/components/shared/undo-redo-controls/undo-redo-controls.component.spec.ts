@@ -6,7 +6,7 @@ import { UndoRedoControlsHarness } from "./testing/undo-redo-controls.harness";
 import { UndoManager } from "./undo-manager";
 import { UndoRedoControlsComponent } from "./undo-redo-controls.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

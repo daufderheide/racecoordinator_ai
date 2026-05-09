@@ -3,10 +3,9 @@ import { Inject, Injectable } from "@angular/core";
 import { NavigationEnd, Router } from "@angular/router";
 import { Observable, of } from "rxjs";
 import { catchError, filter, map } from "rxjs/operators";
+import { DataService } from "@app/data.service";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
-
-import { DataService } from "@app/data.service";
 
 // Declare standard gtag function
 declare const gtag: Function;

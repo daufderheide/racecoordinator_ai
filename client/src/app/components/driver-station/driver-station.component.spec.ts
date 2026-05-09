@@ -14,7 +14,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import { DriverStationComponent } from "./driver-station.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

@@ -163,7 +163,7 @@ class MockAudioSelectorComponent {
   textChange = output<string>();
 }
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     if (value === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";

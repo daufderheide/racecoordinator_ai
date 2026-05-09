@@ -6,14 +6,14 @@ import { FormsModule } from "@angular/forms";
 import { ItemSelectorComponent } from "./item-selector.component";
 import { ItemSelectorHarness } from "./testing/item-selector.harness";
 
-@Pipe({ name: "avatarUrl" })
+@Pipe({ standalone: true,name: "avatarUrl" })
 class MockAvatarUrlPipe implements PipeTransform {
   transform(value: string): string {
     return value;
   }
 }
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

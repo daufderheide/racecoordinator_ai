@@ -27,7 +27,7 @@ class MockImageSelectorComponent {
   imageUrlChange = output<string>();
 }
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;

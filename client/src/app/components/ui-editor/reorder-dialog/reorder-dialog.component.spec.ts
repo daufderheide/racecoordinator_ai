@@ -18,7 +18,7 @@ import {
   ReorderDialogData,
 } from "./reorder-dialog.component";
 
-@Pipe({ name: "translate" })
+@Pipe({ standalone: true,name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
     return value;
