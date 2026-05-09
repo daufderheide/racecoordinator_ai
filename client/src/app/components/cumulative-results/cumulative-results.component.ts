@@ -1,9 +1,11 @@
+import { CommonModule, DecimalPipe } from "@angular/common";
 import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
-import { DataService } from "src/app/data.service";
-import { RaceHistoryRecord } from "src/app/models/race_history_record";
-import { SettingsService } from "src/app/services/settings.service";
-import { ThemeService } from "src/app/services/theme.service";
+import { DataService } from "@app/data.service";
+import { RaceHistoryRecord } from "@app/models/race_history_record";
+import { SettingsService } from "@app/services/settings.service";
+import { ThemeService } from "@app/services/theme.service";
 
 interface DriverTotal {
   driverId: string;
@@ -37,7 +39,8 @@ export interface DriverDetailedStats {
   selector: "app-cumulative-results",
   templateUrl: "./cumulative-results.component.html",
   styleUrls: ["./cumulative-results.component.css"],
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, DecimalPipe, FormsModule],
 })
 export class CumulativeResultsComponent implements OnInit {
   history: RaceHistoryRecord[] = [];
@@ -586,16 +589,34 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportCsv() {
-    const selectedRaces = this.history.filter(r => this.selectedRaces.has(r._id));
-    const raceNames = selectedRaces.map(r => r.model?.name || "Unknown").join("; ");
-    const tracks = Array.from(new Set(selectedRaces.map(r => r.track?.name || "Unknown"))).join("; ");
-    const carClasses = Array.from(new Set(selectedRaces.map(r => r.car_class || "N/A"))).join("; ");
-    const geolocations = Array.from(new Set(selectedRaces.map(r => r.geolocation || r.track?.geolocation || "N/A"))).join("; ");
-    
+    const selectedRaces = this.history.filter((r) =>
+      this.selectedRaces.has(r._id),
+    );
+    const raceNames = selectedRaces
+      .map((r) => r.model?.name || "Unknown")
+      .join("; ");
+    const tracks = Array.from(
+      new Set(selectedRaces.map((r) => r.track?.name || "Unknown")),
+    ).join("; ");
+    const carClasses = Array.from(
+      new Set(selectedRaces.map((r) => r.car_class || "N/A")),
+    ).join("; ");
+    const geolocations = Array.from(
+      new Set(
+        selectedRaces.map(
+          (r) => r.geolocation || r.track?.geolocation || "N/A",
+        ),
+      ),
+    ).join("; ");
+
     let dateRange = "N/A";
     if (selectedRaces.length > 0) {
-      const startMillis = Math.min(...selectedRaces.map(r => r.statistics?.startMillis || Infinity));
-      const endMillis = Math.max(...selectedRaces.map(r => r.statistics?.startMillis || -Infinity));
+      const startMillis = Math.min(
+        ...selectedRaces.map((r) => r.statistics?.startMillis || Infinity),
+      );
+      const endMillis = Math.max(
+        ...selectedRaces.map((r) => r.statistics?.startMillis || -Infinity),
+      );
       if (startMillis !== Infinity) {
         dateRange = this.formatDateOnly(startMillis);
         if (endMillis !== -Infinity && endMillis !== startMillis) {
@@ -610,8 +631,10 @@ export class CumulativeResultsComponent implements OnInit {
       ["Tracks", `"${tracks}"`],
       ["Car Classes", `"${carClasses}"`],
       ["Geolocations", `"${geolocations}"`],
-      []
-    ].map(r => r.join(",")).join("\n");
+      [],
+    ]
+      .map((r) => r.join(","))
+      .join("\n");
 
     const header = [
       "Rank",
@@ -645,16 +668,34 @@ export class CumulativeResultsComponent implements OnInit {
   }
 
   exportHtml() {
-    const selectedRaces = this.history.filter(r => this.selectedRaces.has(r._id));
-    const raceNames = selectedRaces.map(r => r.model?.name || "Unknown").join(", ");
-    const tracks = Array.from(new Set(selectedRaces.map(r => r.track?.name || "Unknown"))).join(", ");
-    const carClasses = Array.from(new Set(selectedRaces.map(r => r.car_class || "N/A"))).join(", ");
-    const geolocations = Array.from(new Set(selectedRaces.map(r => r.geolocation || r.track?.geolocation || "N/A"))).join(", ");
+    const selectedRaces = this.history.filter((r) =>
+      this.selectedRaces.has(r._id),
+    );
+    const raceNames = selectedRaces
+      .map((r) => r.model?.name || "Unknown")
+      .join(", ");
+    const tracks = Array.from(
+      new Set(selectedRaces.map((r) => r.track?.name || "Unknown")),
+    ).join(", ");
+    const carClasses = Array.from(
+      new Set(selectedRaces.map((r) => r.car_class || "N/A")),
+    ).join(", ");
+    const geolocations = Array.from(
+      new Set(
+        selectedRaces.map(
+          (r) => r.geolocation || r.track?.geolocation || "N/A",
+        ),
+      ),
+    ).join(", ");
 
     let dateRange = "N/A";
     if (selectedRaces.length > 0) {
-      const startMillis = Math.min(...selectedRaces.map(r => r.statistics?.startMillis || Infinity));
-      const endMillis = Math.max(...selectedRaces.map(r => r.statistics?.startMillis || -Infinity));
+      const startMillis = Math.min(
+        ...selectedRaces.map((r) => r.statistics?.startMillis || Infinity),
+      );
+      const endMillis = Math.max(
+        ...selectedRaces.map((r) => r.statistics?.startMillis || -Infinity),
+      );
       if (startMillis !== Infinity) {
         dateRange = this.formatDateOnly(startMillis);
         if (endMillis !== -Infinity && endMillis !== startMillis) {

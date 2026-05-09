@@ -1,8 +1,8 @@
 import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
-import { RaceHistoryMaintenanceComponent } from "@app/components/race-history/race-history-maintenance.component";
-import { RaceHistoryComponent } from "@app/components/race-history/race-history.component";
-import { RaceDetailComponent } from "@app/components/race-history/race-detail.component";
+import { AnalyticsMaintenanceComponent } from "@app/components/cumulative-results/analytics-maintenance.component";
+import { CumulativeResultsComponent } from "@app/components/cumulative-results/cumulative-results.component";
+import { RaceDetailComponent } from "@app/components/cumulative-results/race-detail.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
@@ -108,7 +108,7 @@ export const routes: Routes = [
   },
   {
     path: "history/maintenance",
-    component: RaceHistoryMaintenanceComponent,
+    component: AnalyticsMaintenanceComponent,
     data: { animation: "AnalyticsMaintenancePage" },
   },
   {
@@ -118,7 +118,7 @@ export const routes: Routes = [
   },
   {
     path: "history",
-    component: RaceHistoryComponent,
+    component: CumulativeResultsComponent,
     data: { animation: "AnalyticsPage" },
   },
   { path: "analytics", redirectTo: "history" },

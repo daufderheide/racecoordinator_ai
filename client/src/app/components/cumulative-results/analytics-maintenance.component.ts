@@ -2,8 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
-
-import { DataService } from "@app/services/data.service";
+import { DataService } from "@app/data.service";
 
 @Component({
   selector: "app-analytics-maintenance",
@@ -31,19 +30,19 @@ export class AnalyticsMaintenanceComponent implements OnInit {
     this.loading = true;
     console.log("Maintenance: Loading history, demo mode:", this.isDemoMode);
     this.dataService.getRaceHistory(this.isDemoMode).subscribe({
-      next: (data) => {
+      next: (data: any[]) => {
         console.log("Maintenance: Received data:", data);
         if (!data || data.length === 0) {
           console.warn("Maintenance: No data returned from server");
         }
         // Sort by date descending
         this.history = data.sort(
-          (a, b) =>
+          (a: any, b: any) =>
             (b.statistics?.startMillis || 0) - (a.statistics?.startMillis || 0),
         );
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error("Maintenance: Error loading history:", err);
         alert(
           "Failed to load race history: " + (err.message || "Unknown error"),
@@ -104,7 +103,7 @@ export class AnalyticsMaintenanceComponent implements OnInit {
               this.loadHistory();
             }
           },
-          error: (err) => {
+          error: (err: any) => {
             console.error("Delete error:", err);
             completed++;
             if (completed === deletions.length) {
