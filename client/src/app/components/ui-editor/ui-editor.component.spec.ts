@@ -9,7 +9,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { delay, of } from "rxjs";
+import { delay, of, throwError } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
@@ -296,11 +296,7 @@ describe("UIEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: LoggerService,
-          useValue: jasmine.createSpyObj("LoggerService", [
-            "error",
-            "info",
-            "warn",
-          ]),
+          useValue: jasmine.createSpyObj("LoggerService", ["error", "info", "warn"]),
         },
       ],
     }).compileComponents();
@@ -1532,6 +1528,199 @@ describe("UIEditorComponent", () => {
 
       const resolved = component.getAssetForSlot("gauge.fuel", theme);
       expect(resolved).toBeUndefined();
+    });
+  });
+
+  describe("areSettingsEqual – new fields", () => {
+    function makeSettings(overrides: Partial<Settings> = {}): Settings {
+      return Object.assign(new Settings(), {
+        sortByStandings: true,
+        flagGreen: "g",
+        flagYellow: "y",
+        flagRed: "r",
+        flagWhite: "w",
+        flagBlack: "b",
+        flagCheckered: "c",
+        activeThemeId: "theme-a",
+        lampRedOn: "lamp-red-on",
+        lampRedDim: "lamp-red-dim",
+        lampGreen: "lamp-green",
+        fuelGaugeImageSet: "default_fuel-gauge-builtin",
+        columnAnchors: {},
+        ...overrides,
+      });
+    }
+
+    it("should report no changes when activeThemeId is the same", () => {
+      const a = makeSettings({ activeThemeId: "t1" });
+      const b = makeSettings({ activeThemeId: "t1" });
+      expect((component as any).areSettingsEqual(a, b)).toBeTrue();
+    });
+
+    it("should detect a change in activeThemeId", () => {
+      const a = makeSettings({ activeThemeId: "t1" });
+      const b = makeSettings({ activeThemeId: "t2" });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should detect a change in lampRedOn", () => {
+      const a = makeSettings({ lampRedOn: "asset-a" });
+      const b = makeSettings({ lampRedOn: "asset-b" });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should detect a change in lampRedDim", () => {
+      const a = makeSettings({ lampRedDim: "asset-a" });
+      const b = makeSettings({ lampRedDim: "asset-b" });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should detect a change in lampGreen", () => {
+      const a = makeSettings({ lampGreen: "asset-a" });
+      const b = makeSettings({ lampGreen: "asset-b" });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should detect a change in fuelGaugeImageSet", () => {
+      const a = makeSettings({ fuelGaugeImageSet: "default_fuel-gauge-builtin" });
+      const b = makeSettings({ fuelGaugeImageSet: "custom-gauge-set" });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should detect a change in columnAnchors", () => {
+      const a = makeSettings({ columnAnchors: {} });
+      const b = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
+      expect((component as any).areSettingsEqual(a, b)).toBeFalse();
+    });
+
+    it("should report equal when columnAnchors has the same keys and values", () => {
+      const a = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
+      const b = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
+      expect((component as any).areSettingsEqual(a, b)).toBeTrue();
+    });
+  });
+
+  describe("autoSaveState – Promise-based API", () => {
+    it("should resolve immediately if isLoading is true", async () => {
+      component.isLoading = true;
+      await expectAsync((component as any).autoSaveState()).toBeResolved();
+      expect(mockSettingsService.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it("should resolve immediately if there are no changes", async () => {
+      component.isLoading = false;
+      (component as any).isSaving = false;
+      // No changes by default (undo manager is at initial state)
+      await expectAsync((component as any).autoSaveState()).toBeResolved();
+      expect(mockSettingsService.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it("should save and resolve when there are unsaved changes", fakeAsync(async () => {
+      component.isLoading = false;
+      (component as any).isSaving = false;
+
+      // Force hasChanges() to be true by manipulating the undo manager baseline
+      component.undoManager.initialize(component.editingState);
+      component.editingSettings.sortByStandings = !component.editingSettings.sortByStandings;
+      component.captureState();
+      tick();
+
+      mockDataService.updateTheme.and.returnValue(of({}));
+
+      const promise = (component as any).autoSaveState();
+      tick(600);
+      await promise;
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    }));
+
+    it("should reject and log an error if updateTheme fails", async () => {
+      const logger = TestBed.inject(LoggerService);
+      component.isLoading = false;
+      (component as any).isSaving = false;
+
+      // Add a non-default theme so updateTheme is called
+      const customTheme = { entity_id: "t2", is_default: false, name: "Custom", slots: {} } as Theme;
+      component.editingState.themes = [customTheme];
+      component.refreshDisplayProperties();
+
+      // Force hasChanges() to return true without relying on debounce timing
+      spyOn(component, "hasChanges").and.returnValue(true);
+
+      const error = { status: 500 };
+      mockDataService.updateTheme.and.returnValue(throwError(() => error));
+
+      let rejected = false;
+      try {
+        await (component as any).autoSaveState();
+      } catch (e) {
+        rejected = true;
+      }
+
+      expect(rejected).toBeTrue();
+      expect(logger.error).toHaveBeenCalledWith("Auto-save failed", error);
+    });
+  });
+
+  describe("confirmDiscard – auto-save before navigation", () => {
+    it("should return true without modal if there are no changes", async () => {
+      // Undo manager at initial state → no changes
+      const result = await component.confirmDiscard();
+      expect(result).toBeTrue();
+      expect(component.showDiscardConfirm).toBeFalse();
+    });
+
+    it("should auto-save and return true without modal when changes are saveable", fakeAsync(async () => {
+      component.isLoading = false;
+      (component as any).isSaving = false;
+
+      // Dirty the state
+      component.undoManager.initialize(component.editingState);
+      component.editingSettings.sortByStandings = !component.editingSettings.sortByStandings;
+      component.captureState();
+      tick();
+
+      mockDataService.updateTheme.and.returnValue(of({}));
+
+      const promise = component.confirmDiscard();
+      tick(600);
+      const result = await promise;
+
+      expect(result).toBeTrue();
+      expect(component.showDiscardConfirm).toBeFalse();
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    }));
+
+    it("should show modal if auto-save fails", async () => {
+      const logger = TestBed.inject(LoggerService);
+      component.isLoading = false;
+      (component as any).isSaving = false;
+
+      // Add non-default theme so updateTheme is called
+      const customTheme = { entity_id: "t2", is_default: false, name: "Custom", slots: {} } as Theme;
+      component.editingState.themes = [customTheme];
+      component.refreshDisplayProperties();
+
+      // Force hasChanges() to return true without relying on debounce timing
+      spyOn(component, "hasChanges").and.returnValue(true);
+
+      const error = { status: 500 };
+      mockDataService.updateTheme.and.returnValue(throwError(() => error));
+
+      const promise = component.confirmDiscard();
+      // Wait for the auto-save promise chain to settle
+      await Promise.resolve();
+
+      expect(component.showDiscardConfirm).toBeTrue();
+      expect(logger.error).toHaveBeenCalledWith(
+        "Final auto-save failed before navigation",
+        error,
+      );
+
+      // Resolve by confirming the discard modal
+      component.onConfirmDiscard();
+      const result = await promise;
+      expect(result).toBeTrue();
     });
   });
 });
