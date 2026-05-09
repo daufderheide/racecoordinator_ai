@@ -178,6 +178,7 @@ public class ProtocolDelegate implements IProtocol {
 
   @Override
   public void initializeHardwareState() {
+    this.powerManager.reset();
     for (IProtocol protocol : protocols) {
       protocol.initializeHardwareState();
     }

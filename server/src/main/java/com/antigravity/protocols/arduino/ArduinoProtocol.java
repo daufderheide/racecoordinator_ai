@@ -565,6 +565,7 @@ public class ArduinoProtocol extends DefaultProtocol {
           hwReset);
       pinStateCache.clear();
       hwReset = isReset;
+      initializeHardwareState();
     }
   }
 

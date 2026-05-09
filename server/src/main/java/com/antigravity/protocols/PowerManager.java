@@ -45,6 +45,13 @@ public class PowerManager {
     }
   }
 
+  public void reset() {
+    for (ProtocolState state : protocolStates) {
+      state.firstMainPower = true;
+      Arrays.fill(state.firstLanePower, true);
+    }
+  }
+
   public void setMainPower(boolean on) {
     List<IProtocol> protocols = this.delegate.getProtocols();
     for (int i = 0; i < protocols.size(); i++) {
@@ -56,7 +63,8 @@ public class PowerManager {
           state.firstMainPower = false;
           logger.info("Main Power set to {} for protocol {}", on ? "ON" : "OFF", i);
         }
-      } else if (protocol.hasPerLaneRelays()) {
+      }
+      if (protocol.hasPerLaneRelays()) {
         for (int lane = 0; lane < numLanes; lane++) {
           boolean effectivePower = on && state.desiredLanePower[lane];
           if (state.firstLanePower[lane] || state.currentLanePower[lane] != effectivePower) {
