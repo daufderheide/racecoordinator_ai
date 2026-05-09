@@ -296,7 +296,7 @@ describe("UIEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: LoggerService,
-          useValue: jasmine.createSpyObj("LoggerService", ["error"]),
+          useValue: jasmine.createSpyObj("LoggerService", ["error", "info", "warn"]),
         },
       ],
     }).compileComponents();
@@ -489,6 +489,32 @@ describe("UIEditorComponent", () => {
     );
     expect(imageSetCol).toBeTruthy();
     expect(imageSetCol?.label).toBe("My Set");
+  });
+
+  it("should deduplicate fuel gauge image set in availableColumns", () => {
+    // Simulate multiple assets that could match "Fuel Gauge"
+    // 1. One by name
+    // 2. One by builtin entityId
+    mockDataService.listAssets.and.returnValue(
+      of([
+        { type: "image_set", name: "Fuel Gauge", model: { entityId: "custom-id" } },
+        { type: "image_set", name: "Custom Name", model: { entityId: "fuel-gauge-builtin" } },
+        { type: "image_set", name: "Another Set", model: { entityId: "set456" } },
+      ]),
+    );
+
+    component.loadData();
+
+    const fuelGaugeCols = component.availableColumns.filter(
+      (c) => c.key === "imageset_fuel-gauge-builtin",
+    );
+
+    // Should only have one, even though two assets matched the criteria
+    expect(fuelGaugeCols.length).toBe(1);
+    
+    // The "Another Set" should still be there with its own key
+    const otherSet = component.availableColumns.find(c => c.key === "imageset_set456");
+    expect(otherSet).toBeTruthy();
   });
 
   it("should return correct label for avatar column in columnSlots", () => {
