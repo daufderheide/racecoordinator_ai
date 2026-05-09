@@ -15,6 +15,10 @@
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*_test.ts",
-    "src/**/testing/**/*"
+    "src/**/testing/**/*",
+    "src/test.ts",
+    "src/app/components/shared/asset-picker/asset-picker.component.ts",
+    "src/app/components/shared/undo-redo-controls/undo-redo-controls.component.ts",
+    "src/app/directives/svg-text-scaler.directive.ts"
   ]
 }

@@ -421,6 +421,13 @@
   margin-top: 5px;
 }
 
+.dropdown-menu.open-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
 .dropdown-item {
   padding: 8px 12px;
   font-size: 0.9rem;
@@ -677,7 +684,6 @@
   background: rgba(30, 41, 59, 0.4);
   border: 1px solid rgba(148, 163, 184, 0.1);
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .led-string-header {
@@ -688,6 +694,12 @@
   cursor: pointer;
   gap: 10px;
   user-select: none;
+  border-radius: 8px;
+  transition: background-color 0.2s, border-radius 0.2s;
+}
+
+.led-string-item.expanded .led-string-header {
+  border-radius: 8px 8px 0 0;
 }
 
 .led-string-header:hover {

@@ -77,6 +77,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   // Custom Dropdown State
   openPinDropdown: string | null = null;
+  dropdownOpenUp: { [key: string]: boolean } = {};
   groupsCollapsed: { [key: string]: boolean } = {}; // key is PinGroup.key
 
   private interfaceEventsSubscription?: Subscription;
@@ -684,16 +685,16 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       label: this.translationService.translate("AE_PIN_UNUSED"),
       value: RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED.toString(),
     });
-    generalActions.push({
+    groups.push({ key: "", label: "", actions: generalActions });
+
+    // 2. Leader Group
+    const leaderActions: PinAction[] = [];
+    leaderActions.push({
       label: this.translationService.translate(
         "RGB_LED_BEHAVIOR_HEAT_PROGRESS",
       ),
       value: RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_PROGRESS.toString(),
     });
-    groups.push({ key: "", label: "", actions: generalActions });
-
-    // 2. Leader Group
-    const leaderActions: PinAction[] = [];
     leaderActions.push({
       label: this.translationService.translate("RGB_LED_BEHAVIOR_HEAT_LEADER"),
       value: RgbLedBehavior.RGB_LED_BEHAVIOR_HEAT_LEADER.toString(),
@@ -1708,6 +1709,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       this.openPinDropdown = null;
     } else {
       this.openPinDropdown = pinKey;
+
+      // Smart positioning: check if there's enough space below
+      const trigger = event.currentTarget as HTMLElement;
+      if (trigger) {
+        const rect = trigger.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        // If less than 300px below (typical dropdown height), open up
+        this.dropdownOpenUp[pinKey] = spaceBelow < 300;
+      }
     }
   }
 
@@ -1756,6 +1766,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   @HostListener("document:click")
   closeDropdowns() {
     this.openPinDropdown = null;
+    this.dropdownOpenUp = {};
   }
 
   getHelpSteps(): any[] {

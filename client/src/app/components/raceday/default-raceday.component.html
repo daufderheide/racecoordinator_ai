@@ -406,13 +406,13 @@
                   <div
                     class="body-cell"
                     [style.background]="
-                      track?.lanes?.[hd.laneIndex]?.background_color
+                      track.lanes[hd.laneIndex].background_color
                     "
                     [style.border-left-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      track.lanes[hd.laneIndex].foreground_color
                     "
                     [style.border-right-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      track.lanes[hd.laneIndex].foreground_color
                     "
                     (click)="onCellClick(hd, col, $event)"
                   >
@@ -421,10 +421,10 @@
                         class="drift-indicator"
                         data-testid="drift-badge"
                         [style.background-color]="
-                          track?.lanes?.[hd.laneIndex]?.foreground_color
+                          track.lanes[hd.laneIndex].foreground_color
                         "
                         [style.color]="
-                          track?.lanes?.[hd.laneIndex]?.background_color
+                          track.lanes[hd.laneIndex].background_color
                         "
                       >
                         {{ "RD_DRIFT_LAP" | translate }}
@@ -439,7 +439,7 @@
                         <div
                           [class]="getAnchorClass(entry.anchor)"
                           [style.color]="
-                            track?.lanes?.[hd.laneIndex]?.foreground_color
+                            track.lanes[hd.laneIndex].foreground_color
                           "
                         >
                           <!-- Team Driver Pulldown -->
@@ -457,7 +457,7 @@
                               <span
                                 class="teammate-display-name"
                                 [style.color]="
-                                  track?.lanes?.[hd.laneIndex]?.foreground_color
+                                  track.lanes[hd.laneIndex].foreground_color
                                 "
                               >
                                 {{
@@ -512,7 +512,7 @@
                               class="drag-handle"
                               cdkDragHandle
                               [style.color]="
-                                track?.lanes?.[hd.laneIndex]?.foreground_color
+                                track.lanes[hd.laneIndex].foreground_color
                               "
                             >
                               <span class="material-icons">drag_indicator</span>

@@ -237,6 +237,9 @@
                               @if (isPinDropdownOpen("digital-" + pin)) {
                                 <div
                                   class="dropdown-menu"
+                                  [class.open-up]="
+                                    dropdownOpenUp['digital-' + pin]
+                                  "
                                   (click)="$event.stopPropagation()"
                                 >
                                   @for (
@@ -367,6 +370,9 @@
                               @if (isPinDropdownOpen("analog-" + pin)) {
                                 <div
                                   class="dropdown-menu"
+                                  [class.open-up]="
+                                    dropdownOpenUp['analog-' + pin]
+                                  "
                                   (click)="$event.stopPropagation()"
                                 >
                                   @for (
@@ -610,7 +616,10 @@
                           track trackByLedString(i, ls);
                           let i = $index
                         ) {
-                          <div class="led-string-item">
+                          <div
+                            class="led-string-item"
+                            [class.expanded]="ledStringExpanded[i]"
+                          >
                             <div
                               class="led-string-header"
                               (click)="toggleLedString(i)"
@@ -834,6 +843,11 @@
                                         ) {
                                           <div
                                             class="dropdown-menu"
+                                            [class.open-up]="
+                                              dropdownOpenUp[
+                                                'led-' + i + '-' + ledIdx
+                                              ]
+                                            "
                                             (click)="$event.stopPropagation()"
                                           >
                                             @for (
