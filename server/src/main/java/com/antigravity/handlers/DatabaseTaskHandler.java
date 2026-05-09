@@ -495,15 +495,10 @@ public class DatabaseTaskHandler {
         track =
             new Track(
                 track.getName(),
-<<<<<<< HEAD
                 track.getNumTrackSections(),
                 track.getLanes(),
                 track.getArduinoConfigs(),
-=======
-                track.getLanes(),
-                track.getArduinoConfigs(),
                 track.getGeolocation(),
->>>>>>> a2c1c14a (feat(analytics): add race report metadata and optimize server startup)
                 nextId,
                 null);
       }
@@ -533,15 +528,10 @@ public class DatabaseTaskHandler {
       track =
           new Track(
               track.getName(),
-<<<<<<< HEAD
               track.getNumTrackSections(),
               track.getLanes(),
               track.getArduinoConfigs(),
-=======
-              track.getLanes(),
-              track.getArduinoConfigs(),
               track.getGeolocation(),
->>>>>>> a2c1c14a (feat(analytics): add race report metadata and optimize server startup)
               id,
               track.getId());
 
