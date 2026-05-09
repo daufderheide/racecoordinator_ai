@@ -250,7 +250,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         // Dynamic columns for image sets
         const imageSetColumns = result.assets
-          .filter((a: any) => a.type === "image_set")
+          .filter(
+            (a: any) =>
+              a.type === "image_set" &&
+              a.name !== "Fuel Gauge" &&
+              a.model?.entityId !== "fuel-gauge-builtin" &&
+              a.model?.entityId !== "default_fuel-gauge-builtin",
+          )
           .map((a: any) => ({
             key: `imageset_${a.model?.entityId}`,
             label: a.name || "AM_UNKNOWN_ASSET",
@@ -260,7 +266,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         const builtinKey = "imageset_fuel-gauge-builtin";
         if (!imageSetColumns.find((c) => c.key === builtinKey)) {
           const fuelGaugeAsset = result.assets.find(
-            (a: any) => a.type === "image_set" && a.name === "Fuel Gauge",
+            (a: any) =>
+              a.type === "image_set" &&
+              (a.name === "Fuel Gauge" ||
+                a.model?.entityId === "fuel-gauge-builtin" ||
+                a.model?.entityId === "default_fuel-gauge-builtin"),
           );
           if (fuelGaugeAsset) {
             imageSetColumns.push({

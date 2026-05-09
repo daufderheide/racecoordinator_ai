@@ -100,3 +100,15 @@ server/src/main/resources/analytics.properties
 # Scratch folder for AI scripts
 /scratch/
 
+# IDE and Maven temporary files
+.classpath
+.project
+.settings/
+effective-pom
+effective_pom.xml
+generated_files.txt
+test-pom
+null/
+en_orig.json
+pw-result.json
+
