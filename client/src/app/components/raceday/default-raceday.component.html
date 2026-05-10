@@ -198,7 +198,7 @@
       </div>
     </div>
 
-    @if (heat && race) {
+    @if (heat && race && track) {
       <!-- Race and Track Top Bar -->
       <div class="top-info-bar">
         <div class="info-section">
@@ -320,7 +320,7 @@
             >
               @for (
                 entry of leaderboardEntries;
-                track trackByLeaderboardEntry(i, entry);
+                track trackByLeaderboardEntry($index, entry);
                 let i = $index
               ) {
                 <div
@@ -374,7 +374,7 @@
           >
             @for (
               hd of sortedHeatDrivers;
-              track trackByDriverId(i, hd);
+              track trackByDriverId($index, hd);
               let i = $index
             ) {
               <div
@@ -405,14 +405,12 @@
                 @for (col of columns; track trackByColumn($index, col)) {
                   <div
                     class="body-cell"
-                    [style.background]="
-                      track?.lanes?.[hd.laneIndex]?.background_color
-                    "
+                    [style.background]="getLaneColor(hd, 'background_color')"
                     [style.border-left-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      getLaneColor(hd, 'foreground_color')
                     "
                     [style.border-right-color]="
-                      track?.lanes?.[hd.laneIndex]?.foreground_color
+                      getLaneColor(hd, 'foreground_color')
                     "
                     (click)="onCellClick(hd, col, $event)"
                   >
@@ -421,11 +419,9 @@
                         class="drift-indicator"
                         data-testid="drift-badge"
                         [style.background-color]="
-                          track?.lanes?.[hd.laneIndex]?.foreground_color
+                          getLaneColor(hd, 'foreground_color')
                         "
-                        [style.color]="
-                          track?.lanes?.[hd.laneIndex]?.background_color
-                        "
+                        [style.color]="getLaneColor(hd, 'background_color')"
                       >
                         {{ "RD_DRIFT_LAP" | translate }}
                       </div>
@@ -438,9 +434,7 @@
                       @if (!isImageProperty(entry.property)) {
                         <div
                           [class]="getAnchorClass(entry.anchor)"
-                          [style.color]="
-                            track?.lanes?.[hd.laneIndex]?.foreground_color
-                          "
+                          [style.color]="getLaneColor(hd, 'foreground_color')"
                         >
                           <!-- Team Driver Pulldown -->
                           @if (isNameProperty(entry.property) && isTeam(hd)) {
@@ -457,7 +451,7 @@
                               <span
                                 class="teammate-display-name"
                                 [style.color]="
-                                  track?.lanes?.[hd.laneIndex]?.foreground_color
+                                  getLaneColor(hd, 'foreground_color')
                                 "
                               >
                                 {{
@@ -512,7 +506,7 @@
                               class="drag-handle"
                               cdkDragHandle
                               [style.color]="
-                                track?.lanes?.[hd.laneIndex]?.foreground_color
+                                getLaneColor(hd, 'foreground_color')
                               "
                             >
                               <span class="material-icons">drag_indicator</span>

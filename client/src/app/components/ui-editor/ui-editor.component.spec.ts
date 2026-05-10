@@ -296,7 +296,11 @@ describe("UIEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: LoggerService,
-          useValue: jasmine.createSpyObj("LoggerService", ["error", "info", "warn"]),
+          useValue: jasmine.createSpyObj("LoggerService", [
+            "error",
+            "info",
+            "warn",
+          ]),
         },
       ],
     }).compileComponents();
@@ -497,9 +501,21 @@ describe("UIEditorComponent", () => {
     // 2. One by builtin entityId
     mockDataService.listAssets.and.returnValue(
       of([
-        { type: "image_set", name: "Fuel Gauge", model: { entityId: "custom-id" } },
-        { type: "image_set", name: "Custom Name", model: { entityId: "fuel-gauge-builtin" } },
-        { type: "image_set", name: "Another Set", model: { entityId: "set456" } },
+        {
+          type: "image_set",
+          name: "Fuel Gauge",
+          model: { entityId: "custom-id" },
+        },
+        {
+          type: "image_set",
+          name: "Custom Name",
+          model: { entityId: "fuel-gauge-builtin" },
+        },
+        {
+          type: "image_set",
+          name: "Another Set",
+          model: { entityId: "set456" },
+        },
       ]),
     );
 
@@ -511,9 +527,11 @@ describe("UIEditorComponent", () => {
 
     // Should only have one, even though two assets matched the criteria
     expect(fuelGaugeCols.length).toBe(1);
-    
+
     // The "Another Set" should still be there with its own key
-    const otherSet = component.availableColumns.find(c => c.key === "imageset_set456");
+    const otherSet = component.availableColumns.find(
+      (c) => c.key === "imageset_set456",
+    );
     expect(otherSet).toBeTruthy();
   });
 
@@ -648,7 +666,7 @@ describe("UIEditorComponent", () => {
       expect(toolbars[1].componentInstance.disabledDelete()).toBeFalse();
     });
 
-    it("should hide Add button only on the default theme toolbar", () => {
+    it("should show Add button on all theme toolbars", () => {
       const themes: Theme[] = [
         {
           entity_id: "t1",
@@ -672,8 +690,8 @@ describe("UIEditorComponent", () => {
         By.css(".theme-toolbar-container app-toolbar"),
       );
 
-      // Default theme toolbar - Add should be hidden
-      expect(toolbars[0].componentInstance.showAdd()).toBeFalse();
+      // Default theme toolbar - Add should be shown
+      expect(toolbars[0].componentInstance.showAdd()).toBeTrue();
 
       // Custom theme toolbar - Add should be shown
       expect(toolbars[1].componentInstance.showAdd()).toBeTrue();

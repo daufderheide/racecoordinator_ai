@@ -2099,6 +2099,7 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
   ): string {
+    if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
     if (this.isEmptyDriver(hd)) {
@@ -2325,6 +2326,13 @@ export class DefaultRacedayComponent
     const color =
       this.track?.lanes?.[hd.laneIndex]?.foreground_color || "#ffffff";
     return this.getDropdownIcon(color);
+  }
+
+  getLaneColor(
+    hd: DriverHeatData,
+    property: "background_color" | "foreground_color",
+  ): string {
+    return this.track?.lanes?.[hd.laneIndex]?.[property] || "";
   }
 
   getDropdownIcon(color: string): string {
