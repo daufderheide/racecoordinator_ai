@@ -78,7 +78,7 @@ public class SerialConnection {
     if (outputStream == null) {
       throw new IOException("Port not open");
     }
-    logger.info("Sent: {}", bytesToHex(data));
+    logger.debug("Sent: {}", bytesToHex(data));
     outputStream.write(data);
     outputStream.flush();
   }
