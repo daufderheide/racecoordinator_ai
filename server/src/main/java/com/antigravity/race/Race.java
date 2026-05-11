@@ -17,6 +17,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.CurrentRecords;
+import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
@@ -72,6 +73,7 @@ public class Race implements ProtocolListener {
 
   private ProtocolDelegate protocols;
   private boolean isDemoMode;
+  private DemoConfig demoConfig;
   private DatabaseContext databaseContext;
 
   // Dynamic race data
@@ -186,6 +188,7 @@ public class Race implements ProtocolListener {
     this.statistics = builder.statistics != null ? builder.statistics : new RaceStatistics();
 
     this.overallStandings = new OverallStandings(model.getHeatScoring(), model.getOverallScoring());
+    this.demoConfig = builder.demoConfig;
     this.createProtocols(builder.isDemoMode);
 
     this.executionManager = new HeatExecutionManager(this);
@@ -371,6 +374,7 @@ public class Race implements ProtocolListener {
     private boolean autoAdvanceFired = false;
     private String stateClassName = null;
     private RaceStatistics statistics;
+    private DemoConfig demoConfig;
 
     public Builder model(com.antigravity.models.Race model) { // fqn-collision
       this.model = model;
@@ -439,6 +443,11 @@ public class Race implements ProtocolListener {
 
     public Builder statistics(RaceStatistics statistics) {
       this.statistics = statistics;
+      return this;
+    }
+
+    public Builder demoConfig(DemoConfig demoConfig) {
+      this.demoConfig = demoConfig;
       return this;
     }
 
@@ -532,7 +541,7 @@ public class Race implements ProtocolListener {
     if (isDemoMode) {
       AnalogFuelOptions fuelOptions = this.model.getFuelOptions();
       boolean isFuelRace = fuelOptions != null && fuelOptions.isEnabled();
-      Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace);
+      Demo protocol = new Demo(this.track.getLanes().size(), isFuelRace, demoConfig);
       protocol.setInterfaceIndex(0);
       protocols_list.add(protocol);
     } else {

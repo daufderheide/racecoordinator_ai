@@ -1,0 +1,20 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "DemoConfigProto";
+
+message DemoConfig {
+  double min_lap_time_ms = 1;
+  double max_lap_time_ms = 2;
+  double min_refuel_time_ms = 3;
+  double max_refuel_time_ms = 4;
+  int32 num_segments = 5;
+  int32 min_laps_between_pits = 6;
+  int32 max_laps_between_pits = 7;
+  double min_reaction_time_ms = 8;
+  double max_reaction_time_ms = 9;
+  double min_pit_entry_offset_ms = 10;
+  double max_pit_entry_offset_ms = 11;
+}

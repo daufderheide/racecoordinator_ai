@@ -22,6 +22,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "deleteSavedRace",
     "toggleServerAnalytics",
     "getRaceFlag",
+    "getDefaultDemoConfig",
   ]);
 
   mock.getDrivers.and.callFake(() =>
@@ -39,6 +40,19 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     of(InitializeRaceResponse.create({ success: true })),
   );
   mock.getRaceFlag.and.returnValue(of(RaceFlag.RED));
+  mock.getDefaultDemoConfig.and.returnValue({
+    minLapTimeMs: 3000,
+    maxLapTimeMs: 5000,
+    minRefuelTimeMs: 5000,
+    maxRefuelTimeMs: 10000,
+    numSegments: 4,
+    minLapsBetweenPits: 3,
+    maxLapsBetweenPits: 5,
+    minReactionTimeMs: 100,
+    maxReactionTimeMs: 500,
+    minPitEntryOffsetMs: 500,
+    maxPitEntryOffsetMs: 1000,
+  });
 
   return Object.assign(mock, overrides);
 }

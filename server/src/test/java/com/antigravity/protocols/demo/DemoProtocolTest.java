@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import com.antigravity.mocks.MockProtocolListener;
 import com.antigravity.mocks.MockRandom;
 import com.antigravity.mocks.MockScheduler;
+import com.antigravity.proto.DemoConfig;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
 import java.util.List;
@@ -27,7 +28,16 @@ public class DemoProtocolTest {
 
     public TestableDemo(
         int numLanes, MockScheduler scheduler, MockRandom random, boolean isFuelRace) {
-      super(numLanes, random, isFuelRace);
+      this(numLanes, scheduler, random, isFuelRace, null);
+    }
+
+    public TestableDemo(
+        int numLanes,
+        MockScheduler scheduler,
+        MockRandom random,
+        boolean isFuelRace,
+        DemoConfig config) {
+      super(numLanes, random, isFuelRace, config);
       this.mockScheduler = scheduler;
     }
 
@@ -349,5 +359,52 @@ public class DemoProtocolTest {
     scheduler.tick();
     assertEquals("After reset, first hit should be reaction again", 1, resetListener.laps.size());
     assertEquals(0.25, resetListener.laps.get(0), 0.001);
+  }
+
+  @Test
+  public void testCustomConfig() {
+    DemoConfig customConfig =
+        DemoConfig.newBuilder()
+            .setMinLapTimeMs(1000)
+            .setMaxLapTimeMs(1000)
+            .setMinReactionTimeMs(500)
+            .setMaxReactionTimeMs(500)
+            .setNumSegments(2)
+            .build();
+
+    MockRandom random = new MockRandom();
+    TestableDemo customDemo = new TestableDemo(1, scheduler, random, false, customConfig);
+    MockProtocolListener customListener = new MockProtocolListener();
+    customDemo.setListener(customListener);
+    customDemo.startTimer();
+
+    // 1. Reaction lap (fixed 500ms)
+    customDemo.advanceTime(600);
+    scheduler.tick();
+    assertEquals(1, customListener.laps.size());
+    assertEquals(0.6, customListener.laps.get(0), 0.001);
+    customListener.laps.clear();
+
+    // 2. Regular lap (fixed 1000ms)
+    // 2 segments should be at 1/3 and 2/3 of 1000ms
+    // offsets = [333, 666]
+
+    // Advance to Segment 1 (333ms)
+    customDemo.advanceTime(400); // 400ms since lap start
+    scheduler.tick();
+    assertEquals("Should have 1 segment hit", 1, customListener.segments.size());
+    assertEquals(0.333, customListener.segments.get(0).time, 0.001);
+
+    // Advance to Segment 2 (666ms)
+    customDemo.advanceTime(300); // 700ms since lap start
+    scheduler.tick();
+    assertEquals("Should have 2 segment hits", 2, customListener.segments.size());
+    assertEquals(0.333, customListener.segments.get(1).time, 0.001);
+
+    // Advance to Lap Complete (1000ms)
+    customDemo.advanceTime(400); // 1100ms since lap start
+    scheduler.tick();
+    assertEquals("Should have completed the lap", 1, customListener.laps.size());
+    assertEquals(1.1, customListener.laps.get(0), 0.001);
   }
 }

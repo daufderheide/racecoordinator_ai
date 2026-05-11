@@ -21,6 +21,7 @@ import { Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { ToolbarComponent as ToolbarComponent_1 } from "@app/components/shared/toolbar/toolbar.component";
 import { DataService } from "@app/data.service";
@@ -28,6 +29,7 @@ import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { IDemoConfig } from "@app/proto/antigravity";
 import { FileSystemService } from "@app/services/file-system.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -53,6 +55,7 @@ type Participant = Driver | Team;
     NgClass,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
+    DemoConfigModalComponent,
     TranslatePipe,
   ],
 })
@@ -96,6 +99,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   errorTitle: string = "";
   errorMessage: string = "";
   errorMessageParams: any = {};
+
+  // Demo Config State
+  showDemoConfigModal: boolean = false;
+  demoConfig?: IDemoConfig;
 
   // Modals
   public isAboutModalVisible = false;
@@ -268,6 +275,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.settingsService.getSettings().clientLogLevel || "INFO";
     this.currentServerLogLevel =
       this.settingsService.getSettings().serverLogLevel || "INFO";
+    this.demoConfig = this.settingsService.getSettings().demoConfig;
   }
 
   @HostListener("window:resize")
@@ -569,6 +577,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     settings.selectedDriverIds = this.selectedParticipants.map((p) =>
       this.getParticipantUniqueId(p),
     );
+    settings.demoConfig = this.demoConfig;
 
     this.settingsService.saveSettings(settings);
 
@@ -636,6 +645,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
         this.selectedRace!.entity_id,
         settings.selectedDriverIds,
         isDemo,
+        isDemo
+          ? this.demoConfig || this.dataService.getDefaultDemoConfig()
+          : undefined,
       )
       .subscribe({
         next: (response) => {
@@ -800,6 +812,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (this.isClientLogOpen) {
       this.isServerLogOpen = false;
     }
+    this.cdr.detectChanges();
+  }
+
+  // --- Demo Config Logic ---
+
+  configureDemo() {
+    this.showDemoConfigModal = true;
+    this.closeOptionsDropdown();
+    this.cdr.detectChanges();
+  }
+
+  onDemoConfigConfirm(config: IDemoConfig) {
+    this.demoConfig = config;
+    this.showDemoConfigModal = false;
+    this.saveSettings();
+    this.cdr.detectChanges();
+  }
+
+  onDemoConfigCancel() {
+    this.showDemoConfigModal = false;
     this.cdr.detectChanges();
   }
 

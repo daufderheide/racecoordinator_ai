@@ -381,6 +381,7 @@ describe("DefaultRacedaySetupComponent", () => {
       jasmine.any(String),
       jasmine.any(Array),
       true,
+      jasmine.any(Object),
     );
   }));
 

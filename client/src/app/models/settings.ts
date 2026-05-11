@@ -1,4 +1,5 @@
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { IDemoConfig } from "@app/proto/antigravity";
 
 export enum ColumnVisibility {
   Always = "Always",
@@ -18,6 +19,7 @@ export class Settings {
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
   selectedDriverIds: string[] = [];
+  demoConfig?: IDemoConfig;
 
   serverIp: string = "";
   serverPort: number = 7070;

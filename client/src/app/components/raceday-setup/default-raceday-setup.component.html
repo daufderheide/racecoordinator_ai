@@ -100,6 +100,10 @@
                   </div>
                 }
               </div>
+              <hr class="menu-dropdown-divider" />
+              <div class="menu-dropdown-item" (click)="configureDemo()">
+                {{ "RDS_MENU_DEMO_CONFIG" | translate }}
+              </div>
             </div>
           }
           <!-- Help Dropdown -->
@@ -653,3 +657,11 @@
   (acknowledge)="showErrorModal = false"
 >
 </app-acknowledgement-modal>
+
+<app-demo-config-modal
+  [visible]="showDemoConfigModal"
+  [initialConfig]="demoConfig"
+  (confirm)="onDemoConfigConfirm($event)"
+  (cancel)="onDemoConfigCancel()"
+>
+</app-demo-config-modal>

@@ -12,6 +12,7 @@ import {
   IAssetMessage,
   ICarData,
   ICustomRotation,
+  IDemoConfig,
   IInterfaceEvent,
   ILap,
   InitializeInterfaceRequest,
@@ -182,6 +183,22 @@ export class DataService {
     });
   }
 
+  public getDefaultDemoConfig(): IDemoConfig {
+    return {
+      minLapTimeMs: 3000,
+      maxLapTimeMs: 5000,
+      minRefuelTimeMs: 5000,
+      maxRefuelTimeMs: 10000,
+      numSegments: 4,
+      minLapsBetweenPits: 3,
+      maxLapsBetweenPits: 7,
+      minReactionTimeMs: 1,
+      maxReactionTimeMs: 500,
+      minPitEntryOffsetMs: 500,
+      maxPitEntryOffsetMs: 1000,
+    };
+  }
+
   generateHeats(raceId: string, driverCount: number): Observable<any> {
     return this.http.post<any>(
       `http://${this.serverIp}:${this.serverPort}/api/races/${raceId}/generate-heats`,
@@ -246,11 +263,13 @@ export class DataService {
     raceId: string,
     driverIds: string[],
     isDemoMode: boolean,
+    demoConfig?: IDemoConfig,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
       driverIds,
       isDemoMode,
+      demoConfig,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

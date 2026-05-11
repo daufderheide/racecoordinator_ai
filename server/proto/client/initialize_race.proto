@@ -7,10 +7,13 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "InitializeRaceProto";
 
+import "client/demo_config.proto";
+
 message InitializeRaceRequest {
   string race_id = 1;
   repeated string driver_ids = 2;
   bool is_demo_mode = 3;
+  DemoConfig demo_config = 4;
 }
 
 message InitializeRaceResponse {

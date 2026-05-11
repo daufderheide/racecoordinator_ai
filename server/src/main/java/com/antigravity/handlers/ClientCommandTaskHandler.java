@@ -303,6 +303,7 @@ public class ClientCommandTaskHandler {
             .track(raceTrack)
             .databaseContext(databaseContext)
             .isDemoMode(request.getIsDemoMode())
+            .demoConfig(request.getDemoConfig())
             .build();
 
     try {

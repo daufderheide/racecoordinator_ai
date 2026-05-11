@@ -1,5 +1,6 @@
 package com.antigravity.protocols.demo;
 
+import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.DemoPinId;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.RaceFlag;
@@ -27,6 +28,7 @@ public class Demo extends DefaultProtocol {
   private ScheduledFuture<?> timerHandle;
   private final Random random;
   private final boolean isFuelRace;
+  private final DemoConfig config;
 
   private class LaneState {
 
@@ -40,10 +42,12 @@ public class Demo extends DefaultProtocol {
     long pitExitOffset = 0;
     boolean pitEntrySent = false;
     boolean pitExitSent = false;
-    final long[] segmentOffsets = new long[4];
-    final boolean[] segmentSent = new boolean[4];
+    final long[] segmentOffsets;
+    final boolean[] segmentSent;
 
     LaneState() {
+      segmentOffsets = new long[config.getNumSegments()];
+      segmentSent = new boolean[config.getNumSegments()];
       setNextTarget();
     }
 
@@ -54,24 +58,41 @@ public class Demo extends DefaultProtocol {
         segmentSent[i] = false;
       }
       if (isFirstLap) {
-        // First lap is reaction time: (0, 0.5]s
-        targetLapDuration = 1 + random.nextInt(500);
+        // First lap is reaction time
+        long minReaction = (long) config.getMinReactionTimeMs();
+        long maxReaction = (long) config.getMaxReactionTimeMs();
+        targetLapDuration =
+            minReaction + random.nextInt((int) Math.max(1, maxReaction - minReaction + 1));
         isFirstLap = false;
         if (isFuelRace) {
-          lapsUntilNextPit = 3 + random.nextInt(5); // 3 to 7 laps
+          int minLaps = config.getMinLapsBetweenPits();
+          int maxLaps = config.getMaxLapsBetweenPits();
+          lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
         }
       } else {
-        // Regular lap time: [3s, 5s]
-        long lapDuration = 3000 + random.nextInt(2001);
+        // Regular lap time
+        long minLap = (long) config.getMinLapTimeMs();
+        long maxLap = (long) config.getMaxLapTimeMs();
+        long lapDuration = minLap + random.nextInt((int) Math.max(1, maxLap - minLap + 1));
 
         if (isFuelRace) {
           if (lapsUntilNextPit <= 0) {
             isPitLap = true;
-            long pitDuration = 5000 + random.nextInt(5001); // 5 to 10 seconds
+            long minRefuel = (long) config.getMinRefuelTimeMs();
+            long maxRefuel = (long) config.getMaxRefuelTimeMs();
+            long pitDuration =
+                minRefuel + random.nextInt((int) Math.max(1, maxRefuel - minRefuel + 1));
             targetLapDuration = lapDuration + pitDuration;
-            pitEntryOffset = 500 + random.nextInt(501);
+
+            long minPitOffset = (long) config.getMinPitEntryOffsetMs();
+            long maxPitOffset = (long) config.getMaxPitEntryOffsetMs();
+            pitEntryOffset =
+                minPitOffset + random.nextInt((int) Math.max(1, maxPitOffset - minPitOffset + 1));
             pitExitOffset = pitEntryOffset + pitDuration;
-            lapsUntilNextPit = 3 + random.nextInt(5);
+
+            int minLaps = config.getMinLapsBetweenPits();
+            int maxLaps = config.getMaxLapsBetweenPits();
+            lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
             logger.info(
                 "Demo: Lane scheduled for pit stop. Duration: {}ms, Lap Total: {}ms",
                 pitDuration,
@@ -86,10 +107,19 @@ public class Demo extends DefaultProtocol {
           targetLapDuration = lapDuration;
         }
 
-        // Calculate 4 irregular segment offsets (15%, 40%, 60%, 85%)
-        double[] percentages = {0.15, 0.40, 0.60, 0.85};
-        for (int i = 0; i < segmentOffsets.length; i++) {
-          segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
+        // Calculate segment offsets
+        int numSegments = config.getNumSegments();
+        if (numSegments == 4) {
+          // Keep legacy distribution for 4 segments
+          double[] percentages = {0.15, 0.40, 0.60, 0.85};
+          for (int i = 0; i < segmentOffsets.length; i++) {
+            segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
+          }
+        } else if (numSegments > 0) {
+          // Linear distribution for other counts
+          for (int i = 0; i < numSegments; i++) {
+            segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / (numSegments + 1.0));
+          }
         }
       }
     }
@@ -111,17 +141,38 @@ public class Demo extends DefaultProtocol {
   private final LaneState[] laneStates;
 
   public Demo(int numLanes, boolean isFuelRace) {
-    this(numLanes, new Random(), isFuelRace);
+    this(numLanes, new Random(), isFuelRace, null);
   }
 
-  protected Demo(int numLanes, Random random, boolean isFuelRace) {
+  public Demo(int numLanes, boolean isFuelRace, DemoConfig config) {
+    this(numLanes, new Random(), isFuelRace, config);
+  }
+
+  protected Demo(int numLanes, Random random, boolean isFuelRace, DemoConfig config) {
     super(numLanes);
     this.random = random;
     this.isFuelRace = isFuelRace;
+    this.config = config != null ? config : createDefaultConfig();
     laneStates = new LaneState[numLanes];
     for (int i = 0; i < numLanes; i++) {
       laneStates[i] = new LaneState();
     }
+  }
+
+  public static DemoConfig createDefaultConfig() {
+    return DemoConfig.newBuilder()
+        .setMinLapTimeMs(3000)
+        .setMaxLapTimeMs(5000)
+        .setMinRefuelTimeMs(5000)
+        .setMaxRefuelTimeMs(10000)
+        .setNumSegments(4)
+        .setMinLapsBetweenPits(3)
+        .setMaxLapsBetweenPits(7)
+        .setMinReactionTimeMs(1)
+        .setMaxReactionTimeMs(500)
+        .setMinPitEntryOffsetMs(500)
+        .setMaxPitEntryOffsetMs(1000)
+        .build();
   }
 
   @Override
