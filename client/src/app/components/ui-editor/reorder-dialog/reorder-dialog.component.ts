@@ -27,6 +27,7 @@ import { ColumnPreviewComponent } from "@app/components/ui-editor/column-preview
 import { ColumnVisibility, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -58,6 +59,7 @@ export interface ReorderDialogResult {
     FormsModule,
     ColumnPreviewComponent,
     TranslatePipe,
+    ConfirmationModalComponent,
   ],
 })
 export class ReorderDialogComponent implements OnInit, OnDestroy {
@@ -192,6 +194,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   visibilityOptions = Object.values(ColumnVisibility);
   cachedDropListIds: string[] = [];
   screenName: string = "";
+  showLastValueConfirm = false;
+  pendingLastValueClear: { slotKey: string; anchor: AnchorPoint } | null = null;
 
   // Track initial state for change detection
   private initialState: {
@@ -268,6 +272,19 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
   clearAnchor(slotKey: string, anchor: AnchorPoint) {
     if (this.columnLayouts[slotKey]) {
+      const currentLayout = this.columnLayouts[slotKey];
+      const activeKeys = Object.keys(currentLayout).filter(
+        (key) => !!currentLayout[key as AnchorPoint],
+      );
+
+      // Check if this is the last value in the slot
+      if (activeKeys.length === 1 && activeKeys[0] === anchor) {
+        this.pendingLastValueClear = { slotKey, anchor };
+        this.showLastValueConfirm = true;
+        this.cdr.detectChanges();
+        return;
+      }
+
       // Push current state to undo stack BEFORE removing
       this.markChanges();
 
@@ -283,6 +300,19 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  onConfirmLastValueClear() {
+    if (this.pendingLastValueClear) {
+      this.removeColumn(this.pendingLastValueClear.slotKey);
+    }
+    this.onCancelLastValueClear();
+  }
+
+  onCancelLastValueClear() {
+    this.showLastValueConfirm = false;
+    this.pendingLastValueClear = null;
+    this.cdr.markForCheck();
   }
 
   removeColumn(slotKey: string) {

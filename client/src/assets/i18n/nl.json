@@ -1056,5 +1056,7 @@
   "UI_EDITOR_COL_GAP_LEADER": "GAT NAAR LEIDER",
   "UI_EDITOR_COL_GAP_POSITION": "GAT NAAR POSITIE",
   "UI_EDITOR_COL_REACTION_TIME": "REACTIETIJD",
-  "UI_EDITOR_COL_TEAM": "TEAMNAAM"
+  "UI_EDITOR_COL_TEAM": "TEAMNAAM",
+  "UE_CONFIRM_LAST_VALUE_TITLE": "Laatste waarde verwijderen",
+  "UE_CONFIRM_LAST_VALUE_MESSAGE": "Weet u zeker dat u de laatste waarde uit deze kolom wilt verwijderen?"
 }

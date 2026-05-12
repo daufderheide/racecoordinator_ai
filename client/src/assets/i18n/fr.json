@@ -1052,5 +1052,7 @@
   "UI_EDITOR_COL_GAP_LEADER": "ÉCART AU LEADER",
   "UI_EDITOR_COL_GAP_POSITION": "ÉCART À LA POSITION",
   "UI_EDITOR_COL_REACTION_TIME": "TEMPS DE RÉACTION",
-  "UI_EDITOR_COL_TEAM": "NOM DE L'ÉQUIPE"
+  "UI_EDITOR_COL_TEAM": "NOM DE L'ÉQUIPE",
+  "UE_CONFIRM_LAST_VALUE_TITLE": "Supprimer la dernière valeur",
+  "UE_CONFIRM_LAST_VALUE_MESSAGE": "Êtes-vous sûr de vouloir supprimer la dernière valeur de cette colonne ?"
 }

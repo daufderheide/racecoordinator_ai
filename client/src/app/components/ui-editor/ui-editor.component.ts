@@ -104,10 +104,18 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "bestLapTime", label: "RD_COL_BEST_LAP" },
     { key: "gapLeader", label: "RD_COL_GAP_LEADER" },
     { key: "gapPosition", label: "RD_COL_GAP_POSITION" },
+    { key: "seed", label: "RD_COL_SEED" },
+    { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
+    { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
     { key: "participant.team.name", label: "RD_COL_TEAM" },
     { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
     { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
     { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
+    { key: "mph", label: "RD_COL_MPH" },
+    { key: "kph", label: "RD_COL_KPH" },
+    { key: "fph", label: "RD_COL_FPH" },
+    { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
+    { key: "flag", label: "RD_COL_DRIVER_STATE" },
   ];
   availableTransitions = [
     { key: "none", label: "UE_TRANSITION_NONE" },

@@ -102,9 +102,9 @@ export class ColumnPreviewComponent {
     const val = layout ? layout[anchor as AnchorPoint] : undefined;
     if (val) return val;
 
-    // Fallback: Default to CenterCenter showing the slot key if NO layout exists
-    // or if CenterCenter is specifically missing/empty
-    if (anchor === AnchorPoint.CenterCenter) {
+    // Fallback: Default to CenterCenter showing the slot key only if NO layout exists
+    // Don't fallback if layout exists but center-center is explicitly cleared
+    if (anchor === AnchorPoint.CenterCenter && !layout) {
       return slotKey;
     }
     return undefined;

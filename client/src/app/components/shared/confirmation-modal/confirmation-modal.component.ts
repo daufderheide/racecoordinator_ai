@@ -6,7 +6,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   selector: "app-confirmation-modal",
   template: `
     @if (visible()) {
-      <div id="confirmation-modal-backdrop" class="modal-backdrop">
+      <div id="confirmation-modal-backdrop" class="modal-backdrop" [class]="className()">
         <div id="confirmation-modal-content" class="modal-content">
           <h2 class="modal-title">{{ title() | translate }}</h2>
           <p class="modal-message">
@@ -39,7 +39,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 3000;
       }
       .modal-content {
         background: #2b2b2b;
@@ -58,6 +58,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
       .modal-message {
         margin: 20px 0;
         font-size: 1.1em;
+        white-space: pre-line;
       }
       .modal-actions {
         display: flex;
@@ -97,6 +98,7 @@ export class ConfirmationModalComponent {
   messageParams = input<any>({});
   cancelText = input("NO");
   confirmText = input("YES");
+  className = input("");
 
   cancel = output<void>();
   confirm = output<void>();

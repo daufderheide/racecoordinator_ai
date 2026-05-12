@@ -198,4 +198,12 @@
       </div>
     </div>
   </div>
+  <app-confirmation-modal
+    [visible]="showLastValueConfirm"
+    [title]="'UE_CONFIRM_LAST_VALUE_TITLE'"
+    [message]="'UE_CONFIRM_LAST_VALUE_MESSAGE'"
+    [className]="'column-slots-confirm'"
+    (confirm)="onConfirmLastValueClear()"
+    (cancel)="onCancelLastValueClear()"
+  ></app-confirmation-modal>
 }

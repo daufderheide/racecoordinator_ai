@@ -566,3 +566,13 @@
   cursor: not-allowed;
   filter: grayscale(1);
 }
+
+/* Custom positioning for the last value confirmation modal */
+.column-slots-confirm {
+  justify-content: flex-start !important;
+  padding-left: 300px; 
+}
+
+.column-slots-confirm .modal-content {
+  width: 400px; /* Match the slots-container width */
+}
