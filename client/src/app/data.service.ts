@@ -785,65 +785,11 @@ export class DataService {
             );
             return listResponse.assets;
           } catch (error) {
-            console.log('Protobuf parsing failed, trying manual fallback:', error);
-            // Fallback: parse the raw response text
-            return this.parseProtobufTextResponse(new TextDecoder().decode(response as any));
+            this.logger.error('Error decoding asset list protobuf', error);
+            return [];
           }
         }),
       );
-  }
-
-  private parseProtobufTextResponse(text: string): IAssetMessage[] {
-    const assets: IAssetMessage[] = [];
-    const lines = text.split('\n');
-    
-    for (const line of lines) {
-      if (line.trim() === '') continue;
-      
-      // Try to extract asset details using regex patterns
-      const assetMatch = line.match(/([a-zA-Z0-9_-]+)\x12([^\x00]+)\x1a([^\x00]+)\x22([^\x00]+)\x2a([^\x00]+)\x2a([^\x00]+)/);
-      if (assetMatch) {
-        const [, id, name, type, size, url] = assetMatch;
-        assets.push({
-          model: { entityId: id },
-          name: this.cleanString(name),
-          type: this.cleanString(type),
-          size: this.cleanString(size),
-          url: this.cleanString(url),
-        });
-      }
-    }
-    
-    // Ensure Custom Dash and Fuel Gauge are always included
-    const hasCustomDash = assets.some(a => a.name?.toLowerCase().includes('custom dash'));
-    const hasFuelGauge = assets.some(a => a.name?.toLowerCase().includes('fuel gauge'));
-    
-    if (!hasFuelGauge) {
-      assets.push({
-        model: { entityId: "default_fuel-gauge-builtin" },
-        name: "Fuel Gauge",
-        type: "image_set",
-        size: "380.9 KiB",
-        url: "/assets/default_fuel_100_fuel_100.png",
-      });
-    }
-    
-    if (!hasCustomDash) {
-      assets.push({
-        model: { entityId: "set123" },
-        name: "Custom Dash",
-        type: "image_set",
-        size: "1.2 MiB",
-        url: "/assets/default_flag_checkered_flag_checkered.png",
-      });
-    }
-    
-    return assets;
-  }
-
-  private cleanString(str: string): string {
-    // Remove null bytes and clean up the string
-    return str.replace(/\x00/g, '').trim();
   }
 
   getAssetUrl(id: string): string {
