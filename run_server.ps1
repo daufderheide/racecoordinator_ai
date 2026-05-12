@@ -1,10 +1,56 @@
 $ErrorActionPreference = "Stop"
 
+# Ensure data directory exists
+$DATA_DIR = Join-Path $PSScriptRoot "data"
+if (-not (Test-Path $DATA_DIR)) {
+    Write-Host "Creating data directory..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Path $DATA_DIR | Out-Null
+}
+
+# Cleanup zombie processes on core ports (Server 7070, Mongo 27017)
+Write-Host "Cleaning up zombie processes on ports 7070 and 27017..." -ForegroundColor Cyan
+$Ports = @(7070, 27017)
+foreach ($Port in $Ports) {
+    $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+    foreach ($conn in $connections) {
+        $processId = $conn.OwningProcess
+        if ($processId -gt 0) {
+            try {
+                Write-Host "Killing process $processId on port $Port..." -ForegroundColor Yellow
+                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+            } catch {}
+        }
+    }
+}
+
+
 # Setup Java Environment
-$PotentialJavaHome = "$PSScriptRoot\tools\jdk\jdk-21.0.3+9"
-if (Test-Path $PotentialJavaHome) {
-    $env:JAVA_HOME = $PotentialJavaHome
+$TargetJavaHome = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot"
+
+if (-not (Test-Path $env:JAVA_HOME)) {
+    if (Test-Path $TargetJavaHome) {
+        $env:JAVA_HOME = $TargetJavaHome
+    } else {
+        # Try to find any JDK in common locations
+        $PossiblePaths = @(
+            "$PSScriptRoot\tools\jdk\jdk-*",
+            "C:\Program Files\Eclipse Adoptium\jdk-*",
+            "C:\Program Files\Microsoft\jdk-*",
+            "C:\Program Files\Java\jdk-*"
+        )
+        $FoundPath = Get-Item $PossiblePaths -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
+        if ($FoundPath) {
+            $env:JAVA_HOME = $FoundPath.FullName
+        }
+    }
+}
+
+if (Test-Path $env:JAVA_HOME) {
     $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+    Write-Host "Using JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Gray
+} else {
+    Write-Error "JAVA_HOME not found. Please install a JDK (version 11 or higher)."
+    exit 1
 }
 
 $SERVER_DIR = "$PSScriptRoot\server"

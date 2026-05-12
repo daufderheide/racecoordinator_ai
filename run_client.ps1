@@ -24,7 +24,14 @@ if (-not (Test-Path "node_modules")) {
 }
 
 Write-Host "Generating Protos..." -ForegroundColor Cyan
-npm run proto:gen
+if (-not (Test-Path "src/app/proto")) { New-Item -ItemType Directory -Path "src/app/proto" | Out-Null }
+# Use relative paths for pbjs to avoid duplicate definitions when files are imported
+$ClientProtos = Get-ChildItem ../server/proto/client/*.proto | Resolve-Path -Relative
+$ServerProtos = Get-ChildItem ../server/proto/server/*.proto | Resolve-Path -Relative
+$ProtoFiles = $ClientProtos + $ServerProtos
+
+& npx pbjs -p ../server/proto -t static-module -w es6 -o src/app/proto/message.js $ProtoFiles
+& npx pbts -o src/app/proto/message.d.ts src/app/proto/message.js
 
 Write-Host "Starting Client..." -ForegroundColor Green
 npm start -- --open

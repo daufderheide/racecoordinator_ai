@@ -6,8 +6,11 @@ option java_multiple_files = true;
 option java_outer_classname = "DeferHeatProto";
 
 message DeferHeatRequest {
+  bool unused = 1;
 }
 
 message DeferHeatResponse {
   bool success = 1;
 }
+
+
