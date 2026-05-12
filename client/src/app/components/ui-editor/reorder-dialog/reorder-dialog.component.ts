@@ -278,7 +278,8 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       );
 
       // Check if this is the last value in the slot
-      if (activeKeys.length === 1 && activeKeys[0] === anchor) {
+      // Only show confirmation if the anchor actually has a value
+      if (activeKeys.length === 1 && activeKeys[0] === anchor && currentLayout[anchor]) {
         this.pendingLastValueClear = { slotKey, anchor };
         this.showLastValueConfirm = true;
         this.cdr.detectChanges();

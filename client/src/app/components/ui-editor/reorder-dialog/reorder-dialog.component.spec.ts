@@ -339,4 +339,102 @@ describe("ReorderDialogComponent", () => {
       );
     });
   });
+
+  describe("last value protection", () => {
+    it("should show confirmation when clearing the last value in a slot", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        columnLayouts: {
+          slot1: { [AnchorPoint.CenterCenter]: "driver.name" },
+        },
+      });
+      fixture.detectChanges();
+
+      component.clearAnchor("slot1", AnchorPoint.CenterCenter);
+
+      expect(component.showLastValueConfirm).toBeTrue();
+      expect(component.pendingLastValueClear).toEqual({
+        slotKey: "slot1",
+        anchor: AnchorPoint.CenterCenter,
+      });
+      // The value should NOT be cleared yet
+      expect(component.columnLayouts["slot1"]![AnchorPoint.CenterCenter]).toBe(
+        "driver.name",
+      );
+    });
+
+    it("should clear normally when there are multiple values in the slot", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        columnLayouts: {
+          slot1: {
+            [AnchorPoint.CenterCenter]: "driver.name",
+            [AnchorPoint.TopLeft]: "lapCount",
+          },
+        },
+      });
+      fixture.detectChanges();
+
+      component.clearAnchor("slot1", AnchorPoint.CenterCenter);
+
+      expect(component.showLastValueConfirm).toBeFalse();
+      expect(component.pendingLastValueClear).toBeNull();
+      // The value should be cleared immediately
+      expect(
+        component.columnLayouts["slot1"]![AnchorPoint.CenterCenter],
+      ).toBeUndefined();
+      expect(component.columnLayouts["slot1"]![AnchorPoint.TopLeft]).toBe(
+        "lapCount",
+      );
+    });
+
+    it("should remove column when confirming last value clear", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        columnSlots: [{ key: "slot1", label: "Slot 1" }],
+        columnLayouts: {
+          slot1: { [AnchorPoint.CenterCenter]: "driver.name" },
+        },
+      });
+      fixture.detectChanges();
+
+      // Trigger the confirmation
+      component.clearAnchor("slot1", AnchorPoint.CenterCenter);
+      expect(component.showLastValueConfirm).toBeTrue();
+
+      // Confirm the clear
+      component.onConfirmLastValueClear();
+
+      expect(component.showLastValueConfirm).toBeFalse();
+      expect(component.pendingLastValueClear).toBeNull();
+      expect(component.columnLayouts["slot1"]).toBeUndefined();
+      expect(component.columnSlots.length).toBe(0);
+    });
+
+    it("should not remove column when canceling last value clear", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        columnSlots: [{ key: "slot1", label: "Slot 1" }],
+        columnLayouts: {
+          slot1: { [AnchorPoint.CenterCenter]: "driver.name" },
+        },
+      });
+      fixture.detectChanges();
+
+      // Trigger the confirmation
+      component.clearAnchor("slot1", AnchorPoint.CenterCenter);
+      expect(component.showLastValueConfirm).toBeTrue();
+
+      // Cancel the clear
+      component.onCancelLastValueClear();
+
+      expect(component.showLastValueConfirm).toBeFalse();
+      expect(component.pendingLastValueClear).toBeNull();
+      // The value should still be there
+      expect(component.columnLayouts["slot1"]![AnchorPoint.CenterCenter]).toBe(
+        "driver.name",
+      );
+      expect(component.columnSlots.length).toBe(1);
+    });
+  });
 });
