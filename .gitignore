@@ -38,7 +38,6 @@ server/data/assets/
 server/data
 server/app_data/
 server/temp/
-data/
 /data/
 
 # Maven
@@ -60,6 +59,8 @@ client/.playwright-browsers/
 client/.tmp/
 client/playwright-report/
 client/test-results/
+*-snapshots/
+**/*-snapshots/
 
 # Client unit tests
 .browser-tmp/
