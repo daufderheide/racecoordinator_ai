@@ -31,14 +31,14 @@ yarn-error.log*
 
 
 # Mongodb
-server/mongodb_data
-server_mongo/
-server_temp/
-server/data/assets/
-server/data
-server/app_data/
-server/temp/
-/data/
+#server/mongodb_data
+#server_mongo/
+#server_temp/
+#server/data/assets/
+#server/data
+#server/app_data/
+#server/temp/
+#/data/
 
 # Maven
 server/target
@@ -96,6 +96,7 @@ server/target_tmp/
 data_v2
 data_v3
 build_cache
+data/
 
 # Analytics
 server/src/main/resources/analytics.properties
