@@ -118,9 +118,6 @@ export namespace com {
 
             /** ArduinoConfig ledStrings */
             ledStrings?: (com.antigravity.ILedString[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an ArduinoConfig. */
@@ -131,9 +128,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IArduinoConfig);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** ArduinoConfig name. */
             public name: string;
@@ -251,11 +245,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for ArduinoConfig
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for ArduinoConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a LedString. */
@@ -287,9 +281,6 @@ export namespace com {
 
             /** LedString colorOrder */
             colorOrder?: (com.antigravity.ColorOrder|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a LedString. */
@@ -300,9 +291,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ILedString);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** LedString leds. */
             public leds: number[];
@@ -402,11 +390,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for LedString
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for LedString
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a VoltageConfig. */
@@ -417,9 +405,6 @@ export namespace com {
 
             /** VoltageConfig maxVoltage */
             maxVoltage?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a VoltageConfig. */
@@ -430,9 +415,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IVoltageConfig);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** VoltageConfig lane. */
             public lane: number;
@@ -511,18 +493,15 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for VoltageConfig
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for VoltageConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a ListAssetsRequest. */
         interface IListAssetsRequest {
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a ListAssetsRequest. */
@@ -533,9 +512,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IListAssetsRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /**
              * Creates a new ListAssetsRequest instance using the specified properties.
@@ -608,11 +584,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for ListAssetsRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for ListAssetsRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an UploadAssetRequest. */
@@ -626,9 +602,6 @@ export namespace com {
 
             /** UploadAssetRequest data */
             data?: (Uint8Array|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an UploadAssetRequest. */
@@ -639,9 +612,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IUploadAssetRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** UploadAssetRequest name. */
             public name: string;
@@ -723,11 +693,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for UploadAssetRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for UploadAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DeleteAssetRequest. */
@@ -735,9 +705,6 @@ export namespace com {
 
             /** DeleteAssetRequest id */
             id?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DeleteAssetRequest. */
@@ -748,9 +715,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDeleteAssetRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DeleteAssetRequest id. */
             public id: string;
@@ -826,11 +790,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DeleteAssetRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DeleteAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RenameAssetRequest. */
@@ -841,9 +805,6 @@ export namespace com {
 
             /** RenameAssetRequest newName */
             newName?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RenameAssetRequest. */
@@ -854,9 +815,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRenameAssetRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RenameAssetRequest id. */
             public id: string;
@@ -935,11 +893,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RenameAssetRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RenameAssetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveImageSetRequest. */
@@ -953,9 +911,6 @@ export namespace com {
 
             /** SaveImageSetRequest entries */
             entries?: (com.antigravity.ISaveImageSetEntry[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveImageSetRequest. */
@@ -966,9 +921,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveImageSetRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveImageSetRequest id. */
             public id: string;
@@ -1050,11 +1002,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveImageSetRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveImageSetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveImageSetEntry. */
@@ -1071,9 +1023,6 @@ export namespace com {
 
             /** SaveImageSetEntry data */
             data?: (Uint8Array|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveImageSetEntry. */
@@ -1084,9 +1033,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveImageSetEntry);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveImageSetEntry name. */
             public name: string;
@@ -1171,11 +1117,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveImageSetEntry
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveImageSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveAudioSetRequest. */
@@ -1189,9 +1135,6 @@ export namespace com {
 
             /** SaveAudioSetRequest entries */
             entries?: (com.antigravity.ISaveAudioSetEntry[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveAudioSetRequest. */
@@ -1202,9 +1145,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveAudioSetRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveAudioSetRequest id. */
             public id: string;
@@ -1286,11 +1226,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveAudioSetRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveAudioSetRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveAudioSetEntry. */
@@ -1307,9 +1247,6 @@ export namespace com {
 
             /** SaveAudioSetEntry data */
             data?: (Uint8Array|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveAudioSetEntry. */
@@ -1320,9 +1257,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveAudioSetEntry);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveAudioSetEntry name. */
             public name: string;
@@ -1407,11 +1341,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveAudioSetEntry
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveAudioSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveCustomRotationRequest. */
@@ -1428,9 +1362,6 @@ export namespace com {
 
             /** SaveCustomRotationRequest rotations */
             rotations?: (com.antigravity.ICustomRotation[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveCustomRotationRequest. */
@@ -1441,9 +1372,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveCustomRotationRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveCustomRotationRequest id. */
             public id: string;
@@ -1528,11 +1456,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveCustomRotationRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveCustomRotationRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveCustomRotationResponse. */
@@ -1546,9 +1474,6 @@ export namespace com {
 
             /** SaveCustomRotationResponse asset */
             asset?: (com.antigravity.IAssetMessage|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveCustomRotationResponse. */
@@ -1559,9 +1484,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveCustomRotationResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveCustomRotationResponse success. */
             public success: boolean;
@@ -1643,11 +1565,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveCustomRotationResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveCustomRotationResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a CustomRotation. */
@@ -1658,9 +1580,6 @@ export namespace com {
 
             /** CustomRotation heats */
             heats?: (com.antigravity.ICustomHeat[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a CustomRotation. */
@@ -1671,9 +1590,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ICustomRotation);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** CustomRotation numDrivers. */
             public numDrivers: number;
@@ -1752,11 +1668,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for CustomRotation
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for CustomRotation
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a CustomHeat. */
@@ -1764,9 +1680,6 @@ export namespace com {
 
             /** CustomHeat driverIndices */
             driverIndices?: (number[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a CustomHeat. */
@@ -1777,9 +1690,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ICustomHeat);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** CustomHeat driverIndices. */
             public driverIndices: number[];
@@ -1855,11 +1765,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for CustomHeat
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for CustomHeat
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an ImageSetEntry. */
@@ -1876,9 +1786,6 @@ export namespace com {
 
             /** ImageSetEntry size */
             size?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an ImageSetEntry. */
@@ -1889,9 +1796,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IImageSetEntry);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** ImageSetEntry url. */
             public url: string;
@@ -1976,11 +1880,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for ImageSetEntry
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for ImageSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an AudioSetEntry. */
@@ -1997,9 +1901,6 @@ export namespace com {
 
             /** AudioSetEntry size */
             size?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an AudioSetEntry. */
@@ -2010,9 +1911,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IAudioSetEntry);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** AudioSetEntry url. */
             public url: string;
@@ -2097,11 +1995,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for AudioSetEntry
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for AudioSetEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an AssetMessage. */
@@ -2133,9 +2031,6 @@ export namespace com {
 
             /** AssetMessage customRotations */
             customRotations?: (com.antigravity.ICustomRotation[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an AssetMessage. */
@@ -2146,9 +2041,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IAssetMessage);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** AssetMessage model. */
             public model?: (com.antigravity.IModel|null);
@@ -2248,11 +2140,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for AssetMessage
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for AssetMessage
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a Model. */
@@ -2260,9 +2152,6 @@ export namespace com {
 
             /** Model entityId */
             entityId?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a Model. */
@@ -2273,9 +2162,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** Model entityId. */
             public entityId: string;
@@ -2351,11 +2237,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for Model
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for Model
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an AudioConfig. */
@@ -2369,9 +2255,6 @@ export namespace com {
 
             /** AudioConfig text */
             text?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an AudioConfig. */
@@ -2382,9 +2265,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IAudioConfig);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** AudioConfig type. */
             public type: string;
@@ -2466,18 +2346,18 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for AudioConfig
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for AudioConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DeferHeatRequest. */
         interface IDeferHeatRequest {
 
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
+            /** DeferHeatRequest unused */
+            unused?: (boolean|null);
         }
 
         /** Represents a DeferHeatRequest. */
@@ -2489,8 +2369,8 @@ export namespace com {
              */
             constructor(properties?: com.antigravity.IDeferHeatRequest);
 
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
+            /** DeferHeatRequest unused. */
+            public unused: boolean;
 
             /**
              * Creates a new DeferHeatRequest instance using the specified properties.
@@ -2563,11 +2443,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DeferHeatRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DeferHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DeferHeatResponse. */
@@ -2575,9 +2455,6 @@ export namespace com {
 
             /** DeferHeatResponse success */
             success?: (boolean|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DeferHeatResponse. */
@@ -2588,9 +2465,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDeferHeatResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DeferHeatResponse success. */
             public success: boolean;
@@ -2666,11 +2540,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DeferHeatResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DeferHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DemoConfig. */
@@ -2708,9 +2582,6 @@ export namespace com {
 
             /** DemoConfig maxPitEntryOffsetMs */
             maxPitEntryOffsetMs?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DemoConfig. */
@@ -2721,9 +2592,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDemoConfig);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DemoConfig minLapTimeMs. */
             public minLapTimeMs: number;
@@ -2829,11 +2697,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DemoConfig
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DemoConfig
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DriverModel. */
@@ -2859,9 +2727,6 @@ export namespace com {
 
             /** DriverModel penaltyAudio */
             penaltyAudio?: (com.antigravity.IAudioConfig|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DriverModel. */
@@ -2872,9 +2737,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDriverModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DriverModel model. */
             public model?: (com.antigravity.IModel|null);
@@ -2968,11 +2830,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DriverModel
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DriverModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InitializeInterfaceRequest. */
@@ -2983,9 +2845,6 @@ export namespace com {
 
             /** InitializeInterfaceRequest laneCount */
             laneCount?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InitializeInterfaceRequest. */
@@ -2996,9 +2855,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInitializeInterfaceRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InitializeInterfaceRequest configs. */
             public configs: com.antigravity.IArduinoConfig[];
@@ -3077,11 +2933,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InitializeInterfaceRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InitializeInterfaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InitializeInterfaceResponse. */
@@ -3092,9 +2948,6 @@ export namespace com {
 
             /** InitializeInterfaceResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InitializeInterfaceResponse. */
@@ -3105,9 +2958,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInitializeInterfaceResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InitializeInterfaceResponse success. */
             public success: boolean;
@@ -3186,11 +3036,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InitializeInterfaceResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InitializeInterfaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InitializeRaceRequest. */
@@ -3207,9 +3057,6 @@ export namespace com {
 
             /** InitializeRaceRequest demoConfig */
             demoConfig?: (com.antigravity.IDemoConfig|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InitializeRaceRequest. */
@@ -3220,9 +3067,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInitializeRaceRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InitializeRaceRequest raceId. */
             public raceId: string;
@@ -3307,11 +3151,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InitializeRaceRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InitializeRaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InitializeRaceResponse. */
@@ -3328,9 +3172,6 @@ export namespace com {
 
             /** InitializeRaceResponse teamNames */
             teamNames?: (string[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InitializeRaceResponse. */
@@ -3341,9 +3182,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInitializeRaceResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InitializeRaceResponse success. */
             public success: boolean;
@@ -3428,11 +3266,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InitializeRaceResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InitializeRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** InterfaceStatus enum. */
@@ -3462,9 +3300,6 @@ export namespace com {
 
             /** InterfaceEvent digitalPin */
             digitalPin?: (com.antigravity.IInterfaceDigitalPinEvent|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InterfaceEvent. */
@@ -3475,9 +3310,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInterfaceEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InterfaceEvent lap. */
             public lap?: (com.antigravity.ILapEvent|null);
@@ -3571,11 +3403,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InterfaceEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InterfaceEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InterfaceDigitalPinEvent. */
@@ -3592,9 +3424,6 @@ export namespace com {
 
             /** InterfaceDigitalPinEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InterfaceDigitalPinEvent. */
@@ -3605,9 +3434,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInterfaceDigitalPinEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InterfaceDigitalPinEvent pin. */
             public pin: number;
@@ -3692,11 +3518,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InterfaceDigitalPinEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InterfaceDigitalPinEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InterfaceStatusEvent. */
@@ -3707,9 +3533,6 @@ export namespace com {
 
             /** InterfaceStatusEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InterfaceStatusEvent. */
@@ -3720,9 +3543,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInterfaceStatusEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InterfaceStatusEvent status. */
             public status: com.antigravity.InterfaceStatus;
@@ -3801,11 +3621,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InterfaceStatusEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InterfaceStatusEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a LapEvent. */
@@ -3822,9 +3642,6 @@ export namespace com {
 
             /** LapEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a LapEvent. */
@@ -3835,9 +3652,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ILapEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** LapEvent lane. */
             public lane: number;
@@ -3922,11 +3736,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for LapEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for LapEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SegmentEvent. */
@@ -3943,9 +3757,6 @@ export namespace com {
 
             /** SegmentEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SegmentEvent. */
@@ -3956,9 +3767,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISegmentEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SegmentEvent lane. */
             public lane: number;
@@ -4043,11 +3851,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SegmentEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SegmentEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a CallbuttonEvent. */
@@ -4058,9 +3866,6 @@ export namespace com {
 
             /** CallbuttonEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a CallbuttonEvent. */
@@ -4071,9 +3876,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ICallbuttonEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** CallbuttonEvent lane. */
             public lane: number;
@@ -4152,11 +3954,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for CallbuttonEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for CallbuttonEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an InterfaceAnalogDataEvent. */
@@ -4170,9 +3972,6 @@ export namespace com {
 
             /** InterfaceAnalogDataEvent interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an InterfaceAnalogDataEvent. */
@@ -4183,9 +3982,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IInterfaceAnalogDataEvent);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** InterfaceAnalogDataEvent pin. */
             public pin: number;
@@ -4267,11 +4063,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for InterfaceAnalogDataEvent
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for InterfaceAnalogDataEvent
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a LaneModel. */
@@ -4288,9 +4084,6 @@ export namespace com {
 
             /** LaneModel objectId */
             objectId?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a LaneModel. */
@@ -4301,9 +4094,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ILaneModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** LaneModel backgroundColor. */
             public backgroundColor: string;
@@ -4388,18 +4178,18 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for LaneModel
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for LaneModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a NextHeatRequest. */
         interface INextHeatRequest {
 
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
+            /** NextHeatRequest unused */
+            unused?: (boolean|null);
         }
 
         /** Represents a NextHeatRequest. */
@@ -4411,8 +4201,8 @@ export namespace com {
              */
             constructor(properties?: com.antigravity.INextHeatRequest);
 
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
+            /** NextHeatRequest unused. */
+            public unused: boolean;
 
             /**
              * Creates a new NextHeatRequest instance using the specified properties.
@@ -4485,11 +4275,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for NextHeatRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for NextHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a NextHeatResponse. */
@@ -4500,9 +4290,6 @@ export namespace com {
 
             /** NextHeatResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a NextHeatResponse. */
@@ -4513,9 +4300,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.INextHeatResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** NextHeatResponse success. */
             public success: boolean;
@@ -4594,18 +4378,15 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for NextHeatResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for NextHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a PauseRaceRequest. */
         interface IPauseRaceRequest {
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a PauseRaceRequest. */
@@ -4616,9 +4397,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IPauseRaceRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /**
              * Creates a new PauseRaceRequest instance using the specified properties.
@@ -4691,11 +4469,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for PauseRaceRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for PauseRaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a PauseRaceResponse. */
@@ -4706,9 +4484,6 @@ export namespace com {
 
             /** PauseRaceResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a PauseRaceResponse. */
@@ -4719,9 +4494,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IPauseRaceResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** PauseRaceResponse success. */
             public success: boolean;
@@ -4800,11 +4572,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for PauseRaceResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for PauseRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a HeatScoring. */
@@ -4824,9 +4596,6 @@ export namespace com {
 
             /** HeatScoring allowFinish */
             allowFinish?: (com.antigravity.HeatScoring.AllowFinish|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a HeatScoring. */
@@ -4837,9 +4606,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IHeatScoring);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** HeatScoring finishMethod. */
             public finishMethod: com.antigravity.HeatScoring.FinishMethod;
@@ -4927,11 +4693,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for HeatScoring
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for HeatScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         namespace HeatScoring {
@@ -4976,9 +4742,6 @@ export namespace com {
 
             /** OverallScoring tiebreaker */
             tiebreaker?: (com.antigravity.OverallScoring.OverallRankingTiebreaker|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an OverallScoring. */
@@ -4989,9 +4752,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IOverallScoring);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** OverallScoring droppedHeats. */
             public droppedHeats: number;
@@ -5073,11 +4833,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for OverallScoring
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for OverallScoring
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         namespace OverallScoring {
@@ -5116,9 +4876,6 @@ export namespace com {
 
             /** TeamOptions requirePitStopChangeDriver */
             requirePitStopChangeDriver?: (boolean|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a TeamOptions. */
@@ -5129,9 +4886,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ITeamOptions);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** TeamOptions heatLapLimit. */
             public heatLapLimit: number;
@@ -5219,11 +4973,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for TeamOptions
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for TeamOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** HeatRotationType enum. */
@@ -5326,9 +5080,6 @@ export namespace com {
 
             /** RaceModel falseStartTimePenalty */
             falseStartTimePenalty?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RaceModel. */
@@ -5339,9 +5090,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RaceModel model. */
             public model?: (com.antigravity.IModel|null);
@@ -5501,11 +5249,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RaceModel
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RaceModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** FuelUsageType enum. */
@@ -5547,9 +5295,6 @@ export namespace com {
 
             /** AnalogFuelOptions referenceTime */
             referenceTime?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an AnalogFuelOptions. */
@@ -5560,9 +5305,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IAnalogFuelOptions);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** AnalogFuelOptions enabled. */
             public enabled: boolean;
@@ -5665,11 +5407,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for AnalogFuelOptions
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for AnalogFuelOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DigitalFuelOptions. */
@@ -5701,9 +5443,6 @@ export namespace com {
 
             /** DigitalFuelOptions pitStopDelay */
             pitStopDelay?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DigitalFuelOptions. */
@@ -5714,9 +5453,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDigitalFuelOptions);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DigitalFuelOptions enabled. */
             public enabled: boolean;
@@ -5816,11 +5552,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DigitalFuelOptions
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DigitalFuelOptions
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a TrackModel. */
@@ -5843,9 +5579,6 @@ export namespace com {
 
             /** TrackModel numTrackSections */
             numTrackSections?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a TrackModel. */
@@ -5856,9 +5589,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ITrackModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** TrackModel model. */
             public model?: (com.antigravity.IModel|null);
@@ -5949,11 +5679,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for TrackModel
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for TrackModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RaceSubscriptionRequest. */
@@ -5961,9 +5691,6 @@ export namespace com {
 
             /** RaceSubscriptionRequest subscribe */
             subscribe?: (boolean|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RaceSubscriptionRequest. */
@@ -5974,9 +5701,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceSubscriptionRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RaceSubscriptionRequest subscribe. */
             public subscribe: boolean;
@@ -6052,18 +5776,15 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RaceSubscriptionRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RaceSubscriptionRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RestartHeatRequest. */
         interface IRestartHeatRequest {
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RestartHeatRequest. */
@@ -6074,9 +5795,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRestartHeatRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /**
              * Creates a new RestartHeatRequest instance using the specified properties.
@@ -6149,11 +5867,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RestartHeatRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RestartHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RestartHeatResponse. */
@@ -6164,9 +5882,6 @@ export namespace com {
 
             /** RestartHeatResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RestartHeatResponse. */
@@ -6177,9 +5892,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRestartHeatResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RestartHeatResponse success. */
             public success: boolean;
@@ -6258,11 +5970,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RestartHeatResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RestartHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SetInterfacePinStateRequest. */
@@ -6279,9 +5991,6 @@ export namespace com {
 
             /** SetInterfacePinStateRequest interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SetInterfacePinStateRequest. */
@@ -6292,9 +6001,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISetInterfacePinStateRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SetInterfacePinStateRequest pin. */
             public pin: number;
@@ -6379,11 +6085,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SetInterfacePinStateRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SetInterfacePinStateRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SetInterfacePinStateResponse. */
@@ -6394,9 +6100,6 @@ export namespace com {
 
             /** SetInterfacePinStateResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SetInterfacePinStateResponse. */
@@ -6407,9 +6110,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISetInterfacePinStateResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SetInterfacePinStateResponse success. */
             public success: boolean;
@@ -6488,11 +6188,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SetInterfacePinStateResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SetInterfacePinStateResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RgbLedState. */
@@ -6509,9 +6209,6 @@ export namespace com {
 
             /** RgbLedState b */
             b?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RgbLedState. */
@@ -6522,9 +6219,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRgbLedState);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RgbLedState index. */
             public index: number;
@@ -6609,11 +6303,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RgbLedState
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RgbLedState
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SetInterfaceRgbLedStateRequest. */
@@ -6627,9 +6321,6 @@ export namespace com {
 
             /** SetInterfaceRgbLedStateRequest interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SetInterfaceRgbLedStateRequest. */
@@ -6640,9 +6331,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISetInterfaceRgbLedStateRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SetInterfaceRgbLedStateRequest pin. */
             public pin: number;
@@ -6724,11 +6412,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SetInterfaceRgbLedStateRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SetInterfaceRgbLedStateRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SetInterfaceRgbLedStateResponse. */
@@ -6739,9 +6427,6 @@ export namespace com {
 
             /** SetInterfaceRgbLedStateResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SetInterfaceRgbLedStateResponse. */
@@ -6752,9 +6437,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISetInterfaceRgbLedStateResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SetInterfaceRgbLedStateResponse success. */
             public success: boolean;
@@ -6833,18 +6515,15 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SetInterfaceRgbLedStateResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SetInterfaceRgbLedStateResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SkipHeatRequest. */
         interface ISkipHeatRequest {
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SkipHeatRequest. */
@@ -6855,9 +6534,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISkipHeatRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /**
              * Creates a new SkipHeatRequest instance using the specified properties.
@@ -6930,11 +6606,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SkipHeatRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SkipHeatRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SkipHeatResponse. */
@@ -6945,9 +6621,6 @@ export namespace com {
 
             /** SkipHeatResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SkipHeatResponse. */
@@ -6958,9 +6631,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISkipHeatResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SkipHeatResponse success. */
             public success: boolean;
@@ -7039,18 +6709,15 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SkipHeatResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SkipHeatResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a StartRaceRequest. */
         interface IStartRaceRequest {
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a StartRaceRequest. */
@@ -7061,9 +6728,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IStartRaceRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /**
              * Creates a new StartRaceRequest instance using the specified properties.
@@ -7136,11 +6800,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for StartRaceRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for StartRaceRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a StartRaceResponse. */
@@ -7151,9 +6815,6 @@ export namespace com {
 
             /** StartRaceResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a StartRaceResponse. */
@@ -7164,9 +6825,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IStartRaceResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** StartRaceResponse success. */
             public success: boolean;
@@ -7245,11 +6903,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for StartRaceResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for StartRaceResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a TeamModel. */
@@ -7266,9 +6924,6 @@ export namespace com {
 
             /** TeamModel driverIds */
             driverIds?: (string[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a TeamModel. */
@@ -7279,9 +6934,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ITeamModel);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** TeamModel model. */
             public model?: (com.antigravity.IModel|null);
@@ -7366,11 +7018,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for TeamModel
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for TeamModel
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an UpdateInterfaceConfigRequest. */
@@ -7381,9 +7033,6 @@ export namespace com {
 
             /** UpdateInterfaceConfigRequest interfaceIndex */
             interfaceIndex?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an UpdateInterfaceConfigRequest. */
@@ -7394,9 +7043,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IUpdateInterfaceConfigRequest);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** UpdateInterfaceConfigRequest config. */
             public config?: (com.antigravity.IArduinoConfig|null);
@@ -7475,11 +7121,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for UpdateInterfaceConfigRequest
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for UpdateInterfaceConfigRequest
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an UpdateInterfaceConfigResponse. */
@@ -7490,9 +7136,6 @@ export namespace com {
 
             /** UpdateInterfaceConfigResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an UpdateInterfaceConfigResponse. */
@@ -7503,9 +7146,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IUpdateInterfaceConfigResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** UpdateInterfaceConfigResponse success. */
             public success: boolean;
@@ -7584,11 +7224,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for UpdateInterfaceConfigResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for UpdateInterfaceConfigResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a ListAssetsResponse. */
@@ -7596,9 +7236,6 @@ export namespace com {
 
             /** ListAssetsResponse assets */
             assets?: (com.antigravity.IAssetMessage[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a ListAssetsResponse. */
@@ -7609,9 +7246,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IListAssetsResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** ListAssetsResponse assets. */
             public assets: com.antigravity.IAssetMessage[];
@@ -7687,11 +7321,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for ListAssetsResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for ListAssetsResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of an UploadAssetResponse. */
@@ -7705,9 +7339,6 @@ export namespace com {
 
             /** UploadAssetResponse asset */
             asset?: (com.antigravity.IAssetMessage|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an UploadAssetResponse. */
@@ -7718,9 +7349,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IUploadAssetResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** UploadAssetResponse success. */
             public success: boolean;
@@ -7802,11 +7430,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for UploadAssetResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for UploadAssetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DeleteAssetResponse. */
@@ -7817,9 +7445,6 @@ export namespace com {
 
             /** DeleteAssetResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DeleteAssetResponse. */
@@ -7830,9 +7455,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDeleteAssetResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DeleteAssetResponse success. */
             public success: boolean;
@@ -7911,11 +7533,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DeleteAssetResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DeleteAssetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RenameAssetResponse. */
@@ -7926,9 +7548,6 @@ export namespace com {
 
             /** RenameAssetResponse message */
             message?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RenameAssetResponse. */
@@ -7939,9 +7558,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRenameAssetResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RenameAssetResponse success. */
             public success: boolean;
@@ -8020,11 +7636,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RenameAssetResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RenameAssetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveImageSetResponse. */
@@ -8038,9 +7654,6 @@ export namespace com {
 
             /** SaveImageSetResponse asset */
             asset?: (com.antigravity.IAssetMessage|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveImageSetResponse. */
@@ -8051,9 +7664,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveImageSetResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveImageSetResponse success. */
             public success: boolean;
@@ -8135,11 +7745,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveImageSetResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveImageSetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a SaveAudioSetResponse. */
@@ -8153,9 +7763,6 @@ export namespace com {
 
             /** SaveAudioSetResponse asset */
             asset?: (com.antigravity.IAssetMessage|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a SaveAudioSetResponse. */
@@ -8166,9 +7773,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISaveAudioSetResponse);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** SaveAudioSetResponse success. */
             public success: boolean;
@@ -8250,11 +7854,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for SaveAudioSetResponse
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for SaveAudioSetResponse
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a CarData. */
@@ -8283,9 +7887,6 @@ export namespace com {
 
             /** CarData flag */
             flag?: (com.antigravity.RaceFlag|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a CarData. */
@@ -8296,9 +7897,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ICarData);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** CarData lane. */
             public lane: number;
@@ -8395,11 +7993,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for CarData
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for CarData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** RaceState enum. */
@@ -8449,9 +8047,6 @@ export namespace com {
 
             /** FullUpdate currentHeat */
             currentHeat?: (com.antigravity.IHeat|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a FullUpdate. */
@@ -8462,9 +8057,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IFullUpdate);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** FullUpdate race. */
             public race?: (com.antigravity.IRaceModel|null);
@@ -8549,11 +8141,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for FullUpdate
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for FullUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a Heat. */
@@ -8570,9 +8162,6 @@ export namespace com {
 
             /** Heat standings */
             standings?: (string[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a Heat. */
@@ -8583,9 +8172,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IHeat);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** Heat heatDrivers. */
             public heatDrivers: com.antigravity.IDriverHeatData[];
@@ -8670,11 +8256,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for Heat
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for Heat
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a LapData. */
@@ -8688,9 +8274,6 @@ export namespace com {
 
             /** LapData isDrift */
             isDrift?: (boolean|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a LapData. */
@@ -8701,9 +8284,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ILapData);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** LapData lapTime. */
             public lapTime: number;
@@ -8785,11 +8365,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for LapData
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for LapData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a DriverHeatData. */
@@ -8857,9 +8437,6 @@ export namespace com {
 
             /** DriverHeatData flag */
             flag?: (com.antigravity.RaceFlag|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a DriverHeatData. */
@@ -8870,9 +8447,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IDriverHeatData);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** DriverHeatData driver. */
             public driver?: (com.antigravity.IRaceParticipant|null);
@@ -9008,11 +8582,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for DriverHeatData
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for DriverHeatData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RaceParticipant. */
@@ -9053,9 +8627,6 @@ export namespace com {
 
             /** RaceParticipant fuelLevel */
             fuelLevel?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RaceParticipant. */
@@ -9066,9 +8637,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceParticipant);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RaceParticipant objectId. */
             public objectId: string;
@@ -9177,11 +8745,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RaceParticipant
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RaceParticipant
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a Lap. */
@@ -9225,9 +8793,6 @@ export namespace com {
 
             /** Lap flag */
             flag?: (com.antigravity.RaceFlag|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a Lap. */
@@ -9238,9 +8803,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ILap);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** Lap objectId. */
             public objectId: string;
@@ -9352,11 +8914,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for Lap
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for Lap
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         namespace Lap {
@@ -9375,9 +8937,6 @@ export namespace com {
 
             /** OverallStandingsUpdate participants */
             participants?: (com.antigravity.IRaceParticipant[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents an OverallStandingsUpdate. */
@@ -9388,9 +8947,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IOverallStandingsUpdate);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** OverallStandingsUpdate participants. */
             public participants: com.antigravity.IRaceParticipant[];
@@ -9466,11 +9022,604 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for OverallStandingsUpdate
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for OverallStandingsUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a Race. */
+        interface IRace {
+
+            /** Race race */
+            race?: (com.antigravity.IRaceModel|null);
+
+            /** Race drivers */
+            drivers?: (com.antigravity.IRaceParticipant[]|null);
+
+            /** Race heats */
+            heats?: (com.antigravity.IHeat[]|null);
+
+            /** Race currentHeat */
+            currentHeat?: (com.antigravity.IHeat|null);
+
+            /** Race state */
+            state?: (com.antigravity.RaceState|null);
+
+            /** Race flag */
+            flag?: (com.antigravity.RaceFlag|null);
+
+            /** Race recordData */
+            recordData?: (com.antigravity.IRecordData|null);
+        }
+
+        /** Represents a Race. */
+        class Race implements IRace {
+
+            /**
+             * Constructs a new Race.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRace);
+
+            /** Race race. */
+            public race?: (com.antigravity.IRaceModel|null);
+
+            /** Race drivers. */
+            public drivers: com.antigravity.IRaceParticipant[];
+
+            /** Race heats. */
+            public heats: com.antigravity.IHeat[];
+
+            /** Race currentHeat. */
+            public currentHeat?: (com.antigravity.IHeat|null);
+
+            /** Race state. */
+            public state: com.antigravity.RaceState;
+
+            /** Race flag. */
+            public flag: com.antigravity.RaceFlag;
+
+            /** Race recordData. */
+            public recordData?: (com.antigravity.IRecordData|null);
+
+            /**
+             * Creates a new Race instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Race instance
+             */
+            public static create(properties?: com.antigravity.IRace): com.antigravity.Race;
+
+            /**
+             * Encodes the specified Race message. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
+             * @param message Race message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Race message, length delimited. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
+             * @param message Race message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Race message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Race
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Race;
+
+            /**
+             * Decodes a Race message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Race
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Race;
+
+            /**
+             * Verifies a Race message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Race message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Race
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.Race;
+
+            /**
+             * Creates a plain object from a Race message. Also converts values to other types if specified.
+             * @param message Race
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.Race, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Race to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Race
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RecordEntry. */
+        interface IRecordEntry {
+
+            /** RecordEntry value */
+            value?: (number|null);
+
+            /** RecordEntry holderName */
+            holderName?: (string|null);
+
+            /** RecordEntry date */
+            date?: (number|Long|null);
+
+            /** RecordEntry holderNickname */
+            holderNickname?: (string|null);
+
+            /** RecordEntry holderTeamName */
+            holderTeamName?: (string|null);
+        }
+
+        /** Represents a RecordEntry. */
+        class RecordEntry implements IRecordEntry {
+
+            /**
+             * Constructs a new RecordEntry.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRecordEntry);
+
+            /** RecordEntry value. */
+            public value: number;
+
+            /** RecordEntry holderName. */
+            public holderName: string;
+
+            /** RecordEntry date. */
+            public date: (number|Long);
+
+            /** RecordEntry holderNickname. */
+            public holderNickname: string;
+
+            /** RecordEntry holderTeamName. */
+            public holderTeamName: string;
+
+            /**
+             * Creates a new RecordEntry instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RecordEntry instance
+             */
+            public static create(properties?: com.antigravity.IRecordEntry): com.antigravity.RecordEntry;
+
+            /**
+             * Encodes the specified RecordEntry message. Does not implicitly {@link com.antigravity.RecordEntry.verify|verify} messages.
+             * @param message RecordEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRecordEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RecordEntry message, length delimited. Does not implicitly {@link com.antigravity.RecordEntry.verify|verify} messages.
+             * @param message RecordEntry message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRecordEntry, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RecordEntry message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RecordEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RecordEntry;
+
+            /**
+             * Decodes a RecordEntry message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RecordEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RecordEntry;
+
+            /**
+             * Verifies a RecordEntry message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RecordEntry message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RecordEntry
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RecordEntry;
+
+            /**
+             * Creates a plain object from a RecordEntry message. Also converts values to other types if specified.
+             * @param message RecordEntry
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RecordEntry, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RecordEntry to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RecordEntry
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a RecordData. */
+        interface IRecordData {
+
+            /** RecordData overall */
+            overall?: (com.antigravity.IOverallRecords|null);
+
+            /** RecordData current */
+            current?: (com.antigravity.ICurrentRecords|null);
+        }
+
+        /** Represents a RecordData. */
+        class RecordData implements IRecordData {
+
+            /**
+             * Constructs a new RecordData.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IRecordData);
+
+            /** RecordData overall. */
+            public overall?: (com.antigravity.IOverallRecords|null);
+
+            /** RecordData current. */
+            public current?: (com.antigravity.ICurrentRecords|null);
+
+            /**
+             * Creates a new RecordData instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns RecordData instance
+             */
+            public static create(properties?: com.antigravity.IRecordData): com.antigravity.RecordData;
+
+            /**
+             * Encodes the specified RecordData message. Does not implicitly {@link com.antigravity.RecordData.verify|verify} messages.
+             * @param message RecordData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IRecordData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified RecordData message, length delimited. Does not implicitly {@link com.antigravity.RecordData.verify|verify} messages.
+             * @param message RecordData message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IRecordData, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a RecordData message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns RecordData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RecordData;
+
+            /**
+             * Decodes a RecordData message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns RecordData
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RecordData;
+
+            /**
+             * Verifies a RecordData message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a RecordData message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns RecordData
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.RecordData;
+
+            /**
+             * Creates a plain object from a RecordData message. Also converts values to other types if specified.
+             * @param message RecordData
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.RecordData, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this RecordData to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for RecordData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of an OverallRecords. */
+        interface IOverallRecords {
+
+            /** OverallRecords fastestLap */
+            fastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** OverallRecords highestScore */
+            highestScore?: (com.antigravity.IRecordEntry|null);
+
+            /** OverallRecords laneFastestLap */
+            laneFastestLap?: (com.antigravity.IRecordEntry[]|null);
+
+            /** OverallRecords laneHighestScore */
+            laneHighestScore?: (com.antigravity.IRecordEntry[]|null);
+        }
+
+        /** Represents an OverallRecords. */
+        class OverallRecords implements IOverallRecords {
+
+            /**
+             * Constructs a new OverallRecords.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.IOverallRecords);
+
+            /** OverallRecords fastestLap. */
+            public fastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** OverallRecords highestScore. */
+            public highestScore?: (com.antigravity.IRecordEntry|null);
+
+            /** OverallRecords laneFastestLap. */
+            public laneFastestLap: com.antigravity.IRecordEntry[];
+
+            /** OverallRecords laneHighestScore. */
+            public laneHighestScore: com.antigravity.IRecordEntry[];
+
+            /**
+             * Creates a new OverallRecords instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns OverallRecords instance
+             */
+            public static create(properties?: com.antigravity.IOverallRecords): com.antigravity.OverallRecords;
+
+            /**
+             * Encodes the specified OverallRecords message. Does not implicitly {@link com.antigravity.OverallRecords.verify|verify} messages.
+             * @param message OverallRecords message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.IOverallRecords, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified OverallRecords message, length delimited. Does not implicitly {@link com.antigravity.OverallRecords.verify|verify} messages.
+             * @param message OverallRecords message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.IOverallRecords, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes an OverallRecords message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns OverallRecords
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallRecords;
+
+            /**
+             * Decodes an OverallRecords message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns OverallRecords
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallRecords;
+
+            /**
+             * Verifies an OverallRecords message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates an OverallRecords message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns OverallRecords
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallRecords;
+
+            /**
+             * Creates a plain object from an OverallRecords message. Also converts values to other types if specified.
+             * @param message OverallRecords
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.OverallRecords, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this OverallRecords to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for OverallRecords
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a CurrentRecords. */
+        interface ICurrentRecords {
+
+            /** CurrentRecords fastestLap */
+            fastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords highestScore */
+            highestScore?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords heatFastestLap */
+            heatFastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords laneFastestLap */
+            laneFastestLap?: (com.antigravity.IRecordEntry[]|null);
+
+            /** CurrentRecords laneHighestScore */
+            laneHighestScore?: (com.antigravity.IRecordEntry[]|null);
+        }
+
+        /** Represents a CurrentRecords. */
+        class CurrentRecords implements ICurrentRecords {
+
+            /**
+             * Constructs a new CurrentRecords.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: com.antigravity.ICurrentRecords);
+
+            /** CurrentRecords fastestLap. */
+            public fastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords highestScore. */
+            public highestScore?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords heatFastestLap. */
+            public heatFastestLap?: (com.antigravity.IRecordEntry|null);
+
+            /** CurrentRecords laneFastestLap. */
+            public laneFastestLap: com.antigravity.IRecordEntry[];
+
+            /** CurrentRecords laneHighestScore. */
+            public laneHighestScore: com.antigravity.IRecordEntry[];
+
+            /**
+             * Creates a new CurrentRecords instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CurrentRecords instance
+             */
+            public static create(properties?: com.antigravity.ICurrentRecords): com.antigravity.CurrentRecords;
+
+            /**
+             * Encodes the specified CurrentRecords message. Does not implicitly {@link com.antigravity.CurrentRecords.verify|verify} messages.
+             * @param message CurrentRecords message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: com.antigravity.ICurrentRecords, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CurrentRecords message, length delimited. Does not implicitly {@link com.antigravity.CurrentRecords.verify|verify} messages.
+             * @param message CurrentRecords message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: com.antigravity.ICurrentRecords, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CurrentRecords message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns CurrentRecords
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.CurrentRecords;
+
+            /**
+             * Decodes a CurrentRecords message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns CurrentRecords
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.CurrentRecords;
+
+            /**
+             * Verifies a CurrentRecords message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CurrentRecords message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CurrentRecords
+             */
+            public static fromObject(object: { [k: string]: any }): com.antigravity.CurrentRecords;
+
+            /**
+             * Creates a plain object from a CurrentRecords message. Also converts values to other types if specified.
+             * @param message CurrentRecords
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: com.antigravity.CurrentRecords, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CurrentRecords to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for CurrentRecords
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RaceData. */
@@ -9505,9 +9654,6 @@ export namespace com {
 
             /** RaceData recordData */
             recordData?: (com.antigravity.IRecordData|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RaceData. */
@@ -9518,9 +9664,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceData);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RaceData raceTime. */
             public raceTime?: (com.antigravity.IRaceTime|null);
@@ -9623,11 +9766,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RaceData
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RaceData
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a RaceTime. */
@@ -9641,9 +9784,6 @@ export namespace com {
 
             /** RaceTime autoAdvanceRemaining */
             autoAdvanceRemaining?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a RaceTime. */
@@ -9654,9 +9794,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IRaceTime);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** RaceTime time. */
             public time: number;
@@ -9738,634 +9875,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for RaceTime
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for RaceTime
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
-        }
-
-        /** Properties of a Race. */
-        interface IRace {
-
-            /** Race race */
-            race?: (com.antigravity.IRaceModel|null);
-
-            /** Race drivers */
-            drivers?: (com.antigravity.IRaceParticipant[]|null);
-
-            /** Race heats */
-            heats?: (com.antigravity.IHeat[]|null);
-
-            /** Race currentHeat */
-            currentHeat?: (com.antigravity.IHeat|null);
-
-            /** Race state */
-            state?: (com.antigravity.RaceState|null);
-
-            /** Race flag */
-            flag?: (com.antigravity.RaceFlag|null);
-
-            /** Race recordData */
-            recordData?: (com.antigravity.IRecordData|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
-        }
-
-        /** Represents a Race. */
-        class Race implements IRace {
-
-            /**
-             * Constructs a new Race.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IRace);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
-
-            /** Race race. */
-            public race?: (com.antigravity.IRaceModel|null);
-
-            /** Race drivers. */
-            public drivers: com.antigravity.IRaceParticipant[];
-
-            /** Race heats. */
-            public heats: com.antigravity.IHeat[];
-
-            /** Race currentHeat. */
-            public currentHeat?: (com.antigravity.IHeat|null);
-
-            /** Race state. */
-            public state: com.antigravity.RaceState;
-
-            /** Race flag. */
-            public flag: com.antigravity.RaceFlag;
-
-            /** Race recordData. */
-            public recordData?: (com.antigravity.IRecordData|null);
-
-            /**
-             * Creates a new Race instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns Race instance
-             */
-            public static create(properties?: com.antigravity.IRace): com.antigravity.Race;
-
-            /**
-             * Encodes the specified Race message. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
-             * @param message Race message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified Race message, length delimited. Does not implicitly {@link com.antigravity.Race.verify|verify} messages.
-             * @param message Race message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IRace, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a Race message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns Race
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.Race;
-
-            /**
-             * Decodes a Race message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns Race
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.Race;
-
-            /**
-             * Verifies a Race message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a Race message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns Race
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.Race;
-
-            /**
-             * Creates a plain object from a Race message. Also converts values to other types if specified.
-             * @param message Race
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.Race, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this Race to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the type url for Race
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
-             */
-            public static getTypeUrl(prefix?: string): string;
-        }
-
-        /** Properties of a RecordEntry. */
-        interface IRecordEntry {
-
-            /** RecordEntry value */
-            value?: (number|null);
-
-            /** RecordEntry holderName */
-            holderName?: (string|null);
-
-            /** RecordEntry date */
-            date?: (number|Long|null);
-
-            /** RecordEntry holderNickname */
-            holderNickname?: (string|null);
-
-            /** RecordEntry holderTeamName */
-            holderTeamName?: (string|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
-        }
-
-        /** Represents a RecordEntry. */
-        class RecordEntry implements IRecordEntry {
-
-            /**
-             * Constructs a new RecordEntry.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IRecordEntry);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
-
-            /** RecordEntry value. */
-            public value: number;
-
-            /** RecordEntry holderName. */
-            public holderName: string;
-
-            /** RecordEntry date. */
-            public date: (number|Long);
-
-            /** RecordEntry holderNickname. */
-            public holderNickname: string;
-
-            /** RecordEntry holderTeamName. */
-            public holderTeamName: string;
-
-            /**
-             * Creates a new RecordEntry instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns RecordEntry instance
-             */
-            public static create(properties?: com.antigravity.IRecordEntry): com.antigravity.RecordEntry;
-
-            /**
-             * Encodes the specified RecordEntry message. Does not implicitly {@link com.antigravity.RecordEntry.verify|verify} messages.
-             * @param message RecordEntry message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IRecordEntry, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified RecordEntry message, length delimited. Does not implicitly {@link com.antigravity.RecordEntry.verify|verify} messages.
-             * @param message RecordEntry message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IRecordEntry, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a RecordEntry message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns RecordEntry
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RecordEntry;
-
-            /**
-             * Decodes a RecordEntry message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns RecordEntry
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RecordEntry;
-
-            /**
-             * Verifies a RecordEntry message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a RecordEntry message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns RecordEntry
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.RecordEntry;
-
-            /**
-             * Creates a plain object from a RecordEntry message. Also converts values to other types if specified.
-             * @param message RecordEntry
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.RecordEntry, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this RecordEntry to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the type url for RecordEntry
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
-             */
-            public static getTypeUrl(prefix?: string): string;
-        }
-
-        /** Properties of a RecordData. */
-        interface IRecordData {
-
-            /** RecordData overall */
-            overall?: (com.antigravity.IOverallRecords|null);
-
-            /** RecordData current */
-            current?: (com.antigravity.ICurrentRecords|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
-        }
-
-        /** Represents a RecordData. */
-        class RecordData implements IRecordData {
-
-            /**
-             * Constructs a new RecordData.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IRecordData);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
-
-            /** RecordData overall. */
-            public overall?: (com.antigravity.IOverallRecords|null);
-
-            /** RecordData current. */
-            public current?: (com.antigravity.ICurrentRecords|null);
-
-            /**
-             * Creates a new RecordData instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns RecordData instance
-             */
-            public static create(properties?: com.antigravity.IRecordData): com.antigravity.RecordData;
-
-            /**
-             * Encodes the specified RecordData message. Does not implicitly {@link com.antigravity.RecordData.verify|verify} messages.
-             * @param message RecordData message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IRecordData, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified RecordData message, length delimited. Does not implicitly {@link com.antigravity.RecordData.verify|verify} messages.
-             * @param message RecordData message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IRecordData, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a RecordData message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns RecordData
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.RecordData;
-
-            /**
-             * Decodes a RecordData message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns RecordData
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.RecordData;
-
-            /**
-             * Verifies a RecordData message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a RecordData message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns RecordData
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.RecordData;
-
-            /**
-             * Creates a plain object from a RecordData message. Also converts values to other types if specified.
-             * @param message RecordData
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.RecordData, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this RecordData to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the type url for RecordData
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
-             */
-            public static getTypeUrl(prefix?: string): string;
-        }
-
-        /** Properties of an OverallRecords. */
-        interface IOverallRecords {
-
-            /** OverallRecords fastestLap */
-            fastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** OverallRecords highestScore */
-            highestScore?: (com.antigravity.IRecordEntry|null);
-
-            /** OverallRecords laneFastestLap */
-            laneFastestLap?: (com.antigravity.IRecordEntry[]|null);
-
-            /** OverallRecords laneHighestScore */
-            laneHighestScore?: (com.antigravity.IRecordEntry[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
-        }
-
-        /** Represents an OverallRecords. */
-        class OverallRecords implements IOverallRecords {
-
-            /**
-             * Constructs a new OverallRecords.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.IOverallRecords);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
-
-            /** OverallRecords fastestLap. */
-            public fastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** OverallRecords highestScore. */
-            public highestScore?: (com.antigravity.IRecordEntry|null);
-
-            /** OverallRecords laneFastestLap. */
-            public laneFastestLap: com.antigravity.IRecordEntry[];
-
-            /** OverallRecords laneHighestScore. */
-            public laneHighestScore: com.antigravity.IRecordEntry[];
-
-            /**
-             * Creates a new OverallRecords instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns OverallRecords instance
-             */
-            public static create(properties?: com.antigravity.IOverallRecords): com.antigravity.OverallRecords;
-
-            /**
-             * Encodes the specified OverallRecords message. Does not implicitly {@link com.antigravity.OverallRecords.verify|verify} messages.
-             * @param message OverallRecords message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.IOverallRecords, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified OverallRecords message, length delimited. Does not implicitly {@link com.antigravity.OverallRecords.verify|verify} messages.
-             * @param message OverallRecords message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.IOverallRecords, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes an OverallRecords message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns OverallRecords
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.OverallRecords;
-
-            /**
-             * Decodes an OverallRecords message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns OverallRecords
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.OverallRecords;
-
-            /**
-             * Verifies an OverallRecords message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates an OverallRecords message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns OverallRecords
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.OverallRecords;
-
-            /**
-             * Creates a plain object from an OverallRecords message. Also converts values to other types if specified.
-             * @param message OverallRecords
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.OverallRecords, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this OverallRecords to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the type url for OverallRecords
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
-             */
-            public static getTypeUrl(prefix?: string): string;
-        }
-
-        /** Properties of a CurrentRecords. */
-        interface ICurrentRecords {
-
-            /** CurrentRecords fastestLap */
-            fastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords highestScore */
-            highestScore?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords heatFastestLap */
-            heatFastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords laneFastestLap */
-            laneFastestLap?: (com.antigravity.IRecordEntry[]|null);
-
-            /** CurrentRecords laneHighestScore */
-            laneHighestScore?: (com.antigravity.IRecordEntry[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
-        }
-
-        /** Represents a CurrentRecords. */
-        class CurrentRecords implements ICurrentRecords {
-
-            /**
-             * Constructs a new CurrentRecords.
-             * @param [properties] Properties to set
-             */
-            constructor(properties?: com.antigravity.ICurrentRecords);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
-
-            /** CurrentRecords fastestLap. */
-            public fastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords highestScore. */
-            public highestScore?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords heatFastestLap. */
-            public heatFastestLap?: (com.antigravity.IRecordEntry|null);
-
-            /** CurrentRecords laneFastestLap. */
-            public laneFastestLap: com.antigravity.IRecordEntry[];
-
-            /** CurrentRecords laneHighestScore. */
-            public laneHighestScore: com.antigravity.IRecordEntry[];
-
-            /**
-             * Creates a new CurrentRecords instance using the specified properties.
-             * @param [properties] Properties to set
-             * @returns CurrentRecords instance
-             */
-            public static create(properties?: com.antigravity.ICurrentRecords): com.antigravity.CurrentRecords;
-
-            /**
-             * Encodes the specified CurrentRecords message. Does not implicitly {@link com.antigravity.CurrentRecords.verify|verify} messages.
-             * @param message CurrentRecords message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encode(message: com.antigravity.ICurrentRecords, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Encodes the specified CurrentRecords message, length delimited. Does not implicitly {@link com.antigravity.CurrentRecords.verify|verify} messages.
-             * @param message CurrentRecords message or plain object to encode
-             * @param [writer] Writer to encode to
-             * @returns Writer
-             */
-            public static encodeDelimited(message: com.antigravity.ICurrentRecords, writer?: $protobuf.Writer): $protobuf.Writer;
-
-            /**
-             * Decodes a CurrentRecords message from the specified reader or buffer.
-             * @param reader Reader or buffer to decode from
-             * @param [length] Message length if known beforehand
-             * @returns CurrentRecords
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): com.antigravity.CurrentRecords;
-
-            /**
-             * Decodes a CurrentRecords message from the specified reader or buffer, length delimited.
-             * @param reader Reader or buffer to decode from
-             * @returns CurrentRecords
-             * @throws {Error} If the payload is not a reader or valid buffer
-             * @throws {$protobuf.util.ProtocolError} If required fields are missing
-             */
-            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): com.antigravity.CurrentRecords;
-
-            /**
-             * Verifies a CurrentRecords message.
-             * @param message Plain object to verify
-             * @returns `null` if valid, otherwise the reason why it is not
-             */
-            public static verify(message: { [k: string]: any }): (string|null);
-
-            /**
-             * Creates a CurrentRecords message from a plain object. Also converts values to their respective internal types.
-             * @param object Plain object
-             * @returns CurrentRecords
-             */
-            public static fromObject(object: { [k: string]: any }): com.antigravity.CurrentRecords;
-
-            /**
-             * Creates a plain object from a CurrentRecords message. Also converts values to other types if specified.
-             * @param message CurrentRecords
-             * @param [options] Conversion options
-             * @returns Plain object
-             */
-            public static toObject(message: com.antigravity.CurrentRecords, options?: $protobuf.IConversionOptions): { [k: string]: any };
-
-            /**
-             * Converts this CurrentRecords to JSON.
-             * @returns JSON object
-             */
-            public toJSON(): { [k: string]: any };
-
-            /**
-             * Gets the type url for CurrentRecords
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
-             */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a HeatPositionUpdate. */
@@ -10382,9 +9896,6 @@ export namespace com {
 
             /** HeatPositionUpdate gapPosition */
             gapPosition?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a HeatPositionUpdate. */
@@ -10395,9 +9906,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IHeatPositionUpdate);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** HeatPositionUpdate objectId. */
             public objectId: string;
@@ -10482,11 +9990,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for HeatPositionUpdate
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for HeatPositionUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a StandingsUpdate. */
@@ -10494,9 +10002,6 @@ export namespace com {
 
             /** StandingsUpdate updates */
             updates?: (com.antigravity.IHeatPositionUpdate[]|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a StandingsUpdate. */
@@ -10507,9 +10012,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.IStandingsUpdate);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** StandingsUpdate updates. */
             public updates: com.antigravity.IHeatPositionUpdate[];
@@ -10585,11 +10087,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for StandingsUpdate
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for StandingsUpdate
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
 
         /** Properties of a Segment. */
@@ -10606,9 +10108,6 @@ export namespace com {
 
             /** Segment interfaceId */
             interfaceId?: (number|null);
-
-            /** Unknown fields preserved while decoding */
-            $unknowns?: Uint8Array[];
         }
 
         /** Represents a Segment. */
@@ -10619,9 +10118,6 @@ export namespace com {
              * @param [properties] Properties to set
              */
             constructor(properties?: com.antigravity.ISegment);
-
-            /** Unknown fields preserved while decoding */
-            public $unknowns?: Uint8Array[];
 
             /** Segment objectId. */
             public objectId: string;
@@ -10706,11 +10202,11 @@ export namespace com {
             public toJSON(): { [k: string]: any };
 
             /**
-             * Gets the type url for Segment
-             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
-             * @returns The type url
+             * Gets the default type url for Segment
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
              */
-            public static getTypeUrl(prefix?: string): string;
+            public static getTypeUrl(typeUrlPrefix?: string): string;
         }
     }
 }
