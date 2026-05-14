@@ -162,8 +162,8 @@ public class RaceHeatManager {
   private String validateHeatDrivers(ModifyHeatsRequest request) {
     for (com.antigravity.proto.Heat protoHeat : request.getHeatsList()) { // fqn-collision
       Set<String> driverObjectIds = new HashSet<>();
-      for (com.antigravity.proto.DriverHeatData protoDhd :
-          protoHeat.getHeatDriversList()) { // fqn-collision
+      for (com.antigravity.proto.DriverHeatData protoDhd : // fqn-collision
+          protoHeat.getHeatDriversList()) {
         String driverObjectId = protoDhd.getDriver().getObjectId();
         if (driverObjectId != null && !driverObjectId.isEmpty()) {
           if (!driverObjectIds.add(driverObjectId)) {
@@ -261,8 +261,8 @@ public class RaceHeatManager {
   private com.antigravity.race.Heat createNewHeat( // fqn-collision
       ModifyHeatsRequest request, com.antigravity.proto.Heat protoHeat) { // fqn-collision
     List<DriverHeatData> newHeatDrivers = new ArrayList<>();
-    for (com.antigravity.proto.DriverHeatData protoDhd :
-        protoHeat.getHeatDriversList()) { // fqn-collision
+    for (com.antigravity.proto.DriverHeatData protoDhd : // fqn-collision
+        protoHeat.getHeatDriversList()) {
       RaceParticipant p = findParticipantByObjectId(protoDhd.getDriver().getObjectId());
       if (p == null) {
         p = findParticipantInProtoRequest(request, protoDhd.getDriver().getObjectId());
@@ -308,7 +308,7 @@ public class RaceHeatManager {
     }
 
     boolean anyHeatStarted = false;
-    for (com.antigravity.race.Heat h : this.race.getHeats()) {
+    for (com.antigravity.race.Heat h : this.race.getHeats()) { // fqn-collision
       if (h.isStarted()) {
         anyHeatStarted = true;
         break;
@@ -328,8 +328,8 @@ public class RaceHeatManager {
 
     if (request.getParticipantsCount() > 0) {
       List<RaceParticipant> newDrivers = new ArrayList<>();
-      for (com.antigravity.proto.RaceParticipant protoP :
-          request.getParticipantsList()) { // fqn-collision
+      for (com.antigravity.proto.RaceParticipant protoP : // fqn-collision
+          request.getParticipantsList()) {
         RaceParticipant p = findParticipantByObjectId(protoP.getObjectId());
         if (p == null) {
           Driver d =
@@ -389,8 +389,8 @@ public class RaceHeatManager {
 
   private RaceParticipant findParticipantInProtoRequest(
       ModifyHeatsRequest request, String objectId) {
-    for (com.antigravity.proto.RaceParticipant protoP :
-        request.getParticipantsList()) { // fqn-collision
+    for (com.antigravity.proto.RaceParticipant protoP : // fqn-collision
+        request.getParticipantsList()) {
       if (protoP.getObjectId().equals(objectId)) {
         if (protoP.hasTeam()) {
           Team t = new Team(protoP.getTeam());
