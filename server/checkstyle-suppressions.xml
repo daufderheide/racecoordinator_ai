@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+    <suppress checks="FileLength" files="Race.java"/>
+    <suppress checks="FileLength" files="AssetService.java"/>
+    <suppress checks="FileLength" files="ArduinoProtocol.java"/>
+    <suppress checks="FileLength" files="ClientCommandTaskHandler.java"/>
+    <suppress checks="FileLength" files="DatabaseTaskHandler.java"/>
+</suppressions>

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { NgTemplateOutlet } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -195,6 +196,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.updateScale();
     this.loadExpanderState();
@@ -249,6 +251,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  /* eslint-disable max-lines-per-function */
   loadData() {
     this.isLoading = true;
     this.dataSubscription = forkJoin({

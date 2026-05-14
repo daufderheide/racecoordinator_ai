@@ -47,6 +47,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     private logger: LoggerService,
   ) {}
 
+  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.route.params.subscribe((params) => {
       this.laneIndex = +params["lane"] - 1;

@@ -45,6 +45,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("checkstyle:FileLength")
 public class DatabaseTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DatabaseTaskHandler.class);
@@ -873,6 +874,7 @@ public class DatabaseTaskHandler {
     tempRace.stop();
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public void previewHeats(Context ctx) {
     Map<String, Object> body = ctx.bodyAsClass(Map.class);
     Number driverCountNum = (Number) body.get("driverCount");

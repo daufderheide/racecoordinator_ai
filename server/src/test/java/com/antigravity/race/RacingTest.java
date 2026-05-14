@@ -538,10 +538,11 @@ public class RacingTest {
     assertTrue("Power should be OFF for lane 0 initially", !realRace.isLanePower(0));
 
     // Wait for penalty to expire (0.2s penalty should expire in ~3-4 ticks)
+    // and for power to be turned back ON
     long start = System.currentTimeMillis();
-    while (d1.getRemainingFalseStartTimePenalty() > 0
+    while ((d1.getRemainingFalseStartTimePenalty() > 0 || !realRace.isLanePower(0))
         && (System.currentTimeMillis() - start) < 5000) {
-      Thread.sleep(100);
+      Thread.sleep(50);
     }
 
     // After expiry, power should be ON

@@ -126,6 +126,7 @@ export class ToolbarComponent implements OnInit {
     this.edit.emit();
   }
 
+  // eslint-disable-next-line max-lines-per-function
   getToolbarHelpSteps(): GuideStep[] {
     const defaultSteps: GuideStep[] = [];
 

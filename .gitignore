@@ -113,3 +113,10 @@ null/
 en_orig.json
 pw-result.json
 
+# Build and Quality Reports
+client/lint_report.txt
+client/lint_report_debug.txt
+client/pw-result.json
+server/checkstyle_report.txt
+server/checkstyle_report_final.txt
+

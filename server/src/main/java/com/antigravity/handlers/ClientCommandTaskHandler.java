@@ -75,6 +75,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("checkstyle:FileLength")
 public class ClientCommandTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ClientCommandTaskHandler.class);
@@ -163,6 +164,7 @@ public class ClientCommandTaskHandler {
   }
 
   // Visible for testing
+  @SuppressWarnings("checkstyle:MethodLength")
   TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
     DatabaseService dbService = DatabaseService.getInstance();
     Race raceModel = dbService.getRace(databaseContext.getDatabase(), request.getRaceId());

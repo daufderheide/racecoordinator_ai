@@ -23,11 +23,11 @@ import { Subject } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { BackButtonComponent } from "@app/components/shared/back-button/back-button.component";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ColumnPreviewComponent } from "@app/components/ui-editor/column-preview/column-preview.component";
 import { ColumnVisibility, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
-import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -279,7 +279,11 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
       // Check if this is the last value in the slot
       // Only show confirmation if the anchor actually has a value
-      if (activeKeys.length === 1 && activeKeys[0] === anchor && currentLayout[anchor]) {
+      if (
+        activeKeys.length === 1 &&
+        activeKeys[0] === anchor &&
+        currentLayout[anchor]
+      ) {
         this.pendingLastValueClear = { slotKey, anchor };
         this.showLastValueConfirm = true;
         this.cdr.detectChanges();

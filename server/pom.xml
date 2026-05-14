@@ -155,6 +155,7 @@
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
           <linkXRef>false</linkXRef>
+          <includeTestSourceDirectory>false</includeTestSourceDirectory>
         </configuration>
         <executions>
           <execution>

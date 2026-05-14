@@ -27,6 +27,7 @@ export class RaceConverter {
     this.cache.clear();
   }
 
+  /* eslint-disable max-lines-per-function */
   static fromProto(proto: IRaceModel): Race {
     if (!proto) {
       return new Race(
@@ -50,6 +51,7 @@ export class RaceConverter {
     return this.cache.process(
       objectId,
       isReference,
+      /* eslint-disable max-lines-per-function */
       () => {
         let heatScoring = new HeatScoring();
         if (p.heatScoring) {

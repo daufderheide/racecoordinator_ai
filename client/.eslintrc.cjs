@@ -91,7 +91,9 @@ module.exports = {
               ["^\\."]
             ]
           }
-        ]
+        ],
+        "max-lines": ["error", { "max": 1000, "skipBlankLines": true, "skipComments": true }],
+        "max-lines-per-function": ["error", { "max": 100, "skipBlankLines": true, "skipComments": true }]
       },
       "plugins": [
         "@typescript-eslint",
@@ -126,9 +128,11 @@ module.exports = {
       }
     },
     {
-      "files": ["**/testing/**/*.ts", "**/*.spec.ts"],
+      "files": ["**/testing/**/*.ts", "**/*.spec.ts", "**/*_test.ts"],
       "rules": {
-        "no-restricted-imports": "off"
+        "no-restricted-imports": "off",
+        "max-lines": "off",
+        "max-lines-per-function": "off"
       }
     }
   ]

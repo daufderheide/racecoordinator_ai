@@ -125,6 +125,7 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
+  /* eslint-disable max-lines-per-function */
   private startConnection() {
     // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();

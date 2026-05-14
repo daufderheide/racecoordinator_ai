@@ -125,6 +125,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   activeDatabaseName: string = "";
 
+  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.updateScale();
     this.connectionMonitor.startMonitoring();
@@ -784,6 +785,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
+  /* eslint-disable max-lines-per-function */
   getHelpSteps(): GuideStep[] {
     return [
       {

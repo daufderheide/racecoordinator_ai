@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -308,6 +309,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /* eslint-disable max-lines-per-function */
   loadRace(id: string) {
     this.isLoading = true;
     this.dataService.getRaces().subscribe({

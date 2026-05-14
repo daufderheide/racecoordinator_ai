@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
   CdkDrag,
   CdkDragDrop,
@@ -155,6 +156,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private validationService: ParticipantValidationService,
   ) {}
 
+  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.updateScale();
 

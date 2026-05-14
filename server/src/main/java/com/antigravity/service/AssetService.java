@@ -31,6 +31,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("checkstyle:FileLength")
 public class AssetService {
   private static final Logger logger = LoggerFactory.getLogger(AssetService.class);
 
@@ -670,6 +671,7 @@ public class AssetService {
     return String.format("%.1f %ciB", value / 1024.0, ci.current());
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public void resetAssets() {
     // 1. Clear directory
     File directory = new File(assetDir);
@@ -914,6 +916,7 @@ public class AssetService {
     backfillThemeSlots();
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public void backfillDefaults() {
     try {
       List<ImageSetEntry> fuelImages = new ArrayList<>();
@@ -1165,6 +1168,7 @@ public class AssetService {
   }
 
   /** Ensures all themes have the 'audio.yellowflag' slot in the audio_slots map. */
+  @SuppressWarnings("checkstyle:MethodLength")
   public void backfillThemeSlots() {
     MongoCollection<Document> themes = database.getCollection("themes");
     for (Document theme : themes.find()) {

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";

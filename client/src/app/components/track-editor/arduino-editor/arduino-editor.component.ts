@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {} from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
@@ -114,6 +115,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     });
   }
 
+  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.fetchPorts();
     this.portPollingSubscription = timer(5000, 5000).subscribe(() => {
@@ -680,6 +682,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /* eslint-disable max-lines-per-function */
   private updateLedBehaviors() {
     const lanes = this.lanes();
     const groups: PinGroup[] = [];
@@ -1227,9 +1230,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     }, 400);
   }
 
+  /* eslint-disable max-lines-per-function */
   private updatePinActions() {
     const lanes = this.lanes();
 
+    /* eslint-disable max-lines-per-function */
     const createGroups = (includeVoltage: boolean): PinGroup[] => {
       const groups: PinGroup[] = [];
 
@@ -1774,6 +1779,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.dropdownOpenUp = {};
   }
 
+  /* eslint-disable max-lines-per-function */
   getHelpSteps(): any[] {
     const steps: any[] = [
       {

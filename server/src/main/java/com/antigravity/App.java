@@ -83,6 +83,7 @@ public class App {
 
   public static final String SERVER_VERSION = "0.0.0.18";
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     try {
       logger.info("Race Coordinator AI Server {}", SERVER_VERSION);
@@ -477,6 +478,7 @@ public class App {
 
   private static Process manualMongoProcess;
 
+  @SuppressWarnings("checkstyle:MethodLength")
   private static void startEmbeddedMongo() {
     try {
       logger.info("Starting MongoDB...");

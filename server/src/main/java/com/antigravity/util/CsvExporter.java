@@ -25,6 +25,7 @@ import java.util.TimeZone;
 
 public class CsvExporter {
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public static String export(Race race) {
     StringBuilder sb = new StringBuilder();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

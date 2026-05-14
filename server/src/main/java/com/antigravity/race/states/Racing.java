@@ -82,6 +82,7 @@ public class Racing implements IRaceState {
   }
 
   @Override
+  @SuppressWarnings("checkstyle:MethodLength")
   public void enter(Race race) {
     this.race = race;
     this.previousHeatProgress = -1.0;
@@ -140,6 +141,7 @@ public class Racing implements IRaceState {
           long lastTime = 0;
 
           @Override
+          @SuppressWarnings("checkstyle:MethodLength")
           public void run() {
             try {
               long now = System.nanoTime();

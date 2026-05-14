@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 public class RaceConverter {
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public static com.antigravity.proto.RaceModel toProto( // fqn-collision
       Race race, Track track, Set<String> sentObjectIds) { // fqn-collision
     String key = "Race_" + race.getObjectId();

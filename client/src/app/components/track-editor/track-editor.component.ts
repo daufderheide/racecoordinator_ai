@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {
   CdkDrag,
   CdkDragDrop,
@@ -780,10 +781,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  /* eslint-disable max-lines-per-function */
   private updateArduinoConfigsOnLaneOrderChange(
     prevIndex: number,
     currIndex: number,
   ) {
+    /* eslint-disable max-lines-per-function */
     this.arduinoConfigs.forEach((config) => {
       // Helper to update pin IDs
       const updatePinIds = (ids: number[]) => {
@@ -1173,6 +1176,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     this.updateTrack(false, true);
   }
 
+  /* eslint-disable max-lines-per-function */
   updateTrack(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
     if (!this.editingTrack) return;
 

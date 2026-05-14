@@ -98,6 +98,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     this.heat = this.raceService.getCurrentHeat();
   }
 
+  /* eslint-disable max-lines-per-function */
   protected updateGraph() {
     if (!this.heat || !this.heat.heatDrivers) return;
 

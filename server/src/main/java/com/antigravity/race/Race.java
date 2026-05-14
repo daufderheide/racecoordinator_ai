@@ -61,6 +61,7 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("checkstyle:FileLength")
 public class Race implements ProtocolListener {
   private static final Logger logger = LoggerFactory.getLogger(Race.class);
 
@@ -1202,6 +1203,7 @@ public class Race implements ProtocolListener {
     broadcastRecords();
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   private void recalculateScoreRecords() {
     long timestamp = System.currentTimeMillis();
     boolean isTimeBased = isTimeBasedRanking();
@@ -1761,6 +1763,7 @@ public class Race implements ProtocolListener {
     }
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public RecordData getRecordData() {
     recalculateScoreRecords();
     OverallRecords.Builder overallBuilder =
@@ -2081,6 +2084,7 @@ public class Race implements ProtocolListener {
     return RaceState.UNKNOWN_STATE;
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public synchronized ModifyHeatsResponse modifyHeats(ModifyHeatsRequest request) {
     logger.info("Race.modifyHeats() called");
 

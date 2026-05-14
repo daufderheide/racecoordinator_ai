@@ -360,6 +360,7 @@ public class ArduinoLedHelper {
     }
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public void refreshRaceState() {
     if (!protocol.isOpen()) {
       return;

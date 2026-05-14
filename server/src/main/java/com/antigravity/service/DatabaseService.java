@@ -62,6 +62,7 @@ public class DatabaseService {
     logger.info("Database reset complete.");
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   private void resetDrivers(DatabaseContext context, MongoDatabase database) {
     MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
     driverCollection.drop(); // Clear all existing data

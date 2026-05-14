@@ -392,6 +392,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     return dhd ? dhd.participant : null;
   }
 
+  // eslint-disable-next-line max-lines-per-function
   protected onDrop(event: CdkDragDrop<any>) {
     const fromId = event.previousContainer.id;
     const toId = event.container.id;
@@ -818,7 +819,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           this.errorMessage =
             res.errorMessage || "Failed to regenerate heats. Please try again.";
           this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-          this.ackModalMessage = this.errorMessage;
+          this.ackModalMessage = this.errorMessage || "";
           this.showAckModal = true;
         }
       },
@@ -826,7 +827,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.errorMessage = "Server error: " + err.message;
         this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-        this.ackModalMessage = this.errorMessage;
+        this.ackModalMessage = this.errorMessage || "";
         this.showAckModal = true;
       },
     });
