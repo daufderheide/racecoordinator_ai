@@ -41,7 +41,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-ExecutionPolicy Bypass", "-F
 # 2. Verify Running
 Write-Host "[2/3] Waiting for server to be ready at http://localhost:7070..." -ForegroundColor Yellow
 $serverReady = $false
-$maxRetries = 60
+$maxRetries = 150
 $retryCount = 0
 
 while (-not $serverReady -and $retryCount -lt $maxRetries) {
@@ -63,7 +63,7 @@ while (-not $serverReady -and $retryCount -lt $maxRetries) {
 }
 
 if (-not $serverReady) {
-    Write-Host "`nError: Server failed to start within 2 minutes. Please check the server window for errors." -ForegroundColor Red
+    Write-Host "`nError: Server failed to start within 5 minutes. Please check the server window for errors." -ForegroundColor Red
     exit 1
 }
 
