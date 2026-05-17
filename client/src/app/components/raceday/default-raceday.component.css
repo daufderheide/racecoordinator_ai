@@ -728,3 +728,62 @@ app-acknowledgement-modal, app-confirmation-modal {
 .table-body.cdk-drop-list-dragging .table-row:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+@media print {
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  :host {
+    background: transparent !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .dashboard-wrapper {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    background: transparent !important;
+  }
+
+  .scalable-content {
+    background: #0d151e !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 1920px !important;
+    min-width: 0 !important;
+    height: 1080px !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+    zoom: 1 !important;
+    margin: 0 !important;
+  }
+
+  .bottom-section {
+    flex: none !important;
+    height: auto !important;
+  }
+
+  .table-body {
+    height: auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+  }
+
+  .table-row {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    margin-bottom: 2px !important;
+  }
+
+  .unconfigured-lane {
+    display: none !important;
+  }
+}

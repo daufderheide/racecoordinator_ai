@@ -4,6 +4,7 @@ import { Subscription } from "rxjs";
 import { Race } from "@app/models/race";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
+import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -59,6 +60,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     private raceService: RaceService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
+    private printService: PrintService,
   ) {}
 
   ngOnInit() {
@@ -91,6 +93,10 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
+  }
+
+  exportPdf() {
+    this.printService.print("Heat Results");
   }
 
   private loadRaceData() {

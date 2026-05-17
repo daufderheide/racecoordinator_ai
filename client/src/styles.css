@@ -8,3 +8,26 @@ body {
     overflow: hidden;
     background-color: #000;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: 1920px 1080px;
+    margin: 0;
+  }
+
+  html,
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.print-full-scroll,
+  html.print-full-scroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}

@@ -5,6 +5,7 @@ import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 
@@ -22,6 +23,7 @@ describe("HeatResultsComponent", () => {
   let fixture: ComponentFixture<HeatResultsComponent>;
   let mockRaceConnectionService: any;
   let mockRaceService: any;
+  let mockPrintService: any;
 
   beforeEach(async () => {
     mockRaceConnectionService = {
@@ -74,11 +76,14 @@ describe("HeatResultsComponent", () => {
     mockRaceService.getRace.and.returnValue(mockRace);
     mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
 
+    mockPrintService = jasmine.createSpyObj("PrintService", ["print"]);
+
     await TestBed.configureTestingModule({
       imports: [HeatResultsComponent, MockTranslatePipe],
       providers: [
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },
+        { provide: PrintService, useValue: mockPrintService },
       ],
     }).compileComponents();
   });
@@ -133,5 +138,10 @@ describe("HeatResultsComponent", () => {
 
     // empty driver should be filtered
     expect(component["driverLines"].length).toBe(2);
+  });
+
+  it("should trigger PDF export with Heat Results when exportPdf is called", () => {
+    component.exportPdf();
+    expect(mockPrintService.print).toHaveBeenCalledWith("Heat Results");
   });
 });

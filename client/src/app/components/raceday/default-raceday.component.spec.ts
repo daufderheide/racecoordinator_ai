@@ -77,6 +77,7 @@ import {
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
+import { PrintService } from "@app/services/print.service";
 import { MOCK_HEATS } from "@app/testing/data/heats_data";
 import { MOCK_RACES } from "@app/testing/data/races_data";
 import { createDefaultSettings } from "@app/testing/data/settings_data";
@@ -198,6 +199,10 @@ describe("DefaultRacedayComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: LoggerService, useValue: mockLogger },
+        {
+          provide: PrintService,
+          useValue: jasmine.createSpyObj("PrintService", ["print"]),
+        },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -1584,6 +1589,14 @@ describe("DefaultRacedayComponent", () => {
       expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
       expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
+
+    it("should trigger PDF export when EXPORT_PDF is selected", () => {
+      const printService = TestBed.inject(
+        PrintService,
+      ) as jasmine.SpyObj<PrintService>;
+      component.onFileMenuSelect("EXPORT_PDF");
+      expect(printService.print).toHaveBeenCalledWith("RaceDay");
+    });
   });
 
   describe("getCurrentFlagUrl", () => {

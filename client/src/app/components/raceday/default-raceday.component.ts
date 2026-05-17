@@ -40,6 +40,7 @@ import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { LoggerService } from "@app/services/logger.service";
+import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -351,6 +352,7 @@ export class DefaultRacedayComponent
     private themeService: ThemeService,
     private logger: LoggerService,
     private route: ActivatedRoute,
+    private printService: PrintService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -1431,6 +1433,8 @@ export class DefaultRacedayComponent
       this.router.navigate(["/raceday-setup"]);
     } else if (action === "EXPORT_CSV") {
       this.exportToCsv();
+    } else if (action === "EXPORT_PDF") {
+      this.printService.print("RaceDay"); // Screen View only as requested
     } else if (action === "SAVE") {
       this.saveRace();
     }

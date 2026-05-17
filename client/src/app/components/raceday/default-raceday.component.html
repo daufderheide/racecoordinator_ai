@@ -47,7 +47,7 @@
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   >
     <!-- Top Horizontal Menu Bar -->
-    <div class="menu-bar">
+    <div class="menu-bar no-print">
       <div class="menu-wrapper">
         <button class="menu-button-top" (click)="toggleFileMenu()">
           {{ "RD_MENU_FILE" | translate }}
@@ -61,9 +61,14 @@
             >
               {{ "RD_MENU_SAVE" | translate }}
             </div>
+            <div class="menu-separator"></div>
             <div class="menu-item" (click)="onFileMenuSelect('EXPORT_CSV')">
               {{ "RD_MENU_EXPORT_CSV" | translate }}
             </div>
+            <div class="menu-item" (click)="onFileMenuSelect('EXPORT_PDF')">
+              Export PDF
+            </div>
+            <div class="menu-separator"></div>
             <div class="menu-item" (click)="onFileMenuSelect('EXIT')">
               {{ "RD_MENU_EXIT" | translate }}
             </div>
@@ -384,6 +389,9 @@
             ) {
               <div
                 class="table-row"
+                [class.unconfigured-lane]="
+                  !getLaneColor(hd, 'background_color')
+                "
                 cdkDrag
                 [cdkDragData]="hd"
                 [cdkDragDisabled]="!canSwapLanes || !isLaneOccupied(hd)"
