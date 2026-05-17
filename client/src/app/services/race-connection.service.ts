@@ -105,12 +105,22 @@ export class RaceConnectionService implements OnDestroy {
   ) {}
 
   connect() {
+    if (this.disconnectedTimeout) {
+      this.logger.debug(
+        "RaceConnectionService: Cancelling pending disconnection",
+      );
+      clearTimeout(this.disconnectedTimeout);
+      this.disconnectedTimeout = null;
+    }
     this.connectionCount++;
     this.logger.debug(
       `RaceConnectionService: Connection count incremented to ${this.connectionCount}`,
     );
     if (this.connectionCount === 1) {
       this.startConnection();
+    } else {
+      // Even if already connected, ensure the new component gets a fresh race update
+      this.dataService.updateRaceSubscription(true);
     }
   }
 
@@ -121,7 +131,17 @@ export class RaceConnectionService implements OnDestroy {
     );
     if (this.connectionCount <= 0) {
       this.connectionCount = 0;
-      this.stopConnection();
+      // Delay actual disconnection to handle fast component transitions (e.g. Raceday to Manager)
+      if (this.disconnectedTimeout) clearTimeout(this.disconnectedTimeout);
+      this.disconnectedTimeout = setTimeout(() => {
+        if (this.connectionCount === 0) {
+          this.logger.debug(
+            "RaceConnectionService: Disconnecting after grace period",
+          );
+          this.stopConnection();
+        }
+        this.disconnectedTimeout = null;
+      }, 2000);
     }
   }
 

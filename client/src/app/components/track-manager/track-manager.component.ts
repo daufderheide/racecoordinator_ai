@@ -1,19 +1,29 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
+  inject,
+  OnDestroy,
   OnInit,
   ViewChild,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -31,22 +41,46 @@ import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.compo
     TranslatePipe,
   ],
 })
-export class TrackManagerComponent implements OnInit {
+export class TrackManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   tracks: Track[] = [];
   selectedTrack?: Track;
   scale: number = 1;
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
   isLoading: boolean = true;
   isSaving: boolean = false;
   showDeleteConfirm: boolean = false;
   isLaneSummaryExpanded = true;
+
+  // Connection Monitoring
+  isConnectionLost = false;
+  private connectionSubscription: Subscription | null = null;
 
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     public translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
+    private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
@@ -58,7 +92,18 @@ export class TrackManagerComponent implements OnInit {
 
   ngOnInit() {
     this.updateScale();
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
     this.loadTracks();
+    this.raceConnectionService.connect();
+  }
+
+  ngOnDestroy() {
+    this.raceConnectionService.disconnect();
+    this.connectionMonitor.stopMonitoring();
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
   }
 
   getHelpSteps(): GuideStep[] {
@@ -145,10 +190,38 @@ export class TrackManagerComponent implements OnInit {
     this.selectedTrack = track;
   }
 
+  monitorConnection() {
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
+  }
+
+  handleConnectionLoss() {
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
+      }
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        this.router.navigate(["/raceday-setup"]);
+      }
+    }, 1000);
+  }
+
   editTrack() {
     if (!this.selectedTrack) return;
     this.router.navigate(["/track-editor"], {
-      queryParams: { id: this.selectedTrack.entity_id },
+      queryParams: {
+        id: this.selectedTrack.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
     });
   }
 
@@ -173,7 +246,11 @@ export class TrackManagerComponent implements OnInit {
           next: (createdTrack) => {
             this.isSaving = false;
             this.router.navigate(["/track-editor"], {
-              queryParams: { id: createdTrack.entity_id },
+              queryParams: {
+                id: createdTrack.entity_id,
+                from: this.route.snapshot.queryParamMap.get("from"),
+                returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+              },
             });
           },
           error: (err) => {
@@ -233,9 +310,5 @@ export class TrackManagerComponent implements OnInit {
 
   onCancelDelete() {
     this.showDeleteConfirm = false;
-  }
-
-  onBack() {
-    this.router.navigate(["/raceday-setup"]);
   }
 }

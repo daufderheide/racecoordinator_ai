@@ -1,6 +1,9 @@
 <div class="header">
   <div class="header-left">
-    <app-back-button [route]="backTargetUrl()"></app-back-button>
+    <app-back-button
+      [route]="backTargetUrl()"
+      [queryParams]="backQueryParams()"
+    ></app-back-button>
 
     <h1 class="page-title">{{ title() | translate }}</h1>
   </div>

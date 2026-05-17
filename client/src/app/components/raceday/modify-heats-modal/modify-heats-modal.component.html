@@ -60,7 +60,187 @@
       <div class="driver-pool-section">
         <div class="section-header">
           <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
-          <span class="badge">{{ databaseParticipants.length }}</span>
+          <div class="header-actions">
+            <button
+              class="icon-button available-pill teams-pill"
+              (click)="onManageTeams()"
+              title="{{ 'TMM_HEADER_TEAMS' | translate }}"
+            >
+              <!-- Graphical Representation: 3 Overlapping Helmets for Team -->
+              <svg
+                class="graphic-icon team-icon"
+                viewBox="0 0 140 100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <linearGradient
+                    id="teamGradBackLeft"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0284c7" stop-opacity="0.6" />
+                    <stop
+                      offset="100%"
+                      stop-color="#0369a1"
+                      stop-opacity="0.6"
+                    />
+                  </linearGradient>
+                  <linearGradient
+                    id="teamGradBackRight"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0284c7" stop-opacity="0.6" />
+                    <stop
+                      offset="100%"
+                      stop-color="#0369a1"
+                      stop-opacity="0.6"
+                    />
+                  </linearGradient>
+                  <linearGradient
+                    id="teamGradFront"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#0284c7" />
+                  </linearGradient>
+                  <linearGradient
+                    id="visorGradTeam"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0f172a" />
+                    <stop offset="100%" stop-color="#1e293b" />
+                  </linearGradient>
+                </defs>
+                <!-- Back Left Helmet -->
+                <g transform="translate(5, 10) scale(0.75)">
+                  <path
+                    d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                    fill="url(#teamGradBackLeft)"
+                  />
+                  <path
+                    d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                    fill="url(#visorGradTeam)"
+                    opacity="0.5"
+                    stroke="#0284c7"
+                    stroke-width="2"
+                  />
+                </g>
+                <!-- Back Right Helmet -->
+                <g transform="translate(55, 10) scale(0.75)">
+                  <path
+                    d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                    fill="url(#teamGradBackRight)"
+                  />
+                  <path
+                    d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                    fill="url(#visorGradTeam)"
+                    opacity="0.5"
+                    stroke="#0284c7"
+                    stroke-width="2"
+                  />
+                </g>
+                <!-- Foreground Center Helmet -->
+                <g transform="translate(30, 20) scale(0.85)">
+                  <path
+                    d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                    fill="url(#teamGradFront)"
+                    stroke="#0f172a"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                    fill="url(#visorGradTeam)"
+                    stroke="#38bdf8"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M38,44 L48,44"
+                    stroke="#ffffff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    opacity="0.6"
+                  />
+                </g>
+              </svg>
+              <span class="count-badge">{{ databaseTeams.length }}</span>
+            </button>
+            <button
+              class="icon-button available-pill drivers-pill"
+              (click)="onManageDrivers()"
+              title="{{ 'DM_HEADER_DRIVERS' | translate }}"
+            >
+              <!-- Graphical Representation: Single Helmet for Driver -->
+              <svg
+                class="graphic-icon driver-icon"
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <linearGradient
+                    id="driverGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#38bdf8" />
+                    <stop offset="100%" stop-color="#0369a1" />
+                  </linearGradient>
+                  <linearGradient
+                    id="visorGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#0f172a" />
+                    <stop offset="100%" stop-color="#1e293b" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                  fill="url(#driverGrad)"
+                />
+                <path
+                  d="M25,72 L75,72 C75,72 80,78 75,82 L25,82 C20,78 25,72 25,72 Z"
+                  fill="#0f172a"
+                  opacity="0.4"
+                />
+                <path
+                  d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                  fill="url(#visorGrad)"
+                  stroke="#38bdf8"
+                  stroke-width="2"
+                />
+                <path
+                  d="M38,44 L48,44"
+                  stroke="#ffffff"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  opacity="0.6"
+                />
+                <path
+                  d="M35,49 L40,49"
+                  stroke="#ffffff"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  opacity="0.4"
+                />
+              </svg>
+              <span class="count-badge">{{ databaseDrivers.length }}</span>
+            </button>
+          </div>
         </div>
         <div
           id="database-drivers"
@@ -237,11 +417,11 @@
     </div>
   </div>
 
-  @if (errorMessage || currentValidationError) {
+  @if (errorMessage() || currentValidationError) {
     <div class="error-toast">
       <i class="fas fa-exclamation-triangle"></i>
       <span>{{
-        errorMessage || currentValidationError || "" | translate
+        errorMessage() || currentValidationError || "" | translate
       }}</span>
     </div>
   }

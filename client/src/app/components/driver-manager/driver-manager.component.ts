@@ -1,22 +1,23 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   QueryList,
   ViewChild,
   ViewChildren,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
-import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
@@ -27,6 +28,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
@@ -38,7 +40,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   templateUrl: "./driver-manager.component.html",
   styleUrls: ["./driver-manager.component.css"],
   imports: [
-    ManagerHeaderComponent_1,
+    ManagerHeaderComponent,
     FormsModule,
     AudioSelectorComponent,
     ConfirmationModalComponent,
@@ -57,6 +59,25 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   scale: number = 1;
   searchQuery: string = "";
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
   @ViewChildren("driverRow") driverRows!: QueryList<ElementRef>;
 
   get filteredDrivers(): Driver[] {
@@ -99,8 +120,8 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
@@ -111,13 +132,15 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+    this.raceConnectionService.connect();
   }
 
   ngOnDestroy() {
-    this.connectionMonitor.stopMonitoring();
+    this.raceConnectionService.disconnect();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    this.connectionMonitor.stopMonitoring();
   }
 
   @HostListener("window:resize")
@@ -242,7 +265,11 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
   updateDriver() {
     if (!this.selectedDriver) return;
     this.router.navigate(["/driver-editor"], {
-      queryParams: { id: this.selectedDriver.entity_id },
+      queryParams: {
+        id: this.selectedDriver.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
     });
   }
 
@@ -304,7 +331,11 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
       next: (createdDriver: any) => {
         this.isSaving = false;
         this.router.navigate(["/driver-editor"], {
-          queryParams: { id: createdDriver.entity_id },
+          queryParams: {
+            id: createdDriver.entity_id,
+            from: this.route.snapshot.queryParamMap.get("from"),
+            returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+          },
         });
       },
       error: (err) => {

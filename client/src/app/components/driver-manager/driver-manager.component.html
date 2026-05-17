@@ -3,7 +3,9 @@
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
 >
   <app-manager-header
-    [title]="'DM_TITLE'"
+    [title]="'DM_HEADER_DRIVERS'"
+    [backTargetUrl]="backTargetUrl()"
+    [backQueryParams]="backQueryParams()"
     [showActions]="true"
     [showEdit]="selectedDriver != null"
     [showDelete]="selectedDriver != null"

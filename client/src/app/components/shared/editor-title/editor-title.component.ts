@@ -82,10 +82,5 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   onBack() {
     this.back.emit();
-    if (this.backRoute() && this.backRoute() !== "") {
-      this.router.navigate([this.backRoute()], {
-        queryParams: this.backQueryParams(),
-      });
-    }
   }
 }

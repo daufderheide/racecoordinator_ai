@@ -8,8 +8,10 @@ import { of, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_DATABASES } from "@app/testing/data/databases_data";
@@ -22,6 +24,7 @@ import {
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { DatabaseManagerComponent } from "./database-manager.component";
 
@@ -37,9 +40,7 @@ describe("DatabaseManagerComponent", () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     // Default mock returns
-    mockDataService.getDatabases.and.returnValue(
-      of(JSON.parse(JSON.stringify(MOCK_DATABASES))),
-    );
+    mockDataService.getDatabases.and.returnValue(of(deepCopy(MOCK_DATABASES)));
     mockDataService.getCurrentDatabase.and.returnValue(
       of({ name: MOCK_DATABASES[0].name }),
     );
@@ -81,6 +82,17 @@ describe("DatabaseManagerComponent", () => {
       }),
     );
 
+    const mockConnectionMonitor = jasmine.createSpyObj(
+      "ConnectionMonitorService",
+      ["startMonitoring", "stopMonitoring"],
+      { connectionState$: of() },
+    );
+
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
+
     await TestBed.configureTestingModule({
       imports: [FormsModule, DatabaseManagerComponent, TranslatePipe],
       providers: [
@@ -89,7 +101,10 @@ describe("DatabaseManagerComponent", () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: { get: () => null } },
+            snapshot: {
+              paramMap: { get: () => null },
+              queryParamMap: { get: () => null },
+            },
             queryParams: of({}),
           },
         },
@@ -101,6 +116,8 @@ describe("DatabaseManagerComponent", () => {
           provide: HelpService,
           useValue: { startGuide: jasmine.createSpy("startGuide") },
         },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         ChangeDetectorRef,
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -363,11 +380,6 @@ describe("DatabaseManagerComponent", () => {
         MOCK_DATABASES[1].name,
       );
     });
-  });
-
-  it("should navigate back", () => {
-    component.onBack();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   });
 
   it("should handle cancel confirm", () => {

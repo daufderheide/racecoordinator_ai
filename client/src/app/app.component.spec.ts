@@ -41,12 +41,20 @@ describe("AppComponent", () => {
       "getRaceUpdate",
       "getRaceFlag",
       "getThemes",
+      "updateRaceSubscription",
+      "connectToInterfaceDataSocket",
+      "disconnectFromInterfaceDataSocket",
+      "getHeats",
     ]);
     mockDataService.getThemes.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of("TEST-SERVER-VERSION"));
     mockDataService.connectToRaceDataSocket.and.stub();
-    mockDataService.getRaceUpdate.and.returnValue(of({}));
+    mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
     mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
+    mockDataService.updateRaceSubscription.and.stub();
+    mockDataService.connectToInterfaceDataSocket.and.stub();
+    mockDataService.disconnectFromInterfaceDataSocket.and.stub();
+    mockDataService.getHeats.and.returnValue(new Subject().asObservable());
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
       "initTracking",

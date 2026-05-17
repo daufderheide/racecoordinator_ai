@@ -16,6 +16,7 @@ import { ConnectionMonitorService } from "@app/services/connection-monitor.servi
 import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 
+import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
 
 // Mock Child Components
@@ -156,14 +157,7 @@ describe("DriverEditorComponent Reproduction", () => {
   let mockAnalyticsService: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", [
-      "getDrivers",
-      "listAssets",
-      "createDriver",
-      "updateDriver",
-      "deleteDriver",
-      "uploadAsset",
-    ]);
+    mockDataService = createDriverManagerDataServiceMock();
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);

@@ -39,6 +39,26 @@ export interface DropResult {
 export class ModifyHeatsService {
   private validationService = inject(ParticipantValidationService);
   private translationService = inject(TranslationService);
+  private pendingState: {
+    heats: Heat[];
+    participants: RaceParticipant[];
+  } | null = null;
+
+  public saveState(heats: Heat[], participants: RaceParticipant[]) {
+    this.pendingState = {
+      heats: heats,
+      participants: [...participants],
+    };
+  }
+
+  public restoreState(): {
+    heats: Heat[];
+    participants: RaceParticipant[];
+  } | null {
+    const state = this.pendingState;
+    this.pendingState = null;
+    return state;
+  }
 
   handleDrop(event: CdkDragDrop<any>, context: DropContext): DropResult {
     const fromId = event.previousContainer.id;

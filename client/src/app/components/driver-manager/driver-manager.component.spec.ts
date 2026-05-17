@@ -6,7 +6,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -17,6 +17,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -32,6 +33,7 @@ import {
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { DriverManagerComponent } from "./driver-manager.component";
 import { createDriverManagerDataServiceMock } from "./testing/driver-manager_helper";
@@ -43,7 +45,9 @@ describe("DriverManagerComponent", () => {
   let _connectionMonitor: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
+  let mockRaceConnectionService: jasmine.SpyObj<RaceConnectionService>;
   let mockActivatedRoute: any;
+  let mockQueryParamsSubject: BehaviorSubject<any>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -60,13 +64,34 @@ describe("DriverManagerComponent", () => {
       get: () => connectionStateSubject.asObservable(),
     });
 
+    mockRaceConnectionService = jasmine.createSpyObj("RaceConnectionService", [
+      "connect",
+      "disconnect",
+    ]);
+    Object.defineProperty(mockRaceConnectionService, "laps$", {
+      get: () => new Subject().asObservable(),
+    });
+    Object.defineProperty(mockRaceConnectionService, "raceFlag$", {
+      get: () => new Subject().asObservable(),
+    });
+    Object.defineProperty(mockRaceConnectionService, "raceState$", {
+      get: () => new Subject().asObservable(),
+    });
+    Object.defineProperty(mockRaceConnectionService, "raceTime$", {
+      get: () => new Subject().asObservable(),
+    });
+    Object.defineProperty(mockRaceConnectionService, "interfaceAlert$", {
+      get: () => new Subject().asObservable(),
+    });
+
+    mockQueryParamsSubject = new BehaviorSubject<any>({ help: "false" });
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
           get: jasmine.createSpy("get").and.returnValue(null),
         },
       },
-      queryParams: of({ help: "false" }),
+      queryParams: mockQueryParamsSubject.asObservable(),
     };
 
     await TestBed.configureTestingModule({
@@ -80,6 +105,7 @@ describe("DriverManagerComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         {
           provide: HelpService,
           useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
@@ -98,6 +124,7 @@ describe("DriverManagerComponent", () => {
   });
 
   afterEach(() => {
+    fixture.destroy();
     resetMocks();
   });
 
@@ -106,12 +133,10 @@ describe("DriverManagerComponent", () => {
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
     // Deep copy mock data AND set prototypes to ensure Driver methods work
-    component.drivers = JSON.parse(JSON.stringify(MOCK_DRIVER_INSTANCES)).map(
-      (d: any) => {
-        Object.setPrototypeOf(d, Driver.prototype);
-        return d;
-      },
-    );
+    component.drivers = deepCopy(MOCK_DRIVER_INSTANCES).map((d: any) => {
+      Object.setPrototypeOf(d, Driver.prototype);
+      return d;
+    });
     fixture.detectChanges();
   });
 
@@ -186,8 +211,58 @@ describe("DriverManagerComponent", () => {
       component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
       component.updateDriver();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
-        queryParams: { id: "d1" },
+        queryParams: { id: "d1", from: null, returnUrl: null },
       });
+    });
+
+    it("should propagate 'from' and 'returnUrl' when navigating to editor", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (key: string) => {
+          if (key === "from") return "modify-heats";
+          if (key === "returnUrl") return "/default-raceday";
+          if (key === "id") return "d1";
+          return null;
+        },
+      );
+
+      component.selectDriver(MOCK_DRIVER_INSTANCES[0]);
+      component.updateDriver();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: {
+          id: "d1",
+          from: "modify-heats",
+          returnUrl: "/default-raceday",
+        },
+      });
+    });
+
+    it("should compute correct backTargetUrl when from is 'modify-heats'", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (key: string) => {
+          if (key === "from") return "modify-heats";
+          if (key === "returnUrl") return "/custom-raceday";
+          return null;
+        },
+      );
+      mockQueryParamsSubject.next({
+        from: "modify-heats",
+        returnUrl: "/custom-raceday",
+      });
+
+      expect(component.backTargetUrl()).toBe("/custom-raceday");
+      expect(component.backQueryParams()).toEqual({ modifyHeats: "true" });
+    });
+
+    it("should default to /raceday-setup when from is NOT 'modify-heats'", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (_key: string) => {
+          return null;
+        },
+      );
+
+      expect(component.backTargetUrl()).toBe("/raceday-setup");
+      expect(component.backQueryParams()).toEqual({});
     });
   });
 

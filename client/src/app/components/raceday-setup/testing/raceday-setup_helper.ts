@@ -1,5 +1,6 @@
 import { BehaviorSubject, of } from "rxjs";
 import { InitializeRaceResponse, RaceFlag } from "@app/proto/antigravity";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
 import { MOCK_RACES } from "../../../testing/data/races_data";
@@ -25,14 +26,10 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "getDefaultDemoConfig",
   ]);
 
-  mock.getDrivers.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_DRIVERS))),
-  );
-  mock.getTeams.and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_TEAMS))));
-  mock.getRaces.and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_RACES))));
-  mock.getSavedRaces.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_AUTOSAVE_RACES))),
-  );
+  mock.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
+  mock.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
+  mock.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
+  mock.getSavedRaces.and.callFake(() => of(deepCopy(MOCK_AUTOSAVE_RACES)));
   mock.loadRace.and.returnValue(of("OK"));
   mock.deleteSavedRace.and.returnValue(of("OK"));
   mock.toggleServerAnalytics.and.returnValue(of("OK"));

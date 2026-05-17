@@ -9,6 +9,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
@@ -17,10 +18,16 @@ import { DataService } from "@app/data.service";
 import { FuelUsageType } from "@app/models/fuel_options";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 @Component({
   standalone: true,
@@ -62,6 +69,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   raceScoringTypes = ["Points", "Time"];
 
   private static readonly EMPTY_LABELS: string[] = [];
+  private subscriptions: Subscription[] = [];
+
+  // Connection Monitoring
+  isConnectionLost = false;
+  private connectionSubscription: Subscription | null = null;
 
   // Acknowledgement modal properties
   showAckModal: boolean = false;
@@ -113,6 +125,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       queryParams: {
         id: this.editingRace?.entity_id,
         driverCount: this.driverCount,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
     });
   }
@@ -214,7 +228,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    private route: ActivatedRoute,
+    protected route: ActivatedRoute,
     private router: Router,
     private dataService: DataService,
     private translationService: TranslationService,
@@ -222,11 +236,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     private location: Location,
     private helpService: HelpService,
     private settingsService: SettingsService,
+    private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<any>(
       {
-        clonner: (race) => this.deepCopy(race),
+        clonner: (race) => deepCopy(race),
         equalizer: (a, b) => JSON.stringify(a) === JSON.stringify(b),
         applier: (race) => {
           const currentId = this.editingRace?.entity_id;
@@ -270,12 +286,24 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     this.loadRaces();
     this.loadCustomRotationAssets();
 
-    this.undoManager.stateCommitted$.subscribe(() => {
-      this.autoSaveRace();
-    });
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
+    this.raceConnectionService.connect();
+
+    this.subscriptions.push(
+      this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveRace();
+      }),
+    );
   }
 
   ngOnDestroy() {
+    this.raceConnectionService.disconnect();
+    this.connectionMonitor.stopMonitoring();
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
+    this.subscriptions.forEach((s) => s.unsubscribe());
     this.undoManager.destroy();
   }
 
@@ -310,6 +338,32 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  monitorConnection() {
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
+  }
+
+  handleConnectionLoss() {
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        this.router.navigate(["/raceday-setup"]);
+      }
+    }, 1000);
+  }
+
   /* eslint-disable max-lines-per-function */
   loadRace(id: string) {
     this.isLoading = true;
@@ -318,7 +372,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         const race = races.find((r) => r.entity_id === id);
         if (race) {
           this.editingRace = {
-            ...this.deepCopy(race),
+            ...deepCopy(race),
             auto_advance_time: race.auto_advance_time || 0,
             auto_start_time: race.auto_start_time || 0,
             auto_advance_warmup_time: race.auto_advance_warmup_time || 0,
@@ -418,7 +472,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           };
         }
         this.enforceFuelRules();
-        this.originalRace = this.deepCopy(this.editingRace);
+        this.originalRace = deepCopy(this.editingRace);
         this.undoManager.initialize(this.editingRace);
         // Load heats if we have a valid race
         if (this.driverCount > 0) {
@@ -609,7 +663,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         min_advancing: 0,
       },
     };
-    this.originalRace = this.deepCopy(this.editingRace);
+    this.originalRace = deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
     this.syncSequenceTextFromModel();
     this.isLoading = false;
@@ -851,7 +905,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
           this.isAutoSaving = false;
           // Update the current race to the newly created one
           this.editingRace.entity_id = created.entity_id;
-          this.originalRace = this.deepCopy(this.editingRace);
+          this.originalRace = deepCopy(this.editingRace);
           this.undoManager.resetTracking(this.editingRace);
           this.loadRaces(); // Reload races to update duplicate detection
           this.cdr.detectChanges(); // Ensure spinner clears
@@ -894,7 +948,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
             this.isSaving = false;
             this.isAutoSaving = false;
             // Sync originalRace with editingRace so isDirtyState() returns false
-            this.originalRace = this.deepCopy(this.editingRace);
+            this.originalRace = deepCopy(this.editingRace);
             // Reset tracking point but keep history
             this.undoManager.resetTracking(this.editingRace);
             this.loadRaces(); // Reload races to update duplicate detection
@@ -932,7 +986,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         // Update the current race to the newly created one
         this.editingRace = created;
-        this.originalRace = this.deepCopy(created);
+        this.originalRace = deepCopy(created);
         // Reset tracking point but keep history
         this.undoManager.resetTracking(this.editingRace);
         // Reload heats for the new race
@@ -961,10 +1015,6 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
-  }
-
-  private deepCopy(obj: any): any {
-    return JSON.parse(JSON.stringify(obj));
   }
 
   private transformCustomRotationsToSnakeCase(rotations: any[]): any[] {

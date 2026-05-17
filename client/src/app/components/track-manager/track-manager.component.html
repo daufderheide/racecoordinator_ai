@@ -12,6 +12,8 @@
 >
   <app-manager-header
     [title]="'TM_TITLE'"
+    [backTargetUrl]="backTargetUrl()"
+    [backQueryParams]="backQueryParams()"
     [showActions]="true"
     [showEdit]="selectedTrack != null"
     [showDelete]="selectedTrack != null"

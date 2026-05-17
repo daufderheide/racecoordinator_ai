@@ -1,10 +1,16 @@
 import { DragDropModule } from "@angular/cdk/drag-drop";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { NoopAnimationsModule } from "@angular/platform-browser/animations";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
+import { GroupOptions } from "@app/models/group_options";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
@@ -32,7 +38,9 @@ describe("ModifyHeatsModalComponent", () => {
       "getTeams",
       "regenerateHeats",
       "modifyHeats",
+      "updateRaceSubscription",
     ]);
+    mockDataService.updateRaceSubscription.and.stub();
     mockDataService.getDrivers.and.returnValue(of([]));
     mockDataService.getTeams.and.returnValue(of([]));
     mockDataService.regenerateHeats.and.returnValue(
@@ -90,11 +98,18 @@ describe("ModifyHeatsModalComponent", () => {
     // Provide required inputs to prevent NG0950 errors
     const track = createMockTrack();
     fixture.componentRef.setInput("track", track);
-    fixture.componentRef.setInput("race", createMockRace(track));
+    fixture.componentRef.setInput("race", createMockRace(track, true));
   });
 
-  const createMockRace = (track: Track) => {
-    return new Race("race-1", "Test Race", track);
+  const createMockRace = (track: Track, groupEnabled: boolean = false) => {
+    const race = new Race("race-1", "Test Race", track);
+    // Use defineProperty to ensure the value is set correctly and picks up by signals
+    Object.defineProperty(race, "group_options", {
+      value: new GroupOptions(groupEnabled),
+      writable: true,
+      configurable: true,
+    });
+    return race;
   };
 
   const createMockTrack = () => {
@@ -504,7 +519,7 @@ describe("ModifyHeatsModalComponent", () => {
     let p1: RaceParticipant;
     let heat1: Heat, heat2: Heat;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       p1 = new RaceParticipant(
         "p1",
         new Driver("d1", "D1", "D1"),
@@ -524,48 +539,77 @@ describe("ModifyHeatsModalComponent", () => {
       heat2.group = 0; // Group 1
 
       const track = createMockTrack();
-      const race = createMockRace(track);
-      race.group_options.enabled = true;
+      const race = {
+        entity_id: "race-1",
+        name: "Test Race",
+        track: track,
+        group_options: { enabled: true },
+        clone: function () {
+          return { ...this };
+        },
+      };
 
-      fixture.componentRef.setInput("race", race);
+      fixture.componentRef.setInput("race", race as any);
       fixture.componentRef.setInput("track", track);
       fixture.componentRef.setInput("heats", [heat1, heat2]);
-      component["localHeats"] = [heat1, heat2];
+
       component["undoManager"].initialize({
         heats: [heat1, heat2],
         participants: [p1],
       });
       fixture.detectChanges();
+
+      // Force enabled state on the signal's value to be absolutely sure
+      if (component.race()) {
+        (component.race() as any).group_options = { enabled: true };
+      }
     });
 
     it("should allow valid sequential group change", () => {
       component["onGroupChange"](heat2, 2);
       expect(heat2.group).toBe(1);
-      expect(component["errorMessage"]).toBeUndefined();
+      expect(component["errorMessage"]()).toBeUndefined();
     });
 
-    it("should prevent non-sequential group change", () => {
-      component["onGroupChange"](component["localHeats"][1], 3); // Group 1 exists, Group 3 is too far
-      expect(component["localHeats"][1].group).toBe(2);
-      expect(component["errorMessage"]).toBe("RD_ERR_GROUP_NON_SEQUENTIAL");
-    });
+    it("should prevent non-sequential group change", fakeAsync(() => {
+      const targetHeat = component["localHeats"][1];
+      fixture.detectChanges();
+      tick();
+      component["onGroupChange"](targetHeat, 3); // Group 1 exists, Group 3 is too far
+      fixture.detectChanges();
+      tick();
 
-    it("should prevent group change that causes participant to be in multiple groups", () => {
-      // p1 is in heat1 (G0) and we add p1 to heat2
+      expect(targetHeat.group).toBe(2);
+      expect(component["errorMessage"]()).toBe("RD_ERR_GROUP_NON_SEQUENTIAL");
+    }));
+
+    it("should prevent group change that causes participant to be in multiple groups", fakeAsync(() => {
       const targetHeat = component["localHeats"][1];
       targetHeat.heatDrivers = [new DriverHeatData("dhd2", p1, 0)];
+      fixture.detectChanges();
+      tick();
+
       component["onGroupChange"](targetHeat, 2);
-      expect(component["localHeats"][1].group).toBe(1);
-      expect(component["errorMessage"]).toBe(
+      fixture.detectChanges();
+      tick();
+
+      expect(targetHeat.group).toBe(1);
+      expect(component["errorMessage"]()).toBe(
         "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
       );
-    });
+    }));
 
-    it("should prevent group change to less than 1", () => {
-      component["onGroupChange"](component["localHeats"][1], 0);
-      expect(component["localHeats"][1].group).toBe(-1);
-      expect(component["errorMessage"]).toBe("RD_ERR_GROUP_MIN_VALUE");
-    });
+    it("should prevent group change to less than 1", fakeAsync(() => {
+      const targetHeat = component["localHeats"][1];
+      fixture.detectChanges();
+      tick();
+      component["onGroupChange"](targetHeat, 0);
+      fixture.detectChanges();
+      tick();
+
+      expect(targetHeat.group).toBe(-1);
+      expect(component["errorMessage"]()).toBe("RD_ERR_GROUP_MIN_VALUE");
+    }));
 
     it("should undo group change correctly", () => {
       component["onGroupChange"](component["localHeats"][1], 2);

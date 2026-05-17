@@ -1,14 +1,17 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   QueryList,
   ViewChild,
   ViewChildren,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -23,6 +26,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -54,6 +58,25 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   @ViewChildren("raceRow") raceRows!: QueryList<ElementRef>;
   isSummaryExpanded: boolean = true;
   isHeatListExpanded: boolean = true;
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
 
   toggleSummary() {
     this.isSummaryExpanded = !this.isSummaryExpanded;
@@ -94,8 +117,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
@@ -114,9 +137,11 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     }
 
     this.loadData();
+    this.raceConnectionService.connect();
   }
 
   ngOnDestroy() {
+    this.raceConnectionService.disconnect();
     this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
@@ -225,7 +250,24 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     this.connectionSubscription =
       this.connectionMonitor.connectionState$.subscribe((state) => {
         this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
       });
+  }
+
+  handleConnectionLoss() {
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
+      }
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        this.router.navigate(["/raceday-setup"]);
+      }
+    }, 1000);
   }
 
   updateRace() {
@@ -234,6 +276,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       queryParams: {
         id: (this.selectedRace as any).entity_id,
         driverCount: this.driverCount,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
     });
   }
@@ -326,6 +370,8 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
           queryParams: {
             id: (createdRace as any).entity_id,
             driverCount: this.driverCount,
+            from: this.route.snapshot.queryParamMap.get("from"),
+            returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
           },
         });
       },

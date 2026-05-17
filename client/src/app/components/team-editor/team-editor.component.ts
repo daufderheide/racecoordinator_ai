@@ -29,6 +29,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -83,10 +84,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
+    protected route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
     private location: Location,
     private helpService: HelpService,
+    private raceConnectionService: RaceConnectionService,
     private settingsService: SettingsService,
     private logger: LoggerService,
   ) {
@@ -111,6 +113,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+    this.raceConnectionService.connect();
 
     if (this.undoManager) {
       this.subscriptions.push(
@@ -123,6 +126,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceConnectionService.disconnect();
     this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
@@ -363,7 +367,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   onBack() {
     this.router.navigate(["/team-manager"], {
-      queryParams: { id: this.editingTeam?.entity_id },
+      queryParams: {
+        id: this.editingTeam?.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
     });
   }
 

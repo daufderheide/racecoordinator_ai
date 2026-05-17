@@ -7,6 +7,10 @@
     titleKey="TEM_TITLE"
     backRoute="/team-manager"
     [backConfirm]="!isConfigValid()"
+    [backQueryParams]="{
+      from: route.snapshot.queryParamMap.get('from'),
+      returnUrl: route.snapshot.queryParamMap.get('returnUrl'),
+    }"
     backConfirmTitle="TEM_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="TEM_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"

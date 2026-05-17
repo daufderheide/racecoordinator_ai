@@ -2,10 +2,7 @@ import { ChangeDetectorRef, Component, input, output } from "@angular/core";
 import { Router } from "@angular/router";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import {
-  ConnectionMonitorService,
-  ConnectionState,
-} from "@app/services/connection-monitor.service";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 
 @Component({
   standalone: true,
@@ -50,24 +47,18 @@ export class BackButtonComponent {
   }
 
   private proceed() {
-    const isConnected =
-      this.connectionMonitor.currentState === ConnectionState.CONNECTED;
-
-    if (!isConnected) {
-      // Always go back to splash screen if disconnected
-      sessionStorage.removeItem("skipIntro");
-      this.router.navigate(["/raceday-setup"]);
-      return;
-    }
-
     sessionStorage.setItem("skipIntro", "true");
     this.back.emit();
 
-    // If no one is listening (implied by providing a route and not wanting manual override)
-    // we navigate. Since we can't check 'observed', we check if route is provided.
-    // However, most components pass a route.
-    if (this.route() && this.route() !== "") {
-      this.router.navigate([this.route()], { queryParams: this.queryParams() });
+    const route = this.route();
+    if (route && route !== "") {
+      if (route.includes("?")) {
+        // If the route already has query params, use navigateByUrl
+        this.router.navigateByUrl(route);
+      } else {
+        // Otherwise use navigate with the provided queryParams
+        this.router.navigate([route], { queryParams: this.queryParams() });
+      }
     }
   }
 }

@@ -7,7 +7,11 @@
     titleKey="TE_TITLE"
     backRoute="/track-manager"
     [backConfirm]="!isConfigValid() || isDirtyState()"
-    [backQueryParams]="{ selectedId: editingTrack?.entity_id }"
+    [backQueryParams]="{
+      selectedId: editingTrack?.entity_id,
+      from: route.snapshot.queryParamMap.get('from'),
+      returnUrl: route.snapshot.queryParamMap.get('returnUrl'),
+    }"
     backConfirmTitle="TE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="TE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"

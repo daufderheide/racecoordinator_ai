@@ -3,12 +3,14 @@ import { NgTemplateOutlet } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
@@ -33,6 +35,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { ColumnPreviewComponent } from "./column-preview/column-preview.component";
 import { ReorderDialogComponent } from "./reorder-dialog/reorder-dialog.component";
@@ -68,6 +71,24 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isAutoSaving = false;
   scale = 1;
   assets: any[] = [];
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
 
   // Unified state for undo/redo
   state!: UIEditorState;
@@ -181,6 +202,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     public themeService: ThemeService,
     private translationService: TranslationService,
     private logger: LoggerService,
+    private route: ActivatedRoute,
   ) {
     this.undoManager = new UndoManager<UIEditorState>(
       {
@@ -345,7 +367,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         this.editingState = {
           settings: editingSettings,
-          themes: JSON.parse(JSON.stringify(themes)),
+          themes: deepCopy(themes),
         };
         this.refreshDisplayProperties();
         this.undoManager.initialize(this.editingState);
@@ -459,10 +481,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     // Safely clone layouts and visibility
     const layouts = s.columnLayouts || {};
-    clone.columnLayouts = JSON.parse(JSON.stringify(layouts));
+    clone.columnLayouts = deepCopy(layouts);
 
     const visibility = s.columnVisibility || {};
-    clone.columnVisibility = JSON.parse(JSON.stringify(visibility));
+    clone.columnVisibility = deepCopy(visibility);
 
     clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
     clone.pageTransition = s.pageTransition || "slide";
@@ -485,7 +507,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private cloneState(s: UIEditorState): UIEditorState {
     return {
       settings: this.cloneSettings(s.settings),
-      themes: JSON.parse(JSON.stringify(s.themes)),
+      themes: deepCopy(s.themes),
     };
   }
 
@@ -660,7 +682,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onBack() {
     this.isNavigationApproved = true;
-    this.router.navigate(["/raceday-setup"]);
+    this.router.navigate([this.backTargetUrl()], {
+      queryParams: this.backQueryParams(),
+    });
   }
 
   hasChanges() {
@@ -1010,13 +1034,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
       // Clean history: remove deleted theme from all snapshots
       this.undoManager.updateHistory((state) => {
-        const s = JSON.parse(JSON.stringify(state));
+        const s = deepCopy(state);
         s.themes = (s.themes || []).filter(
           (t: any) => t.entity_id !== themeIdToDelete,
         );
         if (s.settings.activeThemeId === themeIdToDelete) {
           const def = (s.themes || []).find((t: any) => t.is_default);
-          s.settings.activeThemeId = def ? def.entity_id : null;
+          s.settings.activeThemeId = def ? def.entity_id : undefined;
         }
         return s;
       });

@@ -9,7 +9,7 @@ import {
   ViewChild,
   ViewContainerRef,
 } from "@angular/core";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
@@ -39,6 +39,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
     @Inject(ThemeService) themeService: ThemeService,
     @Inject(LoggerService) logger: LoggerService,
+    @Inject(ActivatedRoute) route: ActivatedRoute,
   ) {
     super(
       el,
@@ -52,6 +53,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       cdr,
       themeService,
       logger,
+      route,
     );
   }
 }
@@ -169,9 +171,11 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
     }
   }
 
-  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+  canDeactivate(
+    nextState?: RouterStateSnapshot,
+  ): Observable<boolean> | Promise<boolean> | boolean {
     if (this.childComponent && this.childComponent.canDeactivate) {
-      return this.childComponent.canDeactivate();
+      return this.childComponent.canDeactivate(nextState);
     }
     return true;
   }

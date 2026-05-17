@@ -1,17 +1,18 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   ViewChild,
 } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
-import { Router } from "@angular/router";
+import { toSignal } from "@angular/core/rxjs-interop";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
-import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";
@@ -23,6 +24,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -34,7 +36,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   styleUrls: ["./team-manager.component.css"],
   imports: [
     ConfirmationModalComponent,
-    ManagerHeaderComponent_1,
+    ManagerHeaderComponent,
     TranslatePipe,
     AvatarUrlPipe,
   ],
@@ -48,6 +50,25 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   scale: number = 1;
   searchQuery: string = "";
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
 
   get filteredTeams(): Team[] {
     let filtered = this.teams;
@@ -71,8 +92,8 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
@@ -86,13 +107,15 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.loadData();
+    this.raceConnectionService.connect();
   }
 
   ngOnDestroy() {
-    this.connectionMonitor.stopMonitoring();
+    this.raceConnectionService.disconnect();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();
     }
+    this.connectionMonitor.stopMonitoring();
   }
 
   @HostListener("window:resize")
@@ -207,7 +230,11 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
       this.selectedTeam.entity_id,
     );
     this.router.navigate(["/team-editor"], {
-      queryParams: { id: this.selectedTeam.entity_id },
+      queryParams: {
+        id: this.selectedTeam.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
     });
   }
 
@@ -228,7 +255,11 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
       next: (createdTeam: any) => {
         this.isSaving = false;
         this.router.navigate(["/team-editor"], {
-          queryParams: { id: createdTeam.entity_id },
+          queryParams: {
+            id: createdTeam.entity_id,
+            from: this.route.snapshot.queryParamMap.get("from"),
+            returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+          },
         });
       },
       error: (err: any) => {

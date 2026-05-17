@@ -17,7 +17,9 @@ import { FuelUsageType } from "@app/models/fuel_options";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_RACE_INSTANCES, MOCK_RACES } from "@app/testing/data/races_data";
@@ -32,6 +34,7 @@ import {
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
 import { RaceEditorComponent } from "./race-editor.component";
@@ -61,6 +64,17 @@ describe("RaceEditorComponent", () => {
       queryParams: of({ help: "false" }),
     };
 
+    const mockConnectionMonitor = jasmine.createSpyObj(
+      "ConnectionMonitorService",
+      ["startMonitoring", "stopMonitoring"],
+      { connectionState$: of() },
+    );
+
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
+
     TestBed.configureTestingModule({
       imports: [FormsModule, RaceEditorComponent, TranslatePipe],
       providers: [
@@ -79,6 +93,8 @@ describe("RaceEditorComponent", () => {
         },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     });
@@ -91,7 +107,7 @@ describe("RaceEditorComponent", () => {
     activatedRoute = TestBed.inject(ActivatedRoute);
 
     // Initialize with safe defaults for template binding (usually handled by loadData)
-    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    component.editingRace = deepCopy(MOCK_RACE_INSTANCES[0]);
     Object.setPrototypeOf(component.editingRace, Race.prototype);
     if (component.editingRace) {
       component.editingRace.track_entity_id =
@@ -104,21 +120,17 @@ describe("RaceEditorComponent", () => {
       component.editingRace.custom_rotations =
         component.editingRace.custom_rotations || [];
     }
-    component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.originalRace = deepCopy(component.editingRace);
     component.undoManager.initialize(component.editingRace!);
 
-    component.races = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES)).map(
-      (r: any) => {
-        Object.setPrototypeOf(r, Race.prototype);
-        return r;
-      },
-    );
-    component.tracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
-      (t: any) => {
-        Object.setPrototypeOf(t, Track.prototype);
-        return t;
-      },
-    );
+    component.races = deepCopy(MOCK_RACE_INSTANCES).map((r: any) => {
+      Object.setPrototypeOf(r, Race.prototype);
+      return r;
+    });
+    component.tracks = deepCopy(MOCK_TRACK_INSTANCES).map((t: any) => {
+      Object.setPrototypeOf(t, Track.prototype);
+      return t;
+    });
   });
 
   afterEach(() => {
@@ -192,7 +204,7 @@ describe("RaceEditorComponent", () => {
   }));
 
   it("should fallback to 0.5 drift_time when loading race without it", fakeAsync(() => {
-    const raceWithoutDrift: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+    const raceWithoutDrift: any = deepCopy(MOCK_RACES[0]);
     delete raceWithoutDrift.drift_time; // Ensure it's missing
     dataService.getRaces.and.returnValue(of([raceWithoutDrift]));
     dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
@@ -270,7 +282,7 @@ describe("RaceEditorComponent", () => {
   }));
 
   it("should not load heats for new race", () => {
-    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    component.editingRace = deepCopy(MOCK_RACE_INSTANCES[0]);
     Object.setPrototypeOf(component.editingRace, Race.prototype);
     component.editingRace.entity_id = "new";
     dataService.previewHeats.calls.reset();
@@ -282,7 +294,7 @@ describe("RaceEditorComponent", () => {
 
   it("should detect duplicate names", () => {
     component.races = [...MOCK_RACE_INSTANCES];
-    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    component.editingRace = deepCopy(MOCK_RACE_INSTANCES[0]);
     Object.setPrototypeOf(component.editingRace, Race.prototype);
     component.editingRace.entity_id = "new";
     component.editingRace.name = MOCK_RACES[0].name;
@@ -398,9 +410,9 @@ describe("RaceEditorComponent", () => {
         require_pit_stop_change_driver: false,
       },
     };
-    component.originalRace = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES[0]));
+    component.originalRace = deepCopy(MOCK_RACE_INSTANCES[0]);
     Object.setPrototypeOf(component.originalRace, Race.prototype);
-    component.editingRace = JSON.parse(JSON.stringify(component.originalRace));
+    component.editingRace = deepCopy(component.originalRace);
     Object.setPrototypeOf(component.editingRace, Race.prototype);
     Object.assign(component.editingRace, baseRace);
     component.undoManager.initialize(component.editingRace!);
@@ -486,7 +498,7 @@ describe("RaceEditorComponent", () => {
 
   describe("Analog Fuel Options", () => {
     it("should initialize with default fuel options if not present", fakeAsync(() => {
-      const raceWithoutFuel: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      const raceWithoutFuel: any = deepCopy(MOCK_RACES[0]);
       delete raceWithoutFuel.fuel_options;
       delete raceWithoutFuel.digital_fuel_options;
 
@@ -521,7 +533,7 @@ describe("RaceEditorComponent", () => {
 
   describe("Digital Fuel Options", () => {
     it("should initialize with default digital fuel options if not present", fakeAsync(() => {
-      const raceWithoutFuel: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      const raceWithoutFuel: any = deepCopy(MOCK_RACES[0]);
       delete raceWithoutFuel.digital_fuel_options;
 
       dataService.getRaces.and.returnValue(of([raceWithoutFuel]));
@@ -601,7 +613,7 @@ describe("RaceEditorComponent", () => {
 
   describe("Group Options", () => {
     it("should initialize with default group options if not present", fakeAsync(() => {
-      const raceWithoutGroups: any = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+      const raceWithoutGroups: any = deepCopy(MOCK_RACES[0]);
       delete raceWithoutGroups.group_options;
 
       dataService.getRaces.and.returnValue(of([raceWithoutGroups]));
@@ -670,7 +682,7 @@ describe("RaceEditorComponent", () => {
   });
 
   it("should call updateRace API", fakeAsync(() => {
-    component.editingRace = JSON.parse(JSON.stringify(MOCK_RACES[0]));
+    component.editingRace = deepCopy(MOCK_RACES[0]);
     spyOn(component, "isDirtyState").and.returnValue(true);
     dataService.updateRace.and.returnValue(of({}));
     dataService.getRaces.and.returnValue(of([]));
@@ -680,6 +692,30 @@ describe("RaceEditorComponent", () => {
 
     expect(dataService.updateRace).toHaveBeenCalled();
     expect(component.isSaving).toBeFalse();
+  }));
+
+  it("should propagate 'from' and 'returnUrl' when navigating back", fakeAsync(() => {
+    activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "from") return "modify-heats";
+      if (key === "returnUrl") return "/default-raceday";
+      if (key === "id") return "r1";
+      return null;
+    });
+
+    component.ngOnInit();
+    tick();
+
+    component.onBackClicked();
+    tick();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
+      queryParams: {
+        id: "r1",
+        driverCount: 12,
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
+    });
   }));
 
   it("should include team options in updateRace payload", fakeAsync(() => {
@@ -769,7 +805,7 @@ describe("RaceEditorComponent", () => {
       },
       group_options: { enabled: false },
     };
-    component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.originalRace = deepCopy(component.editingRace);
     component.driverCount = 10;
     dataService.createRace.and.returnValue(
       of({
@@ -810,7 +846,7 @@ describe("RaceEditorComponent", () => {
 
     expect(dataService.createRace).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
-      queryParams: { id: "2", driverCount: 10 },
+      queryParams: { id: "2", driverCount: 10, from: null, returnUrl: null },
     });
   }));
 
@@ -845,7 +881,7 @@ describe("RaceEditorComponent", () => {
     // Setup a race
     component.editingRace.name = "Initial Name";
     component.editingRace.entity_id = "1"; // Ensure component.editingRace.auto_advance_warmup_time = 1;
-    component.originalRace = JSON.parse(JSON.stringify(component.editingRace));
+    component.originalRace = deepCopy(component.editingRace);
     component.undoManager.initialize(component.editingRace!);
 
     dataService.updateRace.and.returnValue(of({}));

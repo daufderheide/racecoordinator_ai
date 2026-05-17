@@ -1,4 +1,4 @@
-export const MOCK_ASSETS = [
+export const MOCK_ASSETS: any[] = [
   {
     id: "a1",
     name: "RedCar",

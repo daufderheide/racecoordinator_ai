@@ -8,7 +8,7 @@ echo "--- 🔹 Running Client Unit Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
 
 # Ensure isolated directory exists and is prepared
-ISOLATED_DIR="/tmp/racecoordinator-client-$(id -u)"
+ISOLATED_DIR="$PROJECT_ROOT/client/tmp-isolated-test-$(id -u)"
 mkdir -p "$ISOLATED_DIR"
 
 # Sync current source and configuration to isolated directory

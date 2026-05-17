@@ -1,4 +1,9 @@
-<button class="back-btn" (click)="onBack()" [attr.data-confirm]="confirm()">
+<button
+  type="button"
+  class="back-btn"
+  (click)="onBack()"
+  [attr.data-confirm]="confirm()"
+>
   <span class="back-icon">‹</span> {{ label() | translate }}
 </button>
 

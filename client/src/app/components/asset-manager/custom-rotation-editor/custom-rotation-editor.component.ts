@@ -22,6 +22,7 @@ import {
 } from "@app/proto/antigravity";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 @Component({
   standalone: true,
@@ -62,7 +63,7 @@ export class CustomRotationEditorComponent implements OnInit {
   ngOnInit() {
     this.internalAssetName = this.assetName();
     this.internalNumLanes = this.numLanes();
-    this.internalRotations = JSON.parse(JSON.stringify(this.rotations()));
+    this.internalRotations = deepCopy(this.rotations());
 
     this.loadTracks();
     if (this.internalRotations.length === 0) {

@@ -67,6 +67,9 @@ client/test-results/
 client/.chrome-home/
 .karma-profile/
 client/browsers/
+client/server/
+client/tmp-isolated-test-*
+
 
 # I think this is generated code on the client/server
 .m2/

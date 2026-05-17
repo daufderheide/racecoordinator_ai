@@ -1,11 +1,14 @@
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   ViewChild,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
@@ -28,6 +31,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext, playSound } from "@app/utils/audio";
@@ -106,6 +110,25 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   editingRotationNumLanes: number = 4;
   editingRotations: ICustomRotation[] = [];
   scale: number = 1;
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
 
   // Delete Confirmation
   showDeleteConfirm: boolean = false;
@@ -116,8 +139,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
     private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
@@ -132,6 +155,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.monitorConnection();
     this.loadActiveDatabase();
     this.loadAssets();
+    this.raceConnectionService.connect();
   }
 
   @HostListener("window:resize")
@@ -168,6 +192,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceConnectionService.disconnect();
     this.connectionMonitor.stopMonitoring();
     if (this.connectionSubscription) {
       this.connectionSubscription.unsubscribe();

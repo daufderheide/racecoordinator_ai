@@ -7,7 +7,9 @@ import { DataService } from "@app/data.service";
 import {} from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -21,6 +23,7 @@ import {
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { createTrackManagerDataServiceMock } from "./testing/track-manager_helper";
 import { TrackManagerComponent } from "./track-manager.component";
@@ -59,6 +62,17 @@ describe("TrackManagerComponent", () => {
       queryParams: of({ help: "false" }),
     };
 
+    const mockConnectionMonitor = jasmine.createSpyObj(
+      "ConnectionMonitorService",
+      ["startMonitoring", "stopMonitoring"],
+      { connectionState$: of() },
+    );
+
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
+
     await TestBed.configureTestingModule({
       imports: [TrackManagerComponent, TranslatePipe, MockBackButtonComponent],
       schemas: [NO_ERRORS_SCHEMA],
@@ -77,6 +91,8 @@ describe("TrackManagerComponent", () => {
             hasPrevious$: of(false),
           }),
         },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
       ],
     }).compileComponents();
@@ -86,12 +102,10 @@ describe("TrackManagerComponent", () => {
     dataService = TestBed.inject(DataService);
     router = TestBed.inject(Router);
     // Deep copy mock data AND set prototypes to ensure Track methods work
-    component.tracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
-      (t: any) => {
-        Object.setPrototypeOf(t, Track.prototype);
-        return t;
-      },
-    );
+    component.tracks = deepCopy(MOCK_TRACK_INSTANCES).map((t: any) => {
+      Object.setPrototypeOf(t, Track.prototype);
+      return t;
+    });
     fixture.detectChanges();
   });
 
@@ -128,7 +142,29 @@ describe("TrackManagerComponent", () => {
   it("should navigate to editor for editing", () => {
     component.editTrack();
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
-      queryParams: { id: "t1" },
+      queryParams: {
+        id: "t1",
+        from: null,
+        returnUrl: null,
+      },
+    });
+  });
+
+  it("should propagate 'from' and 'returnUrl' when navigating to editor", () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
+      if (key === "from") return "modify-heats";
+      if (key === "returnUrl") return "/default-raceday";
+      return null;
+    });
+
+    component.editTrack();
+    expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
+      queryParams: {
+        id: "t1",
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
     });
   });
 
@@ -147,7 +183,34 @@ describe("TrackManagerComponent", () => {
       }),
     );
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
-      queryParams: { id: "t-new-id" },
+      queryParams: {
+        id: "t-new-id",
+        from: null,
+        returnUrl: null,
+      },
+    });
+  });
+
+  it("should propagate 'from' and 'returnUrl' during creation", () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
+      if (key === "from") return "modify-heats";
+      if (key === "returnUrl") return "/default-raceday";
+      return null;
+    });
+
+    (component.translationService.translate as jasmine.Spy).and.returnValue(
+      "New Track",
+    );
+
+    component.createNewTrack();
+
+    expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
+      queryParams: {
+        id: "t-new-id",
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
     });
   });
 

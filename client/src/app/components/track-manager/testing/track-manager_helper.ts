@@ -1,5 +1,6 @@
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { RaceState as _RaceState } from "@app/proto/antigravity";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { createDefaultSettings as _createDefaultSettings } from "../../../testing/data/settings_data";
 import {
@@ -28,18 +29,60 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     "updateInterfaceConfig",
     "setInterfacePinState",
     "setInterfaceRgbLedState",
+    "updateRaceSubscription",
+    "getRaceUpdate",
+    "getRaceTime",
+    "getLaps",
+    "getCarData",
+    "getSegments",
+    "getStandingsUpdate",
+    "getOverallStandingsUpdate",
+    "getHeats",
+    "getRecordData",
+    "getRaceFlag",
+    "getDrivers",
   ]);
+  mock.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
+  mock.getRaceUpdate = jasmine
+    .createSpy("getRaceUpdate")
+    .and.returnValue(new Subject().asObservable());
+  mock.getRaceTime = jasmine
+    .createSpy("getRaceTime")
+    .and.returnValue(new Subject().asObservable());
+  mock.getLaps = jasmine
+    .createSpy("getLaps")
+    .and.returnValue(new Subject().asObservable());
+  mock.getCarData = jasmine
+    .createSpy("getCarData")
+    .and.returnValue(new Subject().asObservable());
+  mock.getSegments = jasmine
+    .createSpy("getSegments")
+    .and.returnValue(new Subject().asObservable());
+  mock.getStandingsUpdate = jasmine
+    .createSpy("getStandingsUpdate")
+    .and.returnValue(new Subject().asObservable());
+  mock.getOverallStandingsUpdate = jasmine
+    .createSpy("getOverallStandingsUpdate")
+    .and.returnValue(new Subject().asObservable());
+  mock.getHeats = jasmine
+    .createSpy("getHeats")
+    .and.returnValue(new Subject().asObservable());
+  mock.getRecordData = jasmine
+    .createSpy("getRecordData")
+    .and.returnValue(of(null));
+  mock.getRaceFlag = jasmine
+    .createSpy("getRaceFlag")
+    .and.returnValue(new Subject().asObservable());
+  mock.getDrivers = jasmine.createSpy("getDrivers").and.returnValue(of([]));
 
-  mock.getTracks.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES))),
-  );
+  mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACK_INSTANCES)));
   mock.deleteTrack.and.returnValue(of(true));
   mock.createTrack.and.callFake((track: any) =>
     of({ ...track, entity_id: "t-new-id" }),
   );
   mock.updateTrack.and.callFake((id: any, track: any) => of(track));
   mock.getTrackFactorySettings.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_FACTORY_SETTINGS))),
+    of(deepCopy(MOCK_FACTORY_SETTINGS)),
   );
   mock.getInterfaceEvents.and.returnValue(of({}));
   mock.getRaceState.and.returnValue(of(0)); // RaceState.NOT_STARTED

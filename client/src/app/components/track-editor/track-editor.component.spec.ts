@@ -17,8 +17,10 @@ import { Lane } from "@app/models/lane";
 import { Settings } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -82,6 +84,8 @@ class MockEditorTitleComponent {
   delete = output<void>();
 }
 
+import { deepCopy } from "@app/utils/clone.utils";
+
 import { TrackEditorComponent } from "./track-editor.component";
 
 describe("TrackEditorComponent", () => {
@@ -119,6 +123,17 @@ describe("TrackEditorComponent", () => {
         (this as any).queryParamsSubject.next(params);
       },
     };
+
+    const mockConnectionMonitor = jasmine.createSpyObj(
+      "ConnectionMonitorService",
+      ["startMonitoring", "stopMonitoring"],
+      { connectionState$: of() },
+    );
+
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
     (mockActivatedRoute.snapshot as any)._parent = mockActivatedRoute;
     mockActivatedRoute.queryParamMap =
       mockActivatedRoute.queryParamMapSubject.asObservable();
@@ -158,6 +173,8 @@ describe("TrackEditorComponent", () => {
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: LoggerService, useValue: mockLoggerService },
+        { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
       ],
     }).compileComponents();
 
@@ -171,12 +188,10 @@ describe("TrackEditorComponent", () => {
       JSON.stringify(MOCK_TRACK_INSTANCES[0]),
     );
     Object.setPrototypeOf(component.editingTrack, Track.prototype);
-    component.allTracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
-      (t: any) => {
-        Object.setPrototypeOf(t, Track.prototype);
-        return t;
-      },
-    );
+    component.allTracks = deepCopy(MOCK_TRACK_INSTANCES).map((t: any) => {
+      Object.setPrototypeOf(t, Track.prototype);
+      return t;
+    });
     fixture.detectChanges();
     // After detectChanges (ngOnInit -> loadData), the component has a fresh model from the mock.
     // We MUST use the model the component is actually using for the UndoManager baseline.
@@ -259,7 +274,30 @@ describe("TrackEditorComponent", () => {
   it("should navigate back to manager with selectedId", () => {
     component.onBack();
     expect(router.navigate).toHaveBeenCalledWith(["/track-manager"], {
-      queryParams: { selectedId: "t1" },
+      queryParams: {
+        selectedId: "t1",
+        from: null,
+        returnUrl: null,
+      },
+    });
+  });
+
+  it("should propagate 'from' and 'returnUrl' when navigating back", () => {
+    const route = TestBed.inject(ActivatedRoute) as any;
+    spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
+      if (key === "from") return "modify-heats";
+      if (key === "returnUrl") return "/default-raceday";
+      if (key === "id") return "t1";
+      return null;
+    });
+
+    component.onBack();
+    expect(router.navigate).toHaveBeenCalledWith(["/track-manager"], {
+      queryParams: {
+        selectedId: "t1",
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
     });
   });
 

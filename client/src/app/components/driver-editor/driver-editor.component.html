@@ -7,7 +7,11 @@
     titleKey="DE_TITLE"
     backRoute="/driver-manager"
     [backConfirm]="!isConfigValid() || isDirtyState()"
-    [backQueryParams]="{ id: editingDriver?.entity_id }"
+    [backQueryParams]="{
+      id: editingDriver?.entity_id,
+      from: route.snapshot.queryParamMap.get('from'),
+      returnUrl: route.snapshot.queryParamMap.get('returnUrl'),
+    }"
     backConfirmTitle="DE_CONFIRM_DISCARD_TITLE"
     backConfirmMessage="DE_CONFIRM_DISCARD_MESSAGE"
     [undoManager]="undoManager"

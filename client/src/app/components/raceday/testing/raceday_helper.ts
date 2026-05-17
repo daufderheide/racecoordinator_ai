@@ -12,6 +12,7 @@ import {
   RaceState,
 } from "@app/proto/antigravity";
 import { IReactionTime } from "@app/services/race-connection.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { MOCK_DRIVERS } from "../../../testing/data/drivers_data";
 import { MOCK_HEATS } from "../../../testing/data/heats_data";
@@ -21,7 +22,6 @@ import {
   MOCK_TRACK_INSTANCES,
   MOCK_TRACKS as _MOCK_TRACKS,
 } from "../../../testing/data/tracks_data";
-
 /**
  * Creates a comprehensive set of mocks for Raceday tests.
  */
@@ -78,7 +78,7 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.getThemes.and.returnValue(of([]));
   mockDataService.getDrivers.and.callFake(() =>
     of(
-      JSON.parse(JSON.stringify(MOCK_DRIVERS)).map((d: any) => ({
+      deepCopy(MOCK_DRIVERS).map((d: any) => ({
         ...d,
         lapAudio: { url: "", type: "none", text: "" },
         bestLapAudio: { url: "", type: "none", text: "" },
@@ -129,19 +129,17 @@ export function createRacedayMocks(overrides: any = {}) {
     "getHeats",
     "getCurrentHeat",
   ]);
-  const mockHeatsWithAudio = JSON.parse(JSON.stringify(MOCK_HEATS)).map(
-    (h: any) => ({
-      ...h,
-      heatDrivers: h.heatDrivers.map((hd: any) => ({
-        ...hd,
-        driver: {
-          ...hd.driver,
-          lapAudio: { url: "", type: "none", text: "" },
-          bestLapAudio: { url: "", type: "none", text: "" },
-        },
-      })),
-    }),
-  );
+  const mockHeatsWithAudio = deepCopy(MOCK_HEATS).map((h: any) => ({
+    ...h,
+    heatDrivers: h.heatDrivers.map((hd: any) => ({
+      ...hd,
+      driver: {
+        ...hd.driver,
+        lapAudio: { url: "", type: "none", text: "" },
+        bestLapAudio: { url: "", type: "none", text: "" },
+      },
+    })),
+  }));
 
   const mockRaceWithTrack = {
     ...MOCK_RACES[0],

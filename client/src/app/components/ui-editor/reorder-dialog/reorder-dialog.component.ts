@@ -28,6 +28,7 @@ import { ColumnPreviewComponent } from "@app/components/ui-editor/column-preview
 import { ColumnVisibility, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 export interface ReorderDialogData {
   availableValues: { key: string; label: string }[];
@@ -114,7 +115,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
         );
 
         const newSlots = data.columnSlots.map((s) => ({ ...s }));
-        const newLayouts = JSON.parse(JSON.stringify(data.columnLayouts || {}));
+        const newLayouts = deepCopy(data.columnLayouts || {});
         const newVisibility = JSON.parse(
           JSON.stringify(data.columnVisibility || {}),
         );
@@ -540,9 +541,9 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
   // Push current state to undo stack
   private pushState() {
     const state = {
-      slots: JSON.parse(JSON.stringify(this.columnSlots)),
-      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
+      slots: deepCopy(this.columnSlots),
+      layouts: deepCopy(this.columnLayouts),
+      visibility: deepCopy(this.columnVisibility),
     };
 
     this.undoStack.push(state);
@@ -562,9 +563,9 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     // Save current state to redo stack
     const currentState = {
-      slots: JSON.parse(JSON.stringify(this.columnSlots)),
-      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
+      slots: deepCopy(this.columnSlots),
+      layouts: deepCopy(this.columnLayouts),
+      visibility: deepCopy(this.columnVisibility),
     };
     this.redoStack.push(currentState);
 
@@ -591,9 +592,9 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     // Save current state to undo stack
     const currentState = {
-      slots: JSON.parse(JSON.stringify(this.columnSlots)),
-      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
+      slots: deepCopy(this.columnSlots),
+      layouts: deepCopy(this.columnLayouts),
+      visibility: deepCopy(this.columnVisibility),
     };
     this.undoStack.push(currentState);
 
@@ -642,7 +643,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       key,
       label: this.getLabel(key),
     }));
-    const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
+    const newLayouts = deepCopy(new Settings().columnLayouts);
     const newVisibility = JSON.parse(
       JSON.stringify(new Settings().columnVisibility),
     );
@@ -688,9 +689,9 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
 
     // Save current state to undo stack before resetting
     const currentState = {
-      slots: JSON.parse(JSON.stringify(this.columnSlots)),
-      layouts: JSON.parse(JSON.stringify(this.columnLayouts)),
-      visibility: JSON.parse(JSON.stringify(this.columnVisibility)),
+      slots: deepCopy(this.columnSlots),
+      layouts: deepCopy(this.columnLayouts),
+      visibility: deepCopy(this.columnVisibility),
     };
     this.undoStack.push(currentState);
 
@@ -742,7 +743,7 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       key,
       label: this.getLabel(key),
     }));
-    const newLayouts = JSON.parse(JSON.stringify(new Settings().columnLayouts));
+    const newLayouts = deepCopy(new Settings().columnLayouts);
     const newVisibility = JSON.parse(
       JSON.stringify(new Settings().columnVisibility),
     );

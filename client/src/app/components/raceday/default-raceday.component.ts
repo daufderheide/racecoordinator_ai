@@ -16,7 +16,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable, Subject, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -352,6 +352,7 @@ export class DefaultRacedayComponent
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
     private logger: LoggerService,
+    private route: ActivatedRoute,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -637,6 +638,17 @@ export class DefaultRacedayComponent
     );
 
     this.subscriptions.push(
+      this.route.queryParams.subscribe((params: any) => {
+        if (params["modifyHeats"] === "true") {
+          setTimeout(() => {
+            this.showModifyHeatsModal = true;
+            this.cdr.detectChanges();
+          });
+        }
+      }),
+    );
+
+    this.subscriptions.push(
       this.raceConnectionService.interfaceEvents$.subscribe((_event) => {
         this.isInterfaceConnected =
           this.raceConnectionService.isInterfaceConnected;
@@ -773,7 +785,18 @@ export class DefaultRacedayComponent
     this.deactivateSubject.next(false);
   }
 
-  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+  canDeactivate(
+    nextState?: RouterStateSnapshot,
+  ): Observable<boolean> | Promise<boolean> | boolean {
+    if (this.showModifyHeatsModal && nextState) {
+      if (
+        nextState.url.includes("/team-manager") ||
+        nextState.url.includes("/driver-manager")
+      ) {
+        return true;
+      }
+    }
+
     this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
     this.exitModalMessage = "RD_CONFIRM_EXIT_MESSAGE";
     this.exitConfirmText = "RD_CONFIRM_EXIT_BTN_LEAVE";
@@ -2716,5 +2739,9 @@ export class DefaultRacedayComponent
     if (saved) {
       this.logger.info("Heats modified and saved.");
     }
+    this.router.navigate([], {
+      queryParams: { modifyHeats: null },
+      queryParamsHandling: "merge",
+    });
   }
 }

@@ -36,9 +36,15 @@ import {
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
 import {} from "@app/proto/message";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 @Component({
   standalone: true,
@@ -84,6 +90,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     lanes: true,
   };
 
+  // Connection Monitoring
+  isConnectionLost = false;
+  private connectionSubscription: Subscription | null = null;
+
   showLedStringDialog = false;
   requestingArduinoIndex = -1;
 
@@ -100,9 +110,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     public translationService: TranslationService,
     private router: Router,
-    private route: ActivatedRoute,
+    protected route: ActivatedRoute,
     private location: Location,
     private helpService: HelpService,
+    private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
   ) {
     this.undoManager = new UndoManager<Track>(
@@ -188,10 +200,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     );
 
     this.dataService.connectToInterfaceDataSocket();
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
+    this.raceConnectionService.connect();
   }
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceConnectionService.disconnect();
+    this.connectionMonitor.stopMonitoring();
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
     this.undoManager.destroy();
     this.dataService.disconnectFromInterfaceDataSocket();
     this.subscriptions.push(
@@ -238,6 +258,32 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     const scaleY = windowHeight / targetHeight;
 
     this.scale = Math.min(scaleX, scaleY);
+  }
+
+  monitorConnection() {
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
+  }
+
+  handleConnectionLoss() {
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
+      }
+
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        this.router.navigate(["/raceday-setup"]);
+      }
+    }, 1000);
   }
 
   onRequestLedStringDialog(index: number) {
@@ -432,7 +478,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
         new Lane(l.entity_id, l.foreground_color, l.background_color, l.length),
     );
     const arduinoCopy = track.arduino_configs
-      ? JSON.parse(JSON.stringify(track.arduino_configs))
+      ? deepCopy(track.arduino_configs)
       : [];
     return new Track(
       track.entity_id,
@@ -448,9 +494,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
     if (!this.editingTrack) {
       return new Track("new", "", 100, [], false);
     }
-    const configs = this.arduinoConfigs
-      ? JSON.parse(JSON.stringify(this.arduinoConfigs))
-      : [];
+    const configs = this.arduinoConfigs ? deepCopy(this.arduinoConfigs) : [];
     return new Track(
       this.editingTrack.entity_id,
       this.trackName,
@@ -1348,7 +1392,11 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   onBack() {
     this.router.navigate(["/track-manager"], {
-      queryParams: { selectedId: this.editingTrack?.entity_id },
+      queryParams: {
+        selectedId: this.editingTrack?.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
     });
   }
 

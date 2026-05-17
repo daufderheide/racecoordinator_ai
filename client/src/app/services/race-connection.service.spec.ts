@@ -101,7 +101,7 @@ describe("RaceConnectionService", () => {
       expect((service as any).startConnection).toHaveBeenCalledTimes(1); // Should still be 1
     });
 
-    it("should call stopConnection when reference count reaches 0", () => {
+    it("should call stopConnection when reference count reaches 0", fakeAsync(() => {
       spyOn<any>(service, "stopConnection").and.callThrough();
 
       service.connect();
@@ -111,8 +111,9 @@ describe("RaceConnectionService", () => {
       expect((service as any).stopConnection).not.toHaveBeenCalled();
 
       service.disconnect();
+      tick(2000); // Wait for delayed disconnection
       expect((service as any).stopConnection).toHaveBeenCalledTimes(1);
-    });
+    }));
   });
 
   describe("Watchdog and Alerts", () => {

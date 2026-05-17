@@ -14,7 +14,11 @@ describe("AudioSetEditorComponent", () => {
   let mockTranslationService: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", ["saveAudioSet"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "saveAudioSet",
+      "updateRaceSubscription",
+    ]);
+    mockDataService.updateRaceSubscription.and.stub();
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);

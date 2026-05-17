@@ -19,6 +19,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { UIEditorComponent } from "./ui-editor.component";
 
@@ -199,7 +200,9 @@ describe("UIEditorComponent", () => {
       "createTheme",
       "deleteTheme",
       "getAssetUrl",
+      "updateRaceSubscription",
     ]);
+    mockDataService.updateRaceSubscription.and.stub();
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     mockThemeService = jasmine.createSpyObj("ThemeService", [
       "getActiveTheme",
@@ -296,7 +299,11 @@ describe("UIEditorComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: LoggerService,
-          useValue: jasmine.createSpyObj("LoggerService", ["error", "info", "warn"]),
+          useValue: jasmine.createSpyObj("LoggerService", [
+            "error",
+            "info",
+            "warn",
+          ]),
         },
       ],
     }).compileComponents();
@@ -350,7 +357,9 @@ describe("UIEditorComponent", () => {
 
   it("should navigate back", () => {
     component.onBack();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: {},
+    });
   });
 
   it("should detect changes via undo manager", fakeAsync(() => {
@@ -1173,7 +1182,7 @@ describe("UIEditorComponent", () => {
           slots: {},
         } as Theme,
       ];
-      component.editingState.themes = JSON.parse(JSON.stringify(themes));
+      component.editingState.themes = deepCopy(themes);
       component.refreshDisplayProperties();
       // Use initialize to clear stacks from previous tests
       component.undoManager.initialize(component.editingState);
@@ -1582,20 +1591,28 @@ describe("UIEditorComponent", () => {
     });
 
     it("should detect a change in fuelGaugeImageSet", () => {
-      const a = makeSettings({ fuelGaugeImageSet: "default_fuel-gauge-builtin" });
+      const a = makeSettings({
+        fuelGaugeImageSet: "default_fuel-gauge-builtin",
+      });
       const b = makeSettings({ fuelGaugeImageSet: "custom-gauge-set" });
       expect((component as any).areSettingsEqual(a, b)).toBeFalse();
     });
 
     it("should detect a change in columnAnchors", () => {
       const a = makeSettings({ columnAnchors: {} });
-      const b = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
+      const b = makeSettings({
+        columnAnchors: { lapCount: AnchorPoint.CenterCenter },
+      });
       expect((component as any).areSettingsEqual(a, b)).toBeFalse();
     });
 
     it("should report equal when columnAnchors has the same keys and values", () => {
-      const a = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
-      const b = makeSettings({ columnAnchors: { lapCount: AnchorPoint.CenterCenter } });
+      const a = makeSettings({
+        columnAnchors: { lapCount: AnchorPoint.CenterCenter },
+      });
+      const b = makeSettings({
+        columnAnchors: { lapCount: AnchorPoint.CenterCenter },
+      });
       expect((component as any).areSettingsEqual(a, b)).toBeTrue();
     });
   });
@@ -1621,7 +1638,8 @@ describe("UIEditorComponent", () => {
 
       // Force hasChanges() to be true by manipulating the undo manager baseline
       component.undoManager.initialize(component.editingState);
-      component.editingSettings.sortByStandings = !component.editingSettings.sortByStandings;
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
       component.captureState();
       tick();
 
@@ -1640,7 +1658,12 @@ describe("UIEditorComponent", () => {
       (component as any).isSaving = false;
 
       // Add a non-default theme so updateTheme is called
-      const customTheme = { entity_id: "t2", is_default: false, name: "Custom", slots: {} } as Theme;
+      const customTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Custom",
+        slots: {},
+      } as Theme;
       component.editingState.themes = [customTheme];
       component.refreshDisplayProperties();
 
@@ -1676,7 +1699,8 @@ describe("UIEditorComponent", () => {
 
       // Dirty the state
       component.undoManager.initialize(component.editingState);
-      component.editingSettings.sortByStandings = !component.editingSettings.sortByStandings;
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
       component.captureState();
       tick();
 
@@ -1697,7 +1721,12 @@ describe("UIEditorComponent", () => {
       (component as any).isSaving = false;
 
       // Add non-default theme so updateTheme is called
-      const customTheme = { entity_id: "t2", is_default: false, name: "Custom", slots: {} } as Theme;
+      const customTheme = {
+        entity_id: "t2",
+        is_default: false,
+        name: "Custom",
+        slots: {},
+      } as Theme;
       component.editingState.themes = [customTheme];
       component.refreshDisplayProperties();
 

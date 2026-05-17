@@ -233,6 +233,13 @@ export function getModifyHeatsValidationError(
   for (const originalH of originalHeats) {
     if (isHeatStarted(originalH)) {
       for (const dhd of originalH.heatDrivers) {
+        // Skip empty lanes
+        if (
+          !dhd.participant ||
+          dhd.participant.driver.objectId === "EMPTY_LANE"
+        ) {
+          continue;
+        }
         const stillInRace = localParticipants.some(
           (p) => p.objectId === dhd.participant.objectId,
         );

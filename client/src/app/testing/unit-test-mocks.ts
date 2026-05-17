@@ -1,4 +1,5 @@
 import { of, Subject } from "rxjs";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { Settings } from "../models/settings";
 import { MOCK_DRIVERS } from "./data/drivers_data";
@@ -12,13 +13,13 @@ export const mockDataService = {
   renameAsset: jasmine.createSpy("renameAsset").and.returnValue(of(true)),
   getDrivers: jasmine
     .createSpy("getDrivers")
-    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_DRIVERS)))),
+    .and.callFake(() => of(deepCopy(MOCK_DRIVERS))),
   getTeams: jasmine
     .createSpy("getTeams")
-    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_TEAMS)))),
+    .and.callFake(() => of(deepCopy(MOCK_TEAMS))),
   getRaces: jasmine
     .createSpy("getRaces")
-    .and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_RACES)))),
+    .and.callFake(() => of(deepCopy(MOCK_RACES))),
   createTeam: jasmine
     .createSpy("createTeam")
     .and.returnValue(of({ entity_id: "new_t" })),
@@ -34,9 +35,6 @@ export const mockDataService = {
     .createSpy("getServerVersion")
     .and.returnValue(of("1.0.0")),
   connectToRaceDataSocket: jasmine.createSpy("connectToRaceDataSocket"),
-  getRaceUpdate: jasmine
-    .createSpy("getRaceUpdate")
-    .and.returnValue(new Subject().asObservable()),
   getServerAnalyticsConfig: jasmine
     .createSpy("getServerAnalyticsConfig")
     .and.returnValue(of({ measurementId: "G-TEST", clientId: "test-client" })),
@@ -60,11 +58,51 @@ export const mockDataService = {
   importDatabase: jasmine
     .createSpy("importDatabase")
     .and.returnValue(of({ success: true })),
-  getRecordData: jasmine.createSpy("getRecordData").and.returnValue(of(null)),
   getTracks: jasmine.createSpy("getTracks").and.returnValue(of([])),
   saveCustomRotation: jasmine
     .createSpy("saveCustomRotation")
     .and.returnValue(of({})),
+  updateRaceSubscription: jasmine.createSpy("updateRaceSubscription"),
+  connectToInterfaceDataSocket: jasmine.createSpy(
+    "connectToInterfaceDataSocket",
+  ),
+  disconnectFromInterfaceDataSocket: jasmine.createSpy(
+    "disconnectFromInterfaceDataSocket",
+  ),
+  getRaceUpdate: jasmine
+    .createSpy("getRaceUpdate")
+    .and.returnValue(new Subject().asObservable()),
+  getRaceTime: jasmine
+    .createSpy("getRaceTime")
+    .and.returnValue(new Subject().asObservable()),
+  getLaps: jasmine
+    .createSpy("getLaps")
+    .and.returnValue(new Subject().asObservable()),
+  getCarData: jasmine
+    .createSpy("getCarData")
+    .and.returnValue(new Subject().asObservable()),
+  getSegments: jasmine
+    .createSpy("getSegments")
+    .and.returnValue(new Subject().asObservable()),
+  getStandingsUpdate: jasmine
+    .createSpy("getStandingsUpdate")
+    .and.returnValue(new Subject().asObservable()),
+  getOverallStandingsUpdate: jasmine
+    .createSpy("getOverallStandingsUpdate")
+    .and.returnValue(new Subject().asObservable()),
+  getInterfaceEvents: jasmine
+    .createSpy("getInterfaceEvents")
+    .and.returnValue(new Subject().asObservable()),
+  getRaceState: jasmine
+    .createSpy("getRaceState")
+    .and.returnValue(new Subject().asObservable()),
+  getRaceFlag: jasmine
+    .createSpy("getRaceFlag")
+    .and.returnValue(new Subject().asObservable()),
+  getHeats: jasmine
+    .createSpy("getHeats")
+    .and.returnValue(new Subject().asObservable()),
+  getRecordData: jasmine.createSpy("getRecordData").and.returnValue(of(null)),
   serverUrl: "http://localhost:7070",
 };
 
@@ -148,22 +186,35 @@ export function resetMocks() {
   });
 
   // Restore default behaviors for mockDataService
-  mockDataService.getDrivers.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_DRIVERS))),
-  );
-  mockDataService.getTeams.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_TEAMS))),
-  );
-  mockDataService.getRaces.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_RACES))),
-  );
+  mockDataService.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
+  mockDataService.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
+  mockDataService.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getDatabases.and.returnValue(of([]));
   mockDataService.connectToRaceDataSocket.and.stub();
   mockDataService.getRaceUpdate.and.returnValue(new Subject().asObservable());
+  mockDataService.getRaceTime.and.returnValue(new Subject().asObservable());
+  mockDataService.getLaps.and.returnValue(new Subject().asObservable());
+  mockDataService.getCarData.and.returnValue(new Subject().asObservable());
+  mockDataService.getSegments.and.returnValue(new Subject().asObservable());
+  mockDataService.getStandingsUpdate.and.returnValue(
+    new Subject().asObservable(),
+  );
+  mockDataService.getOverallStandingsUpdate.and.returnValue(
+    new Subject().asObservable(),
+  );
+  mockDataService.getInterfaceEvents.and.returnValue(
+    new Subject().asObservable(),
+  );
+  mockDataService.getRaceState.and.returnValue(new Subject().asObservable());
+  mockDataService.getRaceFlag.and.returnValue(new Subject().asObservable());
+  mockDataService.getHeats.and.returnValue(new Subject().asObservable());
   mockDataService.getRecordData.and.returnValue(of(null));
   mockDataService.getTracks.and.returnValue(of([]));
   mockDataService.saveCustomRotation.and.returnValue(of({}));
+  mockDataService.updateRaceSubscription.and.stub();
+  mockDataService.connectToInterfaceDataSocket.and.stub();
+  mockDataService.disconnectFromInterfaceDataSocket.and.stub();
 
   // Restore default behaviors for mockTranslationService
   mockTranslationService.translate.and.callFake((key: string) => key);

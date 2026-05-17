@@ -13,6 +13,8 @@
 >
   <app-manager-header
     [title]="'TMM_HEADER_TEAMS'"
+    [backTargetUrl]="backTargetUrl()"
+    [backQueryParams]="backQueryParams()"
     [showActions]="true"
     [showEdit]="selectedTeam != null"
     [showDelete]="selectedTeam != null"

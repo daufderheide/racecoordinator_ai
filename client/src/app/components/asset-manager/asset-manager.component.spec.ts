@@ -16,6 +16,7 @@ import {
   ConnectionState,
 } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -37,6 +38,7 @@ class MockTranslatePipe implements PipeTransform {
 }
 
 import { MOCK_ASSETS } from "@app/testing/data/assets_data";
+import { deepCopy } from "@app/utils/clone.utils";
 
 describe("AssetManagerComponent", () => {
   let component: AssetManagerComponent;
@@ -45,9 +47,17 @@ describe("AssetManagerComponent", () => {
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let _mockHelpService: jasmine.SpyObj<HelpService>;
-  const mockActivatedRoute = { queryParams: of({ help: "false" }) };
+  let mockActivatedRoute: any;
 
   beforeEach(async () => {
+    mockActivatedRoute = {
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
+      queryParams: of({ help: "false" }),
+    };
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
@@ -62,6 +72,11 @@ describe("AssetManagerComponent", () => {
       get: () => connectionStateSubject.asObservable(),
     });
     mockConnectionMonitor.checkConnection.and.returnValue(of(true));
+
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
 
     await TestBed.configureTestingModule({
       imports: [FormsModule, AssetManagerComponent, MockTranslatePipe],
@@ -81,6 +96,7 @@ describe("AssetManagerComponent", () => {
         },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -109,7 +125,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should filter assets by type", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
 
     component.setFilterType("image");
     expect(component.filterType).toBe("image");
@@ -134,7 +150,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should exclude image_sets when filtering by image", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
 
     component.setFilterType("image");
     expect(component.filteredAssets.length).toBe(4);
@@ -145,7 +161,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should filter assets by name", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
 
     component.filterName = "Red";
     expect(component.filteredAssets.length).toBe(2);
@@ -185,7 +201,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should rename an asset", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
     const asset = component.assets[0];
 
     // Start editing
@@ -201,7 +217,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should cycle preview index for image sets", fakeAsync(() => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
     const imageSet = component.assets.find((a) => a.type === "image_set");
 
     // Trigger preview cycling
@@ -250,7 +266,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should select range with Shift key", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
 
     // First click (single)
     const event1 = new MouseEvent("click");
@@ -297,7 +313,7 @@ describe("AssetManagerComponent", () => {
   });
 
   it("should return correct selectedAssets", () => {
-    component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+    component.assets = deepCopy(MOCK_ASSETS);
     component.assets[0].selected = true;
     expect(component.selectedAssets.length).toBe(1);
     expect(component.selectedAssets[0].id).toBe("a1");
@@ -476,7 +492,7 @@ describe("AssetManagerComponent", () => {
       expect(component.customRotationCount).toBe(1);
     });
     it("should filter custom rotations correctly", () => {
-      component.assets = JSON.parse(JSON.stringify(MOCK_ASSETS));
+      component.assets = deepCopy(MOCK_ASSETS);
       const customRotationId = "cr1";
 
       // Select Audio Sets filter

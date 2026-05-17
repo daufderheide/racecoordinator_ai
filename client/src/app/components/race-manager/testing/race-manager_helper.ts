@@ -1,6 +1,7 @@
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { MOCK_RACES } from "@app/testing/data/races_data";
 import { MOCK_TRACKS } from "@app/testing/data/tracks_data";
+import { deepCopy } from "@app/utils/clone.utils";
 
 /**
  * RaceManagerHelper centralizes mock data and service behaviors for race-related components.
@@ -52,12 +53,40 @@ export function createRaceManagerDataServiceMock(): any {
     "generateHeats",
     "previewHeats",
     "listAssets", // Added for image set editing
+    "updateRaceSubscription",
+    "connectToInterfaceDataSocket",
+    "disconnectFromInterfaceDataSocket",
+    "getRaceUpdate",
+    "getRaceTime",
+    "getLaps",
+    "getCarData",
+    "getSegments",
+    "getStandingsUpdate",
+    "getOverallStandingsUpdate",
+    "getInterfaceEvents",
+    "getRaceState",
+    "getRaceFlag",
+    "getHeats",
+    "getRecordData",
   ]);
+  mock.updateRaceSubscription.and.stub();
+  mock.connectToInterfaceDataSocket.and.stub();
+  mock.disconnectFromInterfaceDataSocket.and.stub();
+  mock.getRaceUpdate.and.returnValue(new Subject().asObservable());
+  mock.getRaceTime.and.returnValue(new Subject().asObservable());
+  mock.getLaps.and.returnValue(new Subject().asObservable());
+  mock.getCarData.and.returnValue(new Subject().asObservable());
+  mock.getSegments.and.returnValue(new Subject().asObservable());
+  mock.getStandingsUpdate.and.returnValue(new Subject().asObservable());
+  mock.getOverallStandingsUpdate.and.returnValue(new Subject().asObservable());
+  mock.getInterfaceEvents.and.returnValue(new Subject().asObservable());
+  mock.getRaceState.and.returnValue(new Subject().asObservable());
+  mock.getRaceFlag.and.returnValue(new Subject().asObservable());
+  mock.getHeats.and.returnValue(new Subject().asObservable());
+  mock.getRecordData.and.returnValue(of(null));
 
-  mock.getRaces.and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_RACES))));
-  mock.getTracks.and.callFake(() =>
-    of(JSON.parse(JSON.stringify(MOCK_TRACKS))),
-  );
+  mock.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
+  mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACKS)));
   mock.createRace.and.returnValue(of({ entity_id: "r-new" }));
   mock.updateRace.and.returnValue(of({ entity_id: "r1" }));
   mock.deleteRace.and.returnValue(of({}));

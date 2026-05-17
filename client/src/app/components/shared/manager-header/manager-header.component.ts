@@ -17,6 +17,7 @@ export class ManagerHeaderComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   title = input("");
   backTargetUrl = input("/raceday-setup");
+  backQueryParams = input<any>({});
   showActions = input(true);
   showAdd = input(true);
   showEdit = input(true);

@@ -13,6 +13,8 @@
 >
   <app-manager-header
     [title]="'RM_TITLE'"
+    [backTargetUrl]="backTargetUrl()"
+    [backQueryParams]="backQueryParams()"
     [showActions]="true"
     [showEdit]="selectedRace != null"
     [showDelete]="selectedRace != null"

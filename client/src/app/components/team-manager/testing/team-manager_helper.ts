@@ -1,6 +1,7 @@
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { MOCK_DRIVERS } from "@app/testing/data/drivers_data";
 import { MOCK_TEAMS } from "@app/testing/data/teams_data";
+import { deepCopy } from "@app/utils/clone.utils";
 
 /**
  * Shared test helper for TeamManager and TeamEditor.
@@ -18,12 +19,40 @@ export class TeamManagerHelper {
       "updateTeam",
       "createTeam",
       "listAssets",
+      "updateRaceSubscription",
+      "connectToInterfaceDataSocket",
+      "disconnectFromInterfaceDataSocket",
+      "getRaceUpdate",
+      "getRaceTime",
+      "getLaps",
+      "getCarData",
+      "getSegments",
+      "getStandingsUpdate",
+      "getOverallStandingsUpdate",
+      "getInterfaceEvents",
+      "getRaceState",
+      "getRaceFlag",
+      "getHeats",
+      "getRecordData",
     ]);
+    spy.updateRaceSubscription.and.stub();
+    spy.connectToInterfaceDataSocket.and.stub();
+    spy.disconnectFromInterfaceDataSocket.and.stub();
+    spy.getRaceUpdate.and.returnValue(new Subject().asObservable());
+    spy.getRaceTime.and.returnValue(new Subject().asObservable());
+    spy.getLaps.and.returnValue(new Subject().asObservable());
+    spy.getCarData.and.returnValue(new Subject().asObservable());
+    spy.getSegments.and.returnValue(new Subject().asObservable());
+    spy.getStandingsUpdate.and.returnValue(new Subject().asObservable());
+    spy.getOverallStandingsUpdate.and.returnValue(new Subject().asObservable());
+    spy.getInterfaceEvents.and.returnValue(new Subject().asObservable());
+    spy.getRaceState.and.returnValue(new Subject().asObservable());
+    spy.getRaceFlag.and.returnValue(new Subject().asObservable());
+    spy.getHeats.and.returnValue(new Subject().asObservable());
+    spy.getRecordData.and.returnValue(of(null));
 
-    spy.getTeams.and.callFake(() => of(JSON.parse(JSON.stringify(MOCK_TEAMS))));
-    spy.getDrivers.and.callFake(() =>
-      of(JSON.parse(JSON.stringify(MOCK_DRIVERS))),
-    );
+    spy.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
+    spy.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
     spy.deleteTeam.and.returnValue(of({ success: true }));
     spy.updateTeam.and.callFake((id: string, team: any) => of(team));
     spy.createTeam.and.callFake((team: any) =>

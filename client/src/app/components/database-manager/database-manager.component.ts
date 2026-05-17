@@ -2,18 +2,28 @@ import { DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
+  inject,
+  OnDestroy,
   OnInit,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin } from "rxjs";
+import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 
 @Component({
@@ -30,12 +40,35 @@ import { SettingsService } from "@app/services/settings.service";
     TranslatePipe,
   ],
 })
-export class DatabaseManagerComponent implements OnInit {
+export class DatabaseManagerComponent implements OnInit, OnDestroy {
   databases: any[] = [];
   selectedDatabase: any = null;
   currentDatabaseName: string = "";
   loading = false;
   scale: number = 1;
+  private route = inject(ActivatedRoute);
+  private params = toSignal(this.route.queryParams);
+
+  backTargetUrl = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const returnUrl =
+      p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "modify-heats") {
+      return returnUrl || "/default-raceday";
+    }
+    return "/raceday-setup";
+  });
+
+  backQueryParams = computed(() => {
+    const p = this.params();
+    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    return from === "modify-heats" ? { modifyHeats: "true" } : {};
+  });
+
+  // Connection Monitoring
+  isConnectionLost = false;
+  private connectionSubscription: Subscription | null = null;
 
   // Modal State
   showConfirmModal = false;
@@ -61,12 +94,25 @@ export class DatabaseManagerComponent implements OnInit {
     private settingsService: SettingsService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private connectionMonitor: ConnectionMonitorService,
+    private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
   ) {}
 
   ngOnInit(): void {
     this.updateScale();
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
     this.initialLoad();
+    this.raceConnectionService.connect();
+  }
+
+  ngOnDestroy(): void {
+    this.raceConnectionService.disconnect();
+    this.connectionMonitor.stopMonitoring();
+    if (this.connectionSubscription) {
+      this.connectionSubscription.unsubscribe();
+    }
   }
 
   @HostListener("window:resize")
@@ -155,6 +201,30 @@ export class DatabaseManagerComponent implements OnInit {
 
   selectDatabase(db: any) {
     this.selectedDatabase = db;
+  }
+
+  monitorConnection() {
+    this.connectionSubscription =
+      this.connectionMonitor.connectionState$.subscribe((state) => {
+        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
+        if (this.isConnectionLost) {
+          this.handleConnectionLoss();
+        }
+      });
+  }
+
+  handleConnectionLoss() {
+    let startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!this.isConnectionLost) {
+        clearInterval(intervalId);
+        return;
+      }
+      if (Date.now() - startTime > 5000) {
+        clearInterval(intervalId);
+        this.router.navigate(["/raceday-setup"]);
+      }
+    }, 1000);
   }
 
   useDatabase() {
@@ -393,10 +463,6 @@ export class DatabaseManagerComponent implements OnInit {
     return !this.databases.find(
       (db) => db.name.toLowerCase() === name.toLowerCase(),
     );
-  }
-
-  onBack() {
-    this.router.navigate(["/raceday-setup"]);
   }
 
   // Modal Helpers

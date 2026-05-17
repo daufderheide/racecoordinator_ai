@@ -8,10 +8,12 @@ import {
   OnDestroy,
   OnInit,
   output,
+  signal,
 } from "@angular/core";
 import { HostListener } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { finalize, Subscription } from "rxjs";
+import { Router } from "@angular/router";
+import { finalize, forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
@@ -31,6 +33,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IHeat, IRaceParticipant, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
@@ -88,14 +91,17 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
   protected hasUnsavedChanges = false;
   protected showExitConfirmation = false;
-  protected errorMessage?: string;
+  protected errorMessage = signal<string | undefined>(undefined);
   protected scale = 1;
   private isRecovering = false;
   protected hoveredHeatIdx = -1;
   protected isDraggingHeat = false;
   protected allTeams: Team[] = [];
+  protected isLoading = false;
 
   private translationService = inject(TranslationService);
+  private router = inject(Router);
+  private logger = inject(LoggerService);
 
   // Acknowledgement modal properties
   protected showAckModal = false;
@@ -200,18 +206,28 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   ngOnInit() {
     (window as any).tempModifyHeats = this;
     this.updateScale();
-    // Deep clone heats to avoid modifying original state until saved
+
+    this.isLoading = true;
     this.localHeats = this.heats().map((h) => cloneHeat(h));
     this.localParticipants = [...this.participants()];
 
-    this.undoManager.initialize({
-      heats: this.localHeats,
-      participants: this.localParticipants,
-    });
+    const savedState = this.modifyHeatsService.restoreState();
+    if (savedState) {
+      this.localHeats = savedState.heats;
+      this.localParticipants = savedState.participants;
+      this.undoManager.clearRedo();
+      // We don't want to capture the initial state if we just restored it,
+      // as it might be 'dirty' relative to the server but it's what the user wants.
+      this.undoManager.captureState();
+      this.hasUnsavedChanges = true;
+    }
 
-    this.dataService.getDrivers().subscribe({
-      next: (drivers) => {
-        this.allDrivers = (drivers as any[]).map(
+    forkJoin({
+      drivers: this.dataService.getDrivers(),
+      teams: this.dataService.getTeams(),
+    }).subscribe({
+      next: (result: any) => {
+        this.allDrivers = (result.drivers as any[]).map(
           (d) =>
             new Driver(
               d.entity_id || d.entityId || d.id || "",
@@ -223,18 +239,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
               d.penaltyAudio,
             ),
         );
-        this.updateDriverPool();
-        this.updateDatabaseParticipants();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error("Failed to fetch drivers", err);
-      },
-    });
-
-    this.dataService.getTeams().subscribe({
-      next: (teams) => {
-        this.allTeams = (teams as any[]).map(
+        this.allTeams = (result.teams as any[]).map(
           (t) =>
             new Team(
               t.entity_id || t.entityId || "",
@@ -243,16 +248,25 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
               t.driver_ids || t.driverIds || [],
             ),
         );
-        this.updateDatabaseParticipants();
-        this.updateDriverPool();
+
+        if (!savedState) {
+          this.initializeState();
+        } else {
+          this.updateDatabaseParticipants();
+          this.updateDriverPool();
+        }
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error("Failed to fetch teams", err);
+      error: (err: any) => {
+        this.logger.error("Failed to load database items", err);
+        if (!savedState) {
+          this.initializeState();
+        }
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
     });
-
-    this.updateDropListConnections();
 
     this.subscriptions.push(
       this.undoManager.stateCommitted$.subscribe((event) => {
@@ -261,10 +275,23 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
           (event.type === "undo" || event.type === "redo")
         ) {
           this.autoSave(event.type);
+          this.cdr.detectChanges();
         }
       }),
     );
 
+    this.updateDropListConnections();
+  }
+
+  private initializeState() {
+    // Deep clone heats to avoid modifying original state until saved
+    this.localHeats = this.heats().map((h) => cloneHeat(h));
+    this.localParticipants = [...this.participants()];
+
+    this.undoManager.initialize({
+      heats: this.localHeats,
+      participants: this.localParticipants,
+    });
     this.updateDatabaseParticipants();
     this.updateDriverPool();
   }
@@ -514,7 +541,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected onRegenerateHeats() {
     this.savingCount++;
     this.cdr.detectChanges();
-    this.errorMessage = undefined;
+    this.errorMessage.set(undefined);
     try {
       // Convert local participants to Proto IRaceParticipant[], filtering out empty drivers
       const protoParticipants: IRaceParticipant[] = convertParticipantsToProto(
@@ -542,18 +569,19 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
               this.undoManager.captureState();
               this.autoSave();
             } else {
-              this.errorMessage =
+              this.errorMessage.set(
                 res.errorMessage ||
-                "Failed to regenerate heats. Please try again.";
+                  "Failed to regenerate heats. Please try again.",
+              );
               this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-              this.ackModalMessage = this.errorMessage || "";
+              this.ackModalMessage = this.errorMessage() || "";
               this.showAckModal = true;
             }
           },
           error: (err) => {
-            this.errorMessage = "Server error: " + err.message;
+            this.errorMessage.set("Server error: " + err.message);
             this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-            this.ackModalMessage = this.errorMessage || "";
+            this.ackModalMessage = this.errorMessage() || "";
             this.showAckModal = true;
           },
         });
@@ -588,11 +616,27 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected onBack() {
-    if (this.hasUnsavedChanges || this.isSaving) {
+    if (this.undoManager.hasChanges()) {
       this.showExitConfirmation = true;
     } else {
       this.close.emit(true);
     }
+  }
+
+  onManageTeams() {
+    this.modifyHeatsService.saveState(this.localHeats, this.localParticipants);
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/team-manager"], {
+      queryParams: { from: "modify-heats", returnUrl },
+    });
+  }
+
+  onManageDrivers() {
+    this.modifyHeatsService.saveState(this.localHeats, this.localParticipants);
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/driver-manager"], {
+      queryParams: { from: "modify-heats", returnUrl },
+    });
   }
 
   protected onExitConfirm() {
@@ -610,7 +654,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   ) {
     const validationError = this.getValidationError();
     if (validationError) {
-      this.errorMessage = validationError;
+      this.errorMessage.set(validationError);
 
       if (triggeredBy === "push" && !isGroupChange) {
         // Revert invalid non-group change
@@ -625,7 +669,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       // If invalid, it returns BEFORE incrementing savingCount.
       return;
     }
-    this.errorMessage = undefined;
+    this.errorMessage.set(undefined);
 
     this.savingCount++;
     this.cdr.detectChanges();

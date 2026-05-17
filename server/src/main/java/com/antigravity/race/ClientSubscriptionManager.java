@@ -116,6 +116,7 @@ public class ClientSubscriptionManager {
 
   public void addSession(WsContext ctx) {
     sessions.add(ctx);
+    cancelPendingCleanup();
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
@@ -148,6 +149,7 @@ public class ClientSubscriptionManager {
     logger.debug("New Interface WebSocket session added: {}", System.identityHashCode(ctx));
     sessions.add(ctx);
     interfaceSubscribers.add(ctx);
+    cancelPendingCleanup();
     logger.info(
         "New Interface WebSocket session added. Total sessions: {}, Interface Subscribers: {}",
         sessions.size(),
@@ -162,6 +164,7 @@ public class ClientSubscriptionManager {
         sessions.size(),
         interfaceSubscribers.size());
     checkAndCloseProtocol();
+    checkAndStopRace();
   }
 
   private synchronized void checkAndCloseProtocol() {
@@ -202,7 +205,7 @@ public class ClientSubscriptionManager {
   }
 
   private synchronized void checkAndStopRace() {
-    if (currentRace != null && raceDataSubscribers.isEmpty()) {
+    if (currentRace != null && sessions.isEmpty()) {
       if (!isShuttingDown) {
         // If there are NO sessions at all (not even splash screen), we should stop quickly
         long gracePeriod =

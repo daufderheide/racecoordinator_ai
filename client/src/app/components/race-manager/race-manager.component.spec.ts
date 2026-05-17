@@ -11,6 +11,7 @@ import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -28,6 +29,7 @@ import {
   mockTranslationService,
   resetMocks,
 } from "@app/testing/unit-test-mocks";
+import { deepCopy } from "@app/utils/clone.utils";
 
 import { RaceManagerComponent } from "./race-manager.component";
 import { createRaceManagerDataServiceMock } from "./testing/race-manager_helper";
@@ -56,6 +58,11 @@ describe("RaceManagerComponent", () => {
       queryParams: of({ help: "false" }),
     };
 
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
+
     TestBed.configureTestingModule({
       imports: [FormsModule, RaceManagerComponent, TranslatePipe],
       providers: [
@@ -64,6 +71,7 @@ describe("RaceManagerComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         {
           provide: HelpService,
           useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
@@ -86,18 +94,14 @@ describe("RaceManagerComponent", () => {
     _activatedRoute = TestBed.inject(ActivatedRoute);
 
     // Standardize races as class instances for all tests
-    component.races = JSON.parse(JSON.stringify(MOCK_RACE_INSTANCES)).map(
-      (r: any) => {
-        Object.setPrototypeOf(r, Race.prototype);
-        return r;
-      },
-    );
-    component.tracks = JSON.parse(JSON.stringify(MOCK_TRACK_INSTANCES)).map(
-      (t: any) => {
-        Object.setPrototypeOf(t, Track.prototype);
-        return t;
-      },
-    );
+    component.races = deepCopy(MOCK_RACE_INSTANCES).map((r: any) => {
+      Object.setPrototypeOf(r, Race.prototype);
+      return r;
+    });
+    component.tracks = deepCopy(MOCK_TRACK_INSTANCES).map((t: any) => {
+      Object.setPrototypeOf(t, Track.prototype);
+      return t;
+    });
     fixture.detectChanges();
   });
 
@@ -157,7 +161,33 @@ describe("RaceManagerComponent", () => {
     component.updateRace();
 
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
-      queryParams: { id: "1", driverCount: 4 },
+      queryParams: {
+        id: "1",
+        driverCount: 4,
+        from: null,
+        returnUrl: null,
+      },
+    });
+  });
+
+  it("should propagate 'from' and 'returnUrl' when navigating to editor", () => {
+    _activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "from") return "modify-heats";
+      if (key === "returnUrl") return "/default-raceday";
+      return null;
+    });
+
+    component.selectedRace = { entity_id: "1" };
+    component.driverCount = 4;
+    component.updateRace();
+
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+      queryParams: {
+        id: "1",
+        driverCount: 4,
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
     });
   });
 
@@ -197,7 +227,34 @@ describe("RaceManagerComponent", () => {
 
       expect(dataService.createRace).toHaveBeenCalled();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
-        queryParams: { id: "r-new", driverCount: component.driverCount },
+        queryParams: {
+          id: "r-new",
+          driverCount: component.driverCount,
+          from: null,
+          returnUrl: null,
+        },
+      });
+    });
+
+    it("should propagate 'from' and 'returnUrl' during creation", () => {
+      _activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "from") return "modify-heats";
+        if (key === "returnUrl") return "/default-raceday";
+        return null;
+      });
+
+      const createdRace = { entity_id: "r-new" };
+      dataService.createRace.and.returnValue(of(createdRace));
+
+      component.createNewRace();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: {
+          id: "r-new",
+          driverCount: component.driverCount,
+          from: "modify-heats",
+          returnUrl: "/default-raceday",
+        },
       });
     });
 

@@ -179,7 +179,10 @@ describe("DriverEditorComponent", () => {
     mockActivatedRoute = {
       snapshot: {
         queryParamMap: {
-          get: jasmine.createSpy("get").and.returnValue("new"),
+          get: jasmine.createSpy("get").and.callFake((key: string) => {
+            if (key === "id") return "new";
+            return null;
+          }),
         },
       },
       queryParams: of({ help: "false" }),
@@ -341,7 +344,31 @@ describe("DriverEditorComponent", () => {
 
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
     expect(router.navigate).toHaveBeenCalledWith(["/driver-manager"], {
-      queryParams: { id: "d1" },
+      queryParams: { id: "d1", from: null, returnUrl: null },
+    });
+  });
+
+  it("should propagate 'from' and 'returnUrl' when navigating back", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+      (key: string) => {
+        if (key === "from") return "modify-heats";
+        if (key === "returnUrl") return "/default-raceday";
+        if (key === "id") return "d1";
+        return null;
+      },
+    );
+
+    const driver = new Driver("d1", "Test", "");
+    setupDriver(driver);
+
+    component.onBack();
+
+    expect(router.navigate).toHaveBeenCalledWith(["/driver-manager"], {
+      queryParams: {
+        id: "d1",
+        from: "modify-heats",
+        returnUrl: "/default-raceday",
+      },
     });
   });
 

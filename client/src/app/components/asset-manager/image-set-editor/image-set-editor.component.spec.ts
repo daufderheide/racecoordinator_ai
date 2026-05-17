@@ -41,7 +41,11 @@ describe("ImageSetEditorComponent", () => {
   let mockTranslationService: any;
 
   beforeEach(async () => {
-    mockDataService = jasmine.createSpyObj("DataService", ["saveImageSet"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "saveImageSet",
+      "updateRaceSubscription",
+    ]);
+    mockDataService.updateRaceSubscription.and.stub();
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
