@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -12,6 +13,7 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
@@ -642,5 +644,97 @@ public class RacingTest {
         racing.getLaneFlagType(realRace, 0) == com.antigravity.proto.RaceFlag.GREEN);
 
     realRace.stop();
+  }
+
+  @Test
+  public void testLapTimesAfterPause() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race spyRace = spy(race);
+
+    List<PartialTime> mockPartials =
+        Arrays.asList(new PartialTime(0, 2.5, 0.0), new PartialTime(1, 3.1, 0.0));
+    doReturn(mockPartials).when(spyRace).stopProtocols();
+
+    spyRace.changeState(racing);
+
+    // Complete reaction times first
+    racing.onLap(0, 1.0, 1, false);
+    racing.onLap(1, 1.2, 1, false);
+
+    // Pause the race
+    racing.pause(spyRace);
+
+    // Verify pending lap times are updated with partial times
+    assertEquals(2.5, spyRace.getCurrentHeat().getDrivers().get(0).getPendingLapTime(), 0.001);
+    assertEquals(3.1, spyRace.getCurrentHeat().getDrivers().get(1).getPendingLapTime(), 0.001);
+
+    // Resume the race
+    spyRace.changeState(racing);
+
+    // Trigger next lap
+    racing.onLap(0, 1.5, 1, false);
+    racing.onLap(1, 2.0, 1, false);
+
+    // Verify final lap times are partial + elapsed since resume + reaction time (for the very first
+    // lap)
+    assertEquals(
+        5.0, spyRace.getCurrentHeat().getDrivers().get(0).getLaps().get(0).getLapTime(), 0.001);
+    assertEquals(
+        6.3, spyRace.getCurrentHeat().getDrivers().get(1).getLaps().get(0).getLapTime(), 0.001);
+
+    // Verify pending lap times are reset
+    assertEquals(0.0, spyRace.getCurrentHeat().getDrivers().get(0).getPendingLapTime(), 0.001);
+    assertEquals(0.0, spyRace.getCurrentHeat().getDrivers().get(1).getPendingLapTime(), 0.001);
+
+    // Trigger a second lap to verify reaction time and pending lap time are no longer added
+    racing.onLap(0, 3.0, 1, false);
+    racing.onLap(1, 3.5, 1, false);
+
+    assertEquals(
+        3.0, spyRace.getCurrentHeat().getDrivers().get(0).getLaps().get(1).getLapTime(), 0.001);
+    assertEquals(
+        3.5, spyRace.getCurrentHeat().getDrivers().get(1).getLaps().get(1).getLapTime(), 0.001);
+
+    spyRace.stop();
+  }
+
+  @Test
+  public void testLapTimesAfterPause_DuringReactionTime() {
+    Racing racing = new Racing();
+    com.antigravity.race.Race spyRace = spy(race);
+
+    List<PartialTime> mockPartials =
+        Arrays.asList(new PartialTime(0, 0.5, 0.0), new PartialTime(1, 0.6, 0.0));
+    doReturn(mockPartials).when(spyRace).stopProtocols();
+
+    spyRace.changeState(racing);
+
+    // Pause immediately during reaction time
+    racing.pause(spyRace);
+
+    // Verify pending lap times are updated
+    assertEquals(0.5, spyRace.getCurrentHeat().getDrivers().get(0).getPendingLapTime(), 0.001);
+    assertEquals(0.6, spyRace.getCurrentHeat().getDrivers().get(1).getPendingLapTime(), 0.001);
+
+    // Resume
+    spyRace.changeState(racing);
+
+    // Complete reaction lap
+    racing.onLap(0, 0.8, 1, false);
+    racing.onLap(1, 0.9, 1, false);
+
+    // Verify reaction times include partial time
+    assertEquals(1.3, spyRace.getCurrentHeat().getDrivers().get(0).getReactionTime(), 0.001);
+    assertEquals(1.5, spyRace.getCurrentHeat().getDrivers().get(1).getReactionTime(), 0.001);
+
+    // No regular laps recorded yet
+    assertEquals(0, spyRace.getCurrentHeat().getDrivers().get(0).getLaps().size());
+    assertEquals(0, spyRace.getCurrentHeat().getDrivers().get(1).getLaps().size());
+
+    // Verify pending lap times are reset
+    assertEquals(0.0, spyRace.getCurrentHeat().getDrivers().get(0).getPendingLapTime(), 0.001);
+    assertEquals(0.0, spyRace.getCurrentHeat().getDrivers().get(1).getPendingLapTime(), 0.001);
+
+    spyRace.stop();
   }
 }

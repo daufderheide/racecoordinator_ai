@@ -136,7 +136,9 @@ public class HeatExecutionManager {
       driverData.setPendingLapTime(0.0);
       lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     } else {
-      lapCounted = handleLapTime(driverData, lapTime, lane, interfaceId, isDrift);
+      double finalLapTime = lapTime + driverData.getPendingLapTime();
+      driverData.setPendingLapTime(0.0);
+      lapCounted = handleLapTime(driverData, finalLapTime, lane, interfaceId, isDrift);
     }
 
     if (lapCounted) {

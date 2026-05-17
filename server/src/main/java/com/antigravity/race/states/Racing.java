@@ -9,6 +9,7 @@ import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
@@ -320,6 +321,23 @@ public class Racing implements IRaceState {
   public void pause(Race race) {
     logger.info("Racing.pause() called. Pausing race.");
     race.getStatistics().incrementYellowFlagCount();
+
+    // Get partial times on pause and add them to each driver's pending lap time
+    List<PartialTime> partialTimes = race.stopProtocols();
+    if (partialTimes != null && race.getCurrentHeat() != null) {
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      for (PartialTime pt : partialTimes) {
+        int lane = pt.getLaneIndex();
+        if (drivers != null && lane >= 0 && lane < drivers.size()) {
+          DriverHeatData dhd = drivers.get(lane);
+          if (dhd != null) {
+            dhd.addPendingLapTime(pt.getLapTime());
+            logger.info("Added partial lap time of {}s to lane {}", pt.getLapTime(), lane);
+          }
+        }
+      }
+    }
+
     race.changeState(new Paused());
   }
 

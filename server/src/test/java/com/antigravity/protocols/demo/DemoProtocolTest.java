@@ -407,4 +407,199 @@ public class DemoProtocolTest {
     assertEquals("Should have completed the lap", 1, customListener.laps.size());
     assertEquals(1.1, customListener.laps.get(0), 0.001);
   }
+
+  @Test
+  public void testResumeTimerAdjustsTargets() {
+    MockRandom random = new MockRandom();
+    // First lap reaction (100ms target)
+    random.addNextInt(100);
+    // Regular lap 1 (target 5000ms)
+    random.addNextInt(2000);
+
+    TestableDemo resumeDemo = new TestableDemo(1, scheduler, random, false);
+    MockProtocolListener resumeListener = new MockProtocolListener();
+    resumeDemo.setListener(resumeListener);
+    resumeDemo.startTimer();
+
+    // 1. Complete reaction lap (100ms target)
+    resumeDemo.advanceTime(150);
+    scheduler.tick();
+    resumeListener.laps.clear();
+
+    // Now on regular lap 1 (target 5000ms)
+    assertEquals(5000, resumeDemo.laneStates[0].targetLapDuration);
+
+    // Advance 2000ms
+    resumeDemo.advanceTime(2000);
+
+    // Pause the race
+    List<PartialTime> partials = resumeDemo.stopTimer();
+    assertEquals(2.0, partials.get(0).getLapTime(), 0.001);
+    assertEquals(2000, resumeDemo.laneStates[0].currentLapElapsedTime);
+
+    // Resume the race
+    scheduler.reset();
+    resumeDemo.startTimer();
+
+    // Verify adjusted target duration and reset elapsed/start times
+    assertEquals(3000, resumeDemo.laneStates[0].targetLapDuration);
+    assertEquals(0, resumeDemo.laneStates[0].currentLapElapsedTime);
+    assertEquals(resumeDemo.now(), resumeDemo.laneStates[0].currentLapStartTime);
+
+    // Advance 3100ms (total since resume = 3100ms)
+    resumeDemo.advanceTime(3100);
+    scheduler.tick();
+
+    // Verify lap completed and recorded time since resume
+    assertEquals(1, resumeListener.laps.size());
+    assertEquals(3.1, resumeListener.laps.get(0), 0.001);
+  }
+
+  @Test
+  public void testResumeTimerAdjustsPitOffsets() {
+    MockRandom random = new MockRandom();
+    // 1. Constructor: Reaction lap (100ms target)
+    random.addNextInt(100);
+    // 2. Constructor: lapsUntilNextPit reset to 3 + 0 = 3
+    random.addNextInt(0);
+
+    // 3. Lap 1 regular duration (minLap + 1000 = 4000ms)
+    random.addNextInt(1000);
+    // 4. Lap 2 regular duration (minLap + 1000 = 4000ms)
+    random.addNextInt(1000);
+    // 5. Lap 3 regular duration (minLap + 1000 = 4000ms)
+    random.addNextInt(1000);
+
+    // 6. Pit Lap: regular duration offset (1000) -> 4000ms
+    random.addNextInt(1000);
+    // 7. Pit Lap: pitDuration offset (1000) -> 6000ms (Total target 10000ms)
+    random.addNextInt(1000);
+    // 8. Pit Lap: pitEntryOffset offset (100) -> 600ms
+    random.addNextInt(100);
+    // 9. Pit Lap: lapsUntilNextPit reset offset (1) -> 4 laps
+    random.addNextInt(1);
+
+    TestableDemo fuelDemo = new TestableDemo(1, scheduler, random, true);
+    MockProtocolListener fuelListener = new MockProtocolListener();
+    fuelDemo.setListener(fuelListener);
+    fuelDemo.startTimer();
+
+    // 1. Reaction lap (100ms)
+    fuelDemo.advanceTime(150);
+    scheduler.tick();
+    fuelListener.laps.clear();
+
+    // 2. Lap 1 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    fuelListener.laps.clear();
+
+    // 3. Lap 2 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    fuelListener.laps.clear();
+
+    // 4. Lap 3 (4000ms)
+    fuelDemo.advanceTime(4100);
+    scheduler.tick();
+    fuelListener.laps.clear();
+
+    // Now we are on Pit Lap:
+    // target = 10000ms.
+    // pitEntryOffset = 600ms.
+    // pitExitOffset = 6600ms.
+    assertTrue(fuelDemo.laneStates[0].isPitLap);
+    assertEquals(10000, fuelDemo.laneStates[0].targetLapDuration);
+    assertEquals(600, fuelDemo.laneStates[0].pitEntryOffset);
+    assertEquals(6600, fuelDemo.laneStates[0].pitExitOffset);
+
+    // Advance 400ms (before pitEntryOffset)
+    fuelDemo.advanceTime(400);
+
+    // Pause the race
+    fuelDemo.stopTimer();
+    assertEquals(400, fuelDemo.laneStates[0].currentLapElapsedTime);
+
+    // Resume the race
+    scheduler.reset();
+    fuelDemo.startTimer();
+
+    // Verify adjusted offsets
+    assertEquals(9600, fuelDemo.laneStates[0].targetLapDuration);
+    assertEquals(200, fuelDemo.laneStates[0].pitEntryOffset);
+    assertEquals(6200, fuelDemo.laneStates[0].pitExitOffset);
+
+    // Advance past pitEntryOffset (200ms target since resume)
+    fuelDemo.advanceTime(250);
+    scheduler.tick();
+    assertEquals("Should have sent pit entry CarData", 1, fuelListener.carData.size());
+    assertEquals(CarLocation.PitRow, fuelListener.carData.get(0).getLocation());
+
+    // Advance past pitExitOffset (6200ms target since resume, total 6250ms)
+    fuelDemo.advanceTime(6000);
+    scheduler.tick();
+    assertEquals("Should have sent pit exit CarData", 2, fuelListener.carData.size());
+    assertEquals(CarLocation.Main, fuelListener.carData.get(1).getLocation());
+
+    // Advance past targetLapDuration (9600ms target since resume, total 9750ms)
+    fuelDemo.advanceTime(3500);
+    scheduler.tick();
+    assertEquals("Should have completed pit lap", 1, fuelListener.laps.size());
+    assertEquals(9.75, fuelListener.laps.get(0), 0.001);
+  }
+
+  @Test
+  public void testResumeTimerAdjustsSegmentOffsets() {
+    MockRandom random = new MockRandom();
+    // Reaction lap (100ms)
+    random.addNextInt(100);
+    // Regular lap 1 (target 5000ms)
+    random.addNextInt(2000);
+
+    TestableDemo segmentDemo = new TestableDemo(1, scheduler, random, false);
+    MockProtocolListener segmentListener = new MockProtocolListener();
+    segmentDemo.setListener(segmentListener);
+    segmentDemo.startTimer();
+
+    // 1. Reaction lap (100ms)
+    segmentDemo.advanceTime(150);
+    scheduler.tick();
+    segmentListener.laps.clear();
+
+    // Now on regular lap 1 (target 5000ms)
+    // offsets = [750, 2000, 3000, 4250]
+    assertEquals(5000, segmentDemo.laneStates[0].targetLapDuration);
+    assertEquals(750, segmentDemo.laneStates[0].segmentOffsets[0]);
+    assertEquals(2000, segmentDemo.laneStates[0].segmentOffsets[1]);
+
+    // Advance past first segment hit (1000ms total elapsed)
+    segmentDemo.advanceTime(1000);
+    scheduler.tick();
+    assertEquals("Should have 1 segment hit", 1, segmentListener.segments.size());
+    assertEquals(0.75, segmentListener.segments.get(0).time, 0.001);
+
+    // Pause the race
+    segmentDemo.stopTimer();
+    assertEquals(1000, segmentDemo.laneStates[0].currentLapElapsedTime);
+
+    // Resume the race
+    scheduler.reset();
+    segmentDemo.startTimer();
+
+    // Verify adjusted segment offsets
+    assertEquals(4000, segmentDemo.laneStates[0].targetLapDuration);
+    assertEquals(0, segmentDemo.laneStates[0].segmentOffsets[0]); // was 750 - 1000 -> 0
+    assertEquals(1000, segmentDemo.laneStates[0].segmentOffsets[1]); // was 2000 - 1000 -> 1000
+    assertEquals(2000, segmentDemo.laneStates[0].segmentOffsets[2]); // was 3000 - 1000 -> 2000
+    assertEquals(3250, segmentDemo.laneStates[0].segmentOffsets[3]); // was 4250 - 1000 -> 3250
+
+    // Advance 1100ms since resume (total 1100ms)
+    segmentDemo.advanceTime(1100);
+    scheduler.tick();
+
+    // Verify Segment 2 (index 1) is sent
+    assertEquals("Should have 2 segment hits total", 2, segmentListener.segments.size());
+    assertEquals(
+        1.0, segmentListener.segments.get(1).time, 0.001); // 2000 - 1000 = 1000ms offset trigger
+  }
 }
