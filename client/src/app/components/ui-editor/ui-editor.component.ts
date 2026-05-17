@@ -133,6 +133,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
     { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
     { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
+    { key: "imageset_fuel-gauge-builtin", label: "RD_COL_FUEL_GAUGE" },
     { key: "mph", label: "RD_COL_MPH" },
     { key: "kph", label: "RD_COL_KPH" },
     { key: "fph", label: "RD_COL_FPH" },
@@ -306,24 +307,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             label: a.name || "AM_UNKNOWN_ASSET",
           }));
 
-        // Robustness: ensure imageset_fuel-gauge-builtin is available if a "Fuel Gauge" set exists
-        const builtinKey = "imageset_fuel-gauge-builtin";
-        if (!imageSetColumns.find((c) => c.key === builtinKey)) {
-          const fuelGaugeAsset = result.assets.find(
-            (a: any) =>
-              a.type === "image_set" &&
-              (a.name === "Fuel Gauge" ||
-                a.model?.entityId === "fuel-gauge-builtin" ||
-                a.model?.entityId === "default_fuel-gauge-builtin"),
-          );
-          if (fuelGaugeAsset) {
-            imageSetColumns.push({
-              key: builtinKey,
-              label: fuelGaugeAsset.name,
-            });
-          }
-        }
-
         // Reset availableColumns to base set + dynamic image sets
         this.availableColumns = [
           { key: "driver.name", label: "RD_COL_NAME" },
@@ -344,6 +327,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
           { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
           { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
+          { key: "imageset_fuel-gauge-builtin", label: "RD_COL_FUEL_GAUGE" },
           { key: "mph", label: "RD_COL_MPH" },
           { key: "kph", label: "RD_COL_KPH" },
           { key: "fph", label: "RD_COL_FPH" },

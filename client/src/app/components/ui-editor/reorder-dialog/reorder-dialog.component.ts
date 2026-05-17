@@ -468,6 +468,12 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
       return "RD_COL_FUEL_GAUGE";
     }
 
+    // Try finding direct match first (e.g. custom image sets)
+    const directVal = this.availableValuesMap.get(key);
+    if (directVal) {
+      return directVal.label;
+    }
+
     const baseKey = key.split("_")[0];
     const val = this.availableValuesMap.get(baseKey);
     let label = val ? val.label : key;
@@ -479,6 +485,12 @@ export class ReorderDialogComponent implements OnInit, OnDestroy {
         return `${this.translationService.translate(label)} ${index}`;
       }
     }
+
+    // If it's a custom imageset but we didn't find it in availableValuesMap (e.g. not loaded yet), strip the prefix
+    if (key.startsWith("imageset_")) {
+      return key.replace("imageset_", "");
+    }
+
     return label;
   }
 

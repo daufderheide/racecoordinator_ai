@@ -25,7 +25,7 @@ const PREVIEW_LABELS: { [key: string]: string } = {
   "participant.fuelLevel": "RD_COL_FUEL_LEVEL",
   fuelCapacity: "RD_COL_FUEL_CAPACITY",
   fuelPercentage: "RD_COL_FUEL_PERCENTAGE",
-  imageset: "RD_COL_FUEL_GAUGE",
+  "imageset_fuel-gauge-builtin": "RD_COL_FUEL_GAUGE",
   mph: "RD_COL_MPH",
   kph: "RD_COL_KPH",
   fph: "RD_COL_FPH",
@@ -68,19 +68,33 @@ export class ColumnPreviewComponent {
 
   getLabel(prop: string | undefined): string {
     if (!prop) return "";
-    const baseKey = prop.split("_")[0];
 
+    // If it's a known static column or built-in, use the label key
+    if (PREVIEW_LABELS[prop]) {
+      return PREVIEW_LABELS[prop];
+    }
+
+    const baseKey = prop.split("_")[0];
     // If it's a known static column, use the label key
     if (PREVIEW_LABELS[baseKey]) {
       return PREVIEW_LABELS[baseKey];
     }
 
     // If it's an image set, try to find it in column slots to get the name
-    // TODO(aufderheide): I'm not sure we want this or not.  As long as it's not showing the
-    // uuid prefix for the asset it might be okay.
     if (prop.startsWith("imageset_")) {
-      const slot = this.columnSlots().find((s) => s.key === prop);
+      if (prop === "imageset_fuel-gauge-builtin") {
+        return "RD_COL_FUEL_GAUGE";
+      }
+      const slot = this.columnSlots().find(
+        (s) =>
+          s.key === prop ||
+          s.key.startsWith(prop + "_") ||
+          prop.startsWith(s.key + "_"),
+      );
       if (slot) return slot.label;
+
+      // If we still didn't find the slot, strip the "imageset_" prefix to make it look nicer
+      return prop.replace("imageset_", "");
     }
 
     return prop;
