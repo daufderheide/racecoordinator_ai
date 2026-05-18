@@ -1290,8 +1290,8 @@ describe("DefaultRacedayComponent", () => {
       expect(parseInt(scrollContent.style.height)).toBeGreaterThan(1000);
     });
 
-    it("should return correct leaderboard score format dynamically based on entries", () => {
-      // 1. All scores are integers
+    it("should return correct leaderboard score format based on entry type", () => {
+      // 1. All scores are integers, isTime is false (lap-based) -> should always show 2 decimals
       component["leaderboardEntries"] = [
         { isTime: false, score: 10, entityId: "1" },
         { isTime: false, score: 8, entityId: "2" },
@@ -1300,23 +1300,12 @@ describe("DefaultRacedayComponent", () => {
         component["getLeaderboardScoreFormat"](
           component["leaderboardEntries"][0],
         ),
-      ).toBe("1.0-0");
+      ).toBe("1.2-2");
 
-      // 2. One score has 1 decimal place
+      // 2. Scores have decimals, isTime is false (lap-based) -> should still show 2 decimals
       component["leaderboardEntries"] = [
         { isTime: false, score: 10.5, entityId: "1" },
-        { isTime: false, score: 8, entityId: "2" },
-      ];
-      expect(
-        component["getLeaderboardScoreFormat"](
-          component["leaderboardEntries"][0],
-        ),
-      ).toBe("1.1-1");
-
-      // 3. One score has 2 decimal places
-      component["leaderboardEntries"] = [
-        { isTime: false, score: 10.25, entityId: "1" },
-        { isTime: false, score: 8.5, entityId: "2" },
+        { isTime: false, score: 8.25, entityId: "2" },
       ];
       expect(
         component["getLeaderboardScoreFormat"](
@@ -1324,18 +1313,7 @@ describe("DefaultRacedayComponent", () => {
         ),
       ).toBe("1.2-2");
 
-      // 4. One score has 3 or more decimal places (should cap at 3)
-      component["leaderboardEntries"] = [
-        { isTime: false, score: 10.3333, entityId: "1" },
-        { isTime: false, score: 8, entityId: "2" },
-      ];
-      expect(
-        component["getLeaderboardScoreFormat"](
-          component["leaderboardEntries"][0],
-        ),
-      ).toBe("1.3-3");
-
-      // 5. If isTime is true, always 3 decimal places
+      // 3. If isTime is true, always 3 decimal places
       expect(
         component["getLeaderboardScoreFormat"]({ isTime: true, score: 10 }),
       ).toBe("1.3-3");

@@ -188,26 +188,7 @@ export class DefaultRacedayComponent
     if (entry.isTime) {
       return "1.3-3";
     }
-    // Calculate the maximum number of decimal places among all non-time entries
-    let maxDecimals = 0;
-    for (const e of this.leaderboardEntries) {
-      if (!e.isTime && e.score != null && typeof e.score === "number") {
-        const score = e.score;
-        const str = score.toString();
-        // Handle scientific notation just in case, though highly unlikely for laps
-        if (!str.includes("e") && str.includes(".")) {
-          const decimalStr = str.split(".")[1];
-          if (decimalStr) {
-            // Cap at 3 decimal places to avoid float issues like 12.333333333333
-            const len = Math.min(decimalStr.length, 3);
-            if (len > maxDecimals) {
-              maxDecimals = len;
-            }
-          }
-        }
-      }
-    }
-    return `1.${maxDecimals}-${maxDecimals}`;
+    return "1.2-2";
   }
 
   protected get autoStatusLabel(): string {
