@@ -59,10 +59,25 @@
       </div>
 
       <!-- Available Drivers -->
-      <div class="driver-pool-section">
-        <div class="section-header">
-          <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
-          <div class="header-actions">
+      <div
+        class="driver-pool-section"
+        [class.collapsed]="isAvailableDriversCollapsed"
+      >
+        <div
+          class="section-header clickable"
+          (click)="toggleAvailableDrivers()"
+        >
+          <div class="header-title-container">
+            <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
+            <span class="chevron-icon">
+              @if (isAvailableDriversCollapsed) {
+                <i class="fas fa-chevron-right"></i>
+              } @else {
+                <i class="fas fa-chevron-down"></i>
+              }
+            </span>
+          </div>
+          <div class="header-actions" (click)="$event.stopPropagation()">
             <button
               class="icon-button available-pill teams-pill"
               (click)="onManageTeams()"

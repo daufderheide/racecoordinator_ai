@@ -138,6 +138,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected isLoading = false;
   protected equalityReport: any[] | null = null;
   protected isHeatsEqual: boolean = false;
+  protected isAvailableDriversCollapsed = false;
 
   private translationService = inject(TranslationService);
   private router = inject(Router);
@@ -861,5 +862,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected closeReport() {
     this.equalityReport = null;
+  }
+
+  protected toggleAvailableDrivers() {
+    this.isAvailableDriversCollapsed = !this.isAvailableDriversCollapsed;
   }
 }

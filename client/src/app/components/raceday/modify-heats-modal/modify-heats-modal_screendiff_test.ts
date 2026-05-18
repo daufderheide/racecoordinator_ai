@@ -369,4 +369,102 @@ test.describe("Modify Heats Modal Visuals", () => {
     await modalHarness.waitForLoaderToBeHidden();
     await expect(page).toHaveScreenshot("modify-heats-after-redo.png");
   });
+
+  test("should show collapsed available list with scrollbar in racing drivers list when there are many drivers", async ({
+    page,
+  }) => {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    // Create 20 drivers to ensure the list is long enough to show a scrollbar
+    const drivers = Array.from({ length: 20 }, (_, i) => ({
+      objectId: `rp${i + 1}`,
+      seed: i + 1,
+      driver: {
+        model: { entityId: `d_racer_${i + 1}` },
+        name: `Racer ${i + 1}`,
+      },
+    }));
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Screendiff Scrollbar Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#00ff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: drivers,
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [],
+          },
+        ],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    // CRITICAL: Wait for localization to be applied to the newly opened modal
+    await TestSetupHelper.waitForLocalization(page);
+
+    // Wait for the first and last Racer to be visible in the racing pool to ensure the list is fully loaded
+    await page
+      .locator('#driver-pool .driver-item:has-text("Racer 1")')
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
+    await page
+      .locator('#driver-pool .driver-item:has-text("Racer 20")')
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    // Collapse the available drivers section by clicking its header title container (second pool section)
+    const availableHeader = page
+      .locator(".driver-pool-section")
+      .nth(1)
+      .locator(".header-title-container");
+    await availableHeader.click();
+
+    // Wait for the collapsed class to be applied to the second section
+    await page
+      .locator(".driver-pool-section.collapsed")
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    // Wait for loader to be hidden
+    await modalHarness.waitForLoaderToBeHidden();
+
+    // Capture screenshot for visual validation
+    await expect(page).toHaveScreenshot(
+      "modify-heats-collapsed-available-list.png",
+    );
+  });
 });

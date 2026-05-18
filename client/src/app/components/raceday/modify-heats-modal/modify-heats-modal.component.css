@@ -60,6 +60,17 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 8px;
   padding: 15px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.driver-pool-section.collapsed {
+  flex: 0 0 auto;
+  background: rgba(15, 23, 42, 0.2);
+  border-color: rgba(148, 163, 184, 0.1);
+}
+
+.driver-pool-section.collapsed .driver-pool {
+  display: none;
 }
 
 .driver-pool-section:last-child {
@@ -73,6 +84,38 @@
   margin-bottom: 15px;
   border-bottom: 1px solid rgba(56, 189, 248, 0.3);
   padding-bottom: 8px;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.driver-pool-section.collapsed .section-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.header-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chevron-icon {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.85rem;
+  color: rgba(56, 189, 248, 0.7);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+}
+
+.section-header.clickable:hover .chevron-icon {
+  color: #38bdf8;
+  transform: scale(1.15);
 }
 
 .section-header h3 {

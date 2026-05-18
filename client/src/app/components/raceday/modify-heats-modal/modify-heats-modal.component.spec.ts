@@ -814,4 +814,97 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["equalityReport"]?.[0]?.params?.heat).toBe(1);
     });
   });
+
+  describe("collapsible available drivers sidebar height", () => {
+    let container: HTMLDivElement;
+    let styleElement: HTMLStyleElement;
+
+    beforeEach(() => {
+      // Inject a style to disable transitions/animations completely for instant layout updates
+      styleElement = document.createElement("style");
+      styleElement.innerHTML = `
+        * {
+          transition: none !important;
+          transition-duration: 0s !important;
+          animation: none !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
+
+      container = document.createElement("div");
+      container.style.height = "800px";
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+      document.body.appendChild(container);
+      container.appendChild(fixture.nativeElement);
+    });
+
+    afterEach(() => {
+      if (container && container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+      if (styleElement && styleElement.parentNode) {
+        styleElement.parentNode.removeChild(styleElement);
+      }
+    });
+
+    it("should give more height to the racing list when available drivers pool is collapsed", () => {
+      // Setup elements with styling
+      const editorPanel = fixture.nativeElement.querySelector(
+        ".editor-panel",
+      ) as HTMLElement;
+      expect(editorPanel).toBeTruthy();
+      editorPanel.style.height = "500px";
+      editorPanel.style.display = "flex";
+      editorPanel.style.flexDirection = "column";
+
+      // Mock participants and drivers to simulate a real pool layout
+      component["databaseParticipants"] = [
+        new Driver("d-avail", "Avail Driver", "Avail"),
+      ];
+      component["driverPool"] = [
+        new RaceParticipant(
+          "rp-racing",
+          new Driver("d-racing", "Racing Driver", "Racing"),
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          100,
+        ),
+      ];
+
+      // Toggle first to ensure starting at expanded state
+      component["isAvailableDriversCollapsed"] = false;
+      fixture.detectChanges();
+
+      const poolSections = fixture.nativeElement.querySelectorAll(
+        ".driver-pool-section",
+      );
+      expect(poolSections.length).toBe(2);
+
+      const racingSection = poolSections[0] as HTMLElement;
+      const availableSection = poolSections[1] as HTMLElement;
+
+      // Get original height of racing drivers pool section when expanded
+      const heightExpanded = racingSection.offsetHeight;
+
+      // Collapse available drivers pool
+      component["toggleAvailableDrivers"]();
+      fixture.detectChanges();
+
+      expect(component["isAvailableDriversCollapsed"]).toBeTrue();
+      expect(availableSection.classList.contains("collapsed")).toBeTrue();
+
+      // Get new height of racing drivers pool section when collapsed
+      const heightCollapsed = racingSection.offsetHeight;
+
+      // Verification: the racing pool height must be significantly larger when available drivers is collapsed
+      expect(heightCollapsed).toBeGreaterThan(heightExpanded);
+    });
+  });
 });
