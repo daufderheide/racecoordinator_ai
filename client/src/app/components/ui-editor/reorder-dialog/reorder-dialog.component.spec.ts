@@ -437,4 +437,42 @@ describe("ReorderDialogComponent", () => {
       expect(component.columnSlots.length).toBe(1);
     });
   });
+
+  describe("getLabel", () => {
+    it("should resolve imageset_fuel-gauge-builtin to RD_COL_FUEL_GAUGE", () => {
+      fixture.componentRef.setInput("data", mockData);
+      fixture.detectChanges();
+      expect(component.getLabel("imageset_fuel-gauge-builtin")).toBe("RD_COL_FUEL_GAUGE");
+    });
+
+    it("should resolve keys from availableValuesMap if they match directly", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        availableValues: [
+          { key: "imageset_custom-imageset", label: "Custom Imageset Label" }
+        ]
+      });
+      fixture.detectChanges();
+      expect(component.getLabel("imageset_custom-imageset")).toBe("Custom Imageset Label");
+    });
+
+    it("should strip imageset_ prefix if key is not found in availableValuesMap", () => {
+      fixture.componentRef.setInput("data", mockData);
+      fixture.detectChanges();
+      expect(component.getLabel("imageset_some-other-imageset")).toBe("some-other-imageset");
+    });
+
+    it("should format dynamic duplicate indices correctly", () => {
+      fixture.componentRef.setInput("data", {
+        ...mockData,
+        availableValues: [
+          { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" }
+        ]
+      });
+      fixture.detectChanges();
+      // Since mockTranslationService returns the key itself
+      expect(component.getLabel("segmentTime_2")).toBe("RD_COL_SEGMENT_TIME 3");
+    });
+  });
 });
+
