@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "No se puede eliminar a un participante que ya ha corrido en una manga iniciada.",
   "RD_ERR_SAVE_FAILED": "Error al guardar la configuración de la carrera.",
   "RD_ERR_SAVE_FAILED_TITLE": "Error al guardar",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "La regeneración modificaría una o más mangas que ya han comenzado.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Por favor, elimine al piloto o equipo redundante antes de comenzar.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "No hay rotaciones personalizadas definidas. La rotación personalizada configurada para esta carrera no existe o ha sido eliminada.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Por favor, seleccione un método de rotación diferente o vuelva a crear la rotación personalizada en el Gestor de Activos.",

@@ -374,23 +374,6 @@ public class RaceHeatManager {
           .build();
     }
 
-    boolean anyHeatStarted = false;
-    for (com.antigravity.race.Heat h : this.race.getHeats()) { // fqn-collision
-      if (h.isStarted()) {
-        anyHeatStarted = true;
-        break;
-      }
-    }
-
-    if (anyHeatStarted) {
-      return RegenerateHeatsResponse.newBuilder()
-          .setSuccess(false)
-          .setErrorMessage(
-              "One or more heats have already been started. Regeneration is only allowed before any heats have run.")
-          .build();
-    }
-
-    List<com.antigravity.race.Heat> preservedHeats = new ArrayList<>(); // fqn-collision
     List<RaceParticipant> driversToUse = new ArrayList<>(this.race.getDrivers());
 
     if (request.getParticipantsCount() > 0) {
@@ -415,6 +398,40 @@ public class RaceHeatManager {
     List<com.antigravity.race.Heat> regeneratedHeats = // fqn-collision
         HeatBuilder.buildHeats(this.race, driversToUse, this.race.getCustomRotations());
 
+    List<com.antigravity.race.Heat> preservedHeats = new ArrayList<>(); // fqn-collision
+    int lastStartedIdx = -1;
+    for (int i = 0; i < this.race.getHeats().size(); i++) {
+      if (this.race.getHeats().get(i).isStarted()) {
+        lastStartedIdx = i;
+      }
+    }
+
+    if (lastStartedIdx >= 0) {
+      if (regeneratedHeats.size() < lastStartedIdx + 1) {
+        return RegenerateHeatsResponse.newBuilder()
+            .setSuccess(false)
+            .setErrorMessage("RD_ERR_REGENERATE_STARTED_HEATS")
+            .build();
+      }
+
+      for (int i = 0; i <= lastStartedIdx; i++) {
+        com.antigravity.race.Heat existingHeat = this.race.getHeats().get(i); // fqn-collision
+        if (existingHeat.isStarted()) {
+          com.antigravity.race.Heat genHeat = regeneratedHeats.get(i); // fqn-collision
+          if (!doesGeneratedHeatMatchStartedHeat(genHeat, existingHeat)) {
+            return RegenerateHeatsResponse.newBuilder()
+                .setSuccess(false)
+                .setErrorMessage("RD_ERR_REGENERATE_STARTED_HEATS")
+                .build();
+          }
+        }
+      }
+
+      for (int i = 0; i <= lastStartedIdx; i++) {
+        preservedHeats.add(this.race.getHeats().get(i));
+      }
+    }
+
     List<com.antigravity.race.Heat> finalHeats = new ArrayList<>(preservedHeats); // fqn-collision
     for (int i = preservedHeats.size(); i < regeneratedHeats.size(); i++) {
       com.antigravity.race.Heat h = regeneratedHeats.get(i); // fqn-collision
@@ -428,6 +445,41 @@ public class RaceHeatManager {
       responseBuilder.addHeats(HeatConverter.toProto(h, new HashSet<String>()));
     }
     return responseBuilder.build();
+  }
+
+  private String getDriverStableId(com.antigravity.race.DriverHeatData dhd) { // fqn-collision
+    if (dhd == null) {
+      return "";
+    }
+    RaceParticipant rp = dhd.getDriver();
+    if (rp == null) {
+      return "";
+    }
+    Driver d = rp.getDriver();
+    if (d == null || d.isEmpty()) {
+      return "";
+    }
+    return rp.getStableId();
+  }
+
+  private boolean doesGeneratedHeatMatchStartedHeat(
+      com.antigravity.race.Heat genHeat, com.antigravity.race.Heat startedHeat) { // fqn-collision
+    if (genHeat.getDrivers().size() != startedHeat.getDrivers().size()) {
+      return false;
+    }
+    for (int j = 0; j < genHeat.getDrivers().size(); j++) {
+      com.antigravity.race.DriverHeatData genDhd = genHeat.getDrivers().get(j); // fqn-collision
+      com.antigravity.race.DriverHeatData startedDhd =
+          startedHeat.getDrivers().get(j); // fqn-collision
+
+      String genStableId = getDriverStableId(genDhd);
+      String startedStableId = getDriverStableId(startedDhd);
+
+      if (!genStableId.equals(startedStableId)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private RaceParticipant findParticipantByObjectId(String objectId) {

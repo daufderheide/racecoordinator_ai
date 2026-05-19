@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Kan een deelnemer die al in een gestarte heat heeft gereden niet verwijderen.",
   "RD_ERR_SAVE_FAILED": "Er is een fout opgetreden bij het opslaan van de raceconfiguratie.",
   "RD_ERR_SAVE_FAILED_TITLE": "Opslaan mislukt",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "Regeneratie zou een of meer heats wijzigen die al zijn gestart.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Verwijder de overtollige coureur of het team voordat u begint.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Er zijn geen aangepaste rotaties gedefinieerd. De voor deze race geconfigureerde aangepaste rotatie bestaat niet of is verwijderd.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Selecteer een andere rotatiemethode of maak de aangepaste rotatie opnieuw aan in de Asset Manager.",

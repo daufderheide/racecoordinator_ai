@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Cannot remove a participant who has already run in a started heat.",
   "RD_ERR_SAVE_FAILED": "An error occurred while saving the race configuration.",
   "RD_ERR_SAVE_FAILED_TITLE": "Save Failed",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "Regeneration would modify one or more heats that have already started.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Please remove the redundant driver or team before starting.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "No custom rotations are defined. The custom rotation configured for this race does not exist or has been deleted.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Please select a different rotation method or recreate the custom rotation in the Asset Manager.",

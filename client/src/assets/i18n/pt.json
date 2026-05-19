@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Não é possível remover um participante que já correu em uma bateria iniciada.",
   "RD_ERR_SAVE_FAILED": "Ocorreu um erro ao salvar a configuração da corrida.",
   "RD_ERR_SAVE_FAILED_TITLE": "Falha ao salvar",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "A regeneração modificaria uma ou mais baterias que já começaram.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Por favor, remova o piloto ou equipe redundante antes de começar.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Não existem rotações personalizadas definidas. A rotação personalizada configurada para esta corrida não existe ou foi excluída.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Selecione um método de rotação diferente ou recrie a rotação personalizada no Gerenciador de Ativos.",

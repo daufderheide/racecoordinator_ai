@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Impossible de supprimer un participant qui a déjà couru dans une manche commencée.",
   "RD_ERR_SAVE_FAILED": "Une erreur est survenue lors de l'enregistrement de la configuration de la course.",
   "RD_ERR_SAVE_FAILED_TITLE": "Échec de l'enregistrement",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "La régénération modifierait une ou plusieurs manches qui ont déjà commencé.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Veuillez supprimer le pilote ou l'équipe redondante avant de commencer.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Aucune rotation personnalisée n'est définie. La rotation personnalisée configurée pour cette course n'existe pas ou a été supprimée.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Veuillez sélectionner une autre méthode de rotation ou recréer la rotation personnalisée dans le gestionnaire d'actifs.",

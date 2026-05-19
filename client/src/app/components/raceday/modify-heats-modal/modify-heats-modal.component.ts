@@ -455,7 +455,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected get isRegenerateDisabled(): boolean {
-    return this.localHeats.some((h) => this.isHeatStarted(h));
+    return false;
   }
 
   protected getDriverInLane(

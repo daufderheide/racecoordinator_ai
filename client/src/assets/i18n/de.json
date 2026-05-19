@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Ein Teilnehmer, der bereits in einem gestarteten Lauf gefahren ist, kann nicht entfernt werden.",
   "RD_ERR_SAVE_FAILED": "Fehler beim Speichern der Rennkonfiguration.",
   "RD_ERR_SAVE_FAILED_TITLE": "Speichern fehlgeschlagen",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "Die Regeneration würde eine oder mehrere bereits gestartete Runden ändern.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Bitte entfernen Sie den redundanten Fahrer oder das Team, bevor Sie starten.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Es sind keine benutzerdefinierten Rotationen definiert. Die für dieses Rennen konfigurierte benutzerdefinierte Rotation existiert nicht oder wurde gelöscht.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Bitte wählen Sie eine andere Rotationsmethode oder erstellen Sie die benutzerdefinierte Rotation im Asset-Manager neu.",

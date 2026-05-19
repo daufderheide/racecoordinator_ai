@@ -421,6 +421,7 @@
   "RD_ERR_STARTED_PARTICIPANT_REMOVED": "Non è possibile rimuovere un partecipante che ha già corso in una manche iniziata.",
   "RD_ERR_SAVE_FAILED": "Si è verificato un errore durante il salvataggio della configurazione della gara.",
   "RD_ERR_SAVE_FAILED_TITLE": "Salvataggio fallito",
+  "RD_ERR_REGENERATE_STARTED_HEATS": "La rigenerazione modificherebbe una o più manche già iniziate.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Rimuovere il pilota o il team ridondante prima di iniziare.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Nessuna rotazione personalizzata definita. La rotazione personalizzata configurata per questa gara non esiste o è stata eliminata.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Selezionare un metodo di rotazione diverso o ricreare la rotazione personalizzata in Gestione Asset.",

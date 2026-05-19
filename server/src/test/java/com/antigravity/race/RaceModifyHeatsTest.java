@@ -17,6 +17,8 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
+import com.antigravity.proto.RegenerateHeatsRequest;
+import com.antigravity.proto.RegenerateHeatsResponse;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -290,16 +292,47 @@ public class RaceModifyHeatsTest {
   }
 
   @Test
-  public void testRegenerateHeats_StartedHeat_Fails() {
-    // Start a heat
+  public void testRegenerateHeats_StartedHeat_AllowsSame_FailsChanged() {
+    // Start Heat 1 (which contains p1 and p2)
     testRace.getHeats().get(0).setStarted(true);
 
-    com.antigravity.proto.RegenerateHeatsRequest request =
-        com.antigravity.proto.RegenerateHeatsRequest.newBuilder().build();
-    com.antigravity.proto.RegenerateHeatsResponse response = testRace.regenerateHeats(request);
+    // 1. Regenerate with same participants -> should succeed under new rules!
+    RegenerateHeatsRequest.Builder requestBuilder = RegenerateHeatsRequest.newBuilder();
+    for (RaceParticipant p : participants) {
+      requestBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+    }
+    RegenerateHeatsResponse response = testRace.regenerateHeats(requestBuilder.build());
+    assertTrue(
+        "Should succeed to regenerate if started heats are not modified", response.getSuccess());
 
-    assertFalse("Should fail to regenerate if any heat is started", response.getSuccess());
-    assertTrue(response.getErrorMessage().contains("One or more heats have already been started"));
+    // 2. Try to regenerate with different participants (removing p1) -> should
+    // fail!
+    List<RaceParticipant> differentParticipants = new ArrayList<>(participants);
+    differentParticipants.remove(0); // Remove p1
+
+    RegenerateHeatsRequest.Builder failRequestBuilder = RegenerateHeatsRequest.newBuilder();
+    for (RaceParticipant p : differentParticipants) {
+      failRequestBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+    }
+    RegenerateHeatsResponse failResponse = testRace.regenerateHeats(failRequestBuilder.build());
+    assertFalse(
+        "Should fail to regenerate if started heat would be modified", failResponse.getSuccess());
+    assertTrue(failResponse.getErrorMessage().contains("RD_ERR_REGENERATE_STARTED_HEATS"));
+
+    // 3. Try to regenerate with different participants (removing p3, who did NOT
+    // run in started Heat 1) -> should succeed!
+    List<RaceParticipant> allowedParticipants = new ArrayList<>(participants);
+    allowedParticipants.remove(2); // Remove p3 (Driver 3)
+
+    RegenerateHeatsRequest.Builder allowedRequestBuilder = RegenerateHeatsRequest.newBuilder();
+    for (RaceParticipant p : allowedParticipants) {
+      allowedRequestBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+    }
+    RegenerateHeatsResponse allowedResponse =
+        testRace.regenerateHeats(allowedRequestBuilder.build());
+    assertTrue(
+        "Should succeed to regenerate if removed driver did not run in any started heats",
+        allowedResponse.getSuccess());
   }
 
   @Test
@@ -319,9 +352,8 @@ public class RaceModifyHeatsTest {
     // Set race to over
     testRace.changeState(new com.antigravity.race.states.RaceOver());
 
-    com.antigravity.proto.RegenerateHeatsRequest request =
-        com.antigravity.proto.RegenerateHeatsRequest.newBuilder().build();
-    com.antigravity.proto.RegenerateHeatsResponse response = testRace.regenerateHeats(request);
+    RegenerateHeatsRequest request = RegenerateHeatsRequest.newBuilder().build();
+    RegenerateHeatsResponse response = testRace.regenerateHeats(request);
 
     assertFalse("Should fail to regenerate heats when race is over", response.getSuccess());
     assertTrue(
