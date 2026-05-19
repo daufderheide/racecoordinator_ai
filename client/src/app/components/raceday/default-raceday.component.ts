@@ -1832,6 +1832,7 @@ export class DefaultRacedayComponent
       medianLapTime: 330,
       averageLapTime: 330,
       bestLapTime: 330,
+      totalTime: 330,
       gapLeader: 330,
       gapPosition: 330,
       "driver.name": 480,
@@ -2147,7 +2148,11 @@ export class DefaultRacedayComponent
       }
     }
 
-    if (baseKey.includes("LapTime") || baseKey === "reactionTime") {
+    if (
+      baseKey.includes("LapTime") ||
+      baseKey === "reactionTime" ||
+      baseKey === "totalTime"
+    ) {
       return value > 0 ? value.toFixed(3) : "--.---";
     } else if (baseKey === "gapLeader" || baseKey === "gapPosition") {
       if (value === 0) return "--.---";
@@ -2318,6 +2323,7 @@ export class DefaultRacedayComponent
       medianLapTime: "RD_COL_MEDIAN_LAP",
       averageLapTime: "RD_COL_AVG_LAP",
       bestLapTime: "RD_COL_BEST_LAP",
+      totalTime: "RD_COL_TOTAL_TIME",
       gapLeader: "RD_COL_GAP_LEADER",
       gapPosition: "RD_COL_GAP_POSITION",
       reactionTime: "RD_COL_REACTION_TIME",

@@ -652,6 +652,18 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("");
     });
 
+    it("should format totalTime to 3 decimal places when above 0", () => {
+      const result = component.formatValue("totalTime", 42.1234, mockHd);
+      expect(result).toBe("42.123");
+    });
+
+    it("should format totalTime as --.--- when 0 or less", () => {
+      const result1 = component.formatValue("totalTime", 0, mockHd);
+      const result2 = component.formatValue("totalTime", -5, mockHd);
+      expect(result1).toBe("--.---");
+      expect(result2).toBe("--.---");
+    });
+
     it("should not render img tag in the table when avatarUrl is empty", () => {
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();

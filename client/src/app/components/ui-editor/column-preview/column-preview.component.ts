@@ -15,6 +15,7 @@ const PREVIEW_LABELS: { [key: string]: string } = {
   medianLapTime: "RD_COL_MEDIAN_LAP",
   averageLapTime: "RD_COL_AVG_LAP",
   bestLapTime: "RD_COL_BEST_LAP",
+  totalTime: "RD_COL_TOTAL_TIME",
   gapLeader: "RD_COL_GAP_LEADER",
   gapPosition: "RD_COL_GAP_POSITION",
   reactionTime: "RD_COL_REACTION_TIME",

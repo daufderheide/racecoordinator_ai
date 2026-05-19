@@ -576,6 +576,7 @@
   "RD_COL_SEED": "POSIÇÃOINICIAL",
   "RD_COL_SEGMENT_TIME": "TEMPO PARCIAL",
   "RD_COL_TEAM": "EQUIPE",
+  "RD_COL_TOTAL_TIME": "TEMPO TOTAL",
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Sair",
   "RD_CONFIRM_EXIT_BTN_STAY": "Ficar",
   "RD_CONFIRM_EXIT_MESSAGE": "Tem certeza de que deseja sair da corrida?",

@@ -561,6 +561,14 @@ describe("UIEditorComponent", () => {
     expect(fph?.label).toBe("RD_COL_FPH");
   });
 
+  it("should include totalTime column in availableColumns", () => {
+    const totalTime = component.availableColumns.find(
+      (c) => c.key === "totalTime",
+    );
+    expect(totalTime).toBeTruthy();
+    expect(totalTime?.label).toBe("RD_COL_TOTAL_TIME");
+  });
+
   describe("expander behavior", () => {
     beforeEach(() => {
       localStorage.clear();

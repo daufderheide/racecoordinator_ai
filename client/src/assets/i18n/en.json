@@ -576,6 +576,7 @@
   "RD_COL_SEED": "SEED",
   "RD_COL_SEGMENT_TIME": "SEGMENT TIME",
   "RD_COL_TEAM": "TEAM",
+  "RD_COL_TOTAL_TIME": "TOTAL TIME",
   "RD_CONFIRM_EXIT_BTN_LEAVE": "Leave",
   "RD_CONFIRM_EXIT_BTN_STAY": "Stay",
   "RD_CONFIRM_EXIT_MESSAGE": "Are you sure you want to exit the race?",
