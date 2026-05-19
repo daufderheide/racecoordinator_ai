@@ -52,33 +52,30 @@ public class DemoModePersistenceTest {
   @After
   public void tearDown() {
     DatabaseService.setInstance(new DatabaseService());
-    ClientSubscriptionManager.setInstance(null); // It will lazy-init next time
+    ClientSubscriptionManager.getInstance().setDatabaseContext(null);
   }
 
   @Test
-  public void testRaceOverSavesInDemoMode() {
+  public void testRaceOverSavesInDemoAndNormalMode() {
     DatabaseService mockService = mock(DatabaseService.class);
     DatabaseService.setInstance(mockService);
 
-    ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
-    ClientSubscriptionManager.setInstance(mockManager);
-
     DatabaseContext mockContext = mock(DatabaseContext.class);
-    doReturn(mockContext).when(mockManager).getDatabaseContext();
     doReturn(mock(MongoDatabase.class)).when(mockContext).getDatabase();
 
-    // Create and enter RaceOver state
+    ClientSubscriptionManager.getInstance().setDatabaseContext(mockContext);
+
+    // 1. Test Demo Mode
     RaceOver raceOver = new RaceOver();
     raceOver.enter(race);
 
-    // Verify that save methods WERE called (now allowed in demo mode)
     verify(mockService, times(1)).saveRaceHistory(any(), any());
     verify(mockService, times(1)).updateGlobalStatistics(any(), any());
-  }
 
-  @Test
-  public void testRaceOverSavesInNormalMode() {
-    // Create a race NOT in demo mode
+    // Reset mock interactions for the next check
+    reset(mockService);
+
+    // 2. Test Normal Mode
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
             .withName("Normal Race")
@@ -89,43 +86,25 @@ public class DemoModePersistenceTest {
             .withEntityId("race2")
             .build();
 
-    // Pass ArduinoConfig directly to the constructor since Track wraps them in unmodifiable lists
     ArduinoConfig config = new ArduinoConfig();
     config.commPort = "COM1";
     List<ArduinoConfig> configs = new ArrayList<>();
     configs.add(config);
 
-    track = new Track(track.getName(), track.getLanes(), configs, track.getEntityId(), null);
+    Track normalTrack =
+        new Track(track.getName(), track.getLanes(), configs, track.getEntityId(), null);
 
     com.antigravity.race.Race normalRace =
         new com.antigravity.race.Race.Builder()
             .model(raceModel)
             .drivers(new ArrayList<>())
-            .track(track)
+            .track(normalTrack)
             .isDemoMode(false)
             .build();
 
-    DatabaseService mockService = mock(DatabaseService.class);
-    DatabaseService.setInstance(mockService);
-
-    ClientSubscriptionManager mockManager = mock(ClientSubscriptionManager.class);
-    ClientSubscriptionManager.setInstance(mockManager);
-
-    DatabaseContext mockContext = mock(DatabaseContext.class);
-    doReturn(mockContext).when(mockManager).getDatabaseContext();
-    doReturn(mock(MongoDatabase.class)).when(mockContext).getDatabase();
-
-    RaceOver raceOver = new RaceOver();
     raceOver.enter(normalRace);
 
-    // Verify that save methods WERE called
     verify(mockService, times(1)).saveRaceHistory(any(), any());
     verify(mockService, times(1)).updateGlobalStatistics(any(), any());
-  }
-
-  @Test
-  public void testAutoSaveBypassedInDemoMode() {
-    // This test was incomplete and didn't really test anything before either.
-    // It is kept for future expansion if needed, but no longer uses static mocks.
   }
 }

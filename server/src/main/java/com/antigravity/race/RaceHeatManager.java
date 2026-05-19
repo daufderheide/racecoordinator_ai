@@ -67,7 +67,7 @@ public class RaceHeatManager {
 
   private String validateModification(ModifyHeatsRequest request) {
     // 1. Ensure no started heats are deleted
-    for (com.antigravity.race.Heat existingHeat : this.race.getHeats()) { // fqn-collision
+    for (Heat existingHeat : this.race.getHeats()) {
       if (existingHeat.isStarted()) {
         boolean found = false;
         for (com.antigravity.proto.Heat protoHeat : request.getHeatsList()) { // fqn-collision
@@ -447,7 +447,7 @@ public class RaceHeatManager {
     return responseBuilder.build();
   }
 
-  private String getDriverStableId(com.antigravity.race.DriverHeatData dhd) { // fqn-collision
+  private String getDriverStableId(DriverHeatData dhd) {
     if (dhd == null) {
       return "";
     }
@@ -468,9 +468,8 @@ public class RaceHeatManager {
       return false;
     }
     for (int j = 0; j < genHeat.getDrivers().size(); j++) {
-      com.antigravity.race.DriverHeatData genDhd = genHeat.getDrivers().get(j); // fqn-collision
-      com.antigravity.race.DriverHeatData startedDhd =
-          startedHeat.getDrivers().get(j); // fqn-collision
+      DriverHeatData genDhd = genHeat.getDrivers().get(j);
+      DriverHeatData startedDhd = startedHeat.getDrivers().get(j);
 
       String genStableId = getDriverStableId(genDhd);
       String startedStableId = getDriverStableId(startedDhd);

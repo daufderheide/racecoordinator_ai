@@ -1,5 +1,6 @@
 package com.antigravity.race.states;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
@@ -50,11 +51,19 @@ public class RaceOver implements IRaceState {
 
     // Save history and update stats (separately if in demo mode)
     try {
-      DatabaseService dbService = DatabaseService.getInstance();
-      com.mongodb.client.MongoDatabase db =
-          ClientSubscriptionManager.getInstance().getDatabaseContext().getDatabase();
-      dbService.saveRaceHistory(db, race);
-      dbService.updateGlobalStatistics(db, race);
+      DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
+      if (dbCtx != null) {
+        DatabaseService dbService = DatabaseService.getInstance();
+        com.mongodb.client.MongoDatabase db = dbCtx.getDatabase();
+        if (db != null) {
+          dbService.saveRaceHistory(db, race);
+          dbService.updateGlobalStatistics(db, race);
+        } else {
+          logger.warn("Database is null; skipping race history and statistics persistence.");
+        }
+      } else {
+        logger.info("DatabaseContext is null; skipping race history and statistics persistence.");
+      }
     } catch (Exception e) {
       logger.error("Failed to insert race history", e);
     }
