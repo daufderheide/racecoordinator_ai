@@ -74,7 +74,19 @@ public class App {
 
   static {
     // Ensure app.data.dir is set as a system property early for Logback
-    String defaultDataDir = Paths.get(System.getProperty("user.dir"), "app_data").toString();
+    String defaultDataDir;
+    String os = System.getProperty("os.name").toLowerCase();
+    if (os.contains("win")) {
+      String programData = System.getenv("ProgramData");
+      if (programData != null && !programData.isEmpty()) {
+        defaultDataDir = Paths.get(programData, "Race Coordinator AI").toString();
+      } else {
+        defaultDataDir = Paths.get(System.getProperty("user.home"), ".racecoordinator").toString();
+      }
+    } else {
+      defaultDataDir = Paths.get(System.getProperty("user.dir"), "app_data").toString();
+    }
+
     if (System.getProperty("app.data.dir") == null) {
       System.setProperty("app.data.dir", defaultDataDir);
     }

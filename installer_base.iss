@@ -40,7 +40,7 @@ Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ig
 [Icons]
 ; Desktop Icons
 Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
-    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless || pause"""""; \
+    Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) || pause"""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
 Name: "{autodesktop}\Race Coordinator Client"; Filename: "{cmd}"; \
@@ -48,11 +48,11 @@ Name: "{autodesktop}\Race Coordinator Client"; Filename: "{cmd}"; \
 
 ; Start Menu Icons
 Name: "{group}\Race Coordinator Server"; Filename: "{cmd}"; \
-    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" || pause"""""; \
+    Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") || pause"""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
 Name: "{group}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
-    Parameters: "/c """"{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless || pause"""""; \
+    Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) || pause"""; \
     IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 
 Name: "{group}\Race Coordinator Client"; Filename: "cmd.exe"; \
