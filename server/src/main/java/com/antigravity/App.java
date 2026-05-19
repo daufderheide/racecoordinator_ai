@@ -94,7 +94,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.18";
+  public static final String SERVER_VERSION = "0.0.0.19";
 
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
