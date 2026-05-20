@@ -1,4 +1,6 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ActivatedRoute } from "@angular/router";
 import { BehaviorSubject, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -12,10 +14,12 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { RaceResultsComponent } from "./race-results.component";
+import { RaceResultsHarness } from "./testing/race-results.harness";
 
 describe("RaceResultsComponent", () => {
   let component: RaceResultsComponent;
   let fixture: ComponentFixture<RaceResultsComponent>;
+  let harness: RaceResultsHarness;
   let mockRaceConnectionService: any;
   let mockRaceService: any;
   let mockPrintService: any;
@@ -136,6 +140,20 @@ describe("RaceResultsComponent", () => {
         { provide: PrintService, useValue: mockPrintService },
         { provide: TranslationService, useValue: mockTranslationService },
         {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: {
+                get: () => null,
+              },
+              queryParamMap: {
+                get: () => null,
+              },
+            },
+            params: new BehaviorSubject({}),
+          },
+        },
+        {
           provide: DataService,
           useValue: { serverUrl: "http://localhost:8080" },
         },
@@ -143,10 +161,14 @@ describe("RaceResultsComponent", () => {
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(RaceResultsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      RaceResultsHarness,
+    );
   });
 
   afterEach(() => {
@@ -658,29 +680,25 @@ describe("RaceResultsComponent", () => {
       expect(component["hoveredDriverId"]).toBeNull();
     });
 
-    it("should force hidden driver back into DOM / render it when hovered", () => {
+    it("should force hidden driver back into DOM / render it when hovered", async () => {
       fixture.detectChanges();
 
       // Initially all 3 drivers are visible, so we should have 6 driver-group elements (3 in left graph, 3 in right graph)
-      let driverGroups =
-        fixture.nativeElement.querySelectorAll(".driver-group");
-      expect(driverGroups.length).toBe(6);
+      expect(await harness.getDriverGroupCount()).toBe(6);
 
       // Hide Bob (d2)
       component["toggleDriverVisibility"]("d2");
       fixture.detectChanges();
 
-      driverGroups = fixture.nativeElement.querySelectorAll(".driver-group");
       // Bob is hidden, so only d1 and d3 are rendered (2 in left graph, 2 in right graph -> 4 total)
-      expect(driverGroups.length).toBe(4);
+      expect(await harness.getDriverGroupCount()).toBe(4);
 
       // Hover over Bob (d2)
       component["hoveredDriverId"] = "d2";
       fixture.detectChanges();
 
-      driverGroups = fixture.nativeElement.querySelectorAll(".driver-group");
       // Bob is hovered, so he should temporarily re-enter the DOM / render in both graphs (6 total)
-      expect(driverGroups.length).toBe(6);
+      expect(await harness.getDriverGroupCount()).toBe(6);
     });
   });
 
@@ -830,12 +848,11 @@ describe("RaceResultsComponent", () => {
   });
 
   describe("DOM Rendering", () => {
-    it("should render the results table header", () => {
-      const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.querySelector(".results-table-header")).toBeTruthy();
+    it("should render the results table header", async () => {
+      expect(await harness.hasResultsTableHeader()).toBeTrue();
     });
 
-    it("should render dual graph containers", () => {
+    it("should render dual graph containers", async () => {
       const d1 = createDriver("d1", "Alice", "Ally");
       const heat = createHeatWithLaps("h1", 1, [{ driver: d1, laps: [5.0] }]);
       mockRaceService.getHeats.and.returnValue([heat]);
@@ -843,12 +860,11 @@ describe("RaceResultsComponent", () => {
       participantsSubject.next([p1]);
       fixture.detectChanges();
 
-      const compiled = fixture.nativeElement as HTMLElement;
-      expect(compiled.querySelector(".rankings-graph")).toBeTruthy();
-      expect(compiled.querySelector(".laptimes-graph")).toBeTruthy();
+      expect(await harness.hasRankingsGraph()).toBeTrue();
+      expect(await harness.hasLaptimesGraph()).toBeTrue();
     });
 
-    it("should render driver rows matching participant count", () => {
+    it("should render driver rows matching participant count", async () => {
       const d1 = createDriver("d1", "Alice", "Ally");
       const d2 = createDriver("d2", "Bob", "Bobby");
 
@@ -858,9 +874,7 @@ describe("RaceResultsComponent", () => {
       participantsSubject.next([p1, p2]);
       fixture.detectChanges();
 
-      const compiled = fixture.nativeElement as HTMLElement;
-      const rows = compiled.querySelectorAll(".driver-row");
-      expect(rows.length).toBe(2);
+      expect(await harness.getDriverRowCount()).toBe(2);
     });
   });
 

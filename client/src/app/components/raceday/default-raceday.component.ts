@@ -1464,11 +1464,7 @@ export class DefaultRacedayComponent
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/race-results"]),
       );
-      this.raceResultsWindow = window.open(
-        url,
-        "_blank",
-        "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no",
-      );
+      this.raceResultsWindow = window.open(url, "_blank");
     }
   }
 

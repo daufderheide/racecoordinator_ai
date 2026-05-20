@@ -18,6 +18,7 @@ export class DriverHeatData {
     time: number;
     driverId: string;
     isDrift: boolean;
+    segments?: number[];
   }[] = [];
 
   // These are all updated by the addLapTime method.
@@ -84,6 +85,7 @@ export class DriverHeatData {
     driverId?: string,
     isDrift?: boolean,
     _type?: LapType,
+    segments?: number[],
   ): void {
     this._adjustedLapCount = adjustedLapCount;
     if (
@@ -109,6 +111,7 @@ export class DriverHeatData {
         time: lapTime,
         driverId: driverId || "",
         isDrift: !!isDrift,
+        segments: segments ? [...segments] : undefined,
       });
     } else {
       this.laps[lapIndex] = lapTime;
@@ -116,6 +119,7 @@ export class DriverHeatData {
         time: lapTime,
         driverId: driverId || "",
         isDrift: !!isDrift,
+        segments: segments ? [...segments] : undefined,
       };
     }
 
@@ -188,6 +192,7 @@ export class DriverHeatData {
     time: number;
     driverId: string;
     isDrift: boolean;
+    segments?: number[];
   }[] {
     return [...this._lapsWithDetails];
   }

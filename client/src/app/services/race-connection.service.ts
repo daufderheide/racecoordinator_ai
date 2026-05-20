@@ -210,6 +210,7 @@ export class RaceConnectionService implements OnDestroy {
               );
               this.lapSubject.next(lap);
             } else {
+              const segmentsCopy = [...(driverData.currentLapSegments || [])];
               driverData.addLapTime(
                 lap.lapNumber!,
                 lap.lapTime!,
@@ -220,6 +221,7 @@ export class RaceConnectionService implements OnDestroy {
                 lap.driverId!,
                 lap.isDrift!,
                 lap.type!,
+                segmentsCopy,
               );
               if (lap.flag !== undefined && lap.flag !== null) {
                 driverData.flag = lap.flag;

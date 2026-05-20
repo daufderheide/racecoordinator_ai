@@ -11,7 +11,7 @@
       </div>
       @if (race) {
         <div class="race-name-container">
-          <span class="label-text">RACE:</span>
+          <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
           <span class="value-text">{{ race.name }}</span>
           <button
             class="export-pdf-btn no-print"
@@ -37,7 +37,9 @@
             <div class="header-cell col-driver">
               {{ "RM_LABEL_DRIVER" | translate }}
             </div>
-            <div class="header-cell col-score">Score</div>
+            <div class="header-cell col-score">
+              {{ "DR_COL_SCORE" | translate }}
+            </div>
             <div class="header-cell col-laps">
               {{ "RD_COL_LAP" | translate }}
             </div>
@@ -100,19 +102,25 @@
                 </div>
                 <!-- Driver Details -->
                 <div class="body-cell col-driver">
-                  <div class="driver-name-block">
-                    <div class="driver-nickname">
-                      {{ row.driver.nickname || row.driver.name }}
-                    </div>
-                    @if (
-                      row.driver.nickname &&
-                      row.driver.nickname !== row.driver.name
-                    ) {
-                      <div class="driver-full-name">
-                        {{ row.driver.name }}
+                  <a
+                    [routerLink]="['/driver-results', getDriverId(row.driver)]"
+                    target="_blank"
+                    class="driver-results-link"
+                  >
+                    <div class="driver-name-block">
+                      <div class="driver-nickname">
+                        {{ row.driver.nickname || row.driver.name }}
                       </div>
-                    }
-                  </div>
+                      @if (
+                        row.driver.nickname &&
+                        row.driver.nickname !== row.driver.name
+                      ) {
+                        <div class="driver-full-name">
+                          {{ row.driver.name }}
+                        </div>
+                      }
+                    </div>
+                  </a>
                 </div>
                 <!-- Overall Score -->
                 <div class="body-cell col-score text-highlight">

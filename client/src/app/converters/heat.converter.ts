@@ -85,6 +85,8 @@ export class HeatConverter {
                   lap && typeof lap === "object"
                     ? !!(lap.isDrift ?? lap.is_drift)
                     : false;
+                const segments =
+                  lap && typeof lap === "object" ? lap.segments || [] : [];
 
                 hd.addLapTime(
                   i + 1,
@@ -95,6 +97,8 @@ export class HeatConverter {
                   dProto.adjustedLapCount || 0,
                   driverId,
                   isDrift,
+                  undefined,
+                  segments,
                 );
               });
             }

@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
 import { Driver } from "@app/models/driver";
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
@@ -71,7 +72,13 @@ const NEON_COLORS = [
   selector: "app-race-results",
   templateUrl: "./race-results.component.html",
   styleUrls: ["./race-results.component.css"],
-  imports: [CommonModule, DecimalPipe, TranslatePipe, AvatarUrlPipe],
+  imports: [
+    CommonModule,
+    DecimalPipe,
+    TranslatePipe,
+    AvatarUrlPipe,
+    RouterModule,
+  ],
 })
 export class RaceResultsComponent implements OnInit, OnDestroy {
   protected scale = 1;

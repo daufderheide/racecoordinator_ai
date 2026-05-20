@@ -13,6 +13,7 @@ message LapData {
   double lap_time = 1;
   string driver_id = 2;
   bool is_drift = 3;
+  repeated double segments = 4;
 }
 
 message DriverHeatData {

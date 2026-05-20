@@ -71,6 +71,7 @@ public class HeatConverter {
                           .setLapTime(l.getLapTime())
                           .setDriverId(l.getDriverId() != null ? l.getDriverId() : "")
                           .setIsDrift(l.isDrift())
+                          .addAllSegments(l.getSegments())
                           .build())
               .collect(Collectors.toList()));
     }

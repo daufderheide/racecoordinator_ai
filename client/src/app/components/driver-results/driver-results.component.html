@@ -1,0 +1,501 @@
+<div class="dashboard-wrapper">
+  <div class="scrollable-container">
+    <!-- Top Cyberpunk Title Bar -->
+    <div class="header-bar">
+      <div class="driver-profile-header">
+        <div
+          class="avatar-ring"
+          [class.gold-ring]="overallRow?.rank === 1"
+          [class.silver-ring]="overallRow?.rank === 2"
+          [class.bronze-ring]="overallRow?.rank === 3"
+        >
+          <img
+            [src]="driver?.avatarUrl | avatarUrl"
+            class="driver-avatar"
+            alt="Avatar"
+          />
+        </div>
+        <div class="title-glow-container">
+          <h1 class="page-title">{{ driver?.nickname || driver?.name }}</h1>
+          @if (driver?.nickname && driver?.nickname !== driver?.name) {
+            <div class="driver-sub-name">{{ driver?.name }}</div>
+          }
+          <div class="cyberpunk-line"></div>
+        </div>
+      </div>
+      @if (race) {
+        <div class="race-name-container">
+          <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
+          <span class="value-text">{{ race.name }}</span>
+          <button
+            class="export-pdf-btn no-print"
+            (click)="exportPdf()"
+            title="Export PDF"
+          >
+            <span class="material-icons">picture_as_pdf</span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Overall Standing Data Container -->
+    <div class="results-container section-container">
+      <h2 class="section-title">{{ "OR_RANKINGS_HEADER" | translate }}</h2>
+      <div class="results-table-wrapper">
+        <div class="results-table overall-table">
+          <div class="results-table-header overall-grid">
+            <div class="header-cell col-pos">
+              {{ "RD_COL_RANK_OVERALL" | translate }}
+            </div>
+            <div class="header-cell col-score">
+              {{ "DR_COL_SCORE" | translate }}
+            </div>
+            <div class="header-cell col-laps">
+              {{ "RD_COL_LAP" | translate }}
+            </div>
+            <div class="header-cell col-avg-lap">
+              {{ "RD_COL_AVG_LAP" | translate }}
+            </div>
+            <div class="header-cell col-median-lap">
+              {{ "RD_COL_MEDIAN_LAP" | translate }}
+            </div>
+            <div class="header-cell col-best-lap">
+              {{ "RD_COL_BEST_LAP" | translate }}
+            </div>
+            <div class="header-cell col-total-time">
+              {{ "RD_COL_TOTAL_TIME" | translate }}
+            </div>
+            <div class="header-cell col-gap-leader">
+              {{ "RD_COL_GAP_LEADER" | translate }}
+            </div>
+            <div class="header-cell col-gap-ahead">
+              {{ "RD_COL_GAP_POSITION" | translate }}
+            </div>
+          </div>
+          <div class="results-table-body">
+            @if (overallRow) {
+              <div class="driver-row static-row overall-grid">
+                <div class="body-cell col-pos">
+                  <div
+                    class="pos-badge"
+                    [class.podium-1]="overallRow.rank === 1"
+                    [class.podium-2]="overallRow.rank === 2"
+                    [class.podium-3]="overallRow.rank === 3"
+                  >
+                    {{ overallRow.rank }}
+                  </div>
+                </div>
+                <div class="body-cell col-score text-highlight">
+                  {{ overallRow.score | number: getScoreFormat() }}
+                </div>
+                <div class="body-cell col-laps">
+                  {{ overallRow.laps | number: "1.2-2" }}
+                </div>
+                <div class="body-cell col-avg-lap">
+                  {{
+                    overallRow.averageLapTime > 0
+                      ? (overallRow.averageLapTime | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell col-median-lap">
+                  {{
+                    overallRow.medianLapTime > 0
+                      ? (overallRow.medianLapTime | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell col-best-lap text-best-lap">
+                  {{
+                    overallRow.bestLapTime > 0
+                      ? (overallRow.bestLapTime | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell col-total-time">
+                  {{
+                    overallRow.totalTime > 0
+                      ? (overallRow.totalTime | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell col-gap-leader text-gap">
+                  {{ formatGap(overallRow.gap1st) }}
+                </div>
+                <div class="body-cell col-gap-ahead text-gap">
+                  {{ formatGap(overallRow.gapAhead) }}
+                </div>
+              </div>
+            } @else {
+              <div class="no-data-row">
+                <div class="no-data-msg">
+                  <span>{{ "DR_NO_OVERALL_STANDINGS" | translate }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heats Expanders -->
+    <div class="heats-section-container">
+      <h2 class="section-title">{{ "DR_HEAT_PARTICIPATIONS" | translate }}</h2>
+
+      @if (driverHeats.length === 0) {
+        <div class="results-container no-heats-container">
+          <div class="no-data-row">
+            <div class="no-data-msg">
+              <i class="warning-icon">⚠️</i>
+              <span>{{ "DR_NO_HEAT_DATA" | translate }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      @for (dh of driverHeats; track dh.heat.objectId; let isFirst = $first) {
+        <div
+          class="heat-card results-container"
+          [class.expanded]="expandedHeats.has(dh.heat.objectId)"
+          [class.first-heat]="isFirst"
+        >
+          <!-- Expander Header -->
+          <div class="heat-card-header" (click)="toggleHeat(dh.heat.objectId)">
+            <div class="heat-title-block">
+              <span class="heat-badge"
+                >{{ "DR_LABEL_HEAT" | translate }}
+                {{ dh.heat.heatNumber }}</span
+              >
+              @if (dh.heat.group) {
+                <span class="group-badge">{{
+                  "DR_LABEL_GROUP" | translate: { group: dh.heat.group }
+                }}</span>
+              }
+              <span
+                class="lane-badge"
+                [style.color]="dh.laneColor.foreground"
+                [style.background-color]="dh.laneColor.background"
+              >
+                {{ dh.laneColor.name }}
+              </span>
+            </div>
+            <div class="heat-toggle-icon">
+              <span class="material-icons">{{
+                expandedHeats.has(dh.heat.objectId)
+                  ? "expand_less"
+                  : "expand_more"
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Expander Content -->
+          <div
+            class="heat-card-content"
+            [class.collapsed-heat-content]="
+              !expandedHeats.has(dh.heat.objectId)
+            "
+          >
+            <!-- Heat Stats Table -->
+            <div class="heat-stats-table-wrapper">
+              <div class="results-table">
+                <div class="results-table-header heat-grid">
+                  <div class="header-cell col-pos">
+                    {{ "RD_COL_RANK_HEAT" | translate }}
+                  </div>
+                  <div class="header-cell col-laps">
+                    {{ "RD_COL_LAP" | translate }}
+                  </div>
+                  <div class="header-cell col-reaction">
+                    {{ "RD_COL_REACTION_TIME" | translate }}
+                  </div>
+                  <div class="header-cell col-avg-lap">
+                    {{ "RD_COL_AVG_LAP" | translate }}
+                  </div>
+                  <div class="header-cell col-median-lap">
+                    {{ "RD_COL_MEDIAN_LAP" | translate }}
+                  </div>
+                  <div class="header-cell col-best-lap">
+                    {{ "RD_COL_BEST_LAP" | translate }}
+                  </div>
+                  <div class="header-cell col-total-time">
+                    {{ "RD_COL_TOTAL_TIME" | translate }}
+                  </div>
+                  <div class="header-cell col-gap-leader">
+                    {{ "RD_COL_GAP_LEADER" | translate }}
+                  </div>
+                  <div class="header-cell col-gap-ahead">
+                    {{ "RD_COL_GAP_POSITION" | translate }}
+                  </div>
+                </div>
+                <div class="results-table-body">
+                  <div class="driver-row static-row heat-row heat-grid">
+                    <div class="body-cell col-pos">
+                      <div
+                        class="pos-badge small-badge"
+                        [class.podium-1]="dh.row.rank === 1"
+                        [class.podium-2]="dh.row.rank === 2"
+                        [class.podium-3]="dh.row.rank === 3"
+                      >
+                        {{ dh.row.rank }}
+                      </div>
+                    </div>
+                    <div class="body-cell col-laps">
+                      {{ dh.row.laps | number: "1.2-2" }}
+                    </div>
+                    <div class="body-cell col-reaction text-highlight">
+                      {{
+                        dh.row.reactionTime > 0
+                          ? (dh.row.reactionTime | number: "1.3-3") + "s"
+                          : "0.000s"
+                      }}
+                    </div>
+                    <div class="body-cell col-avg-lap">
+                      {{
+                        dh.row.averageLapTime > 0
+                          ? (dh.row.averageLapTime | number: "1.3-3")
+                          : "--.---"
+                      }}
+                    </div>
+                    <div class="body-cell col-median-lap">
+                      {{
+                        dh.row.medianLapTime > 0
+                          ? (dh.row.medianLapTime | number: "1.3-3")
+                          : "--.---"
+                      }}
+                    </div>
+                    <div class="body-cell col-best-lap text-best-lap">
+                      {{
+                        dh.row.bestLapTime > 0
+                          ? (dh.row.bestLapTime | number: "1.3-3")
+                          : "--.---"
+                      }}
+                    </div>
+                    <div class="body-cell col-total-time">
+                      {{
+                        dh.row.totalTime > 0
+                          ? (dh.row.totalTime | number: "1.3-3")
+                          : "--.---"
+                      }}
+                    </div>
+                    <div class="body-cell col-gap-leader text-gap">
+                      {{ formatGap(dh.row.gap1st) }}
+                    </div>
+                    <div class="body-cell col-gap-ahead text-gap">
+                      {{ formatGap(dh.row.gapAhead) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Sequential Lap Chart -->
+            @if (dh.heatDriver.lapsWithDetails.length > 0) {
+              <div class="lap-chart-section">
+                <h3 class="subsection-title">
+                  {{ "DR_LAP_PERFORMANCE_CHART" | translate }}
+                </h3>
+
+                <div class="lap-chart-box-container">
+                  <div class="lap-chart-box">
+                    <!-- Background Grid Lines -->
+                    <div class="lap-chart-grid">
+                      <div class="grid-line" data-value="100%"></div>
+                      <div class="grid-line" data-value="75%"></div>
+                      <div class="grid-line" data-value="50%"></div>
+                      <div class="grid-line" data-value="25%"></div>
+                    </div>
+
+                    <!-- Sequential Bars Container -->
+                    <div class="lap-chart-bars">
+                      @for (
+                        lap of dh.heatDriver.lapsWithDetails;
+                        track $index;
+                        let lapIdx = $index
+                      ) {
+                        <div
+                          class="lap-bar"
+                          [style.height.%]="
+                            getLapBarHeight(lap.time, dh.maxLapTime)
+                          "
+                          (mouseenter)="
+                            showTooltip($event, lap, lapIdx, dh.heat.objectId)
+                          "
+                          (mouseleave)="hideTooltip()"
+                        >
+                          <!-- Custom Stacked Segments -->
+                          @if (lap.segments && lap.segments.length > 0) {
+                            <!-- Render stacked segments in chronological order from bottom to top -->
+                            @for (
+                              seg of lap.segments;
+                              track $index;
+                              let segIdx = $index
+                            ) {
+                              <div
+                                class="lap-bar-segment"
+                                [style.height.%]="(seg / lap.time) * 100"
+                                [style.background-color]="
+                                  getSegmentColor(segIdx)
+                                "
+                              ></div>
+                            }
+                          } @else {
+                            <div class="lap-bar-solid"></div>
+                          }
+
+                          <!-- Lap index label at the base of the bar -->
+                          <span class="lap-bar-label">L{{ lapIdx + 1 }}</span>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Premium Cyberpunk Glass Hover Tooltip (rendered outside scrollbar container) -->
+                    @if (
+                      activeTooltip && activeTooltip.heatId === dh.heat.objectId
+                    ) {
+                      <div
+                        class="lap-bar-tooltip active-tooltip"
+                        [style.left.px]="activeTooltip.left"
+                        [style.top.px]="activeTooltip.top"
+                      >
+                        <div class="tooltip-header">
+                          {{ "DR_LABEL_LAP" | translate }}
+                          {{ activeTooltip.lapIdx + 1 }}
+                        </div>
+                        @if (isTeam() && activeTooltip.lap.driverId) {
+                          <div class="tooltip-row driver-row">
+                            <span class="tooltip-label">{{
+                              "DR_TOOLTIP_DRIVER" | translate
+                            }}</span>
+                            <span class="tooltip-val text-driver">{{
+                              getDriverName(activeTooltip.lap.driverId)
+                            }}</span>
+                          </div>
+                        }
+                        <div class="tooltip-row total-row">
+                          <span class="tooltip-label">{{
+                            "DR_TOOLTIP_TOTAL" | translate
+                          }}</span>
+                          <span class="tooltip-val text-highlight"
+                            >{{
+                              activeTooltip.lap.time | number: "1.3-3"
+                            }}s</span
+                          >
+                        </div>
+                        @if (
+                          activeTooltip.lap.segments &&
+                          activeTooltip.lap.segments.length > 0
+                        ) {
+                          <div class="tooltip-divider"></div>
+                          <div class="tooltip-segments">
+                            @for (
+                              seg of activeTooltip.lap.segments;
+                              track $index;
+                              let segIdx = $index
+                            ) {
+                              <div class="tooltip-row">
+                                <span
+                                  class="tooltip-seg-dot"
+                                  [style.background-color]="
+                                    getSegmentColor(segIdx)
+                                  "
+                                ></span>
+                                <span class="tooltip-label">{{
+                                  "DR_TOOLTIP_SEG"
+                                    | translate: { index: segIdx + 1 }
+                                }}</span>
+                                <span class="tooltip-val"
+                                  >{{ seg | number: "1.3-3" }}s</span
+                                >
+                              </div>
+                            }
+                          </div>
+                        }
+                        @if (activeTooltip.lap.isDrift) {
+                          <div class="tooltip-drift">
+                            <span class="drift-badge">{{
+                              "RD_DRIFT_LAP" | translate
+                            }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Laps Section -->
+            <div class="laps-section">
+              <h3 class="subsection-title">
+                {{ "DR_LAP_TIMES_SEGMENTS" | translate }}
+              </h3>
+
+              @if (dh.heatDriver.lapsWithDetails.length === 0) {
+                <div class="no-laps-msg">
+                  {{ "DR_NO_LAPS_RECORDED" | translate }}
+                </div>
+              }
+
+              @if (dh.heatDriver.lapsWithDetails.length > 0) {
+                <div class="laps-list">
+                  @for (
+                    lap of dh.heatDriver.lapsWithDetails;
+                    track $index;
+                    let lapIdx = $index
+                  ) {
+                    <div class="lap-item-card">
+                      <div class="lap-main-row">
+                        <div class="lap-number">
+                          {{ "DR_LABEL_LAP" | translate }} {{ lapIdx + 1 }}
+                        </div>
+                        @if (isTeam() && lap.driverId) {
+                          <span class="team-driver-badge">
+                            {{ getDriverName(lap.driverId) }}
+                          </span>
+                        }
+                        <div
+                          class="lap-time"
+                          [class.text-best-lap]="
+                            lap.time === dh.row.bestLapTime
+                          "
+                        >
+                          {{ lap.time | number: "1.3-3" }}s
+                        </div>
+                        @if (lap.isDrift) {
+                          <span class="drift-badge">{{
+                            "RD_DRIFT_LAP" | translate
+                          }}</span>
+                        }
+                      </div>
+
+                      <!-- Segments if available -->
+                      @if (lap.segments && lap.segments.length > 0) {
+                        <div class="segments-container">
+                          @for (
+                            seg of lap.segments;
+                            track $index;
+                            let segIdx = $index
+                          ) {
+                            <div class="segment-pill">
+                              <span class="seg-label">{{
+                                "DR_LABEL_SEG_CAPS"
+                                  | translate: { index: segIdx + 1 }
+                              }}</span>
+                              <span class="seg-val"
+                                >{{ seg | number: "1.3-3" }}s</span
+                              >
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

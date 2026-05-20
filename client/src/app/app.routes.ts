@@ -4,6 +4,7 @@ import { CustomRotationEditorComponent } from "@app/components/asset-manager/cus
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
+import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
@@ -120,6 +121,11 @@ export const routes: Routes = [
     path: "race-results",
     component: RaceResultsComponent,
     data: { animation: "RaceResultsPage" },
+  },
+  {
+    path: "driver-results/:driverId",
+    component: DriverResultsComponent,
+    data: { animation: "DriverResultsPage" },
   },
   { path: "**", redirectTo: "" },
 ];
