@@ -8,11 +8,13 @@ import {
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
@@ -39,8 +41,6 @@ import { deepCopy } from "@app/utils/clone.utils";
 
 import { ColumnPreviewComponent } from "./column-preview/column-preview.component";
 import { ReorderDialogComponent } from "./reorder-dialog/reorder-dialog.component";
-import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
-import { NO_ERRORS_SCHEMA } from "@angular/core";
 
 export interface UIEditorState {
   settings: Settings;
@@ -111,11 +111,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   showReorderModal = false;
   reorderModalData: ReorderDialogData | null = null;
-  
+
   // Success modal properties
   showSuccessModal = false;
-  successModalTitle = '';
-  successModalMessage = '';
+  successModalTitle = "";
+  successModalMessage = "";
   successModalParams: any = {};
   private themeToCollapseAfterSuccess: string | null = null;
 
@@ -973,7 +973,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       // Expand the new theme without activating it
       this.toggleThemeSection(created.entity_id, false);
       this.captureState();
-      
+
       // Show success message using RCAI modal
       this.successModalTitle = "GEN_SUCCESS";
       this.successModalMessage = "UE_SUCCESS_CREATE";
@@ -1004,23 +1004,28 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       );
       this.editingState.themes = [...this.editingState.themes, created];
       this.refreshDisplayProperties();
-      
+
       // Preserve current active theme - do not activate the new theme
       const currentActiveThemeId = this.editingSettings.activeThemeId;
-      
+
       // Always keep new theme collapsed
       this.sectionsExpanded[created.entity_id] = false;
-      
+
+      // Collapse all themes
+      Object.keys(this.sectionsExpanded).forEach((themeId) => {
+        this.sectionsExpanded[themeId] = false;
+      });
+
       // Collapse original theme after success modal
       this.themeToCollapseAfterSuccess = theme.entity_id;
-      
+
       this.saveExpanderState();
-      
+
       // Ensure the new theme is not activated
       this.editingSettings.activeThemeId = currentActiveThemeId;
-      
+
       this.captureState();
-      
+
       // Show success message using RCAI modal
       this.successModalTitle = "GEN_SUCCESS";
       this.successModalMessage = "UE_SUCCESS_DUPLICATE";
@@ -1087,10 +1092,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onSuccessModalAcknowledge() {
     this.showSuccessModal = false;
-    this.successModalTitle = '';
-    this.successModalMessage = '';
+    this.successModalTitle = "";
+    this.successModalMessage = "";
     this.successModalParams = {};
-    
+
     // Collapse the original theme after successful duplication
     if (this.themeToCollapseAfterSuccess) {
       this.sectionsExpanded[this.themeToCollapseAfterSuccess] = false;
