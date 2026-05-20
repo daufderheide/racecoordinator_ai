@@ -1825,7 +1825,9 @@ describe("UIEditorComponent", () => {
       component.refreshDisplayProperties();
       component.editingSettings.activeThemeId = "t1";
 
-      mockThemeService.duplicateTheme.and.returnValue(Promise.resolve(newTheme));
+      mockThemeService.duplicateTheme.and.returnValue(
+        Promise.resolve(newTheme),
+      );
 
       component.createNewTheme();
       flush();
@@ -1838,7 +1840,7 @@ describe("UIEditorComponent", () => {
       });
     }));
 
-    it("should collapse original theme after acknowledging success modal", fakeAsync(() => {
+    it("should collapse all themes after acknowledging success modal", fakeAsync(() => {
       const originalTheme = {
         entity_id: "t1",
         is_default: false,
@@ -1870,8 +1872,9 @@ describe("UIEditorComponent", () => {
       // Acknowledge the success modal
       component.onSuccessModalAcknowledge();
 
-      // After acknowledgment, original theme should be collapsed
+      // After acknowledgment, all themes should be collapsed
       expect(component.sectionsExpanded["t1"]).toBeFalse();
+      expect(component.sectionsExpanded["t2"]).toBeFalse();
       expect((component as any).themeToCollapseAfterSuccess).toBeNull();
       expect(component.showSuccessModal).toBeFalse();
     }));
@@ -1947,7 +1950,7 @@ describe("UIEditorComponent", () => {
         By.css("app-acknowledgement-modal"),
       );
       expect(modal).toBeTruthy();
-      
+
       // Verify component properties are set correctly
       expect(component.showSuccessModal).toBeTrue();
       expect(component.successModalTitle).toBe("GEN_SUCCESS");

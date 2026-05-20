@@ -1011,11 +1011,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       // Always keep new theme collapsed
       this.sectionsExpanded[created.entity_id] = false;
 
-      // Collapse all theme sections (not main sections like layout, themes, config)
-      this.displayThemes.forEach((t) => {
-        this.sectionsExpanded[t.entity_id] = false;
-      });
-
       // Collapse original theme after success modal
       this.themeToCollapseAfterSuccess = theme.entity_id;
 
@@ -1096,12 +1091,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.successModalMessage = "";
     this.successModalParams = {};
 
-    // Collapse the original theme after successful duplication
-    if (this.themeToCollapseAfterSuccess) {
-      this.sectionsExpanded[this.themeToCollapseAfterSuccess] = false;
-      this.saveExpanderState();
-      this.themeToCollapseAfterSuccess = null;
-    }
+    // Collapse all themes after successful duplication
+    this.editingState.themes.forEach((t) => {
+      this.sectionsExpanded[t.entity_id] = false;
+    });
+    this.saveExpanderState();
+    this.themeToCollapseAfterSuccess = null;
   }
 
   onDetachTheme() {
