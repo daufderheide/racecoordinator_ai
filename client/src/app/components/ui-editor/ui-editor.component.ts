@@ -1011,9 +1011,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       // Always keep new theme collapsed
       this.sectionsExpanded[created.entity_id] = false;
 
-      // Collapse all themes
-      Object.keys(this.sectionsExpanded).forEach((themeId) => {
-        this.sectionsExpanded[themeId] = false;
+      // Collapse all theme sections (not main sections like layout, themes, config)
+      this.displayThemes.forEach((t) => {
+        this.sectionsExpanded[t.entity_id] = false;
       });
 
       // Collapse original theme after success modal
