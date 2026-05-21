@@ -96,6 +96,28 @@ public class App {
 
   public static final String SERVER_VERSION = "0.0.0.20";
 
+  static boolean shouldUseEmbeddedMongo(String[] args) {
+    boolean useEmbeddedMongo = true;
+
+    String envUseEmbedded = System.getenv("USE_EMBEDDED_MONGO");
+    if (envUseEmbedded != null && envUseEmbedded.equalsIgnoreCase("false")) {
+      useEmbeddedMongo = false;
+    }
+
+    for (String arg : args) {
+      if ("--no-embedded-mongo".equals(arg)) {
+        useEmbeddedMongo = false;
+      }
+    }
+
+    return useEmbeddedMongo;
+  }
+
+@SuppressWarnings("checkstyle:MethodLength")
+public static void main(String[] args) {
+
+
+
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     try {
@@ -119,16 +141,11 @@ public class App {
         logger.error("Failed to set java.io.tmpdir", e);
       }
 
-      boolean useEmbeddedMongo = true;
-      String envUseEmbedded = System.getenv("USE_EMBEDDED_MONGO");
-      if (envUseEmbedded != null && envUseEmbedded.equalsIgnoreCase("false")) {
-        useEmbeddedMongo = false;
-      }
+      boolean useEmbeddedMongo = shouldUseEmbeddedMongo(args);
       boolean headless = false;
+
       for (String arg : args) {
-        if ("--no-embedded-mongo".equals(arg)) {
-          useEmbeddedMongo = false;
-        } else if ("--headless".equals(arg)) {
+        if ("--headless".equals(arg)) {
           headless = true;
         }
       }
