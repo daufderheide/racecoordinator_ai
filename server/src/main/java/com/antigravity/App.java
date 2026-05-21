@@ -113,11 +113,6 @@ public class App {
     return useEmbeddedMongo;
   }
 
-@SuppressWarnings("checkstyle:MethodLength")
-public static void main(String[] args) {
-
-
-
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     try {
