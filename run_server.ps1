@@ -7,9 +7,10 @@ $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 $SERVER_DIR = "$PSScriptRoot\server"
 
 # Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
+# Use --server-only to avoid regenerating client protobuf files which can cause compatibility issues
 Write-Host "Generating Protobuf files..." -ForegroundColor Cyan
 Set-Location $SERVER_DIR
-& powershell -ExecutionPolicy Bypass -File generate_protos.ps1
+& powershell -ExecutionPolicy Bypass -File generate_protos.ps1 --server-only
 
 Write-Host "Starting Server..." -ForegroundColor Green
 Set-Location $SERVER_DIR
