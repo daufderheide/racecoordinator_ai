@@ -87,6 +87,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   isUploading: boolean = false;
   isLoading: boolean = true;
   isDragOver: boolean = false;
+  errorMessage: string | null = null;
+  private errorTimeout: any = null;
 
   // Image Set Editor
   showImageSetEditor: boolean = false;
@@ -191,6 +193,9 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     }
     if (this.previewInterval) {
       clearInterval(this.previewInterval);
+    }
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
     }
   }
 
@@ -551,6 +556,32 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   uploadFiles(files: FileList) {
     if (files && files.length > 0) {
+      this.errorMessage = null;
+      if (this.errorTimeout) {
+        clearTimeout(this.errorTimeout);
+        this.errorTimeout = null;
+      }
+
+      const allowedExtensions =
+        /\.(png|jpe?g|gif|webp|svg|mp3|wav|ogg|m4a|aac|flac)$/i;
+      const hasInvalidFiles = Array.from(files).some((file: any) => {
+        const isMimeValid =
+          file.type &&
+          (file.type.startsWith("image/") || file.type.startsWith("audio/"));
+        const isExtValid = allowedExtensions.test(file.name);
+        return !isMimeValid && !isExtValid;
+      });
+
+      if (hasInvalidFiles) {
+        this.errorMessage = "AM_ERR_ONLY_IMAGE_AUDIO_SUPPORTED";
+        this.errorTimeout = setTimeout(() => {
+          this.errorMessage = null;
+          this.cdr.detectChanges();
+        }, 5000);
+        this.cdr.detectChanges();
+        return;
+      }
+
       this.isUploading = true;
       this.cdr.detectChanges();
 

@@ -184,12 +184,12 @@
         (drop)="onDrop($event)"
       >
         @if (!isUploading) {
+          <img
+            src="assets/images/am_icon_upload.png"
+            alt="Upload"
+            class="upload-bg-icon"
+          />
           <div class="upload-content">
-            <img
-              src="assets/images/am_icon_upload.png"
-              alt="Upload"
-              class="upload-icon"
-            />
             <div class="upload-btn">{{ "AM_BTN_UPLOAD_NEW" | translate }}</div>
             <div class="upload-hint">{{ "AM_UPLOAD_HINT" | translate }}</div>
           </div>
@@ -430,6 +430,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Error Toast -->
+  @if (errorMessage) {
+    <div class="error-toast">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>{{ errorMessage | translate }}</span>
+    </div>
+  }
 </div>
 
 <!-- Connection Lost Overlay -->

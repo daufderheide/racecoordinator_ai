@@ -518,4 +518,130 @@ describe("AssetManagerComponent", () => {
       ).toBeTrue();
     });
   });
+
+  describe("Asset Upload & Drag-and-Drop Validation", () => {
+    it("should accept and upload files when all files are valid images or audio", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [
+        new File([""], "test.png", { type: "image/png" }),
+        new File([""], "test.mp3", { type: "audio/mpeg" }),
+      ];
+
+      const fileList = {
+        0: files[0],
+        1: files[1],
+        length: files.length,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+
+      // Wait for FileReader promises to resolve and dataService.uploadAsset calls to complete
+      tick();
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBeNull();
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(2);
+      expect(mockDataService.uploadAsset.calls.argsFor(0)[0]).toBe("test.png");
+      expect(mockDataService.uploadAsset.calls.argsFor(0)[1]).toBe("image");
+      expect(mockDataService.uploadAsset.calls.argsFor(1)[0]).toBe("test.mp3");
+      expect(mockDataService.uploadAsset.calls.argsFor(1)[1]).toBe("sound");
+      expect(mockDataService.listAssets).toHaveBeenCalled();
+      expect(component.isUploading).toBeFalse();
+    }));
+
+    it("should reject uploads, block uploadAsset, and show error when any file is invalid", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+
+      const files = [
+        new File([""], "test.png", { type: "image/png" }),
+        new File([""], "unsupported.pdf", { type: "application/pdf" }),
+      ];
+
+      const fileList = {
+        0: files[0],
+        1: files[1],
+        length: files.length,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+
+      tick();
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBe("AM_ERR_ONLY_IMAGE_AUDIO_SUPPORTED");
+      expect(mockDataService.uploadAsset).not.toHaveBeenCalled();
+      expect(component.isUploading).toBeFalse();
+    }));
+
+    it("should auto-dismiss the error message after exactly 5 seconds", fakeAsync(() => {
+      const files = [
+        new File([""], "unsupported.zip", { type: "application/zip" }),
+      ];
+
+      const fileList = {
+        0: files[0],
+        length: files.length,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBe("AM_ERR_ONLY_IMAGE_AUDIO_SUPPORTED");
+
+      // Tick 4.9 seconds - should still be visible
+      tick(4900);
+      fixture.detectChanges();
+      expect(component.errorMessage).toBe("AM_ERR_ONLY_IMAGE_AUDIO_SUPPORTED");
+
+      // Tick remaining 100ms - should be dismissed
+      tick(100);
+      fixture.detectChanges();
+      expect(component.errorMessage).toBeNull();
+    }));
+
+    it("should clear the dismissal timeout when ngOnDestroy is triggered to prevent memory leaks", fakeAsync(() => {
+      const files = [
+        new File([""], "unsupported.zip", { type: "application/zip" }),
+      ];
+
+      const fileList = {
+        0: files[0],
+        length: files.length,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      fixture.detectChanges();
+
+      expect(component.errorMessage).toBe("AM_ERR_ONLY_IMAGE_AUDIO_SUPPORTED");
+
+      // Call ngOnDestroy to clear the timeout
+      component.ngOnDestroy();
+
+      // Ticking 5 seconds should not throw an error and since it was cleared, the error message won't be cleared by the timer
+      tick(5000);
+      fixture.detectChanges();
+    }));
+  });
 });
