@@ -224,8 +224,7 @@ public class App {
           MongoClientSettings.builder()
               .applyConnectionString(new ConnectionString(mongoUri))
               .codecRegistry(pojoCodecRegistry)
-              .applyToClusterSettings(
-                  b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
+              .applyToClusterSettings(b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
               .build();
 
       mongoClient = MongoClients.create(settings);
