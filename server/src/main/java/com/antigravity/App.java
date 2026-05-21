@@ -217,7 +217,7 @@ public class App {
               fromProviders(PojoCodecProvider.builder().automatic(true).build()));
       String mongoUri = System.getenv("MONGO_URI");
       if (mongoUri == null || mongoUri.trim().isEmpty()) {
-          mongoUri = "mongodb://127.0.0.1:" + MONGO_PORT;
+        mongoUri = "mongodb://127.0.0.1:" + MONGO_PORT;
       }
 
       MongoClientSettings settings =
