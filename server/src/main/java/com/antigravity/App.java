@@ -120,7 +120,14 @@ public class App {
       }
 
       boolean useEmbeddedMongo = true;
+      
+      String envUseEmbedded = System.getenv("USE_EMBEDDED_MONGO");
+      if (envUseEmbedded != null && envUseEmbedded.equalsIgnoreCase("false")) {
+        useEmbeddedMongo = false;
+      }
+
       boolean headless = false;
+
       for (String arg : args) {
         if ("--no-embedded-mongo".equals(arg)) {
           useEmbeddedMongo = false;
@@ -205,7 +212,9 @@ public class App {
                   }));
 
       // MongoDB Setup
-      CodecRegistry robustBooleanRegistry = CodecRegistries.fromCodecs(new RobustBooleanCodec());
+
+      CodecRegistry robustBooleanRegistry =
+          CodecRegistries.fromCodecs(new RobustBooleanCodec());
 
       CodecRegistry pojoCodecRegistry =
           fromRegistries(
@@ -213,11 +222,18 @@ public class App {
               MongoClientSettings.getDefaultCodecRegistry(),
               fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
+      String mongoUri = System.getenv("MONGO_URI");
+
+      if (mongoUri == null || mongoUri.trim().isEmpty()) {
+          mongoUri = "mongodb://127.0.0.1:" + MONGO_PORT;
+      }
+
       MongoClientSettings settings =
           MongoClientSettings.builder()
-              .applyConnectionString(new ConnectionString("mongodb://127.0.0.1:" + MONGO_PORT))
+              .applyConnectionString(new ConnectionString(mongoUri))
               .codecRegistry(pojoCodecRegistry)
-              .applyToClusterSettings(b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
+              .applyToClusterSettings(
+                  b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
               .build();
 
       mongoClient = MongoClients.create(settings);
