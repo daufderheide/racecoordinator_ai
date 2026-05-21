@@ -1002,6 +1002,12 @@ describe("CustomRotationEditorComponent", () => {
   });
 
   describe("Virtual Drivers", () => {
+    it("should default virtual driver count to 10 when no rotations or low driver counts exist", () => {
+      fixture.detectChanges();
+      expect(component.numVirtualDrivers).toBe(10);
+      expect(component.virtualDrivers.length).toBe(10);
+    });
+
     it("should initialize virtual driver count from maximum driver index in heats", () => {
       fixture.componentRef.setInput("rotations", [
         {

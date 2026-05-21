@@ -90,7 +90,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   lastSavedAsset?: IAssetMessage;
   scale = 1;
   virtualDrivers: { id: number; name: string }[] = [];
-  numVirtualDrivers: number = 32;
+  numVirtualDrivers: number = 10;
 
   updateVirtualDriversList() {
     this.virtualDrivers = [];
@@ -292,7 +292,7 @@ export class CustomRotationEditorComponent implements OnInit, OnDestroy {
   }
 
   private initEditorState() {
-    let maxDriverId = 32;
+    let maxDriverId = 10;
     this.internalRotations.forEach((rot) => {
       if (rot.numDrivers && rot.numDrivers > maxDriverId) {
         maxDriverId = rot.numDrivers;
