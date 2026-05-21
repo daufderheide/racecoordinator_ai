@@ -78,7 +78,53 @@ public class App {
     String os = System.getProperty("os.name").toLowerCase();
     if (os.contains("win")) {
       String programData = System.getenv("ProgramData");
-      if (programData != null && !programData.isEmpty()) {
+      if (ppi@rpi4:~ $ cd ~/rcai-runtime/
+      pi@rpi4:~/rcai-runtime $ ls
+      app_data  RaceCoordinator.jar  start_linux_rpi.sh  web
+      pi@rpi4:~/rcai-runtime $ chmod +x start_linux_rpi.sh
+      ./start_linux_rpi.sh
+      Starting RC AI...
+      2026-05-20 23:38:10.062 [main] INFO  com.antigravity.App - Race Coordinator AI Server 0.0.0.20
+      2026-05-20 23:38:10.073 [main] INFO  com.antigravity.App - Using app data directory: /home/pi/rcai-runtime/app_data
+      2026-05-20 23:38:10.074 [main] INFO  com.antigravity.App - Set de.flapdoodle.embed.io.tmpdir to: /home/pi/rcai-runtime/app_data/server_temp
+      2026-05-20 23:38:10.079 [main] INFO  com.antigravity.App - Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available...
+      2026-05-20 23:38:10.734 [main] INFO  com.antigravity.App - MongoDB is ready.
+      2026-05-20 23:38:11.008 [main] INFO  com.antigravity.App - No existing databases found. Creating 'RaceCoordinator_AI_DB' with factory defaults.
+      2026-05-20 23:38:11.141 [main] INFO  c.a.context.DatabaseContext - Switched context to database: RaceCoordinator_AI_DB
+      2026-05-20 23:38:11.184 [main] INFO  com.antigravity.service.AssetService - Created asset directory: /home/pi/rcai-runtime/app_data/RaceCoordinator_AI_DB/assets
+      2026-05-20 23:38:12.551 [main] INFO  com.antigravity.service.AssetService - Default theme 'RaceCoordinator AI (default)' created.
+      2026-05-20 23:38:12.561 [main] INFO  c.a.service.DatabaseService - Resetting database to factory settings...
+      2026-05-20 23:38:13.140 [main] INFO  c.a.service.DatabaseService - Drivers reset.
+      2026-05-20 23:38:13.431 [main] INFO  c.a.service.DatabaseService - Teams reset.
+      2026-05-20 23:38:13.689 [main] INFO  c.a.service.DatabaseService - Tracks reset.
+      2026-05-20 23:38:14.005 [main] INFO  c.a.service.DatabaseService - Races reset.
+      2026-05-20 23:38:14.007 [main] INFO  c.a.service.DatabaseService - Database reset complete.
+      2026-05-20 23:38:14.009 [main] INFO  com.antigravity.App - Connected to MongoDB successfully.
+      2026-05-20 23:38:14.010 [main] INFO  com.antigravity.App - Starting database backfill loop...
+      2026-05-20 23:38:14.017 [main] INFO  com.antigravity.App - Backfilling default assets for database: RaceCoordinator_AI_DB
+      2026-05-20 23:38:14.377 [main] INFO  com.antigravity.service.AssetService - Default theme 'RaceCoordinator AI (default)' created.
+      2026-05-20 23:38:14.382 [main] INFO  com.antigravity.App - Serving static files from: web
+      2026-05-20 23:38:14.383 [main] INFO  com.antigravity.App - Starting Javalin on port 7070...
+      2026-05-20 23:38:14.531 [main] INFO  org.eclipse.jetty.util.log - Logging initialized @5441ms to org.eclipse.jetty.util.log.Slf4jLog
+      2026-05-20 23:38:14.720 [main] INFO  io.javalin.Javalin - 
+             __                      __ _            __ __
+            / /____ _ _   __ ____ _ / /(_)____      / // /
+       __  / // __ `/| | / // __ `// // // __ \    / // /_
+      / /_/ // /_/ / | |/ // /_/ // // // / / /   /__  __/
+      \____/ \__,_/  |___/ \__,_//_//_//_/ /_/      /_/
+      
+                https://javalin.io/documentation
+      
+      2026-05-20 23:38:14.723 [main] INFO  io.javalin.Javalin - Starting Javalin ...
+      2026-05-20 23:38:14.759 [main] INFO  io.javalin.Javalin - You are running Javalin 4.6.4 (released July 8, 2022. Your Javalin version is 1412 days old. Consider checking for a newer version.).
+      2026-05-20 23:38:14.821 [main] INFO  io.javalin.Javalin - Loom is available, using Virtual ThreadPool... Neat!
+      2026-05-20 23:38:15.068 [main] INFO  io.javalin.Javalin - Static file handler added: StaticFileConfig(hostedPath=/, directory=web, location=EXTERNAL, precompress=false, aliasCheck=null, headers={Cache-Control=max-age=0}, skipFileFunction=Function1<javax.servlet.http.HttpServletRequest, java.lang.Boolean>). File system location: 'web'
+      2026-05-20 23:38:15.069 [main] INFO  io.javalin.Javalin - Listening on http://localhost:7070/
+      2026-05-20 23:38:15.070 [main] INFO  io.javalin.Javalin - Javalin started in 349ms \o/
+      2026-05-20 23:38:15.071 [main] INFO  com.antigravity.App - Javalin started successfully.
+      2026-05-20 23:38:15.260 [main] INFO  com.antigravity.App - Headless mode: Browser will not be opened automatically.
+      2026-05-20 23:38:15.261 [main] INFO  com.antigravity.App - Server is running at http://localhost:7070
+      2rogramData != null && !programData.isEmpty()) {
         defaultDataDir = Paths.get(programData, "Race Coordinator AI").toString();
       } else {
         defaultDataDir = Paths.get(System.getProperty("user.home"), ".racecoordinator").toString();
@@ -120,14 +166,11 @@ public class App {
       }
 
       boolean useEmbeddedMongo = true;
-      
       String envUseEmbedded = System.getenv("USE_EMBEDDED_MONGO");
       if (envUseEmbedded != null && envUseEmbedded.equalsIgnoreCase("false")) {
         useEmbeddedMongo = false;
       }
-
       boolean headless = false;
-
       for (String arg : args) {
         if ("--no-embedded-mongo".equals(arg)) {
           useEmbeddedMongo = false;
@@ -212,18 +255,13 @@ public class App {
                   }));
 
       // MongoDB Setup
-
-      CodecRegistry robustBooleanRegistry =
-          CodecRegistries.fromCodecs(new RobustBooleanCodec());
-
+      CodecRegistry robustBooleanRegistry = CodecRegistries.fromCodecs(new RobustBooleanCodec());
       CodecRegistry pojoCodecRegistry =
           fromRegistries(
               robustBooleanRegistry,
               MongoClientSettings.getDefaultCodecRegistry(),
               fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
       String mongoUri = System.getenv("MONGO_URI");
-
       if (mongoUri == null || mongoUri.trim().isEmpty()) {
           mongoUri = "mongodb://127.0.0.1:" + MONGO_PORT;
       }
@@ -232,8 +270,7 @@ public class App {
           MongoClientSettings.builder()
               .applyConnectionString(new ConnectionString(mongoUri))
               .codecRegistry(pojoCodecRegistry)
-              .applyToClusterSettings(
-                  b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
+              .applyToClusterSettings(b -> b.serverSelectionTimeout(1000, TimeUnit.MILLISECONDS))
               .build();
 
       mongoClient = MongoClients.create(settings);
