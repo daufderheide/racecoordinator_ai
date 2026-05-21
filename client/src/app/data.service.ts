@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
+import { Reader } from "protobufjs";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { ArduinoConfig } from "@app/models/track";
@@ -294,7 +295,9 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          return InitializeRaceResponse.decode(new Uint8Array(response as any));
+          return InitializeRaceResponse.decode(
+            Reader.create(new Uint8Array(response as any)),
+          );
         }),
       );
   }
@@ -361,7 +364,7 @@ export class DataService {
       .pipe(
         map((response) => {
           return InitializeInterfaceResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
         }),
       );
@@ -427,7 +430,7 @@ export class DataService {
       .pipe(
         map((response) => {
           return UpdateInterfaceConfigResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
         }),
       );
@@ -464,7 +467,7 @@ export class DataService {
       .pipe(
         map((response) => {
           return SetInterfacePinStateResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
         }),
       );
@@ -499,7 +502,7 @@ export class DataService {
       .pipe(
         map((response) => {
           return SetInterfaceRgbLedStateResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
         }),
       );
@@ -526,7 +529,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const startResponse = StartRaceResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return startResponse.success;
         }),
@@ -550,7 +553,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const pauseResponse = PauseRaceResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return pauseResponse.success;
         }),
@@ -574,7 +577,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const abortResponse = PauseRaceResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return abortResponse.success ?? false;
         }),
@@ -598,7 +601,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const nextResponse = NextHeatResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return nextResponse.success ?? false;
         }),
@@ -622,7 +625,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const restartResponse = RestartHeatResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return restartResponse.success ?? false;
         }),
@@ -646,7 +649,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const skipResponse = SkipHeatResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return skipResponse.success ?? false;
         }),
@@ -670,7 +673,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const deferResponse = DeferHeatResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           return deferResponse.success ?? false;
         }),
@@ -699,7 +702,9 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          return ModifyHeatsResponse.decode(new Uint8Array(response as any));
+          return ModifyHeatsResponse.decode(
+            Reader.create(new Uint8Array(response as any)),
+          );
         }),
       );
   }
@@ -725,7 +730,7 @@ export class DataService {
       .pipe(
         map((response) => {
           return RegenerateHeatsResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
         }),
       );
@@ -844,7 +849,7 @@ export class DataService {
         map((response) => {
           try {
             const listResponse = ListAssetsResponse.decode(
-              new Uint8Array(response as any),
+              Reader.create(new Uint8Array(response as any)),
             );
             return listResponse.assets;
           } catch (error) {
@@ -884,7 +889,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const uploadResponse = UploadAssetResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!uploadResponse.success) {
             throw new Error(uploadResponse.message);
@@ -922,7 +927,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const saveResponse = SaveImageSetResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!saveResponse.success) {
             throw new Error(
@@ -962,7 +967,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const saveResponse = SaveAudioSetResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!saveResponse.success) {
             throw new Error(
@@ -1004,7 +1009,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const saveResponse = SaveCustomRotationResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!saveResponse.success) {
             throw new Error(
@@ -1033,7 +1038,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const deleteResponse = DeleteAssetResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!deleteResponse.success) {
             throw new Error(deleteResponse.message);
@@ -1060,7 +1065,7 @@ export class DataService {
       .pipe(
         map((response) => {
           const renameResponse = RenameAssetResponse.decode(
-            new Uint8Array(response as any),
+            Reader.create(new Uint8Array(response as any)),
           );
           if (!renameResponse.success) {
             throw new Error(renameResponse.message);
@@ -1162,7 +1167,9 @@ export class DataService {
       this.ngZone.run(() => {
         try {
           const arrayBuffer = event.data as ArrayBuffer;
-          const raceData = RaceData.decode(new Uint8Array(arrayBuffer));
+          const raceData = RaceData.decode(
+            Reader.create(new Uint8Array(arrayBuffer)),
+          );
 
           if (raceData.raceTime) {
             this.raceTimeSubject.next(raceData.raceTime);
@@ -1286,7 +1293,7 @@ export class DataService {
           return;
         }
 
-        const msg = InterfaceEvent.decode(uint8Array);
+        const msg = InterfaceEvent.decode(Reader.create(uint8Array));
         this.interfaceEventSubject.next(msg);
       } catch (e) {
         this.logger.error("Error decoding Interface WebSocket message", e);
