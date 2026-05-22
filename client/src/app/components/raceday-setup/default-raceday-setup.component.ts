@@ -2,7 +2,6 @@
 import {
   CdkDrag,
   CdkDragDrop,
-  CdkDragPreview,
   CdkDropList,
   moveItemInArray,
   ɵɵCdkScrollable,
@@ -23,8 +22,7 @@ import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
-import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
-import { ToolbarComponent as ToolbarComponent_1 } from "@app/components/shared/toolbar/toolbar.component";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
@@ -48,34 +46,31 @@ type Participant = Driver | Team;
   templateUrl: "./default-raceday-setup.component.html",
   styleUrl: "./default-raceday-setup.component.css",
   imports: [
-    ToolbarComponent_1,
     ɵɵCdkScrollable,
     CdkDropList,
     CdkDrag,
-    CdkDragPreview,
     FormsModule,
     NgClass,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     DemoConfigModalComponent,
     TranslatePipe,
+    EditorTitleComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
-  @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   requestServerConfig = output<void>();
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
 
   // Driver/Team State
   selectedParticipants: Participant[] = [];
   unselectedParticipants: Participant[] = [];
-  private allDrivers: Driver[] = [];
-  private allTeams: Team[] = [];
+  public allDrivers: Driver[] = [];
+  public allTeams: Team[] = [];
 
   imageErrors = new Set<string>();
 
   // Search State
-  driverSearchQuery: string = "";
   raceSearchQuery: string = "";
 
   // Race State
@@ -97,6 +92,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   selectedSavedRace: string | null = null;
   public isRefreshingList: boolean = false;
   public showWelcomeMessage: boolean = true;
+  isAvailableDriversCollapsed: boolean = false;
 
   // Conflict Error Modal
   showErrorModal: boolean = false;
@@ -254,13 +250,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
             const p = participantMap.get(prefixedId);
             if (p) {
               this.selectedParticipants.push(p);
-              participantMap.delete(prefixedId);
             }
           }
         }
-        this.unselectedParticipants = Array.from(participantMap.values()).sort(
-          (a, b) => this.naturalSortParticipants(a, b),
-        );
+        this.updateUnselectedParticipants();
 
         this.cdr.detectChanges();
       },
@@ -387,10 +380,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
               this.isDriver(p) === this.isDriver(participant)
             ),
         );
-        this.unselectedParticipants = [
-          ...this.unselectedParticipants,
-          participant,
-        ].sort((a, b) => this.naturalSortParticipants(a, b));
       } else {
         // Was unselected, now selecting
         // Perform validation
@@ -418,15 +407,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
           return;
         }
 
-        this.unselectedParticipants = this.unselectedParticipants.filter(
-          (p) =>
-            !(
-              p.entity_id === participant.entity_id &&
-              this.isDriver(p) === this.isDriver(participant)
-            ),
-        );
         this.selectedParticipants = [...this.selectedParticipants, participant];
       }
+      this.updateUnselectedParticipants();
     });
   }
 
@@ -458,17 +441,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
         ...this.selectedParticipants,
         ...this.unselectedParticipants,
       ];
-      this.unselectedParticipants = [];
+      this.updateUnselectedParticipants();
     });
   }
 
   removeAllParticipants() {
     this.updateListWithRefresh(() => {
-      this.unselectedParticipants = [
-        ...this.unselectedParticipants,
-        ...this.selectedParticipants,
-      ].sort((a, b) => this.naturalSortParticipants(a, b));
       this.selectedParticipants = [];
+      this.updateUnselectedParticipants();
     });
   }
 
@@ -573,18 +553,91 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   drop(event: CdkDragDrop<Participant[]>) {
-    // Only reorder within the selected list and if dropped strictly inside the container
-    if (
-      event.container.id === "selected-list" &&
-      event.isPointerOverContainer
-    ) {
-      moveItemInArray(
-        this.selectedParticipants,
-        event.previousIndex,
-        event.currentIndex,
-      );
-      this.saveSettings();
+    if (event.previousContainer === event.container) {
+      // Reordering within the same container
+      if (
+        event.container.id === "selected-list" &&
+        event.isPointerOverContainer
+      ) {
+        moveItemInArray(
+          this.selectedParticipants,
+          event.previousIndex,
+          event.currentIndex,
+        );
+        this.saveSettings();
+      }
+    } else {
+      // Dragging between containers
+      if (event.container.id === "selected-list") {
+        // Dragging from available-list to selected-list
+        const participant = this.unselectedParticipants[event.previousIndex];
+        if (!participant) return;
+
+        // Perform validation
+        const potentialParticipants = [...this.selectedParticipants];
+        const targetIndex = event.currentIndex;
+        if (targetIndex >= 0 && targetIndex <= potentialParticipants.length) {
+          potentialParticipants.splice(targetIndex, 0, participant);
+        } else {
+          potentialParticipants.push(participant);
+        }
+
+        const validationResult = this.validationService.validate(
+          potentialParticipants,
+          this.allTeams,
+          this.allDrivers,
+        );
+
+        if (!validationResult.isValid) {
+          this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+          this.errorMessage = this.validationService.getErrorMessage(
+            validationResult,
+            this.translationService,
+          );
+          this.errorMessageParams = {};
+          this.showErrorModal = true;
+          this.cdr.detectChanges();
+          return;
+        }
+
+        // Apply changes
+        this.updateListWithRefresh(() => {
+          if (
+            targetIndex >= 0 &&
+            targetIndex <= this.selectedParticipants.length
+          ) {
+            this.selectedParticipants.splice(targetIndex, 0, participant);
+          } else {
+            this.selectedParticipants.push(participant);
+          }
+          this.updateUnselectedParticipants();
+        });
+      } else if (event.container.id === "available-list") {
+        // Dragging from selected-list to available-list
+        const participant = this.selectedParticipants[event.previousIndex];
+        if (!participant) return;
+
+        this.updateListWithRefresh(() => {
+          this.selectedParticipants = this.selectedParticipants.filter(
+            (p) =>
+              !(
+                p.entity_id === participant.entity_id &&
+                this.isDriver(p) === this.isDriver(participant)
+              ),
+          );
+          this.updateUnselectedParticipants();
+        });
+      }
     }
+  }
+
+  toggleAvailableDrivers() {
+    this.isAvailableDriversCollapsed = !this.isAvailableDriversCollapsed;
+    this.cdr.detectChanges();
+  }
+
+  onBack() {
+    // Raceday Setup is the landing page. Back does nothing (button hidden by CSS)
   }
 
   // --- Race Logic ---
@@ -593,10 +646,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.stopPropagation();
     const newState = !this.isDropdownOpen;
     if (newState) {
-      this.isFileDropdownOpen = false;
-      this.isConfigDropdownOpen = false;
-      this.isOptionsDropdownOpen = false;
-      this.isLocalizationDropdownOpen = false;
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
     }
     this.isDropdownOpen = newState;
     this.cdr.detectChanges();
@@ -833,20 +886,37 @@ export class DefaultRacedaySetupComponent implements OnInit {
     return backgrounds[index % backgrounds.length];
   }
 
-  get filteredUnselectedParticipants(): Participant[] {
-    if (!this.driverSearchQuery) return this.unselectedParticipants;
-    const q = this.driverSearchQuery.toLowerCase();
-    return this.unselectedParticipants.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        ((p as any).nickname && (p as any).nickname.toLowerCase().includes(q)),
-    );
-  }
-
   get filteredRaces(): Race[] {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
     return this.races.filter((r) => r.name.toLowerCase().includes(q));
+  }
+
+  public updateUnselectedParticipants() {
+    const selectedDriverIds = new Set<string>();
+    const selectedTeamIds = new Set<string>();
+
+    this.selectedParticipants.forEach((p) => {
+      if (this.isDriver(p)) {
+        selectedDriverIds.add(p.entity_id);
+      } else if (this.isTeam(p)) {
+        selectedTeamIds.add(p.entity_id);
+        p.driverIds.forEach((id) => selectedDriverIds.add(id));
+      }
+    });
+
+    const availableDrivers = this.allDrivers.filter((d) => {
+      return !selectedDriverIds.has(d.entity_id);
+    });
+
+    const availableTeams = this.allTeams.filter((t) => {
+      if (selectedTeamIds.has(t.entity_id)) return false;
+      return !t.driverIds.some((dId) => selectedDriverIds.has(dId));
+    });
+
+    this.unselectedParticipants = [...availableDrivers, ...availableTeams].sort(
+      (a, b) => this.naturalSortParticipants(a, b),
+    );
   }
 
   private naturalSortParticipants(a: Participant, b: Participant): number {
@@ -859,9 +929,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.stopPropagation();
     const newState = !this.isOptionsDropdownOpen;
     if (newState) {
-      this.isFileDropdownOpen = false;
-      this.isConfigDropdownOpen = false;
-      this.isDropdownOpen = false;
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeHelpDropdown();
+      this.closeDropdown();
     }
     this.isOptionsDropdownOpen = newState;
     if (!this.isOptionsDropdownOpen) {
@@ -984,10 +1055,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.stopPropagation();
     const newState = !this.isFileDropdownOpen;
     if (newState) {
-      this.isConfigDropdownOpen = false;
-      this.isOptionsDropdownOpen = false;
-      this.isDropdownOpen = false;
-      this.isLocalizationDropdownOpen = false;
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.closeDropdown();
     }
     this.isFileDropdownOpen = newState;
     this.cdr.detectChanges();
@@ -1030,10 +1101,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.stopPropagation();
     const newState = !this.isConfigDropdownOpen;
     if (newState) {
-      this.isFileDropdownOpen = false;
-      this.isOptionsDropdownOpen = false;
-      this.isDropdownOpen = false;
-      this.isLocalizationDropdownOpen = false;
+      this.closeFileDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.closeDropdown();
     }
     this.isConfigDropdownOpen = newState;
     this.cdr.detectChanges();
@@ -1047,11 +1118,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     event.stopPropagation();
     const newState = !this.isHelpDropdownOpen;
     if (newState) {
-      this.isFileDropdownOpen = false;
-      this.isConfigDropdownOpen = false;
-      this.isOptionsDropdownOpen = false;
-      this.isDropdownOpen = false;
-      this.isLocalizationDropdownOpen = false;
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeDropdown();
       this.isHelpDropdownOpen = true;
     } else {
       this.closeHelpDropdown();
@@ -1064,6 +1134,41 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.isLogDropdownOpen = false;
     this.isClientLogOpen = false;
     this.isServerLogOpen = false;
+  }
+
+  isAnyMenuDropdownOpen(): boolean {
+    return (
+      this.isFileDropdownOpen ||
+      this.isConfigDropdownOpen ||
+      this.isOptionsDropdownOpen ||
+      this.isHelpDropdownOpen
+    );
+  }
+
+  onMenuItemHover(label: string) {
+    if (this.isAnyMenuDropdownOpen()) {
+      if (label === "RDS_MENU_FILE" && this.isFileDropdownOpen) return;
+      if (label === "RDS_MENU_CONFIG" && this.isConfigDropdownOpen) return;
+      if (label === "RDS_MENU_OPTIONS" && this.isOptionsDropdownOpen) return;
+      if (label === "RDS_MENU_HELP" && this.isHelpDropdownOpen) return;
+
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.closeDropdown();
+
+      if (label === "RDS_MENU_FILE") {
+        this.isFileDropdownOpen = true;
+      } else if (label === "RDS_MENU_CONFIG") {
+        this.isConfigDropdownOpen = true;
+      } else if (label === "RDS_MENU_OPTIONS") {
+        this.isOptionsDropdownOpen = true;
+      } else if (label === "RDS_MENU_HELP") {
+        this.isHelpDropdownOpen = true;
+      }
+      this.cdr.detectChanges();
+    }
   }
 
   openAbout() {
@@ -1097,24 +1202,24 @@ export class DefaultRacedaySetupComponent implements OnInit {
         content: this.translationService.translate("RDS_HELP_WELCOME_CONTENT"),
       },
       {
-        selector: ".panel.driver-panel",
+        targetId: "racing-drivers-section",
         title: this.translationService.translate(
-          "RDS_HELP_DRIVER_SELECTION_TITLE",
+          "RDS_HELP_DRIVER_RACING_TITLE",
         ),
         content: this.translationService.translate(
-          "RDS_HELP_DRIVER_SELECTION_CONTENT",
+          "RDS_HELP_DRIVER_RACING_CONTENT",
         ),
         position: "right",
       },
       {
-        selector: ".driver-action-bar",
+        targetId: "available-drivers-section",
         title: this.translationService.translate(
-          "RDS_HELP_DRIVER_ACTIONS_TITLE",
+          "RDS_HELP_DRIVER_AVAILABLE_TITLE",
         ),
         content: this.translationService.translate(
-          "RDS_HELP_DRIVER_ACTIONS_CONTENT",
+          "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
         ),
-        position: "bottom",
+        position: "right",
       },
       {
         selector: ".custom-dropdown-container",

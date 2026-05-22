@@ -204,7 +204,7 @@ describe("DefaultRacedaySetupComponent", () => {
     flush();
     fixture.detectChanges();
 
-    const driverToSelect = component.filteredUnselectedParticipants.find(
+    const driverToSelect = component.unselectedParticipants.find(
       (d: any) => d.entity_id === "d2",
     )!;
     component.toggleParticipantSelection(driverToSelect, false);
@@ -220,12 +220,12 @@ describe("DefaultRacedaySetupComponent", () => {
     fixture.detectChanges();
 
     expect(component.selectedParticipants.length).toBe(0);
-    expect(component.filteredUnselectedParticipants.length).toBe(6);
+    expect(component.unselectedParticipants.length).toBe(6);
   }));
 
   it("should toggle team selection", fakeAsync(() => {
-    expect(component.filteredUnselectedParticipants.length).toBe(6);
-    const teamToSelect = component.filteredUnselectedParticipants.find(
+    expect(component.unselectedParticipants.length).toBe(6);
+    const teamToSelect = component.unselectedParticipants.find(
       (d: any) => d.entity_id === "t1",
     )!;
     component.toggleParticipantSelection(teamToSelect, false);
@@ -243,12 +243,55 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.selectedParticipants.length).toBe(0);
   }));
 
-  it("should search drivers", () => {
-    expect(component.filteredUnselectedParticipants.length).toBe(6);
-    component.driverSearchQuery = "Alice";
-    expect(component.filteredUnselectedParticipants.length).toBe(1);
-    expect(component.filteredUnselectedParticipants[0].name).toBe("Alice");
-  });
+  it("should filter out team members from available drivers when a team is selected", fakeAsync(() => {
+    expect(component.unselectedParticipants.length).toBe(6);
+
+    const teamToSelect = component.unselectedParticipants.find(
+      (p: any) => p.entity_id === "t1" && component.isTeam(p),
+    )!;
+    component.toggleParticipantSelection(teamToSelect, false);
+    flush();
+    fixture.detectChanges();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].entity_id).toBe("t1");
+
+    expect(component.unselectedParticipants.length).toBe(3);
+    const unselectedIds = component.unselectedParticipants.map(
+      (p) => p.entity_id,
+    );
+    expect(unselectedIds).toContain("t2");
+    expect(unselectedIds).toContain("d3");
+    expect(unselectedIds).toContain("d4");
+    expect(unselectedIds).not.toContain("t1");
+    expect(unselectedIds).not.toContain("d1");
+    expect(unselectedIds).not.toContain("d2");
+  }));
+
+  it("should filter out teams from available teams when one of their drivers is selected", fakeAsync(() => {
+    expect(component.unselectedParticipants.length).toBe(6);
+
+    const driverToSelect = component.unselectedParticipants.find(
+      (p: any) => p.entity_id === "d1" && component.isDriver(p),
+    )!;
+    component.toggleParticipantSelection(driverToSelect, false);
+    flush();
+    fixture.detectChanges();
+
+    expect(component.selectedParticipants.length).toBe(1);
+    expect(component.selectedParticipants[0].entity_id).toBe("d1");
+
+    expect(component.unselectedParticipants.length).toBe(4);
+    const unselectedIds = component.unselectedParticipants.map(
+      (p) => p.entity_id,
+    );
+    expect(unselectedIds).toContain("d2");
+    expect(unselectedIds).toContain("d3");
+    expect(unselectedIds).toContain("d4");
+    expect(unselectedIds).toContain("t2");
+    expect(unselectedIds).not.toContain("d1");
+    expect(unselectedIds).not.toContain("t1");
+  }));
 
   it("should search races", () => {
     expect(component.filteredRaces.length).toBe(3);
@@ -397,13 +440,13 @@ describe("DefaultRacedaySetupComponent", () => {
   }));
 
   it("should add all drivers", fakeAsync(() => {
-    expect(component.filteredUnselectedParticipants.length).toBe(6);
+    expect(component.unselectedParticipants.length).toBe(6);
     expect(component.selectedParticipants.length).toBe(0);
 
     component.addAllParticipants();
     flush();
 
-    expect(component.filteredUnselectedParticipants.length).toBe(0);
+    expect(component.unselectedParticipants.length).toBe(0);
     expect(component.selectedParticipants.length).toBe(6);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   }));
@@ -418,9 +461,9 @@ describe("DefaultRacedaySetupComponent", () => {
     flush();
 
     expect(component.selectedParticipants.length).toBe(0);
-    expect(component.filteredUnselectedParticipants.length).toBe(6);
+    expect(component.unselectedParticipants.length).toBe(6);
     // Should be sorted alphabetically
-    expect(component.filteredUnselectedParticipants[0].name).toBe("Alice");
+    expect(component.unselectedParticipants[0].name).toBe("Alice");
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
   }));
 
@@ -723,11 +766,14 @@ describe("DefaultRacedaySetupComponent", () => {
 
     it("should maintain natural sorting when moving participants from selected to unselected", fakeAsync(() => {
       // Setup initial state with unsorted participants
-      component.unselectedParticipants = [
-        { entity_id: "d1", name: "Driver 10" } as any,
-        { entity_id: "d2", name: "Driver 1" } as any,
-        { entity_id: "d3", name: "Driver 2" } as any,
+      const mockDrivers = [
+        { entity_id: "d1", name: "Driver 10", nickname: "" } as any,
+        { entity_id: "d2", name: "Driver 1", nickname: "" } as any,
+        { entity_id: "d3", name: "Driver 2", nickname: "" } as any,
       ];
+      component.allDrivers = mockDrivers;
+      component.allTeams = [];
+      component.unselectedParticipants = [...mockDrivers];
       component.selectedParticipants = [];
 
       // Select a participant (moving from unselected to selected)
@@ -738,8 +784,8 @@ describe("DefaultRacedaySetupComponent", () => {
 
       // Verify unselected participants remain naturally sorted
       expect(component.unselectedParticipants.map((p) => p.name)).toEqual([
-        "Driver 10",
         "Driver 2",
+        "Driver 10",
       ]);
 
       // Unselect the participant (moving back to unselected)
@@ -757,11 +803,14 @@ describe("DefaultRacedaySetupComponent", () => {
 
     it("should maintain natural sorting when removing all participants", fakeAsync(() => {
       // Setup initial state with selected participants
-      component.selectedParticipants = [
-        { entity_id: "d1", name: "Driver 10" } as any,
-        { entity_id: "d2", name: "Driver 1" } as any,
-        { entity_id: "d3", name: "Driver 2" } as any,
+      const mockDrivers = [
+        { entity_id: "d1", name: "Driver 10", nickname: "" } as any,
+        { entity_id: "d2", name: "Driver 1", nickname: "" } as any,
+        { entity_id: "d3", name: "Driver 2", nickname: "" } as any,
       ];
+      component.allDrivers = mockDrivers;
+      component.allTeams = [];
+      component.selectedParticipants = [...mockDrivers];
       component.unselectedParticipants = [];
 
       // Remove all participants
@@ -812,28 +861,6 @@ describe("DefaultRacedaySetupComponent", () => {
         "Driver v1.2.10",
         "Driver v1.10.1",
       ]);
-    });
-
-    it("should preserve natural sorting after search filter is cleared", () => {
-      // Setup with naturally sorted participants
-      component.unselectedParticipants = [
-        { entity_id: "d1", name: "Alice" } as any,
-        { entity_id: "d2", name: "Driver 1" } as any,
-        { entity_id: "d3", name: "Driver 2" } as any,
-        { entity_id: "d4", name: "Driver 10" } as any,
-      ];
-
-      // Apply search filter
-      component.driverSearchQuery = "Driver";
-      expect(
-        component.filteredUnselectedParticipants.map((p) => p.name),
-      ).toEqual(["Driver 1", "Driver 2", "Driver 10"]);
-
-      // Clear search filter
-      component.driverSearchQuery = "";
-      expect(
-        component.filteredUnselectedParticipants.map((p) => p.name),
-      ).toEqual(["Alice", "Driver 1", "Driver 2", "Driver 10"]);
     });
   });
 });

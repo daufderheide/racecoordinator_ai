@@ -100,7 +100,7 @@ test.describe("Raceday Setup Functional - en", () => {
 
     await harness.clickRemoveAll();
 
-    await expect(page.locator(".driver-list-container")).toBeVisible();
+    await expect(page.locator(".editor-panel")).toBeVisible();
     await page.waitForTimeout(300);
 
     await expect(page).toHaveScreenshot(`no-drivers-en.png`, {
@@ -127,30 +127,15 @@ test.describe("Raceday Setup Functional - en", () => {
     });
   });
 
-  test("Searching and adding drivers", async ({ page }) => {
+  test("Adding drivers", async ({ page }) => {
     const container = page.locator(".setup-container");
     const harness = new DefaultRacedaySetupHarnessE2e(container);
 
-    await harness.setSearchQuery("Charlie");
-    await page.waitForTimeout(500);
-
-    await page.waitForTimeout(500);
-    await page.locator("input.driver-search").blur();
-
-    await expect(page).toHaveScreenshot(`driver-search-en.png`, {
-      maxDiffPixelRatio: 0.05,
-      animations: "disabled",
-      timeout: 10000,
-    });
-
     await harness.doubleClickUnselectedDriver(0);
 
-    await expect(page.locator(".driver-list-container")).toBeVisible();
-
-    await harness.setSearchQuery("");
+    await expect(page.locator(".editor-panel")).toBeVisible();
 
     await page.waitForTimeout(500);
-    await page.locator("input.driver-search").blur();
 
     await expect(page).toHaveScreenshot(`driver-added-en.png`, {
       maxDiffPixelRatio: 0.05,

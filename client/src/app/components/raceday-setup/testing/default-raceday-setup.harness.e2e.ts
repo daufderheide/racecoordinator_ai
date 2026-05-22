@@ -21,9 +21,7 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   private get startBtn() {
     return this.locator.locator(this.base.selectors.startBtn);
   }
-  private get searchInput() {
-    return this.locator.locator(this.base.selectors.searchInput);
-  }
+
   private get unselectedDrivers() {
     return this.locator.locator(
       `${this.base.selectors.driverItem}:not(.selected)`,
@@ -78,10 +76,6 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
 
   async clickStart(): Promise<void> {
     await this.startBtn.click();
-  }
-
-  async setSearchQuery(query: string): Promise<void> {
-    await this.searchInput.fill(query);
   }
 
   async getUnselectedDriverCount(): Promise<number> {

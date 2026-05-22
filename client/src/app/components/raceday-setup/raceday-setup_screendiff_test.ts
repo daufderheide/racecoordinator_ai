@@ -22,6 +22,7 @@ test.describe("Splash Screen Visuals", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
+          RDS_TITLE: "Race Day Setup",
           RDS_MENU_SERVER: "SERVER",
           RDS_ABOUT_CLIENT_VERSION: "Client: {{version}}",
           RDS_ABOUT_SERVER_VERSION: "Server: {{version}}",

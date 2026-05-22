@@ -1,48 +1,72 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { DefaultRacedaySetupHarnessBase } from './default-raceday-setup.harness.base';
+import { DefaultRacedaySetupHarnessBase } from "./default-raceday-setup.harness.base";
 
 export class DriverItemHarness extends ComponentHarness {
   static hostSelector = DefaultRacedaySetupHarnessBase.selectors.driverItem;
-  protected getNameEl = this.locatorFor(DefaultRacedaySetupHarnessBase.selectors.driverName);
-  
-  async getName(): Promise<string> { 
-    return await (await this.getNameEl()).text(); 
+  protected getNameEl = this.locatorFor(
+    DefaultRacedaySetupHarnessBase.selectors.driverName,
+  );
+
+  async getName(): Promise<string> {
+    return await (await this.getNameEl()).text();
   }
-  
-  async isSelected(): Promise<boolean> { 
-    return await (await this.host()).hasClass('selected'); 
+
+  async isSelected(): Promise<boolean> {
+    return await (await this.host()).hasClass("selected");
   }
 }
 
 export class MenuDropdownHarness extends ComponentHarness {
   static hostSelector = DefaultRacedaySetupHarnessBase.selectors.menuDropdown;
-  protected getItems = this.locatorForAll(DefaultRacedaySetupHarnessBase.selectors.menuDropdownItem);
+  protected getItems = this.locatorForAll(
+    DefaultRacedaySetupHarnessBase.selectors.menuDropdownItem,
+  );
 
   async clickItemByText(text: string): Promise<void> {
     const items = await this.getItems();
     for (const item of items) {
       if ((await item.text()).includes(text)) {
-         await item.click();
-         return;
+        await item.click();
+        return;
       }
     }
   }
 }
 
-export class DefaultRacedaySetupHarness extends ComponentHarness implements DefaultRacedaySetupHarnessBase {
+export class DefaultRacedaySetupHarness
+  extends ComponentHarness
+  implements DefaultRacedaySetupHarnessBase
+{
   static hostSelector = DefaultRacedaySetupHarnessBase.hostSelector;
 
-  protected getDriverItems = this.locatorForAll(DefaultRacedaySetupHarnessBase.selectors.driverItem);
-  protected getRemoveAllBtn = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.removeAllBtn);
-  protected getStartBtn = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.startBtn);
-  protected getSearchInput = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.searchInput);
-  protected getRaceCards = this.locatorForAll(DefaultRacedaySetupHarnessBase.selectors.raceCard);
-  protected getDropdownTrigger = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.dropdownTrigger);
-  protected getOptionsMenu = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.optionsMenu);
-  protected getFileMenu = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.fileMenu);
-  protected getConfigMenu = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.configMenu);
-  protected getHelpMenu = this.locatorForOptional(DefaultRacedaySetupHarnessBase.selectors.helpMenu);
+  protected getDriverItems = this.locatorForAll(
+    DefaultRacedaySetupHarnessBase.selectors.driverItem,
+  );
+  protected getRemoveAllBtn = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.removeAllBtn,
+  );
+  protected getStartBtn = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.startBtn,
+  );
+  protected getRaceCards = this.locatorForAll(
+    DefaultRacedaySetupHarnessBase.selectors.raceCard,
+  );
+  protected getDropdownTrigger = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.dropdownTrigger,
+  );
+  protected getOptionsMenu = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.optionsMenu,
+  );
+  protected getFileMenu = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.fileMenu,
+  );
+  protected getConfigMenu = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.configMenu,
+  );
+  protected getHelpMenu = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.helpMenu,
+  );
 
   // ... (clickAddAll/clickRandomize use driverActionBarBtn inside methods)
 
@@ -57,7 +81,7 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
   async doubleClickDriverItem(): Promise<void> {
     const items = await this.getDriverItems();
     if (items.length > 0) {
-      await items[0].dispatchEvent('dblclick');
+      await items[0].dispatchEvent("dblclick");
     }
   }
 
@@ -68,19 +92,23 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
   }
 
   async clickAddAll(): Promise<void> {
-    const buttons = await this.locatorForAll(DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn)();
+    const buttons = await this.locatorForAll(
+      DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
+    )();
     if (buttons.length > 0) await buttons[0].click();
   }
 
   async clickRandomize(): Promise<void> {
-    const buttons = await this.locatorForAll(DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn)();
+    const buttons = await this.locatorForAll(
+      DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
+    )();
     if (buttons.length > 2) await buttons[2].click();
   }
 
   async isStartEnabled(): Promise<boolean> {
     const btn = await this.getStartBtn();
     if (!btn) return false;
-    return !(await btn.getProperty('disabled'));
+    return !(await btn.getProperty("disabled"));
   }
 
   async clickStart(): Promise<void> {
@@ -88,19 +116,11 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
     if (btn) await btn.click();
   }
 
-  async setSearchQuery(query: string): Promise<void> {
-    const input = await this.getSearchInput();
-    if (input) {
-      await input.clear();
-      await input.sendKeys(query);
-    }
-  }
-
   async getUnselectedDriverCount(): Promise<number> {
     const drivers = await this.locatorForAll(DriverItemHarness)();
     let count = 0;
     for (const d of drivers) {
-       if (!(await d.isSelected())) count++;
+      if (!(await d.isSelected())) count++;
     }
     return count;
   }
@@ -109,7 +129,7 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
     const drivers = await this.locatorForAll(DriverItemHarness)();
     let count = 0;
     for (const d of drivers) {
-       if (await d.isSelected()) count++;
+      if (await d.isSelected()) count++;
     }
     return count;
   }
@@ -125,7 +145,7 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
         unselectedCount++;
       }
     }
-    return '';
+    return "";
   }
 
   async doubleClickUnselectedDriver(index: number): Promise<void> {
@@ -135,14 +155,13 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
       if (!(await d.isSelected())) {
         if (unselectedCount === index) {
           const host = await d.host();
-          await host.dispatchEvent('dblclick');
+          await host.dispatchEvent("dblclick");
           return;
         }
         unselectedCount++;
       }
     }
   }
-
 
   async getRaceCardCount(): Promise<number> {
     return (await this.getRaceCards()).length;
@@ -161,7 +180,7 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
   async clickOptionsMenuOptionByText(text: string): Promise<void> {
     const dropdowns = await this.locatorForAll(MenuDropdownHarness)();
     if (dropdowns.length > 0) {
-        await dropdowns[0].clickItemByText(text);
+      await dropdowns[0].clickItemByText(text);
     }
   }
 
@@ -181,7 +200,9 @@ export class DefaultRacedaySetupHarness extends ComponentHarness implements Defa
   }
 
   async isMenuDropdownVisible(menuClass: string): Promise<boolean> {
-    const dropdown = await this.locatorForOptional(`.${menuClass} .menu-dropdown`)();
+    const dropdown = await this.locatorForOptional(
+      `.${menuClass} .menu-dropdown`,
+    )();
     return dropdown !== null;
   }
 }

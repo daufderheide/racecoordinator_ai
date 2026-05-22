@@ -1,9 +1,9 @@
 @if (translationsLoaded) {
   <div
-    class="setup-container"
+    class="page-container setup-container"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   >
-    <!-- Menu Bar -->
+    <!-- Modernized Horizontal Menu/Dropdown Toolbar sitting right above the Title Bar -->
     <div class="menu-bar">
       @for (item of menuItems; track item) {
         <div
@@ -13,7 +13,11 @@
           [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'"
           [class.help-menu-container]="item.label === 'RDS_MENU_HELP'"
         >
-          <div class="menu-item" (click)="item.action($event)">
+          <div
+            class="menu-item"
+            (click)="item.action($event)"
+            (mouseenter)="onMenuItemHover(item.label)"
+          >
             {{ item.label | translate }}
           </div>
           <!-- Config Dropdown -->
@@ -114,7 +118,7 @@
                 (click)="toggleLogDropdown($event)"
               >
                 {{ "RDS_MENU_LOG_LEVELS" | translate }}
-                <span class="submenu-arrow">◀</span>
+                <span class="submenu-arrow">▶</span>
                 @if (isLogDropdownOpen) {
                   <div class="menu-dropdown submenu">
                     <div
@@ -122,7 +126,7 @@
                       (click)="toggleClientLogDropdown($event)"
                     >
                       {{ "RDS_LOG_CLIENT" | translate }}
-                      <span class="submenu-arrow">◀</span>
+                      <span class="submenu-arrow">▶</span>
                       @if (isClientLogOpen) {
                         <div class="menu-dropdown submenu">
                           @for (level of logLevels; track level) {
@@ -142,7 +146,7 @@
                       (click)="toggleServerLogDropdown($event)"
                     >
                       {{ "RDS_LOG_SERVER" | translate }}
-                      <span class="submenu-arrow">◀</span>
+                      <span class="submenu-arrow">▶</span>
                       @if (isServerLogOpen) {
                         <div class="menu-dropdown submenu">
                           @for (level of logLevels; track level) {
@@ -169,261 +173,114 @@
         </div>
       }
     </div>
-    <!-- Main Header -->
-    <div class="main-header">
-      <div class="logo-text">
-        Race Coordinator <span class="logo-highlight">AI</span>
-      </div>
-      <div class="header-right">
-        <app-toolbar
-          [showHelp]="true"
-          [helpSteps]="getHelpSteps()"
-          [helpRecordName]="'racedaySetupWalkthroughSeen'"
-        ></app-toolbar>
-      </div>
-    </div>
-    <div class="content-area">
-      <!-- Driver Selection Panel -->
-      <div class="panel driver-panel" id="driver-panel">
-        <div class="panel-header">
-          {{ "RDS_DRIVERS_AVAILABLE" | translate }}
-          <span style="font-size: 12px; color: #888">{{
-            "RDS_SELECTED_COUNT"
-              | translate: { count: selectedParticipants.length }
-          }}</span>
-        </div>
-        <!-- Unified List Container -->
-        <div class="driver-action-bar" (selectstart)="preventSelection($event)">
-          <button
-            class="action-btn"
-            (click)="addAllParticipants()"
-            (mousedown)="$event.preventDefault()"
-            tabindex="-1"
-            [title]="'RDS_BTN_ADD_ALL' | translate"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-            </svg>
-            <span class="btn-text">{{ "RDS_BTN_ADD_ALL" | translate }}</span>
-          </button>
-          <button
-            class="action-btn"
-            (click)="removeAllParticipants()"
-            (mousedown)="$event.preventDefault()"
-            tabindex="-1"
-            [title]="'RDS_BTN_REMOVE_ALL' | translate"
-            data-testid="btn-remove-all"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13H5v-2h14v2z" />
-            </svg>
-            <span class="btn-text">{{ "RDS_BTN_REMOVE_ALL" | translate }}</span>
-          </button>
-          <button
-            class="action-btn"
-            (click)="randomizeParticipants()"
-            (mousedown)="$event.preventDefault()"
-            tabindex="-1"
-            [title]="'RDS_BTN_RANDOMIZE' | translate"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
-              />
-            </svg>
-            <span class="btn-text">{{ "RDS_BTN_RANDOMIZE" | translate }}</span>
-          </button>
-        </div>
-        <div
-          class="driver-list-spacer"
-          id="driver-list-target"
-          style="
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-          "
-        >
-          @if (!isRefreshingList) {
+
+    <!-- New Premium Editor Title Bar -->
+    <app-editor-title
+      titleKey="RDS_TITLE"
+      [showHelp]="true"
+      [showUndo]="false"
+      [showRedo]="false"
+      [helpSteps]="getHelpSteps()"
+      [helpRecordName]="'racedaySetupWalkthroughSeen'"
+      (back)="onBack()"
+    >
+    </app-editor-title>
+
+    <!-- Main Content split into LHS and RHS -->
+    <div class="content-split">
+      <!-- Left Panel: Drivers Pool (Redesigned matching Modify Heats modal) -->
+      <div class="editor-panel panel driver-panel">
+        <!-- Section 1: Racing Drivers (Connected Drop List) -->
+        <div id="racing-drivers-section" class="driver-pool-section">
+          <div class="section-header">
+            <div class="header-title-container">
+              <h3>{{ "RDS_SECTION_RACING" | translate }}</h3>
+              <span class="badge">{{ selectedParticipants.length }}</span>
+            </div>
             <div
-              class="driver-list-container"
-              #scrollContainer
-              cdkScrollable
-              (selectstart)="preventSelection($event)"
+              class="header-actions driver-action-bar"
+              (click)="$event.stopPropagation()"
             >
-              <!-- Drop Zone for Reordering -->
-              <div
-                class="drop-zone"
-                id="selected-list"
-                cdkDropList
-                [cdkDropListData]="selectedParticipants"
-                (cdkDropListDropped)="drop($event)"
+              <button
+                class="action-btn"
+                (click)="addAllParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_ADD_ALL' | translate"
               >
-                <!-- Selected Participants (Draggable) -->
-                @if (selectedParticipants.length > 0) {
-                  <div class="section-divider">
-                    {{ "RDS_SECTION_RACING" | translate }}
-                  </div>
-                }
-                @for (
-                  participant of selectedParticipants;
-                  track trackByParticipant(i, participant);
-                  let i = $index
-                ) {
-                  <div
-                    class="driver-item selected"
-                    cdkDrag
-                    (cdkDragStarted)="onDragStarted($event)"
-                    (dblclick)="toggleParticipantSelection(participant, true)"
-                  >
-                    <div
-                      class="checkbox"
-                      (dblclick)="
-                        toggleParticipantSelection(participant, true);
-                        $event.stopPropagation()
-                      "
-                    >
-                      <div class="checkbox-icon">✓</div>
-                    </div>
-                    <div class="driver-seed">({{ i + 1 }})</div>
-                    <div class="driver-avatar">
-                      @if (
-                        participant.avatarUrl &&
-                        !imageErrors.has(getParticipantUniqueId(participant))
-                      ) {
-                        <img
-                          [src]="getParticipantAvatarUrl(participant)"
-                          (error)="onParticipantImageError(participant)"
-                          class="avatar-img"
-                          alt="Avatar"
-                          draggable="false"
-                        />
-                      }
-                      <!-- Placeholder Avatar -->
-                      @if (
-                        !participant.avatarUrl ||
-                        imageErrors.has(getParticipantUniqueId(participant))
-                      ) {
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="#ccc"
-                        >
-                          抽离. driver name and team name.
-                          <path
-                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                          />
-                        </svg>
-                      }
-                    </div>
-                    <div class="driver-details">
-                      <div class="driver-name">
-                        {{ getLocalizedName(participant) }}
-                      </div>
-                      @if (isDriver(participant)) {
-                        <div class="driver-meta">
-                          {{ getLocalizedNickname(participant) }}
-                        </div>
-                      }
-                      @if (isTeam(participant)) {
-                        <div class="driver-meta">
-                          {{ getLocalizedTeamMembers(participant) }}
-                        </div>
-                      }
-                    </div>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
-                    </svg>
-                    <!-- Drag Preview -->
-                    <div
-                      *cdkDragPreview
-                      class="driver-item selected"
-                      style="width: 380px"
-                    >
-                      <div class="checkbox">
-                        <div class="checkbox-icon">✓</div>
-                      </div>
-                      <div class="driver-avatar">
-                        @if (
-                          participant.avatarUrl &&
-                          !imageErrors.has(getParticipantUniqueId(participant))
-                        ) {
-                          <img
-                            [src]="getParticipantAvatarUrl(participant)"
-                            (error)="onParticipantImageError(participant)"
-                            class="avatar-img"
-                            alt="Avatar"
-                          />
-                        }
-                        <!-- Placeholder Avatar -->
-                        @if (
-                          !participant.avatarUrl ||
-                          imageErrors.has(getParticipantUniqueId(participant))
-                        ) {
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="#ccc"
-                          >
-                            抽离. driver name and team name.
-                            <path
-                              d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                            />
-                          </svg>
-                        }
-                      </div>
-                      <div class="driver-details">
-                        <div class="driver-name">
-                          {{ getLocalizedName(participant) }}
-                        </div>
-                        @if (isDriver(participant)) {
-                          <div class="driver-meta">
-                            {{ getLocalizedNickname(participant) }}
-                          </div>
-                        }
-                        @if (isTeam(participant)) {
-                          <div class="driver-meta">
-                            {{ getLocalizedTeamMembers(participant) }}
-                          </div>
-                        }
-                      </div>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path
-                          d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                }
-              </div>
-              <!-- Unselected Participants (Static) -->
-              @if (filteredUnselectedParticipants.length > 0) {
-                <div class="section-divider">
-                  {{ "RDS_SECTION_AVAILABLE" | translate }}
-                </div>
-              }
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+              </button>
+              <button
+                class="action-btn"
+                (click)="removeAllParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_REMOVE_ALL' | translate"
+                data-testid="btn-remove-all"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19 13H5v-2h14v2z" />
+                </svg>
+              </button>
+              <button
+                class="action-btn"
+                (click)="randomizeParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_RANDOMIZE' | translate"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="selected-list"
+            cdkDropList
+            [cdkDropListData]="selectedParticipants"
+            [cdkDropListConnectedTo]="['available-list']"
+            class="driver-pool"
+            (cdkDropListDropped)="drop($event)"
+            #scrollContainer
+            cdkScrollable
+            (selectstart)="preventSelection($event)"
+          >
+            @if (!isRefreshingList) {
               @for (
-                participant of filteredUnselectedParticipants;
-                track participant
+                participant of selectedParticipants;
+                track trackByParticipant(i, participant);
+                let i = $index
               ) {
                 <div
-                  class="driver-item"
-                  (dblclick)="toggleParticipantSelection(participant, false)"
+                  class="driver-item selected"
+                  cdkDrag
+                  [cdkDragData]="participant"
+                  (cdkDragStarted)="onDragStarted($event)"
+                  (dblclick)="toggleParticipantSelection(participant, true)"
                 >
-                  <div class="checkbox"></div>
-                  <div class="driver-avatar">
+                  <div class="driver-seed">({{ i + 1 }})</div>
+                  <div class="avatar-container">
                     @if (
                       participant.avatarUrl &&
                       !imageErrors.has(getParticipantUniqueId(participant))
@@ -431,23 +288,22 @@
                       <img
                         [src]="getParticipantAvatarUrl(participant)"
                         (error)="onParticipantImageError(participant)"
-                        class="avatar-img"
+                        class="driver-avatar"
                         alt="Avatar"
                         draggable="false"
                       />
                     }
-                    <!-- Placeholder Avatar -->
                     @if (
                       !participant.avatarUrl ||
                       imageErrors.has(getParticipantUniqueId(participant))
                     ) {
                       <svg
-                        width="20"
-                        height="20"
+                        class="driver-avatar placeholder"
+                        width="32"
+                        height="32"
                         viewBox="0 0 24 24"
-                        fill="#ccc"
+                        fill="#64748b"
                       >
-                        抽离. driver name and team name.
                         <path
                           d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                         />
@@ -458,47 +314,303 @@
                     <div class="driver-name">
                       {{ getLocalizedName(participant) }}
                     </div>
-                    @if (isDriver(participant)) {
-                      <div class="driver-meta">
+                    <div class="driver-meta">
+                      @if (isDriver(participant)) {
                         {{ getLocalizedNickname(participant) }}
-                      </div>
-                    }
-                    @if (isTeam(participant)) {
-                      <div class="driver-meta">
+                      } @else {
                         {{ getLocalizedTeamMembers(participant) }}
-                      </div>
-                    }
+                      }
+                    </div>
                   </div>
                 </div>
               }
-            </div>
-          }
+            }
+          </div>
         </div>
-        <div class="search-bar">
-          <div class="search-wrapper">
-            <input
-              type="text"
-              class="search-input driver-search"
-              [placeholder]="'RDS_SEARCH_DRIVERS' | translate"
-              [(ngModel)]="driverSearchQuery"
-              (ngModelChange)="onSearchChange()"
-            />
-            <svg
-              class="search-icon"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path
-                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-              />
-            </svg>
+
+        <!-- Section 2: Available Drivers (Collapsible, connected to Racing) -->
+        <div
+          id="available-drivers-section"
+          class="driver-pool-section"
+          [class.collapsed]="isAvailableDriversCollapsed"
+        >
+          <div
+            class="section-header clickable"
+            (click)="toggleAvailableDrivers()"
+          >
+            <div class="header-title-container">
+              <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
+              <span class="chevron-icon">
+                @if (isAvailableDriversCollapsed) {
+                  <i class="fas fa-chevron-right"></i>
+                } @else {
+                  <i class="fas fa-chevron-down"></i>
+                }
+              </span>
+            </div>
+            <div class="header-actions" (click)="$event.stopPropagation()">
+              <button
+                class="icon-button available-pill teams-pill"
+                (click)="openTeamManager()"
+                title="{{ 'TMM_HEADER_TEAMS' | translate }}"
+              >
+                <!-- SVG: 3 overlapping helmets triad -->
+                <svg
+                  class="graphic-icon team-icon"
+                  viewBox="0 0 140 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <linearGradient
+                      id="teamGradBackLeft"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop
+                        offset="0%"
+                        stop-color="#0284c7"
+                        stop-opacity="0.6"
+                      />
+                      <stop
+                        offset="100%"
+                        stop-color="#0369a1"
+                        stop-opacity="0.6"
+                      />
+                    </linearGradient>
+                    <linearGradient
+                      id="teamGradBackRight"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop
+                        offset="0%"
+                        stop-color="#0284c7"
+                        stop-opacity="0.6"
+                      />
+                      <stop
+                        offset="100%"
+                        stop-color="#0369a1"
+                        stop-opacity="0.6"
+                      />
+                    </linearGradient>
+                    <linearGradient
+                      id="teamGradFront"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stop-color="#38bdf8" />
+                      <stop offset="100%" stop-color="#0284c7" />
+                    </linearGradient>
+                    <linearGradient
+                      id="visorGradTeam"
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stop-color="#0f172a" />
+                      <stop offset="100%" stop-color="#1e293b" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Back Left Helmet -->
+                  <g transform="translate(5, 10) scale(0.75)">
+                    <path
+                      d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                      fill="url(#teamGradBackLeft)"
+                    />
+                    <path
+                      d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                      fill="url(#visorGradTeam)"
+                      opacity="0.5"
+                      stroke="#0284c7"
+                      stroke-width="2"
+                    />
+                  </g>
+                  <!-- Back Right Helmet -->
+                  <g transform="translate(55, 10) scale(0.75)">
+                    <path
+                      d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                      fill="url(#teamGradBackRight)"
+                    />
+                    <path
+                      d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                      fill="url(#visorGradTeam)"
+                      opacity="0.5"
+                      stroke="#0284c7"
+                      stroke-width="2"
+                    />
+                  </g>
+                  <!-- Foreground Center Helmet -->
+                  <g transform="translate(30, 20) scale(0.85)">
+                    <path
+                      d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                      fill="url(#teamGradFront)"
+                      stroke="#0f172a"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                      fill="url(#visorGradTeam)"
+                      stroke="#38bdf8"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M38,44 L48,44"
+                      stroke="#ffffff"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      opacity="0.6"
+                    />
+                  </g>
+                </svg>
+                <span class="count-badge">{{ allTeams.length }}</span>
+              </button>
+              <button
+                class="icon-button available-pill drivers-pill"
+                (click)="openDriverManager()"
+                title="{{ 'DM_HEADER_DRIVERS' | translate }}"
+              >
+                <!-- SVG: Single helmet -->
+                <svg
+                  class="graphic-icon driver-icon"
+                  viewBox="0 0 100 100"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <defs>
+                    <linearGradient
+                      id="driverGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stop-color="#38bdf8" />
+                      <stop offset="100%" stop-color="#0369a1" />
+                    </linearGradient>
+                    <linearGradient
+                      id="visorGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stop-color="#0f172a" />
+                      <stop offset="100%" stop-color="#1e293b" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                    fill="url(#driverGrad)"
+                  />
+                  <path
+                    d="M25,72 L75,72 C75,72 80,78 75,82 L25,82 C20,78 25,72 25,72 Z"
+                    fill="#0f172a"
+                    opacity="0.4"
+                  />
+                  <path
+                    d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                    fill="url(#visorGrad)"
+                    stroke="#38bdf8"
+                    stroke-width="2"
+                  />
+                  <path
+                    d="M38,44 L48,44"
+                    stroke="#ffffff"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    opacity="0.6"
+                  />
+                  <path
+                    d="M35,49 L40,49"
+                    stroke="#ffffff"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    opacity="0.4"
+                  />
+                </svg>
+                <span class="count-badge">{{ allDrivers.length }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="available-list"
+            cdkDropList
+            [cdkDropListData]="unselectedParticipants"
+            [cdkDropListConnectedTo]="['selected-list']"
+            class="driver-pool"
+            (cdkDropListDropped)="drop($event)"
+          >
+            @if (!isRefreshingList) {
+              @for (
+                participant of unselectedParticipants;
+                track trackByParticipant(i, participant);
+                let i = $index
+              ) {
+                <div
+                  class="driver-item"
+                  cdkDrag
+                  [cdkDragData]="participant"
+                  (cdkDragStarted)="onDragStarted($event)"
+                  (dblclick)="toggleParticipantSelection(participant, false)"
+                >
+                  <div class="avatar-container">
+                    @if (
+                      participant.avatarUrl &&
+                      !imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <img
+                        [src]="getParticipantAvatarUrl(participant)"
+                        (error)="onParticipantImageError(participant)"
+                        class="driver-avatar"
+                        alt="Avatar"
+                        draggable="false"
+                      />
+                    }
+                    @if (
+                      !participant.avatarUrl ||
+                      imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <svg
+                        class="driver-avatar placeholder"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="#64748b"
+                      >
+                        <path
+                          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                      </svg>
+                    }
+                  </div>
+                  <div class="driver-details">
+                    <div class="driver-name">
+                      {{ getLocalizedName(participant) }}
+                    </div>
+                    <div class="driver-meta">
+                      @if (isDriver(participant)) {
+                        {{ getLocalizedNickname(participant) }}
+                      } @else {
+                        {{ getLocalizedTeamMembers(participant) }}
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
           </div>
         </div>
       </div>
-      <!-- Race Configuration Panel -->
-      <div class="panel race-panel">
+
+      <!-- Right Panel: Race Configuration (Beautiful Dark Cards and Neon start) -->
+      <div class="preview-panel">
         <div class="quick-start-grid">
           @for (race of quickStartRaces; track race; let i = $index) {
             <div
@@ -515,9 +627,11 @@
             </div>
           }
         </div>
+
         <div class="race-selection-title">
           {{ "RDS_SECTION_ALL_RACES" | translate }}
         </div>
+
         <div class="all-races-selector">
           <div class="search-wrapper">
             <input
@@ -539,6 +653,7 @@
               />
             </svg>
           </div>
+
           <div class="custom-dropdown-container">
             <div class="dropdown-trigger" (click)="toggleDropdown($event)">
               <span class="selected-value">{{
@@ -563,6 +678,7 @@
             }
           </div>
         </div>
+
         <div class="action-footer" id="race-controls">
           <button
             class="btn-start"

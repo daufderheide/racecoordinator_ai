@@ -25,7 +25,7 @@ test.describe("Help Overlay Visuals", () => {
     await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
 
     // Wait for main content to be visible
-    await expect(page.locator(".logo-text")).toBeVisible();
+    await expect(page.locator(".setup-container")).toBeVisible();
 
     // 2. Click Help Icon
     const helpIcon = page.locator(".toolbar-btn.help");
