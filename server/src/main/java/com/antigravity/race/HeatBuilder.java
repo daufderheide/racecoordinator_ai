@@ -23,7 +23,9 @@ public class HeatBuilder {
     GroupOptions groupOptions = race.getRaceModel().getGroupOptions();
     List<Heat> heatList = new ArrayList<>();
 
-    if (groupOptions != null && groupOptions.isEnabled()) {
+    boolean isCustom = race.getRaceModel().getHeatRotationType() == HeatRotationType.Custom;
+
+    if (groupOptions != null && groupOptions.isEnabled() && !isCustom) {
       List<Integer> driverGroups =
           getGroups(
               drivers,

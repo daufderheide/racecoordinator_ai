@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -11,6 +13,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -180,6 +183,31 @@ public class HeatBuilderGroupTest {
       assertEquals("Heat " + (i + 1) + " should be Group 0", 0, heats.get(i).getGroup());
     for (int i = 12; i < 16; i++)
       assertEquals("Heat " + (i + 1) + " should be Group 1", 1, heats.get(i).getGroup());
+  }
+
+  @Test
+  public void testBuildHeats_CustomRotationIgnoresGroupSplitting() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+    GroupOptions groupOptions = new GroupOptions(true, 2, false, true, false, false, 0);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+    when(raceModel.getHeatTimesThrough()).thenReturn(1);
+
+    CustomRotation rot4 =
+        new CustomRotation(
+            4,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 2, 3, 4), 5),
+                new CustomHeat(Arrays.asList(4, 3, 2, 1), 6)));
+
+    List<RaceParticipant> drivers = createDrivers(4);
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, Arrays.asList(rot4));
+
+    // Should NOT be split into groups (which would make 2 groups of 2).
+    // It should generate heats from the full pool of 4 drivers, keeping the groups specified in
+    // custom heats.
+    assertEquals(2, heats.size());
+    assertEquals(5, heats.get(0).getGroup());
+    assertEquals(6, heats.get(1).getGroup());
   }
 
   private List<RaceParticipant> createDrivers(int count) {

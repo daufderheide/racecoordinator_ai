@@ -641,26 +641,41 @@
                 >
                   <div class="config-row">
                     <div class="config-section">
-                      <label>{{ "RE_GROUPS_MAX" | translate }}</label>
+                      <label
+                        [class.disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
+                        >{{ "RE_GROUPS_MAX" | translate }}</label
+                      >
                       <input
                         type="number"
                         [(ngModel)]="editingRace.group_options.max_groups"
                         (ngModelChange)="captureState()"
                         min="1"
                         max="100"
-                        [disabled]="!editingRace.group_options.enabled"
+                        [disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
                       />
                     </div>
                     <div class="config-section checkbox-section">
                       <label
                         class="checkbox-container"
-                        [class.disabled]="!editingRace.group_options.enabled"
+                        [class.disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
                       >
                         <input
                           type="checkbox"
                           [(ngModel)]="editingRace.group_options.balance"
                           (ngModelChange)="captureState()"
-                          [disabled]="!editingRace.group_options.enabled"
+                          [disabled]="
+                            !editingRace.group_options.enabled ||
+                            editingRace?.heat_rotation_type === 'Custom'
+                          "
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -673,7 +688,10 @@
                     <div class="config-section checkbox-section">
                       <label
                         class="checkbox-container"
-                        [class.disabled]="!editingRace.group_options.enabled"
+                        [class.disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
                       >
                         <input
                           type="checkbox"
@@ -681,7 +699,10 @@
                             editingRace.group_options.allow_empty_lanes
                           "
                           (ngModelChange)="captureState()"
-                          [disabled]="!editingRace.group_options.enabled"
+                          [disabled]="
+                            !editingRace.group_options.enabled ||
+                            editingRace?.heat_rotation_type === 'Custom'
+                          "
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -692,7 +713,10 @@
                     <div class="config-section checkbox-section">
                       <label
                         class="checkbox-container"
-                        [class.disabled]="!editingRace.group_options.enabled"
+                        [class.disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
                       >
                         <input
                           type="checkbox"
@@ -700,7 +724,10 @@
                             editingRace.group_options.force_multiple_of_max
                           "
                           (ngModelChange)="captureState()"
-                          [disabled]="!editingRace.group_options.enabled"
+                          [disabled]="
+                            !editingRace.group_options.enabled ||
+                            editingRace?.heat_rotation_type === 'Custom'
+                          "
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -713,7 +740,10 @@
                     <div class="config-section checkbox-section">
                       <label
                         class="checkbox-container"
-                        [class.disabled]="!editingRace.group_options.enabled"
+                        [class.disabled]="
+                          !editingRace.group_options.enabled ||
+                          editingRace?.heat_rotation_type === 'Custom'
+                        "
                       >
                         <input
                           type="checkbox"
@@ -721,7 +751,10 @@
                             editingRace.group_options.rotate_group_heats
                           "
                           (ngModelChange)="captureState()"
-                          [disabled]="!editingRace.group_options.enabled"
+                          [disabled]="
+                            !editingRace.group_options.enabled ||
+                            editingRace?.heat_rotation_type === 'Custom'
+                          "
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">

@@ -427,4 +427,50 @@ public class OverallStandingsTest {
     assertEquals(p1, drivers.get(0));
     assertEquals(empty, drivers.get(1));
   }
+
+  @Test
+  public void testMinAdvancingWithCustomRotation() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+
+    // Groups enabled with minAdvancing = 1
+    GroupOptions groupOptions = new GroupOptions(true, 2, false, true, false, true, 1);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, groupOptions);
+
+    RaceParticipant g1_p1 = createDriver("G1P1", "g1p1");
+    RaceParticipant g1_p2 = createDriver("G1P2", "g1p2");
+    RaceParticipant g2_p1 = createDriver("G2P1", "g2p1");
+    RaceParticipant g2_p2 = createDriver("G2P2", "g2p2");
+
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(g1_p1);
+    drivers.add(g1_p2);
+    drivers.add(g2_p1);
+    drivers.add(g2_p2);
+
+    List<Heat> heats = new ArrayList<>();
+    // Custom heats preserve their custom groups (Group 5 and Group 6)
+    Heat h1 = createHeat(1, g1_p1, 10, 100.0, g1_p2, 20, 200.0);
+    h1.setGroup(5);
+    heats.add(h1);
+
+    Heat h2 = createHeat(2, g2_p1, 15, 150.0, g2_p2, 5, 50.0);
+    h2.setGroup(6);
+    heats.add(h2);
+
+    os.recalculate(drivers, heats);
+
+    // Group 5: g1_p2 (20 laps) advances over g1_p1 (10 laps)
+    // Group 6: g2_p1 (15 laps) advances over g2_p2 (5 laps)
+    // Forced Top (minAdvancing = 1 per group): g1_p2, g2_p1. Sorted: g1_p2 (Rank 1), g2_p1 (Rank
+    // 2).
+    // The Rest: g1_p1, g2_p2. Sorted: g1_p1 (Rank 3), g2_p2 (Rank 4).
+    assertEquals(1, g1_p2.getRank());
+    assertEquals(2, g2_p1.getRank());
+    assertEquals(3, g1_p1.getRank());
+    assertEquals(4, g2_p2.getRank());
+  }
 }

@@ -473,13 +473,9 @@ export class TestSetupHelper {
           while ((node = walk.nextNode())) {
             const text = node.textContent?.trim() || "";
             // If the text looks like one of our common localization keys, it hasn't been replaced yet.
-            if (
-              /^[A-Z][A-Z0-9_]+$/.test(text) &&
-              (text.startsWith("RD_") ||
-                text.startsWith("DE_") ||
-                text.startsWith("RE_") ||
-                text.startsWith("RDS_"))
-            ) {
+            const prefixes =
+              /^(RD|DE|RE|RDS|AM|DBM|DM|AE|TEM|TE|TMM|TM|RM|UE|UI|ASSET|AS|GEN|HELP|HR|OR|IS|LOG|ACK|APP|CD|DR|RGB|TOOLBAR)_/;
+            if (/^[A-Z][A-Z0-9_]+$/.test(text) && prefixes.test(text)) {
               return false;
             }
           }

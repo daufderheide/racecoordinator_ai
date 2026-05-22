@@ -816,3 +816,8 @@
   font-weight: 500;
   text-transform: uppercase;
 }
+
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}

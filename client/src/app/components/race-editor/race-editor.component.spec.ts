@@ -679,6 +679,61 @@ describe("RaceEditorComponent", () => {
       expect(payload.group_options.max_groups).toBe(4);
       expect(payload.group_options.min_advancing).toBe(3);
     }));
+
+    it("should disable specific group options when heat rotation is Custom", fakeAsync(() => {
+      // First trigger ngOnInit and let async loadRace finish loading data
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      // Now apply custom mutations on the loaded object
+      component.editingRace.heat_rotation_type = "Custom";
+      if (!component.editingRace.group_options) {
+        component.editingRace.group_options = {} as any;
+      }
+      component.editingRace.group_options.enabled = true;
+      component.editingRace.group_options.max_groups = 3;
+      component.editingRace.group_options.balance = true;
+      component.editingRace.group_options.allow_empty_lanes = true;
+      component.editingRace.group_options.force_multiple_of_max = true;
+      component.editingRace.group_options.rotate_group_heats = true;
+      component.editingRace.group_options.min_advancing = 2;
+
+      // Propagate the changes to the DOM template
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      const compiled = fixture.debugElement.nativeElement;
+      const groupGrid = compiled.querySelector(".group-options-grid");
+      expect(groupGrid).toBeTruthy();
+
+      const inputs = groupGrid.querySelectorAll("input");
+      const maxGroupsInput = Array.from(inputs).find(
+        (inp: any) =>
+          inp.getAttribute("type") === "number" &&
+          inp.getAttribute("min") === "1",
+      ) as HTMLInputElement;
+      const minAdvancingInput = Array.from(inputs).find(
+        (inp: any) =>
+          inp.getAttribute("type") === "number" &&
+          inp.getAttribute("min") === "0",
+      ) as HTMLInputElement;
+
+      expect(maxGroupsInput).toBeTruthy();
+      expect(minAdvancingInput).toBeTruthy();
+
+      expect(maxGroupsInput.disabled).toBeTrue();
+      expect(minAdvancingInput.disabled).toBeFalse();
+
+      const checkboxInputs = Array.from(inputs).filter(
+        (inp: any) => inp.getAttribute("type") === "checkbox",
+      ) as HTMLInputElement[];
+      expect(checkboxInputs.length).toBe(4);
+      checkboxInputs.forEach((checkbox) => {
+        expect(checkbox.disabled).toBeTrue();
+      });
+    }));
   });
 
   it("should call updateRace API", fakeAsync(() => {
