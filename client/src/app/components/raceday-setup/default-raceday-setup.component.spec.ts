@@ -19,6 +19,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InitializeRaceResponse, Race } from "@app/proto/antigravity";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
@@ -74,6 +75,7 @@ describe("DefaultRacedaySetupComponent", () => {
   let mockRaceService: jasmine.SpyObj<RaceService>;
   let mockFileSystemService: jasmine.SpyObj<FileSystemService>;
   let mockHelpService: any;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
 
   beforeEach(() => {
     mockDataService = createRacedaySetupDataServiceMock();
@@ -134,6 +136,7 @@ describe("DefaultRacedaySetupComponent", () => {
     ]);
 
     mockHelpService = createRacedaySetupHelpServiceMock();
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
 
     const mockActivatedRoute = {
       queryParams: of({}),
@@ -162,6 +165,7 @@ describe("DefaultRacedaySetupComponent", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: FileSystemService, useValue: mockFileSystemService },
         { provide: HelpService, useValue: mockHelpService },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: LoggerService, useValue: mockLoggerService },
         {
@@ -570,6 +574,12 @@ describe("DefaultRacedaySetupComponent", () => {
     spyOn(component.requestAbout, "emit");
     component.openAbout();
     expect(component.requestAbout.emit).toHaveBeenCalled();
+    expect(component.isHelpDropdownOpen).toBeFalse();
+  });
+
+  it("should call openHelp with empty string and close dropdown when openHelpCenter is called", () => {
+    component.openHelpCenter();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("");
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 

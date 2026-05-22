@@ -46,7 +46,8 @@ export class HelpLinkService {
 
     // English is the default locale (no prefix), other languages get /lang/ prefix
     const langPrefix = lang === "en" ? "" : `/${lang}`;
-    return `${base}${langPrefix}/${article}/${fragment}`;
+    const articlePath = article ? `${article}/` : "";
+    return `${base}${langPrefix}/${articlePath}${fragment}`;
   }
 
   /**

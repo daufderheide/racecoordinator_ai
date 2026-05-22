@@ -12,6 +12,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  inject,
   OnInit,
   output,
   ViewChild,
@@ -31,6 +32,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IDemoConfig } from "@app/proto/antigravity";
 import { FileSystemService } from "@app/services/file-system.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
@@ -61,6 +63,8 @@ type Participant = Driver | Team;
 export class DefaultRacedaySetupComponent implements OnInit {
   requestServerConfig = output<void>();
   @ViewChild("scrollContainer") scrollContainer?: ElementRef;
+
+  private helpLinkService = inject(HelpLinkService);
 
   // Driver/Team State
   selectedParticipants: Participant[] = [];
@@ -1169,6 +1173,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  openHelpCenter() {
+    this.closeHelpDropdown();
+    this.helpLinkService.openHelp("");
   }
 
   openAbout() {

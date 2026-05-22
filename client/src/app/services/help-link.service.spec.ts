@@ -93,6 +93,38 @@ describe("HelpLinkService", () => {
       const url = service.buildHelpUrl("race-formats", "round-robin");
       expect(url).toBe("/help/it/race-formats/#round-robin");
     });
+
+    it("should build an online root URL without double slashes for English", () => {
+      spyOn(service, "isOnline").and.returnValue(true);
+      translationServiceSpy.getCurrentLanguageValue.and.returnValue("en");
+
+      const url = service.buildHelpUrl("");
+      expect(url).toBe("https://daufderheide.github.io/racecoordinator_ai/");
+    });
+
+    it("should build an online root URL without double slashes for non-English", () => {
+      spyOn(service, "isOnline").and.returnValue(true);
+      translationServiceSpy.getCurrentLanguageValue.and.returnValue("es");
+
+      const url = service.buildHelpUrl("");
+      expect(url).toBe("https://daufderheide.github.io/racecoordinator_ai/es/");
+    });
+
+    it("should build an offline root URL without double slashes for English", () => {
+      spyOn(service, "isOnline").and.returnValue(false);
+      translationServiceSpy.getCurrentLanguageValue.and.returnValue("en");
+
+      const url = service.buildHelpUrl("");
+      expect(url).toBe("/help/");
+    });
+
+    it("should build an offline root URL without double slashes for non-English", () => {
+      spyOn(service, "isOnline").and.returnValue(false);
+      translationServiceSpy.getCurrentLanguageValue.and.returnValue("fr");
+
+      const url = service.buildHelpUrl("");
+      expect(url).toBe("/help/fr/");
+    });
   });
 
   describe("openHelp", () => {
