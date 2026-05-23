@@ -320,4 +320,8 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
   trackByTeam(index: number, team: Team): string {
     return team.entity_id;
   }
+
+  trackByDriver(index: number, driver: Driver): string {
+    return driver.entity_id;
+  }
 }

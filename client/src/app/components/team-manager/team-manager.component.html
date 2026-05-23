@@ -81,7 +81,10 @@
             class="team-drivers-list"
             style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px"
           >
-            @for (driver of getDriversForTeam(selectedTeam); track driver) {
+            @for (
+              driver of getDriversForTeam(selectedTeam);
+              track trackByDriver($index, driver)
+            ) {
               <div
                 class="driver-badge"
                 style="
