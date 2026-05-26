@@ -89,6 +89,12 @@ jobs:
         run: cd server && chmod +x generate_protos.sh && ./generate_protos.sh
       - name: Run visual tests
         run: cd client && npx playwright test
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: client/test-results/
 
   test-server:
     runs-on: ubuntu-22.04
