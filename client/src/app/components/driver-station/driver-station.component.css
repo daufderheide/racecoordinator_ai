@@ -105,13 +105,26 @@
   display: block;
 }
 
-/* Nickname/value scaling - shrink to fit */
-.data-row .value.nickname-value,
+/* Nickname scaling - shrink to fit */
+.data-row .value.nickname-value {
+  white-space: normal;
+  font-size: clamp(1.5rem, 15cqw, 3.6rem);
+  max-width: 100%;
+  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1;
+}
+
+/* Other values - keep original size */
 .data-row .value.shrink-value,
 .rank-col .value.shrink-value,
 .lap-col .value.shrink-value {
   white-space: nowrap;
-  font-size: min(3.6rem, 20cqw);
+  font-size: 3.6rem;
   max-width: 100%;
   display: block;
 }
