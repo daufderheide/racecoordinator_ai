@@ -40,6 +40,11 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
+interface ISavedRace {
+  filename: string;
+  isDemo: boolean;
+}
+
 type Participant = Driver | Team;
 
 @Component({
@@ -92,8 +97,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   showAutoSavePrompt: boolean = false;
   autoSaveFileToLoad: string | null = null;
   pendingIsDemo: boolean = false;
-  savedRaces: string[] = [];
-  selectedSavedRace: string | null = null;
+  savedRaces: ISavedRace[] = [];
+  selectedSavedRace: ISavedRace | null = null;
   public isRefreshingList: boolean = false;
   public showWelcomeMessage: boolean = true;
   isAvailableDriversCollapsed: boolean = false;
@@ -1276,9 +1281,20 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
   loadSavedRaces() {
     this.isFileDropdownOpen = false;
-    this.dataService.getSavedRaces().subscribe({
-      next: (races) => {
-        this.savedRaces = races;
+    forkJoin({
+      normal: this.dataService.getSavedRaces(false),
+      demo: this.dataService.getSavedRaces(true),
+    }).subscribe({
+      next: (result) => {
+        const normalList = result.normal.map((f) => ({
+          filename: f,
+          isDemo: false,
+        }));
+        const demoList = result.demo.map((f) => ({
+          filename: f,
+          isDemo: true,
+        }));
+        this.savedRaces = [...normalList, ...demoList];
         this.showLoadRaceModal = true;
         this.selectedSavedRace = null;
         this.cdr.detectChanges();
@@ -1287,7 +1303,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     });
   }
 
-  selectSavedRace(file: string) {
+  selectSavedRace(file: ISavedRace) {
     this.selectedSavedRace = file;
   }
 
@@ -1298,22 +1314,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
   confirmLoadRace() {
     if (!this.selectedSavedRace) return;
 
-    this.dataService.loadRace(this.selectedSavedRace).subscribe({
-      next: () => {
-        this.closeLoadRaceModal();
-        this.router.navigate(["/raceday"]);
-      },
-      error: (err) => console.error("Failed to load race:", err),
-    });
+    this.dataService
+      .loadRace(this.selectedSavedRace.filename, this.selectedSavedRace.isDemo)
+      .subscribe({
+        next: () => {
+          this.closeLoadRaceModal();
+          this.router.navigate(["/raceday"]);
+        },
+        error: (err) => console.error("Failed to load race:", err),
+      });
   }
 
-  deleteSavedRace(event: MouseEvent, file: string) {
+  deleteSavedRace(event: MouseEvent, file: ISavedRace) {
     event.stopPropagation(); // Prevent selection
-    if (confirm(`Are you sure you want to delete "${file}"?`)) {
-      this.dataService.deleteSavedRace(file).subscribe({
+    if (confirm(`Are you sure you want to delete "${file.filename}"?`)) {
+      this.dataService.deleteSavedRace(file.filename, file.isDemo).subscribe({
         next: () => {
-          this.savedRaces = this.savedRaces.filter((r) => r !== file);
-          if (this.selectedSavedRace === file) {
+          this.savedRaces = this.savedRaces.filter(
+            (r) => r.filename !== file.filename,
+          );
+          if (this.selectedSavedRace?.filename === file.filename) {
             this.selectedSavedRace = null;
           }
           this.cdr.detectChanges();

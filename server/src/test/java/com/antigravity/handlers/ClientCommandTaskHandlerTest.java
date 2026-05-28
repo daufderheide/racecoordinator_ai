@@ -409,6 +409,37 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testDeleteSavedRace_RouteRegistered() {
+    verify(app).delete(eq("/api/saved-races/{filename}"), any());
+  }
+
+  @Test
+  public void testDeleteSavedRace_Demo_Success() throws Exception {
+    MongoCollection<RaceSaveData> saveCollection =
+        mongoDatabase.getCollection("demo_saved_races", RaceSaveData.class);
+    com.mongodb.client.result.DeleteResult dr =
+        com.mongodb.client.result.DeleteResult.acknowledged(1);
+    when(saveCollection.deleteOne(any(Bson.class))).thenReturn(dr);
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("filename", "20260101-120001_MyTestRace.json");
+    try {
+      Method setParams = ctx.getClass().getMethod("setPathParamMap$javalin", Map.class);
+      setParams.invoke(ctx, pathParams);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    HttpServletRequest req = ctx.req;
+    when(req.getParameter("demo")).thenReturn("true");
+
+    handler.deleteSavedRace(ctx);
+
+    verify(res).setStatus(200);
+    verify(saveCollection).deleteOne(any(Bson.class));
+  }
+
+  @Test
   public void testAbortTimers_Success() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
     ClientSubscriptionManager.getInstance().setRace(mockRace);

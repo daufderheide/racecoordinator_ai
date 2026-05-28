@@ -585,27 +585,61 @@ describe("DefaultRacedaySetupComponent", () => {
 
   it("should load saved races and open modal", () => {
     component.loadSavedRaces();
-    expect(mockDataService.getSavedRaces).toHaveBeenCalled();
+    expect(mockDataService.getSavedRaces).toHaveBeenCalledTimes(2);
     expect(component.showLoadRaceModal).toBeTrue();
-    // In this spec, we mock 2 saved races in the helper
-    expect(component.savedRaces.length).toBe(2);
+    // 2 normal and 2 demo races combined
+    expect(component.savedRaces.length).toBe(4);
   });
 
   it("should delete saved race after confirmation", () => {
     spyOn(window, "confirm").and.returnValue(true);
-    component.savedRaces = ["race1.json", "race2.json"];
-    component.selectedSavedRace = "race1.json";
+    const fileToDelete = { filename: "race1.json", isDemo: false };
+    component.savedRaces = [
+      fileToDelete,
+      { filename: "race2.json", isDemo: true },
+    ];
+    component.selectedSavedRace = fileToDelete;
 
     const event = new MouseEvent("click");
     spyOn(event, "stopPropagation");
 
-    component.deleteSavedRace(event, "race1.json");
+    component.deleteSavedRace(event, fileToDelete);
 
     expect(event.stopPropagation).toHaveBeenCalled();
     expect(window.confirm).toHaveBeenCalled();
-    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith("race1.json");
-    expect(component.savedRaces).not.toContain("race1.json");
+    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
+      "race1.json",
+      false,
+    );
+    expect(component.savedRaces).not.toContain(
+      jasmine.objectContaining({ filename: "race1.json" }),
+    );
     expect(component.selectedSavedRace).toBeNull();
+  });
+
+  it("should confirm and load normal race", () => {
+    const fileToLoad = { filename: "race1.json", isDemo: false };
+    component.selectedSavedRace = fileToLoad;
+    mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
+
+    component.confirmLoadRace();
+
+    expect(mockDataService.loadRace).toHaveBeenCalledWith("race1.json", false);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+  });
+
+  it("should confirm and load demo race", () => {
+    const fileToLoad = { filename: "race-demo.json", isDemo: true };
+    component.selectedSavedRace = fileToLoad;
+    mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
+
+    component.confirmLoadRace();
+
+    expect(mockDataService.loadRace).toHaveBeenCalledWith(
+      "race-demo.json",
+      true,
+    );
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
   });
 
   it("should show error modal when server returns DUPE_INDIVIDUAL_TEAM", fakeAsync(() => {

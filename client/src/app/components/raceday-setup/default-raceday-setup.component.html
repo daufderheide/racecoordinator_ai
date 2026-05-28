@@ -719,13 +719,16 @@
       <div class="modal-body">
         <p>{{ "RDS_SELECT_RACE_TO_LOAD" | translate }}</p>
         <div class="saved-races-list">
-          @for (file of savedRaces; track file) {
+          @for (file of savedRaces; track file.filename) {
             <div
               class="saved-race-item"
-              [class.selected]="selectedSavedRace === file"
+              [class.selected]="selectedSavedRace?.filename === file.filename"
               (click)="selectSavedRace(file)"
             >
-              <span class="race-file-name">{{ file }}</span>
+              <span class="race-file-name">{{ file.filename }}</span>
+              @if (file.isDemo) {
+                <span class="demo-indicator-badge">Demo</span>
+              }
               <button
                 class="delete-saved-btn"
                 (click)="deleteSavedRace($event, file)"

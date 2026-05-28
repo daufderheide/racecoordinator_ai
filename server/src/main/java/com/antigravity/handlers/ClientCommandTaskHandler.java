@@ -103,6 +103,7 @@ public class ClientCommandTaskHandler {
     app.get("/api/races/current/export-csv", this::exportRaceCsv);
     app.post("/api/save-race", this::saveRace);
     app.get("/api/saved-races", this::getSavedRaces);
+    app.delete("/api/saved-races/{filename}", this::deleteSavedRace);
     app.post("/api/delete-saved-race/{filename}", this::deleteSavedRace);
     app.post("/api/load-race", this::loadRace);
     app.post("/api/analytics/toggle", this::toggleAnalytics);

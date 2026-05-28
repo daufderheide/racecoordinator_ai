@@ -1393,20 +1393,29 @@ export class DataService {
     );
   }
 
-  getSavedRaces(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.baseUrl}/api/saved-races`);
+  getSavedRaces(isDemo: boolean = false): Observable<string[]> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/saved-races?demo=true`
+      : `${this.baseUrl}/api/saved-races`;
+    return this.http.get<string[]>(url);
   }
 
-  loadRace(filename: string): Observable<string> {
+  loadRace(filename: string, isDemo: boolean = false): Observable<string> {
     return this.http.post(
       `${this.baseUrl}/api/load-race`,
-      { filename },
+      { filename, isDemo },
       { responseType: "text" },
     );
   }
 
-  deleteSavedRace(filename: string): Observable<string> {
-    return this.http.delete(`${this.baseUrl}/api/saved-races/${filename}`, {
+  deleteSavedRace(
+    filename: string,
+    isDemo: boolean = false,
+  ): Observable<string> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/saved-races/${filename}?demo=true`
+      : `${this.baseUrl}/api/saved-races/${filename}`;
+    return this.http.delete(url, {
       responseType: "text",
     });
   }
