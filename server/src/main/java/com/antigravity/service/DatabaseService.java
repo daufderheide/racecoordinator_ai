@@ -1091,8 +1091,10 @@ public class DatabaseService {
           return stats;
         }
 
-        // If a specific raceId was requested and no stats were found, return empty stats.
-        // We do not want to aggregate historical stats across all races into a new race.
+        // If a specific raceId was requested and no stats were found, return empty
+        // stats.
+        // We do not want to aggregate historical stats across all races into a new
+        // race.
         DriverStatistics emptyStats = new DriverStatistics();
         emptyStats.setDriverId(driverId);
         emptyStats.setRaceId(raceId);
@@ -1165,7 +1167,8 @@ public class DatabaseService {
         return null;
       }
 
-      // Merge all statistics documents to find the true overall (all-time) best highlights and
+      // Merge all statistics documents to find the true overall (all-time) best
+      // highlights and
       // per-lane bests
       DriverStatistics merged = new DriverStatistics();
       merged.setDriverId(driverId);
