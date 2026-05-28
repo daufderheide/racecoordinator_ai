@@ -105,10 +105,10 @@
   display: block;
 }
 
-/* Nickname scaling - shrink to fit */
+/* Nickname scaling - wrap first, then shrink */
 .data-row .value.nickname-value {
   white-space: normal;
-  font-size: clamp(1.5rem, 15cqw, 3.6rem);
+  font-size: clamp(2.5rem, 25cqw, 3.6rem);
   max-width: 100%;
   display: block;
   display: -webkit-box;
@@ -119,12 +119,12 @@
   line-height: 1;
 }
 
-/* Other values - keep original size */
+/* Other values - scale to fit */
 .data-row .value.shrink-value,
 .rank-col .value.shrink-value,
 .lap-col .value.shrink-value {
   white-space: nowrap;
-  font-size: 3.6rem;
+  font-size: clamp(2.5rem, 25cqw, 3.6rem);
   max-width: 100%;
   display: block;
 }
