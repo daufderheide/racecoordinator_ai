@@ -13,14 +13,16 @@ test.describe("Connection Loss Visuals", () => {
       (window as any).disableConnectionTimeout = true;
     });
 
-    await page.route("**/api/auth/role", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ role: "DIRECTOR" }),
-      });
+    // Use full standard mocks so WebSocket, version, server-ip, analytics,
+    // fonts, theme, isPlaywright, and WATCHDOG_TIMEOUT are all properly set up.
+    // This prevents flakiness from unmocked endpoints under parallel execution.
+    await TestSetupHelper.setupStandardMocks(page, {
+      walkthroughSeen: true,
     });
 
+    // Override the drivers route with connection-switching logic.
+    // Playwright applies later-registered routes first, so this takes priority
+    // over the one registered inside setupStandardMocks.
     let connectionSucceeds = true;
     await page.route("**/api/drivers", async (route) => {
       if (connectionSucceeds) {
@@ -35,50 +37,6 @@ test.describe("Connection Loss Visuals", () => {
       } else {
         await route.abort("failed");
       }
-    });
-
-    await page.route("**/api/races", async (route) => {
-      if (connectionSucceeds) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify([
-            {
-              entity_id: "r1",
-              name: "Grand Prix",
-              track: { name: "Mock Track", entity_id: "t1" },
-            },
-            {
-              entity_id: "r2",
-              name: "Time Trial",
-              track: { name: "Mock Track", entity_id: "t1" },
-            },
-          ]),
-        });
-      } else {
-        await route.abort("failed");
-      }
-    });
-
-    await page.route("**/api/teams", async (route) => {
-      if (connectionSucceeds) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify([
-            { entity_id: "t1", name: "Team Alpha", avatarUrl: "" },
-          ]),
-        });
-      } else {
-        await route.abort("failed");
-      }
-    });
-
-    await TestSetupHelper.setupLocalizationMocks(page);
-    await TestSetupHelper.setupAssetMocks(page);
-
-    await TestSetupHelper.setupLocalStorage(page, {
-      racedaySetupWalkthroughSeen: true,
     });
 
     await page.goto("/");
