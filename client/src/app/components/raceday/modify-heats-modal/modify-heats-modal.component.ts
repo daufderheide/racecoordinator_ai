@@ -95,11 +95,13 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.raceInput()?.track ||
       this.raceService.getRace()?.track!,
   );
-  participants = computed(() =>
-    this.participantsInput().length > 0
-      ? this.participantsInput()
-      : this.raceService.getParticipants(),
-  );
+  participants = computed(() => {
+    const list =
+      this.participantsInput().length > 0
+        ? this.participantsInput()
+        : this.raceService.getParticipants();
+    return [...list].sort((a, b) => (a.seed || 0) - (b.seed || 0));
+  });
   heats = computed(() =>
     this.heatsInput().length > 0
       ? this.heatsInput()

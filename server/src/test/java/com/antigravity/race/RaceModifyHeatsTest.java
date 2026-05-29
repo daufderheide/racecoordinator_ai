@@ -518,4 +518,28 @@ public class RaceModifyHeatsTest {
 
     assertTrue("Should succeed if group sequence has a gap", response.getSuccess());
   }
+
+  @Test
+  public void testModifyHeats_PreservesAndUpdatesSeeds() {
+    // We will change the seeds of existing participants
+    List<RaceParticipant> updatedParticipants = new ArrayList<>();
+    for (int i = 0; i < participants.size(); i++) {
+      RaceParticipant p = participants.get(i);
+      // Create a copy to send in request with a modified seed
+      RaceParticipant pCopy = new RaceParticipant(p.getDriver(), p.getObjectId());
+      pCopy.setSeed(i + 10); // change seed to something distinct
+      updatedParticipants.add(pCopy);
+    }
+
+    ModifyHeatsRequest request = createRequest(updatedParticipants, testRace.getHeats());
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+
+    assertTrue("Modify heats should succeed", response.getSuccess());
+    assertEquals(
+        "Participant 1 seed should be updated to 10", 10, testRace.getDrivers().get(0).getSeed());
+    assertEquals(
+        "Participant 2 seed should be updated to 11", 11, testRace.getDrivers().get(1).getSeed());
+    assertEquals(
+        "Participant 3 seed should be updated to 12", 12, testRace.getDrivers().get(2).getSeed());
+  }
 }

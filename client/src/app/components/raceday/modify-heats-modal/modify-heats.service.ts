@@ -68,11 +68,39 @@ export class ModifyHeatsService {
 
     if (fromId === toId) {
       if (toId === "driver-pool") {
-        moveItemInArray(
-          updatedParticipants,
-          event.previousIndex,
-          event.currentIndex,
+        const item = event.item.data as RaceParticipant;
+        const fromIdx = updatedParticipants.findIndex(
+          (p) => p.objectId === item.objectId,
         );
+
+        const driverPool = event.container.data as RaceParticipant[];
+        let toIdx = -1;
+        if (event.currentIndex < driverPool.length) {
+          const targetItem = driverPool[event.currentIndex];
+          toIdx = updatedParticipants.findIndex(
+            (p) => p.objectId === targetItem.objectId,
+          );
+        } else {
+          // Dragged to the end: find the last non-placeholder in updatedParticipants
+          for (let i = updatedParticipants.length - 1; i >= 0; i--) {
+            const p = updatedParticipants[i];
+            const isPlaceholder =
+              (p.driver?.entity_id === "EMPTY_LANE" ||
+                (p.driver as any)?.entityId === "EMPTY_LANE") &&
+              !p.team;
+            if (!isPlaceholder) {
+              toIdx = i;
+              break;
+            }
+          }
+          if (toIdx === -1) {
+            toIdx = updatedParticipants.length - 1;
+          }
+        }
+
+        if (fromIdx !== -1 && toIdx !== -1) {
+          moveItemInArray(updatedParticipants, fromIdx, toIdx);
+        }
         return { updatedHeats, updatedParticipants, actionTaken: true };
       }
       return { updatedHeats, updatedParticipants, actionTaken: false };
@@ -104,6 +132,7 @@ export class ModifyHeatsService {
         participant,
         updatedHeats,
         updatedParticipants,
+        event,
       );
     } else if (toId === "database-drivers") {
       return this.handleDatabaseDrop(
@@ -302,9 +331,36 @@ export class ModifyHeatsService {
     participant: RaceParticipant,
     heats: Heat[],
     participants: RaceParticipant[],
+    event: CdkDragDrop<any>,
   ): DropResult {
     if (fromId === "database-drivers") {
-      participants.push(participant);
+      const driverPool = event.container.data as RaceParticipant[];
+      let toIdx = -1;
+      if (event.currentIndex < driverPool.length) {
+        const targetItem = driverPool[event.currentIndex];
+        toIdx = participants.findIndex(
+          (p) => p.objectId === targetItem.objectId,
+        );
+      } else {
+        // Find the first placeholder or the end of the array
+        toIdx = participants.length;
+        for (let i = 0; i < participants.length; i++) {
+          const p = participants[i];
+          const isPlaceholder =
+            (p.driver?.entity_id === "EMPTY_LANE" ||
+              (p.driver as any)?.entityId === "EMPTY_LANE") &&
+            !p.team;
+          if (isPlaceholder) {
+            toIdx = i;
+            break;
+          }
+        }
+      }
+      if (toIdx !== -1) {
+        participants.splice(toIdx, 0, participant);
+      } else {
+        participants.push(participant);
+      }
     } else if (fromId.startsWith("heat-")) {
       this.removeDriverFromHeat(
         heats,

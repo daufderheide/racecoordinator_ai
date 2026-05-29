@@ -251,6 +251,7 @@ public class RaceHeatManager {
         p = findParticipantInProtoRequest(request, protoP.getObjectId());
       }
       if (p != null) {
+        p.setSeed(protoP.getSeed());
         newDrivers.add(p);
       }
     }

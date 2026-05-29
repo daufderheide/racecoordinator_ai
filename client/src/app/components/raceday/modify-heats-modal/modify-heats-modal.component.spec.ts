@@ -1031,4 +1031,168 @@ describe("ModifyHeatsModalComponent", () => {
       expect(heightCollapsed).toBeGreaterThan(heightExpanded);
     });
   });
+
+  describe("seeding order maintenance and preservation", () => {
+    it("should sort participants by seed order on retrieval", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        100,
+      ); // seed 3
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "D2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        100,
+      ); // seed 1
+      const p3 = new RaceParticipant(
+        "p3",
+        new Driver("d3", "D3", "D3"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        100,
+      ); // seed 2
+
+      fixture.componentRef.setInput("participantsInput", [p1, p2, p3]);
+      fixture.detectChanges();
+
+      const sorted = component.participants();
+      expect(sorted[0].objectId).toBe("p2");
+      expect(sorted[1].objectId).toBe("p3");
+      expect(sorted[2].objectId).toBe("p1");
+    });
+
+    it("should correctly re-order participants inside the driver pool via onDrop", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        100,
+      );
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "D2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        100,
+      );
+      const p3 = new RaceParticipant(
+        "p3",
+        new Driver("d3", "D3", "D3"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        100,
+      );
+
+      fixture.componentRef.setInput("participantsInput", [p1, p2, p3]);
+      fixture.detectChanges();
+
+      // Trigger a drag and drop re-order (moving p1 to position after p2)
+      const event: any = {
+        container: { id: "driver-pool", data: [p1, p2, p3] },
+        previousContainer: { id: "driver-pool", data: [p1, p2, p3] },
+        item: { data: p1 },
+        previousIndex: 0,
+        currentIndex: 1,
+      };
+
+      component["onDrop"](event);
+
+      expect(component["localParticipants"][0].objectId).toBe("p2");
+      expect(component["localParticipants"][1].objectId).toBe("p1");
+      expect(component["localParticipants"][2].objectId).toBe("p3");
+    });
+
+    it("should correctly insert new driver from database at the dropped index", () => {
+      const p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "D1", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        100,
+      );
+      const p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "D2", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        100,
+      );
+      const newDriver = new Driver("d3", "D3", "D3");
+
+      fixture.componentRef.setInput("participantsInput", [p1, p2]);
+      component["allDrivers"] = [newDriver];
+      fixture.detectChanges();
+
+      mockValidationService.validate.and.returnValue({ isValid: true });
+
+      // Dropping d3 at index 1 (between p1 and p2)
+      const event: any = {
+        container: { id: "driver-pool", data: [p1, p2] },
+        previousContainer: { id: "database-drivers", data: [newDriver] },
+        item: { data: newDriver },
+        previousIndex: 0,
+        currentIndex: 1,
+      };
+
+      component["onDrop"](event);
+
+      // Verify new participant is inserted at index 1
+      expect(component["localParticipants"][0].objectId).toBe("p1");
+      expect(component["localParticipants"][1].driver.name).toBe("D3");
+      expect(component["localParticipants"][2].objectId).toBe("p2");
+    });
+  });
 });
