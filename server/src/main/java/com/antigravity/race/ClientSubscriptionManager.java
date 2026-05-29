@@ -319,15 +319,20 @@ public class ClientSubscriptionManager {
         });
   }
 
-  public void broadcastSystemState(String resourceLockState) {
+  public void broadcastSystemState(String resourceLockState, String ownerId) {
     com.antigravity.proto.SystemState state = // fqn-collision
         com.antigravity.proto.SystemState.newBuilder() // fqn-collision
             .setResourceLockState(resourceLockState)
+            .setOwnerId(ownerId)
+            .build();
+    com.antigravity.proto.RaceData raceData = // fqn-collision
+        com.antigravity.proto.RaceData.newBuilder() // fqn-collision
+            .setSystemState(state)
             .build();
 
     // We can broadcast to all sessions, not just raceDataSubscribers, because system state is
     // global
-    byte[] bytes = state.toByteArray();
+    byte[] bytes = raceData.toByteArray();
     sessions.forEach(
         ctx -> {
           ctx.send(ByteBuffer.wrap(bytes));

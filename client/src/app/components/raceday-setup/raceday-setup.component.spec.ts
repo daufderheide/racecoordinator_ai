@@ -3,14 +3,17 @@ import {
   ComponentFixture,
   discardPeriodicTasks,
   fakeAsync,
+  flushMicrotasks,
   TestBed,
   tick,
 } from "@angular/core/testing";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
+import { Role } from "@app/models/role";
 import { Settings } from "@app/models/settings";
 import { RaceFlag } from "@app/proto/antigravity";
+import { AuthService } from "@app/services/auth.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -35,6 +38,7 @@ describe("RacedaySetupComponent", () => {
   let mockConnectionMonitor: jasmine.SpyObj<ConnectionMonitorService>;
   let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let mockLoggerService: jasmine.SpyObj<LoggerService>;
+  let mockAuthService: jasmine.SpyObj<AuthService>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
@@ -60,7 +64,9 @@ describe("RacedaySetupComponent", () => {
       "getServerVersion",
       "getServerIp",
       "getRaceFlag",
+      "getSystemState",
     ]);
+    mockDataService.getSystemState.and.returnValue(of({} as any));
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -85,6 +91,29 @@ describe("RacedaySetupComponent", () => {
       "error",
       "log",
     ]);
+
+    mockAuthService = jasmine.createSpyObj("AuthService", [
+      "loginAsDirector",
+      "changeDirectorPassword",
+      "logout",
+      "fetchRoleFromServer",
+    ]);
+    Object.defineProperty(mockAuthService, "currentRole", {
+      get: () => Role.ADMIN,
+      configurable: true,
+    });
+    mockAuthService.loginAsDirector.and.returnValue(of(true));
+    mockAuthService.fetchRoleFromServer.and.returnValue(of(Role.VIEWER));
+    Object.defineProperty(mockAuthService, "currentRole$", {
+      get: () => of(Role.ADMIN),
+      configurable: true,
+    });
+    Object.defineProperty(mockAuthService, "roleInitialized$", {
+      get: () => of(true),
+    });
+    mockAuthService.loginAsDirector.and.returnValue(of(true));
+    mockAuthService.changeDirectorPassword.and.returnValue(of(true));
+    mockAuthService.fetchRoleFromServer.and.returnValue(of(Role.ADMIN));
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
       ConnectionState.CONNECTED,
@@ -144,6 +173,7 @@ describe("RacedaySetupComponent", () => {
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
         { provide: LoggerService, useValue: mockLoggerService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
       imports: [RacedaySetupComponent],
     }).compileComponents();
@@ -233,6 +263,28 @@ describe("RacedaySetupComponent", () => {
       component.saveServerConfig();
       expect(mockConnectionMonitor.checkConnection).toHaveBeenCalled();
       expect(mockConnectionMonitor.waitForConnection).toHaveBeenCalled();
+    }));
+
+    it("should attempt to login as director if password is provided", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      component.directorPassword = "my-secret-password";
+      component.saveServerConfig();
+      flushMicrotasks();
+      expect(mockAuthService.loginAsDirector).toHaveBeenCalledWith(
+        "my-secret-password",
+      );
+    }));
+
+    it("should not attempt to login as director if password is empty", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      component.directorPassword = "";
+      component.saveServerConfig();
+      flushMicrotasks();
+      expect(mockAuthService.loginAsDirector).not.toHaveBeenCalled();
     }));
   });
 

@@ -108,6 +108,8 @@ describe("ArduinoEditorComponent", () => {
             "info",
             "warn",
             "error",
+            ,
+            "log",
           ]),
         },
       ],

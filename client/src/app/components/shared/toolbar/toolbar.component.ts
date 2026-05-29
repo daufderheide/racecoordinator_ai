@@ -1,16 +1,20 @@
 import {
   ChangeDetectorRef,
   Component,
+  inject,
   input,
   OnInit,
   output,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { AnalyticsService } from "@app/analytics.service";
+import { ChangePasswordDialogComponent } from "@app/components/change-password-dialog/change-password-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { Role } from "@app/models/role";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -20,7 +24,11 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-toolbar",
   templateUrl: "./toolbar.component.html",
   styleUrls: ["./toolbar.component.css"],
-  imports: [AcknowledgementModalComponent, TranslatePipe],
+  imports: [
+    AcknowledgementModalComponent,
+    TranslatePipe,
+    ChangePasswordDialogComponent,
+  ],
 })
 export class ToolbarComponent implements OnInit {
   showAdd = input(false);
@@ -59,10 +67,42 @@ export class ToolbarComponent implements OnInit {
   showLaneCheck = input(false);
   disabledLaneCheck = input(false);
   isHeatsEqual = input<boolean | undefined>(undefined);
+  showAuthority = input(true);
+  showPasswordChange = input(true);
 
   showAnalyticsModal = false;
   analyticsModalTitle = "";
   analyticsModalMessage = "";
+  showChangePasswordModal = false;
+
+  public authService = inject(AuthService);
+  public Role = Role;
+
+  get authorityIcon(): string {
+    switch (this.authService.currentRole) {
+      case Role.ADMIN:
+        return "admin_panel_settings";
+      case Role.DIRECTOR:
+        return "supervised_user_circle";
+      case Role.VIEWER:
+        return "visibility";
+      default:
+        return "visibility";
+    }
+  }
+
+  get authorityTooltip(): string {
+    switch (this.authService.currentRole) {
+      case Role.ADMIN:
+        return "ROLE_ADMIN";
+      case Role.DIRECTOR:
+        return "ROLE_DIRECTOR";
+      case Role.VIEWER:
+        return "ROLE_VIEWER";
+      default:
+        return "ROLE_VIEWER";
+    }
+  }
 
   constructor(
     private analyticsService: AnalyticsService,

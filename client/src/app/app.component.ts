@@ -9,8 +9,11 @@ import { filter } from "rxjs/operators";
 import { slideInAnimation } from "@app/utils/animations";
 
 import { AnalyticsService } from "./analytics.service";
+import { LockOverlayComponent } from "./components/lock-overlay/lock-overlay.component";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 import { DataService } from "./data.service";
+import { Role } from "./models/role";
+import { AuthService } from "./services/auth.service";
 import { FileSystemService } from "./services/file-system.service";
 import { LoggerService } from "./services/logger.service";
 import { NavigationService } from "./services/navigation.service";
@@ -25,6 +28,7 @@ import { ThemeService } from "./services/theme.service";
       <router-outlet></router-outlet>
     </div>
     <app-help-overlay></app-help-overlay>
+    <app-lock-overlay></app-lock-overlay>
   `,
   animations: [slideInAnimation],
   styles: [
@@ -37,7 +41,7 @@ import { ThemeService } from "./services/theme.service";
       }
     `,
   ],
-  imports: [RouterOutlet, HelpOverlayComponent],
+  imports: [RouterOutlet, HelpOverlayComponent, LockOverlayComponent],
 })
 export class AppComponent implements OnInit {
   private navigationCounter = 0;
@@ -55,6 +59,7 @@ export class AppComponent implements OnInit {
     private logger: LoggerService,
     private fileSystemService: FileSystemService,
     private cdr: ChangeDetectorRef,
+    private authService: AuthService,
   ) {}
 
   ngOnInit() {
@@ -87,6 +92,22 @@ export class AppComponent implements OnInit {
 
     this.themeService.initialize().then(() => {
       this.logger.debug("AppComponent: ThemeService initialized");
+    });
+
+    this.dataService.getSystemState().subscribe((state) => {
+      if (state) {
+        // We only forcefully navigate Viewers
+        const isViewer = this.authService.currentRole === Role.VIEWER;
+        if (isViewer && state.resourceLockState === "IDLE") {
+          // If we are on raceday (but not setup) and the race ends, go back to splash
+          if (
+            this.router.url.includes("raceday") &&
+            !this.router.url.includes("raceday-setup")
+          ) {
+            this.router.navigate(["/raceday-setup"]);
+          }
+        }
+      }
     });
 
     this.dataService.getRaceUpdate().subscribe((_update) => {

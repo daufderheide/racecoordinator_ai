@@ -3,9 +3,11 @@ package com.antigravity.handlers;
 import com.antigravity.auth.AuthService;
 import com.antigravity.auth.Role;
 import com.antigravity.service.ServerConfigService;
+import com.antigravity.util.NetworkUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.Map;
 
 public class AuthTaskHandler {
 
@@ -14,6 +16,32 @@ public class AuthTaskHandler {
   public AuthTaskHandler(Javalin app, ServerConfigService configService) {
     this.configService = configService;
     app.post("/api/auth/login", this::handleLogin, Role.VIEWER);
+    app.put("/api/auth/password", this::handleChangePassword, Role.ADMIN);
+    app.get("/api/auth/role", this::handleGetRole, Role.VIEWER);
+  }
+
+  private void handleGetRole(Context ctx) {
+    Role role = Role.VIEWER;
+
+    if (NetworkUtils.isLocalAddress(ctx.ip())) {
+      role = Role.ADMIN;
+    } else {
+      String authHeader = ctx.header("Authorization");
+      if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        String token = authHeader.substring(7);
+        if (AuthService.getInstance().isValidToken(token)) {
+          role = Role.DIRECTOR;
+        }
+      }
+    }
+
+    ctx.json(Map.of("role", role.name()));
+  }
+
+  private void handleChangePassword(Context ctx) {
+    ChangePasswordRequest request = ctx.bodyAsClass(ChangePasswordRequest.class);
+    configService.setDirectorPassword(request.newPassword);
+    ctx.status(200).json(Map.of("success", true));
   }
 
   private void handleLogin(Context ctx) {
@@ -37,12 +65,12 @@ public class AuthTaskHandler {
     }
   }
 
-  private static class LoginRequest {
+  static class LoginRequest {
     @JsonProperty("password")
     public String password;
   }
 
-  private static class LoginResponse {
+  static class LoginResponse {
     public boolean success;
     public String token;
     public String error;
@@ -52,5 +80,10 @@ public class AuthTaskHandler {
       this.token = token;
       this.error = error;
     }
+  }
+
+  static class ChangePasswordRequest {
+    @JsonProperty("newPassword")
+    public String newPassword;
   }
 }

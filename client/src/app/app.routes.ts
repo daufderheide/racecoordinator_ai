@@ -19,6 +19,7 @@ import { TeamManagerComponent } from "@app/components/team-manager/team-manager.
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { TrackManagerComponent } from "@app/components/track-manager/track-manager.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
+import { AuthGuard } from "@app/guards/auth.guard";
 import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
 import { RacedayGuard } from "@app/guards/raceday.guard";
 
@@ -44,61 +45,73 @@ export const routes: Routes = [
   {
     path: "asset-manager",
     component: AssetManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "AssetManagerPage" },
   },
   {
     path: "custom-rotation-editor",
     component: CustomRotationEditorComponent,
+    canActivate: [AuthGuard],
     data: { animation: "CustomRotationEditorPage" },
   },
   {
     path: "driver-editor",
     component: DriverEditorComponent,
+    canActivate: [AuthGuard],
     data: { animation: "DriverEditorPage" },
   },
   {
     path: "driver-manager",
     component: DriverManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "DriverManagerPage" },
   },
   {
     path: "team-manager",
     component: TeamManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "TeamManagerPage" },
   },
   {
     path: "team-editor",
     component: TeamEditorComponent,
+    canActivate: [AuthGuard],
     data: { animation: "TeamEditorPage" },
   },
   {
     path: "track-manager",
     component: TrackManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "TrackManagerPage" },
   },
   {
     path: "track-editor",
     component: TrackEditorComponent,
+    canActivate: [AuthGuard],
     data: { animation: "TrackEditorPage" },
   },
   {
     path: "database-manager",
     component: DatabaseManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "DatabaseManagerPage" },
   },
   {
     path: "race-manager",
     component: RaceManagerComponent,
+    canActivate: [AuthGuard],
     data: { animation: "RaceManagerPage" },
   },
   {
     path: "race-editor",
     component: RaceEditorComponent,
+    canActivate: [AuthGuard],
     data: { animation: "RaceEditorPage" },
   },
   {
     path: "ui-editor",
     component: UIEditorComponent,
+    canActivate: [AuthGuard],
     canDeactivate: [DirtyCheckGuard],
     data: { animation: "UIEditorPage" },
   },
@@ -115,6 +128,7 @@ export const routes: Routes = [
   {
     path: "modify-heats",
     component: ModifyHeatsModalComponent,
+    canActivate: [AuthGuard],
     data: { animation: "ModifyHeatsPage" },
   },
   {

@@ -40,6 +40,8 @@ describe("RacedayComponent", () => {
       "info",
       "warn",
       "error",
+      ,
+      "log",
     ]);
     mockCdr = jasmine.createSpyObj("ChangeDetectorRef", ["detectChanges"]);
 

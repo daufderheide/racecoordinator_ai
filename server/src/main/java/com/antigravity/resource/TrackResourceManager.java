@@ -113,6 +113,8 @@ public class TrackResourceManager {
   private void broadcastLockState() {
     // Send a message over WebSockets to inform clients about the new state
     // We will implement this in ClientSubscriptionManager.
-    ClientSubscriptionManager.getInstance().broadcastSystemState(currentLock.getState().name());
+    String ownerId = currentLock.getOwnerId() == null ? "" : currentLock.getOwnerId();
+    ClientSubscriptionManager.getInstance()
+        .broadcastSystemState(currentLock.getState().name(), ownerId);
   }
 }

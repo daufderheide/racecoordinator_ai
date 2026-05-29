@@ -49,6 +49,8 @@ describe("ThemeService", () => {
       "warn",
       "error",
       "debug",
+      ,
+      "log",
     ]);
 
     TestBed.configureTestingModule({
@@ -177,6 +179,9 @@ describe("ThemeService", () => {
     const customLoggerSpy = jasmine.createSpyObj("LoggerService", [
       "info",
       "error",
+      ,
+      "debug",
+      "log",
     ]);
 
     spyOn(ThemeService.prototype, "initialize").and.callThrough();

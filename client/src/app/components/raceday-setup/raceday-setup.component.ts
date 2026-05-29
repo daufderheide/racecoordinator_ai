@@ -15,7 +15,9 @@ import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { DataService } from "@app/data.service";
+import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -99,6 +101,10 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   private retryStartTime: number = 0;
   private retryTimeout: any;
 
+  public Role = Role;
+  public directorPassword = "";
+  private hasLoadedSetupComponent = false;
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -110,6 +116,8 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private connectionMonitor: ConnectionMonitorService,
     private logger: LoggerService,
+    public authService: AuthService,
+    private router: Router,
   ) {
     // Initialize quote keys
     for (let i = 1; i <= 29; i++) {
@@ -191,40 +199,91 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
 
-    try {
-      if (
-        await this.fileSystem.hasCustomFiles(
-          "raceday-setup.component.html",
-          "raceday-setup",
-        )
-      ) {
-        // Found in 'raceday-setup/' folder
-        await this.loadCustomComponent("raceday-setup");
-      } else if (
-        await this.fileSystem.hasCustomFiles("raceday-setup.component.html")
-      ) {
-        // Fallback to root custom folder
-        await this.loadCustomComponent();
-      } else {
+    // Wait for role initialization
+    await new Promise<void>((resolve) => {
+      let isDone = false;
+      let sub: Subscription | null = null;
+      sub = this.authService.roleInitialized$.subscribe((init) => {
+        if (init) {
+          isDone = true;
+          resolve();
+          if (sub) {
+            sub.unsubscribe();
+          }
+        }
+      });
+      // In case it resolved synchronously and sub wasn't set yet during callback
+      if (isDone && sub) {
+        sub.unsubscribe();
+      }
+    });
+
+    this.logger.info(
+      "Role initialization complete. Current role: " +
+        this.authService.currentRole,
+    );
+
+    await this.handleRoleTransition(skipIntro);
+  }
+
+  async handleRoleTransition(skipIntro: boolean = false) {
+    const isViewer = this.authService.currentRole === Role.VIEWER;
+
+    if (!isViewer) {
+      if (this.hasLoadedSetupComponent) {
+        return;
+      }
+      this.hasLoadedSetupComponent = true;
+      this.logger.info("User is not a viewer. Loading component...");
+      try {
+        if (
+          await this.fileSystem.hasCustomFiles(
+            "raceday-setup.component.html",
+            "raceday-setup",
+          )
+        ) {
+          // Found in 'raceday-setup/' folder
+          await this.loadCustomComponent("raceday-setup");
+        } else if (
+          await this.fileSystem.hasCustomFiles("raceday-setup.component.html")
+        ) {
+          // Fallback to root custom folder
+          await this.loadCustomComponent();
+        } else {
+          this.loadDefaultComponent();
+        }
+        this.cdr.detectChanges();
+      } catch (e: any) {
+        this.logger.error(
+          "Failed to load custom component, falling back to default",
+          e,
+        );
         this.loadDefaultComponent();
+        this.cdr.detectChanges();
+      } finally {
+        this.isLoading = false;
+      }
+
+      if (!skipIntro) {
+        // Smooth transition
+        this.showSplash = false;
+        this.stopQuoteRotation();
+        this.cdr.detectChanges();
+      }
+    } else {
+      // Viewer logic
+      this.isLoading = false;
+      if (skipIntro) {
+        this.showSplash = true; // Always show splash for viewer
       }
       this.cdr.detectChanges();
-    } catch (e: any) {
-      this.logger.error(
-        "Failed to load custom component, falling back to default",
-        e,
-      );
-      this.loadDefaultComponent();
-      this.cdr.detectChanges();
-    } finally {
-      this.isLoading = false;
-    }
 
-    if (!skipIntro) {
-      // Smooth transition
-      this.showSplash = false;
-      this.stopQuoteRotation();
-      this.cdr.detectChanges();
+      // Subscribe to system state to know when race starts
+      this.dataService.getSystemState().subscribe((state) => {
+        if (state && state.resourceLockState === "RACE_RUNNING") {
+          this.router.navigate(["/raceday"]);
+        }
+      });
     }
   }
 
@@ -392,17 +451,39 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     settings.serverPort = this.tempServerPort;
     this.settingsService.saveSettings(settings);
     this.dataService.setServerAddress(this.tempServerIp, this.tempServerPort);
+
+    const passwordToTry = this.directorPassword;
+    this.directorPassword = "";
+
     this.showServerConfig = false;
 
     // Reset connection verification to force a new check with new address
     this.connectionVerified = false;
-    // We update the service monitor to check immediately?
-    // The service continues polling, but let's manual check.
     this.connectionMonitor.checkConnection().subscribe();
 
     // UI wait
     this.connectionMonitor.waitForConnection().then(() => {
       this.connectionVerified = true;
+      if (
+        passwordToTry &&
+        this.authService.currentRole !== Role.ADMIN &&
+        this.authService.currentRole !== Role.DIRECTOR
+      ) {
+        this.authService.loginAsDirector(passwordToTry).subscribe((success) => {
+          if (!success) {
+            this.error = "Failed to authenticate as Director";
+            setTimeout(() => {
+              this.error = null;
+            }, 5000);
+          } else {
+            this.authService.fetchRoleFromServer().subscribe(() => {
+              this.handleRoleTransition(false);
+            });
+          }
+        });
+      } else {
+        this.handleRoleTransition(false);
+      }
     });
   }
 

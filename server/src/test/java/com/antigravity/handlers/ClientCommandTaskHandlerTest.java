@@ -410,7 +410,8 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   public void testDeleteSavedRace_RouteRegistered() {
-    verify(app).delete(eq("/api/saved-races/{filename}"), any());
+    verify(app)
+        .delete(eq("/api/saved-races/{filename}"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
   }
 
   @Test

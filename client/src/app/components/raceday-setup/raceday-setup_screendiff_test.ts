@@ -30,6 +30,8 @@ test.describe("Splash Screen Visuals", () => {
           RDS_SERVER_CONFIG_TITLE: "SERVER CONFIGURATION",
           RDS_LABEL_IP: "IP ADDRESS:",
           RDS_LABEL_PORT: "PORT:",
+          RDS_LABEL_PASSWORD: "DIRECTOR PASSWORD:",
+          RDS_PASSWORD_DISABLED_ALREADY_AUTH: "Already authenticated",
           RDS_BTN_SAVE_RETRY: "SAVE & RETRY",
           RDS_BTN_CANCEL: "CANCEL",
           RDS_QUOTE_1: "MOCK STABLE QUOTE FOR TESTING",

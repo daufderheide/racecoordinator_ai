@@ -13,6 +13,7 @@ import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
+import { AuthService } from "@app/services/auth.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -42,6 +43,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(LoggerService) logger: LoggerService,
     @Inject(ActivatedRoute) route: ActivatedRoute,
     @Inject(PrintService) printService: PrintService,
+    @Inject(AuthService) authService: AuthService,
   ) {
     super(
       el,
@@ -57,6 +59,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       logger,
       route,
       printService,
+      authService,
     );
   }
 }

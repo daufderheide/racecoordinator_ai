@@ -40,6 +40,9 @@ describe("AppComponent", () => {
       "connectToInterfaceDataSocket",
       "disconnectFromInterfaceDataSocket",
       "getHeats",
+      "getSystemState",
+      "getServerLogLevel",
+      "setServerLogLevel",
     ]);
     mockDataService.getThemes.and.returnValue(of([]));
     mockDataService.getServerVersion.and.returnValue(of("TEST-SERVER-VERSION"));
@@ -50,6 +53,9 @@ describe("AppComponent", () => {
     mockDataService.connectToInterfaceDataSocket.and.stub();
     mockDataService.disconnectFromInterfaceDataSocket.and.stub();
     mockDataService.getHeats.and.returnValue(new Subject().asObservable());
+    mockDataService.getSystemState.and.returnValue(of(null));
+    mockDataService.getServerLogLevel.and.returnValue(of("INFO"));
+    mockDataService.setServerLogLevel.and.returnValue(of({}));
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
       "initTracking",

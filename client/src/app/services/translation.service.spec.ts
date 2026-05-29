@@ -25,6 +25,8 @@ describe("TranslationService", () => {
       "warn",
       "error",
       "debug",
+      ,
+      "log",
     ]);
 
     TestBed.configureTestingModule({

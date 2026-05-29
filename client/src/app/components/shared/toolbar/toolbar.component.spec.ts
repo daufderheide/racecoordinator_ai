@@ -13,6 +13,7 @@ import { AcknowledgementModalComponent } from "@app/components/shared/acknowledg
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import { HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -35,6 +36,7 @@ describe("ToolbarComponent", () => {
   let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
   let helpServiceSpy: jasmine.SpyObj<HelpService>;
   let settingsServiceSpy: jasmine.SpyObj<SettingsService>;
+  let mockAuthService: any;
   let mockActivatedRoute: any;
   let queryParamsSubject: BehaviorSubject<any>;
 
@@ -64,6 +66,11 @@ describe("ToolbarComponent", () => {
     ]);
     settingsServiceSpy.getSettings.and.returnValue(createTestSettings());
 
+    mockAuthService = {
+      currentRole: 1, // Role.VIEWER
+      currentRole$: of(1),
+    };
+
     queryParamsSubject = new BehaviorSubject({});
     mockActivatedRoute = {
       queryParams: queryParamsSubject.asObservable(),
@@ -82,6 +89,7 @@ describe("ToolbarComponent", () => {
         { provide: HelpService, useValue: helpServiceSpy },
         { provide: SettingsService, useValue: settingsServiceSpy },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: AuthService, useValue: mockAuthService },
       ],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
     }).compileComponents();
@@ -330,6 +338,32 @@ describe("ToolbarComponent", () => {
         fixture.nativeElement.querySelector("#lane-check-btn");
       expect(laneCheckBtn).toBeTruthy();
       expect(laneCheckBtn.classList.contains("unequal")).toBeFalse();
+    });
+  });
+
+  describe("Authority Indicators", () => {
+    it("should return the correct icon for each role", () => {
+      const Role = component.Role;
+      mockAuthService.currentRole = Role.ADMIN;
+      expect(component.authorityIcon).toBe("admin_panel_settings");
+
+      mockAuthService.currentRole = Role.DIRECTOR;
+      expect(component.authorityIcon).toBe("supervised_user_circle");
+
+      mockAuthService.currentRole = Role.VIEWER;
+      expect(component.authorityIcon).toBe("visibility");
+    });
+
+    it("should return the correct tooltip for each role", () => {
+      const Role = component.Role;
+      mockAuthService.currentRole = Role.ADMIN;
+      expect(component.authorityTooltip).toBe("ROLE_ADMIN");
+
+      mockAuthService.currentRole = Role.DIRECTOR;
+      expect(component.authorityTooltip).toBe("ROLE_DIRECTOR");
+
+      mockAuthService.currentRole = Role.VIEWER;
+      expect(component.authorityTooltip).toBe("ROLE_VIEWER");
     });
   });
 });

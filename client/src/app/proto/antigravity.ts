@@ -196,3 +196,4 @@ export import ModifyHeatsRequest = _proto_com.antigravity.ModifyHeatsRequest;
 export import ModifyHeatsResponse = _proto_com.antigravity.ModifyHeatsResponse;
 export import RegenerateHeatsRequest = _proto_com.antigravity.RegenerateHeatsRequest;
 export import RegenerateHeatsResponse = _proto_com.antigravity.RegenerateHeatsResponse;
+export import SystemState = _proto_com.antigravity.SystemState;

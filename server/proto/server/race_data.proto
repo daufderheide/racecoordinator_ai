@@ -13,6 +13,7 @@ import "server/car_data.proto";
 import "server/segment.proto";
 import "server/record_data.proto";
 import "server/heat.proto";
+import "server/system_state.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -30,4 +31,5 @@ message RaceData {
   optional RaceFlag flag = 10;
   RecordData record_data = 11;
   Heat heat = 12;
+  SystemState system_state = 13;
 }

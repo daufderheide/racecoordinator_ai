@@ -72,6 +72,15 @@ export class TestSetupHelper {
       });
     });
 
+    // Mock Auth Role API to ensure UI tests run as DIRECTOR
+    await page.route("**/api/auth/role", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ role: "DIRECTOR" }),
+      });
+    });
+
     // Mock Client Version Override
     await page.addInitScript(() => {
       (window as any).CLIENT_VERSION_OVERRIDE = "TEST-CLIENT-VERSION";

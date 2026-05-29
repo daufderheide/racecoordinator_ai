@@ -67,6 +67,7 @@ import {
   SkipHeatResponse,
   StartRaceRequest,
   StartRaceResponse,
+  SystemState,
   UpdateInterfaceConfigRequest,
   UpdateInterfaceConfigResponse,
   UploadAssetRequest,
@@ -1095,6 +1096,7 @@ export class DataService {
   private flagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.UNKNOWN_FLAG);
   private recordDataSubject = new ReplaySubject<IRecordData>(1);
   private heatSubject = new Subject<IHeat>();
+  private systemStateSubject = new BehaviorSubject<SystemState | null>(null);
   private socketConnectedSubject = new BehaviorSubject<boolean>(false);
   public socketConnected$ = this.socketConnectedSubject.asObservable();
 
@@ -1213,6 +1215,9 @@ export class DataService {
           if (raceData.heat) {
             this.logger.debug("WS: Received Heat", raceData.heat);
             this.heatSubject.next(raceData.heat);
+          }
+          if (raceData.systemState) {
+            this.systemStateSubject.next(raceData.systemState as SystemState);
           }
         } catch (e) {
           this.logger.error("Error parsing race data message", e);
@@ -1359,6 +1364,10 @@ export class DataService {
 
   public getHeats(): Observable<IHeat> {
     return this.heatSubject.asObservable();
+  }
+
+  public getSystemState(): Observable<SystemState | null> {
+    return this.systemStateSubject.asObservable();
   }
 
   public changeActualDriver(

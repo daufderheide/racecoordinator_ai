@@ -147,6 +147,8 @@ describe("DefaultRacedayComponent", () => {
       "info",
       "warn",
       "error",
+      ,
+      "log",
     ]);
 
     mockAudioInstance.play.calls.reset();

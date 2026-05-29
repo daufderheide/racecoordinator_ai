@@ -6,7 +6,7 @@ import {
   CdkDragHandle,
   CdkDropList,
 } from "@angular/cdk/drag-drop";
-import { DecimalPipe } from "@angular/common";
+import { AsyncPipe, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -18,6 +18,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable, Subject, Subscription } from "rxjs";
+import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DriverConverter } from "@app/converters/driver.converter";
@@ -35,6 +36,7 @@ import {
 } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { Role } from "@app/models/role";
 import { ColumnVisibility, Settings } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
@@ -42,6 +44,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
@@ -72,6 +75,8 @@ import { AnchorPoint } from "./column_definition";
     CdkDragHandle,
     DecimalPipe,
     TranslatePipe,
+    LoginDialogComponent,
+    AsyncPipe,
   ],
 })
 export class DefaultRacedayComponent
@@ -358,6 +363,9 @@ export class DefaultRacedayComponent
   ackModalMessage = "";
   ackModalButtonText = "ACK_MODAL_BTN_OK";
 
+  public Role = Role;
+  showLoginModal = false;
+
   constructor(
     private el: ElementRef,
     private translationService: TranslationService,
@@ -372,6 +380,7 @@ export class DefaultRacedayComponent
     private logger: LoggerService,
     private route: ActivatedRoute,
     private printService: PrintService,
+    public authService: AuthService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -1390,6 +1399,17 @@ export class DefaultRacedayComponent
 
     this.isMenuOpen = false;
     this.logger.debug("Menu Action Selected:", action);
+
+    if (action === "LOGIN") {
+      this.showLoginModal = true;
+      return;
+    }
+
+    if (action === "LOGOUT") {
+      this.authService.logout();
+      return;
+    }
+
     if (action === "START_RESUME") {
       this.dataService.startRace().subscribe(
         (success) => {

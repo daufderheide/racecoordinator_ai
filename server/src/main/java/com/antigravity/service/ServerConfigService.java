@@ -124,6 +124,6 @@ public class ServerConfigService {
     public double restartTime = 5.0;
     public double startDelay = 0.0;
     public double restartDelay = 0.0;
-    public String directorPassword;
+    public String directorPassword = "RC AI Director";
   }
 }

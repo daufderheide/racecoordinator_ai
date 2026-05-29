@@ -171,6 +171,25 @@
             >
               {{ "RD_MENU_MODIFY" | translate }}
             </div>
+            @if ((authService.currentRole$ | async) === Role.VIEWER) {
+              <div class="menu-separator"></div>
+              <div class="menu-item" (click)="onMenuSelect('LOGIN')">
+                {{ "RD_MENU_LOGIN" | translate }}
+              </div>
+            } @else if ((authService.currentRole$ | async) === Role.ADMIN) {
+              <div class="menu-separator"></div>
+              <div
+                class="menu-item disabled"
+                [title]="'RD_MENU_LOGIN_DISABLED_ADMIN' | translate"
+              >
+                {{ "RD_MENU_LOGIN" | translate }}
+              </div>
+            } @else {
+              <div class="menu-separator"></div>
+              <div class="menu-item" (click)="onMenuSelect('LOGOUT')">
+                {{ "RD_MENU_LOGOUT" | translate }}
+              </div>
+            }
           </div>
         }
       </div>
@@ -605,3 +624,6 @@
     }
   </div>
 </div>
+
+<app-login-dialog [visible]="showLoginModal" (close)="showLoginModal = false">
+</app-login-dialog>
