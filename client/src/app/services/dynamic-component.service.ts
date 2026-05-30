@@ -46,10 +46,15 @@ export class DynamicComponentService {
     // Create a named class to help with debugging
     const DynamicComponent = class extends baseClass {};
 
+    // Ensure custom dynamic components always act as a block-level full-height container
+    // to match route transition constraints and prevent visual "popping"
+    const hostCss = `:host { display: block; width: 100%; height: 100%; }`;
+    const finalCss = css ? `${hostCss}\n${css}` : hostCss;
+
     return Component({
       selector: selector,
       template: html,
-      styles: [css],
+      styles: [finalCss],
       standalone: true,
       imports: [
         CommonModule,

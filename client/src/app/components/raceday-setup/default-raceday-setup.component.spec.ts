@@ -907,4 +907,23 @@ describe("DefaultRacedaySetupComponent", () => {
       ]);
     });
   });
+
+  describe("Layout Structure", () => {
+    it("should have a rigid-spacer to prevent margin collapse during transitions", () => {
+      const rigidSpacer = fixture.nativeElement.querySelector(".rigid-spacer");
+      expect(rigidSpacer).toBeTruthy();
+    });
+
+    it("should wrap the race selection title and dropdown in a bottom-section container", () => {
+      const bottomSection =
+        fixture.nativeElement.querySelector(".bottom-section");
+      expect(bottomSection).toBeTruthy();
+
+      const title = bottomSection.querySelector(".race-selection-title");
+      const selector = bottomSection.querySelector(".all-races-selector");
+
+      expect(title).toBeTruthy();
+      expect(selector).toBeTruthy();
+    });
+  });
 });

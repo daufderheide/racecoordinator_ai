@@ -1049,6 +1049,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   configureCustomUI() {
+    this.closeDropdown();
     this.closeOptionsDropdown();
     this.router.navigate(["/ui-editor"]);
   }

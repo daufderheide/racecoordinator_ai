@@ -340,30 +340,4 @@ describe("ToolbarComponent", () => {
       expect(laneCheckBtn.classList.contains("unequal")).toBeFalse();
     });
   });
-
-  describe("Authority Indicators", () => {
-    it("should return the correct icon for each role", () => {
-      const Role = component.Role;
-      mockAuthService.currentRole = Role.ADMIN;
-      expect(component.authorityIcon).toBe("admin_panel_settings");
-
-      mockAuthService.currentRole = Role.DIRECTOR;
-      expect(component.authorityIcon).toBe("supervised_user_circle");
-
-      mockAuthService.currentRole = Role.VIEWER;
-      expect(component.authorityIcon).toBe("visibility");
-    });
-
-    it("should return the correct tooltip for each role", () => {
-      const Role = component.Role;
-      mockAuthService.currentRole = Role.ADMIN;
-      expect(component.authorityTooltip).toBe("ROLE_ADMIN");
-
-      mockAuthService.currentRole = Role.DIRECTOR;
-      expect(component.authorityTooltip).toBe("ROLE_DIRECTOR");
-
-      mockAuthService.currentRole = Role.VIEWER;
-      expect(component.authorityTooltip).toBe("ROLE_VIEWER");
-    });
-  });
 });

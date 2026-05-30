@@ -34,6 +34,7 @@ import { ThemeService } from "./services/theme.service";
   styles: [
     `
       .app-route-container {
+        position: relative;
         width: 100%;
         height: 100%;
         overflow: hidden;

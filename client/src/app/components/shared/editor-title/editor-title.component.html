@@ -1,13 +1,19 @@
-<div class="header">
+<div
+  class="header"
+  [style.margin-top.px]="marginTop()"
+  [style.margin-bottom.px]="marginBottom()"
+>
   <div class="header-left">
-    <app-back-button
-      [route]="backRoute()"
-      [confirm]="backConfirm()"
-      [queryParams]="backQueryParams()"
-      [confirmTitle]="backConfirmTitle()"
-      [confirmMessage]="backConfirmMessage()"
-      (back)="onBack()"
-    ></app-back-button>
+    @if (showBack()) {
+      <app-back-button
+        [route]="backRoute()"
+        [confirm]="backConfirm()"
+        [queryParams]="backQueryParams()"
+        [confirmTitle]="backConfirmTitle()"
+        [confirmMessage]="backConfirmMessage()"
+        (back)="onBack()"
+      ></app-back-button>
+    }
     <h1 class="page-title">{{ titleKey() | translate }}</h1>
   </div>
   <div class="header-right">

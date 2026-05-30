@@ -174,18 +174,6 @@
   <div class="spacer"></div>
 
   <div class="toolbar-utility-group">
-    <!-- Authority Role Icon -->
-    @if (showAuthority()) {
-      <div
-        class="toolbar-btn authority-indicator"
-        [title]="authorityTooltip | translate"
-      >
-        <span class="material-icons" style="cursor: default">{{
-          authorityIcon
-        }}</span>
-      </div>
-    }
-
     <!-- Password Change Icon (if Admin) -->
     @if (authService.currentRole === Role.ADMIN && showPasswordChange()) {
       <button

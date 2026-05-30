@@ -32,6 +32,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   undoManager = input<UndoManager<any>>();
   showUndo = input(true);
   showRedo = input(true);
+  showBack = input(true);
   showHelp = input(true);
   showCopy = input(false);
   showAdd = input(false);
@@ -51,6 +52,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledImport = input(false);
   disabledImportRc1 = input(false);
   disabledExport = input(false);
+  marginTop = input<number>(60);
+  marginBottom = input<number>(40);
   isSaving = input(false);
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");

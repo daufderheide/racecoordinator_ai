@@ -67,7 +67,6 @@ export class ToolbarComponent implements OnInit {
   showLaneCheck = input(false);
   disabledLaneCheck = input(false);
   isHeatsEqual = input<boolean | undefined>(undefined);
-  showAuthority = input(true);
   showPasswordChange = input(true);
 
   showAnalyticsModal = false;
@@ -77,32 +76,6 @@ export class ToolbarComponent implements OnInit {
 
   public authService = inject(AuthService);
   public Role = Role;
-
-  get authorityIcon(): string {
-    switch (this.authService.currentRole) {
-      case Role.ADMIN:
-        return "admin_panel_settings";
-      case Role.DIRECTOR:
-        return "supervised_user_circle";
-      case Role.VIEWER:
-        return "visibility";
-      default:
-        return "visibility";
-    }
-  }
-
-  get authorityTooltip(): string {
-    switch (this.authService.currentRole) {
-      case Role.ADMIN:
-        return "ROLE_ADMIN";
-      case Role.DIRECTOR:
-        return "ROLE_DIRECTOR";
-      case Role.VIEWER:
-        return "ROLE_VIEWER";
-      default:
-        return "ROLE_VIEWER";
-    }
-  }
 
   constructor(
     private analyticsService: AnalyticsService,
