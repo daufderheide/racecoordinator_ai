@@ -1,10 +1,11 @@
 $ErrorActionPreference = "Stop"
 
 # Setup Java Environment
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
+. "$PSScriptRoot\setup_java_env.ps1"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
-$SERVER_DIR = "$PSScriptRoot\server"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$SERVER_DIR = "$RepoRoot\server"
 
 # Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
 # Use --server-only to avoid regenerating client protobuf files which can cause compatibility issues
@@ -34,6 +35,6 @@ if ($null -eq $MvnCmd) {
     $MvnExecutable = "mvn.cmd"
 }
 
-$DATA_DIR = Join-Path $PSScriptRoot "data"
+$DATA_DIR = Join-Path $RepoRoot "data"
 $MvnArgs = @("clean", "compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=false")
 & $MvnExecutable @MvnArgs

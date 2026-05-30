@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-# Configuration
-$ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
+# This script lives in scripts/, so the repo root is one level up.
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ServerDir = Join-Path $ProjectRoot "server"
 $ServerTmp = Join-Path $ServerDir "target_tmp"
 $ServerBuildDir = Join-Path $ServerTmp "target_test"

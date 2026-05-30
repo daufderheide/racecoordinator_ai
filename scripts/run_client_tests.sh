@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # Source environment
-source "$(dirname "$0")/scripts/test_env.sh"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/test_env.sh"
 
 # Run Unit Tests
-./run_client_unit_tests.sh
+"$SCRIPT_DIR/run_client_unit_tests.sh"
 UNIT_EXIT_CODE=$?
 
 # Run Visual Tests
-./run_client_screendiff_tests.sh
+"$SCRIPT_DIR/run_client_screendiff_tests.sh"
 VISUAL_EXIT_CODE=$?
 
 # Summary

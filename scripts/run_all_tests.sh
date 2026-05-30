@@ -1,17 +1,20 @@
 #!/bin/bash
-set -e
+# No `set -e` here on purpose — the orchestrator captures each suite's exit
+# code via `$?` and prints a summary; aborting on first failure would skip
+# both the second suite and the summary block below.
 
 # Source environment
-source "$(dirname "$0")/scripts/test_env.sh"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/test_env.sh"
 
 echo "🚀 Starting all tests..."
 
 # 1. Server Tests
-./run_server_tests.sh
+"$SCRIPT_DIR/run_server_tests.sh"
 SERVER_EXIT_CODE=$?
 
 # 2. Client Tests (combined unit and visual)
-./run_client_tests.sh
+"$SCRIPT_DIR/run_client_tests.sh"
 CLIENT_EXIT_CODE=$?
 
 # Summary

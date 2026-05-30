@@ -1,10 +1,11 @@
 $ErrorActionPreference = "Stop"
 
 # Setup Java Environment
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
+. "$PSScriptRoot\setup_java_env.ps1"
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 
-$SERVER_DIR = "$PSScriptRoot\server"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$SERVER_DIR = "$RepoRoot\server"
 $BUILD_DIR = "target_generated"
 
 # Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
@@ -35,7 +36,7 @@ if ($null -eq $MvnCmd) {
     $MvnExecutable = "mvn.cmd"
 }
 
-$DATA_DIR = Join-Path $PSScriptRoot "data"
+$DATA_DIR = Join-Path $RepoRoot "data"
 # Use BUILD_DIR for both proto generation and maven build to avoid conflicts
 $MvnArgs = @("compile", "exec:java", "-Dbuild.dist.dir=$BUILD_DIR", "-Dexec.mainClass=com.antigravity.App", "-Dexec.args=--headless", "-Dapp.data.dir=$DATA_DIR")
 & $MvnExecutable @MvnArgs

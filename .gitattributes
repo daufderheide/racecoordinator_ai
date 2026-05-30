@@ -1,0 +1,12 @@
+# Shell scripts must keep LF line endings so bash on Linux/Mac/WSL can run
+# them without "bad interpreter: /bin/bash^M" errors. Without this rule a
+# Windows checkout with core.autocrlf=true silently rewrites .sh to CRLF.
+*.sh           text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.ps1          text eol=crlf
+*.bat          text eol=crlf
+*.cmd          text eol=crlf
+
+# Inno Setup scripts are compiled on Windows.
+*.iss          text eol=crlf

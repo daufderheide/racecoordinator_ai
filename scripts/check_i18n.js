@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const i18nDir = path.join(__dirname, 'client/src/assets/i18n');
+const i18nDir = path.join(__dirname, '..', 'client/src/assets/i18n');
 
 const args = process.argv.slice(2);
 const fix = args.includes('--fix');
@@ -79,7 +79,7 @@ function check() {
   }
 
   if (hasSortError && !fix) {
-    console.error('\nI18n alphabetization failed! Run "node check_i18n.js --fix" to sort them automatically.');
+    console.error('\nI18n alphabetization failed! Run "node scripts/check_i18n.js --fix" from the repo root to sort them automatically.');
     process.exit(1);
   }
 

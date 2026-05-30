@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Continue"
 
-$PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+# $PSScriptRoot is set automatically by PowerShell to the script's directory.
 
 Write-Host "🚀 Starting all client tests..." -ForegroundColor Green
 

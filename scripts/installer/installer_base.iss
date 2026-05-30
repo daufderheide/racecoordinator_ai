@@ -1,5 +1,5 @@
 ; Race Coordinator AI Common Installer Definitions
-; This file is included by installer_offline.iss and installer_online.iss
+; Included by installer_online.iss and installer_offline_legacy.iss
 
 #define MyAppName "Race Coordinator AI"
 #define MyAppVersion "0.0.0.21"
@@ -8,6 +8,11 @@
 #define MyAppExeName "RaceCoordinator.jar"
 
 [Setup]
+; This .iss lives in scripts\installer\; SourceDir rebases relative [Files]
+; Source paths back to the repo root, and OutputDir keeps the built .exe at
+; <repo>\Output\ instead of scripts\installer\Output\.
+SourceDir=..\..
+OutputDir=Output
 AppId={{C6F6F6F6-E6E6-4E4E-A7A7-9D9D9D9D9D9D}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}

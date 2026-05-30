@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Source environment
-source "$(dirname "$0")/scripts/test_env.sh"
+source "$(dirname "$0")/test_env.sh"
 
 # If sync-only, run Node.js script to promote actual images to expected and exit
 if [[ "$*" == *"--sync-only"* ]]; then
     echo "Syncing snapshots from last run's actual results..."
-    PW_REPORT_PATH="$CLIENT_DIR/.isolated-test/playwright-report/pw-result.json" CLIENT_DIR="$CLIENT_DIR" node "$(dirname "$0")/scripts/sync_snapshots.js"
+    PW_REPORT_PATH="$CLIENT_DIR/.isolated-test/playwright-report/pw-result.json" CLIENT_DIR="$CLIENT_DIR" node "$(dirname "$0")/sync_snapshots.js"
     exit 0
 fi
 

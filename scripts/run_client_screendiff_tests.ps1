@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Continue"
 
-# Resolve project root even when invoked via Start-Process
-$ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
+# This script lives in scripts/, so the repo root is one level up.
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ClientDir = Join-Path $ProjectRoot "client"
 $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-visual"
 
@@ -15,7 +15,7 @@ $env:PW_REPORT_PATH = Join-Path $IsolatedDir "pw-result.json"
 if ($args -contains "--sync-only") {
     Write-Host "Syncing snapshots from last run's actual results..." -ForegroundColor Cyan
     $env:CLIENT_DIR = $ClientDir
-    node (Join-Path $ProjectRoot "scripts" "sync_snapshots.js")
+    node (Join-Path $PSScriptRoot "sync_snapshots.js")
     exit 0
 }
 

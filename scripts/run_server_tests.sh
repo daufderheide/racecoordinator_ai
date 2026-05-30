@@ -2,7 +2,7 @@
 set -e
 
 # Source environment
-source "$(dirname "$0")/scripts/test_env.sh"
+source "$(dirname "$0")/test_env.sh"
 
 echo ""
 echo "--- 🔹 Running Server Tests 🔹 ---"

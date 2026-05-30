@@ -1,5 +1,5 @@
 #!/bin/bash
-cd "$(dirname "$0")/server"
+cd "$(dirname "$0")/../server" || exit 1
 # Run mvn clean first to ensure a fresh build, but this removes protoc executable if we are not careful.
 # Actually, mvn clean removes target/. 
 # So generated_protos.sh needs to handle missing protoc.
@@ -13,11 +13,6 @@ cd "$(dirname "$0")/server"
 
 
 chmod +x generate_protos.sh
-
-# Use target_generated to avoid conflicts with locked target_dev
-export PROTO_DEST_DIR="$(pwd)/target_generated_3"
-mkdir -p "$PROTO_DEST_DIR"
-
-mvn clean -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dmaven.repo.local="$(pwd)/.m2/repository" || true
+mvn clean -Dmaven.repo.local="$(pwd)/.m2/repository" || true
 ./generate_protos.sh
-mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -DLOG_DIR="$(pwd)/../data_v3" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" -Dmaven.repo.local="$(pwd)/.m2/repository"
+mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dapp.data.dir="$(pwd)/../data" -Dmaven.repo.local="$(pwd)/.m2/repository"

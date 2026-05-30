@@ -11,37 +11,41 @@ function Exec {
 # 0. Setup Environment
 Write-Host "Setting up environment..." -ForegroundColor Cyan
 
+# This script lives at scripts\installer\. The repo root is two levels up.
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+Set-Location $RepoRoot
+
 # Check for Analytics Credentials
-$AnalyticsFile = "$PSScriptRoot\server\src\main\resources\analytics.properties"
+$AnalyticsFile = "$RepoRoot\server\src\main\resources\analytics.properties"
 if (-not (Test-Path $AnalyticsFile)) {
     Write-Error "ERROR: $AnalyticsFile is missing!"
     Write-Host "This file is required for analytics to work in the production build." -ForegroundColor Red
     Write-Host "Please create it using the keys from the secure vault before publishing a release." -ForegroundColor Red
     exit 1
 }
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
+. "$PSScriptRoot\..\setup_java_env.ps1"
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") + ";$env:JAVA_HOME\bin"
 
 Write-Host "Building Race Coordinator Release..." -ForegroundColor Cyan
 
 # 1. Clean and Build Client
 Write-Host "Building Client..." -ForegroundColor Yellow
-Set-Location "$PSScriptRoot\client"
+Set-Location "$RepoRoot\client"
 $env:NPM_CONFIG_CACHE = "$(pwd)\.npm_cache"
 Exec { npm install }
 Exec { npm run build }
-Set-Location "$PSScriptRoot"
+Set-Location $RepoRoot
 
 # 2. Clean and Build Server (Fat Jar)
 Write-Host "Building Server..." -ForegroundColor Yellow
-Set-Location "$PSScriptRoot\server"
+Set-Location "$RepoRoot\server"
 Exec { mvn clean "-Dbuild.dist.dir=target_dist" }
 if (Get-Command chmod -ErrorAction SilentlyContinue) {
     Exec { chmod +x generate_protos.sh }
 }
 Exec { ./generate_protos.sh }
 Exec { mvn package "-Dmaven.test.skip=true" "-Dbuild.dist.dir=target_dist" }
-Set-Location "$PSScriptRoot"
+Set-Location $RepoRoot
 
 # 3. Download Dependencies for Offline Installer
 Write-Host "Downloading Dependencies for Offline Installer..." -ForegroundColor Yellow
@@ -150,7 +154,7 @@ Extract-To-Release "mongodb60.zip" "mongodb60" $null
 # 5. Create Launch Scripts
 function Create-Scripts {
     param($TargetDir)
-    $Dest = Join-Path $PSScriptRoot $TargetDir
+    $Dest = Join-Path $RepoRoot $TargetDir
     
     # Mac Launch Script (Comprehensive)
     $MacScript = @'
@@ -404,15 +408,15 @@ Compress-Archive -Path "release\RaceCoordinator_Offline\*" -DestinationPath "rel
 $ISCC = "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
 if (Get-Command iscc -ErrorAction SilentlyContinue) {
     Write-Host "Creating Windows Installer (.exe) using Inno Setup..." -ForegroundColor Cyan
-    Exec { iscc installer_online.iss }
-    Exec { iscc installer_offline_legacy.iss }
+    Exec { iscc "$PSScriptRoot\installer_online.iss" }
+    Exec { iscc "$PSScriptRoot\installer_offline_legacy.iss" }
 } elseif (Test-Path $ISCC) {
     Write-Host "Creating Windows Installer (.exe) using Inno Setup (found in default path)..." -ForegroundColor Cyan
-    Exec { & $ISCC installer_online.iss }
-    Exec { & $ISCC installer_offline_legacy.iss }
+    Exec { & $ISCC "$PSScriptRoot\installer_online.iss" }
+    Exec { & $ISCC "$PSScriptRoot\installer_offline_legacy.iss" }
 } else {
     Write-Warning "Inno Setup (iscc) not found. Skipping .exe installer creation."
-    Write-Host "To build the .exe installer, install Inno Setup and run: iscc installer_online.iss, etc."
+    Write-Host "To build the .exe installer, install Inno Setup and run: iscc scripts\installer\installer_online.iss, etc."
 }
 
 Write-Host "Build Complete!" -ForegroundColor Green

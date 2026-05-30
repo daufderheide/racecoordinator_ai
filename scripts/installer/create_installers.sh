@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# This script lives at scripts/installer/. cd to the repo root so all relative
+# paths below (client/, server/, release/, build_cache/, scripts/...) resolve
+# the same way they did when the script lived at the top level.
+cd "$(dirname "$0")/../.."
+
 # Ensure PROTO_DEST_DIR is unset so protobuf files compile into target_dist correctly
 unset PROTO_DEST_DIR
 
@@ -379,7 +384,7 @@ EOF
     rm -rf release/dmg_content
 fi
 
-echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline_legacy.iss)"
+echo "Manual Step for Windows: Build installers using Inno Setup (scripts/installer/installer_online.iss, scripts/installer/installer_offline_legacy.iss)"
 
 echo "Build Complete!"
 echo "Artifacts in 'release/' directory."

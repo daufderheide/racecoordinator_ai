@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-Set-Location "$PSScriptRoot\client"
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+Set-Location "$RepoRoot\client"
 
 # Setup Node Environment
 $NodePath = "C:\Program Files\nodejs"
