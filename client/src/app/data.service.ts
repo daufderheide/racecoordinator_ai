@@ -1488,4 +1488,28 @@ export class DataService {
     }
     return this.http.get<any>(url);
   }
+
+  getRaceHistory(isDemo: boolean = false): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.baseUrl}/api/history/races?demo=${isDemo}`,
+    );
+  }
+
+  getRaceHistoryById(id: string, isDemo: boolean = false): Observable<any> {
+    return this.http.get<any>(
+      `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`,
+    );
+  }
+
+  deleteRaceHistory(
+    id: string,
+    isDemo: boolean = false,
+    database?: string,
+  ): Observable<any> {
+    let url = `${this.baseUrl}/api/history/races/${id}?demo=${isDemo}`;
+    if (database) {
+      url += `&database=${encodeURIComponent(database)}`;
+    }
+    return this.http.delete<any>(url);
+  }
 }

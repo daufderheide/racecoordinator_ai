@@ -18,6 +18,7 @@ export class Track implements Model {
   readonly lanes: Lane[];
   readonly has_digital_fuel: boolean;
   readonly arduino_configs: ArduinoConfig[];
+  readonly geolocation?: string;
 
   constructor(
     entity_id: string,
@@ -26,6 +27,7 @@ export class Track implements Model {
     lanes: Lane[],
     has_digital_fuel: boolean = false,
     arduino_configs?: ArduinoConfig[],
+    geolocation?: string,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -33,6 +35,7 @@ export class Track implements Model {
     this.lanes = lanes;
     this.has_digital_fuel = has_digital_fuel;
     this.arduino_configs = arduino_configs || [];
+    this.geolocation = geolocation;
   }
 
   get objectId(): string {

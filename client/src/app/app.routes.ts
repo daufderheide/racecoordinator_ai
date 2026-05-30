@@ -1,6 +1,9 @@
 import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
+import { AnalyticsMaintenanceComponent } from "@app/components/cumulative-results/analytics-maintenance.component";
+import { CumulativeResultsComponent } from "@app/components/cumulative-results/cumulative-results.component";
+import { RaceDetailComponent } from "@app/components/cumulative-results/race-detail.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
@@ -141,5 +144,24 @@ export const routes: Routes = [
     component: DriverResultsComponent,
     data: { animation: "DriverResultsPage" },
   },
+  {
+    path: "history",
+    component: CumulativeResultsComponent,
+    data: { animation: "AnalyticsPage" },
+  },
+  {
+    path: "history/race/:id",
+    component: RaceDetailComponent,
+    data: { animation: "RaceDetailPage" },
+  },
+  {
+    path: "history/maintenance",
+    component: AnalyticsMaintenanceComponent,
+    canActivate: [AuthGuard],
+    data: { animation: "AnalyticsMaintenancePage" },
+  },
+  { path: "analytics", redirectTo: "history" },
+  { path: "analytics/race/:id", redirectTo: "history/race/:id" },
+  { path: "analytics/maintenance", redirectTo: "history/maintenance" },
   { path: "**", redirectTo: "" },
 ];

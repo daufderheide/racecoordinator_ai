@@ -59,42 +59,16 @@ jobs:
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
 
-  test-visual:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
-      - name: Install dependencies
-        run: cd client && npm install --legacy-peer-deps
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('client/package-lock.json') }}
-      - name: Install Playwright Browsers
-        run: cd client && npx playwright install --with-deps
-      - name: Use JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Install Protoc
-        run: brew install protobuf
-      - name: Generate Protobufs
-        run: cd server && chmod +x generate_protos.sh && ./generate_protos.sh
-      - name: Run visual tests
-        run: cd client && npx playwright test
-      - name: Upload Playwright test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-test-results
-          path: client/test-results/
+  # The visual-regression (Playwright screen-diff) suite is intentionally
+  # not part of CI. Its baselines are large binary PNGs that we don't track
+  # in git (see .gitignore and docs/REPO_CLEANUP.md §1), so a fresh CI
+  # checkout has no expected images to compare against and every assertion
+  # would fail. Run visual tests locally before merging UI-affecting changes:
+  #   ./scripts/run_client_screendiff_tests.sh [--update-snapshots]
+  # If we ever decide to gate CI on visual regression again, the snapshot
+  # files (or a subset) will need to come back into the repo, or the job
+  # will need to operate as a "regenerate and upload as artifact for human
+  # review" step rather than a hard pass/fail.
 
   test-server:
     runs-on: ubuntu-22.04

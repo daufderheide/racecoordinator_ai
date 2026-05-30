@@ -1,0 +1,389 @@
+<div class="cumulative-container">
+  <div class="header">
+    <div class="header-left">
+      <div class="back-btn" (click)="goBack()">
+        <span class="material-icons">arrow_back</span>
+        <span>Back</span>
+      </div>
+      <div class="title-section">
+        <h1>Race History</h1>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button (click)="selectAll()">
+        <span class="material-icons">done_all</span>
+        Select All
+      </button>
+      <button (click)="selectNone()">
+        <span class="material-icons">clear</span>
+        Clear
+      </button>
+      <button
+        (click)="exportCsv()"
+        [disabled]="cumulativeStandings.length === 0"
+      >
+        <span class="material-icons">description</span>
+        CSV
+      </button>
+      <button
+        (click)="exportHtml()"
+        [disabled]="cumulativeStandings.length === 0"
+      >
+        <span class="material-icons">html</span>
+        HTML
+      </button>
+      <button
+        (click)="exportDetailedReport()"
+        [disabled]="selectedRaces.size === 0"
+      >
+        <span class="material-icons">summarize</span>
+        Detailed Report
+      </button>
+      <button class="maintenance-btn" (click)="goToMaintenance()">
+        <span class="material-icons">settings_backup_restore</span>
+        Maintenance
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-panel">
+    <div class="filter-group">
+      <label>Track Database:</label>
+      <select [(ngModel)]="selectedDatabaseFilter" (change)="onFilterChange()">
+        <option value="">All Databases</option>
+        @for (db of availableDatabases; track db) {
+          <option [value]="db">
+            {{ db }}
+          </option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Track:</label>
+      <select [(ngModel)]="selectedTrackFilter" (change)="onFilterChange()">
+        <option value="">All Tracks</option>
+        @for (track of availableTracks; track track) {
+          <option [value]="track">
+            {{ track }}
+          </option>
+        }
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Car Class:</label>
+      <select [(ngModel)]="selectedCarClassFilter" (change)="onFilterChange()">
+        <option value="">All Classes</option>
+        @for (carClass of availableCarClasses; track carClass) {
+          <option [value]="carClass">
+            {{ carClass }}
+          </option>
+        }
+      </select>
+    </div>
+    <div
+      class="filter-group"
+      style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 20px;
+        margin-left: 10px;
+      "
+      (click)="toggleDemoData()"
+    >
+      <input
+        type="checkbox"
+        [checked]="showDemoData"
+        style="
+          width: 18px;
+          height: 18px;
+          margin: 0;
+          cursor: pointer;
+          accent-color: #3b82f6;
+        "
+      />
+      <label
+        style="margin: 0; cursor: pointer; font-weight: 500; color: #3b82f6"
+        >Demo Mode</label
+      >
+    </div>
+  </div>
+
+  <div
+    class="main-content"
+    (mousemove)="onMouseMove($event)"
+    (mouseup)="onMouseUp()"
+    (mouseleave)="onMouseUp()"
+  >
+    <!-- Race History Panel -->
+    <div class="history-panel" [style.width.px]="sidebarWidth">
+      <div class="panel-header">
+        <span>Race History</span>
+        <span class="material-icons" style="opacity: 0.5; font-size: 1.2rem"
+          >history</span
+        >
+      </div>
+      @if (!isLoading) {
+        <div class="list-container">
+          @for (race of filteredHistory; track race) {
+            <div
+              class="race-item"
+              [class.selected]="selectedRaces.has(race._id)"
+              (click)="toggleRaceSelection(race._id)"
+              (dblclick)="onRaceDoubleClick(race._id)"
+            >
+              <div class="checkbox">
+                @if (selectedRaces.has(race._id)) {
+                  <span class="material-icons" style="font-size: 1rem"
+                    >check</span
+                  >
+                }
+              </div>
+              <div class="race-info-detailed">
+                <div class="race-date-time-block">
+                  <span class="race-date-primary">{{
+                    formatDateOnly(race.statistics?.startMillis)
+                  }}</span>
+                  <span class="race-time-secondary">{{
+                    formatTime(race.statistics?.startMillis)
+                  }}</span>
+                </div>
+                <div class="race-main-details">
+                  <span class="race-name-inline">{{ race.model?.name }}</span>
+                  <span class="meta-separator">•</span>
+                  <div class="race-meta-inline">
+                    <span class="race-track-name">{{
+                      race.track?.name || "Unknown Track"
+                    }}</span>
+                    @if (race.car_class) {
+                      <span class="race-tag-compact">{{ race.car_class }}</span>
+                    }
+                    <span class="meta-separator">•</span>
+                    <span class="driver-count-inline"
+                      >{{ race.drivers?.length || 0 }}d</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+          @if (filteredHistory.length === 0) {
+            <div class="empty-state">
+              <span class="material-icons">event_busy</span>
+              <p>No race history found</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Loading race history...</span>
+        </div>
+      }
+    </div>
+
+    <!-- Horizontal Resizer -->
+    <div class="resizer" (mousedown)="onResizeStart($event)">
+      <div class="resizer-handle"></div>
+    </div>
+
+    <!-- Standings Table Panel -->
+    <div class="standings-panel">
+      <div class="standings-header">
+        <h2>Standings Breakdown</h2>
+        <div class="sort-controls">
+          <span class="material-icons" style="font-size: 1.1rem; opacity: 0.6"
+            >sort</span
+          >
+          <select
+            [(ngModel)]="sortMode"
+            (change)="calculateCumulativeStandings()"
+            class="sort-select"
+          >
+            <option value="points">By Points (Tiebreak Laps)</option>
+            <option value="laps">By Laps (Tiebreak Points)</option>
+          </select>
+        </div>
+      </div>
+
+      @if (selectedRaces.size > 0) {
+        <div class="table-container">
+          <table class="standings-table">
+            <thead>
+              <tr>
+                <th style="width: 80px; text-align: center">Rank</th>
+                <th style="width: 250px">Driver / Team</th>
+                <th class="points-col" style="width: 100px; text-align: center">
+                  Races
+                </th>
+                <th class="points-col" style="width: 120px; text-align: center">
+                  Total Laps
+                </th>
+                <th class="points-col" style="width: 120px; text-align: center">
+                  Points
+                </th>
+                <th class="points-col" style="width: 120px; text-align: center">
+                  Total Time
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of cumulativeStandings; track entry; let i = $index) {
+                <tr
+                  [class]="'rank-' + (i + 1) + ' clickable-row'"
+                  (click)="openDriverCard(entry)"
+                >
+                  <td style="text-align: center">
+                    <div class="rank-badge" style="margin: 0 auto">
+                      {{ i + 1 }}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="driver-info">
+                      <img
+                        [src]="getAvatarUrl(entry.avatarUrl)"
+                        class="driver-avatar"
+                        alt=""
+                      />
+                      <div class="driver-name">
+                        {{ entry.name }}
+                        @if (entry.nickname) {
+                          <span class="driver-nickname"
+                            >({{ entry.nickname }})</span
+                          >
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td class="points-col" style="text-align: center">
+                    {{ entry.racesCount }}
+                  </td>
+                  <td class="points-col laps-col" style="text-align: center">
+                    {{ entry.totalLaps }}
+                  </td>
+                  <td class="points-col" style="text-align: center">
+                    {{ entry.totalPoints | number: "1.0-0" }}
+                  </td>
+                  <td class="points-col" style="text-align: center">
+                    {{ formatTotalTime(entry.totalTime) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="material-icons">info</span>
+          <p>Select races from the list to view analytics</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Driver Card Modal -->
+@if (selectedDriverStats) {
+  <div class="driver-card-overlay" (click)="closeDriverCard()">
+    <div class="driver-card" (click)="$event.stopPropagation()">
+      <div class="driver-card-header">
+        <img
+          [src]="getAvatarUrl(selectedDriverStats.avatarUrl)"
+          class="driver-card-avatar"
+          alt="Avatar"
+        />
+        <div class="driver-card-title">
+          <h2>{{ selectedDriverStats.name }}</h2>
+          @if (selectedDriverStats.nickname) {
+            <span class="driver-card-nickname"
+              >"{{ selectedDriverStats.nickname }}"</span
+            >
+          }
+        </div>
+        <button class="close-btn" (click)="closeDriverCard()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="driver-card-body">
+        <div class="stat-grid">
+          <div class="stat-box">
+            <span class="stat-label">Total Wins</span>
+            <span class="stat-value">{{ selectedDriverStats.totalWins }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Heat Wins</span>
+            <span class="stat-value">{{ selectedDriverStats.heatWins }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Fastest Laps</span>
+            <span class="stat-value">{{
+              selectedDriverStats.fastestLapsCount
+            }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Median Lap</span>
+            @if (selectedDriverStats.medianLap > 0) {
+              <span class="stat-value">{{
+                selectedDriverStats.medianLap | number: "1.3-3"
+              }}</span>
+            }
+            @if (selectedDriverStats.medianLap === 0) {
+              <span class="stat-value">-</span>
+            }
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Total Races</span>
+            <span class="stat-value">{{ selectedDriverStats.totalRaces }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Heats on Track</span>
+            <span class="stat-value">{{
+              selectedDriverStats.heatsOnTrack
+            }}</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Avg Race Rank</span>
+            @if (selectedDriverStats.averageRacePlacing > 0) {
+              <span class="stat-value">{{
+                selectedDriverStats.averageRacePlacing | number: "1.1-1"
+              }}</span>
+            }
+            @if (selectedDriverStats.averageRacePlacing === 0) {
+              <span class="stat-value">-</span>
+            }
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Avg Heat Rank</span>
+            @if (selectedDriverStats.averageHeatPlacing > 0) {
+              <span class="stat-value">{{
+                selectedDriverStats.averageHeatPlacing | number: "1.1-1"
+              }}</span>
+            }
+            @if (selectedDriverStats.averageHeatPlacing === 0) {
+              <span class="stat-value">-</span>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="driver-card-footer">
+        <div class="card-actions">
+          <button (click)="exportDriverCsv()" class="card-action-btn">
+            <span class="material-icons">description</span>
+            CSV
+          </button>
+          <button (click)="exportDriverHtml()" class="card-action-btn">
+            <span class="material-icons">html</span>
+            HTML
+          </button>
+          <button (click)="exportDriverPng()" class="card-action-btn">
+            <span class="material-icons">image</span>
+            PNG
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
