@@ -420,6 +420,7 @@
   "RDS_ABOUT_SERVER_ADDRESS": "Indirizzo server: {{ip}}:{{port}}",
   "RDS_ABOUT_SERVER_VERSION": "Versione server: {{version}}",
   "RDS_ABOUT_TITLE": "Informazioni su Race Coordinator AI",
+  "RDS_ABOUT_SCAN_QR": "Scansiona il codice QR con il dispositivo mobile per connetterti:",
   "RDS_ANALYTICS_DISABLED_TITLE": "Analitica Disattivata",
   "RDS_ANALYTICS_ENABLED_TITLE": "Analitica Attivata",
   "RDS_ANALYTICS_LOCAL_DISABLED": "L'analitica del client e del server è disattivata",

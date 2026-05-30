@@ -286,6 +286,11 @@
           >
             {{ "RD_TAGLINE" | translate }}
           </a>
+          @if (qrCodeUrl) {
+            <div class="branding-qr" title="Scan to connect mobile devices">
+              <img [src]="qrCodeUrl" alt="QR Code" />
+            </div>
+          }
         </div>
         <!-- Flag Panel -->
         <div class="panel-card flag-panel">

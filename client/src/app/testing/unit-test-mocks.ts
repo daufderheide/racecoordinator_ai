@@ -103,6 +103,9 @@ export const mockDataService = {
     .createSpy("getHeats")
     .and.returnValue(new Subject().asObservable()),
   getRecordData: jasmine.createSpy("getRecordData").and.returnValue(of(null)),
+  getServerIp: jasmine
+    .createSpy("getServerIp")
+    .and.returnValue(of("127.0.0.1")),
   socketConnected$: of(true),
   serverUrl: "http://localhost:7070",
 };
@@ -212,6 +215,7 @@ export function resetMocks() {
   mockDataService.getRaceFlag.and.returnValue(new Subject().asObservable());
   mockDataService.getHeats.and.returnValue(new Subject().asObservable());
   mockDataService.getRecordData.and.returnValue(of(null));
+  mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
   mockDataService.getTracks.and.returnValue(of([]));
   mockDataService.socketConnected$ = of(true);
   mockDataService.saveCustomRotation.and.returnValue(of({}));

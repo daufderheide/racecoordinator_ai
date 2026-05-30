@@ -17,6 +17,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
+import * as QRCode from "qrcode";
 import { Observable, Subject, Subscription } from "rxjs";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
@@ -129,6 +130,7 @@ export class DefaultRacedayComponent
 
   // Stable-order list. DOM order never changes; visual position is from rank.
   protected leaderboardEntries: any[] = [];
+  protected qrCodeUrl?: string;
 
   /**
    * Update leaderboard entries while maintaining stable DOM order.
@@ -401,6 +403,30 @@ export class DefaultRacedayComponent
 
   ngOnInit() {
     this.loadColumns();
+
+    this.subscriptions.push(
+      this.dataService.getServerIp().subscribe({
+        next: (ip) => {
+          if (ip) {
+            const port = window.location.port;
+            const url = `${window.location.protocol}//${ip}${port ? ":" + port : ""}`;
+            QRCode.toDataURL(url, { margin: 1, width: 80 })
+              .then((dataUrl) => {
+                this.qrCodeUrl = dataUrl;
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              })
+              .catch((err) =>
+                this.logger.error("QR Code generation failed", err),
+              );
+          }
+        },
+        error: (err) => {
+          this.logger.warn("Failed to fetch server IP", err);
+        },
+      }),
+    );
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();

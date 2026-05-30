@@ -241,6 +241,28 @@
   padding: 15px;
   background: linear-gradient(145deg, rgba(16, 16, 32, 0.9), rgba(0, 0, 25, 0.7));
   border-left: 3px solid #0ff; /* Neon cyan accent */
+  position: relative;
+}
+
+.branding-qr {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  padding: 2px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.branding-qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .logo-text {

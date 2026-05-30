@@ -1,4 +1,6 @@
 import { Component, input, output } from "@angular/core";
+import { effect, signal } from "@angular/core";
+import * as QRCode from "qrcode";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -29,6 +31,12 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
                     | translate: { ip: serverIp(), port: serverPort() }
                 }}
               </p>
+              <div class="qr-container">
+                <p class="qr-text">{{ "RDS_ABOUT_SCAN_QR" | translate }}</p>
+                @if (qrCodeUrl()) {
+                  <img [src]="qrCodeUrl()" alt="QR Code" class="qr-code" />
+                }
+              </div>
             }
           </div>
           <div class="modal-actions">
@@ -78,6 +86,23 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
       .version-info p {
         margin: 10px 0;
       }
+      .qr-container {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .qr-text {
+        font-size: 1rem;
+        color: #ccc;
+        margin-bottom: 10px;
+      }
+      .qr-code {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        border: 4px solid #fff;
+      }
       .modal-actions {
         display: flex;
         justify-content: center;
@@ -111,7 +136,22 @@ export class AboutDialogComponent {
   serverIp = input("");
   serverPort = input(7070);
 
+  qrCodeUrl = signal<string>("");
+
   close = output<void>();
+
+  constructor() {
+    effect(() => {
+      const ip = this.serverIp();
+      if (ip) {
+        const port = window.location.port;
+        const url = `${window.location.protocol}//${ip}${port ? ":" + port : ""}`;
+        QRCode.toDataURL(url, { margin: 1, width: 200 })
+          .then((dataUrl) => this.qrCodeUrl.set(dataUrl))
+          .catch((err) => console.error("QR Code generation failed", err));
+      }
+    });
+  }
 
   onClose() {
     this.close.emit();

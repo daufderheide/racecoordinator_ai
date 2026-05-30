@@ -72,6 +72,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "changeLane",
     "getAssetUrl",
     "updateUserLaps",
+    "getServerIp",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
@@ -96,6 +97,7 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.getAssetUrl.and.callFake(
     (id: string) => `/api/assets/download/${id}`,
   );
+  mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
   mockDataService.serverUrl = "http://localhost/";
   mockDataService.socketConnected$ = of(true);
 
