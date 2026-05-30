@@ -8,7 +8,10 @@ describe("HelpService", () => {
   let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(() => {
-    const spy = jasmine.createSpyObj("AnalyticsService", ["trackClick"]);
+    const spy = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
+      "trackClick",
+    ]);
 
     TestBed.configureTestingModule({
       providers: [HelpService, { provide: AnalyticsService, useValue: spy }],

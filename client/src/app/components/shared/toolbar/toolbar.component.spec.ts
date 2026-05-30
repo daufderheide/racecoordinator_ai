@@ -47,6 +47,7 @@ describe("ToolbarComponent", () => {
     translationServiceSpy.translate.and.callFake((key: string) => key);
 
     analyticsServiceSpy = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
       "isEnabled",
       "toggleAnalytics",
       "trackClick",

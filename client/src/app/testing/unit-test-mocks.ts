@@ -139,6 +139,7 @@ export const mockAnalyticsService = {
   initTracking: jasmine.createSpy("initTracking"),
   updateOptOutStatus: jasmine.createSpy("updateOptOutStatus"),
   trackClick: jasmine.createSpy("trackClick"),
+  trackEvent: jasmine.createSpy("trackEvent"),
   trackPageView: jasmine.createSpy("trackPageView"),
 };
 
@@ -238,6 +239,7 @@ export function resetMocks() {
   mockAnalyticsService.initTracking.and.stub();
   mockAnalyticsService.updateOptOutStatus.and.stub();
   mockAnalyticsService.trackClick.and.stub();
+  mockAnalyticsService.trackEvent.and.stub();
   mockAnalyticsService.trackPageView.and.stub();
 
   // Restore default behaviors for mockSettingsService

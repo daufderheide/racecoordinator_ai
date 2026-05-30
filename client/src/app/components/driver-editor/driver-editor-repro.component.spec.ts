@@ -190,6 +190,7 @@ describe("DriverEditorComponent Reproduction", () => {
     mockHelpService.hasPrevious$ = of(false);
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
       "isEnabled",
       "trackClick",
     ]);

@@ -80,6 +80,7 @@ describe("RacedaySetupComponent", () => {
       "translate",
     ]);
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
       "initTracking",
       "updateOptOutStatus",
       "trackClick",

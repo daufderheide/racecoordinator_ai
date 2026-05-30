@@ -24,6 +24,9 @@ The client focuses on UI engagement and navigation, only sending data if the use
    - `guide_name`: The descriptive name of the guide.
    - `step_index`: The actual numeric index they dropped off at.
    - `step_title`: The human-readable string title of the slide they closed.
+5. **`authority_level_set`**: Fired when a user connects and their role is determined, or when their role changes (e.g. they log in). Includes:
+   - `authority_level`: The determined role of the user (e.g. `viewer`, `director`, `admin`).
+   - `connection_type`: A string indicating if the connection originated from `localhost`, `local_network`, or `remote_address`.
 
 ### Server-Side Tracking (Java Backend)
 The backend uses Google's specialized Measurement Protocol. Because it uses direct backend HTTP calls instead of browser DOM scripts, this tracking is extremely resilient perfectly suited for application-level lifecycle tracking.
@@ -106,6 +109,10 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Guide Name`, Event parameter: `guide_name`
 - Dimension Name: `Step Index`, Event parameter: `step_index`
 - Dimension Name: `Step Title`, Event parameter: `step_title`
+
+*For example, to map the Authority Level parameters:*
+- Dimension Name: `Authority Level`, Event parameter: `authority_level`
+- Dimension Name: `Connection Type`, Event parameter: `connection_type`
 
 ### Step 3: Explore and Trend
 Once Dimensions are registered (they take ~24 hours to populate moving forward):

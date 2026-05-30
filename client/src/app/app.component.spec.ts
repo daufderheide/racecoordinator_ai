@@ -58,6 +58,7 @@ describe("AppComponent", () => {
     mockDataService.setServerLogLevel.and.returnValue(of({}));
 
     mockAnalyticsService = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
       "initTracking",
       "updateOptOutStatus",
       "trackClick",

@@ -256,6 +256,31 @@ export class AnalyticsService {
     }
   }
 
+  // Generic Event Tracking
+  public trackEvent(eventName: string, params: Record<string, any> = {}) {
+    if (!this.metricsEnabled) return;
+
+    if (!this.configLoaded) {
+      this.logger.info(
+        "Analytics: Queueing generic event until config is loaded",
+        {
+          eventName,
+        },
+      );
+      this.eventQueue.push({ type: "generic", eventName, params });
+      return;
+    }
+
+    try {
+      gtag("event", eventName, {
+        ...params,
+        send_to: this.measurementId,
+      });
+    } catch (e) {
+      this.logger.warn("Analytics: Error in trackEvent", e);
+    }
+  }
+
   private processQueue() {
     if (this.eventQueue.length === 0) return;
     this.logger.info(
@@ -268,6 +293,8 @@ export class AnalyticsService {
         this.trackPageView(event.url);
       } else if (event.type === "click") {
         this.trackClick(event.eventName, event.params);
+      } else if (event.type === "generic") {
+        this.trackEvent(event.eventName, event.params);
       }
     });
   }

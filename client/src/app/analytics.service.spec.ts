@@ -285,4 +285,48 @@ describe("AnalyticsService", () => {
       expect((window as any).gtag).not.toHaveBeenCalled();
     });
   });
+
+  describe("trackEvent", () => {
+    it("should queue generic GA events until config is loaded", () => {
+      mockSettings.shareAnalytics = true;
+      service.initTracking();
+
+      spyOn(window as any, "gtag").and.callThrough();
+
+      service.trackEvent("authority_level_set", { authority_level: "viewer" });
+
+      // Should not be called yet
+      expect((window as any).gtag).not.toHaveBeenCalledWith(
+        "event",
+        "authority_level_set",
+        jasmine.any(Object),
+      );
+
+      // Resolve config
+      mockDataService._analyticsConfigSubject.next({
+        clientId: "test-client-id-123",
+        measurementId: "G-TEST12345",
+      });
+
+      expect((window as any).gtag).toHaveBeenCalledWith(
+        "event",
+        "authority_level_set",
+        {
+          authority_level: "viewer",
+          send_to: "G-TEST12345",
+        },
+      );
+    });
+
+    it("should suppress generic GA events when tracking is disabled", () => {
+      mockSettings.shareAnalytics = false;
+      service.initTracking();
+
+      spyOn(window as any, "gtag").and.callThrough();
+
+      service.trackEvent("authority_level_set", { authority_level: "viewer" });
+
+      expect((window as any).gtag).not.toHaveBeenCalled();
+    });
+  });
 });

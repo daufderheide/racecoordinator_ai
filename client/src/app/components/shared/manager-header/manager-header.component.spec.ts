@@ -32,6 +32,7 @@ describe("ManagerHeaderComponent", () => {
     helpServiceSpy.hasPrevious$ = of(false);
 
     analyticsServiceSpy = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
       "isEnabled",
       "toggleAnalytics",
     ]);

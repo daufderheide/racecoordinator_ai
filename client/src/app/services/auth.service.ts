@@ -1,7 +1,14 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, of } from "rxjs";
-import { catchError, map, tap } from "rxjs/operators";
+import { BehaviorSubject, combineLatest, Observable, of } from "rxjs";
+import {
+  catchError,
+  distinctUntilChanged,
+  filter,
+  map,
+  tap,
+} from "rxjs/operators";
+import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { LoggerService } from "@app/services/logger.service";
@@ -22,8 +29,43 @@ export class AuthService {
     private http: HttpClient,
     private dataService: DataService,
     private logger: LoggerService,
+    private analyticsService: AnalyticsService,
   ) {
     this.checkInitialRole();
+    this.initRoleTracking();
+  }
+
+  private getConnectionType(): string {
+    if (typeof window === "undefined") return "unknown";
+    const hostname = window.location.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]"
+    ) {
+      return "localhost";
+    }
+    const isPrivateIp =
+      /^(?:10\.|192\.168\.|172\.(?:1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname);
+    if (isPrivateIp || hostname.endsWith(".local")) {
+      return "local_network";
+    }
+    return "remote_address";
+  }
+
+  private initRoleTracking(): void {
+    combineLatest([this.currentRole$, this.roleInitialized$])
+      .pipe(
+        filter(([_, initialized]) => initialized),
+        map(([role, _]) => role),
+        distinctUntilChanged(),
+      )
+      .subscribe((role) => {
+        this.analyticsService.trackEvent("authority_level_set", {
+          authority_level: role,
+          connection_type: this.getConnectionType(),
+        });
+      });
   }
 
   public get currentRole(): Role {

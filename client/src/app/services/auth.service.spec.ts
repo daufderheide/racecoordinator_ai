@@ -3,6 +3,7 @@ import {
   HttpTestingController,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
+import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { LoggerService } from "@app/services/logger.service";
@@ -14,6 +15,7 @@ describe("AuthService", () => {
   let httpMock: HttpTestingController;
   let dataServiceMock: any;
   let loggerServiceMock: any;
+  let analyticsServiceMock: any;
 
   beforeEach(() => {
     dataServiceMock = {
@@ -28,12 +30,17 @@ describe("AuthService", () => {
       "log",
     ]);
 
+    analyticsServiceMock = jasmine.createSpyObj("AnalyticsService", [
+      "trackEvent",
+    ]);
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [
         AuthService,
         { provide: DataService, useValue: dataServiceMock },
         { provide: LoggerService, useValue: loggerServiceMock },
+        { provide: AnalyticsService, useValue: analyticsServiceMock },
       ],
     });
 
@@ -95,6 +102,35 @@ describe("AuthService", () => {
       expect(req.request.method).toBe("PUT");
       expect(req.request.body).toEqual({ newPassword: "new-secret" });
       req.flush({ success: true });
+    });
+  });
+
+  describe("role tracking", () => {
+    it("should track authority_level_set upon initialization", () => {
+      expect(analyticsServiceMock.trackEvent).toHaveBeenCalledWith(
+        "authority_level_set",
+        {
+          authority_level: Role.VIEWER,
+          connection_type: "localhost",
+        },
+      );
+    });
+
+    it("should track authority_level_set when role changes after login", () => {
+      analyticsServiceMock.trackEvent.calls.reset();
+
+      service.loginAsDirector("secret").subscribe();
+
+      const req = httpMock.expectOne("http://localhost:7070/api/auth/login");
+      req.flush({ token: "fake-token", role: Role.DIRECTOR });
+
+      expect(analyticsServiceMock.trackEvent).toHaveBeenCalledWith(
+        "authority_level_set",
+        {
+          authority_level: Role.DIRECTOR,
+          connection_type: "localhost",
+        },
+      );
     });
   });
 
