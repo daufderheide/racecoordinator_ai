@@ -62,6 +62,9 @@ client/.tmp/
 client/playwright-report/
 client/test-results/
 
+# Visual-regression screenshot baselines (regenerated locally; not tracked)
+**/*-snapshots/
+
 # Client unit tests
 .browser-tmp/
 .chrome-home/
