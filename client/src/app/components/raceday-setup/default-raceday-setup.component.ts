@@ -143,6 +143,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
       action: (event: MouseEvent) => this.toggleOptionsDropdown(event),
     },
     {
+      label: "RDS_MENU_CUMULATIVE_RESULTS",
+      action: (_event: MouseEvent) => this.openCumulativeResults(),
+    },
+    {
       label: "RDS_MENU_HELP",
       action: (event: MouseEvent) => this.toggleHelpDropdown(event),
     },
@@ -1201,6 +1205,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
   openDatabaseManager() {
     this.closeFileDropdown();
     this.router.navigate(["/database-manager"]);
+  }
+
+  openCumulativeResults() {
+    this.saveSettings();
+    this.closeDropdown();
+    this.router.navigate(["/history"]);
   }
 
   onSearchChange() {

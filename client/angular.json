@@ -57,7 +57,8 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "protobufjs",
-              "@protobufjs/inquire"
+              "@protobufjs/inquire",
+              "html2canvas"
             ]
           },
           "configurations": {

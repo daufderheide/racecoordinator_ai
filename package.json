@@ -17,10 +17,11 @@
     "lint": "npm run lint:client && npm run lint:server",
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
     "lint:server": "cd server && mvn spotless:check checkstyle:check pmd:check",
-    "test": "npm run test:client && npm run test:visual && npm run test:server",
-    "test:client": "./run_client_unit_tests.sh",
-    "test:visual": "./run_client_screendiff_tests.sh",
-    "test:server": "./run_server_tests.sh"
+    "test": "npm run test:client && npm run test:server",
+    "test:all": "npm run test:client && npm run test:visual && npm run test:server",
+    "test:client": "./scripts/run_client_unit_tests.sh",
+    "test:visual": "./scripts/run_client_screendiff_tests.sh",
+    "test:server": "./scripts/run_server_tests.sh"
   },
   "lint-staged": {
     "client/**/*.{ts,tsx,js,jsx,html}": [
