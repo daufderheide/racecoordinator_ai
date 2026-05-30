@@ -317,7 +317,7 @@ public class ArduinoLedHelper {
           countdown);
       lastStateChangeTime = getCurrentTimeMillis();
       if (state == RaceState.STARTING) {
-        startingDuration = (int) Math.ceil(countdown);
+        startingDuration = 0;
       }
     }
     this.lastState = state;
@@ -330,6 +330,7 @@ public class ArduinoLedHelper {
       } else {
         maxCountdownSeen = Math.max(maxCountdownSeen, countdown);
       }
+      startingDuration = Math.max(startingDuration, (int) Math.ceil(maxCountdownSeen));
     } else {
       maxCountdownSeen = 0.0;
     }
@@ -468,7 +469,7 @@ public class ArduinoLedHelper {
             // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec = 1 LED).
             // This matches the updated UI countdown display (1, 2, 3, GO).
             int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
-            boolean shouldBeOn = n < onCount;
+            boolean shouldBeOn = n >= startingDuration - onCount && n < startingDuration;
             if (!shouldBeOn) {
               finalRgb = new int[] {0, 0, 0};
             }
@@ -511,7 +512,7 @@ public class ArduinoLedHelper {
             // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec = 1 LED).
             // This matches the updated UI countdown display (1, 2, 3, GO).
             int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
-            if (n < onCount) {
+            if (n >= startingDuration - onCount && n < startingDuration) {
               r = 255;
             }
           } else if (state == RaceState.RACING && flag == RaceFlag.GREEN) {
