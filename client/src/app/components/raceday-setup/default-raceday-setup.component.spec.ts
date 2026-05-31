@@ -604,12 +604,23 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
-  it("should load saved races and open modal", () => {
+  it("should load saved races, filter out autosaves, and open modal", () => {
+    mockDataService.getSavedRaces.and.callFake((isDemo?: boolean) => {
+      if (isDemo) {
+        return of(["demo_race_1.json", "autosave_demo.json"]);
+      }
+      return of(["user_race_1.json", "autosave_user.json"]);
+    });
+
     component.loadSavedRaces();
     expect(mockDataService.getSavedRaces).toHaveBeenCalledTimes(2);
     expect(component.showLoadRaceModal).toBeTrue();
-    // 2 normal and 2 demo races combined
-    expect(component.savedRaces.length).toBe(4);
+    // 1 normal and 1 demo races combined (autosaves are filtered out)
+    expect(component.savedRaces.length).toBe(2);
+    expect(component.savedRaces).toEqual([
+      { filename: "user_race_1.json", isDemo: false },
+      { filename: "demo_race_1.json", isDemo: true },
+    ]);
   });
 
   it("should delete saved race after confirmation", () => {

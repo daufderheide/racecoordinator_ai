@@ -1290,14 +1290,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
       demo: this.dataService.getSavedRaces(true),
     }).subscribe({
       next: (result) => {
-        const normalList = result.normal.map((f) => ({
-          filename: f,
-          isDemo: false,
-        }));
-        const demoList = result.demo.map((f) => ({
-          filename: f,
-          isDemo: true,
-        }));
+        const normalList = result.normal
+          .filter(
+            (f) =>
+              !f.startsWith("autosave_") &&
+              !f.toLowerCase().includes("autosave"),
+          )
+          .map((f) => ({
+            filename: f,
+            isDemo: false,
+          }));
+        const demoList = result.demo
+          .filter(
+            (f) =>
+              !f.startsWith("autosave_") &&
+              !f.toLowerCase().includes("autosave"),
+          )
+          .map((f) => ({
+            filename: f,
+            isDemo: true,
+          }));
         this.savedRaces = [...normalList, ...demoList];
         this.showLoadRaceModal = true;
         this.selectedSavedRace = null;
