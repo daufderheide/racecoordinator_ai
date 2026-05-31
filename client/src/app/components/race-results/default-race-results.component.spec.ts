@@ -240,8 +240,45 @@ describe("DefaultRaceResultsComponent", () => {
 
       participantsSubject.next([p1, p2]);
 
-      expect(component["standingsRows"][0].driver.name).toBe("Bob");
-      expect(component["standingsRows"][1].driver.name).toBe("Alice");
+      const rank1 = component["standingsRows"].find((r) => r.visualIndex === 0);
+      const rank2 = component["standingsRows"].find((r) => r.visualIndex === 1);
+      expect(rank1?.driver.name).toBe("Bob");
+      expect(rank2?.driver.name).toBe("Alice");
+    });
+
+    it("should physically sort standingsRows alphabetically by driverKey for DOM stability while visualIndex matches rank", () => {
+      const d1 = createDriver("d1", "Charlie", "Chuck");
+      const d2 = createDriver("d2", "Alice", "Ally");
+      const d3 = createDriver("d3", "Bob", "Bobby");
+
+      const p1 = createParticipant("d1", d1, 3, 7, 52.0, 6.0, 7.0, 7.0, 60, 1);
+      const p2 = createParticipant(
+        "d2",
+        d2,
+        1,
+        10,
+        48.0,
+        4.5,
+        4.8,
+        4.8,
+        100,
+        2,
+      );
+      const p3 = createParticipant("d3", d3, 2, 9, 50.0, 5.0, 5.5, 5.5, 80, 3);
+
+      participantsSubject.next([p1, p2, p3]);
+
+      const rows = component["standingsRows"];
+      expect(rows.length).toBe(3);
+      // Alphabetical order of driverKeys/IDs: d1 (Charlie), d2 (Alice), d3 (Bob)
+      expect(rows[0].driver.name).toBe("Charlie");
+      expect(rows[1].driver.name).toBe("Alice");
+      expect(rows[2].driver.name).toBe("Bob");
+
+      // Corresponding visual index based on their ranks
+      expect(rows[0].visualIndex).toBe(2); // Charlie (3rd rank)
+      expect(rows[1].visualIndex).toBe(0); // Alice (1st rank)
+      expect(rows[2].visualIndex).toBe(1); // Bob (2nd rank)
     });
 
     it("should include medianLapTime in standings rows", () => {
