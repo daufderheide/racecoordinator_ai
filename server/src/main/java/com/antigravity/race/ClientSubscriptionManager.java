@@ -85,6 +85,9 @@ public class ClientSubscriptionManager {
 
     if (this.currentRace != null) {
       logger.info("New race set. Clients must explicitly subscribe to race data.");
+      broadcastSystemState("RACE_RUNNING", "SYSTEM");
+    } else {
+      broadcastSystemState("IDLE", "");
     }
   }
 
@@ -122,7 +125,12 @@ public class ClientSubscriptionManager {
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
 
     if (currentRace != null) {
-      RaceData snapshot = currentRace.createSnapshot();
+      com.antigravity.proto.SystemState sysState = // fqn-collision
+          com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+              .setResourceLockState("RACE_RUNNING")
+              .setOwnerId("SYSTEM")
+              .build();
+      RaceData snapshot = currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
       if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
         logger.debug(
             "Snapshot includes Current Heat: {}",

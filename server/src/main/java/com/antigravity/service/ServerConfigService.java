@@ -63,6 +63,9 @@ public class ServerConfigService {
   }
 
   public String getDirectorPassword() {
+    if (config.directorPassword == null || config.directorPassword.isEmpty()) {
+      return "RC AI Director";
+    }
     return config.directorPassword;
   }
 

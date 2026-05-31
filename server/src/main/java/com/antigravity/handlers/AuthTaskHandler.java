@@ -17,13 +17,14 @@ public class AuthTaskHandler {
     this.configService = configService;
     app.post("/api/auth/login", this::handleLogin, Role.VIEWER);
     app.put("/api/auth/password", this::handleChangePassword, Role.ADMIN);
+    app.get("/api/auth/password", this::handleGetPassword, Role.ADMIN);
     app.get("/api/auth/role", this::handleGetRole, Role.VIEWER);
   }
 
   private void handleGetRole(Context ctx) {
     Role role = Role.VIEWER;
 
-    if (NetworkUtils.isLocalAddress(ctx.ip())) {
+    if (NetworkUtils.isLocalhost(ctx.ip(), null)) {
       role = Role.ADMIN;
     } else {
       String authHeader = ctx.header("Authorization");
@@ -36,6 +37,11 @@ public class AuthTaskHandler {
     }
 
     ctx.json(Map.of("role", role.name()));
+  }
+
+  private void handleGetPassword(Context ctx) {
+    String password = configService.getDirectorPassword();
+    ctx.json(Map.of("password", password != null ? password : ""));
   }
 
   private void handleChangePassword(Context ctx) {

@@ -7,6 +7,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -39,10 +40,12 @@ describe("RacedaySetupComponent", () => {
   let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let mockLoggerService: jasmine.SpyObj<LoggerService>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
+  let mockRouter: jasmine.SpyObj<Router>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
     sessionStorage.clear();
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
       "selectCustomFolder",
       "hasCustomFiles",
@@ -148,6 +151,7 @@ describe("RacedaySetupComponent", () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: Router, useValue: mockRouter },
         { provide: FileSystemService, useValue: mockFileSystemService },
         {
           provide: Compiler,
@@ -416,6 +420,50 @@ describe("RacedaySetupComponent", () => {
       );
       // Verify loadDefaultComponent by checking that we don't call getCustomFile
       expect(mockFileSystemService.getCustomFile).not.toHaveBeenCalled();
+    }));
+  });
+
+  describe("Viewer Auto-Transition", () => {
+    let systemStateSubject: BehaviorSubject<any>;
+
+    beforeEach(() => {
+      systemStateSubject = new BehaviorSubject<any>(null);
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+    });
+
+    it("should stay on splash screen when connected as viewer and resourceLockState is not RACE_RUNNING", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.ngOnInit();
+      tick(6000); // Let splash screen timer run
+
+      // Initially null system state
+      expect(component.showSplash).toBeTrue();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      // Transition to IDLE state
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+      tick();
+      expect(component.showSplash).toBeTrue();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    }));
+
+    it("should automatically navigate to /raceday as viewer when resourceLockState becomes RACE_RUNNING", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.ngOnInit();
+      tick(6000); // Let splash screen timer run
+
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
+      tick();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
     }));
   });
 });
