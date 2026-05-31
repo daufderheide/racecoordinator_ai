@@ -183,7 +183,7 @@ public class App {
                               });
                       closeThread.start();
                       try {
-                        closeThread.join(3000); // Wait up to 3 seconds
+                        closeThread.join(1000); // Wait up to 1 second
                         if (closeThread.isAlive()) {
                           logger.warn("MongoClient.close() timed out. Proceeding with shutdown.");
                         }
@@ -200,7 +200,7 @@ public class App {
                       logger.info("Stopping manual MongoDB process...");
                       manualMongoProcess.destroy();
                       try {
-                        if (!manualMongoProcess.waitFor(5, TimeUnit.SECONDS)) {
+                        if (!manualMongoProcess.waitFor(2, TimeUnit.SECONDS)) {
                           logger.warn(
                               "MongoDB did not shut down gracefully. Forcing termination...");
                           manualMongoProcess.destroyForcibly();

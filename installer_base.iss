@@ -105,3 +105,9 @@ begin
   KillProcesses;
   Result := True;
 end;
+
+function InitializeUninstall: Boolean;
+begin
+  KillProcesses;
+  Result := True;
+end;
