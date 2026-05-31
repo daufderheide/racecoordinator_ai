@@ -1764,6 +1764,9 @@ export class DefaultRacedayComponent
 
   // Menu State Helpers
   public get isStartResumeDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled if disconnected OR (Starting, Racing, HeatOver, RaceOver)
     // Note: User said "Starting: Start/Resume ... disabled", "Racing: Same as Starting", "Heat Over: Everything ... disabled"
     // Also technically disabled in PAUSED? No, Resume is allowed in Paused.
@@ -1781,6 +1784,9 @@ export class DefaultRacedayComponent
   }
 
   public get isPauseDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled if disconnected OR (NotStarted, Paused, HeatOver, RaceOver)
     // Enabled in STARTING? User didn't say disabled. Usually can pause countdown.
     // Enabled in RACING.
@@ -1805,6 +1811,9 @@ export class DefaultRacedayComponent
   }
 
   public get isNextHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     return this.raceState !== RaceState.HEAT_OVER;
   }
 
@@ -1849,6 +1858,9 @@ export class DefaultRacedayComponent
   }
 
   public get isRestartHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled in Starting, Racing.
     // "Heat Over: Everything... disabled".
     const s = this.raceState;
@@ -1862,6 +1874,9 @@ export class DefaultRacedayComponent
   }
 
   public get isDeferHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     if (s !== RaceState.NOT_STARTED && s !== RaceState.UNKNOWN_STATE) {
       return true;
@@ -1870,6 +1885,9 @@ export class DefaultRacedayComponent
   }
 
   public get isSkipHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     return (
       s === RaceState.STARTING ||
@@ -1880,6 +1898,9 @@ export class DefaultRacedayComponent
   }
 
   public get isSkipRaceDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     return (
       s === RaceState.STARTING ||
@@ -1893,6 +1914,9 @@ export class DefaultRacedayComponent
   }
 
   public get isModifyDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     return this.raceState === RaceState.RACE_OVER;
   }
 

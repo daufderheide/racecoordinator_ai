@@ -32,8 +32,10 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
-import { of, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
+import { Role } from "@app/models/role";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
@@ -113,6 +115,7 @@ describe("DefaultRacedayComponent", () => {
   let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
+  let mockAuthService: any;
 
   beforeEach(() => {
     mockAudioInstance = jasmine.createSpyObj("AudioInstance", [
@@ -141,6 +144,17 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+
+    mockAuthService = {
+      currentRoleSubject: new BehaviorSubject<Role>(Role.DIRECTOR),
+      get currentRole() {
+        return this.currentRoleSubject.value;
+      },
+      get currentRole$() {
+        return this.currentRoleSubject.asObservable();
+      },
+      logout: jasmine.createSpy("logout"),
+    };
 
     mockLogger = jasmine.createSpyObj("LoggerService", [
       "debug",
@@ -205,6 +219,7 @@ describe("DefaultRacedayComponent", () => {
           provide: PrintService,
           useValue: jasmine.createSpyObj("PrintService", ["print"]),
         },
+        { provide: AuthService, useValue: mockAuthService },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -571,6 +586,30 @@ describe("DefaultRacedayComponent", () => {
       expect(mockDataService.abortTimers).toHaveBeenCalled();
       expect(component["autoStartRemaining"]).toBe(0);
       expect(component["autoAdvanceRemaining"]).toBe(0);
+    });
+  });
+
+  describe("viewer role restrictions", () => {
+    beforeEach(() => {
+      mockAuthService.currentRoleSubject.next(Role.VIEWER);
+    });
+
+    it("should disable all Race Director menu items for viewer role", () => {
+      expect(component.isStartResumeDisabled).toBeTrue();
+      expect(component.isPauseDisabled).toBeTrue();
+      expect(component.isNextHeatDisabled).toBeTrue();
+      expect(component.isRestartHeatDisabled).toBeTrue();
+      expect(component.isDeferHeatDisabled).toBeTrue();
+      expect(component.isSkipHeatDisabled).toBeTrue();
+      expect(component.isSkipRaceDisabled).toBeTrue();
+      expect(component.isAddLapDisabled).toBeTrue();
+      expect(component.isModifyDisabled).toBeTrue();
+    });
+
+    it("should not execute action in onMenuSelect for disabled items if user is a viewer", () => {
+      mockDataService.startRace.calls.reset();
+      component.onMenuSelect("START_RESUME");
+      expect(mockDataService.startRace).not.toHaveBeenCalled();
     });
   });
 
