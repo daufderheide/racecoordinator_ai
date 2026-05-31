@@ -897,6 +897,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "The Rocket" }),
+        }),
       );
     });
 
@@ -912,6 +915,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "The Rocket" }),
+        }),
       );
     });
   });
@@ -1544,6 +1550,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_PENALTY,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "Test Driver" }),
+        }),
       );
     });
 

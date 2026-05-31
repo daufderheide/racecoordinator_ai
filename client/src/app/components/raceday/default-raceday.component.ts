@@ -565,12 +565,15 @@ export class DefaultRacedayComponent
                   this.logger,
                 );
               } else {
-                this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY);
+                this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
               }
             }
 
             if (lap.type === LapType.MIN_LAP_TIME) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
+              this.playThemedSound(
+                THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+                ttsContext,
+              );
             }
 
             // Halfway logic for lap-based races
@@ -585,6 +588,7 @@ export class DefaultRacedayComponent
               if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
                 this.playThemedSound(
                   THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+                  ttsContext,
                 );
                 this.playedHalfway = true;
               }
@@ -606,7 +610,7 @@ export class DefaultRacedayComponent
                 this.logger,
               );
             } else if (lap.isDrift) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP);
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
             } else if (
               driver.lapAudio.type !== "none" &&
               (driver.lapAudio.url ||
@@ -2817,7 +2821,7 @@ export class DefaultRacedayComponent
     }
   }
 
-  private playThemedSound(slotKey: string) {
+  private playThemedSound(slotKey: string, context?: any) {
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (config && config.type !== "none") {
       // Resolve URL if it's a preset
@@ -2839,7 +2843,7 @@ export class DefaultRacedayComponent
         playableUrl,
         config.text,
         this.dataService.serverUrl,
-        undefined,
+        context,
         this.logger,
       );
     } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
