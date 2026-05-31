@@ -29,7 +29,9 @@ describe("RaceFlagService", () => {
     const settingsServiceSpy = jasmine.createSpyObj("SettingsService", [
       "getSettings",
     ]);
-    const dataServiceSpy = jasmine.createSpyObj("DataService", ["listAssets"]);
+    const dataServiceSpy = jasmine.createSpyObj("DataService", ["listAssets"], {
+      serverUrl: "http://localhost:7070",
+    });
     dataServiceSpy.listAssets.and.returnValue(of([]));
     dataServiceSpy.socketConnected$ = of(true);
 
@@ -109,6 +111,34 @@ describe("RaceFlagService", () => {
       expect(themeService.resolveAssetId).toHaveBeenCalledWith("flag.green");
     });
 
+    it("should use dataService.serverUrl to resolve asset URLs (mobile bug fix)", () => {
+      const dataService = TestBed.inject(DataService) as any;
+      const originalServerUrl = dataService.serverUrl;
+      Object.defineProperty(dataService, "serverUrl", {
+        get: () => "http://192.168.1.100:7070",
+        configurable: true,
+      });
+
+      themeService.resolveAssetId.and.returnValue("asset-green-id");
+      (service as any).assets = [
+        { entity_id: "asset-green-id", url: "/assets/green.png" },
+      ];
+
+      // Even if settings says localhost (which caused the bug), the dataService url should take precedence
+      settingsService.getSettings.and.returnValue({
+        serverIp: "localhost",
+        serverPort: 7070,
+      });
+
+      const url = service.getFlagUrl(RaceFlag.GREEN);
+      expect(url).toBe("http://192.168.1.100:7070/assets/green.png");
+
+      Object.defineProperty(dataService, "serverUrl", {
+        get: () => originalServerUrl,
+        configurable: true,
+      });
+    });
+
     it("should resolve via settings if theme slot not found", () => {
       themeService.resolveAssetId.and.returnValue(null);
       settingsService.getSettings.and.returnValue({
@@ -162,9 +192,11 @@ describe("RaceFlagService", () => {
       const socketSubject = new Subject<boolean>();
       const assetsSubject = new Subject<any[]>();
 
-      const customDataServiceSpy = jasmine.createSpyObj("DataService", [
-        "listAssets",
-      ]);
+      const customDataServiceSpy = jasmine.createSpyObj(
+        "DataService",
+        ["listAssets"],
+        { serverUrl: "http://localhost:7070" },
+      );
       customDataServiceSpy.socketConnected$ = socketSubject.asObservable();
       customDataServiceSpy.listAssets.and.returnValue(
         assetsSubject.asObservable(),
