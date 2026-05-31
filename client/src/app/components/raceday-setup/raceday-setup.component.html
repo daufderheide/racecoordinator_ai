@@ -73,20 +73,30 @@
       </div>
       <div class="form-group">
         <label>{{ "RDS_LABEL_PASSWORD" | translate }}</label>
-        <input
-          type="password"
-          [(ngModel)]="directorPassword"
-          [disabled]="
-            authService.currentRole === Role.ADMIN ||
-            authService.currentRole === Role.DIRECTOR
-          "
-          [title]="
-            authService.currentRole === Role.ADMIN ||
-            authService.currentRole === Role.DIRECTOR
-              ? ('RDS_PASSWORD_DISABLED_ALREADY_AUTH' | translate)
-              : ''
-          "
-        />
+        <div class="password-input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="directorPassword"
+            [disabled]="authService.currentRole === Role.DIRECTOR"
+            [title]="
+              authService.currentRole === Role.DIRECTOR
+                ? ('RDS_PASSWORD_DISABLED_ALREADY_AUTH' | translate)
+                : ''
+            "
+          />
+          @if (authService.currentRole === Role.ADMIN) {
+            <button
+              type="button"
+              class="toggle-password-btn"
+              (click)="showPassword = !showPassword"
+              [title]="showPassword ? 'Hide password' : 'Show password'"
+            >
+              <span class="material-icons">
+                {{ showPassword ? "visibility_off" : "visibility" }}
+              </span>
+            </button>
+          }
+        </div>
       </div>
       <div class="actions">
         <button (click)="saveServerConfig()">

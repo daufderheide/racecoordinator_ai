@@ -368,3 +368,37 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   font-family: 'Orbitron', sans-serif;
 }
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 40px !important;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 1;
+}
+
+.toggle-password-btn:hover {
+  color: #00f0ff;
+}
+
+.toggle-password-btn .material-icons {
+  font-size: 1.2rem;
+}

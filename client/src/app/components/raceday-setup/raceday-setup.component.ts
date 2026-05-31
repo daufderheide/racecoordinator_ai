@@ -103,6 +103,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
   public Role = Role;
   public directorPassword = "";
+  public showPassword = false;
   private hasLoadedSetupComponent = false;
 
   constructor(
@@ -441,8 +442,32 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
   }
 
+  openServerConfig() {
+    this.showServerConfig = true;
+    this.showPassword = false;
+    if (this.authService.currentRole === Role.ADMIN) {
+      this.authService.getDirectorPassword().subscribe({
+        next: (pwd) => {
+          this.directorPassword = pwd;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to get director password", err);
+          this.directorPassword = "";
+          this.cdr.detectChanges();
+        },
+      });
+    } else {
+      this.directorPassword = "";
+    }
+  }
+
   toggleServerConfig() {
-    this.showServerConfig = !this.showServerConfig;
+    if (!this.showServerConfig) {
+      this.openServerConfig();
+    } else {
+      this.showServerConfig = false;
+    }
   }
 
   saveServerConfig() {
@@ -454,9 +479,34 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
     const passwordToTry = this.directorPassword;
     this.directorPassword = "";
-
     this.showServerConfig = false;
 
+    if (this.authService.currentRole === Role.ADMIN) {
+      this.authService.changeDirectorPassword(passwordToTry).subscribe({
+        next: (success) => {
+          if (!success) {
+            this.error = "Failed to update Director password";
+            setTimeout(() => {
+              this.error = null;
+            }, 5000);
+          }
+          this.refreshConnectionAfterSave();
+        },
+        error: (err) => {
+          this.logger.error("Failed to change password", err);
+          this.error = "Failed to update Director password";
+          setTimeout(() => {
+            this.error = null;
+          }, 5000);
+          this.refreshConnectionAfterSave();
+        },
+      });
+    } else {
+      this.refreshConnectionAfterSave(passwordToTry);
+    }
+  }
+
+  private refreshConnectionAfterSave(passwordToTry?: string) {
     // Reset connection verification to force a new check with new address
     this.connectionVerified = false;
     this.connectionMonitor.checkConnection().subscribe();
@@ -509,7 +559,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       DefaultRacedaySetupComponent,
     );
     componentRef.instance.requestServerConfig.subscribe(() => {
-      this.showServerConfig = true;
+      this.openServerConfig();
       this.cdr.detectChanges();
     });
     componentRef.instance.requestAbout.subscribe(() => {
@@ -559,7 +609,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       // Subscribe to server config request
       if (componentRef.instance instanceof DefaultRacedaySetupComponent) {
         componentRef.instance.requestServerConfig.subscribe(() => {
-          this.showServerConfig = true;
+          this.openServerConfig();
           this.cdr.detectChanges();
         });
         componentRef.instance.requestAbout.subscribe(() => {
@@ -572,7 +622,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         const instance = componentRef.instance as any;
         if (instance.requestServerConfig) {
           instance.requestServerConfig.subscribe(() => {
-            this.showServerConfig = true;
+            this.openServerConfig();
             this.cdr.detectChanges();
           });
         }

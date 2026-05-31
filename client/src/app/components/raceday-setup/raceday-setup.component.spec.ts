@@ -99,6 +99,7 @@ describe("RacedaySetupComponent", () => {
     mockAuthService = jasmine.createSpyObj("AuthService", [
       "loginAsDirector",
       "changeDirectorPassword",
+      "getDirectorPassword",
       "logout",
       "fetchRoleFromServer",
     ]);
@@ -117,6 +118,7 @@ describe("RacedaySetupComponent", () => {
     });
     mockAuthService.loginAsDirector.and.returnValue(of(true));
     mockAuthService.changeDirectorPassword.and.returnValue(of(true));
+    mockAuthService.getDirectorPassword.and.returnValue(of(""));
     mockAuthService.fetchRoleFromServer.and.returnValue(of(Role.ADMIN));
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
@@ -290,6 +292,45 @@ describe("RacedaySetupComponent", () => {
       component.saveServerConfig();
       flushMicrotasks();
       expect(mockAuthService.loginAsDirector).not.toHaveBeenCalled();
+    }));
+
+    it("should populate directorPassword with getDirectorPassword if currentRole is ADMIN on openServerConfig", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.ADMIN,
+      );
+      mockAuthService.getDirectorPassword.and.returnValue(of("admin-secret"));
+
+      component.openServerConfig();
+      tick();
+
+      expect(mockAuthService.getDirectorPassword).toHaveBeenCalled();
+      expect(component.directorPassword).toBe("admin-secret");
+      expect(component.showPassword).toBeFalse();
+    }));
+
+    it("should keep directorPassword empty on openServerConfig if role is not ADMIN", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.openServerConfig();
+      tick();
+
+      expect(mockAuthService.getDirectorPassword).not.toHaveBeenCalled();
+      expect(component.directorPassword).toBe("");
+    }));
+
+    it("should call changeDirectorPassword on saveServerConfig if role is ADMIN", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.ADMIN,
+      );
+      component.directorPassword = "new-admin-password";
+      component.saveServerConfig();
+      flushMicrotasks();
+
+      expect(mockAuthService.changeDirectorPassword).toHaveBeenCalledWith(
+        "new-admin-password",
+      );
     }));
   });
 
