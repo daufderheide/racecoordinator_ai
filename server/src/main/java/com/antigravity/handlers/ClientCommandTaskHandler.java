@@ -182,7 +182,7 @@ public class ClientCommandTaskHandler {
       return TaskResult.error(404, "Race not found");
     }
 
-    if (ClientSubscriptionManager.getInstance().hasSubscribers()
+    if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
         && ClientSubscriptionManager.getInstance().getRace() != null
         && ClientSubscriptionManager.getInstance().getRace().isActive()) {
       return TaskResult.error(409, "Cannot start new race while client is watching an active race");

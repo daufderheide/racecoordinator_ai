@@ -1,11 +1,13 @@
 package com.antigravity.race;
 
+import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.NetworkUtils;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
@@ -312,6 +314,28 @@ public class ClientSubscriptionManager {
 
   public boolean hasSubscribers() {
     return !raceDataSubscribers.isEmpty();
+  }
+
+  public boolean isDirectorSession(WsContext ctx) {
+    try {
+      // 1. Localhost Auto-Admin
+      String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
+      if (NetworkUtils.isLocalhost(remoteIp, null)) {
+        return true;
+      }
+      // 2. Token-based Director
+      String token = ctx.queryParam("token");
+      if (token != null && AuthService.getInstance().isValidToken(token)) {
+        return true;
+      }
+    } catch (Exception e) {
+      logger.error("Error identifying role for WebSocket session", e);
+    }
+    return false;
+  }
+
+  public boolean hasDirectorSubscribers() {
+    return raceDataSubscribers.stream().anyMatch(this::isDirectorSession);
   }
 
   public void broadcast(GeneratedMessageV3 message) {

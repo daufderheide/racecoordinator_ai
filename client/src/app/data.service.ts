@@ -1151,7 +1151,10 @@ export class DataService {
       }
     }
 
-    const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
+    const token = localStorage.getItem("director_token");
+    const wsUrl = token
+      ? `ws://${this.serverIp}:${this.serverPort}/api/race-data?token=${token}`
+      : `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
     this.logger.debug(`Attempting to connect to WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";
