@@ -1733,7 +1733,10 @@ export class DefaultRacedayComponent
   }
 
   public get isSaveDisabled(): boolean {
-    return this.raceState === RaceState.RACING;
+    return (
+      this.authService.currentRole === Role.VIEWER ||
+      this.raceState === RaceState.RACING
+    );
   }
 
   // Menu State Helpers

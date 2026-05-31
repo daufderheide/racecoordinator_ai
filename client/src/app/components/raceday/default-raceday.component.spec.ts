@@ -594,7 +594,7 @@ describe("DefaultRacedayComponent", () => {
       mockAuthService.currentRoleSubject.next(Role.VIEWER);
     });
 
-    it("should disable all Race Director menu items for viewer role", () => {
+    it("should disable all Race Director menu items and save for viewer role", () => {
       expect(component.isStartResumeDisabled).toBeTrue();
       expect(component.isPauseDisabled).toBeTrue();
       expect(component.isNextHeatDisabled).toBeTrue();
@@ -604,12 +604,41 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isSkipRaceDisabled).toBeTrue();
       expect(component.isAddLapDisabled).toBeTrue();
       expect(component.isModifyDisabled).toBeTrue();
+      expect(component.isSaveDisabled).toBeTrue();
     });
 
     it("should not execute action in onMenuSelect for disabled items if user is a viewer", () => {
       mockDataService.startRace.calls.reset();
       component.onMenuSelect("START_RESUME");
       expect(mockDataService.startRace).not.toHaveBeenCalled();
+    });
+
+    it("should hide the teammate select pulldown for viewer role", () => {
+      mockSettings.racedayColumns = ["driver.name"];
+      (component as any).loadColumns();
+
+      const mockHdWithTeam = {
+        objectId: "hd-team",
+        laneIndex: 0,
+        driver: { name: "Team Driver", entity_id: "driver1" },
+        participant: {
+          team: {
+            name: "Team A",
+            driverIds: ["driver1", "driver2"],
+          },
+        },
+        currentLapSegments: [],
+      };
+      component["sortedHeatDrivers"] = [mockHdWithTeam as any];
+      component["allDrivers"] = [
+        { entity_id: "driver1", name: "Team Driver" },
+        { entity_id: "driver2", name: "Teammate" },
+      ] as any;
+
+      fixture.detectChanges();
+
+      const select = fixture.nativeElement.querySelector(".teammate-select");
+      expect(select).toBeFalsy();
     });
   });
 
