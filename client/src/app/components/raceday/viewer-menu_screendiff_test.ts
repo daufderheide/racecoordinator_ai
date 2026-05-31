@@ -119,4 +119,84 @@ test.describe("Viewer Race Director Menu", () => {
       maxDiffPixels: 0,
     });
   });
+
+  test("should display disabled save option in file menu for viewer", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await expect(page.locator(".scalable-content")).toBeVisible();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Viewer GP",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Driver 1",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              driver: {
+                objectId: "rp1",
+                driver: {
+                  model: { entityId: "d1" },
+                  name: "Driver 1",
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    // 1. Open the File menu dropdown (the first top-level menu button)
+    const fileMenuButton = page.locator(".menu-button-top").first();
+    await expect(fileMenuButton).toBeVisible();
+    await fileMenuButton.dispatchEvent("click");
+
+    // 2. Wait for the menu dropdown to be visible
+    const dropdown = page.locator(".menu-dropdown").first();
+    await expect(dropdown).toBeVisible();
+
+    await page.waitForTimeout(500);
+
+    // 3. Take a screenshot to verify disabled Save option
+    await expect(page).toHaveScreenshot("raceday-viewer-file-menu.png", {
+      maxDiffPixelRatio: 0.001,
+      maxDiffPixels: 0,
+    });
+  });
 });
