@@ -152,7 +152,7 @@ public class ClientSubscriptionManager {
         sessions.size(),
         raceDataSubscribers.size());
 
-    checkAndStopRace();
+    checkAndStopRace(false);
   }
 
   public synchronized void addInterfaceSession(WsContext ctx) {
@@ -174,7 +174,7 @@ public class ClientSubscriptionManager {
         sessions.size(),
         interfaceSubscribers.size());
     checkAndCloseProtocol();
-    checkAndStopRace();
+    checkAndStopRace(false);
   }
 
   private synchronized void checkAndCloseProtocol() {
@@ -210,22 +210,26 @@ public class ClientSubscriptionManager {
       raceDataSubscribers.remove(ctx);
       logger.info(
           "Client unsubscribed from race data. Subscribers: {}", raceDataSubscribers.size());
-      checkAndStopRace();
+      checkAndStopRace(true);
     }
   }
 
-  private synchronized void checkAndStopRace() {
-    if (currentRace != null && sessions.isEmpty()) {
+  private synchronized void checkAndStopRace(boolean explicitUnsubscribe) {
+    if (currentRace != null && !hasDirectorSubscribers()) {
       if (!isShuttingDown) {
         // If there are NO sessions at all (not even splash screen), we should stop quickly
         long gracePeriod =
-            sessions.isEmpty() ? Math.min(1, cleanupGracePeriodSeconds) : cleanupGracePeriodSeconds;
+            explicitUnsubscribe
+                ? 0
+                : (sessions.isEmpty()
+                    ? Math.min(1, cleanupGracePeriodSeconds)
+                    : cleanupGracePeriodSeconds);
 
         if (gracePeriod <= 0) {
           performCleanup();
         } else if (cleanupFuture == null || cleanupFuture.isDone()) {
           logger.info(
-              "No subscribers left (Sessions: {}). Scheduling race cleanup in {} seconds...",
+              "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
               sessions.size(),
               gracePeriod);
           cleanupFuture =
@@ -243,9 +247,18 @@ public class ClientSubscriptionManager {
   }
 
   private synchronized void performCleanup() {
-    if (raceDataSubscribers.isEmpty() && currentRace != null) {
+    if (!hasDirectorSubscribers() && currentRace != null) {
       logger.info(
-          "Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
+          "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
+      deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      setRace(null);
+    }
+  }
+
+  public synchronized void forceStopRace() {
+    if (currentRace != null) {
+      logger.info("Force stopping current race via explicit command.");
+      cancelPendingCleanup();
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
     }

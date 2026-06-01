@@ -47,6 +47,7 @@ const protoFiles = [
   "../server/proto/client/skip_heat.proto",
   "../server/proto/client/defer_heat.proto",
   "../server/proto/client/modify_heats.proto",
+  "../server/proto/client/end_race.proto",
   "../server/proto/client/race_subscription.proto",
   "../server/proto/client/arduino_config.proto",
   "../server/proto/client/lane_model.proto",

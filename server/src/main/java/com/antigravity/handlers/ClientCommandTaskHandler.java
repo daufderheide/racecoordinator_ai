@@ -10,6 +10,8 @@ import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
 import com.antigravity.proto.DeferHeatResponse;
+import com.antigravity.proto.EndRaceRequest;
+import com.antigravity.proto.EndRaceResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
@@ -88,6 +90,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/initialize-race", this::initializeRace, Role.DIRECTOR);
     app.post("/api/start-race", this::startRace, Role.DIRECTOR);
     app.post("/api/pause-race", this::pauseRace, Role.DIRECTOR);
+    app.post("/api/end-race", this::endRace, Role.DIRECTOR);
     app.post("/api/next-heat", this::nextHeat, Role.DIRECTOR);
     app.post("/api/restart-heat", this::restartHeat, Role.DIRECTOR);
     app.post("/api/skip-heat", this::skipHeat, Role.DIRECTOR);
@@ -425,6 +428,24 @@ public class ClientCommandTaskHandler {
       }
     } catch (Exception e) {
       logger.error("Error processing pauseRace", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  void endRace(Context ctx) {
+    try {
+      EndRaceRequest.parseFrom(ctx.bodyAsBytes()); // Validate payload
+      logger.info("End race requested via HTTP API.");
+      ClientSubscriptionManager.getInstance().forceStopRace();
+
+      EndRaceResponse response =
+          EndRaceResponse.newBuilder()
+              .setSuccess(true)
+              .setMessage("Race ended successfully")
+              .build();
+      ctx.contentType("application/octet-stream").result(response.toByteArray());
+    } catch (Exception e) {
+      logger.error("Error processing endRace", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

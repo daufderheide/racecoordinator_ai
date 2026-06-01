@@ -70,6 +70,11 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
   showDeleteConfirm: boolean = false;
   isLaneSummaryExpanded = true;
 
+  // Race State
+  isRaceRunning: boolean = false;
+  showTrackEditorPrompt: boolean = false;
+  pendingTrackAction: "edit" | "create" | null = null;
+
   // Connection Monitoring
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
@@ -96,6 +101,13 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
     this.monitorConnection();
     this.loadTracks();
     this.raceConnectionService.connect();
+
+    this.dataService.getSystemState().subscribe((state) => {
+      if (state) {
+        this.isRaceRunning = state.resourceLockState === "RACE_RUNNING";
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -216,9 +228,19 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
 
   editTrack() {
     if (!this.selectedTrack) return;
+    if (this.isRaceRunning) {
+      this.pendingTrackAction = "edit";
+      this.showTrackEditorPrompt = true;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.proceedWithEditTrack();
+  }
+
+  private proceedWithEditTrack() {
     this.router.navigate(["/track-editor"], {
       queryParams: {
-        id: this.selectedTrack.entity_id,
+        id: this.selectedTrack!.entity_id,
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
@@ -227,6 +249,16 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
 
   createNewTrack() {
     if (this.isSaving) return;
+    if (this.isRaceRunning) {
+      this.pendingTrackAction = "create";
+      this.showTrackEditorPrompt = true;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.proceedWithCreateTrack();
+  }
+
+  private proceedWithCreateTrack() {
     this.isSaving = true;
 
     this.dataService.getTrackFactorySettings().subscribe({
@@ -264,6 +296,36 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
         this.isSaving = false;
       },
     });
+  }
+
+  onConfirmTrackEditor() {
+    this.showTrackEditorPrompt = false;
+    this.dataService.endRace().subscribe({
+      next: (success) => {
+        if (success) {
+          this.logger.info(
+            "Race ended successfully, proceeding to track editor",
+          );
+          if (this.pendingTrackAction === "edit") {
+            this.proceedWithEditTrack();
+          } else if (this.pendingTrackAction === "create") {
+            this.proceedWithCreateTrack();
+          }
+        } else {
+          this.logger.warn("Failed to end race");
+        }
+        this.pendingTrackAction = null;
+      },
+      error: (err) => {
+        this.logger.error("Error ending race", err);
+        this.pendingTrackAction = null;
+      },
+    });
+  }
+
+  onCancelTrackEditor() {
+    this.showTrackEditorPrompt = false;
+    this.pendingTrackAction = null;
   }
 
   private generateUniqueName(baseName: string): string {

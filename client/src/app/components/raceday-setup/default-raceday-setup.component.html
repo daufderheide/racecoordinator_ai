@@ -692,23 +692,45 @@
         </div>
 
         <div class="action-footer" id="race-controls">
-          <button
-            class="btn-start"
-            (click)="startRace(false)"
-            [disabled]="selectedParticipants.length === 0"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
-            </svg>
-            {{ "RDS_BTN_START_RACE" | translate }}
-          </button>
-          <button
-            class="btn-demo"
-            (click)="startRace(true)"
-            [disabled]="selectedParticipants.length === 0"
-          >
-            <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
-          </button>
+          @if (isRaceRunning) {
+            <button class="btn-start" (click)="joinRace()">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
+              </svg>
+              {{ "RDS_BTN_JOIN_RACE" | translate }}
+            </button>
+            <button class="btn-demo" (click)="promptEndRace()">
+              <span>{{ "RDS_BTN_END_RACE" | translate }}</span>
+            </button>
+          } @else {
+            <button
+              class="btn-start"
+              (click)="startRace(false)"
+              [disabled]="selectedParticipants.length === 0"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
+              </svg>
+              {{ "RDS_BTN_START_RACE" | translate }}
+            </button>
+            <button
+              class="btn-demo"
+              (click)="startRace(true)"
+              [disabled]="selectedParticipants.length === 0"
+            >
+              <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
+            </button>
+          }
         </div>
       </div>
     </div>
@@ -796,3 +818,27 @@
   (cancel)="onDemoConfigCancel()"
 >
 </app-demo-config-modal>
+
+<!-- End Race Prompt Modal -->
+<app-confirmation-modal
+  [visible]="showEndRacePrompt"
+  title="RDS_END_RACE_TITLE"
+  message="RDS_PROMPT_END_RACE"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmEndRace()"
+  (cancel)="onCancelEndRace()"
+>
+</app-confirmation-modal>
+
+<!-- Track Editor Prompt Modal -->
+<app-confirmation-modal
+  [visible]="showTrackEditorPrompt"
+  title="RDS_TRACK_EDITOR_TITLE"
+  message="RDS_PROMPT_TRACK_EDITOR_RACE_RUNNING"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmTrackEditor()"
+  (cancel)="onCancelTrackEditor()"
+>
+</app-confirmation-modal>

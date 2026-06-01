@@ -41,6 +41,7 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     "getRecordData",
     "getRaceFlag",
     "getDrivers",
+    "getSystemState",
   ]);
   mock.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
   mock.getRaceUpdate = jasmine
@@ -74,6 +75,9 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     .createSpy("getRaceFlag")
     .and.returnValue(new Subject().asObservable());
   mock.getDrivers = jasmine.createSpy("getDrivers").and.returnValue(of([]));
+  mock.getSystemState = jasmine
+    .createSpy("getSystemState")
+    .and.returnValue(of(null));
 
   mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACK_INSTANCES)));
   mock.deleteTrack.and.returnValue(of(true));

@@ -21,6 +21,7 @@ public class StartingStateTest {
   private ServerConfigService configService;
   private ClientSubscriptionManager manager;
   private RaceParticipant mockParticipant;
+  private DatabaseContext mockDbCtx;
 
   @Before
   public void setUp() {
@@ -37,12 +38,21 @@ public class StartingStateTest {
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder().withStartTime(1.0).withRestartTime(2.0).build();
 
+    mockDbCtx = mock(DatabaseContext.class);
+    com.mongodb.client.MongoDatabase mockDb = mock(com.mongodb.client.MongoDatabase.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mockDb);
+    com.mongodb.client.MongoCollection mockCollection =
+        mock(com.mongodb.client.MongoCollection.class);
+    com.mongodb.client.FindIterable mockIterable = mock(com.mongodb.client.FindIterable.class);
+    when(mockDb.getCollection(anyString(), any())).thenReturn(mockCollection);
+    when(mockCollection.find(any(org.bson.conversions.Bson.class))).thenReturn(mockIterable);
+
     race =
         new Race.Builder()
             .model(raceModel)
             .track(track)
             .drivers(Collections.singletonList(mockParticipant))
-            .databaseContext(mock(DatabaseContext.class))
+            .databaseContext(mockDbCtx)
             .isDemoMode(true)
             .build();
 
@@ -103,7 +113,7 @@ public class StartingStateTest {
             .model(raceModelWithDelay)
             .track(race.getTrack())
             .drivers(race.getDrivers())
-            .databaseContext(mock(DatabaseContext.class))
+            .databaseContext(mockDbCtx)
             .isDemoMode(true)
             .build();
     manager.setRace(race);
@@ -136,7 +146,7 @@ public class StartingStateTest {
             .model(hotStartModel)
             .track(race.getTrack())
             .drivers(race.getDrivers())
-            .databaseContext(mock(DatabaseContext.class))
+            .databaseContext(mockDbCtx)
             .isDemoMode(true)
             .build();
     manager.setRace(race);
@@ -161,7 +171,7 @@ public class StartingStateTest {
             .model(hotStartModel)
             .track(race.getTrack())
             .drivers(race.getDrivers())
-            .databaseContext(mock(DatabaseContext.class))
+            .databaseContext(mockDbCtx)
             .isDemoMode(true)
             .build();
     manager.setRace(race);

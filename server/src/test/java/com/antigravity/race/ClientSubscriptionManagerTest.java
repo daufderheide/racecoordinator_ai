@@ -373,4 +373,33 @@ public class ClientSubscriptionManagerTest {
   private static void assertFalse(String message, boolean condition) {
     org.junit.Assert.assertFalse(message, condition);
   }
+
+  @Test
+  public void testForceStopRace() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder().withName("Race").withEntityId("testId").build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.createSnapshot()).thenReturn(RaceData.getDefaultInstance());
+    when(mockRace.getState()).thenReturn(mock(IRaceState.class));
+
+    manager.setRace(mockRace);
+
+    // Mock database context
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mock(com.mongodb.client.MongoDatabase.class));
+    manager.setDatabaseContext(mockDbCtx);
+
+    // Mock an active session
+    WsContext mockContext = mock(WsContext.class);
+    Field sessionsField = ClientSubscriptionManager.class.getDeclaredField("sessions");
+    sessionsField.setAccessible(true);
+    ((Set<WsContext>) sessionsField.get(manager)).add(mockContext);
+
+    // Call force stop
+    manager.forceStopRace();
+
+    assertNull("Race should be immediately cleared by forceStopRace", manager.getRace());
+  }
 }
