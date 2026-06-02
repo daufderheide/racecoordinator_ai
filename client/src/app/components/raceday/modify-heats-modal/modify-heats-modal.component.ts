@@ -370,17 +370,14 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.raceConnectionService.disconnect();
 
-    const allStarted =
-      this.localHeats.length > 0 &&
-      this.localHeats.every((h) => this.isHeatStarted(h));
-    if (allStarted) {
-      this.dataService.finalizeModifyHeats().subscribe({
-        next: () =>
-          this.logger.debug("Modify heats finalized successfully on server"),
-        error: (err) =>
-          this.logger.error("Failed to finalize modify heats on server", err),
-      });
-    }
+    // Always finalize on exit so the server can reconcile race state
+    // (e.g. advance past already-completed heats, or transition to RaceOver).
+    this.dataService.finalizeModifyHeats().subscribe({
+      next: () =>
+        this.logger.debug("Modify heats finalized successfully on server"),
+      error: (err) =>
+        this.logger.error("Failed to finalize modify heats on server", err),
+    });
   }
 
   protected getParticipantName = getParticipantName;

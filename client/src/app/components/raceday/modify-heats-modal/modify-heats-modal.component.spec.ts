@@ -1287,4 +1287,46 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["localParticipants"][2].objectId).toBe("p2");
     });
   });
+
+  describe("ngOnDestroy finalization", () => {
+    it("should always call finalizeModifyHeats when destroyed", () => {
+      // Setup with no started heats
+      const heat1 = new Heat("h1", 1, [], [], false);
+      const heat2 = new Heat("h2", 2, [], [], false);
+      component["localHeats"] = [heat1, heat2];
+
+      fixture.detectChanges();
+
+      // Destroy the component
+      fixture.destroy();
+
+      expect(mockDataService.finalizeModifyHeats).toHaveBeenCalled();
+    });
+
+    it("should call finalizeModifyHeats even when all heats are started", () => {
+      // Setup with all started heats
+      const heat1 = new Heat("h1", 1, [], [], true);
+      component["localHeats"] = [heat1];
+      fixture.componentRef.setInput("raceStateInput", RaceState.HEAT_OVER);
+
+      fixture.detectChanges();
+
+      fixture.destroy();
+
+      expect(mockDataService.finalizeModifyHeats).toHaveBeenCalled();
+    });
+
+    it("should call finalizeModifyHeats when some heats started and some not", () => {
+      // Setup with mixed started/unstarted heats (the original bug scenario)
+      const heat1 = new Heat("h1", 1, [], [], true); // started
+      const heat2 = new Heat("h2", 2, [], [], false); // not started
+      component["localHeats"] = [heat1, heat2];
+
+      fixture.detectChanges();
+
+      fixture.destroy();
+
+      expect(mockDataService.finalizeModifyHeats).toHaveBeenCalled();
+    });
+  });
 });

@@ -45,6 +45,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.OverallStandings;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.AnalyticsService;
@@ -1253,15 +1254,29 @@ public class ClientCommandTaskHandler {
       }
 
       boolean allStarted = !race.getHeats().isEmpty();
+      Heat firstUnstarted = null;
       for (Heat h : race.getHeats()) {
         if (!h.isStarted()) {
           allStarted = false;
-          break;
+          if (firstUnstarted == null) {
+            firstUnstarted = h;
+          }
         }
       }
 
       if (allStarted && !(race.getState() instanceof RaceOver)) {
         race.changeState(new RaceOver());
+      } else if (race.getCurrentHeat() != null
+          && race.getCurrentHeat().isStarted()
+          && race.getState() instanceof NotStarted) {
+        // Safety net: current heat is already completed but state allows re-starting it.
+        // Advance to the first unstarted heat, or transition to RaceOver if none.
+        if (firstUnstarted != null) {
+          race.setCurrentHeat(firstUnstarted);
+          race.broadcast(race.createSnapshot());
+        } else {
+          race.changeState(new RaceOver());
+        }
       }
       ctx.status(200).result("OK");
     } catch (Exception e) {

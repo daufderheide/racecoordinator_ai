@@ -554,11 +554,14 @@ public class RaceModifyHeatsTest {
     ModifyHeatsResponse response = testRace.modifyHeats(request);
 
     assertTrue("Modify heats should succeed", response.getSuccess());
+
+    // 3. modifyHeats is auto-save during editing — it should NOT change state.
+    //    State reconciliation is deferred to finalizeModifyHeats (when user navigates away).
     assertFalse(
-        "Race should NOT immediately transition to RaceOver during modification",
+        "Race should NOT transition to RaceOver during modification (deferred to finalize)",
         testRace.getState() instanceof com.antigravity.race.states.RaceOver);
 
-    // 3. Verify finalization logic transitions it to RaceOver
+    // 4. Verify that all remaining heats are started (precondition for finalize to transition)
     boolean allStarted = !testRace.getHeats().isEmpty();
     for (Heat h : testRace.getHeats()) {
       if (!h.isStarted()) {
@@ -567,10 +570,6 @@ public class RaceModifyHeatsTest {
       }
     }
     assertTrue("All remaining heats are started", allStarted);
-    testRace.changeState(new com.antigravity.race.states.RaceOver());
-    assertTrue(
-        "Race should transition to RaceOver after finalization check",
-        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
   }
 
   @Test
@@ -605,5 +604,172 @@ public class RaceModifyHeatsTest {
       }
     }
     assertFalse("Not all heats are started", allStarted);
+  }
+
+  // ---- Tests for finalizeModifyHeats reconciliation logic ----
+  // These simulate the server-side reconciliation that runs when the user
+  // navigates away from the modify heats page.
+
+  /**
+   * Simulates the reconciliation logic from ClientCommandTaskHandler.finalizeModifyHeats(). This
+   * mirrors the server code so we can test state transitions without HTTP plumbing.
+   */
+  private void simulateFinalizeModifyHeats(com.antigravity.race.Race race) {
+    boolean allStarted = !race.getHeats().isEmpty();
+    Heat firstUnstarted = null;
+    for (Heat h : race.getHeats()) {
+      if (!h.isStarted()) {
+        allStarted = false;
+        if (firstUnstarted == null) {
+          firstUnstarted = h;
+        }
+      }
+    }
+
+    if (allStarted && !(race.getState() instanceof com.antigravity.race.states.RaceOver)) {
+      race.changeState(new com.antigravity.race.states.RaceOver());
+    } else if (race.getCurrentHeat() != null
+        && race.getCurrentHeat().isStarted()
+        && race.getState() instanceof com.antigravity.race.states.NotStarted) {
+      if (firstUnstarted != null) {
+        race.setCurrentHeat(firstUnstarted);
+      } else {
+        race.changeState(new com.antigravity.race.states.RaceOver());
+      }
+    }
+  }
+
+  @Test
+  public void testFinalize_CurrentHeatStarted_AdvancesToFirstUnstartedHeat() {
+    // Scenario: Heat 1 is started, heat 2 is unstarted, current heat points to heat 1
+    // (e.g. after modifying heats where the current heat index landed on a completed heat)
+    testRace.getHeats().get(0).setStarted(true);
+    testRace.setCurrentHeat(testRace.getHeats().get(0)); // On started heat 1
+
+    // State is NotStarted (as if user advanced past heat 1, then heats were modified)
+    assertTrue(
+        "Precondition: race should be in NotStarted",
+        testRace.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    simulateFinalizeModifyHeats(testRace);
+
+    // Should advance to heat 2 (the first unstarted heat)
+    assertFalse(
+        "Race should NOT be in RaceOver",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+    assertEquals("Current heat should be heat 2", 2, testRace.getCurrentHeat().getHeatNumber());
+    assertFalse("Current heat should NOT be started", testRace.getCurrentHeat().isStarted());
+  }
+
+  @Test
+  public void testFinalize_AllHeatsStarted_TransitionsToRaceOver() {
+    // Scenario: All heats are started, current heat points to a started heat
+    testRace.getHeats().get(0).setStarted(true);
+    testRace.getHeats().get(1).setStarted(true);
+    testRace.setCurrentHeat(testRace.getHeats().get(0));
+
+    simulateFinalizeModifyHeats(testRace);
+
+    assertTrue(
+        "Race should transition to RaceOver",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+  }
+
+  @Test
+  public void testFinalize_CurrentHeatNotStarted_NoStateChange() {
+    // Scenario: Current heat is unstarted — no reconciliation needed
+    testRace.setCurrentHeat(testRace.getHeats().get(0));
+    assertFalse("Precondition: heat should not be started", testRace.getCurrentHeat().isStarted());
+
+    simulateFinalizeModifyHeats(testRace);
+
+    assertTrue(
+        "Race should remain in NotStarted",
+        testRace.getState() instanceof com.antigravity.race.states.NotStarted);
+    assertEquals(
+        "Current heat should still be heat 1", 1, testRace.getCurrentHeat().getHeatNumber());
+  }
+
+  @Test
+  public void testFinalize_ReproduceBugScenario_AdvancesToNewHeat() {
+    // Full reproduction of the original bug:
+    // 1. Run heat 1 (mark as started)
+    // 2. Advance to heat 2 (don't start it)
+    // 3. Modify heats: delete heat 2, add new heat 3
+    // 4. After modification, current heat lands on started heat 1
+    // 5. Finalize should advance to unstarted heat 3
+
+    // Step 1: Heat 1 is started
+    testRace.getHeats().get(0).setStarted(true);
+
+    // Step 3: Modify heats - delete heat 2, add heat 3
+    List<DriverHeatData> heat3Drivers = new ArrayList<>();
+    heat3Drivers.add(new DriverHeatData(participants.get(2)));
+    heat3Drivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
+    Heat heat3 = new Heat(2, heat3Drivers, raceModel.getHeatScoring());
+    heat3.setObjectId("heat3");
+
+    ModifyHeatsRequest request =
+        createRequest(participants, Arrays.asList(testRace.getHeats().get(0), heat3));
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+    assertTrue("Modify heats should succeed", response.getSuccess());
+
+    // Step 4: Verify current heat is the started heat 1
+    // (finalizeModification sets it based on previous heat number)
+    assertTrue(
+        "Precondition: current heat should be started", testRace.getCurrentHeat().isStarted());
+
+    // State is still NotStarted (never changed during modification)
+    assertTrue(
+        "Precondition: race should be in NotStarted",
+        testRace.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    // Step 5: Finalize (user navigates away from modify heats page)
+    simulateFinalizeModifyHeats(testRace);
+
+    // Should advance to heat 2 (the new unstarted heat, formerly heat3)
+    assertFalse(
+        "Race should NOT be in RaceOver",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+    assertFalse("Current heat should NOT be started", testRace.getCurrentHeat().isStarted());
+    assertEquals(
+        "Current heat should be heat 2 (the new unstarted heat)",
+        2,
+        testRace.getCurrentHeat().getHeatNumber());
+  }
+
+  @Test
+  public void testFinalize_OnlyStartedHeatRemaining_TransitionsToRaceOver() {
+    // Scenario from original bug but without regenerating:
+    // Heat 1 started, all other heats deleted, no new heats added
+    testRace.getHeats().get(0).setStarted(true);
+
+    // Delete heat 2, keep only started heat 1
+    ModifyHeatsRequest request =
+        createRequest(participants, Collections.singletonList(testRace.getHeats().get(0)));
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+    assertTrue("Modify heats should succeed", response.getSuccess());
+
+    // Finalize should detect all heats are started and transition to RaceOver
+    simulateFinalizeModifyHeats(testRace);
+
+    assertTrue(
+        "Race should transition to RaceOver when only started heats remain",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
+  }
+
+  @Test
+  public void testFinalize_StateNotNotStarted_NoReconciliation() {
+    // If race is already in RaceOver or another state, finalize should not change anything
+    testRace.getHeats().get(0).setStarted(true);
+    testRace.setCurrentHeat(testRace.getHeats().get(0));
+    testRace.changeState(new com.antigravity.race.states.RaceOver());
+
+    // Calling finalize again should be a no-op (already RaceOver)
+    simulateFinalizeModifyHeats(testRace);
+
+    assertTrue(
+        "Race should remain in RaceOver",
+        testRace.getState() instanceof com.antigravity.race.states.RaceOver);
   }
 }
