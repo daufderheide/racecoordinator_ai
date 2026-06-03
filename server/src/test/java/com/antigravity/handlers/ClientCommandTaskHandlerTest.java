@@ -109,6 +109,7 @@ public class ClientCommandTaskHandlerTest {
 
     // Clear subscription manager
     ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
 
     handler = new ClientCommandTaskHandler(databaseContext, app);
   }
@@ -116,6 +117,7 @@ public class ClientCommandTaskHandlerTest {
   @After
   public void tearDown() {
     ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
   }
 
   @Test
