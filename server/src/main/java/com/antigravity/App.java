@@ -99,7 +99,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.21";
+  public static final String SERVER_VERSION = "0.0.0.22";
 
   static boolean shouldUseEmbeddedMongo(String[] args) {
     boolean useEmbeddedMongo = true;
@@ -477,7 +477,8 @@ public class App {
           ctx -> {
             String path = ctx.path();
 
-            // Skip auth for static files, websocket upgrades (handled separately if needed), and
+            // Skip auth for static files, websocket upgrades (handled separately if
+            // needed), and
             // login
             if (!path.startsWith("/api/")
                 || (path.startsWith("/api/auth/") && !path.startsWith("/api/auth/password"))
