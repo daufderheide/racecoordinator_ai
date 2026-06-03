@@ -22,6 +22,7 @@ import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component
 import { AuthGuard } from "@app/guards/auth.guard";
 import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
 import { RacedayGuard } from "@app/guards/raceday.guard";
+import { Role } from "@app/models/role";
 
 export const routes: Routes = [
   { path: "", redirectTo: "raceday-setup", pathMatch: "full" },
@@ -113,7 +114,7 @@ export const routes: Routes = [
     component: UIEditorComponent,
     canActivate: [AuthGuard],
     canDeactivate: [DirtyCheckGuard],
-    data: { animation: "UIEditorPage" },
+    data: { animation: "UIEditorPage", requiredRole: Role.VIEWER },
   },
   {
     path: "driver-station/:lane",
