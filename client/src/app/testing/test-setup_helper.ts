@@ -1116,7 +1116,6 @@ export class TestSetupHelper {
 
     // Mock heats modification endpoints
     await page.route("**/api/modify-heats", async (route) => {
-      console.log("Mocking **/api/modify-heats");
       // Return a successful ModifyHeatsResponse (success: true)
       // Tag 1 (success) = true (1) -> 08 01
       const buffer = new Uint8Array([0x08, 0x01]);
@@ -1128,7 +1127,6 @@ export class TestSetupHelper {
     });
 
     await page.route("**/api/regenerate-heats", async (route) => {
-      console.log("Mocking **/api/regenerate-heats");
       // Return a successful RegenerateHeatsResponse (success: true)
       // Tag 1 (success) = true (1) -> 08 01
       const buffer = new Uint8Array([0x08, 0x01]);
