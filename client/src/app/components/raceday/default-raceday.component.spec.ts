@@ -1011,6 +1011,16 @@ describe("DefaultRacedayComponent", () => {
     expect(spy).toHaveBeenCalled();
   });
 
+  it("should call cdr.markForCheck when loadRaceData is called", () => {
+    const cdrSpy = spyOn(component["cdr"], "markForCheck");
+    const mockRace = { track: { lanes: [] } };
+    mockRaceService.getRace.and.returnValue(mockRace);
+
+    (component as any).loadRaceData();
+
+    expect(cdrSpy).toHaveBeenCalled();
+  });
+
   it("should render the dynamic track name in the header", () => {
     const trackName = "Test Raceway";
     const mockRace = {

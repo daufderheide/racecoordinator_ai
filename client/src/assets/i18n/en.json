@@ -530,6 +530,8 @@
   "RDS_MENU_RACE": "Races",
   "RDS_MENU_SEASON": "Seasons",
   "RDS_MENU_SERVER": "Server",
+  "RDS_SPLASH_WAIT_SERVER": "Waiting for the server to start up. Please ensure the server is running or change the server address to connect to.",
+  "RDS_SPLASH_WAIT_RACE": "Waiting for a race to start. You can also login as a director to manage the event.",
   "RDS_MENU_TEAM_MANAGER": "Teams",
   "RDS_MENU_TRACK": "Tracks",
   "RDS_MENU_TUTORIAL": "Help Tutorial",

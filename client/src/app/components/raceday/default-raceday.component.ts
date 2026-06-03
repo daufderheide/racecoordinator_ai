@@ -1037,6 +1037,9 @@ export class DefaultRacedayComponent
       this.logger.debug("RacedayComponent: Waiting for race data...");
       // Do not throw error, wait for Race
     }
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
+    }
   }
 
   protected totalHeats: number = 0;

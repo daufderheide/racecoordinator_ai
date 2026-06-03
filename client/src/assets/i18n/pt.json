@@ -530,6 +530,8 @@
   "RDS_MENU_RACE": "Corridas",
   "RDS_MENU_SEASON": "Temporadas",
   "RDS_MENU_SERVER": "Servidor",
+  "RDS_SPLASH_WAIT_SERVER": "Aguardando a inicialização do servidor. Certifique-se de que o servidor está em execução ou altere o endereço do servidor para se conectar.",
+  "RDS_SPLASH_WAIT_RACE": "Aguardando o início de uma corrida. Você também pode fazer login como diretor para gerenciar o evento.",
   "RDS_MENU_TEAM_MANAGER": "Equipas",
   "RDS_MENU_TRACK": "Pistas",
   "RDS_MENU_TUTORIAL": "Tutorial de ajuda",

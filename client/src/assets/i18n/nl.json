@@ -530,6 +530,8 @@
   "RDS_MENU_RACE": "Races",
   "RDS_MENU_SEASON": "Seizoenen",
   "RDS_MENU_SERVER": "Server",
+  "RDS_SPLASH_WAIT_SERVER": "Wachten tot de server is opgestart. Zorg ervoor dat de server actief is of wijzig het serveradres om verbinding te maken.",
+  "RDS_SPLASH_WAIT_RACE": "Wachten tot een race start. U kunt ook inloggen als director om het evenement te beheren.",
   "RDS_MENU_TEAM_MANAGER": "Teams",
   "RDS_MENU_TRACK": "Banen",
   "RDS_MENU_TUTORIAL": "Handleiding",

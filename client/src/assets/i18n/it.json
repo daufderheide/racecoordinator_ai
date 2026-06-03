@@ -530,6 +530,8 @@
   "RDS_MENU_RACE": "Gare",
   "RDS_MENU_SEASON": "Stagioni",
   "RDS_MENU_SERVER": "Server",
+  "RDS_SPLASH_WAIT_SERVER": "In attesa dell'avvio del server. Assicurarsi che il server sia in esecuzione o modificare l'indirizzo del server per connettersi.",
+  "RDS_SPLASH_WAIT_RACE": "In attesa dell'inizio di una gara. È anche possibile accedere come direttore per gestire l'evento.",
   "RDS_MENU_TEAM_MANAGER": "Squadre",
   "RDS_MENU_TRACK": "Piste",
   "RDS_MENU_TUTORIAL": "Tutorial di aiuto",

@@ -77,6 +77,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   isLoading = true;
 
   showSplash = true;
+  splashTimeoutElapsed = false;
+  systemState: any = null;
+  private splashTimeoutTimer: any = null;
   connectionVerified = false;
   minTimeElapsed = false;
   translationsLoaded = false;
@@ -143,6 +146,24 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  get isServerConnected(): boolean {
+    return (
+      this.connectionVerified &&
+      this.connectionMonitor.currentState === ConnectionState.CONNECTED
+    );
+  }
+
+  startSplashTimeoutTimer() {
+    if (this.splashTimeoutTimer) {
+      clearTimeout(this.splashTimeoutTimer);
+    }
+    this.splashTimeoutElapsed = false;
+    this.splashTimeoutTimer = setTimeout(() => {
+      this.splashTimeoutElapsed = true;
+      this.cdr.detectChanges();
+    }, 5000);
+  }
+
   async ngOnInit() {
     this.updateScale();
     this.isLoading = true;
@@ -179,6 +200,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       this.connectionVerified = true;
     } else {
       // Start Splash Screen Logic
+      this.startSplashTimeoutTimer();
 
       const minTimePromise = new Promise<void>((resolve) =>
         setTimeout(() => {
@@ -191,6 +213,12 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       await this.connectionMonitor.waitForConnection();
       this.connectionVerified = true;
       this.refreshServerInfo();
+
+      try {
+        await this.authService.fetchRoleFromServer().toPromise();
+      } catch (err) {
+        this.logger.warn("Failed to fetch role after connecting", err);
+      }
 
       // Wait for the remainder of the 5s (if any)
       await minTimePromise;
@@ -281,9 +309,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
       // Subscribe to system state to know when race starts
       this.dataService.getSystemState().subscribe((state) => {
+        this.systemState = state;
         if (state && state.resourceLockState === "RACE_RUNNING") {
           this.router.navigate(["/raceday"]);
         }
+        this.cdr.detectChanges();
       });
     }
   }
@@ -296,6 +326,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
+    }
+    if (this.splashTimeoutTimer) {
+      clearTimeout(this.splashTimeoutTimer);
     }
   }
 
@@ -354,6 +387,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.showSplash = true;
     this.minTimeElapsed = false;
     this.connectionVerified = false;
+    this.startSplashTimeoutTimer();
     this.cdr.detectChanges();
 
     this.stopQuoteRotation();

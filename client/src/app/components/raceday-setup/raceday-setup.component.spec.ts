@@ -132,6 +132,10 @@ describe("RacedaySetupComponent", () => {
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
     });
+    Object.defineProperty(mockConnectionMonitor, "currentState", {
+      get: () => connectionStateSubject.value,
+      configurable: true,
+    });
 
     mockConnectionMonitor.waitForConnection.and.returnValue(Promise.resolve());
     mockConnectionMonitor.checkConnection.and.returnValue(of(true));
@@ -225,6 +229,79 @@ describe("RacedaySetupComponent", () => {
       expect(component.minTimeElapsed).toBeTrue();
       expect(component.showSplash).toBeFalse();
       expect(mockConnectionMonitor.startMonitoring).toHaveBeenCalled();
+    }));
+
+    it("should set splashTimeoutElapsed to true after 5 seconds and check connection status", fakeAsync(() => {
+      mockConnectionMonitor.waitForConnection.and.returnValue(
+        new Promise(() => {}),
+      ); // Never resolves
+      component.ngOnInit();
+      tick(100);
+      expect(component.splashTimeoutElapsed).toBeFalse();
+      tick(5000);
+      expect(component.splashTimeoutElapsed).toBeTrue();
+      expect(component.isServerConnected).toBeFalse();
+    }));
+
+    it("should set splashTimeoutElapsed to true after 5 seconds and indicate viewer wait if connected but no race is running", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      const systemStateSubject = new BehaviorSubject<any>({
+        resourceLockState: "IDLE",
+      });
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      component.ngOnInit();
+      tick(100);
+      expect(component.connectionVerified).toBeTrue();
+      expect(component.isServerConnected).toBeTrue();
+      tick(5000);
+      expect(component.splashTimeoutElapsed).toBeTrue();
+      expect(component.showSplash).toBeTrue();
+    }));
+
+    it("should render server-down warning message when splash screen times out and server is disconnected", fakeAsync(() => {
+      mockConnectionMonitor.waitForConnection.and.returnValue(
+        new Promise(() => {}),
+      ); // Never resolves
+      Object.defineProperty(mockConnectionMonitor, "currentState", {
+        get: () => ConnectionState.DISCONNECTED,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick(5000);
+      fixture.detectChanges();
+
+      const msgEl = fixture.nativeElement.querySelector(
+        ".splash-status-message.server-down",
+      );
+      expect(msgEl).toBeTruthy();
+      expect(msgEl.textContent.trim()).toBe("RDS_SPLASH_WAIT_SERVER");
+    }));
+
+    it("should render viewer-wait warning message when splash screen times out and role is viewer with no race running", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      const systemStateSubject = new BehaviorSubject<any>({
+        resourceLockState: "IDLE",
+      });
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      fixture.detectChanges();
+      tick(5000);
+      fixture.detectChanges();
+
+      const msgEl = fixture.nativeElement.querySelector(
+        ".splash-status-message.viewer-wait",
+      );
+      expect(msgEl).toBeTruthy();
+      expect(msgEl.textContent.trim()).toBe("RDS_SPLASH_WAIT_RACE");
     }));
   });
 

@@ -3,9 +3,26 @@
     <div class="splash-screen">
       <div class="splash-content" [style.transform]="'scale(' + scale + ')'">
         @if (translationsLoaded) {
-          <button class="server-config-btn" (click)="toggleServerConfig()">
-            {{ "RDS_MENU_SERVER" | translate }}
-          </button>
+          <div class="server-btn-container">
+            <button class="server-config-btn" (click)="toggleServerConfig()">
+              {{ "RDS_MENU_SERVER" | translate }}
+            </button>
+            @if (showSplash && splashTimeoutElapsed) {
+              @if (!isServerConnected) {
+                <div class="splash-status-message server-down">
+                  {{ "RDS_SPLASH_WAIT_SERVER" | translate }}
+                </div>
+              } @else if (
+                authService.currentRole === Role.VIEWER &&
+                (!systemState ||
+                  systemState.resourceLockState !== "RACE_RUNNING")
+              ) {
+                <div class="splash-status-message viewer-wait">
+                  {{ "RDS_SPLASH_WAIT_RACE" | translate }}
+                </div>
+              }
+            }
+          </div>
         }
         @if (translationsLoaded) {
           @if (currentQuoteKey) {
