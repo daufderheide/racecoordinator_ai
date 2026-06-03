@@ -79,6 +79,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "restartHeat",
     "deferHeat",
     "skipHeat",
+    "getSystemState",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
@@ -108,6 +109,10 @@ export function createRacedayMocks(overrides: any = {}) {
   );
   mockDataService.getAssetUrl.and.callFake(
     (id: string) => `/api/assets/download/${id}`,
+  );
+  mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
+  mockDataService.getSystemState.and.returnValue(
+    new BehaviorSubject<any>({ resourceLockState: "ACTIVE" }),
   );
   mockDataService.serverUrl = "http://localhost/";
   mockDataService.socketConnected$ = of(true);

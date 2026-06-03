@@ -2840,4 +2840,71 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isWindowsMenuOpen).toBeFalse();
     });
   });
+
+  describe("Race Ended and Exit Behavior", () => {
+    it("should show acknowledgement modal when system state resourceLockState becomes IDLE", () => {
+      fixture.detectChanges();
+      const systemStateSubject = mockDataService.getSystemState();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.raceHasEnded).toBeFalse();
+
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(component.raceHasEnded).toBeTrue();
+      expect(component.showExitConfirmation).toBeFalse();
+      expect(component.showSkipHeatConfirmation).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should allow deactivation immediately if forceExit is true", () => {
+      fixture.detectChanges();
+      component.forceExit = true;
+      component.raceHasEnded = true;
+
+      const result = component.canDeactivate();
+      expect(result).toBeTrue();
+    });
+
+    it("should block deactivation and show acknowledgement modal when race has ended and forceExit is false", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const result = component.canDeactivate();
+      expect(result).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.showAckModal = true;
+      component.forceExit = false;
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.forceExit).toBeTrue();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = false;
+      component.forceExit = false;
+
+      const result = component.canDeactivate();
+      // Returns deactivateSubject observable under normal conditions
+      expect(result).toBeDefined();
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
+    });
+  });
 });

@@ -362,6 +362,8 @@ export class DefaultRacedayComponent
   ackModalTitle = "";
   ackModalMessage = "";
   ackModalButtonText = "ACK_MODAL_BTN_OK";
+  raceHasEnded = false;
+  forceExit = false;
 
   public Role = Role;
   showLoginModal = false;
@@ -401,6 +403,21 @@ export class DefaultRacedayComponent
 
   ngOnInit() {
     this.loadColumns();
+
+    this.subscriptions.push(
+      this.dataService.getSystemState().subscribe((state) => {
+        if (state && state.resourceLockState === "IDLE") {
+          this.raceHasEnded = true;
+          this.showExitConfirmation = false;
+          this.showSkipHeatConfirmation = false;
+          this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+          this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+          this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
+          this.showAckModal = true;
+          this.cdr.markForCheck();
+        }
+      }),
+    );
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();
@@ -829,6 +846,10 @@ export class DefaultRacedayComponent
 
   onAcknowledgeModal() {
     this.showAckModal = false;
+    if (this.raceHasEnded) {
+      this.forceExit = true;
+      this.router.navigate(["/raceday-setup"]);
+    }
   }
 
   onExitConfirm() {
@@ -866,6 +887,19 @@ export class DefaultRacedayComponent
   canDeactivate(
     nextState?: RouterStateSnapshot,
   ): Observable<boolean> | Promise<boolean> | boolean {
+    if (this.forceExit) {
+      return true;
+    }
+    if (this.raceHasEnded) {
+      this.showExitConfirmation = false;
+      this.showSkipHeatConfirmation = false;
+      this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+      this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+      this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
+      this.showAckModal = true;
+      this.cdr.markForCheck();
+      return false;
+    }
     if (nextState) {
       if (
         nextState.url.includes("/modify-heats") ||
