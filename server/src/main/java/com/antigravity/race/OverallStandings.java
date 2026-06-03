@@ -300,7 +300,7 @@ public class OverallStandings {
 
     return Comparator.<RaceParticipant, Boolean>comparing(
             p -> p.getDriver() != null && p.getDriver().isEmpty())
-        .thenComparing(comparator.thenComparing(getTieBreakerComparator()));
+        .thenComparing(comparator.thenComparing(getTieBreakerComparator()).thenComparingInt(RaceParticipant::getSeed));
   }
 
   private Comparator<RaceParticipant> getTieBreakerComparator() {
