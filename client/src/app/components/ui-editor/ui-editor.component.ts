@@ -33,6 +33,7 @@ import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -86,7 +87,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (from === "modify-heats") {
       return returnUrl || "/default-raceday";
     }
-    return "/raceday-setup";
+    return returnUrl || "/raceday-setup";
   });
 
   backQueryParams = computed(() => {
@@ -217,6 +218,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private translationService: TranslationService,
     private logger: LoggerService,
     private route: ActivatedRoute,
+    private raceConnectionService: RaceConnectionService,
   ) {
     this.undoManager = new UndoManager<UIEditorState>(
       {
@@ -237,6 +239,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
+    this.raceConnectionService.connect();
 
     // Auto-save on changes (like Driver Editor)
     if (this.undoManager) {
@@ -248,6 +251,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    this.raceConnectionService.disconnect();
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }

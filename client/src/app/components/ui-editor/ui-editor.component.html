@@ -4,7 +4,8 @@
 >
   <app-editor-title
     titleKey="UE_TITLE"
-    backRoute="/raceday-setup"
+    [backRoute]="backTargetUrl()"
+    [backQueryParams]="backQueryParams()"
     [undoManager]="undoManager"
   >
   </app-editor-title>

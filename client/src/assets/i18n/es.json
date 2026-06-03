@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Error al cargar la carrera",
   "RD_LOAD_SUCCESS": "Carrera cargada con éxito",
   "RD_MENU_ADD_LAP": "Añadir Vuelta",
+  "RD_MENU_CUSTOMIZE_UI": "Personalizar Interfaz",
   "RD_MENU_DEFER": "Posponer Manga",
   "RD_MENU_DRIVERS_STATION": "Puesto de Piloto",
   "RD_MENU_EDIT_LAPS": "Editar Vueltas",

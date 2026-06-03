@@ -1722,6 +1722,39 @@ describe("DefaultRacedayComponent", () => {
       component.onFileMenuSelect("EXPORT_PDF");
       expect(printService.print).toHaveBeenCalledWith("RaceDay");
     });
+
+    it("should navigate to /ui-editor when CUSTOMIZE_UI is selected", () => {
+      (mockRouter as any).url = "/raceday?someParam=true";
+      component.onFileMenuSelect("CUSTOMIZE_UI");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+    });
+  });
+
+  describe("canDeactivate", () => {
+    it("should allow deactivation when navigating to /ui-editor", () => {
+      const nextState = { url: "/ui-editor" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+    });
+
+    it("should allow deactivation when navigating to /modify-heats", () => {
+      const nextState = { url: "/modify-heats" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+    });
+
+    it("should show exit confirmation and return observable when navigating elsewhere", (done) => {
+      const nextState = { url: "/home" } as any;
+      const result = component.canDeactivate(nextState) as any;
+      expect(component.showExitConfirmation).toBeTrue();
+      result.subscribe((val: boolean) => {
+        expect(val).toBeTrue();
+        done();
+      });
+      component.onExitConfirm();
+    });
   });
 
   describe("getCurrentFlagUrl", () => {

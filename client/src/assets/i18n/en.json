@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Failed to load race",
   "RD_LOAD_SUCCESS": "Race loaded successfully",
   "RD_MENU_ADD_LAP": "Add Lap/Sections",
+  "RD_MENU_CUSTOMIZE_UI": "Customize UI",
   "RD_MENU_DEFER": "Defer Heat",
   "RD_MENU_DRIVERS_STATION": "Drivers Station",
   "RD_MENU_EDIT_LAPS": "Edit Laps",

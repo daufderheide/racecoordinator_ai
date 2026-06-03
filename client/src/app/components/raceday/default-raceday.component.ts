@@ -896,7 +896,8 @@ export class DefaultRacedayComponent
       if (
         nextState.url.includes("/modify-heats") ||
         nextState.url.includes("/team-manager") ||
-        nextState.url.includes("/driver-manager")
+        nextState.url.includes("/driver-manager") ||
+        nextState.url.includes("/ui-editor")
       ) {
         return true;
       }
@@ -1584,6 +1585,11 @@ export class DefaultRacedayComponent
       this.exportToCsv();
     } else if (action === "EXPORT_PDF") {
       this.printService.print("RaceDay"); // Screen View only as requested
+    } else if (action === "CUSTOMIZE_UI") {
+      const returnUrl = this.router.url.split("?")[0];
+      this.router.navigate(["/ui-editor"], {
+        queryParams: { returnUrl },
+      });
     } else if (action === "SAVE") {
       this.saveRace();
     }

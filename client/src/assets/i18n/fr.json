@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Échec du chargement de la course",
   "RD_LOAD_SUCCESS": "Course chargée avec succès",
   "RD_MENU_ADD_LAP": "Ajouter Tour",
+  "RD_MENU_CUSTOMIZE_UI": "Personnaliser l'interface",
   "RD_MENU_DEFER": "Reporter Manche",
   "RD_MENU_DRIVERS_STATION": "Poste de Pilotage",
   "RD_MENU_EDIT_LAPS": "Éditer Tours",

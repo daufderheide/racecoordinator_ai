@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Impossibile caricare la gara",
   "RD_LOAD_SUCCESS": "Gara caricata con successo",
   "RD_MENU_ADD_LAP": "Aggiungi Giro",
+  "RD_MENU_CUSTOMIZE_UI": "Personalizza Interfaccia",
   "RD_MENU_DEFER": "Rinvia Manche",
   "RD_MENU_DRIVERS_STATION": "Postazione Pilota",
   "RD_MENU_EDIT_LAPS": "Modifica Giri",

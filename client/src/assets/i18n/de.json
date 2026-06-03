@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Fehler beim Laden des Rennens",
   "RD_LOAD_SUCCESS": "Rennen erfolgreich geladen",
   "RD_MENU_ADD_LAP": "Runde hinzufügen",
+  "RD_MENU_CUSTOMIZE_UI": "Benutzeroberfläche anpassen",
   "RD_MENU_DEFER": "Heat verschieben",
   "RD_MENU_DRIVERS_STATION": "Fahrerstand",
   "RD_MENU_EDIT_LAPS": "Runden bearbeiten",

@@ -16,6 +16,7 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -195,8 +196,13 @@ describe("UIEditorComponent", () => {
   let mockRouter: any;
   let mockThemeService: any;
   let mockTranslationService: any;
+  let mockRaceConnectionService: any;
 
   beforeEach(async () => {
+    mockRaceConnectionService = jasmine.createSpyObj("RaceConnectionService", [
+      "connect",
+      "disconnect",
+    ]);
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -311,6 +317,7 @@ describe("UIEditorComponent", () => {
         { provide: ThemeService, useValue: mockThemeService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         {
           provide: LoggerService,
           useValue: jasmine.createSpyObj("LoggerService", [

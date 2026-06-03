@@ -645,6 +645,7 @@
   "RD_LOAD_ERROR": "Falha ao carregar a corrida",
   "RD_LOAD_SUCCESS": "Corrida carregada com sucesso",
   "RD_MENU_ADD_LAP": "Adicionar Volta",
+  "RD_MENU_CUSTOMIZE_UI": "Personalizar Interface",
   "RD_MENU_DEFER": "Adiar Bateria",
   "RD_MENU_DRIVERS_STATION": "Posto de Piloto",
   "RD_MENU_EDIT_LAPS": "Editar Voltas",
