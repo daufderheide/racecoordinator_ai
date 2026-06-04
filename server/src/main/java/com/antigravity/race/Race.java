@@ -132,6 +132,24 @@ public class Race implements ProtocolListener {
       recordsManager.resetHeatRecords();
     } else {
       this.heats = new ArrayList<>(builder.heats);
+      // Link the DriverHeatData's driver references to the master driver list in this.drivers.
+      // This is crucial because MongoDB deserialization creates separate instances, causing overall
+      // standings updates to not propagate to the heat's driver objects.
+      java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
+      for (RaceParticipant rp : this.drivers) {
+        masterDrivers.put(rp.getStableId(), rp);
+      }
+      for (Heat heat : this.heats) {
+        for (DriverHeatData dhd : heat.getDrivers()) {
+          if (dhd.getDriver() != null) {
+            RaceParticipant master = masterDrivers.get(dhd.getDriver().getStableId());
+            if (master != null) {
+              dhd.setDriver(master);
+            }
+          }
+        }
+      }
+
       if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
         this.currentHeat = this.heats.get(builder.currentHeatIndex);
       } else if (!this.heats.isEmpty()) {

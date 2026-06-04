@@ -1091,6 +1091,10 @@ public class ClientCommandTaskHandler {
       race.init(); // Open protocols
       AnalyticsService.getInstance().trackRaceStart(race);
 
+      // Broadcast full race state to all current subscribers so they render the loaded race in the
+      // UI.
+      ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
+
       ctx.status(200).result("Race loaded successfully");
     } catch (Exception e) {
       logger.error("Error loading race", e);

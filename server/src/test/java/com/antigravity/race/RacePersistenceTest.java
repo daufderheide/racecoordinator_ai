@@ -115,4 +115,53 @@ public class RacePersistenceTest {
     System.out.println("Expected: D2, Actual: " + dhd2.getActualDriver().getName());
     assertEquals("D2", dhd2.getActualDriver().getName());
   }
+
+  @Test
+  public void testRaceRestorationLinksDriverInstances() {
+    Driver d1 =
+        new Driver(
+            "D1", "Driver One", null, null, null, null, null, null, null, null, null, "d1", null);
+    RaceParticipant masterRp = new RaceParticipant(d1);
+    List<RaceParticipant> masterDrivers = new ArrayList<>();
+    masterDrivers.add(masterRp);
+
+    List<Lane> lanes = new ArrayList<>();
+    lanes.add(new Lane("red", "black", 100, "l1", null));
+    Track track = new Track("Track", lanes, "track1", null);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Race")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(new HeatScoring())
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race1")
+            .build();
+
+    // Create a deserialized Heat where DriverHeatData contains a separate instance of
+    // RaceParticipant with matching stable ID
+    RaceParticipant deserializedRp = new RaceParticipant(d1);
+    // Ensure they are separate objects
+    org.junit.Assert.assertNotSame(masterRp, deserializedRp);
+
+    List<DriverHeatData> heatDrivers = new ArrayList<>();
+    heatDrivers.add(new DriverHeatData(deserializedRp));
+    List<Heat> heats = new ArrayList<>();
+    heats.add(new Heat(1, heatDrivers));
+
+    // Build the race with these heats
+    com.antigravity.race.Race restoredRace =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(masterDrivers)
+            .track(track)
+            .heats(heats)
+            .isDemoMode(true)
+            .build();
+
+    // Verify they are now the same master instance
+    RaceParticipant linkedRp = restoredRace.getHeats().get(0).getDrivers().get(0).getDriver();
+    org.junit.Assert.assertSame(masterRp, linkedRp);
+  }
 }
