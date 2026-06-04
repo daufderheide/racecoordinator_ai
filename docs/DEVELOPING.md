@@ -348,6 +348,10 @@ offline help center becomes available at `http://localhost:7070/help/`.
 
 ## Packaging & Distribution
 
+> For the full release-engineering workflow — version bumping, building all
+> artifacts, publishing a GitHub Release, and deploying the help site — see the
+> [Deployment Guide](DEPLOYMENT.md). The section below is the quick reference.
+
 You can create installable packages for macOS and Windows from `scripts/installer/`.
 
 ### Create all installers
@@ -438,6 +442,7 @@ These installers will:
 ## See also
 
 - [README](../README.md) — user-facing overview, install instructions, screenshots
+- [Deployment](DEPLOYMENT.md) — end-to-end release, packaging, and publishing guide
 - [Analytics](ANALYTICS.md) — GA4 instrumentation and event taxonomy
 - [Custom UI](CUSTOM_UI.md) — customizable race-screen layout system
 - [TTS](TTS.md) — text-to-speech configuration

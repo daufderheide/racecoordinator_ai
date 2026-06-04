@@ -108,6 +108,7 @@ race settings, so you can explore the UI from any PC.
 If you want to build, run, test, or contribute to Race Coordinator AI, head
 over to the [Developer Guide](docs/DEVELOPING.md). Other internal docs:
 
+- [Deployment](docs/DEPLOYMENT.md) — end-to-end release & publishing guide
 - [Analytics](docs/ANALYTICS.md) — GA4 event taxonomy
 - [Custom UI](docs/CUSTOM_UI.md) — how the skinnable race-screen system works
 - [Text-to-Speech](docs/TTS.md) — TTS announcer configuration
