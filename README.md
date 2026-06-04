@@ -42,7 +42,7 @@ Race Coordinator works with all the common track interfaces and sensor types:
 ## Install
 
 Download the latest installer from the
-[Releases page](https://github.com/daufderheide/racecoordinator_ai/releases).
+[Releases page](https://github.com/tjc998/racecoordinator_ai/releases).
 
 ### Windows
 
