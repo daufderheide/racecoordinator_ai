@@ -1,78 +1,31 @@
 # Installing Race Coordinator AI on Windows
 
-This fork (`tjc998/racecoordinator_ai`) does **not** publish prebuilt
-installers, so there is no `.exe` to download. You build it from source on a
-Windows machine and then install or run it. These are the basic steps.
+## For end users — download and run
 
-## Prerequisites
+Grab the latest installer from the
+[Releases page](https://github.com/tjc998/racecoordinator_ai/releases) and pick
+**one**:
 
-Install these first:
+- **`RaceCoordinatorAI_Online_Setup.exe`** — recommended. Downloads Java 17 and
+  MongoDB 6.0 during install (needs an internet connection).
+- **`RaceCoordinatorAI_Offline_Legacy_Setup.exe`** — for offline machines or
+  legacy Windows (XP / 7 / 8). Bundles Java 8 and MongoDB 3.2.
 
-- **JDK 17** (e.g. [Adoptium Temurin](https://adoptium.net/))
-- **Maven 3.x**
-- **Node.js 20.x**
-- **protoc** (Protocol Buffers compiler)
-- **[Inno Setup 6](https://jrsoftware.org/isdl.php)** — only if you want the
-  `.exe` installer (optional; see [Option B](#option-b-build-and-run-the-exe-installer))
+Then:
 
-You also need `server\src\main\resources\analytics.properties` (from the secure
-vault) — the build aborts without it.
+1. Double-click the `.exe` and accept the prompts (it needs administrator
+   rights).
+2. It installs to `C:\Program Files\Race Coordinator AI`, with data in
+   `C:\ProgramData\Race Coordinator AI`, and creates two desktop shortcuts:
+   **Race Coordinator Server (Headless)** and **Race Coordinator Client**.
+3. Start the **Server (Headless)** shortcut, then open the **Client** shortcut
+   (or browse to [http://localhost:7070](http://localhost:7070)).
 
-## Build
+> Prefer not to use the installer? Each release also includes
+> `RaceCoordinator_Universal.zip` — extract it and run `setup_windows.bat`
+> (once, to fetch Java) then `start_win.bat`.
 
-From the repo root in PowerShell:
-
-```powershell
-.\scripts\installer\create_installers.ps1
-```
-
-This builds the Angular client and the server JAR, downloads/bundles a Java
-runtime and MongoDB, and writes the distribution into the **`release\`**
-folder:
-
-```
-release\RaceCoordinator\            <- standard app folder
-release\RaceCoordinator_Offline\    <- offline/legacy app folder
-release\RaceCoordinator_Universal.zip
-release\RaceCoordinator_Windows_Offline.zip
-```
-
-> **Note:** there is **no `.exe` in `release\`.** The `.exe` is only produced
-> when Inno Setup is installed, and it is written to the **`Output\`** folder at
-> the repo root — not `release\` (see Option B).
-
-## Install & run
-
-### Option A — run the folder directly (no installer)
-
-1. Copy `release\RaceCoordinator` to wherever you want the app (e.g. your
-   Desktop).
-2. In that folder, double-click **`setup_windows.bat`** if you don't already
-   have Java (it installs a bundled/downloaded Java runtime).
-3. Double-click **`start_win.bat`** to start the server. Leave the window open.
-4. Open [http://localhost:7070](http://localhost:7070) in your browser.
-
-### Option B — build and run the `.exe` installer
-
-1. Install [Inno Setup 6](https://jrsoftware.org/isdl.php).
-2. Re-run `.\scripts\installer\create_installers.ps1` (it auto-builds the `.exe`
-   when Inno Setup is present), **or** build it manually from the repo root:
-   ```powershell
-   iscc scripts\installer\installer_online.iss
-   iscc scripts\installer\installer_offline_legacy.iss
-   ```
-3. The installers appear in the **`Output\`** folder:
-   - `Output\RaceCoordinatorAI_Online_Setup.exe` — downloads Java 17 +
-     MongoDB 6.0 during install (needs internet).
-   - `Output\RaceCoordinatorAI_Offline_Legacy_Setup.exe` — bundles Java 8 +
-     MongoDB 3.2 for offline/legacy Windows (XP/7/8).
-4. Double-click the `.exe`, accept the admin prompts. It installs to
-   `C:\Program Files\Race Coordinator AI` (data in
-   `C:\ProgramData\Race Coordinator AI`) and creates desktop shortcuts for the
-   **Server (Headless)** and the **Client** (which opens
-   `http://localhost:7070`).
-
-## Requirements & notes
+### Requirements & notes
 
 - **Windows:** XP SP3 or newer (32-bit and 64-bit supported).
 - **Legacy Windows (7 / 8 / XP)** also needs the
@@ -81,3 +34,56 @@ release\RaceCoordinator_Windows_Offline.zip
 - Ports **7070** (web) and **27017** (database) must be free.
 
 For macOS and Linux/Raspberry Pi, see the [README](../README.md#install).
+
+## For maintainers — publishing a release
+
+Installers are built by the **Build Windows Installers** GitHub Actions
+workflow (`.github/workflows/release.yml`). Inno Setup only runs on Windows, so
+the build runs on a `windows-latest` runner rather than the Linux CI runners.
+
+The workflow:
+
+1. Builds the Angular client and the server fat JAR (protoc is fetched
+   automatically by the Maven protobuf plugin).
+2. Assembles the `release/` tree and, best-effort, bundles Java 8 + MongoDB 3.2
+   for the offline installer.
+3. Runs Inno Setup on `installer_online.iss` and
+   `installer_offline_legacy.iss`, producing the `.exe`s in `Output/`.
+4. Uploads `RaceCoordinatorAI_Online_Setup.exe`,
+   `RaceCoordinatorAI_Offline_Legacy_Setup.exe`, and
+   `RaceCoordinator_Universal.zip` as build artifacts, and attaches them to the
+   GitHub Release when run for a tag.
+
+### One-time setup
+
+Add a repository secret **`ANALYTICS_PROPERTIES`** (Settings → Secrets and
+variables → Actions) containing the contents of
+`server/src/main/resources/analytics.properties` from the secure vault:
+
+```properties
+ga.measurement.id=G-XXXXXXXXXX
+ga.api.secret=XXXXXXXXXXXXXXXXXXXXXX
+```
+
+If the secret is absent the build still succeeds, but GA4 analytics are
+disabled in that build.
+
+### Cutting a release
+
+1. Bump `MyAppVersion` in `scripts/installer/installer_base.iss` and commit.
+2. Tag and push:
+   ```bash
+   git tag -a v0.0.0.21 -m "Race Coordinator AI 0.0.0.21"
+   git push origin v0.0.0.21
+   ```
+   The workflow runs automatically and publishes a Release with the installers
+   attached.
+
+To produce installers without publishing a Release, run the workflow manually
+(Actions → **Build Windows Installers** → **Run workflow**) and download them
+from the run's artifacts. Supplying a tag in the manual run also publishes a
+Release.
+
+> **Note:** installers are intentionally **not** committed to the repo —
+> `release/` and `build_cache/` are git-ignored. Large binaries belong on the
+> Releases page, not in git history.

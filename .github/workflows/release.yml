@@ -1,0 +1,150 @@
+name: Build Windows Installers
+
+# Builds the Windows .exe installers (and a universal zip) on a Windows runner
+# and attaches them to a GitHub Release. Inno Setup only runs on Windows, so
+# this cannot be done on the Linux CI runners used by ci.yml.
+#
+# Triggers:
+#   * Pushing a tag like v1.2.3  -> builds and publishes a Release for that tag.
+#   * Manual "Run workflow"      -> builds and uploads the installers as
+#                                   workflow artifacts (and, if you supply a
+#                                   tag, publishes a Release too).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Optional release tag to publish to (e.g. v1.2.3). Leave blank to only produce build artifacts.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write   # needed to create/update the GitHub Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Provide analytics.properties
+        shell: pwsh
+        env:
+          ANALYTICS_PROPERTIES: ${{ secrets.ANALYTICS_PROPERTIES }}
+        run: |
+          $dest = "server/src/main/resources/analytics.properties"
+          if ([string]::IsNullOrWhiteSpace($env:ANALYTICS_PROPERTIES)) {
+            Write-Warning "Secret ANALYTICS_PROPERTIES is not set - writing a placeholder. GA4 analytics will be disabled in this build."
+            "ga.measurement.id=`nga.api.secret=" | Out-File -FilePath $dest -Encoding ascii
+          } else {
+            $env:ANALYTICS_PROPERTIES | Out-File -FilePath $dest -Encoding ascii
+            Write-Host "Wrote analytics.properties from secret."
+          }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Angular client
+        shell: pwsh
+        working-directory: client
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Build server (fat JAR)
+        shell: pwsh
+        working-directory: server
+        # The protobuf-maven-plugin downloads protoc itself (os-maven-plugin is
+        # configured), so no separate protoc install is needed here.
+        run: mvn -B clean package "-Dmaven.test.skip=true"
+
+      - name: Assemble release directory
+        shell: pwsh
+        run: |
+          $rc = "release/RaceCoordinator"
+          New-Item -ItemType Directory -Force -Path "$rc/web" | Out-Null
+          Copy-Item "server/target_dist/server-1.0-SNAPSHOT.jar" "$rc/RaceCoordinator.jar"
+          Copy-Item "client/dist/client/*" "$rc/web/" -Recurse -Force
+          if (Test-Path "server/src/main/resources/arduino") {
+            Copy-Item "server/src/main/resources/arduino" "$rc/" -Recurse -Force
+          }
+
+      - name: Bundle Java 8 + MongoDB for the offline installer (best effort)
+        shell: pwsh
+        # The offline installer marks these sources skipifsourcedoesntexist, so
+        # the build still succeeds if a download fails; we just won't bundle a
+        # runtime in the offline .exe.
+        continue-on-error: true
+        run: |
+          $rc = "release/RaceCoordinator"
+          New-Item -ItemType Directory -Force -Path "$rc/jre8","$rc/mongodb32" | Out-Null
+
+          function Fetch-And-Flatten($url, $dest) {
+            $zip = Join-Path $env:RUNNER_TEMP ("dl_" + [System.Guid]::NewGuid().ToString() + ".zip")
+            $tmp = Join-Path $env:RUNNER_TEMP ("ex_" + [System.Guid]::NewGuid().ToString())
+            Invoke-WebRequest -Uri $url -OutFile $zip
+            Expand-Archive -Path $zip -DestinationPath $tmp -Force
+            $top = Get-ChildItem -Path $tmp -Directory | Select-Object -First 1
+            if ($top) {
+              Copy-Item "$($top.FullName)/*" $dest -Recurse -Force
+            } else {
+              Copy-Item "$tmp/*" $dest -Recurse -Force
+            }
+          }
+
+          Fetch-And-Flatten "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk" "$rc/jre8"
+          Fetch-And-Flatten "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" "$rc/mongodb32"
+
+      - name: Build installers with Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "iscc" }
+          & $iscc "scripts/installer/installer_online.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Online installer build failed" }
+          & $iscc "scripts/installer/installer_offline_legacy.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Offline installer build failed" }
+          Write-Host "Built installers:"
+          Get-ChildItem "Output" | Format-Table Name,Length
+
+      - name: Package universal zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "release/RaceCoordinator/*" -DestinationPath "Output/RaceCoordinator_Universal.zip" -Force
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: race-coordinator-installers
+          path: |
+            Output/*.exe
+            Output/*.zip
+          if-no-files-found: error
+
+      - name: Publish to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
+          files: |
+            Output/RaceCoordinatorAI_Online_Setup.exe
+            Output/RaceCoordinatorAI_Offline_Legacy_Setup.exe
+            Output/RaceCoordinator_Universal.zip
