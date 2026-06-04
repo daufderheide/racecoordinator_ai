@@ -122,6 +122,10 @@ export const mockTranslationService = {
   getSupportedLanguages: jasmine
     .createSpy("getSupportedLanguages")
     .and.returnValue([]),
+  selectLanguage: jasmine.createSpy("selectLanguage"),
+  getLanguageDisplayName: jasmine
+    .createSpy("getLanguageDisplayName")
+    .and.callFake((code: string) => code),
   getCurrentLanguage: jasmine
     .createSpy("getCurrentLanguage")
     .and.returnValue(of("en")),
@@ -230,6 +234,10 @@ export function resetMocks() {
   mockTranslationService.getBrowserLanguage.and.returnValue("en");
   mockTranslationService.getSupportedLanguages.and.returnValue([]);
   mockTranslationService.getCurrentLanguage.and.returnValue(of("en"));
+  mockTranslationService.selectLanguage.and.stub();
+  mockTranslationService.getLanguageDisplayName.and.callFake(
+    (code: string) => code,
+  );
 
   // Restore default behaviors for mockRouter
   mockRouter.navigate.and.stub();

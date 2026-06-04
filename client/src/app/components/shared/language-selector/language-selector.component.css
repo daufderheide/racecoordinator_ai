@@ -1,0 +1,108 @@
+app-language-selector {
+  display: block;
+}
+
+/* Submenu container basic properties */
+app-language-selector .menu-dropdown.submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 4000;
+  box-sizing: border-box;
+}
+
+/* Raceday Setup Page dropdown container styling */
+app-language-selector:has(.menu-dropdown-item) .menu-dropdown.submenu {
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
+  min-width: 220px;
+  margin-top: 0;
+  margin-left: 2px;
+  padding: 6px 0;
+  backdrop-filter: blur(12px);
+}
+
+/* Raceday Page dropdown container styling */
+app-language-selector:has(.menu-item) .menu-dropdown.submenu {
+  background-color: #1a2332;
+  border: 1px solid #2d3748;
+  min-width: 180px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  margin-top: -6px;
+  margin-left: -1px;
+  padding: 5px 0;
+  border-radius: 4px;
+}
+
+/* Submenu Arrow styling */
+app-language-selector .submenu-arrow {
+  font-size: 10px;
+  margin-left: 10px;
+  opacity: 0.6;
+}
+
+/* Race Day page items */
+app-language-selector .menu-item {
+  color: #e2e8f0;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  box-sizing: border-box;
+  font-family: 'Tahoma', sans-serif;
+}
+
+app-language-selector .menu-item:hover {
+  background-color: #334155;
+  color: #e2e8f0;
+}
+
+app-language-selector .menu-item.selected {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+/* Race Day Setup page items */
+app-language-selector .menu-dropdown-item {
+  padding: 10px 16px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: block;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+app-language-selector .menu-dropdown-item.has-submenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+app-language-selector .menu-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+app-language-selector .menu-dropdown-item:nth-of-type(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+app-language-selector .menu-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+app-language-selector .menu-dropdown-item.selected {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  font-weight: 600;
+}

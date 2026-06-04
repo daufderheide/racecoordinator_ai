@@ -115,6 +115,30 @@ export class TranslationService {
   }
 
   /**
+   * Select a language code, load it, and save to settings
+   */
+  selectLanguage(code: string): void {
+    this.setLanguage(code);
+    const settings = this.settingsService.getSettings();
+    settings.language = code;
+    this.settingsService.saveSettings(settings);
+  }
+
+  /**
+   * Get the display name of a language code
+   */
+  getLanguageDisplayName(code: string): string {
+    if (code === "") {
+      const browserCode = this.getBrowserLanguage();
+      const langNameKey = `RDS_LANG_${browserCode.toUpperCase()}`;
+      const browserLangName = this.translate(langNameKey);
+      return `${this.translate("RDS_LANG_DEFAULT")} (${browserLangName})`;
+    }
+    const lang = this.getSupportedLanguages().find((l) => l.code === code);
+    return lang ? this.translate(lang.nameKey) : code;
+  }
+
+  /**
    * Get the current language as an observable
    */
   getCurrentLanguage(): Observable<string> {

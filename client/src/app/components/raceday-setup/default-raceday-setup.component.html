@@ -73,37 +73,11 @@
               <div class="menu-dropdown-item" (click)="openServerSettings()">
                 {{ "RDS_MENU_SERVER" | translate }}
               </div>
-              <div
-                class="menu-dropdown-item has-submenu"
-                (click)="toggleLocalizationDropdown($event)"
-                data-testid="menu-item-localization"
-              >
-                {{ "RDS_MENU_LOCALIZATION" | translate }}
-                <span class="submenu-arrow">▶</span>
-                @if (isLocalizationDropdownOpen) {
-                  <div
-                    class="menu-dropdown submenu"
-                    data-testid="submenu-localization"
-                  >
-                    <div
-                      class="menu-dropdown-item"
-                      (click)="selectLanguage('')"
-                      [class.selected]="!currentLanguage"
-                    >
-                      {{ getLanguageDisplayName("") }}
-                    </div>
-                    @for (lang of supportedLanguages; track lang) {
-                      <div
-                        class="menu-dropdown-item"
-                        (click)="selectLanguage(lang.code)"
-                        [class.selected]="currentLanguage === lang.code"
-                      >
-                        {{ getLanguageDisplayName(lang.code) }}
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
+              <app-language-selector
+                wrapperClass="menu-dropdown-item"
+                itemClass="menu-dropdown-item"
+                (languageSelected)="onLanguageSelected()"
+              ></app-language-selector>
               <hr class="menu-dropdown-divider" />
               <div class="menu-dropdown-item" (click)="configureDemo()">
                 {{ "RDS_MENU_DEMO_CONFIG" | translate }}

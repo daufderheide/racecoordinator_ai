@@ -87,6 +87,11 @@
             <div class="menu-item" (click)="onFileMenuSelect('CUSTOMIZE_UI')">
               {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
             </div>
+            <app-language-selector
+              wrapperClass="menu-item"
+              itemClass="menu-item"
+              (languageSelected)="onLanguageSelected()"
+            ></app-language-selector>
             <div class="menu-separator"></div>
             <div class="menu-item" (click)="onFileMenuSelect('EXIT')">
               {{ "RD_MENU_EXIT" | translate }}

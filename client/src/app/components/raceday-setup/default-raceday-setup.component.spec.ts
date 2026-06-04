@@ -520,34 +520,6 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isOptionsDropdownOpen).toBeFalse();
   });
 
-  it("should toggle localization dropdown", () => {
-    component.toggleLocalizationDropdown(new MouseEvent("click"));
-    expect(component.isLocalizationDropdownOpen).toBeTrue();
-
-    component.toggleLocalizationDropdown(new MouseEvent("click"));
-    expect(component.isLocalizationDropdownOpen).toBeFalse();
-  });
-
-  it("should select language and save setting", () => {
-    component.selectLanguage("es");
-    expect(mockTranslationService.setLanguage).toHaveBeenCalledWith("es");
-    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-    expect(component.currentLanguage).toBe("es");
-    expect(component.isOptionsDropdownOpen).toBeFalse();
-  });
-
-  it("should get language display name", () => {
-    mockTranslationService.getBrowserLanguage.and.returnValue("en");
-    mockTranslationService.translate.and.callFake((key) => {
-      if (key === "RDS_LANG_DEFAULT") return "Default";
-      if (key === "RDS_LANG_EN") return "English (en)";
-      return key;
-    });
-
-    expect(component.getLanguageDisplayName("")).toBe("Default (English (en))");
-    expect(component.getLanguageDisplayName("en")).toBe("English (en)");
-  });
-
   it("should not toggle selection on single click in available list", async () => {
     spyOn(component, "toggleParticipantSelection");
     await harness.clickDriverItem();

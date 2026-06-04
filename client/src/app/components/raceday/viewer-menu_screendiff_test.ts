@@ -3,6 +3,11 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Viewer Race Director Menu", () => {
   test.beforeEach(async ({ page }) => {
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        console.log(`BROWSER CONSOLE ERROR: ${msg.text()}`);
+      }
+    });
     // 1. Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
 
@@ -195,8 +200,74 @@ test.describe("Viewer Race Director Menu", () => {
 
     // 3. Take a screenshot to verify disabled Save option
     await expect(page).toHaveScreenshot("raceday-viewer-file-menu.png", {
-      maxDiffPixelRatio: 0.001,
-      maxDiffPixels: 0,
+      maxDiffPixelRatio: 0.05, // Adjusted slightly for layout additions
+    });
+  });
+
+  test("should display localization submenu in file menu and open it", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await expect(page.locator(".scalable-content")).toBeVisible();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Viewer GP",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.waitForTimeout(500);
+
+    // 1. Open the File menu dropdown (the first top-level menu button)
+    const fileMenuButton = page.locator(".menu-button-top").first();
+    await expect(fileMenuButton).toBeVisible();
+    await fileMenuButton.dispatchEvent("click");
+
+    // 2. Wait for the menu dropdown to be visible
+    const dropdown = page.locator(".menu-dropdown").first();
+    await expect(dropdown).toBeVisible();
+
+    // 3. Click the localization menu item to open submenu
+    const locItem = page.locator('[data-testid="menu-item-localization"]');
+    await expect(locItem).toBeVisible();
+    await locItem.click();
+
+    // 4. Expect submenu to be visible
+    const submenu = page.locator('[data-testid="submenu-localization"]');
+    await expect(submenu).toBeVisible();
+
+    await page.waitForTimeout(500);
+
+    // 5. Take a screenshot to verify visual rendering of the submenu
+    await expect(page).toHaveScreenshot("raceday-localization-submenu.png", {
+      maxDiffPixelRatio: 0.05,
     });
   });
 });

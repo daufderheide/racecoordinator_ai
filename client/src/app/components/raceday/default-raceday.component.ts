@@ -22,6 +22,7 @@ import { Observable, Subject, Subscription } from "rxjs";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
@@ -78,6 +79,7 @@ import { AnchorPoint } from "./column_definition";
     TranslatePipe,
     LoginDialogComponent,
     AsyncPipe,
+    LanguageSelectorComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -1416,6 +1418,11 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
     this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
+  }
+
+  onLanguageSelected() {
+    this.isFileMenuOpen = false;
+    this.cdr.markForCheck();
   }
 
   isAnyMenuDropdownOpen(): boolean {

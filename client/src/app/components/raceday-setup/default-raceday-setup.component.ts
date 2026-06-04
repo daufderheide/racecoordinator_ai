@@ -24,6 +24,7 @@ import { AcknowledgementModalComponent } from "@app/components/shared/acknowledg
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
@@ -63,6 +64,7 @@ type Participant = Driver | Team;
     DemoConfigModalComponent,
     TranslatePipe,
     EditorTitleComponent,
+    LanguageSelectorComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
@@ -121,7 +123,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // Modals
   public isAboutModalVisible = false;
 
-  isLocalizationDropdownOpen: boolean = false;
   isConfigDropdownOpen: boolean = false;
   isHelpDropdownOpen: boolean = false;
   isLogDropdownOpen: boolean = false;
@@ -129,9 +130,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isServerLogOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
 
-  supportedLanguages: { code: string; nameKey: string }[] = [];
   logLevels = ["DEBUG", "INFO", "WARN", "ERROR"];
-  currentLanguage: string = "";
   currentClientLogLevel: string = "INFO";
   currentServerLogLevel: string = "INFO";
   menuItems = [
@@ -279,14 +278,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.cdr.detectChanges();
     });
 
-    this.supportedLanguages = this.translationService
-      .getSupportedLanguages()
-      .sort((a, b) => {
-        const nameA = this.translationService.translate(a.nameKey);
-        const nameB = this.translationService.translate(b.nameKey);
-        return nameA.localeCompare(nameB);
-      });
-    this.currentLanguage = this.settingsService.getSettings().language;
     this.currentClientLogLevel =
       this.settingsService.getSettings().clientLogLevel || "INFO";
     this.currentServerLogLevel =
@@ -989,16 +980,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
     this.isOptionsDropdownOpen = newState;
     if (!this.isOptionsDropdownOpen) {
-      this.isLocalizationDropdownOpen = false;
+      // closed
     }
     this.cdr.detectChanges();
   }
 
-  toggleLocalizationDropdown(event: Event) {
-    event.stopPropagation();
-    this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
-    this.cdr.detectChanges();
-  }
   toggleLogDropdown(event: Event) {
     event.stopPropagation();
     this.isLogDropdownOpen = !this.isLogDropdownOpen;
@@ -1049,27 +1035,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   closeOptionsDropdown() {
     this.isOptionsDropdownOpen = false;
-    this.isLocalizationDropdownOpen = false;
   }
 
-  selectLanguage(code: string) {
-    this.translationService.setLanguage(code);
-    const settings = this.settingsService.getSettings();
-    settings.language = code;
-    this.settingsService.saveSettings(settings);
-    this.currentLanguage = code;
+  onLanguageSelected() {
     this.closeOptionsDropdown();
-  }
-
-  getLanguageDisplayName(code: string): string {
-    if (code === "") {
-      const browserCode = this.translationService.getBrowserLanguage();
-      const langNameKey = `RDS_LANG_${browserCode.toUpperCase()}`;
-      const browserLangName = this.translationService.translate(langNameKey);
-      return `${this.translationService.translate("RDS_LANG_DEFAULT")} (${browserLangName})`;
-    }
-    const lang = this.supportedLanguages.find((l) => l.code === code);
-    return lang ? this.translationService.translate(lang.nameKey) : code;
   }
   setClientLogLevel(level: string) {
     const settings = this.settingsService.getSettings();
