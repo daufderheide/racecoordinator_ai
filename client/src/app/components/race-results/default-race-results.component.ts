@@ -24,6 +24,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 interface StandingsRow {
   rank: number;
+  visualIndex: number;
   driver: Driver;
   score: number;
   laps: number;
@@ -404,6 +405,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
 
       return {
         rank: curr.rank || i + 1,
+        visualIndex: i,
         driver: curr.driver,
         score: curr.rankValue || 0,
         laps: curr.totalLaps || 0,
@@ -416,6 +418,12 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         avatarUrl: curr.driver.avatarUrl || "",
       };
     });
+
+    // Sort standingsRows by a stable property so Angular doesn't move DOM nodes,
+    // which breaks CSS transitions. We compute visual positions via visualIndex.
+    this.standingsRows.sort((a, b) =>
+      this.getDriverKey(a.driver).localeCompare(this.getDriverKey(b.driver)),
+    );
 
     this.updateGraph();
     this.cdr.detectChanges();
@@ -444,7 +452,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   protected trackByDriver(index: number, row: StandingsRow): string {
-    return row.driver.entity_id || row.driver.name || "";
+    return this.getDriverKey(row.driver);
   }
 
   protected trackByDriverLine(index: number, line: DriverLine): string {

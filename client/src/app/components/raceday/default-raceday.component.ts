@@ -355,6 +355,20 @@ export class DefaultRacedayComponent
   skipHeatConfirmText = "GEN_YES";
   skipHeatCancelText = "GEN_NO";
 
+  // Restart Heat Confirmation Modal State
+  showRestartHeatConfirmation = false;
+  restartHeatModalTitle = "RD_CONFIRM_RESTART_HEAT_TITLE";
+  restartHeatModalMessage = "RD_CONFIRM_RESTART_HEAT_MESSAGE";
+  restartHeatConfirmText = "GEN_YES";
+  restartHeatCancelText = "GEN_NO";
+
+  // Defer Heat Confirmation Modal State
+  showDeferHeatConfirmation = false;
+  deferHeatModalTitle = "RD_CONFIRM_DEFER_HEAT_TITLE";
+  deferHeatModalMessage = "RD_CONFIRM_DEFER_HEAT_MESSAGE";
+  deferHeatConfirmText = "GEN_YES";
+  deferHeatCancelText = "GEN_NO";
+
   // Acknowledgement Modal State (kept for interface errors)
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
@@ -362,6 +376,8 @@ export class DefaultRacedayComponent
   ackModalTitle = "";
   ackModalMessage = "";
   ackModalButtonText = "ACK_MODAL_BTN_OK";
+  raceHasEnded = false;
+  forceExit = false;
 
   public Role = Role;
   showLoginModal = false;
@@ -401,6 +417,35 @@ export class DefaultRacedayComponent
 
   ngOnInit() {
     this.loadColumns();
+
+    this.subscriptions.push(
+      this.dataService.getSystemState().subscribe((state) => {
+        if (state) {
+          if (state.resourceLockState === "IDLE") {
+            this.raceHasEnded = true;
+            this.showExitConfirmation = false;
+            this.showSkipHeatConfirmation = false;
+            this.showRestartHeatConfirmation = false;
+            this.showDeferHeatConfirmation = false;
+            this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+            this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+            this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
+            this.showAckModal = true;
+            this.cdr.markForCheck();
+          } else if (state.resourceLockState === "RACE_RUNNING") {
+            if (this.raceHasEnded) {
+              this.raceHasEnded = false;
+              this.ackModalTitle = "RD_RACE_STARTED_TITLE";
+              this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
+              this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
+              this.showAckModal = true;
+              this.dataService.updateRaceSubscription(true);
+              this.cdr.markForCheck();
+            }
+          }
+        }
+      }),
+    );
 
     // Clear caches to ensure fresh data for new race
     RaceConverter.clearCache();
@@ -565,12 +610,15 @@ export class DefaultRacedayComponent
                   this.logger,
                 );
               } else {
-                this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY);
+                this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
               }
             }
 
             if (lap.type === LapType.MIN_LAP_TIME) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
+              this.playThemedSound(
+                THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+                ttsContext,
+              );
             }
 
             // Halfway logic for lap-based races
@@ -585,6 +633,7 @@ export class DefaultRacedayComponent
               if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
                 this.playThemedSound(
                   THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+                  ttsContext,
                 );
                 this.playedHalfway = true;
               }
@@ -606,7 +655,7 @@ export class DefaultRacedayComponent
                 this.logger,
               );
             } else if (lap.isDrift) {
-              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP);
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
             } else if (
               driver.lapAudio.type !== "none" &&
               (driver.lapAudio.url ||
@@ -825,6 +874,10 @@ export class DefaultRacedayComponent
 
   onAcknowledgeModal() {
     this.showAckModal = false;
+    if (this.raceHasEnded) {
+      this.forceExit = true;
+      this.router.navigate(["/raceday-setup"]);
+    }
   }
 
   onExitConfirm() {
@@ -859,9 +912,68 @@ export class DefaultRacedayComponent
     this.cdr.markForCheck();
   }
 
+  onRestartHeatConfirm() {
+    this.showRestartHeatConfirmation = false;
+    this.dataService.restartHeat().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Restart heat command sent successfully");
+        } else {
+          this.logger.error("Failed to send restart heat command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error restarting heat:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onRestartHeatCancel() {
+    this.showRestartHeatConfirmation = false;
+    this.cdr.markForCheck();
+  }
+
+  onDeferHeatConfirm() {
+    this.showDeferHeatConfirmation = false;
+    this.dataService.deferHeat().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Defer heat command sent successfully");
+        } else {
+          this.logger.error("Failed to send defer heat command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error deferring heat:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onDeferHeatCancel() {
+    this.showDeferHeatConfirmation = false;
+    this.cdr.markForCheck();
+  }
+
   canDeactivate(
     nextState?: RouterStateSnapshot,
   ): Observable<boolean> | Promise<boolean> | boolean {
+    if (this.forceExit) {
+      return true;
+    }
+    if (this.raceHasEnded) {
+      this.showExitConfirmation = false;
+      this.showSkipHeatConfirmation = false;
+      this.showRestartHeatConfirmation = false;
+      this.showDeferHeatConfirmation = false;
+      this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+      this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+      this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
+      this.showAckModal = true;
+      this.cdr.markForCheck();
+      return false;
+    }
     if (nextState) {
       if (
         nextState.url.includes("/modify-heats") ||
@@ -1032,6 +1144,9 @@ export class DefaultRacedayComponent
     } else {
       this.logger.debug("RacedayComponent: Waiting for race data...");
       // Do not throw error, wait for Race
+    }
+    if (!this.isDestroyed) {
+      this.cdr.markForCheck();
     }
   }
 
@@ -1467,34 +1582,14 @@ export class DefaultRacedayComponent
         },
       );
     } else if (action === "RESTART_HEAT") {
-      this.dataService.restartHeat().subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug("Restart heat command sent successfully");
-          } else {
-            this.logger.error("Failed to send restart heat command");
-          }
-        },
-        (error) => {
-          this.logger.error("Error restarting heat:", error);
-        },
-      );
+      this.showRestartHeatConfirmation = true;
+      this.cdr.markForCheck();
     } else if (action === "SKIP_HEAT") {
       this.showSkipHeatConfirmation = true;
       this.cdr.markForCheck();
     } else if (action === "DEFER_HEAT") {
-      this.dataService.deferHeat().subscribe(
-        (success) => {
-          if (success) {
-            this.logger.debug("Defer heat command sent successfully");
-          } else {
-            this.logger.error("Failed to send defer heat command");
-          }
-        },
-        (error) => {
-          this.logger.error("Error deferring heat:", error);
-        },
-      );
+      this.showDeferHeatConfirmation = true;
+      this.cdr.markForCheck();
     } else if (action === "MODIFY") {
       const returnUrl = this.router.url.split("?")[0];
       this.router.navigate(["/modify-heats"], {
@@ -1733,11 +1828,17 @@ export class DefaultRacedayComponent
   }
 
   public get isSaveDisabled(): boolean {
-    return this.raceState === RaceState.RACING;
+    return (
+      this.authService.currentRole === Role.VIEWER ||
+      this.raceState === RaceState.RACING
+    );
   }
 
   // Menu State Helpers
   public get isStartResumeDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled if disconnected OR (Starting, Racing, HeatOver, RaceOver)
     // Note: User said "Starting: Start/Resume ... disabled", "Racing: Same as Starting", "Heat Over: Everything ... disabled"
     // Also technically disabled in PAUSED? No, Resume is allowed in Paused.
@@ -1755,6 +1856,9 @@ export class DefaultRacedayComponent
   }
 
   public get isPauseDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled if disconnected OR (NotStarted, Paused, HeatOver, RaceOver)
     // Enabled in STARTING? User didn't say disabled. Usually can pause countdown.
     // Enabled in RACING.
@@ -1779,6 +1883,9 @@ export class DefaultRacedayComponent
   }
 
   public get isNextHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     return this.raceState !== RaceState.HEAT_OVER;
   }
 
@@ -1823,6 +1930,9 @@ export class DefaultRacedayComponent
   }
 
   public get isRestartHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     // Disabled in Starting, Racing.
     // "Heat Over: Everything... disabled".
     const s = this.raceState;
@@ -1836,6 +1946,9 @@ export class DefaultRacedayComponent
   }
 
   public get isDeferHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     if (s !== RaceState.NOT_STARTED && s !== RaceState.UNKNOWN_STATE) {
       return true;
@@ -1844,6 +1957,9 @@ export class DefaultRacedayComponent
   }
 
   public get isSkipHeatDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     return (
       s === RaceState.STARTING ||
@@ -1854,6 +1970,9 @@ export class DefaultRacedayComponent
   }
 
   public get isSkipRaceDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     const s = this.raceState;
     return (
       s === RaceState.STARTING ||
@@ -1867,6 +1986,9 @@ export class DefaultRacedayComponent
   }
 
   public get isModifyDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
     return this.raceState === RaceState.RACE_OVER;
   }
 
@@ -2790,7 +2912,7 @@ export class DefaultRacedayComponent
     }
   }
 
-  private playThemedSound(slotKey: string) {
+  private playThemedSound(slotKey: string, context?: any) {
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (config && config.type !== "none") {
       // Resolve URL if it's a preset
@@ -2812,7 +2934,7 @@ export class DefaultRacedayComponent
         playableUrl,
         config.text,
         this.dataService.serverUrl,
-        undefined,
+        context,
         this.logger,
       );
     } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {

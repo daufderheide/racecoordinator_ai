@@ -62,6 +62,17 @@ export class RaceService {
 
   setCurrentHeat(heat: Heat) {
     this.currentHeatSubject.next(heat);
+    const heats = this.getHeats();
+    if (heats && heats.length > 0) {
+      const existing = heats.find((h) => h.objectId === heat.objectId);
+      if (existing) {
+        existing.started = heat.started;
+        existing.heatDrivers = heat.heatDrivers;
+        existing.group = heat.group;
+        existing.heatNumber = heat.heatNumber;
+        this.setHeats([...heats]);
+      }
+    }
   }
 
   getCurrentHeat(): Heat | undefined {

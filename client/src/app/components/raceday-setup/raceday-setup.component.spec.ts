@@ -7,6 +7,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -39,10 +40,12 @@ describe("RacedaySetupComponent", () => {
   let mockAnalyticsService: jasmine.SpyObj<AnalyticsService>;
   let mockLoggerService: jasmine.SpyObj<LoggerService>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
+  let mockRouter: jasmine.SpyObj<Router>;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
     sessionStorage.clear();
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
       "selectCustomFolder",
       "hasCustomFiles",
@@ -95,6 +98,7 @@ describe("RacedaySetupComponent", () => {
     mockAuthService = jasmine.createSpyObj("AuthService", [
       "loginAsDirector",
       "changeDirectorPassword",
+      "getDirectorPassword",
       "logout",
       "fetchRoleFromServer",
     ]);
@@ -113,6 +117,7 @@ describe("RacedaySetupComponent", () => {
     });
     mockAuthService.loginAsDirector.and.returnValue(of(true));
     mockAuthService.changeDirectorPassword.and.returnValue(of(true));
+    mockAuthService.getDirectorPassword.and.returnValue(of(""));
     mockAuthService.fetchRoleFromServer.and.returnValue(of(Role.ADMIN));
 
     connectionStateSubject = new BehaviorSubject<ConnectionState>(
@@ -126,6 +131,10 @@ describe("RacedaySetupComponent", () => {
     ]);
     Object.defineProperty(mockConnectionMonitor, "connectionState$", {
       get: () => connectionStateSubject.asObservable(),
+    });
+    Object.defineProperty(mockConnectionMonitor, "currentState", {
+      get: () => connectionStateSubject.value,
+      configurable: true,
     });
 
     mockConnectionMonitor.waitForConnection.and.returnValue(Promise.resolve());
@@ -147,6 +156,7 @@ describe("RacedaySetupComponent", () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: Router, useValue: mockRouter },
         { provide: FileSystemService, useValue: mockFileSystemService },
         {
           provide: Compiler,
@@ -220,6 +230,79 @@ describe("RacedaySetupComponent", () => {
       expect(component.showSplash).toBeFalse();
       expect(mockConnectionMonitor.startMonitoring).toHaveBeenCalled();
     }));
+
+    it("should set splashTimeoutElapsed to true after 5 seconds and check connection status", fakeAsync(() => {
+      mockConnectionMonitor.waitForConnection.and.returnValue(
+        new Promise(() => {}),
+      ); // Never resolves
+      component.ngOnInit();
+      tick(100);
+      expect(component.splashTimeoutElapsed).toBeFalse();
+      tick(5000);
+      expect(component.splashTimeoutElapsed).toBeTrue();
+      expect(component.isServerConnected).toBeFalse();
+    }));
+
+    it("should set splashTimeoutElapsed to true after 5 seconds and indicate viewer wait if connected but no race is running", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      const systemStateSubject = new BehaviorSubject<any>({
+        resourceLockState: "IDLE",
+      });
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      component.ngOnInit();
+      tick(100);
+      expect(component.connectionVerified).toBeTrue();
+      expect(component.isServerConnected).toBeTrue();
+      tick(5000);
+      expect(component.splashTimeoutElapsed).toBeTrue();
+      expect(component.showSplash).toBeTrue();
+    }));
+
+    it("should render server-down warning message when splash screen times out and server is disconnected", fakeAsync(() => {
+      mockConnectionMonitor.waitForConnection.and.returnValue(
+        new Promise(() => {}),
+      ); // Never resolves
+      Object.defineProperty(mockConnectionMonitor, "currentState", {
+        get: () => ConnectionState.DISCONNECTED,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick(5000);
+      fixture.detectChanges();
+
+      const msgEl = fixture.nativeElement.querySelector(
+        ".splash-status-message.server-down",
+      );
+      expect(msgEl).toBeTruthy();
+      expect(msgEl.textContent.trim()).toBe("RDS_SPLASH_WAIT_SERVER");
+    }));
+
+    it("should render viewer-wait warning message when splash screen times out and role is viewer with no race running", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+      const systemStateSubject = new BehaviorSubject<any>({
+        resourceLockState: "IDLE",
+      });
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      fixture.detectChanges();
+      tick(5000);
+      fixture.detectChanges();
+
+      const msgEl = fixture.nativeElement.querySelector(
+        ".splash-status-message.viewer-wait",
+      );
+      expect(msgEl).toBeTruthy();
+      expect(msgEl.textContent.trim()).toBe("RDS_SPLASH_WAIT_RACE");
+    }));
   });
 
   describe("Connection Monitoring", () => {
@@ -285,6 +368,45 @@ describe("RacedaySetupComponent", () => {
       component.saveServerConfig();
       flushMicrotasks();
       expect(mockAuthService.loginAsDirector).not.toHaveBeenCalled();
+    }));
+
+    it("should populate directorPassword with getDirectorPassword if currentRole is ADMIN on openServerConfig", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.ADMIN,
+      );
+      mockAuthService.getDirectorPassword.and.returnValue(of("admin-secret"));
+
+      component.openServerConfig();
+      tick();
+
+      expect(mockAuthService.getDirectorPassword).toHaveBeenCalled();
+      expect(component.directorPassword).toBe("admin-secret");
+      expect(component.showPassword).toBeFalse();
+    }));
+
+    it("should keep directorPassword empty on openServerConfig if role is not ADMIN", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.openServerConfig();
+      tick();
+
+      expect(mockAuthService.getDirectorPassword).not.toHaveBeenCalled();
+      expect(component.directorPassword).toBe("");
+    }));
+
+    it("should call changeDirectorPassword on saveServerConfig if role is ADMIN", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.ADMIN,
+      );
+      component.directorPassword = "new-admin-password";
+      component.saveServerConfig();
+      flushMicrotasks();
+
+      expect(mockAuthService.changeDirectorPassword).toHaveBeenCalledWith(
+        "new-admin-password",
+      );
     }));
   });
 
@@ -415,6 +537,50 @@ describe("RacedaySetupComponent", () => {
       );
       // Verify loadDefaultComponent by checking that we don't call getCustomFile
       expect(mockFileSystemService.getCustomFile).not.toHaveBeenCalled();
+    }));
+  });
+
+  describe("Viewer Auto-Transition", () => {
+    let systemStateSubject: BehaviorSubject<any>;
+
+    beforeEach(() => {
+      systemStateSubject = new BehaviorSubject<any>(null);
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+    });
+
+    it("should stay on splash screen when connected as viewer and resourceLockState is not RACE_RUNNING", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.ngOnInit();
+      tick(6000); // Let splash screen timer run
+
+      // Initially null system state
+      expect(component.showSplash).toBeTrue();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      // Transition to IDLE state
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+      tick();
+      expect(component.showSplash).toBeTrue();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    }));
+
+    it("should automatically navigate to /raceday as viewer when resourceLockState becomes RACE_RUNNING", fakeAsync(() => {
+      spyOnProperty(mockAuthService, "currentRole", "get").and.returnValue(
+        Role.VIEWER,
+      );
+
+      component.ngOnInit();
+      tick(6000); // Let splash screen timer run
+
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
+      tick();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
     }));
   });
 });

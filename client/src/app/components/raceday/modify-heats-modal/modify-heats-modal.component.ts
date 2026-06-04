@@ -369,6 +369,15 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.raceConnectionService.disconnect();
+
+    // Always finalize on exit so the server can reconcile race state
+    // (e.g. advance past already-completed heats, or transition to RaceOver).
+    this.dataService.finalizeModifyHeats().subscribe({
+      next: () =>
+        this.logger.debug("Modify heats finalized successfully on server"),
+      error: (err) =>
+        this.logger.error("Failed to finalize modify heats on server", err),
+    });
   }
 
   protected getParticipantName = getParticipantName;
@@ -605,6 +614,23 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.localHeats.splice(index, 1);
     // Renumber heats
     this.localHeats.forEach((h, i) => (h.heatNumber = i + 1));
+
+    this.updateDriverPool();
+    this.updateDropListConnections();
+    this.undoManager.captureState();
+    this.autoSave();
+  }
+
+  protected onRemoveFromHeat(heatIdx: number, laneIdx: number) {
+    if (this.isSaving) return;
+    const heat = this.localHeats[heatIdx];
+    if (this.isHeatStarted(heat)) return;
+
+    const dhd = heat.heatDrivers.find((d) => d.laneIndex === laneIdx);
+    if (!dhd || !dhd.participant) return;
+
+    // Remove from the heat
+    heat.heatDrivers = heat.heatDrivers.filter((d) => d.laneIndex !== laneIdx);
 
     this.updateDriverPool();
     this.updateDropListConnections();

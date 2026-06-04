@@ -77,6 +77,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   isLoading = true;
 
   showSplash = true;
+  splashTimeoutElapsed = false;
+  systemState: any = null;
+  private splashTimeoutTimer: any = null;
   connectionVerified = false;
   minTimeElapsed = false;
   translationsLoaded = false;
@@ -103,6 +106,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
   public Role = Role;
   public directorPassword = "";
+  public showPassword = false;
   private hasLoadedSetupComponent = false;
 
   constructor(
@@ -142,6 +146,24 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  get isServerConnected(): boolean {
+    return (
+      this.connectionVerified &&
+      this.connectionMonitor.currentState === ConnectionState.CONNECTED
+    );
+  }
+
+  startSplashTimeoutTimer() {
+    if (this.splashTimeoutTimer) {
+      clearTimeout(this.splashTimeoutTimer);
+    }
+    this.splashTimeoutElapsed = false;
+    this.splashTimeoutTimer = setTimeout(() => {
+      this.splashTimeoutElapsed = true;
+      this.cdr.detectChanges();
+    }, 5000);
+  }
+
   async ngOnInit() {
     this.updateScale();
     this.isLoading = true;
@@ -178,6 +200,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       this.connectionVerified = true;
     } else {
       // Start Splash Screen Logic
+      this.startSplashTimeoutTimer();
 
       const minTimePromise = new Promise<void>((resolve) =>
         setTimeout(() => {
@@ -190,6 +213,12 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       await this.connectionMonitor.waitForConnection();
       this.connectionVerified = true;
       this.refreshServerInfo();
+
+      try {
+        await this.authService.fetchRoleFromServer().toPromise();
+      } catch (err) {
+        this.logger.warn("Failed to fetch role after connecting", err);
+      }
 
       // Wait for the remainder of the 5s (if any)
       await minTimePromise;
@@ -280,9 +309,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
       // Subscribe to system state to know when race starts
       this.dataService.getSystemState().subscribe((state) => {
+        this.systemState = state;
         if (state && state.resourceLockState === "RACE_RUNNING") {
           this.router.navigate(["/raceday"]);
         }
+        this.cdr.detectChanges();
       });
     }
   }
@@ -295,6 +326,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
+    }
+    if (this.splashTimeoutTimer) {
+      clearTimeout(this.splashTimeoutTimer);
     }
   }
 
@@ -353,6 +387,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.showSplash = true;
     this.minTimeElapsed = false;
     this.connectionVerified = false;
+    this.startSplashTimeoutTimer();
     this.cdr.detectChanges();
 
     this.stopQuoteRotation();
@@ -441,8 +476,32 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
   }
 
+  openServerConfig() {
+    this.showServerConfig = true;
+    this.showPassword = false;
+    if (this.authService.currentRole === Role.ADMIN) {
+      this.authService.getDirectorPassword().subscribe({
+        next: (pwd) => {
+          this.directorPassword = pwd;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to get director password", err);
+          this.directorPassword = "";
+          this.cdr.detectChanges();
+        },
+      });
+    } else {
+      this.directorPassword = "";
+    }
+  }
+
   toggleServerConfig() {
-    this.showServerConfig = !this.showServerConfig;
+    if (!this.showServerConfig) {
+      this.openServerConfig();
+    } else {
+      this.showServerConfig = false;
+    }
   }
 
   saveServerConfig() {
@@ -454,9 +513,34 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
     const passwordToTry = this.directorPassword;
     this.directorPassword = "";
-
     this.showServerConfig = false;
 
+    if (this.authService.currentRole === Role.ADMIN) {
+      this.authService.changeDirectorPassword(passwordToTry).subscribe({
+        next: (success) => {
+          if (!success) {
+            this.error = "Failed to update Director password";
+            setTimeout(() => {
+              this.error = null;
+            }, 5000);
+          }
+          this.refreshConnectionAfterSave();
+        },
+        error: (err) => {
+          this.logger.error("Failed to change password", err);
+          this.error = "Failed to update Director password";
+          setTimeout(() => {
+            this.error = null;
+          }, 5000);
+          this.refreshConnectionAfterSave();
+        },
+      });
+    } else {
+      this.refreshConnectionAfterSave(passwordToTry);
+    }
+  }
+
+  private refreshConnectionAfterSave(passwordToTry?: string) {
     // Reset connection verification to force a new check with new address
     this.connectionVerified = false;
     this.connectionMonitor.checkConnection().subscribe();
@@ -509,7 +593,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       DefaultRacedaySetupComponent,
     );
     componentRef.instance.requestServerConfig.subscribe(() => {
-      this.showServerConfig = true;
+      this.openServerConfig();
       this.cdr.detectChanges();
     });
     componentRef.instance.requestAbout.subscribe(() => {
@@ -559,7 +643,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       // Subscribe to server config request
       if (componentRef.instance instanceof DefaultRacedaySetupComponent) {
         componentRef.instance.requestServerConfig.subscribe(() => {
-          this.showServerConfig = true;
+          this.openServerConfig();
           this.cdr.detectChanges();
         });
         componentRef.instance.requestAbout.subscribe(() => {
@@ -572,7 +656,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         const instance = componentRef.instance as any;
         if (instance.requestServerConfig) {
           instance.requestServerConfig.subscribe(() => {
-            this.showServerConfig = true;
+            this.openServerConfig();
             this.cdr.detectChanges();
           });
         }

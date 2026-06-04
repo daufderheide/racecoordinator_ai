@@ -6,6 +6,17 @@
   (cancel)="onCancelDelete()"
 >
 </app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showTrackEditorPrompt"
+  title="RDS_TRACK_EDITOR_TITLE"
+  message="RDS_PROMPT_TRACK_EDITOR_RACE_RUNNING"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="onConfirmTrackEditor()"
+  (cancel)="onCancelTrackEditor()"
+>
+</app-confirmation-modal>
 <div
   class="page-container"
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"

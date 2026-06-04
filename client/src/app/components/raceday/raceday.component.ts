@@ -5,6 +5,7 @@ import {
   ElementRef,
   Inject,
   Injector,
+  OnDestroy,
   OnInit,
   ViewChild,
   ViewContainerRef,
@@ -71,7 +72,9 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
   styleUrls: ["./raceday.component.css"],
   imports: [],
 })
-export class RacedayComponent implements OnInit, CanComponentDeactivate {
+export class RacedayComponent
+  implements OnInit, OnDestroy, CanComponentDeactivate
+{
   @ViewChild("container", { read: ViewContainerRef, static: true })
   container!: ViewContainerRef;
   private childComponent: any;
@@ -184,5 +187,9 @@ export class RacedayComponent implements OnInit, CanComponentDeactivate {
       return this.childComponent.canDeactivate(nextState);
     }
     return true;
+  }
+
+  ngOnDestroy() {
+    this.container.clear();
   }
 }

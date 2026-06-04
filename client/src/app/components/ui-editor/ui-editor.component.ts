@@ -494,6 +494,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.lampRedDim = s.lampRedDim;
     clone.lampGreen = s.lampGreen;
     clone.fuelGaugeImageSet = s.fuelGaugeImageSet;
+    clone.demoConfig = s.demoConfig ? { ...s.demoConfig } : undefined;
 
     return clone;
   }
@@ -533,6 +534,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.lampRedDim === b.lampRedDim &&
       a.lampGreen === b.lampGreen &&
       a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
+      JSON.stringify(a.demoConfig) === JSON.stringify(b.demoConfig) &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&

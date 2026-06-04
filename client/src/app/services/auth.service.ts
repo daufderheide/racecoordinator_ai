@@ -90,6 +90,14 @@ export class AuthService {
       );
   }
 
+  public getDirectorPassword(): Observable<string> {
+    const url = `${this.dataService.serverUrl}/api/auth/password`;
+    return this.http.get<{ password: string }>(url).pipe(
+      map((response) => response.password),
+      catchError(() => of("")),
+    );
+  }
+
   public changeDirectorPassword(newPassword: string): Observable<boolean> {
     const url = `${this.dataService.serverUrl}/api/auth/password`;
     return this.http.put(url, { newPassword }).pipe(

@@ -70,4 +70,33 @@ public class DriverHeatDataTest {
     dhd.reset();
     assertEquals(-1.0, dhd.getReactionTime(), 0.001);
   }
+
+  @Test
+  public void testMongoSerializationDeserialization() {
+    Driver driverModel = new Driver("Test Driver", "Nickname");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData original = new DriverHeatData(driver);
+    original.addSegment(1.5);
+    original.addSegment(2.5);
+    original.addLap(10.0, false);
+    original.addSegment(3.0);
+    original.addLap(12.0, true);
+
+    org.bson.codecs.configuration.CodecRegistry pojoCodecRegistry =
+        org.bson.codecs.configuration.CodecRegistries.fromRegistries(
+            com.mongodb.MongoClientSettings.getDefaultCodecRegistry(),
+            org.bson.codecs.configuration.CodecRegistries.fromProviders(
+                org.bson.codecs.pojo.PojoCodecProvider.builder().automatic(true).build()));
+
+    org.bson.codecs.Codec<DriverHeatData> codec = pojoCodecRegistry.get(DriverHeatData.class);
+    org.bson.BsonDocument document = new org.bson.BsonDocument();
+    org.bson.BsonWriter writer = new org.bson.BsonDocumentWriter(document);
+    codec.encode(writer, original, org.bson.codecs.EncoderContext.builder().build());
+
+    org.bson.BsonReader reader = new org.bson.BsonDocumentReader(document);
+    DriverHeatData decoded = codec.decode(reader, org.bson.codecs.DecoderContext.builder().build());
+
+    assertEquals(original.getLaps().size(), decoded.getLaps().size());
+    assertEquals(original.getSegments().size(), decoded.getSegments().size());
+  }
 }

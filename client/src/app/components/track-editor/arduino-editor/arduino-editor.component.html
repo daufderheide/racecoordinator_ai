@@ -801,6 +801,17 @@
                                           [class.active]="
                                             isRgbLedActive(i, ledIdx)
                                           "
+                                          [style.background-color]="
+                                            getRgbLedColorHex(i, ledIdx)
+                                          "
+                                          [style.box-shadow]="
+                                            getRgbLedColorShadow(i, ledIdx)
+                                          "
+                                          [style.border-color]="
+                                            getRgbLedColorHex(i, ledIdx)
+                                              ? '#ffffff'
+                                              : null
+                                          "
                                           (click)="toggleRgbLed(i, ledIdx)"
                                           style="cursor: pointer"
                                         ></span>

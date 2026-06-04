@@ -451,15 +451,36 @@ describe("DefaultRacedaySetupComponent", () => {
     flush();
 
     expect(component.unselectedParticipants.length).toBe(0);
-    expect(component.selectedParticipants.length).toBe(6);
+    expect(component.selectedParticipants.length).toBe(4);
     expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+  }));
+
+  it("should only add individual drivers and not add teams when addAllParticipants is called", fakeAsync(() => {
+    expect(component.selectedParticipants.length).toBe(0);
+    const unselectedDrivers = component.unselectedParticipants.filter((p) =>
+      component.isDriver(p),
+    );
+    const unselectedTeams = component.unselectedParticipants.filter((p) =>
+      component.isTeam(p),
+    );
+    expect(unselectedDrivers.length).toBeGreaterThan(0);
+    expect(unselectedTeams.length).toBeGreaterThan(0);
+
+    component.addAllParticipants();
+    flush();
+
+    // Verify all selected participants are drivers and none are teams
+    component.selectedParticipants.forEach((p) => {
+      expect(component.isDriver(p)).toBeTrue();
+      expect(component.isTeam(p)).toBeFalse();
+    });
   }));
 
   it("should remove all drivers", fakeAsync(() => {
     // Setup initial state: select all
     component.addAllParticipants();
     flush();
-    expect(component.selectedParticipants.length).toBe(6);
+    expect(component.selectedParticipants.length).toBe(4);
 
     component.removeAllParticipants();
     flush();
@@ -583,12 +604,45 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
-  it("should load saved races and open modal", () => {
+  it("should load demo configuration from settings on init", () => {
+    const customConfig = { minLapTimeMs: 1234 };
+    (mockSettingsService as any).settings.demoConfig = customConfig;
+
+    // Re-initialize to trigger ngOnInit loading
+    component.ngOnInit();
+    expect(component.demoConfig).toEqual(customConfig);
+  });
+
+  it("should save demo configuration to settings when confirmed", () => {
+    const newConfig = { minLapTimeMs: 5678 };
+    mockSettingsService.saveSettings.calls.reset();
+
+    component.onDemoConfigConfirm(newConfig);
+
+    expect(component.demoConfig).toEqual(newConfig);
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    const savedSettings =
+      mockSettingsService.saveSettings.calls.mostRecent().args[0];
+    expect(savedSettings.demoConfig).toEqual(newConfig);
+  });
+
+  it("should load saved races, filter out autosaves, and open modal", () => {
+    mockDataService.getSavedRaces.and.callFake((isDemo?: boolean) => {
+      if (isDemo) {
+        return of(["demo_race_1.json", "autosave_demo.json"]);
+      }
+      return of(["user_race_1.json", "autosave_user.json"]);
+    });
+
     component.loadSavedRaces();
     expect(mockDataService.getSavedRaces).toHaveBeenCalledTimes(2);
     expect(component.showLoadRaceModal).toBeTrue();
-    // 2 normal and 2 demo races combined
-    expect(component.savedRaces.length).toBe(4);
+    // 1 normal and 1 demo races combined (autosaves are filtered out)
+    expect(component.savedRaces.length).toBe(2);
+    expect(component.savedRaces).toEqual([
+      { filename: "user_race_1.json", isDemo: false },
+      { filename: "demo_race_1.json", isDemo: true },
+    ]);
   });
 
   it("should delete saved race after confirmation", () => {

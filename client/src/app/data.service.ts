@@ -11,6 +11,8 @@ import {
   DeferHeatResponse,
   DeleteAssetRequest,
   DeleteAssetResponse,
+  EndRaceRequest,
+  EndRaceResponse,
   IAssetMessage,
   ICarData,
   ICustomRotation,
@@ -123,6 +125,9 @@ export class DataService {
   }
 
   public setServerAddress(ip: string, port: number) {
+    if (this.serverIp === ip && this.serverPort === port) {
+      return;
+    }
     this.serverIp = ip;
     this.serverPort = port;
     // Reconnect socket if it was open? Usually we just let the next attempt handle it,
@@ -537,6 +542,30 @@ export class DataService {
       );
   }
 
+  endRace(): Observable<boolean> {
+    const request = EndRaceRequest.create({});
+    const buffer = EndRaceRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
+    });
+
+    return this.http
+      .post(`${this.baseUrl}/api/end-race`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
+      })
+      .pipe(
+        map((response) => {
+          const endResponse = EndRaceResponse.decode(
+            Reader.create(new Uint8Array(response as any)),
+          );
+          return endResponse.success ?? false;
+        }),
+      );
+  }
+
   pauseRace(): Observable<boolean> {
     const request = PauseRaceRequest.create({});
     const buffer = PauseRaceRequest.encode(request).finish();
@@ -735,6 +764,14 @@ export class DataService {
           );
         }),
       );
+  }
+
+  finalizeModifyHeats(): Observable<any> {
+    return this.http.post(
+      `${this.baseUrl}/api/finalize-modify-heats`,
+      {},
+      { responseType: "text" },
+    );
   }
 
   // --- Database Management ---
@@ -1151,7 +1188,10 @@ export class DataService {
       }
     }
 
-    const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
+    const token = localStorage.getItem("director_token");
+    const wsUrl = token
+      ? `ws://${this.serverIp}:${this.serverPort}/api/race-data?token=${token}`
+      : `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
     this.logger.debug(`Attempting to connect to WebSocket: ${wsUrl}`);
     this.raceDataSocket = new WebSocket(wsUrl);
     this.raceDataSocket.binaryType = "arraybuffer";

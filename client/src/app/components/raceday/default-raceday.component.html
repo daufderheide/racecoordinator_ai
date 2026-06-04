@@ -30,6 +30,28 @@
   >
   </app-confirmation-modal>
 
+  <app-confirmation-modal
+    [visible]="showRestartHeatConfirmation"
+    [title]="restartHeatModalTitle"
+    [message]="restartHeatModalMessage"
+    [confirmText]="restartHeatConfirmText"
+    [cancelText]="restartHeatCancelText"
+    (confirm)="onRestartHeatConfirm()"
+    (cancel)="onRestartHeatCancel()"
+  >
+  </app-confirmation-modal>
+
+  <app-confirmation-modal
+    [visible]="showDeferHeatConfirmation"
+    [title]="deferHeatModalTitle"
+    [message]="deferHeatModalMessage"
+    [confirmText]="deferHeatConfirmText"
+    [cancelText]="deferHeatCancelText"
+    (confirm)="onDeferHeatConfirm()"
+    (cancel)="onDeferHeatCancel()"
+  >
+  </app-confirmation-modal>
+
   @if (showCountdownOverlay) {
     <div class="countdown-overlay">
       @if (race) {
@@ -513,6 +535,12 @@
                                 [style.color]="
                                   getLaneColor(hd, 'foreground_color')
                                 "
+                                [style.padding-right]="
+                                  (authService.currentRole$ | async) ===
+                                  Role.VIEWER
+                                    ? '0px'
+                                    : '30px'
+                                "
                               >
                                 {{
                                   entry.property === "driver.nickname"
@@ -523,37 +551,44 @@
                                     : hd.actualDriver?.name || hd.driver.name
                                 }}
                               </span>
-                              <select
-                                class="teammate-select"
-                                [style.background-image]="
-                                  getDropdownArrowBg(hd)
-                                "
-                                [disabled]="isDriverSwapDisabled(hd)"
-                                (change)="onTeammateChange(hd, $event)"
-                              >
-                                @for (tm of getTeammates(hd); track tm) {
-                                  <option
-                                    [value]="$any(tm).entity_id || $any(tm).id"
-                                    [selected]="
-                                      ($any(tm).entity_id || $any(tm).id) ===
-                                      (hd.actualDriver?.entity_id ||
-                                        $any(hd.driver).entity_id)
-                                    "
-                                  >
-                                    {{
-                                      entry.property === "driver.nickname"
-                                        ? $any(tm).nickname || $any(tm).name
-                                        : $any(tm).name
-                                    }}
-                                    {{
-                                      getDriverStats(
-                                        hd,
+                              @if (
+                                (authService.currentRole$ | async) !==
+                                Role.VIEWER
+                              ) {
+                                <select
+                                  class="teammate-select"
+                                  [style.background-image]="
+                                    getDropdownArrowBg(hd)
+                                  "
+                                  [disabled]="isDriverSwapDisabled(hd)"
+                                  (change)="onTeammateChange(hd, $event)"
+                                >
+                                  @for (tm of getTeammates(hd); track tm) {
+                                    <option
+                                      [value]="
                                         $any(tm).entity_id || $any(tm).id
-                                      )
-                                    }}
-                                  </option>
-                                }
-                              </select>
+                                      "
+                                      [selected]="
+                                        ($any(tm).entity_id || $any(tm).id) ===
+                                        (hd.actualDriver?.entity_id ||
+                                          $any(hd.driver).entity_id)
+                                      "
+                                    >
+                                      {{
+                                        entry.property === "driver.nickname"
+                                          ? $any(tm).nickname || $any(tm).name
+                                          : $any(tm).name
+                                      }}
+                                      {{
+                                        getDriverStats(
+                                          hd,
+                                          $any(tm).entity_id || $any(tm).id
+                                        )
+                                      }}
+                                    </option>
+                                  }
+                                </select>
+                              }
                             </div>
                           }
                           <!-- Drag Handle -->

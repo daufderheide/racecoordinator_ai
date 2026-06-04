@@ -10,6 +10,8 @@ import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
 import com.antigravity.proto.DeferHeatResponse;
+import com.antigravity.proto.EndRaceRequest;
+import com.antigravity.proto.EndRaceResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
@@ -43,6 +45,8 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.OverallStandings;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
+import com.antigravity.race.states.NotStarted;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.AnalyticsService;
 import com.antigravity.service.DatabaseService;
@@ -87,6 +91,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/initialize-race", this::initializeRace, Role.DIRECTOR);
     app.post("/api/start-race", this::startRace, Role.DIRECTOR);
     app.post("/api/pause-race", this::pauseRace, Role.DIRECTOR);
+    app.post("/api/end-race", this::endRace, Role.DIRECTOR);
     app.post("/api/next-heat", this::nextHeat, Role.DIRECTOR);
     app.post("/api/restart-heat", this::restartHeat, Role.DIRECTOR);
     app.post("/api/skip-heat", this::skipHeat, Role.DIRECTOR);
@@ -118,6 +123,7 @@ public class ClientCommandTaskHandler {
     app.get("/api/analytics/config", this::getAnalyticsConfig, Role.VIEWER);
     app.post("/api/modify-heats", this::modifyHeats, Role.DIRECTOR);
     app.post("/api/regenerate-heats", this::regenerateHeats, Role.DIRECTOR);
+    app.post("/api/finalize-modify-heats", this::finalizeModifyHeats, Role.DIRECTOR);
   }
 
   private void initializeRace(Context ctx) {
@@ -182,7 +188,7 @@ public class ClientCommandTaskHandler {
       return TaskResult.error(404, "Race not found");
     }
 
-    if (ClientSubscriptionManager.getInstance().hasSubscribers()
+    if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
         && ClientSubscriptionManager.getInstance().getRace() != null
         && ClientSubscriptionManager.getInstance().getRace().isActive()) {
       return TaskResult.error(409, "Cannot start new race while client is watching an active race");
@@ -423,6 +429,24 @@ public class ClientCommandTaskHandler {
       }
     } catch (Exception e) {
       logger.error("Error processing pauseRace", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  void endRace(Context ctx) {
+    try {
+      EndRaceRequest.parseFrom(ctx.bodyAsBytes()); // Validate payload
+      logger.info("End race requested via HTTP API.");
+      ClientSubscriptionManager.getInstance().forceStopRace();
+
+      EndRaceResponse response =
+          EndRaceResponse.newBuilder()
+              .setSuccess(true)
+              .setMessage("Race ended successfully")
+              .build();
+      ctx.contentType("application/octet-stream").result(response.toByteArray());
+    } catch (Exception e) {
+      logger.error("Error processing endRace", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }
@@ -1067,6 +1091,10 @@ public class ClientCommandTaskHandler {
       race.init(); // Open protocols
       AnalyticsService.getInstance().trackRaceStart(race);
 
+      // Broadcast full race state to all current subscribers so they render the loaded race in the
+      // UI.
+      ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
+
       ctx.status(200).result("Race loaded successfully");
     } catch (Exception e) {
       logger.error("Error loading race", e);
@@ -1216,6 +1244,47 @@ public class ClientCommandTaskHandler {
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Exception e) {
       logger.error("Error regenerating heats", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void finalizeModifyHeats(Context ctx) {
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      boolean allStarted = !race.getHeats().isEmpty();
+      Heat firstUnstarted = null;
+      for (Heat h : race.getHeats()) {
+        if (!h.isStarted()) {
+          allStarted = false;
+          if (firstUnstarted == null) {
+            firstUnstarted = h;
+          }
+        }
+      }
+
+      if (allStarted && !(race.getState() instanceof RaceOver)) {
+        race.changeState(new RaceOver());
+      } else if (race.getCurrentHeat() != null
+          && race.getCurrentHeat().isStarted()
+          && race.getState() instanceof NotStarted) {
+        // Safety net: current heat is already completed but state allows re-starting it.
+        // Advance to the first unstarted heat, or transition to RaceOver if none.
+        if (firstUnstarted != null) {
+          race.setCurrentHeat(firstUnstarted);
+          race.broadcast(race.createSnapshot());
+        } else {
+          race.changeState(new RaceOver());
+        }
+      }
+      ctx.status(200).result("OK");
+    } catch (Exception e) {
+      logger.error("Error finalizing modify heats", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

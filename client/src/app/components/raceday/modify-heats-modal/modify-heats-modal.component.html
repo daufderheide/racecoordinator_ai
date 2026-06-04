@@ -388,6 +388,7 @@
                           track().lanes[lIdx].background_color
                         "
                         [style.color]="track().lanes[lIdx].foreground_color"
+                        (dblclick)="onRemoveFromHeat(hIdx, lIdx)"
                       >
                         <img
                           [src]="getParticipantAvatar(participant) | avatarUrl"

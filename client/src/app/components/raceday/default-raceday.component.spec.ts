@@ -32,8 +32,10 @@ class MockTranslatePipe implements PipeTransform {
   }
 }
 
-import { of, Subject } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
+import { Role } from "@app/models/role";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
@@ -113,6 +115,7 @@ describe("DefaultRacedayComponent", () => {
   let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
+  let mockAuthService: any;
 
   beforeEach(() => {
     mockAudioInstance = jasmine.createSpyObj("AudioInstance", [
@@ -141,6 +144,17 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+
+    mockAuthService = {
+      currentRoleSubject: new BehaviorSubject<Role>(Role.DIRECTOR),
+      get currentRole() {
+        return this.currentRoleSubject.value;
+      },
+      get currentRole$() {
+        return this.currentRoleSubject.asObservable();
+      },
+      logout: jasmine.createSpy("logout"),
+    };
 
     mockLogger = jasmine.createSpyObj("LoggerService", [
       "debug",
@@ -205,6 +219,7 @@ describe("DefaultRacedayComponent", () => {
           provide: PrintService,
           useValue: jasmine.createSpyObj("PrintService", ["print"]),
         },
+        { provide: AuthService, useValue: mockAuthService },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -572,6 +587,119 @@ describe("DefaultRacedayComponent", () => {
       expect(component["autoStartRemaining"]).toBe(0);
       expect(component["autoAdvanceRemaining"]).toBe(0);
     });
+
+    it("should show restart heat confirmation dialog when RESTART_HEAT selected", () => {
+      fixture.detectChanges();
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+
+      component.onMenuSelect("RESTART_HEAT");
+
+      expect(component.showRestartHeatConfirmation).toBeTrue();
+    });
+
+    it("should call restartHeat on confirm and hide dialog", () => {
+      fixture.detectChanges();
+      component.showRestartHeatConfirmation = true;
+
+      component.onRestartHeatConfirm();
+
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(mockDataService.restartHeat).toHaveBeenCalled();
+    });
+
+    it("should hide dialog on restart heat cancel without calling restartHeat", () => {
+      fixture.detectChanges();
+      mockDataService.restartHeat.calls.reset();
+      component.showRestartHeatConfirmation = true;
+
+      component.onRestartHeatCancel();
+
+      expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(mockDataService.restartHeat).not.toHaveBeenCalled();
+    });
+
+    it("should show defer heat confirmation dialog when DEFER_HEAT selected", () => {
+      fixture.detectChanges();
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+
+      component.onMenuSelect("DEFER_HEAT");
+
+      expect(component.showDeferHeatConfirmation).toBeTrue();
+    });
+
+    it("should call deferHeat on confirm and hide dialog", () => {
+      fixture.detectChanges();
+      component.showDeferHeatConfirmation = true;
+
+      component.onDeferHeatConfirm();
+
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+      expect(mockDataService.deferHeat).toHaveBeenCalled();
+    });
+
+    it("should hide dialog on defer heat cancel without calling deferHeat", () => {
+      fixture.detectChanges();
+      mockDataService.deferHeat.calls.reset();
+      component.showDeferHeatConfirmation = true;
+
+      component.onDeferHeatCancel();
+
+      expect(component.showDeferHeatConfirmation).toBeFalse();
+      expect(mockDataService.deferHeat).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("viewer role restrictions", () => {
+    beforeEach(() => {
+      mockAuthService.currentRoleSubject.next(Role.VIEWER);
+    });
+
+    it("should disable all Race Director menu items and save for viewer role", () => {
+      expect(component.isStartResumeDisabled).toBeTrue();
+      expect(component.isPauseDisabled).toBeTrue();
+      expect(component.isNextHeatDisabled).toBeTrue();
+      expect(component.isRestartHeatDisabled).toBeTrue();
+      expect(component.isDeferHeatDisabled).toBeTrue();
+      expect(component.isSkipHeatDisabled).toBeTrue();
+      expect(component.isSkipRaceDisabled).toBeTrue();
+      expect(component.isAddLapDisabled).toBeTrue();
+      expect(component.isModifyDisabled).toBeTrue();
+      expect(component.isSaveDisabled).toBeTrue();
+    });
+
+    it("should not execute action in onMenuSelect for disabled items if user is a viewer", () => {
+      mockDataService.startRace.calls.reset();
+      component.onMenuSelect("START_RESUME");
+      expect(mockDataService.startRace).not.toHaveBeenCalled();
+    });
+
+    it("should hide the teammate select pulldown for viewer role", () => {
+      mockSettings.racedayColumns = ["driver.name"];
+      (component as any).loadColumns();
+
+      const mockHdWithTeam = {
+        objectId: "hd-team",
+        laneIndex: 0,
+        driver: { name: "Team Driver", entity_id: "driver1" },
+        participant: {
+          team: {
+            name: "Team A",
+            driverIds: ["driver1", "driver2"],
+          },
+        },
+        currentLapSegments: [],
+      };
+      component["sortedHeatDrivers"] = [mockHdWithTeam as any];
+      component["allDrivers"] = [
+        { entity_id: "driver1", name: "Team Driver" },
+        { entity_id: "driver2", name: "Teammate" },
+      ] as any;
+
+      fixture.detectChanges();
+
+      const select = fixture.nativeElement.querySelector(".teammate-select");
+      expect(select).toBeFalsy();
+    });
   });
 
   describe("formatValue", () => {
@@ -829,6 +957,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "The Rocket" }),
+        }),
       );
     });
 
@@ -844,6 +975,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "The Rocket" }),
+        }),
       );
     });
   });
@@ -935,6 +1069,16 @@ describe("DefaultRacedayComponent", () => {
     (component as any).loadRaceData();
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it("should call cdr.markForCheck when loadRaceData is called", () => {
+    const cdrSpy = spyOn(component["cdr"], "markForCheck");
+    const mockRace = { track: { lanes: [] } };
+    mockRaceService.getRace.and.returnValue(mockRace);
+
+    (component as any).loadRaceData();
+
+    expect(cdrSpy).toHaveBeenCalled();
   });
 
   it("should render the dynamic track name in the header", () => {
@@ -1476,6 +1620,9 @@ describe("DefaultRacedayComponent", () => {
 
       expect((component as any).playThemedSound).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_PENALTY,
+        jasmine.objectContaining({
+          driver: jasmine.objectContaining({ nickname: "Test Driver" }),
+        }),
       );
     });
 
@@ -2751,6 +2898,93 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isMenuOpen).toBeFalse();
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isWindowsMenuOpen).toBeFalse();
+    });
+  });
+
+  describe("Race Ended and Exit Behavior", () => {
+    it("should show acknowledgement modal when system state resourceLockState becomes IDLE", () => {
+      fixture.detectChanges();
+      const systemStateSubject = mockDataService.getSystemState();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.raceHasEnded).toBeFalse();
+
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(component.raceHasEnded).toBeTrue();
+      expect(component.showExitConfirmation).toBeFalse();
+      expect(component.showSkipHeatConfirmation).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should transition from race ended to new race started when resourceLockState becomes RACE_RUNNING", () => {
+      fixture.detectChanges();
+      const systemStateSubject = mockDataService.getSystemState();
+
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+      expect(component.raceHasEnded).toBeTrue();
+      expect(component.showAckModal).toBeTrue();
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
+
+      expect(component.raceHasEnded).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_STARTED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_STARTED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_STARTED_BTN_OK");
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should allow deactivation immediately if forceExit is true", () => {
+      fixture.detectChanges();
+      component.forceExit = true;
+      component.raceHasEnded = true;
+
+      const result = component.canDeactivate();
+      expect(result).toBeTrue();
+    });
+
+    it("should block deactivation and show acknowledgement modal when race has ended and forceExit is false", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const result = component.canDeactivate();
+      expect(result).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.showAckModal = true;
+      component.forceExit = false;
+
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(component.forceExit).toBeTrue();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should show exit confirmation modal on canDeactivate under normal conditions", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = false;
+      component.forceExit = false;
+
+      const result = component.canDeactivate();
+      // Returns deactivateSubject observable under normal conditions
+      expect(result).toBeDefined();
+      expect(component.showExitConfirmation).toBeTrue();
+      expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
     });
   });
 });

@@ -73,7 +73,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   isVoltageLinked: boolean = false;
   isLedStringsLinked: boolean = true;
   ledStringExpanded: boolean[] = [];
-  activeRgbLedStates: { [key: string]: boolean } = {};
+  activeRgbLedStates: { [key: string]: "off" | "red" | "green" | "blue" } = {};
   ledTypes: PinAction[] = [];
   colorOrders: PinAction[] = [];
 
@@ -366,6 +366,12 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
             );
           } else {
             this.logger.info("Interface config updated successfully");
+            // Resend all active LED string states so they match the UI after reload
+            if (config.ledStrings) {
+              config.ledStrings.forEach((_, idx) => {
+                this.sendLedStringState(idx);
+              });
+            }
           }
         },
         error: (err) => {
@@ -443,36 +449,109 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   private debounceUpdateSubject = new Subject<number>();
 
   isRgbLedActive(stringIndex: number, ledIndex: number): boolean {
-    return !!this.activeRgbLedStates[`${stringIndex}-${ledIndex}`];
+    const key = `${stringIndex}-${ledIndex}`;
+    const state = this.activeRgbLedStates[key] || "off";
+    return state !== "off";
   }
 
-  toggleRgbLed(stringIndex: number, ledIndex: number) {
+  getRgbLedColor(
+    stringIndex: number,
+    ledIndex: number,
+  ): "off" | "red" | "green" | "blue" {
     const key = `${stringIndex}-${ledIndex}`;
-    const isActive = !this.activeRgbLedStates[key];
-    this.activeRgbLedStates[key] = isActive;
+    return this.activeRgbLedStates[key] || "off";
+  }
 
-    const r = isActive ? 255 : 0;
-    const g = 0;
-    const b = 0;
+  getRgbLedColorHex(stringIndex: number, ledIndex: number): string | undefined {
+    const color = this.getRgbLedColor(stringIndex, ledIndex);
+    if (color === "red") return "#ef4444";
+    if (color === "green") return "#22c55e";
+    if (color === "blue") return "#3b82f6";
+    return undefined;
+  }
 
+  getRgbLedColorShadow(
+    stringIndex: number,
+    ledIndex: number,
+  ): string | undefined {
+    const color = this.getRgbLedColor(stringIndex, ledIndex);
+    if (color === "red") return "0 0 8px rgba(239, 68, 68, 0.6)";
+    if (color === "green") return "0 0 8px rgba(34, 197, 94, 0.6)";
+    if (color === "blue") return "0 0 8px rgba(59, 130, 246, 0.6)";
+    return undefined;
+  }
+
+  sendLedStringState(stringIndex: number) {
     const config = this.config();
     const ls = config?.ledStrings?.[stringIndex];
     if (!ls) return;
 
+    // Build states for all LEDs on this string to keep them synced
+    const states = ls.leds.map((_, idx) => {
+      const color = this.getRgbLedColor(stringIndex, idx);
+      let r = 0;
+      let g = 0;
+      let b = 0;
+
+      if (color === "red") {
+        r = 255;
+      } else if (color === "green") {
+        g = 255;
+      } else if (color === "blue") {
+        b = 255;
+      }
+
+      return { index: idx, r, g, b };
+    });
+
+    console.log(
+      `sendLedStringState: sending ${states.length} LED states to pin ${ls.pin}`,
+    );
+
     this.dataService
-      .setInterfaceRgbLedState(
-        ls.pin,
-        [{ index: ledIndex, r, g, b }],
-        this.index(),
-      )
+      .setInterfaceRgbLedState(ls.pin, states, this.index())
       .subscribe({
         next: (resp) => {
           if (!resp.success) {
             this.logger.error("Failed to set RGB LED state:", resp.message);
+          } else {
+            console.log(
+              "sendLedStringState: successfully sent RGB LED state to server",
+            );
           }
         },
         error: (err) => this.logger.error("Error setting RGB LED state:", err),
       });
+  }
+
+  toggleRgbLed(stringIndex: number, ledIndex: number) {
+    const key = `${stringIndex}-${ledIndex}`;
+    const currentState = this.activeRgbLedStates[key] || "off";
+    let nextState: "off" | "red" | "green" | "blue";
+
+    switch (currentState) {
+      case "off":
+        nextState = "red";
+        break;
+      case "red":
+        nextState = "green";
+        break;
+      case "green":
+        nextState = "blue";
+        break;
+      case "blue":
+        nextState = "off";
+        break;
+      default:
+        nextState = "off";
+    }
+
+    this.activeRgbLedStates[key] = nextState;
+    this.cdr.detectChanges();
+
+    console.log(`toggleRgbLed: key=${key}, nextState=${nextState}`);
+
+    this.sendLedStringState(stringIndex);
   }
 
   onDebounceChange(value: number) {
@@ -1033,6 +1112,18 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const ls = config.ledStrings[stringIndex];
     ls.leds[ledIndex] = val;
 
+    if (val === 0) {
+      // RgbLedBehavior.RGB_LED_BEHAVIOR_UNUSED
+      const key = `${stringIndex}-${ledIndex}`;
+      this.activeRgbLedStates[key] = "off";
+
+      if (this.isLedStringsLinked) {
+        config.ledStrings.forEach((_, i) => {
+          this.activeRgbLedStates[`${i}-${ledIndex}`] = "off";
+        });
+      }
+    }
+
     if (this.isLedStringsLinked) {
       config.ledStrings.forEach((string, i) => {
         if (i !== stringIndex) {
@@ -1047,6 +1138,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     // Update derived fields
     this.updateDerivedLedFields(stringIndex);
 
+    this.cdr.detectChanges();
     this.updateArduinoConfig();
   }
 

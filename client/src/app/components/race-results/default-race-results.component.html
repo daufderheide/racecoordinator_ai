@@ -272,12 +272,12 @@
           >
             @for (
               row of standingsRows;
-              track trackByDriver(idx, row);
+              track trackByDriver($index, row);
               let idx = $index
             ) {
               <a
                 class="driver-row"
-                [style.top.px]="idx * 90"
+                [style.top.px]="row.visualIndex * 90"
                 [routerLink]="['/driver-results', getDriverId(row.driver)]"
                 target="_blank"
               >

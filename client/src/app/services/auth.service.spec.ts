@@ -98,6 +98,27 @@ describe("AuthService", () => {
     });
   });
 
+  describe("getDirectorPassword", () => {
+    it("should fetch password from the backend", () => {
+      service.getDirectorPassword().subscribe((password) => {
+        expect(password).toBe("rc-ai-pass");
+      });
+
+      const req = httpMock.expectOne("http://localhost:7070/api/auth/password");
+      expect(req.request.method).toBe("GET");
+      req.flush({ password: "rc-ai-pass" });
+    });
+
+    it("should return empty string on error", () => {
+      service.getDirectorPassword().subscribe((password) => {
+        expect(password).toBe("");
+      });
+
+      const req = httpMock.expectOne("http://localhost:7070/api/auth/password");
+      req.flush(null, { status: 500, statusText: "Server Error" });
+    });
+  });
+
   describe("logout", () => {
     it("should clear storage and fetch role", () => {
       localStorage.setItem("director_token", "token");

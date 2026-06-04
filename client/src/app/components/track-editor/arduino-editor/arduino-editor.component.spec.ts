@@ -1190,4 +1190,119 @@ describe("ArduinoEditorComponent", () => {
       expect(component.config()!.ledStrings[1].colorOrder).toBe(1);
     });
   });
+
+  describe("RGB LED Toggling and State Synchronization", () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(ArduinoEditorComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput("config", makeConfig());
+      fixture.componentRef.setInput("lanes", [
+        new Lane("l1", "#fff", "#ff0000", 10),
+      ]);
+
+      // Add an LED string
+      const rgbBehavior = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+      component.setPinBehavior(true, 5, rgbBehavior.toString());
+      fixture.detectChanges();
+    });
+
+    it("should cycle LED color states correctly (off -> red -> green -> blue -> off)", () => {
+      spyOn(mockDataService, "setInterfaceRgbLedState").and.callThrough();
+
+      const stringIndex = 0;
+      const ledIndex = 0;
+
+      // 1. Toggle to Red
+      component.toggleRgbLed(stringIndex, ledIndex);
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("red");
+      expect(component.getRgbLedColorHex(stringIndex, ledIndex)).toBe(
+        "#ef4444",
+      );
+      expect(component.getRgbLedColorShadow(stringIndex, ledIndex)).toContain(
+        "rgba(239, 68, 68",
+      );
+      expect(component.isRgbLedActive(stringIndex, ledIndex)).toBeTrue();
+      expect(mockDataService.setInterfaceRgbLedState).toHaveBeenCalledWith(
+        5,
+        jasmine.arrayContaining([{ index: 0, r: 255, g: 0, b: 0 }]),
+        0,
+      );
+
+      // 2. Toggle to Green
+      component.toggleRgbLed(stringIndex, ledIndex);
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("green");
+      expect(component.getRgbLedColorHex(stringIndex, ledIndex)).toBe(
+        "#22c55e",
+      );
+      expect(component.getRgbLedColorShadow(stringIndex, ledIndex)).toContain(
+        "rgba(34, 197, 94",
+      );
+      expect(component.isRgbLedActive(stringIndex, ledIndex)).toBeTrue();
+      expect(mockDataService.setInterfaceRgbLedState).toHaveBeenCalledWith(
+        5,
+        jasmine.arrayContaining([{ index: 0, r: 0, g: 255, b: 0 }]),
+        0,
+      );
+
+      // 3. Toggle to Blue
+      component.toggleRgbLed(stringIndex, ledIndex);
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("blue");
+      expect(component.getRgbLedColorHex(stringIndex, ledIndex)).toBe(
+        "#3b82f6",
+      );
+      expect(component.getRgbLedColorShadow(stringIndex, ledIndex)).toContain(
+        "rgba(59, 130, 246",
+      );
+      expect(component.isRgbLedActive(stringIndex, ledIndex)).toBeTrue();
+      expect(mockDataService.setInterfaceRgbLedState).toHaveBeenCalledWith(
+        5,
+        jasmine.arrayContaining([{ index: 0, r: 0, g: 0, b: 255 }]),
+        0,
+      );
+
+      // 4. Toggle back to Off
+      component.toggleRgbLed(stringIndex, ledIndex);
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("off");
+      expect(
+        component.getRgbLedColorHex(stringIndex, ledIndex),
+      ).toBeUndefined();
+      expect(
+        component.getRgbLedColorShadow(stringIndex, ledIndex),
+      ).toBeUndefined();
+      expect(component.isRgbLedActive(stringIndex, ledIndex)).toBeFalse();
+      expect(mockDataService.setInterfaceRgbLedState).toHaveBeenCalledWith(
+        5,
+        jasmine.arrayContaining([{ index: 0, r: 0, g: 0, b: 0 }]),
+        0,
+      );
+    });
+
+    it("should clear active states when behavior is set to unused", () => {
+      spyOn(component, "sendLedStringState");
+
+      const stringIndex = 0;
+      const ledIndex = 0;
+
+      // Make it active (red) first
+      component.toggleRgbLed(stringIndex, ledIndex);
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("red");
+
+      // Change behavior to unused (0)
+      component.updateLedBehavior(stringIndex, ledIndex, 0);
+
+      // Verify active state cleared
+      expect(component.getRgbLedColor(stringIndex, ledIndex)).toBe("off");
+      expect(component.sendLedStringState).toHaveBeenCalledWith(stringIndex);
+    });
+
+    it("should automatically resend LED states after successful config updates", () => {
+      spyOn(component, "sendLedStringState");
+      spyOn(mockDataService, "updateInterfaceConfig").and.callThrough();
+
+      component.updateArduinoConfig();
+
+      expect(mockDataService.updateInterfaceConfig).toHaveBeenCalled();
+      expect(component.sendLedStringState).toHaveBeenCalledWith(0);
+    });
+  });
 });

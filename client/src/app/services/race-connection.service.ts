@@ -87,6 +87,7 @@ export class RaceConnectionService implements OnDestroy {
   private hasInitiallyConnected = false;
 
   // State
+  private isRaceEnded = false;
   public isInterfaceConnected = false;
   public driverRankings = new Map<string, number>();
 
@@ -159,8 +160,28 @@ export class RaceConnectionService implements OnDestroy {
     this.pendingUpdate = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
-
+    this.isRaceEnded = false;
     this.dataService.updateRaceSubscription(true);
+
+    this.subscriptions.push(
+      this.dataService.getSystemState().subscribe((state) => {
+        if (state) {
+          if (state.resourceLockState === "IDLE") {
+            this.isRaceEnded = true;
+            if (this.noStatusWatchdog) {
+              clearTimeout(this.noStatusWatchdog);
+              this.noStatusWatchdog = null;
+            }
+            this.clearDisconnectedError();
+          } else if (state.resourceLockState === "RACE_RUNNING") {
+            if (this.isRaceEnded) {
+              this.isRaceEnded = false;
+              this.resetWatchdog();
+            }
+          }
+        }
+      }),
+    );
 
     this.subscriptions.push(
       this.dataService.socketConnected$.subscribe((connected) => {
@@ -427,6 +448,9 @@ export class RaceConnectionService implements OnDestroy {
   // ... inside starting connection ...
 
   private handleInterfaceEvent(event: IInterfaceEvent) {
+    if (this.isRaceEnded) {
+      return;
+    }
     if (event.status) {
       const status = event.status.status;
       if (status === this.lastInterfaceStatus) {
@@ -472,6 +496,10 @@ export class RaceConnectionService implements OnDestroy {
 
   private resetWatchdog() {
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
+    if (this.isRaceEnded) {
+      this.noStatusWatchdog = null;
+      return;
+    }
     this.noStatusWatchdog = setTimeout(() => {
       this.lastInterfaceStatus = -1;
       if (!this.hasInitiallyConnected) {
@@ -490,6 +518,9 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private scheduleDisconnectedError(titleKey: string, messageKey: string) {
+    if (this.isRaceEnded) {
+      return;
+    }
     if (this.noStatusWatchdog) {
       clearTimeout(this.noStatusWatchdog);
       this.noStatusWatchdog = null;

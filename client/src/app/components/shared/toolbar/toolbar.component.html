@@ -174,17 +174,6 @@
   <div class="spacer"></div>
 
   <div class="toolbar-utility-group">
-    <!-- Password Change Icon (if Admin) -->
-    @if (authService.currentRole === Role.ADMIN && showPasswordChange()) {
-      <button
-        class="toolbar-btn ghost"
-        (click)="showChangePasswordModal = true"
-        [title]="'CHANGE_PASSWORD' | translate"
-      >
-        <span class="material-icons">password</span>
-      </button>
-    }
-
     <!-- Google Analytics Toggle -->
     @if (showAnalytics()) {
       <button
@@ -268,9 +257,3 @@
   [message]="analyticsModalMessage"
   (acknowledge)="onAnalyticsModalAcknowledge()"
 ></app-acknowledgement-modal>
-
-<app-change-password-dialog
-  [visible]="showChangePasswordModal"
-  (close)="showChangePasswordModal = false"
->
-</app-change-password-dialog>

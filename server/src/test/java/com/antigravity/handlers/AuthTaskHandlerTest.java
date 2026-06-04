@@ -27,6 +27,7 @@ public class AuthTaskHandlerTest {
   private Handler getRoleHandler;
   private Handler loginHandler;
   private Handler changePasswordHandler;
+  private Handler getPasswordHandler;
 
   @Before
   public void setUp() {
@@ -36,17 +37,20 @@ public class AuthTaskHandlerTest {
 
     ArgumentCaptor<Handler> postCaptor = ArgumentCaptor.forClass(Handler.class);
     ArgumentCaptor<Handler> putCaptor = ArgumentCaptor.forClass(Handler.class);
-    ArgumentCaptor<Handler> getCaptor = ArgumentCaptor.forClass(Handler.class);
+    ArgumentCaptor<Handler> getRoleCaptor = ArgumentCaptor.forClass(Handler.class);
+    ArgumentCaptor<Handler> getPasswordCaptor = ArgumentCaptor.forClass(Handler.class);
 
     new AuthTaskHandler(app, configService);
 
     verify(app).post(eq("/api/auth/login"), postCaptor.capture(), eq(Role.VIEWER));
     verify(app).put(eq("/api/auth/password"), putCaptor.capture(), eq(Role.ADMIN));
-    verify(app).get(eq("/api/auth/role"), getCaptor.capture(), eq(Role.VIEWER));
+    verify(app).get(eq("/api/auth/role"), getRoleCaptor.capture(), eq(Role.VIEWER));
+    verify(app).get(eq("/api/auth/password"), getPasswordCaptor.capture(), eq(Role.ADMIN));
 
     loginHandler = postCaptor.getValue();
     changePasswordHandler = putCaptor.getValue();
-    getRoleHandler = getCaptor.getValue();
+    getRoleHandler = getRoleCaptor.getValue();
+    getPasswordHandler = getPasswordCaptor.getValue();
   }
 
   @Test
@@ -63,6 +67,18 @@ public class AuthTaskHandlerTest {
   @Test
   public void testGetRole_NonLocalNoAuth_ReturnsViewer() throws Exception {
     when(ctx.ip()).thenReturn("8.8.8.8");
+    when(ctx.header("Authorization")).thenReturn(null);
+
+    getRoleHandler.handle(ctx);
+
+    ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(ctx).json(mapCaptor.capture());
+    assertEquals("VIEWER", mapCaptor.getValue().get("role"));
+  }
+
+  @Test
+  public void testGetRole_LanPrivateIP_ReturnsViewer() throws Exception {
+    when(ctx.ip()).thenReturn("192.168.1.100");
     when(ctx.header("Authorization")).thenReturn(null);
 
     getRoleHandler.handle(ctx);
@@ -168,5 +184,16 @@ public class AuthTaskHandlerTest {
     ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
     verify(ctx).json(mapCaptor.capture());
     assertEquals(true, mapCaptor.getValue().get("success"));
+  }
+
+  @Test
+  public void testGetPassword_ReturnsConfiguredPassword() throws Exception {
+    when(configService.getDirectorPassword()).thenReturn("my-secret-pwd");
+
+    getPasswordHandler.handle(ctx);
+
+    ArgumentCaptor<Map> mapCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(ctx).json(mapCaptor.capture());
+    assertEquals("my-secret-pwd", mapCaptor.getValue().get("password"));
   }
 }

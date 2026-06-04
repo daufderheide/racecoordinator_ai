@@ -109,6 +109,7 @@ public class ClientCommandTaskHandlerTest {
 
     // Clear subscription manager
     ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
 
     handler = new ClientCommandTaskHandler(databaseContext, app);
   }
@@ -116,6 +117,7 @@ public class ClientCommandTaskHandlerTest {
   @After
   public void tearDown() {
     ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
   }
 
   @Test
@@ -834,6 +836,33 @@ public class ClientCommandTaskHandlerTest {
     verify(mockHeat).initializeStandings(any());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(res).setStatus(200);
+  }
+
+  @Test
+  public void testEndRace_Success() throws Exception {
+    com.antigravity.proto.EndRaceRequest request =
+        com.antigravity.proto.EndRaceRequest.newBuilder().build();
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(request.toByteArray());
+    when(mockCtx.contentType(anyString())).thenReturn(mockCtx);
+    when(mockCtx.result(any(byte[].class))).thenReturn(mockCtx);
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+    when(mockCtx.result(anyString())).thenReturn(mockCtx);
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("MyTestRace")
+            .withEntityId("race-1")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(raceModel);
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    handler.endRace(mockCtx);
+
+    verify(mockCtx).contentType("application/octet-stream");
+    assertNull(
+        "Race should be ended and cleared", ClientSubscriptionManager.getInstance().getRace());
   }
 
   private void deleteDirectory(File directory) {

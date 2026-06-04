@@ -1,11 +1,13 @@
 package com.antigravity.race;
 
+import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.NetworkUtils;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
@@ -85,6 +87,9 @@ public class ClientSubscriptionManager {
 
     if (this.currentRace != null) {
       logger.info("New race set. Clients must explicitly subscribe to race data.");
+      broadcastSystemState("RACE_RUNNING", "SYSTEM");
+    } else {
+      broadcastSystemState("IDLE", "");
     }
   }
 
@@ -122,7 +127,12 @@ public class ClientSubscriptionManager {
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
 
     if (currentRace != null) {
-      RaceData snapshot = currentRace.createSnapshot();
+      com.antigravity.proto.SystemState sysState = // fqn-collision
+          com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+              .setResourceLockState("RACE_RUNNING")
+              .setOwnerId("SYSTEM")
+              .build();
+      RaceData snapshot = currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
       if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
         logger.debug(
             "Snapshot includes Current Heat: {}",
@@ -142,7 +152,7 @@ public class ClientSubscriptionManager {
         sessions.size(),
         raceDataSubscribers.size());
 
-    checkAndStopRace();
+    checkAndStopRace(false);
   }
 
   public synchronized void addInterfaceSession(WsContext ctx) {
@@ -164,7 +174,7 @@ public class ClientSubscriptionManager {
         sessions.size(),
         interfaceSubscribers.size());
     checkAndCloseProtocol();
-    checkAndStopRace();
+    checkAndStopRace(false);
   }
 
   private synchronized void checkAndCloseProtocol() {
@@ -200,22 +210,26 @@ public class ClientSubscriptionManager {
       raceDataSubscribers.remove(ctx);
       logger.info(
           "Client unsubscribed from race data. Subscribers: {}", raceDataSubscribers.size());
-      checkAndStopRace();
+      checkAndStopRace(true);
     }
   }
 
-  private synchronized void checkAndStopRace() {
-    if (currentRace != null && sessions.isEmpty()) {
+  private synchronized void checkAndStopRace(boolean explicitUnsubscribe) {
+    if (currentRace != null && !hasDirectorSubscribers()) {
       if (!isShuttingDown) {
         // If there are NO sessions at all (not even splash screen), we should stop quickly
         long gracePeriod =
-            sessions.isEmpty() ? Math.min(1, cleanupGracePeriodSeconds) : cleanupGracePeriodSeconds;
+            explicitUnsubscribe
+                ? 0
+                : (sessions.isEmpty()
+                    ? Math.min(1, cleanupGracePeriodSeconds)
+                    : cleanupGracePeriodSeconds);
 
         if (gracePeriod <= 0) {
           performCleanup();
         } else if (cleanupFuture == null || cleanupFuture.isDone()) {
           logger.info(
-              "No subscribers left (Sessions: {}). Scheduling race cleanup in {} seconds...",
+              "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
               sessions.size(),
               gracePeriod);
           cleanupFuture =
@@ -233,9 +247,18 @@ public class ClientSubscriptionManager {
   }
 
   private synchronized void performCleanup() {
-    if (raceDataSubscribers.isEmpty() && currentRace != null) {
+    if (!hasDirectorSubscribers() && currentRace != null) {
       logger.info(
-          "Last interested client disconnected/unsubscribed. Stopping and clearing current race.");
+          "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
+      deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      setRace(null);
+    }
+  }
+
+  public synchronized void forceStopRace() {
+    if (currentRace != null) {
+      logger.info("Force stopping current race via explicit command.");
+      cancelPendingCleanup();
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
     }
@@ -304,6 +327,28 @@ public class ClientSubscriptionManager {
 
   public boolean hasSubscribers() {
     return !raceDataSubscribers.isEmpty();
+  }
+
+  public boolean isDirectorSession(WsContext ctx) {
+    try {
+      // 1. Localhost Auto-Admin
+      String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
+      if (NetworkUtils.isLocalhost(remoteIp, null)) {
+        return true;
+      }
+      // 2. Token-based Director
+      String token = ctx.queryParam("token");
+      if (token != null && AuthService.getInstance().isValidToken(token)) {
+        return true;
+      }
+    } catch (Exception e) {
+      logger.error("Error identifying role for WebSocket session", e);
+    }
+    return false;
+  }
+
+  public boolean hasDirectorSubscribers() {
+    return raceDataSubscribers.stream().anyMatch(this::isDirectorSession);
   }
 
   public void broadcast(GeneratedMessageV3 message) {

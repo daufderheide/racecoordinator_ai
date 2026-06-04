@@ -24,6 +24,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "toggleServerAnalytics",
     "getRaceFlag",
     "getDefaultDemoConfig",
+    "getSystemState",
   ]);
 
   mock.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
@@ -37,6 +38,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     of(InitializeRaceResponse.create({ success: true })),
   );
   mock.getRaceFlag.and.returnValue(of(RaceFlag.RED));
+  mock.getSystemState.and.returnValue(of(null));
   mock.getDefaultDemoConfig.and.returnValue({
     minLapTimeMs: 3000,
     maxLapTimeMs: 5000,

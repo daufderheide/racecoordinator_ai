@@ -32,6 +32,7 @@ export class DriverManagerHelper {
       "getRaceFlag",
       "getHeats",
       "getRecordData",
+      "getSystemState",
     ]);
     spy.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
     spy.connectToInterfaceDataSocket = jasmine.createSpy(
@@ -75,6 +76,9 @@ export class DriverManagerHelper {
       .and.returnValue(new Subject().asObservable());
     spy.getRecordData = jasmine
       .createSpy("getRecordData")
+      .and.returnValue(of(null));
+    spy.getSystemState = jasmine
+      .createSpy("getSystemState")
       .and.returnValue(of(null));
 
     spy.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));

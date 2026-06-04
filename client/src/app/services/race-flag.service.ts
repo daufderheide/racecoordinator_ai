@@ -165,8 +165,10 @@ export class RaceFlagService implements OnDestroy {
     ) {
       return url;
     }
-    const settings = this.settingsService.getSettings();
-    const base = `http://${settings.serverIp || "localhost"}:${settings.serverPort || 7070}`;
+    const serverUrl = this.dataService.serverUrl;
+    if (!serverUrl || serverUrl.includes("undefined")) return url;
+
+    const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
     return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
   }
 

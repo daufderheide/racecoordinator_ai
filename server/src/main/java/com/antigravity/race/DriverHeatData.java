@@ -66,14 +66,14 @@ public class DriverHeatData extends ServerToClientObject {
     }
   }
 
-  private final ArrayList<LapData> laps = new ArrayList<>();
+  private ArrayList<LapData> laps = new ArrayList<>();
   private double bestLapTime = 0.0f;
   private double reactionTime = -1.0;
   private double pendingLapTime = 0.0f;
   private double initialFuelLevel = 0.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
-  private final ArrayList<Double> segments = new ArrayList<>();
+  private ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
   private double penaltyLaps = 0;
   private double userLaps = 0;
@@ -149,7 +149,7 @@ public class DriverHeatData extends ServerToClientObject {
   }
 
   public List<Double> getSegments() {
-    return Collections.unmodifiableList(segments);
+    return segments;
   }
 
   public int getLapCount() {
@@ -161,7 +161,7 @@ public class DriverHeatData extends ServerToClientObject {
   }
 
   public List<LapData> getLaps() {
-    return Collections.unmodifiableList(laps);
+    return laps;
   }
 
   public double getLastLapTime() {

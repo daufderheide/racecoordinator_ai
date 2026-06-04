@@ -183,7 +183,7 @@ public class App {
                               });
                       closeThread.start();
                       try {
-                        closeThread.join(3000); // Wait up to 3 seconds
+                        closeThread.join(1000); // Wait up to 1 second
                         if (closeThread.isAlive()) {
                           logger.warn("MongoClient.close() timed out. Proceeding with shutdown.");
                         }
@@ -200,7 +200,7 @@ public class App {
                       logger.info("Stopping manual MongoDB process...");
                       manualMongoProcess.destroy();
                       try {
-                        if (!manualMongoProcess.waitFor(5, TimeUnit.SECONDS)) {
+                        if (!manualMongoProcess.waitFor(2, TimeUnit.SECONDS)) {
                           logger.warn(
                               "MongoDB did not shut down gracefully. Forcing termination...");
                           manualMongoProcess.destroyForcibly();
@@ -480,14 +480,14 @@ public class App {
             // Skip auth for static files, websocket upgrades (handled separately if needed), and
             // login
             if (!path.startsWith("/api/")
-                || path.startsWith("/api/auth/")
+                || (path.startsWith("/api/auth/") && !path.startsWith("/api/auth/password"))
                 || path.equals("/api/server-ip")
                 || path.equals("/api/version")) {
               return;
             }
 
             // 1. Localhost Auto-Admin
-            if (NetworkUtils.isLocalAddress(ctx.ip())) {
+            if (NetworkUtils.isLocalhost(ctx.ip(), null)) {
               ctx.attribute("role", Role.ADMIN);
               return;
             }
@@ -798,7 +798,45 @@ public class App {
 
   /* package */ static String getLocalIpAddress() {
     try {
+      // First pass: try with strict filters to find a physical LAN IP
       Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        NetworkInterface iface = interfaces.nextElement();
+        if (iface.isLoopback() || !iface.isUp() || iface.isVirtual()) {
+          continue;
+        }
+
+        String name = iface.getName().toLowerCase();
+        if (name.contains("virtual")
+            || name.contains("vmnet")
+            || name.contains("vbox")
+            || name.contains("docker")
+            || name.contains("bridge")
+            || name.contains("utun")
+            || name.contains("gif")
+            || name.contains("stf")
+            || name.contains("awdl")
+            || name.contains("llw")
+            || name.contains("ap")
+            || name.contains("vpn")
+            || name.contains("vmenet")) {
+          continue;
+        }
+
+        Enumeration<InetAddress> addresses = iface.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          InetAddress addr = addresses.nextElement();
+          if (addr.isLoopbackAddress()) {
+            continue;
+          }
+          if (addr instanceof Inet4Address) {
+            return addr.getHostAddress();
+          }
+        }
+      }
+
+      // Second pass: fallback to any active non-loopback IPv4 address
+      interfaces = NetworkInterface.getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {
         NetworkInterface iface = interfaces.nextElement();
         if (iface.isLoopback() || !iface.isUp()) {

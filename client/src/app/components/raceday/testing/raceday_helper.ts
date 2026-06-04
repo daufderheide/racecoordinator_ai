@@ -72,10 +72,24 @@ export function createRacedayMocks(overrides: any = {}) {
     "changeLane",
     "getAssetUrl",
     "updateUserLaps",
+    "getServerIp",
+    "startRace",
+    "pauseRace",
+    "nextHeat",
+    "restartHeat",
+    "deferHeat",
+    "skipHeat",
+    "getSystemState",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
   mockDataService.getThemes.and.returnValue(of([]));
+  mockDataService.startRace.and.returnValue(of(true));
+  mockDataService.pauseRace.and.returnValue(of(true));
+  mockDataService.nextHeat.and.returnValue(of(true));
+  mockDataService.restartHeat.and.returnValue(of(true));
+  mockDataService.deferHeat.and.returnValue(of(true));
+  mockDataService.skipHeat.and.returnValue(of(true));
   mockDataService.getDrivers.and.callFake(() =>
     of(
       deepCopy(MOCK_DRIVERS).map((d: any) => ({
@@ -95,6 +109,10 @@ export function createRacedayMocks(overrides: any = {}) {
   );
   mockDataService.getAssetUrl.and.callFake(
     (id: string) => `/api/assets/download/${id}`,
+  );
+  mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
+  mockDataService.getSystemState.and.returnValue(
+    new BehaviorSubject<any>({ resourceLockState: "ACTIVE" }),
   );
   mockDataService.serverUrl = "http://localhost/";
   mockDataService.socketConnected$ = of(true);

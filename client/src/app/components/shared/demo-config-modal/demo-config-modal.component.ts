@@ -1,4 +1,4 @@
-import { Component, input, OnInit, output } from "@angular/core";
+import { Component, effect, input, OnInit, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -272,7 +272,13 @@ export class DemoConfigModalComponent implements OnInit {
   config: IDemoConfig = {};
   uiConfig: any = {};
 
-  constructor(private dataService: DataService) {}
+  constructor(private dataService: DataService) {
+    effect(() => {
+      if (this.visible()) {
+        this.resetToInitial();
+      }
+    });
+  }
 
   ngOnInit() {
     this.resetToInitial();

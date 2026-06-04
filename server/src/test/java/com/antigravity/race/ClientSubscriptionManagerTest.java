@@ -307,4 +307,99 @@ public class ClientSubscriptionManagerTest {
     // scheduler.
     // However, the test passing eventually (or within a short timeout) suggests it's working.
   }
+
+  @Test
+  public void testIsDirectorSession_Localhost() throws Exception {
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("127.0.0.1", 12345);
+    when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
+
+    // Inject session into WsContext using reflection
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    assertTrue("Localhost should be a director session", manager.isDirectorSession(mockContext));
+  }
+
+  @Test
+  public void testIsDirectorSession_Token() throws Exception {
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("192.168.1.100", 12345);
+    when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
+
+    // Inject session into WsContext using reflection
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    // Generate real director token
+    String token = com.antigravity.auth.AuthService.getInstance().generateDirectorToken();
+    when(mockContext.queryParam("token")).thenReturn(token);
+
+    assertTrue(
+        "Session with valid token should be a director session",
+        manager.isDirectorSession(mockContext));
+  }
+
+  @Test
+  public void testIsDirectorSession_Viewer() throws Exception {
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("192.168.1.100", 12345);
+    when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
+
+    // Inject session into WsContext using reflection
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    when(mockContext.queryParam("token")).thenReturn(null);
+
+    assertFalse(
+        "Session without token and from remote IP should NOT be a director session",
+        manager.isDirectorSession(mockContext));
+  }
+
+  private static void assertTrue(String message, boolean condition) {
+    org.junit.Assert.assertTrue(message, condition);
+  }
+
+  private static void assertFalse(String message, boolean condition) {
+    org.junit.Assert.assertFalse(message, condition);
+  }
+
+  @Test
+  public void testForceStopRace() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder().withName("Race").withEntityId("testId").build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace.createSnapshot()).thenReturn(RaceData.getDefaultInstance());
+    when(mockRace.getState()).thenReturn(mock(IRaceState.class));
+
+    manager.setRace(mockRace);
+
+    // Mock database context
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    when(mockDbCtx.getDatabase()).thenReturn(mock(com.mongodb.client.MongoDatabase.class));
+    manager.setDatabaseContext(mockDbCtx);
+
+    // Mock an active session
+    WsContext mockContext = mock(WsContext.class);
+    Field sessionsField = ClientSubscriptionManager.class.getDeclaredField("sessions");
+    sessionsField.setAccessible(true);
+    ((Set<WsContext>) sessionsField.get(manager)).add(mockContext);
+
+    // Call force stop
+    manager.forceStopRace();
+
+    assertNull("Race should be immediately cleared by forceStopRace", manager.getRace());
+  }
 }

@@ -44,6 +44,7 @@ describe("RaceConnectionService", () => {
       "updateRaceSubscription",
       "getRecordData",
       "getHeats",
+      "getSystemState",
     ]);
     mockDataService.socketConnected$ = of(true);
 
@@ -65,6 +66,7 @@ describe("RaceConnectionService", () => {
     mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
     mockDataService.getRecordData.and.returnValue(of(null));
     mockDataService.getHeats.and.returnValue(of({}));
+    mockDataService.getSystemState.and.returnValue(of(null));
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",
@@ -239,6 +241,66 @@ describe("RaceConnectionService", () => {
       expect(emittedAlert).toBeNull();
 
       tick(3000);
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should suppress watchdog alerts when systemState is IDLE", fakeAsync(() => {
+      const systemStateSubject = new Subject<any>();
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      // Emit IDLE system state
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      // After 5 seconds, normally a timeout would fire, but should be suppressed
+      tick(5000);
+      expect(emittedAlert).toBeNull();
+
+      // When DISCONNECTED event occurs, it should also be suppressed
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      tick(5000);
+      expect(emittedAlert).toBeNull();
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should resume watchdog alerts when systemState transitions back to RACE_RUNNING", fakeAsync(() => {
+      const systemStateSubject = new Subject<any>();
+      mockDataService.getSystemState.and.returnValue(
+        systemStateSubject.asObservable(),
+      );
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      // Start with IDLE
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+      tick(5000);
+      expect(emittedAlert).toBeNull();
+
+      // Transition to RACE_RUNNING
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
+
+      // After transition, no status watchdog should be reset and eventually fire if no status
+      tick(5000);
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       sub.unsubscribe();

@@ -113,6 +113,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
   showDemoConfigModal: boolean = false;
   demoConfig?: IDemoConfig;
 
+  // Race State Additions
+  isRaceRunning: boolean = false;
+  showEndRacePrompt: boolean = false;
+  showTrackEditorPrompt: boolean = false;
+
   // Modals
   public isAboutModalVisible = false;
 
@@ -291,6 +296,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.currentServerLogLevel =
       this.settingsService.getSettings().serverLogLevel || "INFO";
     this.demoConfig = this.settingsService.getSettings().demoConfig;
+
+    this.dataService.getSystemState().subscribe((state) => {
+      if (state) {
+        this.isRaceRunning = state.resourceLockState === "RACE_RUNNING";
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   @HostListener("window:resize")
@@ -427,9 +439,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   addAllParticipants() {
+    const unselectedDrivers = this.unselectedParticipants.filter((p) =>
+      this.isDriver(p),
+    );
     const potentialParticipants = [
       ...this.selectedParticipants,
-      ...this.unselectedParticipants,
+      ...unselectedDrivers,
     ];
     const validationResult = this.validationService.validate(
       potentialParticipants,
@@ -452,7 +467,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.updateListWithRefresh(() => {
       this.selectedParticipants = [
         ...this.selectedParticipants,
-        ...this.unselectedParticipants,
+        ...unselectedDrivers,
       ];
       this.updateUnselectedParticipants();
     });
@@ -736,6 +751,35 @@ export class DefaultRacedaySetupComponent implements OnInit {
         },
       });
     }
+  }
+
+  joinRace() {
+    this.router.navigate(["/raceday"]);
+  }
+
+  promptEndRace() {
+    this.showEndRacePrompt = true;
+    this.cdr.detectChanges();
+  }
+
+  onConfirmEndRace() {
+    this.showEndRacePrompt = false;
+    this.dataService.endRace().subscribe({
+      next: (success) => {
+        if (success) {
+          this.logger.info("Race ended successfully");
+        } else {
+          this.logger.warn("Failed to end race");
+        }
+      },
+      error: (err) => {
+        this.logger.error("Error ending race", err);
+      },
+    });
+  }
+
+  onCancelEndRace() {
+    this.showEndRacePrompt = false;
   }
 
   onConfirmAutoSave() {
@@ -1099,7 +1143,35 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openTrackManager() {
     this.closeConfigDropdown();
-    this.router.navigate(["/track-manager"]);
+    if (this.isRaceRunning) {
+      this.showTrackEditorPrompt = true;
+      this.cdr.detectChanges();
+    } else {
+      this.router.navigate(["/track-manager"]);
+    }
+  }
+
+  onConfirmTrackEditor() {
+    this.showTrackEditorPrompt = false;
+    this.dataService.endRace().subscribe({
+      next: (success) => {
+        if (success) {
+          this.logger.info(
+            "Race ended successfully, navigating to track manager",
+          );
+          this.router.navigate(["/track-manager"]);
+        } else {
+          this.logger.warn("Failed to end race");
+        }
+      },
+      error: (err) => {
+        this.logger.error("Error ending race", err);
+      },
+    });
+  }
+
+  onCancelTrackEditor() {
+    this.showTrackEditorPrompt = false;
   }
 
   openRaceManager() {
@@ -1297,14 +1369,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
       demo: this.dataService.getSavedRaces(true),
     }).subscribe({
       next: (result) => {
-        const normalList = result.normal.map((f) => ({
-          filename: f,
-          isDemo: false,
-        }));
-        const demoList = result.demo.map((f) => ({
-          filename: f,
-          isDemo: true,
-        }));
+        const normalList = result.normal
+          .filter(
+            (f) =>
+              !f.startsWith("autosave_") &&
+              !f.toLowerCase().includes("autosave"),
+          )
+          .map((f) => ({
+            filename: f,
+            isDemo: false,
+          }));
+        const demoList = result.demo
+          .filter(
+            (f) =>
+              !f.startsWith("autosave_") &&
+              !f.toLowerCase().includes("autosave"),
+          )
+          .map((f) => ({
+            filename: f,
+            isDemo: true,
+          }));
         this.savedRaces = [...normalList, ...demoList];
         this.showLoadRaceModal = true;
         this.selectedSavedRace = null;
