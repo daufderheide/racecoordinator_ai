@@ -184,6 +184,64 @@ public class OverallStandingsTest {
   }
 
   @Test
+  public void testSeedOrderTieBreaker() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    p1.setSeed(1);
+    p2.setSeed(2);
+
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+    drivers.add(p2);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 10, 100.0));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(p1, drivers.get(0));
+    assertEquals(p2, drivers.get(1));
+  }
+
+  @Test
+  public void testOverallRankingSeedOrderTieBreaker() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.TOTAL_TIME, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os = new OverallStandings(heatScoring, overallScoring, new GroupOptions());
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    p1.setSeed(1);
+    p2.setSeed(2);
+
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+    drivers.add(p2);
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 10, 100.0));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(p1, drivers.get(0));
+    assertEquals(p2, drivers.get(1));
+  }
+
+  @Test
   public void testAverageLapRanking() {
     HeatScoring heatScoring =
         new HeatScoring(
