@@ -634,4 +634,66 @@ public class RaceStateTest {
     assertEquals(
         com.antigravity.proto.RaceFlag.RED, race.getCurrentHeat().getDrivers().get(0).getFlag());
   }
+
+  @Test
+  public void testSkipRaceFromNotStarted() throws Exception {
+    assertTrue(race.getState() instanceof NotStarted);
+
+    refreshSession();
+    race.skipRace();
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
+  }
+
+  @Test
+  public void testSkipRaceFromPaused() throws Exception {
+    // 1. Start -> Starting -> Racing -> Paused
+    race.startRace();
+    race.changeState(new Racing());
+    race.pauseRace();
+    assertTrue(race.getState() instanceof Paused);
+
+    refreshSession();
+    race.skipRace();
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
+  }
+
+  @Test
+  public void testSkipRaceFromHeatOver() throws Exception {
+    race.changeState(new HeatOver());
+    assertTrue(race.getState() instanceof HeatOver);
+
+    refreshSession();
+    race.skipRace();
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testSkipRaceWhenAlreadyOver() throws Exception {
+    race.changeState(new RaceOver());
+    assertTrue(race.getState() instanceof RaceOver);
+
+    race.skipRace(); // Should throw IllegalStateException
+  }
+
+  @Test
+  public void testSkipRaceWithMultipleHeatsRemaining() throws Exception {
+    // Add a second heat to the race
+    List<Heat> heats = race.getHeats();
+    Heat h2 = mock(Heat.class);
+    when(h2.getDrivers()).thenReturn(new ArrayList<>());
+    when(h2.getHeatStandings()).thenReturn(mock(HeatStandings.class));
+    heats.add(h2);
+
+    assertTrue(race.getState() instanceof NotStarted);
+
+    refreshSession();
+    race.skipRace();
+
+    // Verify it goes directly to RaceOver, skipping remaining heats
+    verifyBroadcast(RaceState.RACE_OVER);
+    assertTrue(race.getState() instanceof RaceOver);
+  }
 }

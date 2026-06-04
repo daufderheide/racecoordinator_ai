@@ -45,6 +45,7 @@ const protoFiles = [
   "../server/proto/client/next_heat.proto",
   "../server/proto/client/restart_heat.proto",
   "../server/proto/client/skip_heat.proto",
+  "../server/proto/client/skip_race.proto",
   "../server/proto/client/defer_heat.proto",
   "../server/proto/client/modify_heats.proto",
   "../server/proto/client/end_race.proto",

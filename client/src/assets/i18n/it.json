@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Esci dalla gara",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Sei sicuro di voler saltare questa manche?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Salta Manche",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Sei sicuro di voler saltare le manche rimanenti e terminare la gara? Tutti i risultati registrati finora verranno salvati.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Salta Gara",
   "RD_DISCARD": "Scarta ed Esci",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Corsia Vuota",

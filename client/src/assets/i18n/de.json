@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Rennen verlassen",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Sind Sie sicher, dass Sie diesen Heat überspringen möchten?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Heat überspringen",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Sind Sie sicher, dass Sie die verbleibenden Heats überspringen und das Rennen beenden möchten? Alle bisher aufgezeichneten Ergebnisse werden gespeichert.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Rennen überspringen",
   "RD_DISCARD": "Verwerfen und Beenden",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Leere Spur",

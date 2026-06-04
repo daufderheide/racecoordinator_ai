@@ -604,6 +604,13 @@ public class Race implements ProtocolListener {
     state.skipHeat(this);
   }
 
+  public void skipRace() {
+    if (state instanceof RaceOver) {
+      throw new IllegalStateException("Cannot skip race: Race is already over.");
+    }
+    changeState(new RaceOver());
+  }
+
   public void deferHeat() {
     state.deferHeat(this);
   }

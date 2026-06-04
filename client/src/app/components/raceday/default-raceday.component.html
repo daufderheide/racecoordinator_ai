@@ -30,6 +30,17 @@
   >
   </app-confirmation-modal>
 
+  <app-confirmation-modal
+    [visible]="showSkipRaceConfirmation"
+    [title]="skipRaceModalTitle"
+    [message]="skipRaceModalMessage"
+    [confirmText]="skipRaceConfirmText"
+    [cancelText]="skipRaceCancelText"
+    (confirm)="onSkipRaceConfirm()"
+    (cancel)="onSkipRaceCancel()"
+  >
+  </app-confirmation-modal>
+
   @if (showCountdownOverlay) {
     <div class="countdown-overlay">
       @if (race) {

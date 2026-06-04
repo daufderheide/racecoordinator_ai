@@ -29,6 +29,7 @@ import com.antigravity.proto.SetInterfacePinStateResponse;
 import com.antigravity.proto.SetInterfaceRgbLedStateRequest;
 import com.antigravity.proto.SetInterfaceRgbLedStateResponse;
 import com.antigravity.proto.SkipHeatResponse;
+import com.antigravity.proto.SkipRaceResponse;
 import com.antigravity.proto.StartRaceResponse;
 import com.antigravity.proto.UpdateInterfaceConfigRequest;
 import com.antigravity.proto.UpdateInterfaceConfigResponse;
@@ -95,6 +96,7 @@ public class ClientCommandTaskHandler {
     app.post("/api/next-heat", this::nextHeat, Role.DIRECTOR);
     app.post("/api/restart-heat", this::restartHeat, Role.DIRECTOR);
     app.post("/api/skip-heat", this::skipHeat, Role.DIRECTOR);
+    app.post("/api/skip-race", this::skipRace, Role.DIRECTOR);
     app.post("/api/defer-heat", this::deferHeat, Role.DIRECTOR);
     app.post("/api/abort-timers", this::abortTimers, Role.DIRECTOR);
     app.post("/api/update-interface-config", this::updateInterfaceConfig, Role.DIRECTOR);
@@ -564,6 +566,46 @@ public class ClientCommandTaskHandler {
       }
     } catch (Exception e) {
       logger.error("Error processing skipHeat", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void skipRace(Context ctx) {
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      if (race.getState() instanceof com.antigravity.race.states.RaceOver) { // fqn-collision
+        SkipRaceResponse response =
+            SkipRaceResponse.newBuilder()
+                .setSuccess(false)
+                .setMessage("Race is already over")
+                .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+        return;
+      }
+
+      try {
+        race.skipRace();
+        ClientSubscriptionManager.getInstance().autoSave(race);
+
+        SkipRaceResponse response =
+            SkipRaceResponse.newBuilder()
+                .setSuccess(true)
+                .setMessage("Race skipped successfully")
+                .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+      } catch (IllegalStateException e) {
+        SkipRaceResponse response =
+            SkipRaceResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+      }
+    } catch (Exception e) {
+      logger.error("Error processing skipRace", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Quitter la course",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Êtes-vous sûr de vouloir sauter cette manche ?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Sauter Manche",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Êtes-vous sûr de vouloir sauter les manches restantes et terminer la course ? Tous les résultats enregistrés jusqu'à présent seront sauvegardés.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Sauter Course",
   "RD_DISCARD": "Abandonner et Quitter",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Voie Vide",

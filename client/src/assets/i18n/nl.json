@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Race verlaten",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Weet u zeker dat u deze heat wilt overslaan?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Heat Overslaan",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Weet u zeker dat u de resterende heats wilt overslaan en de race wilt beëindigen? Alle tot nu toe vastgelegde resultaten worden opgeslagen.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Race Overslaan",
   "RD_DISCARD": "Negeren en Afsluiten",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Lege Baan",

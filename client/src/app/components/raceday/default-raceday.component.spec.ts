@@ -587,6 +587,45 @@ describe("DefaultRacedayComponent", () => {
       expect(component["autoStartRemaining"]).toBe(0);
       expect(component["autoAdvanceRemaining"]).toBe(0);
     });
+
+    it("should show skip race confirmation dialog when SKIP_RACE selected", () => {
+      fixture.detectChanges();
+      expect(component.showSkipRaceConfirmation).toBeFalse();
+
+      component.onMenuSelect("SKIP_RACE");
+
+      expect(component.showSkipRaceConfirmation).toBeTrue();
+    });
+
+    it("should call skipRace on confirm and hide dialog", () => {
+      fixture.detectChanges();
+      component.showSkipRaceConfirmation = true;
+
+      component.onSkipRaceConfirm();
+
+      expect(component.showSkipRaceConfirmation).toBeFalse();
+      expect(mockDataService.skipRace).toHaveBeenCalled();
+    });
+
+    it("should hide dialog on skip race cancel without calling skipRace", () => {
+      fixture.detectChanges();
+      mockDataService.skipRace.calls.reset();
+      component.showSkipRaceConfirmation = true;
+
+      component.onSkipRaceCancel();
+
+      expect(component.showSkipRaceConfirmation).toBeFalse();
+      expect(mockDataService.skipRace).not.toHaveBeenCalled();
+    });
+
+    it("should not open skip race dialog when isSkipRaceDisabled is true", () => {
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACE_OVER;
+
+      component.onMenuSelect("SKIP_RACE");
+
+      expect(component.showSkipRaceConfirmation).toBeFalse();
+    });
   });
 
   describe("viewer role restrictions", () => {

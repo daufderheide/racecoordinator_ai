@@ -417,6 +417,73 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testSkipRace_RouteRegistered() {
+    verify(app).post(eq("/api/skip-race"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
+  }
+
+  @Test
+  public void testSkipRace_Success() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/skip-race"), handlerCaptor.capture(), eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler skipRaceHandler = handlerCaptor.getValue();
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getState()).thenReturn(new NotStarted());
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.contentType(anyString())).thenReturn(mockCtx);
+    when(mockCtx.result(any(byte[].class))).thenReturn(mockCtx);
+
+    skipRaceHandler.handle(mockCtx);
+
+    verify(mockRace).skipRace();
+    verify(mockCtx).contentType("application/octet-stream");
+
+    org.mockito.ArgumentCaptor<byte[]> resultCaptor =
+        org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(mockCtx).result(resultCaptor.capture());
+    com.antigravity.proto.SkipRaceResponse response =
+        com.antigravity.proto.SkipRaceResponse.parseFrom(resultCaptor.getValue());
+    assertTrue(response.getSuccess());
+    assertEquals("Race skipped successfully", response.getMessage());
+  }
+
+  @Test
+  public void testSkipRace_AlreadyOver() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/skip-race"), handlerCaptor.capture(), eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler skipRaceHandler = handlerCaptor.getValue();
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getState()).thenReturn(new com.antigravity.race.states.RaceOver());
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.contentType(anyString())).thenReturn(mockCtx);
+    when(mockCtx.result(any(byte[].class))).thenReturn(mockCtx);
+
+    skipRaceHandler.handle(mockCtx);
+
+    verify(mockRace, never()).skipRace();
+    verify(mockCtx).contentType("application/octet-stream");
+
+    org.mockito.ArgumentCaptor<byte[]> resultCaptor =
+        org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(mockCtx).result(resultCaptor.capture());
+    com.antigravity.proto.SkipRaceResponse response =
+        com.antigravity.proto.SkipRaceResponse.parseFrom(resultCaptor.getValue());
+    assertFalse(response.getSuccess());
+    assertEquals("Race is already over", response.getMessage());
+  }
+
+  @Test
   public void testDeleteSavedRace_Demo_Success() throws Exception {
     MongoCollection<RaceSaveData> saveCollection =
         mongoDatabase.getCollection("demo_saved_races", RaceSaveData.class);

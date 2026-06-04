@@ -67,6 +67,8 @@ import {
   SetInterfaceRgbLedStateResponse,
   SkipHeatRequest,
   SkipHeatResponse,
+  SkipRaceRequest,
+  SkipRaceResponse,
   StartRaceRequest,
   StartRaceResponse,
   SystemState,
@@ -679,6 +681,30 @@ export class DataService {
       .pipe(
         map((response) => {
           const skipResponse = SkipHeatResponse.decode(
+            Reader.create(new Uint8Array(response as any)),
+          );
+          return skipResponse.success ?? false;
+        }),
+      );
+  }
+
+  skipRace(): Observable<boolean> {
+    const request = SkipRaceRequest.create({});
+    const buffer = SkipRaceRequest.encode(request).finish();
+
+    const headers = new HttpHeaders({
+      "Content-Type": "application/octet-stream",
+      Accept: "application/octet-stream",
+    });
+
+    return this.http
+      .post(`${this.baseUrl}/api/skip-race`, new Blob([buffer as any]), {
+        headers,
+        responseType: "arraybuffer",
+      })
+      .pipe(
+        map((response) => {
+          const skipResponse = SkipRaceResponse.decode(
             Reader.create(new Uint8Array(response as any)),
           );
           return skipResponse.success ?? false;

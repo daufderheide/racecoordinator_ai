@@ -359,6 +359,13 @@ export class DefaultRacedayComponent
   skipHeatConfirmText = "GEN_YES";
   skipHeatCancelText = "GEN_NO";
 
+  // Skip Race Confirmation Modal State
+  showSkipRaceConfirmation = false;
+  skipRaceModalTitle = "RD_CONFIRM_SKIP_RACE_TITLE";
+  skipRaceModalMessage = "RD_CONFIRM_SKIP_RACE_MESSAGE";
+  skipRaceConfirmText = "GEN_YES";
+  skipRaceCancelText = "GEN_NO";
+
   // Acknowledgement Modal State (kept for interface errors)
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
@@ -909,6 +916,28 @@ export class DefaultRacedayComponent
 
   onSkipHeatCancel() {
     this.showSkipHeatConfirmation = false;
+    this.cdr.markForCheck();
+  }
+
+  onSkipRaceConfirm() {
+    this.showSkipRaceConfirmation = false;
+    this.dataService.skipRace().subscribe(
+      (success) => {
+        if (success) {
+          this.logger.debug("Skip race command sent successfully");
+        } else {
+          this.logger.error("Failed to send skip race command");
+        }
+      },
+      (error) => {
+        this.logger.error("Error skipping race:", error);
+      },
+    );
+    this.cdr.markForCheck();
+  }
+
+  onSkipRaceCancel() {
+    this.showSkipRaceConfirmation = false;
     this.cdr.markForCheck();
   }
 
@@ -1556,6 +1585,9 @@ export class DefaultRacedayComponent
       );
     } else if (action === "SKIP_HEAT") {
       this.showSkipHeatConfirmation = true;
+      this.cdr.markForCheck();
+    } else if (action === "SKIP_RACE") {
+      this.showSkipRaceConfirmation = true;
       this.cdr.markForCheck();
     } else if (action === "DEFER_HEAT") {
       this.dataService.deferHeat().subscribe(

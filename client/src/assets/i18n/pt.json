@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Sair da corrida",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Tem certeza de que deseja pular esta bateria?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Pular Bateria",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Tem certeza de que deseja pular as baterias restantes e encerrar a corrida? Todos os resultados registrados até agora serão salvos.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Pular Corrida",
   "RD_DISCARD": "Descartar e Sair",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Raia Vazia",

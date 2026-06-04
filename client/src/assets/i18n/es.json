@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Salir de la carrera",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "¿Está seguro de que desea saltar esta manga?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Saltar Manga",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "¿Está seguro de que desea saltar las mangas restantes y terminar la carrera? Todos los resultados registrados hasta ahora se guardarán.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Saltar Carrera",
   "RD_DISCARD": "Descartar y Salir",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Carril Vacío",

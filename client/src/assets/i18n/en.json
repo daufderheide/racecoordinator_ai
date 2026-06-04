@@ -624,6 +624,8 @@
   "RD_CONFIRM_EXIT_TITLE": "Exit Race",
   "RD_CONFIRM_SKIP_HEAT_MESSAGE": "Are you sure you want to skip this heat?",
   "RD_CONFIRM_SKIP_HEAT_TITLE": "Skip Heat",
+  "RD_CONFIRM_SKIP_RACE_MESSAGE": "Are you sure you want to skip the remaining heats and end the race? All results recorded so far will be saved.",
+  "RD_CONFIRM_SKIP_RACE_TITLE": "Skip Race",
   "RD_DISCARD": "Discard and Exit",
   "RD_DRIFT_LAP": "DRIFT",
   "RD_EMPTY_LANE": "Empty Lane",
