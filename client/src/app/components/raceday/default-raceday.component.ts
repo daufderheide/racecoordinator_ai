@@ -2793,6 +2793,14 @@ export class DefaultRacedayComponent
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
     }
 
+    if (previousState !== RaceState.UNKNOWN_STATE) {
+      if (state === RaceState.HEAT_OVER) {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+      } else if (state === RaceState.RACE_OVER) {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER);
+      }
+    }
+
     // Show overlay for STARTING or RESTARTING
     if (state === RaceState.STARTING) {
       this.showCountdownOverlay = true;

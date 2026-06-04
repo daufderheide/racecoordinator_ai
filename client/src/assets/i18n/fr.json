@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "5 secondes restantes",
   "UE_LABEL_SECONDS_LEFT_60": "1 minute restante",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Ensemble Audio de Secondes Restantes",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Audio de Fin de Manche",
+  "UE_LABEL_RACE_OVER_AUDIO": "Audio de Fin de Course",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Mi-course",
   "UE_LABEL_SELECTED": "Activé",
   "UE_LABEL_SORT_STANDINGS": "Trier la page de course par classement",

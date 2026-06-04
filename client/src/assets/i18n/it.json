@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "5 secondi rimanenti",
   "UE_LABEL_SECONDS_LEFT_60": "1 minuto rimanente",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Set Audio Secondi Rimanenti",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Audio Fine Manche",
+  "UE_LABEL_RACE_OVER_AUDIO": "Audio Fine Gara",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Metà Gara",
   "UE_LABEL_SELECTED": "Attivato",
   "UE_LABEL_SORT_STANDINGS": "Ordina giorno di gara per classifica",

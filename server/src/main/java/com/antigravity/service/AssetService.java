@@ -158,6 +158,8 @@ public class AssetService {
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
 
   static {
+    // TODO(aufderheide): Figure out how to have assets in a set and visible in the
+    // main section individually.
     EXCLUDED_AUDIO_IDS.add("default_countdown_5");
     EXCLUDED_AUDIO_IDS.add("default_countdown_4");
     EXCLUDED_AUDIO_IDS.add("default_countdown_3");
@@ -259,6 +261,10 @@ public class AssetService {
     DEFAULT_AUDIO_ASSETS.add(
         new DefaultAsset(
             "default_heat_half", "audio/english/woman/w_heat_half.wav", "Seconds Left -- Halfway"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_heat_over", "audio/english/woman/w_heatover.wav", "Heat Over"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_race_over", "audio/english/woman/w_raceover.wav", "Race Over"));
   }
 
   public AssetService(MongoDatabase database, String assetDir) {
@@ -1240,7 +1246,8 @@ public class AssetService {
 
       boolean changed = false;
 
-      // 1. Repair and Flatten slots (remove nested Documents caused by dot-notation confusion)
+      // 1. Repair and Flatten slots (remove nested Documents caused by dot-notation
+      // confusion)
       List<Bson> toUnset = new ArrayList<>();
       Document newSlots = new Document();
       for (String key : slots.keySet()) {
@@ -1258,8 +1265,10 @@ public class AssetService {
       }
       slots = newSlots;
 
-      // To avoid Error 40 (path conflict), we must unset nested documents before setting sub-paths
-      // if they are in the same parent path. Splitting into two updates ensures no conflict.
+      // To avoid Error 40 (path conflict), we must unset nested documents before
+      // setting sub-paths
+      // if they are in the same parent path. Splitting into two updates ensures no
+      // conflict.
       if (!toUnset.isEmpty()) {
         themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(toUnset));
       }
@@ -1383,6 +1392,16 @@ public class AssetService {
             new Document("type", "tts").append("text", "{driver.nickname} drift lap"));
         changed = true;
       }
+      if (!audioSlots.containsKey("audio.heat_over")) {
+        audioSlots.append(
+            "audio.heat_over", new Document("type", "preset").append("url", "default_heat_over"));
+        changed = true;
+      }
+      if (!audioSlots.containsKey("audio.race_over")) {
+        audioSlots.append(
+            "audio.race_over", new Document("type", "preset").append("url", "default_race_over"));
+        changed = true;
+      }
 
       if (changed) {
         themes.updateOne(
@@ -1432,6 +1451,10 @@ public class AssetService {
     audioSlots.append(
         "audio.seconds_left.halfway",
         new Document("type", "preset").append("url", "default_heat_half"));
+    audioSlots.append(
+        "audio.heat_over", new Document("type", "preset").append("url", "default_heat_over"));
+    audioSlots.append(
+        "audio.race_over", new Document("type", "preset").append("url", "default_race_over"));
     audioSlots.append(
         "audio.countdown",
         new Document("type", "audio_set").append("url", "default_countdown-set"));

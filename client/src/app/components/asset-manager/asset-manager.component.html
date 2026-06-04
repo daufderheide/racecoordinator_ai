@@ -312,6 +312,7 @@
           <div
             class="asset-card"
             [class.selected]="asset.selected"
+            [class.playing]="currentlyPlayingAsset?.id === asset.id"
             [draggable]="asset.type === 'image'"
             (dragstart)="onAssetDragStart($event, asset)"
             (click)="toggleSelection(asset, $event)"
@@ -390,13 +391,30 @@
                     {{ asset.name }}
                   </div>
                   <div class="asset-actions">
-                    @if (asset.type === "sound") {
-                      <img
-                        src="assets/images/am_icon_play.png"
-                        class="action-icon play"
-                        (click)="$event.stopPropagation(); playAsset(asset)"
-                        title="Play"
-                      />
+                    @if (asset.type === "sound" || asset.type === "audio_set") {
+                      @if (currentlyPlayingAsset?.id !== asset.id) {
+                        <img
+                          src="assets/images/am_icon_play.png"
+                          class="action-icon play"
+                          (click)="$event.stopPropagation(); playAsset(asset)"
+                          title="Play"
+                        />
+                      } @else {
+                        <span
+                          class="material-icons action-icon stop"
+                          (click)="$event.stopPropagation(); stopAsset()"
+                          title="Stop"
+                          style="
+                            font-size: 20px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 20px;
+                            height: 20px;
+                          "
+                          >stop</span
+                        >
+                      }
                     }
                     <img
                       src="assets/images/am_icon_edit.png"

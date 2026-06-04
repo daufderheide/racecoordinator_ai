@@ -34,7 +34,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { mockTTSContext, playSound } from "@app/utils/audio";
+import { interpolate, mockTTSContext } from "@app/utils/audio";
 
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
@@ -73,6 +73,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   // Data
   assets: AssetView[] = [];
+  currentlyPlayingAsset: AssetView | null = null;
+  private currentAudio: HTMLAudioElement | null = null;
 
   // Filtering
   filterType:
@@ -185,6 +187,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.stopAsset();
     this.isDestroyed = true;
     this.raceConnectionService.disconnect();
     this.connectionMonitor.stopMonitoring();
@@ -694,16 +697,108 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   playAsset(asset: AssetView) {
+    if (this.currentlyPlayingAsset) {
+      this.stopAsset();
+    }
+
     if (asset.type === "sound") {
+      this.currentlyPlayingAsset = asset;
+      this.cdr.detectChanges();
+      this.playUrl(asset.url)
+        .then(() => {
+          if (this.currentlyPlayingAsset === asset) {
+            this.currentlyPlayingAsset = null;
+            this.cdr.detectChanges();
+          }
+        })
+        .catch((err) => {
+          this.logger.error("Error playing sound", err);
+          if (this.currentlyPlayingAsset === asset) {
+            this.currentlyPlayingAsset = null;
+            this.cdr.detectChanges();
+          }
+        });
+    } else if (asset.type === "audio_set") {
+      this.playAudioSet(asset);
+    }
+  }
+
+  stopAsset() {
+    this.currentlyPlayingAsset = null;
+    if (this.currentAudio) {
+      this.currentAudio.pause();
+      this.currentAudio = null;
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    this.cdr.detectChanges();
+  }
+
+  private playUrl(url: string | undefined): Promise<void> {
+    if (!url) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      let playableUrl = url;
+      if (url.startsWith("/")) {
+        playableUrl = `${this.dataService.serverUrl}${url}`;
+      } else if (url === "default_penalty") {
+        playableUrl = `${this.dataService.serverUrl}/assets/default_penalty_Penalty`;
+      }
+      const audio = new Audio(playableUrl);
+      this.currentAudio = audio;
+      audio.onended = () => {
+        this.currentAudio = null;
+        resolve();
+      };
+      audio.onerror = (err) => {
+        this.currentAudio = null;
+        reject(err);
+      };
+      audio.play().catch(reject);
+    });
+  }
+
+  private playTTSPromise(text: string | undefined): Promise<void> {
+    return new Promise((resolve) => {
+      if (!text || !window.speechSynthesis) {
+        resolve();
+        return;
+      }
+      window.speechSynthesis.cancel();
       const playContext = mockTTSContext();
-      playSound(
-        "preset",
-        asset.url,
-        "",
-        this.dataService.serverUrl,
-        playContext,
-        this.logger,
-      );
+      const interpolatedText = interpolate(text, playContext);
+      const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      utterance.onend = () => resolve();
+      utterance.onerror = () => resolve();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
+  private async playAudioSet(asset: AssetView) {
+    if (!asset || !asset.audioEntries || asset.audioEntries.length === 0) {
+      return;
+    }
+
+    this.currentlyPlayingAsset = asset;
+    this.cdr.detectChanges();
+
+    for (const entry of asset.audioEntries) {
+      if (this.currentlyPlayingAsset !== asset) break;
+      try {
+        const entryType = entry.type || "preset";
+        if (entryType === "preset") {
+          await this.playUrl(entry.url || undefined);
+        } else if (entryType === "tts") {
+          await this.playTTSPromise(entry.text || undefined);
+        }
+      } catch (e) {
+        this.logger.error("Error playing audio set entry", e);
+      }
+    }
+
+    if (this.currentlyPlayingAsset === asset) {
+      this.currentlyPlayingAsset = null;
+      this.cdr.detectChanges();
     }
   }
 

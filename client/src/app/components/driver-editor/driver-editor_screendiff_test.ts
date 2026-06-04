@@ -23,6 +23,7 @@ test.describe("Driver Editor Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     const container = page.locator(".page-container");
     const _harness = new DriverEditorHarnessE2e(container);
@@ -42,6 +43,7 @@ test.describe("Driver Editor Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
@@ -81,6 +83,7 @@ test.describe("Driver Editor Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     // Now intercept save requests to fail with 409 so autoSave doesn't clear isDirty
     await page.route("**/api/drivers/*", async (route) => {
@@ -135,6 +138,7 @@ test.describe("Driver Editor Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);

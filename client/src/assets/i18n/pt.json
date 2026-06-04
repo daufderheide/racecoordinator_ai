@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "5 segundos restantes",
   "UE_LABEL_SECONDS_LEFT_60": "1 minuto restante",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Conjunto de Áudio de Segundos Restantes",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Áudio de Fim da Bateria",
+  "UE_LABEL_RACE_OVER_AUDIO": "Áudio de Fim da Corrida",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Metade da Heat",
   "UE_LABEL_SELECTED": "Ativado",
   "UE_LABEL_SORT_STANDINGS": "Ordenar dia de corrida por classificação",

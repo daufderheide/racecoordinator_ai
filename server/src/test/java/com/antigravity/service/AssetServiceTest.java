@@ -612,6 +612,32 @@ public class AssetServiceTest {
   }
 
   @Test
+  public void testBackfillThemeSlots_AddsHeatOverAndRaceOverAudioSlots() {
+    Document existingTheme =
+        new Document("_id", "theme_2")
+            .append("name", "Test Theme 2")
+            .append("is_default", false)
+            .append(
+                "audio_slots", new Document("audio.yellowflag", new Document("type", "preset")));
+
+    FindIterable<Document> findIterable = mock(FindIterable.class);
+    MongoCursor<Document> cursor = mock(MongoCursor.class);
+    when(themesCollection.find()).thenReturn(findIterable);
+    when(findIterable.iterator()).thenReturn(cursor);
+    when(cursor.hasNext()).thenReturn(true, false);
+    when(cursor.next()).thenReturn(existingTheme);
+
+    assetService.backfillThemeSlots();
+
+    ArgumentCaptor<Bson> updateCaptor = ArgumentCaptor.forClass(Bson.class);
+    verify(themesCollection, atLeastOnce()).updateOne(any(Bson.class), updateCaptor.capture());
+
+    String lastUpdate = updateCaptor.getValue().toString();
+    assertTrue("Should include audio.heat_over", lastUpdate.contains("audio.heat_over"));
+    assertTrue("Should include audio.race_over", lastUpdate.contains("audio.race_over"));
+  }
+
+  @Test
   public void testSaveCustomRotation_Valid() {
     com.antigravity.proto.CustomHeat heat1 =
         com.antigravity.proto.CustomHeat.newBuilder()

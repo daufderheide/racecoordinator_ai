@@ -2480,6 +2480,48 @@ describe("DefaultRacedayComponent", () => {
       const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
       expect(callArgs[0].text).toBe("Caution on track!");
     });
+
+    it("should play heat over audio when transitioning to HEAT_OVER and previousState is not UNKNOWN_STATE", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "default_heat_over",
+      });
+      component["raceState"] = RaceState.RACING;
+
+      raceStateSubject.next(RaceState.HEAT_OVER);
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_HEAT_OVER,
+      );
+      expect(window.Audio).toHaveBeenCalled();
+    });
+
+    it("should play race over audio when transitioning to RACE_OVER and previousState is not UNKNOWN_STATE", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "default_race_over",
+      });
+      component["raceState"] = RaceState.RACING;
+
+      raceStateSubject.next(RaceState.RACE_OVER);
+
+      expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_RACE_OVER,
+      );
+      expect(window.Audio).toHaveBeenCalled();
+    });
+
+    it("should NOT play heat over or race over audio when transitioning from UNKNOWN_STATE", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "default_heat_over",
+      });
+      component["raceState"] = RaceState.UNKNOWN_STATE;
+
+      raceStateSubject.next(RaceState.HEAT_OVER);
+
+      expect(window.Audio).not.toHaveBeenCalled();
+    });
   });
 
   describe("Countdown Audio", () => {

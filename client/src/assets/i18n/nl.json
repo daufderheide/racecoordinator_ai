@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "Nog 5 seconden",
   "UE_LABEL_SECONDS_LEFT_60": "Nog 1 minuut",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Seconden over Audioset",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Heat over audio",
+  "UE_LABEL_RACE_OVER_AUDIO": "Race over audio",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Halverwege",
   "UE_LABEL_SELECTED": "Geactiveerd",
   "UE_LABEL_SORT_STANDINGS": "Sorteer Raceday op Standen",

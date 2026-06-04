@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "Seconds Left -- 5 Seconds",
   "UE_LABEL_SECONDS_LEFT_60": "Seconds Left -- 1 Minute",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Seconds Left Audio Set",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Heat Over Audio",
+  "UE_LABEL_RACE_OVER_AUDIO": "Race Over Audio",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Seconds Left -- Halfway",
   "UE_LABEL_SELECTED": "Activated",
   "UE_LABEL_SORT_STANDINGS": "Sort Raceday by Standings",

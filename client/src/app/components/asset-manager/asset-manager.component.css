@@ -498,7 +498,8 @@
   transition: opacity 0.2s;
 }
 
-.asset-card:hover .asset-actions {
+.asset-card:hover .asset-actions,
+.asset-card.playing .asset-actions {
   opacity: 1;
 }
 

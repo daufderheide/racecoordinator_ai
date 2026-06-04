@@ -1117,6 +1117,8 @@
   "UE_LABEL_SECONDS_LEFT_5": "Noch 5 Sekunden",
   "UE_LABEL_SECONDS_LEFT_60": "Noch 1 Minute",
   "UE_LABEL_SECONDS_LEFT_AUDIO": "Verbleibende Sekunden Audio-Set",
+  "UE_LABEL_HEAT_OVER_AUDIO": "Lauf beendet Audio",
+  "UE_LABEL_RACE_OVER_AUDIO": "Rennen beendet Audio",
   "UE_LABEL_SECONDS_LEFT_HALFWAY": "Lauf-Hälfte",
   "UE_LABEL_SELECTED": "Aktiviert",
   "UE_LABEL_SORT_STANDINGS": "Renntag nach Stand sortieren",

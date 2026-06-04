@@ -41,6 +41,8 @@ export const THEME_SLOT_KEYS = {
   // Audio (these keys map to audio_slots)
   AUDIO_YELLOW_FLAG: "audio.yellowflag",
   AUDIO_SECONDS_LEFT_HALFWAY: "audio.seconds_left.halfway",
+  AUDIO_HEAT_OVER: "audio.heat_over",
+  AUDIO_RACE_OVER: "audio.race_over",
   AUDIO_PENALTY: "audio.penalty",
   AUDIO_MIN_LAP_TIME: "audio.min_lap_time",
   AUDIO_DRIFT_LAP: "audio.drift_lap",

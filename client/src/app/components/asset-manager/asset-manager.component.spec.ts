@@ -247,9 +247,36 @@ describe("AssetManagerComponent", () => {
     expect(asset.selected).toBeFalse();
   });
 
-  it("should play sound asset", () => {
-    const mockAudio = jasmine.createSpyObj("Audio", ["play"]);
+  it("should play sound asset and toggle currentlyPlayingAsset", async () => {
+    const mockAudio = jasmine.createSpyObj("Audio", ["play", "pause"]);
     mockAudio.play.and.returnValue(Promise.resolve());
+    const audioSpy = spyOn(window, "Audio").and.callFake(function (
+      _url: string,
+    ) {
+      setTimeout(() => {
+        if (mockAudio.onended) mockAudio.onended();
+      }, 0);
+      return mockAudio;
+    } as any);
+
+    const asset: any = {
+      id: "s1",
+      name: "Sound1",
+      type: "sound",
+      url: "sound.mp3",
+    };
+
+    component.playAsset(asset);
+    expect(component.currentlyPlayingAsset).toBe(asset);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(component.currentlyPlayingAsset).toBeNull();
+    expect(audioSpy).toHaveBeenCalled();
+  });
+
+  it("should stop sound asset playback on stopAsset", () => {
+    const mockAudio = jasmine.createSpyObj("Audio", ["play", "pause"]);
+    mockAudio.play.and.returnValue(new Promise(() => {}));
     spyOn(window, "Audio").and.returnValue(mockAudio);
 
     const asset: any = {
@@ -260,9 +287,41 @@ describe("AssetManagerComponent", () => {
     };
 
     component.playAsset(asset);
+    expect(component.currentlyPlayingAsset).toBe(asset);
 
-    expect(window.Audio).toHaveBeenCalled();
-    expect(mockAudio.play).toHaveBeenCalled();
+    component.stopAsset();
+    expect(component.currentlyPlayingAsset).toBeNull();
+    expect(mockAudio.pause).toHaveBeenCalled();
+  });
+
+  it("should play audio set sequentially and stop on completion", async () => {
+    const audioSet: any = {
+      id: "as1",
+      name: "AudioSet1",
+      type: "audio_set",
+      audioEntries: [
+        { url: "1.mp3", type: "preset" },
+        { url: "2.mp3", type: "preset" },
+      ],
+    };
+
+    const mockAudio = jasmine.createSpyObj("Audio", ["play", "pause"]);
+    mockAudio.play.and.returnValue(Promise.resolve());
+    const audioSpy = spyOn(window, "Audio").and.callFake(function (
+      _url: string,
+    ) {
+      setTimeout(() => {
+        if (mockAudio.onended) mockAudio.onended();
+      }, 0);
+      return mockAudio;
+    } as any);
+
+    component.playAsset(audioSet);
+    expect(component.currentlyPlayingAsset).toBe(audioSet);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(component.currentlyPlayingAsset).toBeNull();
+    expect(audioSpy).toHaveBeenCalledTimes(2);
   });
 
   it("should select range with Shift key", () => {

@@ -197,6 +197,16 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       mode: "single",
     },
     {
+      key: "audio.heat_over",
+      label: "UE_LABEL_HEAT_OVER_AUDIO",
+      mode: "single",
+    },
+    {
+      key: "audio.race_over",
+      label: "UE_LABEL_RACE_OVER_AUDIO",
+      mode: "single",
+    },
+    {
       key: "audio.min_lap_time",
       label: "UE_LABEL_MIN_LAP_TIME_AUDIO",
       mode: "single",
