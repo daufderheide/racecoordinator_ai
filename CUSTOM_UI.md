@@ -26,6 +26,8 @@ The application looks for specific filenames to override the default views. You 
 | :--- | :--- | :--- | :--- |
 | **Raceday** | `raceday.component.html` | `raceday.component.css`, `raceday.component.ts` | `raceday/` |
 | **Raceday Setup** | `raceday-setup.component.html` | `raceday-setup.component.css`, `raceday-setup.component.ts` | `raceday-setup/` |
+| **Race Results** | `race-results.component.html` | `race-results.component.css`, `race-results.component.ts` | `race-results/` |
+| **Driver Results** | `driver-results.component.html` | `driver-results.component.css`, `driver-results.component.ts` | `driver-results/` |
 
 ### How Loading Works
 
@@ -40,6 +42,9 @@ The HTML file defines the structure of your custom view. It has access to all th
 
 ### CSS (`.css`)
 The CSS file allows you to style your custom HTML. Styles are scoped to your dynamic component.
+
+> [!NOTE]
+> Depending on your HTML file, a corresponding CSS file may be required.
 
 ### TypeScript (`.ts`)
 The TypeScript file allows you to add custom logic. When providing a `.ts` file, it should contain the logic that would normally go inside an Angular `@Component` class. 
