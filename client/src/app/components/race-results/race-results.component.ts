@@ -120,7 +120,22 @@ export class RaceResultsComponent implements OnInit {
           subfolder,
         );
       } catch (e) {
-        this.logger.debug("No custom CSS found for race results");
+        this.logger.debug(
+          "No custom CSS found for race results, fetching default stylesheet...",
+        );
+        try {
+          const response = await fetch(
+            "/assets/default-styles/race-results/default-race-results.component.css",
+          );
+          if (response.ok) {
+            css = await response.text();
+          }
+        } catch (fetchErr) {
+          this.logger.warn(
+            "Failed to fetch default stylesheet for race-results",
+            fetchErr,
+          );
+        }
       }
 
       let tsCode = "";

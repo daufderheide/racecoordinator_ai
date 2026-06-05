@@ -156,5 +156,52 @@ describe("DriverResultsComponent", () => {
         DefaultDriverResultsComponent as any,
       );
     }));
+
+    it("should fetch default stylesheet if custom CSS is not found", fakeAsync(() => {
+      mockFileSystemService.hasCustomFiles.and.callFake(
+        (file?: string, subfolder?: string) => {
+          if (subfolder === "driver-results") return Promise.resolve(true);
+          return Promise.resolve(false);
+        },
+      );
+      mockFileSystemService.getCustomFile.and.callFake(
+        (filename: string, _subfolder?: string) => {
+          if (filename === "driver-results.component.html") {
+            return Promise.resolve("<html></html>");
+          }
+          if (filename === "driver-results.component.css") {
+            return Promise.reject(new Error("File not found"));
+          }
+          return Promise.resolve("");
+        },
+      );
+
+      const mockFetchResponse = {
+        ok: true,
+        text: () => Promise.resolve(".default-style {}"),
+      };
+      spyOn(window, "fetch").and.returnValue(
+        Promise.resolve(mockFetchResponse as any),
+      );
+      mockDynamicComponentService.createDynamicComponent.and.returnValue(
+        class {},
+      );
+      mockContainer.createComponent.and.returnValue({ instance: {} } as any);
+
+      component.ngOnInit();
+      tick();
+
+      expect(window.fetch).toHaveBeenCalledWith(
+        "/assets/default-styles/driver-results/default-driver-results.component.css",
+      );
+      expect(
+        mockDynamicComponentService.createDynamicComponent,
+      ).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        "<html></html>",
+        ".default-style {}",
+        jasmine.any(String),
+      );
+    }));
   });
 });

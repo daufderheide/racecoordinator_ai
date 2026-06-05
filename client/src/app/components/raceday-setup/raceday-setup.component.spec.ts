@@ -539,6 +539,52 @@ describe("RacedaySetupComponent", () => {
       // Verify loadDefaultComponent by checking that we don't call getCustomFile
       expect(mockFileSystemService.getCustomFile).not.toHaveBeenCalled();
     }));
+
+    it("should fetch default stylesheet if custom CSS is not found", fakeAsync(() => {
+      mockFileSystemService.hasCustomFiles.and.callFake(
+        (file?: string, subfolder?: string) => {
+          if (subfolder === "raceday-setup") return Promise.resolve(true);
+          return Promise.resolve(false);
+        },
+      );
+      mockFileSystemService.getCustomFile.and.callFake(
+        (filename: string, _subfolder?: string) => {
+          if (filename === "raceday-setup.component.html") {
+            return Promise.resolve("<html></html>");
+          }
+          if (filename === "raceday-setup.component.css") {
+            return Promise.reject(new Error("File not found"));
+          }
+          return Promise.resolve("");
+        },
+      );
+
+      const mockFetchResponse = {
+        ok: true,
+        text: () => Promise.resolve(".default-style {}"),
+      };
+      spyOn(window, "fetch").and.returnValue(
+        Promise.resolve(mockFetchResponse as any),
+      );
+      mockDynamicComponentService.createDynamicComponent.and.returnValue(
+        class {},
+      );
+
+      component.ngOnInit();
+      tick(6000);
+
+      expect(window.fetch).toHaveBeenCalledWith(
+        "/assets/default-styles/raceday-setup/default-raceday-setup.component.css",
+      );
+      expect(
+        mockDynamicComponentService.createDynamicComponent,
+      ).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        "<html></html>",
+        ".default-style {}",
+        jasmine.any(String),
+      );
+    }));
   });
 
   describe("Viewer Auto-Transition", () => {

@@ -151,7 +151,22 @@ export class RacedayComponent
           subfolder,
         );
       } catch (e) {
-        this.logger.debug("No custom CSS found for raceday");
+        this.logger.debug(
+          "No custom CSS found for raceday, fetching default stylesheet...",
+        );
+        try {
+          const response = await fetch(
+            "/assets/default-styles/raceday/default-raceday.component.css",
+          );
+          if (response.ok) {
+            css = await response.text();
+          }
+        } catch (fetchErr) {
+          this.logger.warn(
+            "Failed to fetch default stylesheet for raceday",
+            fetchErr,
+          );
+        }
       }
 
       let tsCode = "";

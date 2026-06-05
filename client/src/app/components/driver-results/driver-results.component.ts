@@ -126,7 +126,22 @@ export class DriverResultsComponent implements OnInit {
           subfolder,
         );
       } catch (e) {
-        this.logger.debug("No custom CSS found for driver results");
+        this.logger.debug(
+          "No custom CSS found for driver results, fetching default stylesheet...",
+        );
+        try {
+          const response = await fetch(
+            "/assets/default-styles/driver-results/default-driver-results.component.css",
+          );
+          if (response.ok) {
+            css = await response.text();
+          }
+        } catch (fetchErr) {
+          this.logger.warn(
+            "Failed to fetch default stylesheet for driver-results",
+            fetchErr,
+          );
+        }
       }
 
       let tsCode = "";

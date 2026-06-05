@@ -44,7 +44,7 @@ The HTML file defines the structure of your custom view. It has access to all th
 The CSS file allows you to style your custom HTML. Styles are scoped to your dynamic component.
 
 > [!NOTE]
-> Depending on your HTML file, a corresponding CSS file may be required.
+> If no .css file is provided as part of the customization, the system will fallback to using the styling from the default built-in UI.  If you do not want any styling applied to your custom component, you can provide an empty .css file.
 
 ### TypeScript (`.ts`)
 The TypeScript file allows you to add custom logic. When providing a `.ts` file, it should contain the logic that would normally go inside an Angular `@Component` class. 

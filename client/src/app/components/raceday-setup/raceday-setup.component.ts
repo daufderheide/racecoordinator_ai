@@ -615,8 +615,22 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           subfolder,
         );
       } catch (e) {
-        // CSS is optional
-        this.logger.debug("No custom CSS found or could not be read");
+        this.logger.debug(
+          "No custom CSS found or could not be read, fetching default stylesheet...",
+        );
+        try {
+          const response = await fetch(
+            "/assets/default-styles/raceday-setup/default-raceday-setup.component.css",
+          );
+          if (response.ok) {
+            css = await response.text();
+          }
+        } catch (fetchErr) {
+          this.logger.warn(
+            "Failed to fetch default stylesheet for raceday-setup",
+            fetchErr,
+          );
+        }
       }
 
       let tsCode = "";
