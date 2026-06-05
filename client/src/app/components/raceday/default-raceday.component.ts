@@ -1426,6 +1426,7 @@ export class DefaultRacedayComponent
   isMenuOpen = false;
   isFileMenuOpen = false;
   isWindowsMenuOpen = false;
+  isOptionsMenuOpen = false;
   scale: number = 1;
 
   @HostListener("window:resize")
@@ -1446,6 +1447,7 @@ export class DefaultRacedayComponent
       this.isLanesMenuOpen = false;
       this.isDriversStationOpen = false;
       this.isWindowsMenuOpen = false;
+      this.isOptionsMenuOpen = false;
     }
   }
 
@@ -1474,6 +1476,7 @@ export class DefaultRacedayComponent
     this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
+    this.isOptionsMenuOpen = false;
   }
 
   toggleFileMenu() {
@@ -1486,6 +1489,7 @@ export class DefaultRacedayComponent
     this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
+    this.isOptionsMenuOpen = false;
   }
 
   isLanesMenuOpen = false;
@@ -1501,6 +1505,7 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
     this.isDriversStationOpen = false; // Reset sub-menu on main toggle
     this.isWindowsMenuOpen = false;
+    this.isOptionsMenuOpen = false;
   }
 
   toggleDriversStationMenu() {
@@ -1521,11 +1526,37 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
     this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
+    this.isOptionsMenuOpen = false;
+  }
+
+  toggleOptionsMenu() {
+    this.logger.debug(
+      "Toggling Options menu. Current state:",
+      this.isOptionsMenuOpen,
+    );
+    this.isOptionsMenuOpen = !this.isOptionsMenuOpen;
+    this.isFileMenuOpen = false;
+    this.isMenuOpen = false;
+    this.isLanesMenuOpen = false;
+    this.isDriversStationOpen = false;
+    this.isWindowsMenuOpen = false;
   }
 
   onLanguageSelected() {
     this.isFileMenuOpen = false;
+    this.isOptionsMenuOpen = false;
     this.cdr.markForCheck();
+  }
+
+  onOptionsSelect(action: string) {
+    this.logger.debug("Options menu action:", action);
+    this.isOptionsMenuOpen = false;
+    if (action === "CUSTOMIZE_UI") {
+      const returnUrl = this.router.url.split("?")[0];
+      this.router.navigate(["/ui-editor"], {
+        queryParams: { returnUrl },
+      });
+    }
   }
 
   isAnyMenuDropdownOpen(): boolean {
@@ -1533,7 +1564,8 @@ export class DefaultRacedayComponent
       this.isFileMenuOpen ||
       this.isMenuOpen ||
       this.isLanesMenuOpen ||
-      this.isWindowsMenuOpen
+      this.isWindowsMenuOpen ||
+      this.isOptionsMenuOpen
     );
   }
 
@@ -1543,12 +1575,14 @@ export class DefaultRacedayComponent
       if (menuName === "race" && this.isMenuOpen) return;
       if (menuName === "lanes" && this.isLanesMenuOpen) return;
       if (menuName === "windows" && this.isWindowsMenuOpen) return;
+      if (menuName === "options" && this.isOptionsMenuOpen) return;
 
       this.isFileMenuOpen = false;
       this.isMenuOpen = false;
       this.isLanesMenuOpen = false;
       this.isDriversStationOpen = false;
       this.isWindowsMenuOpen = false;
+      this.isOptionsMenuOpen = false;
 
       if (menuName === "file") {
         this.isFileMenuOpen = true;
@@ -1558,6 +1592,8 @@ export class DefaultRacedayComponent
         this.isLanesMenuOpen = true;
       } else if (menuName === "windows") {
         this.isWindowsMenuOpen = true;
+      } else if (menuName === "options") {
+        this.isOptionsMenuOpen = true;
       }
       this.cdr.markForCheck();
     }

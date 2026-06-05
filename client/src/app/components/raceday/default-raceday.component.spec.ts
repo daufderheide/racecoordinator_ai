@@ -1795,7 +1795,7 @@ describe("DefaultRacedayComponent", () => {
     }));
   });
 
-  describe("onFileMenuSelect", () => {
+  describe("onFileMenuSelect and onOptionsSelect", () => {
     it("should trigger CSV export when EXPORT_CSV is selected", fakeAsync(() => {
       mockDataService.exportRaceToCsv = jasmine
         .createSpy("exportRaceToCsv")
@@ -1832,9 +1832,9 @@ describe("DefaultRacedayComponent", () => {
       expect(printService.print).toHaveBeenCalledWith("RaceDay");
     });
 
-    it("should navigate to /ui-editor when CUSTOMIZE_UI is selected", () => {
+    it("should navigate to /ui-editor when CUSTOMIZE_UI is selected in options menu", () => {
       (mockRouter as any).url = "/raceday?someParam=true";
-      component.onFileMenuSelect("CUSTOMIZE_UI");
+      component.onOptionsSelect("CUSTOMIZE_UI");
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/ui-editor"], {
         queryParams: { returnUrl: "/raceday" },
       });
@@ -1970,9 +1970,11 @@ describe("DefaultRacedayComponent", () => {
     it("should reset menu states when one is toggled", () => {
       component.isLanesMenuOpen = true;
       component.isDriversStationOpen = true;
+      component.isOptionsMenuOpen = true;
       component.toggleMenu();
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
+      expect(component.isOptionsMenuOpen).toBeFalse();
     });
 
     it("should call onLaneMenuSelect with correct index and open window", () => {
@@ -1996,6 +1998,7 @@ describe("DefaultRacedayComponent", () => {
     it("should close all menus on document click outside", () => {
       component.isLanesMenuOpen = true;
       component.isDriversStationOpen = true;
+      component.isOptionsMenuOpen = true;
 
       // Simulate click outside
       const mockEvent = {
@@ -2005,6 +2008,31 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
+      expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+  });
+
+  describe("Options Menu", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should toggle options menu", () => {
+      expect(component.isOptionsMenuOpen).toBeFalse();
+      component.toggleOptionsMenu();
+      expect(component.isOptionsMenuOpen).toBeTrue();
+    });
+
+    it("should close options menu on document click outside", () => {
+      component.isOptionsMenuOpen = true;
+
+      // Simulate click outside
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+      component.onDocumentClick(mockEvent);
+
+      expect(component.isOptionsMenuOpen).toBeFalse();
     });
   });
 

@@ -666,6 +666,7 @@
   "RD_MENU_LOGIN_DISABLED_ADMIN": "Already authenticated as Administrator",
   "RD_MENU_LOGOUT": "Logout",
   "RD_MENU_MODIFY": "Modify Heats",
+  "RD_MENU_OPTIONS": "Options",
   "RD_MENU_NEXT_HEAT": "Next Heat",
   "RD_MENU_PAUSE": "Pause Heat",
   "RD_MENU_RACE_DIRECTOR": "Race Director",

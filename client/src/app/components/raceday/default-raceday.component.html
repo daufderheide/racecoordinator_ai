@@ -117,15 +117,6 @@
               Export PDF
             </div>
             <div class="menu-separator"></div>
-            <div class="menu-item" (click)="onFileMenuSelect('CUSTOMIZE_UI')">
-              {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
-            </div>
-            <app-language-selector
-              wrapperClass="menu-item"
-              itemClass="menu-item"
-              (languageSelected)="onLanguageSelected()"
-            ></app-language-selector>
-            <div class="menu-separator"></div>
             <div class="menu-item" (click)="onFileMenuSelect('EXIT')">
               {{ "RD_MENU_EXIT" | translate }}
             </div>
@@ -150,6 +141,7 @@
               <span>{{ "RD_MENU_START_RESUME" | translate }}</span>
               <span class="menu-shortcut">{{ startResumeShortcut }}</span>
             </div>
+
             <div
               class="menu-item"
               [class.disabled]="isPauseDisabled"
@@ -289,6 +281,28 @@
             >
               {{ "RD_WIN_RACE_RESULTS" | translate }}
             </div>
+          </div>
+        }
+      </div>
+      <div class="menu-wrapper">
+        <button
+          id="options-menu-button"
+          class="menu-button-top"
+          (click)="toggleOptionsMenu()"
+          (mouseenter)="onMenuItemHover('options')"
+        >
+          {{ "RD_MENU_OPTIONS" | translate }}
+        </button>
+        @if (isOptionsMenuOpen) {
+          <div class="menu-dropdown top-dropdown">
+            <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_UI')">
+              {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
+            </div>
+            <app-language-selector
+              wrapperClass="menu-item"
+              itemClass="menu-item"
+              (languageSelected)="onLanguageSelected()"
+            ></app-language-selector>
           </div>
         }
       </div>

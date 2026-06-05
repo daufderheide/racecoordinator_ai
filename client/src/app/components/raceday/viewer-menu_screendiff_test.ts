@@ -204,7 +204,7 @@ test.describe("Viewer Race Director Menu", () => {
     });
   });
 
-  test("should display localization submenu in file menu and open it", async ({
+  test("should display localization submenu in options menu and open it", async ({
     page,
   }) => {
     await TestSetupHelper.waitForLocalization(
@@ -245,10 +245,10 @@ test.describe("Viewer Race Director Menu", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.waitForTimeout(500);
 
-    // 1. Open the File menu dropdown (the first top-level menu button)
-    const fileMenuButton = page.locator(".menu-button-top").first();
-    await expect(fileMenuButton).toBeVisible();
-    await fileMenuButton.dispatchEvent("click");
+    // 1. Open the Options menu dropdown
+    const optionsMenuButton = page.locator("#options-menu-button");
+    await expect(optionsMenuButton).toBeVisible();
+    await optionsMenuButton.dispatchEvent("click");
 
     // 2. Wait for the menu dropdown to be visible
     const dropdown = page.locator(".menu-dropdown").first();
