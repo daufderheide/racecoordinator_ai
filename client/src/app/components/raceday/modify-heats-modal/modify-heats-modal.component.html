@@ -345,7 +345,11 @@
                 <i class="fas fa-grip-vertical drag-handle-icon"></i>
                 <h4>
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
-                  @if (race().group_options.enabled) {
+                  @if (
+                    race() &&
+                    race().group_options &&
+                    race().group_options.enabled
+                  ) {
                     - {{ "RE_GROUPS_LABEL" | translate }}:
                     <input
                       type="number"

@@ -193,7 +193,7 @@ export function getModifyHeatsValidationError(
   localHeats: Heat[],
   originalHeats: Heat[],
   localParticipants: RaceParticipant[],
-  race: Race,
+  race: Race | undefined,
   isHeatStarted: (h: Heat) => boolean,
   translationService: TranslationService,
 ): string | null {
@@ -243,7 +243,7 @@ export function getModifyHeatsValidationError(
   }
 
   // 3. Group Validation
-  if (race.group_options && race.group_options.enabled) {
+  if (race && race.group_options && race.group_options.enabled) {
     const participantGroups = new Map<string, number>();
     for (const h of localHeats) {
       for (const dhd of h.heatDrivers) {

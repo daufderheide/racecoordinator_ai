@@ -27,6 +27,8 @@ import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
 import { RaceConverter } from "@app/converters/race.converter";
+import { RaceParticipantConverter } from "@app/converters/race_participant.converter";
+import { TeamConverter } from "@app/converters/team.converter";
 import { TrackConverter } from "@app/converters/track.converter";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
@@ -488,6 +490,8 @@ export class DefaultRacedayComponent
     HeatConverter.clearCache();
     TrackConverter.clearCache();
     LaneConverter.clearCache();
+    RaceParticipantConverter.clearCache();
+    TeamConverter.clearCache();
 
     this.subscriptions.push(
       this.dataService.socketConnected$.subscribe((connected) => {

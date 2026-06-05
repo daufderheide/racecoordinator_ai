@@ -78,4 +78,12 @@ export class RaceService {
   getCurrentHeat(): Heat | undefined {
     return this.currentHeatSubject.getValue();
   }
+
+  clear() {
+    this.racingDriversSubject.next([]);
+    this.participantsSubject.next([]);
+    this.selectedRaceSubject.next(undefined);
+    this.heatsSubject.next([]);
+    this.currentHeatSubject.next(undefined);
+  }
 }

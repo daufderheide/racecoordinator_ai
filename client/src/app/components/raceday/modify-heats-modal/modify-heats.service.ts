@@ -22,7 +22,7 @@ export interface DropContext {
   localParticipants: RaceParticipant[];
   allDrivers: Driver[];
   allTeams: Team[];
-  race: Race;
+  race?: Race;
   isHeatStarted: (heat: Heat) => boolean;
   isParticipantInStartedHeat: (participant: RaceParticipant) => boolean;
 }
@@ -211,7 +211,7 @@ export class ModifyHeatsService {
       : -1;
 
     // Group Validation
-    if (context.race.group_options?.enabled) {
+    if (context.race?.group_options?.enabled) {
       const groupError = this.validateGroups(
         participant,
         existingOccupant,

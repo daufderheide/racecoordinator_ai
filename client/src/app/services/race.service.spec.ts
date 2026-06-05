@@ -49,4 +49,14 @@ describe("RaceService", () => {
 
     sub.unsubscribe();
   });
+
+  it("should clear all state when clear is called", () => {
+    const mockHeat = new Heat("heat-1", 1, [], [], false);
+    service.setHeats([mockHeat]);
+    service.clear();
+    expect(service.getHeats()).toEqual([]);
+    expect(service.getCurrentHeat()).toBeUndefined();
+    expect(service.getParticipants()).toEqual([]);
+    expect(service.getRace()).toBeUndefined();
+  });
 });

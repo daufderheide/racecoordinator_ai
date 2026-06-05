@@ -5,6 +5,7 @@ import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
 import { RaceConverter } from "@app/converters/race.converter";
 import { RaceParticipantConverter } from "@app/converters/race_participant.converter";
+import { TeamConverter } from "@app/converters/team.converter";
 import { TrackConverter } from "@app/converters/track.converter";
 import { DataService } from "@app/data.service";
 import {
@@ -39,6 +40,7 @@ export class RaceConnectionService implements OnDestroy {
   private connectionCount = 0;
   private subscriptions: Subscription[] = [];
   private isDestroyed = false;
+  private isConnected = false;
 
   // Subjects for side effects
   private lapSubject = new Subject<ILap>();
@@ -118,7 +120,7 @@ export class RaceConnectionService implements OnDestroy {
     this.logger.debug(
       `RaceConnectionService: Connection count incremented to ${this.connectionCount}`,
     );
-    if (this.connectionCount === 1) {
+    if (!this.isConnected) {
       this.startConnection();
     } else {
       // Even if already connected, ensure the new component gets a fresh race update
@@ -149,12 +151,17 @@ export class RaceConnectionService implements OnDestroy {
 
   /* eslint-disable max-lines-per-function */
   private startConnection() {
+    this.isConnected = true;
     // Clear caches to ensure fresh data for new race (mirrors DefaultRacedayComponent)
     RaceConverter.clearCache();
     DriverConverter.clearCache();
     HeatConverter.clearCache();
     TrackConverter.clearCache();
     LaneConverter.clearCache();
+    RaceParticipantConverter.clearCache();
+    TeamConverter.clearCache();
+
+    this.raceService.clear();
 
     this.driversLoaded = false;
     this.pendingUpdate = null;
@@ -344,6 +351,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private stopConnection() {
+    this.isConnected = false;
     this.dataService.updateRaceSubscription(false);
     this.dataService.disconnectFromInterfaceDataSocket();
 
@@ -351,6 +359,8 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions = [];
     this.driversLoaded = false;
     this.pendingUpdate = null;
+
+    this.raceService.clear();
 
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.clearDisconnectedError();

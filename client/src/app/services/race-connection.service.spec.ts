@@ -72,6 +72,7 @@ describe("RaceConnectionService", () => {
       "getRace",
       "getCurrentHeat",
       "setCurrentHeat",
+      "clear",
     ]);
     mockRaceService.getCurrentHeat.and.returnValue({
       heatDrivers: [
