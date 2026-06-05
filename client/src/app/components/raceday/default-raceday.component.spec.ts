@@ -1854,6 +1854,12 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
+    it("should allow deactivation when navigating to /driver-station", () => {
+      const nextState = { url: "/driver-station/1" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+    });
+
     it("should show exit confirmation and return observable when navigating elsewhere", (done) => {
       const nextState = { url: "/home" } as any;
       const result = component.canDeactivate(nextState) as any;
@@ -1977,22 +1983,14 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
 
-    it("should call onLaneMenuSelect with correct index and open window", () => {
+    it("should call onLaneMenuSelect with correct index and navigate", () => {
       const mockRouter = TestBed.inject(Router) as any;
 
       component.onLaneMenuSelect(1);
 
       expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
-      expect(mockRouter.createUrlTree).toHaveBeenCalledWith([
-        "/driver-station",
-        2,
-      ]);
-      expect(window.open).toHaveBeenCalledWith(
-        "/driver-station/2",
-        "_blank",
-        jasmine.any(String),
-      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 2]);
     });
 
     it("should close all menus on document click outside", () => {

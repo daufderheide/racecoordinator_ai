@@ -878,6 +878,7 @@ export class DefaultRacedayComponent
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
   private raceResultsWindow: Window | null = null;
+  private driverStationTabs: Window[] = [];
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -898,6 +899,12 @@ export class DefaultRacedayComponent
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
     }
+    this.driverStationTabs.forEach((tab) => {
+      if (tab && !tab.closed) {
+        tab.close();
+      }
+    });
+    this.driverStationTabs = [];
   }
 
   private showInterfaceError(titleKey: string, messageKey: string) {
@@ -1036,7 +1043,8 @@ export class DefaultRacedayComponent
         nextState.url.includes("/modify-heats") ||
         nextState.url.includes("/team-manager") ||
         nextState.url.includes("/driver-manager") ||
-        nextState.url.includes("/ui-editor")
+        nextState.url.includes("/ui-editor") ||
+        nextState.url.includes("/driver-station")
       ) {
         return true;
       }
@@ -1708,11 +1716,7 @@ export class DefaultRacedayComponent
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/heat-results"]),
       );
-      this.heatResultsWindow = window.open(
-        url,
-        "_blank",
-        "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no",
-      );
+      this.heatResultsWindow = window.open(url, "_blank");
     } else if (action === "RACE_RESULTS") {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/race-results"]),
@@ -1735,6 +1739,12 @@ export class DefaultRacedayComponent
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
     }
+    this.driverStationTabs.forEach((tab) => {
+      if (tab && !tab.closed) {
+        tab.close();
+      }
+    });
+    this.driverStationTabs = [];
   }
 
   onFileMenuSelect(action: string) {
@@ -1819,14 +1829,7 @@ export class DefaultRacedayComponent
     this.isLanesMenuOpen = false; // Close menu
     this.isDriversStationOpen = false;
 
-    const url = this.router.serializeUrl(
-      this.router.createUrlTree(["/driver-station", laneIndex + 1]),
-    );
-    window.open(
-      url,
-      "_blank",
-      "width=1200,height=800,menubar=no,toolbar=no,location=no,status=no",
-    );
+    this.router.navigate(["/driver-station", laneIndex + 1]);
   }
 
   @HostListener("window:keyup", ["$event"])

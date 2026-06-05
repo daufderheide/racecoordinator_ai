@@ -38,7 +38,29 @@ public class ClientSubscriptionManager {
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
 
-  private ClientSubscriptionManager() {}
+  private ClientSubscriptionManager() {
+    // Start periodic ping task to detect and clean up dead/orphaned connections
+    scheduler.scheduleAtFixedRate(
+        () -> {
+          try {
+            sessions.forEach(
+                ctx -> {
+                  try {
+                    if (ctx.session.isOpen()) {
+                      ctx.session.getRemote().sendPing(ByteBuffer.wrap(new byte[0]));
+                    }
+                  } catch (Exception e) {
+                    logger.debug("Failed to ping session: {}", e.getMessage());
+                  }
+                });
+          } catch (Throwable t) {
+            logger.error("Error in ping scheduler", t);
+          }
+        },
+        5,
+        5,
+        TimeUnit.SECONDS);
+  }
 
   public static synchronized ClientSubscriptionManager getInstance() {
     if (instance == null) {
@@ -120,8 +142,12 @@ public class ClientSubscriptionManager {
   }
 
   public void addSession(WsContext ctx) {
+    try {
+      ctx.session.setIdleTimeout(15000); // 15 seconds idle timeout
+    } catch (Exception e) {
+      logger.warn("Failed to set idle timeout on session: {}", e.getMessage());
+    }
     sessions.add(ctx);
-    cancelPendingCleanup();
     // Remove auto-subscription: clients must call subscribe() explicitly
     // raceDataSubscribers.add(ctx);
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
@@ -157,9 +183,13 @@ public class ClientSubscriptionManager {
 
   public synchronized void addInterfaceSession(WsContext ctx) {
     logger.debug("New Interface WebSocket session added: {}", System.identityHashCode(ctx));
+    try {
+      ctx.session.setIdleTimeout(15000); // 15 seconds idle timeout
+    } catch (Exception e) {
+      logger.warn("Failed to set idle timeout on interface session: {}", e.getMessage());
+    }
     sessions.add(ctx);
     interfaceSubscribers.add(ctx);
-    cancelPendingCleanup();
     logger.info(
         "New Interface WebSocket session added. Total sessions: {}, Interface Subscribers: {}",
         sessions.size(),
@@ -226,19 +256,36 @@ public class ClientSubscriptionManager {
                     : cleanupGracePeriodSeconds);
 
         if (gracePeriod <= 0) {
+          cancelPendingCleanup();
           performCleanup();
-        } else if (cleanupFuture == null || cleanupFuture.isDone()) {
-          logger.info(
-              "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
-              sessions.size(),
-              gracePeriod);
-          cleanupFuture =
-              scheduler.schedule(
-                  () -> {
-                    performCleanup();
-                  },
-                  gracePeriod,
-                  TimeUnit.SECONDS);
+        } else {
+          if (cleanupFuture != null && !cleanupFuture.isDone()) {
+            // If sessions became empty, we want to clean up quickly,
+            // but the existing task might have been scheduled with a longer grace period.
+            if (sessions.isEmpty() && gracePeriod < cleanupGracePeriodSeconds) {
+              logger.info(
+                  "Sessions are now empty. Shortening grace period to {} seconds.", gracePeriod);
+              cancelPendingCleanup();
+            }
+          }
+
+          if (cleanupFuture == null || cleanupFuture.isDone()) {
+            logger.info(
+                "No director subscribers left (Total Sessions: {}). Scheduling race cleanup in {} seconds...",
+                sessions.size(),
+                gracePeriod);
+            cleanupFuture =
+                scheduler.schedule(
+                    () -> {
+                      try {
+                        performCleanup();
+                      } catch (Throwable t) {
+                        logger.error("Error during scheduled race cleanup", t);
+                      }
+                    },
+                    gracePeriod,
+                    TimeUnit.SECONDS);
+          }
         }
       } else {
         logger.info("Server is shutting down, preserving race state and auto-save.");
@@ -360,7 +407,11 @@ public class ClientSubscriptionManager {
 
     raceDataSubscribers.forEach(
         ctx -> {
-          ctx.send(ByteBuffer.wrap(bytes));
+          try {
+            ctx.send(ByteBuffer.wrap(bytes));
+          } catch (Exception e) {
+            logger.warn("Failed to broadcast message to subscriber: {}", e.getMessage());
+          }
         });
   }
 
@@ -380,7 +431,11 @@ public class ClientSubscriptionManager {
     byte[] bytes = raceData.toByteArray();
     sessions.forEach(
         ctx -> {
-          ctx.send(ByteBuffer.wrap(bytes));
+          try {
+            ctx.send(ByteBuffer.wrap(bytes));
+          } catch (Exception e) {
+            logger.warn("Failed to send system state to session: {}", e.getMessage());
+          }
         });
   }
 
