@@ -9,7 +9,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { delay, of, throwError } from "rxjs";
+import { BehaviorSubject, delay, of, throwError } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { DataService } from "@app/data.service";
 import { Settings } from "@app/models/settings";
@@ -203,6 +203,8 @@ describe("UIEditorComponent", () => {
       "connect",
       "disconnect",
     ]);
+    mockRaceConnectionService.raceFlag$ = of(0);
+    mockRaceConnectionService.connectionState$ = of("CONNECTED");
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",
       "saveSettings",
@@ -220,7 +222,14 @@ describe("UIEditorComponent", () => {
       "deleteTheme",
       "getAssetUrl",
       "updateRaceSubscription",
+      "getSystemState",
+      "getDrivers",
+      "getTracks",
     ]);
+    mockDataService.socketConnected$ = of(true);
+    mockDataService.systemState$ = new BehaviorSubject<any>({});
+    mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getTracks.and.returnValue(of([]));
     mockDataService.updateRaceSubscription.and.stub();
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     mockThemeService = jasmine.createSpyObj("ThemeService", [
@@ -1969,5 +1978,45 @@ describe("UIEditorComponent", () => {
         name: "Test Theme (Copy)",
       });
     }));
+  });
+
+  describe("Raceday Layout", () => {
+    it("should handle raceday layout change", () => {
+      spyOn(component.undoManager, "captureState");
+      const newLayout = {
+        widgets: [
+          {
+            id: "test",
+            widgetType: "timer",
+            x: 10,
+            y: 20,
+            width: 100,
+            height: 100,
+            zIndex: 1,
+          },
+        ],
+      };
+
+      component.onRacedayLayoutChanged(newLayout as any);
+
+      expect(component.editingSettings.racedayLayout).toEqual(newLayout as any);
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
+    it("should reset raceday layout", () => {
+      spyOn(component.undoManager, "captureState");
+      spyOn(component, "refreshDisplayProperties");
+
+      component.resetRacedayLayout();
+
+      expect(component.editingSettings.racedayLayout).toEqual(
+        Settings.DEFAULT_LAYOUT,
+      );
+      expect(component.editingState.settings.racedayLayout).toEqual(
+        Settings.DEFAULT_LAYOUT,
+      );
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+    });
   });
 });

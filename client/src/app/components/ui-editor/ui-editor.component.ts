@@ -14,6 +14,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -66,6 +67,7 @@ export interface UIEditorState {
     ConfirmationModalComponent,
     TranslatePipe,
     AcknowledgementModalComponent,
+    DefaultRacedayComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -166,6 +168,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   undoManager!: UndoManager<UIEditorState>;
 
   sectionsExpanded: { [key: string]: boolean } = {
+    racedayLayout: true,
     layout: true,
     themes: true,
     config: true,
@@ -217,6 +220,50 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       mode: "single",
     },
   ];
+
+  // Mock properties required by RacedayLayoutNodeComponent for preview
+  track: any = undefined;
+  race: any = undefined;
+  heat: any = undefined;
+  totalHeats = 0;
+  qrCodeUrl = "";
+  formattedTime = "0:00.00";
+  autoStatusLabel = "";
+  isWarmup = false;
+  showCountdownOverlay = false;
+  raceRecordLapNickname = "RecordHolder";
+  raceRecordLapTime = "5.000";
+  raceRecordScoreNickname = "ScoreHolder";
+  raceRecordScore = "10";
+  currentRaceBestNickname = "RaceBest";
+  currentRaceBestTime = "5.100";
+  heatBestNickname = "HeatBest";
+  heatBestTime = "5.200";
+  leaderboardEntries: any[] = [];
+
+  getCurrentFlagUrl() {
+    return "";
+  }
+
+  onRacedayLayoutChanged(newLayout?: any) {
+    if (newLayout) {
+      this.editingSettings.racedayLayout = JSON.parse(
+        JSON.stringify(newLayout),
+      );
+    }
+    this.undoManager.captureState();
+  }
+
+  resetRacedayLayout() {
+    this.editingSettings.racedayLayout = JSON.parse(
+      JSON.stringify(Settings.DEFAULT_LAYOUT),
+    );
+    // Provide new object reference for child components to detect change
+    this.editingState.settings = deepCopy(this.editingSettings);
+    this.undoManager.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.detectChanges();
+  }
 
   constructor(
     private settingsService: SettingsService,
@@ -469,9 +516,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onReorderSave(result: ReorderDialogResult) {
-    this.editingSettings.racedayColumns = result.columns;
-    this.editingSettings.columnLayouts = result.columnLayouts;
-    this.editingSettings.columnVisibility = result.columnVisibility;
+    const newSettings = this.cloneSettings(this.editingState.settings);
+    newSettings.racedayColumns = result.columns;
+    newSettings.columnLayouts = result.columnLayouts;
+    newSettings.columnVisibility = result.columnVisibility;
+    this.editingState.settings = newSettings;
+
     this.refreshDisplayProperties();
     this.captureState();
     if (!this.isDestroyed) {

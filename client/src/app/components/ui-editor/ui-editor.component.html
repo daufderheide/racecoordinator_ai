@@ -12,6 +12,53 @@
 
   @if (!isLoading) {
     <div class="content-area sections-wrapper">
+      <!-- Raceday Layout Section -->
+      <div class="config-section">
+        <div class="section-header" (click)="toggleSection('racedayLayout')">
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['racedayLayout']"
+            >▼</span
+          >
+          <h1>{{ "UE_LABEL_RACEDAY_LAYOUT" | translate }}</h1>
+        </div>
+        @if (sectionsExpanded["racedayLayout"]) {
+          <div class="section-content">
+            <div class="panel layout-panel">
+              <div class="panel-content raceday-layout-section">
+                <!-- Raceday Full Integration -->
+                <div class="raceday-preview-container">
+                  <div class="raceday-preview-scaler">
+                    <app-default-raceday
+                      [isUIEditorMode]="true"
+                      [editingSettings]="editingSettings"
+                      [uiScale]="scale * 0.625"
+                      (layoutChanged)="onRacedayLayoutChanged($event)"
+                    ></app-default-raceday>
+                  </div>
+                </div>
+                <div
+                  class="layout-controls"
+                  style="
+                    margin-top: 10px;
+                    display: flex;
+                    justify-content: center;
+                  "
+                >
+                  <button
+                    class="btn btn-secondary"
+                    (click)="resetRacedayLayout()"
+                  >
+                    <span class="material-icons">refresh</span>
+                    Reset Layout to Defaults
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
       <!-- Full-Width Column Layout Section -->
       <div class="config-section">
         <div class="section-header" (click)="toggleSection('layout')">

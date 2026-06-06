@@ -668,3 +668,28 @@
   margin-top: 10px;
   border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
+
+.raceday-layout-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.raceday-preview-container {
+  width: 1200px;
+  height: 675px;
+  background: #000;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.raceday-preview-scaler {
+  width: 1920px;
+  height: 1080px;
+  transform: scale(0.625);
+  transform-origin: top left;
+  pointer-events: auto;
+  position: relative;
+}

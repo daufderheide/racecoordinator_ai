@@ -256,6 +256,7 @@
                 <div
                   class="driver-item selected"
                   cdkDrag
+                  [cdkDragScale]="scale"
                   [cdkDragData]="participant"
                   (cdkDragStarted)="onDragStarted($event)"
                   (dblclick)="toggleParticipantSelection(participant, true)"
@@ -536,6 +537,7 @@
                 <div
                   class="driver-item"
                   cdkDrag
+                  [cdkDragScale]="scale"
                   [cdkDragData]="participant"
                   (cdkDragStarted)="onDragStarted($event)"
                   (dblclick)="toggleParticipantSelection(participant, false)"

@@ -1,13 +1,18 @@
 /* eslint-disable max-lines */
 /* eslint-disable max-lines-per-function */
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import { DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
+  input,
+  OnChanges,
   OnDestroy,
   OnInit,
+  output,
+  SimpleChanges,
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -38,11 +43,12 @@ import { Role } from "@app/models/role";
 import {
   ColumnVisibility,
   LayoutConfig,
-  LayoutNode,
   Settings,
+  WidgetType,
 } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
@@ -59,7 +65,7 @@ import { createTTSContext, playSound } from "@app/utils/audio";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
-import { RacedayLayoutNodeComponent } from "./components/raceday-layout-node/raceday-layout-node.component";
+import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -75,11 +81,13 @@ import { RacedayLayoutNodeComponent } from "./components/raceday-layout-node/rac
     ConfirmationModalComponent,
     FormsModule,
     LoginDialogComponent,
-    RacedayLayoutNodeComponent,
+    RacedayAbsoluteWidgetComponent,
+    DragDropModule,
+    TranslatePipe,
   ],
 })
 export class DefaultRacedayComponent
-  implements OnInit, OnDestroy, CanComponentDeactivate
+  implements OnInit, OnDestroy, OnChanges, CanComponentDeactivate
 {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -247,7 +255,7 @@ export class DefaultRacedayComponent
 
   protected get gridTemplateColumns(): string {
     if (!this.columns || this.columns.length === 0) return "1fr";
-    return this.columns.map((c) => `${c.width}px`).join(" ");
+    return this.columns.map((c) => `minmax(0, ${c.width}fr)`).join(" ");
   }
 
   protected getLayoutEntries(
@@ -423,20 +431,126 @@ export class DefaultRacedayComponent
   private deactivateSubject = new Subject<boolean>();
 
   // Layout customization state
+  isUIEditorMode = input<boolean>(false);
+  uiScale = input<number>(1);
+  editingSettings = input<Settings | undefined>(undefined);
+
+  get visualScale(): number {
+    return this.isUIEditorMode() ? this.uiScale() : this.scale;
+  }
+
+  get toolboxScale(): number {
+    return this.isUIEditorMode() ? this.uiScale() : 1;
+  }
+  layoutChanged = output<LayoutConfig>();
   isLayoutCustomizing = false;
   layout!: LayoutConfig;
   draggedWidgetType: string | null = null;
-  draggedNode: LayoutNode | null = null;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (
+      changes["editingSettings"] &&
+      !changes["editingSettings"].firstChange &&
+      this.isUIEditorMode()
+    ) {
+      const settings = this.editingSettings();
+      if (settings?.racedayLayout?.widgets) {
+        this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+      } else {
+        this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      }
+      this.loadColumns();
+      if (this.heat) {
+        this.sortHeatDrivers();
+      }
+      this.cdr.markForCheck();
+    }
+  }
 
   ngOnInit() {
-    const settings = this.settingsService.getSettings();
-    if (settings.racedayLayout && settings.racedayLayout.root) {
-      this.layout = settings.racedayLayout;
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (settings.racedayLayout && settings.racedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
     } else {
       this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     }
 
     this.loadColumns();
+
+    // Clear caches to ensure fresh data for new race
+    RaceConverter.clearCache();
+    DriverConverter.clearCache();
+    HeatConverter.clearCache();
+    TrackConverter.clearCache();
+    LaneConverter.clearCache();
+    RaceParticipantConverter.clearCache();
+    TeamConverter.clearCache();
+
+    this.subscriptions.push(
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.dataService.listAssets().subscribe({
+            next: (assets) => {
+              this.assets = assets || [];
+              this.loadColumns();
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch assets",
+                err,
+              );
+            },
+          });
+
+          this.dataService.getDrivers().subscribe({
+            next: (drivers) => {
+              this.allDrivers = drivers || [];
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              this.logger.error(
+                "DefaultRacedayComponent: Failed to fetch drivers",
+                err,
+              );
+            },
+          });
+        }
+      }),
+    );
+
+    this.detectShortcutKey();
+    this.updateScale();
+
+    if (this.isUIEditorMode()) {
+      this.isLayoutCustomizing = true;
+      this.setupMockDataForEditor();
+      return;
+    }
+
+    this.subscriptions.push(
+      this.raceService.participants$.subscribe((participants) => {
+        this.participants = participants || [];
+        this.updateLeaderboardEntries();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.heats$.subscribe((heats) => {
+        this.heats = heats || [];
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
 
     this.subscriptions.push(
       this.dataService.getSystemState().subscribe((state) => {
@@ -490,74 +604,6 @@ export class DefaultRacedayComponent
         },
       }),
     );
-
-    // Clear caches to ensure fresh data for new race
-    RaceConverter.clearCache();
-    DriverConverter.clearCache();
-    HeatConverter.clearCache();
-    TrackConverter.clearCache();
-    LaneConverter.clearCache();
-    RaceParticipantConverter.clearCache();
-    TeamConverter.clearCache();
-
-    this.subscriptions.push(
-      this.dataService.socketConnected$.subscribe((connected) => {
-        if (connected) {
-          this.dataService.listAssets().subscribe({
-            next: (assets) => {
-              this.assets = assets || [];
-              this.loadColumns();
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch assets",
-                err,
-              );
-            },
-          });
-
-          this.dataService.getDrivers().subscribe({
-            next: (drivers) => {
-              this.allDrivers = drivers || [];
-              if (!this.isDestroyed) {
-                this.cdr.markForCheck();
-              }
-            },
-            error: (err) => {
-              this.logger.error(
-                "DefaultRacedayComponent: Failed to fetch drivers",
-                err,
-              );
-            },
-          });
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.raceService.participants$.subscribe((participants) => {
-        this.participants = participants || [];
-        this.updateLeaderboardEntries();
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      }),
-    );
-
-    this.subscriptions.push(
-      this.raceService.heats$.subscribe((heats) => {
-        this.heats = heats || [];
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      }),
-    );
-
-    this.detectShortcutKey();
-    this.updateScale();
 
     this.raceConnectionService.connect();
 
@@ -890,6 +936,128 @@ export class DefaultRacedayComponent
   private heatResultsWindow: Window | null = null;
   private raceResultsWindow: Window | null = null;
   private driverStationTabs: Window[] = [];
+
+  private setupMockDataForEditor() {
+    this.raceState = RaceState.RACING;
+    this.time = 3600; // 1 hour in to show formatted time
+    this.race = {
+      name: "Mock Editor Race",
+      track_id: "mock_track_1",
+      heats_run: 1,
+      overall_scoring: {
+        rankingMethod: OverallRanking.OR_LAP_COUNT,
+        finishMethod: FinishMethod.Timed,
+        points: [],
+      },
+    } as unknown as Race;
+
+    this.track = {
+      name: "Mock Editor Track",
+      lanes: [
+        { id: 1, color: "#FF0000" },
+        { id: 2, color: "#0000FF" },
+        { id: 3, color: "#FFFF00" },
+        { id: 4, color: "#00FF00" },
+      ],
+    } as unknown as Track;
+
+    this.participants = [
+      {
+        id: "p1",
+        driver: {
+          id: "d1",
+          name: "Mario",
+          nickname: "Jumpman",
+          avatarUrl: "",
+        } as unknown as Driver,
+        lane: 1,
+        total_time: 120,
+        lap_count: 5,
+        last_lap_time: 2.1,
+        best_lap_time: 2.0,
+        average_lap_time: 2.5,
+        median_lap_time: 2.4,
+        rank: 1,
+      } as unknown as RaceParticipant,
+      {
+        id: "p2",
+        driver: {
+          id: "d2",
+          name: "Luigi",
+          nickname: "Green Mario",
+          avatarUrl: "",
+        } as unknown as Driver,
+        lane: 2,
+        total_time: 125,
+        lap_count: 4,
+        last_lap_time: 2.8,
+        best_lap_time: 2.5,
+        average_lap_time: 3.0,
+        median_lap_time: 2.9,
+        rank: 2,
+      } as unknown as RaceParticipant,
+      {
+        id: "p3",
+        driver: {
+          id: "d3",
+          name: "Bowser",
+          nickname: "King Koopa",
+          avatarUrl: "",
+        } as unknown as Driver,
+        lane: 3,
+        total_time: 130,
+        lap_count: 4,
+        last_lap_time: 3.1,
+        best_lap_time: 2.9,
+        average_lap_time: 3.2,
+        median_lap_time: 3.1,
+        rank: 3,
+      } as unknown as RaceParticipant,
+      {
+        id: "p4",
+        driver: {
+          id: "d4",
+          name: "Peach",
+          nickname: "Princess",
+          avatarUrl: "",
+        } as unknown as Driver,
+        lane: 4,
+        total_time: 140,
+        lap_count: 3,
+        last_lap_time: 3.5,
+        best_lap_time: 3.2,
+        average_lap_time: 3.6,
+        median_lap_time: 3.5,
+        rank: 4,
+      } as unknown as RaceParticipant,
+    ];
+
+    const heatDrivers = this.participants.map((p: any, index) => {
+      const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane);
+      // addLapTime(lapNumber, lapTime, avgLapTime, medianLapTime, bestLapTime, adjustedLapCount)
+      hd.addLapTime(
+        p.lap_count,
+        p.last_lap_time,
+        p.average_lap_time,
+        p.median_lap_time,
+        p.best_lap_time,
+        p.lap_count,
+      );
+      return hd;
+    });
+
+    this.heat = {
+      id: "mock_heat_1",
+      race_id: "mock_race_1",
+      start_time: "2026-06-05T12:00:00Z",
+      end_time: "2026-06-05T12:03:00Z",
+      heatDrivers: heatDrivers,
+    } as unknown as Heat;
+
+    this.sortHeatDrivers();
+    this.updateLeaderboardEntries();
+    this.cdr.markForCheck();
+  }
 
   ngOnDestroy() {
     this.isDestroyed = true;
@@ -1472,11 +1640,21 @@ export class DefaultRacedayComponent
   }
 
   private updateScale() {
-    const targetHeight = 1080; // 1080 (Total SVG height including menu)
+    if (this.isUIEditorMode()) {
+      this.scale = 1;
+      if (this.dashboardWidth !== 1920) {
+        this.dashboardWidth = 1920;
+        this.loadColumns();
+      }
+      return;
+    }
+
+    const targetHeight = 1080;
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
     const newScale = windowHeight / targetHeight;
+
     if (Math.abs(this.scale - newScale) > 0.001) {
       this.scale = newScale;
     }
@@ -2119,7 +2297,8 @@ export class DefaultRacedayComponent
   }
 
   private loadColumns() {
-    const settings = this.settingsService.getSettings();
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
     let selectedColumns = settings.racedayColumns;
     if (!selectedColumns || selectedColumns.length === 0) {
       selectedColumns = Settings.DEFAULT_COLUMNS;
@@ -2212,7 +2391,7 @@ export class DefaultRacedayComponent
 
     const numColumns = selectedColumns.length;
     const totalGapsWidth = numColumns > 1 ? (numColumns - 1) * 2 : 0;
-    const tableContainerWidth = this.dashboardWidth;
+    const tableContainerWidth = 1920; // Base canvas width to calculate baseline fr ratios
     const remainingWidth = Math.max(
       300,
       tableContainerWidth - totalFixedWithoutResizingColumn - totalGapsWidth,
@@ -3144,6 +3323,7 @@ export class DefaultRacedayComponent
   }
 
   saveLayout() {
+    console.log("saveLayout called");
     const settings = this.settingsService.getSettings();
     settings.racedayLayout = this.layout;
     this.settingsService.saveSettings(settings);
@@ -3153,8 +3333,8 @@ export class DefaultRacedayComponent
 
   cancelLayoutCustomize() {
     const settings = this.settingsService.getSettings();
-    if (settings.racedayLayout && settings.racedayLayout.root) {
-      this.layout = settings.racedayLayout;
+    if (settings.racedayLayout && settings.racedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
     } else {
       this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     }
@@ -3171,8 +3351,8 @@ export class DefaultRacedayComponent
     this.cdr.detectChanges();
   }
 
-  getUnusedWidgets(): string[] {
-    const allTypes = [
+  getUnusedWidgets(): WidgetType[] {
+    const allTypes: WidgetType[] = [
       "menu-bar",
       "race-info",
       "branding",
@@ -3182,132 +3362,141 @@ export class DefaultRacedayComponent
       "leaderboard",
       "lane-view",
     ];
-    const used = new Set<string>();
-    const scan = (node: LayoutNode) => {
-      if (!node) return;
-      if (node.type === "widget") {
-        used.add(node.widgetType);
-      } else if (node.type === "split" && node.children) {
-        scan(node.children[0]);
-        scan(node.children[1]);
-      }
-    };
-    if (this.layout && this.layout.root) {
-      scan(this.layout.root);
-    }
+    const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes.filter((t) => !used.has(t));
   }
 
   onToolboxDragStart(event: DragEvent, type: string) {
     this.draggedWidgetType = type;
-    this.draggedNode = null;
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", type);
     }
   }
 
-  removeNode(root: LayoutNode, target: LayoutNode): LayoutNode | null {
-    if (root === target) {
-      return null;
-    }
-    if (root.type === "split" && root.children) {
-      const left = this.removeNode(root.children[0], target);
-      const right = this.removeNode(root.children[1], target);
-      if (left === null) {
-        return right;
-      }
-      if (right === null) {
-        return left;
-      }
-      root.children = [left, right];
-    }
-    return root;
+  onCanvasDragOver(event: DragEvent) {
+    if (!this.isLayoutCustomizing || !this.draggedWidgetType) return;
+    event.preventDefault(); // Necessary to allow drop
   }
 
-  insertSplit(
-    root: LayoutNode,
-    target: LayoutNode,
-    newNode: LayoutNode,
-    zone: string,
-  ): LayoutNode {
-    if (root === target) {
-      if (zone === "center") {
-        return newNode;
-      }
-      const direction =
-        zone === "top" || zone === "bottom" ? "vertical" : "horizontal";
-      const isFirst = zone === "top" || zone === "left";
-      return {
-        type: "split",
-        direction,
-        size: isFirst ? 30 : 70,
-        children: isFirst ? [newNode, target] : [target, newNode],
-      };
-    }
-    if (root.type === "split" && root.children) {
-      root.children[0] = this.insertSplit(
-        root.children[0],
-        target,
-        newNode,
-        zone,
-      );
-      root.children[1] = this.insertSplit(
-        root.children[1],
-        target,
-        newNode,
-        zone,
-      );
-    }
-    return root;
-  }
+  onCanvasDrop(event: DragEvent) {
+    if (!this.isLayoutCustomizing || !this.draggedWidgetType) return;
+    event.preventDefault();
 
-  dockWidget(
-    sourceNode: LayoutNode | null,
-    targetNode: LayoutNode,
-    zone: string,
-  ) {
-    const draggedType = this.draggedWidgetType;
-    if (!draggedType) return;
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const scale = this.visualScale || 1;
+    let x = (event.clientX - rect.left) / scale;
+    let y = (event.clientY - rect.top) / scale;
 
-    const newNode: LayoutNode = sourceNode || {
-      type: "widget",
-      widgetType: draggedType as any,
+    const newWidget: any = {
+      id: "widget-" + Date.now(),
+      widgetType: this.draggedWidgetType as any,
+      x: Math.round(x),
+      y: Math.round(y),
+      width: 400,
+      height: 300,
+      zIndex: this.getNextZIndex(),
     };
 
-    if (sourceNode && this.layout.root) {
-      const pruned = this.removeNode(this.layout.root, sourceNode);
-      if (pruned) {
-        this.layout.root = pruned;
-      }
-    }
-
-    if (this.layout.root) {
-      this.layout.root = this.insertSplit(
-        this.layout.root,
-        targetNode,
-        newNode,
-        zone,
-      );
-    }
+    if (!this.layout.widgets) this.layout.widgets = [];
+    this.layout.widgets.push(newWidget);
 
     this.draggedWidgetType = null;
-    this.draggedNode = null;
     this.cdr.detectChanges();
+    this.layoutChanged.emit(this.layout);
   }
 
-  undockWidget(targetNode: LayoutNode) {
-    if (this.layout.root) {
-      const pruned = this.removeNode(this.layout.root, targetNode);
-      if (pruned) {
-        this.layout.root = pruned;
-      } else {
-        this.layout.root = {
-          type: "widget",
-          widgetType: "lane-view",
-        };
-      }
-      this.cdr.detectChanges();
+  getNextZIndex(): number {
+    if (!this.layout?.widgets?.length) return 100;
+    return Math.max(...this.layout.widgets.map((w: any) => w.zIndex || 0)) + 1;
+  }
+
+  bringToFront(id: string) {
+    if (!this.layout?.widgets) return;
+    const w = this.layout.widgets.find((w: any) => w.id === id);
+    if (w) {
+      w.zIndex = this.getNextZIndex();
     }
+  }
+
+  removeWidget(id: string) {
+    if (!this.layout?.widgets) return;
+    this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    this.layoutChanged.emit(this.layout);
+  }
+
+  snapToEdges(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ignoreId: string,
+    handle: string,
+  ): { x: number; y: number; w: number; h: number } {
+    const snapThreshold = 10;
+    let newX = x;
+    let newY = y;
+    let newW = w;
+    let newH = h;
+
+    const edgesX: number[] = [0, 1920];
+    const edgesY: number[] = [0, 1080];
+
+    for (const widget of this.layout.widgets || []) {
+      if (widget.id === ignoreId) continue;
+      edgesX.push(widget.x, widget.x + widget.width);
+      edgesY.push(widget.y, widget.y + widget.height);
+    }
+
+    // Snap X
+    if (handle.includes("w") || handle === "all") {
+      for (const e of edgesX) {
+        if (Math.abs(x - e) < snapThreshold) {
+          if (handle === "all") newX = e;
+          else {
+            newW += x - e;
+            newX = e;
+          }
+          break;
+        }
+      }
+    }
+    if (handle.includes("e") || handle === "all") {
+      for (const e of edgesX) {
+        if (Math.abs(x + w - e) < snapThreshold) {
+          if (handle === "all") {
+            /* Dragging whole widget, snapping both ends might resize, but we only snap left. Wait, let's snap left OR right. */
+            newX = e - w;
+          } else newW = e - x;
+          break;
+        }
+      }
+    }
+
+    // Snap Y
+    if (handle.includes("n") || handle === "all") {
+      for (const e of edgesY) {
+        if (Math.abs(y - e) < snapThreshold) {
+          if (handle === "all") newY = e;
+          else {
+            newH += y - e;
+            newY = e;
+          }
+          break;
+        }
+      }
+    }
+    if (handle.includes("s") || handle === "all") {
+      for (const e of edgesY) {
+        if (Math.abs(y + h - e) < snapThreshold) {
+          if (handle === "all") {
+            newY = e - h;
+          } else newH = e - y;
+          break;
+        }
+      }
+    }
+
+    return { x: newX, y: newY, w: newW, h: newH };
   }
 }

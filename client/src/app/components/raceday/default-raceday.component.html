@@ -91,62 +91,22 @@
     [style.width.px]="dashboardWidth"
     [style.min-width.px]="dashboardWidth"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+    (dragover)="onCanvasDragOver($event)"
+    (drop)="onCanvasDrop($event)"
   >
     <div
-      class="raceday-layout-root-wrapper"
+      class="raceday-absolute-layout-root-wrapper"
       [class.edit-mode]="isLayoutCustomizing"
+      style="position: relative; width: 100%; height: 100%"
     >
-      <app-raceday-layout-node
-        [node]="layout.root"
-        [parentComponent]="this"
-        [isCustomizing]="isLayoutCustomizing"
-      ></app-raceday-layout-node>
+      @for (widget of layout?.widgets || []; track widget.id) {
+        <app-raceday-absolute-widget
+          [widget]="widget"
+          [parentComponent]="this"
+          [isCustomizing]="isLayoutCustomizing"
+        ></app-raceday-absolute-widget>
+      }
     </div>
-
-    <!-- Layout Customizer Floating Panel -->
-    @if (isLayoutCustomizing) {
-      <div class="layout-customizer-toolbox">
-        <div class="toolbox-title">Layout Editor</div>
-        <div class="toolbox-subtitle">Drag components to dock indicators</div>
-
-        <div class="toolbox-widget-list">
-          @for (widget of getUnusedWidgets(); track widget) {
-            <div
-              class="toolbox-widget-item"
-              draggable="true"
-              (dragstart)="onToolboxDragStart($event, widget)"
-              title="Drag onto another widget's docking guide to dock"
-            >
-              <span class="material-icons toolbox-widget-icon">extension</span>
-              <span class="toolbox-widget-label">{{ widget }}</span>
-            </div>
-          }
-          @if (getUnusedWidgets().length === 0) {
-            <div class="toolbox-empty-msg">
-              All components are currently docked.
-            </div>
-          }
-        </div>
-
-        <div class="toolbox-buttons">
-          <button class="toolbox-btn save-btn" (click)="saveLayout()">
-            Save Layout
-          </button>
-          <button
-            class="toolbox-btn cancel-btn"
-            (click)="cancelLayoutCustomize()"
-          >
-            Cancel
-          </button>
-          <button
-            class="toolbox-btn reset-btn"
-            (click)="resetLayoutToDefaults()"
-          >
-            Reset Defaults
-          </button>
-        </div>
-      </div>
-    }
 
     @if (!heat && errorMessage) {
       <div
@@ -171,6 +131,61 @@
       </div>
     }
   </div>
+
+  <!-- Layout Customizer Floating Panel -->
+  @if (isLayoutCustomizing) {
+    <div
+      class="layout-customizer-toolbox"
+      cdkDrag
+      [cdkDragScale]="toolboxScale"
+    >
+      <div class="toolbox-title" cdkDragHandle style="cursor: move">
+        {{ "UE_LABEL_LAYOUT_EDITOR" | translate }}
+      </div>
+      <div class="toolbox-subtitle">
+        {{ "UE_HINT_DRAG_COMPONENTS_DOCK" | translate }}
+      </div>
+
+      <div class="toolbox-widget-list">
+        @for (widget of getUnusedWidgets(); track widget) {
+          <div
+            class="toolbox-widget-item"
+            draggable="true"
+            (dragstart)="onToolboxDragStart($event, widget)"
+            [title]="'UE_TITLE_DRAG_WIDGET_DOCK' | translate"
+          >
+            <span class="material-icons toolbox-widget-icon">extension</span>
+            <span class="toolbox-widget-label">{{ widget }}</span>
+          </div>
+        }
+        @if (getUnusedWidgets().length === 0) {
+          <div class="toolbox-empty-msg">
+            {{ "UE_HINT_ALL_COMPONENTS_DOCKED" | translate }}
+          </div>
+        }
+      </div>
+
+      @if (!isUIEditorMode()) {
+        <div class="toolbox-buttons">
+          <button class="toolbox-btn save-btn" (click)="saveLayout()">
+            Save Layout
+          </button>
+          <button
+            class="toolbox-btn cancel-btn"
+            (click)="cancelLayoutCustomize()"
+          >
+            Cancel
+          </button>
+          <button
+            class="toolbox-btn reset-btn"
+            (click)="resetLayoutToDefaults()"
+          >
+            Reset Defaults
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>
 
 <app-login-dialog [visible]="showLoginModal" (close)="showLoginModal = false">

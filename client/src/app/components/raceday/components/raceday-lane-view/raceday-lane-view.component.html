@@ -30,6 +30,7 @@
             !parent.getLaneColor(hd, 'background_color')
           "
           cdkDrag
+          [cdkDragScale]="parent.visualScale"
           [cdkDragData]="hd"
           [cdkDragDisabled]="!parent.canSwapLanes || !parent.isLaneOccupied(hd)"
           [cdkDragPreviewContainer]="'parent'"

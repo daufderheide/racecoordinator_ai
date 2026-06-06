@@ -571,6 +571,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     });
   }
 
+  // TODO(aufderheide): Remove this unused code.
   // Old methods removed/replaced
   waitForConnection() {
     /* removed */
