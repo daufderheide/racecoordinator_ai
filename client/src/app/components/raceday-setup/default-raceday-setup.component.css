@@ -1082,3 +1082,13 @@
   margin-right: 12px;
   box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
 }
+/* Fade in animation to prevent layout popping while data loads */
+@keyframes stabilizeAndFadeIn {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.page-container {
+  animation: stabilizeAndFadeIn 0.4s ease-out 0.2s both;
+}
