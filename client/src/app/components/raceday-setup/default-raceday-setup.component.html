@@ -4,17 +4,17 @@
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   >
     <!-- Modernized Horizontal Menu/Dropdown Toolbar sitting right above the Title Bar -->
-    <div class="menu-bar">
+    <div class="setup-menu-bar">
       @for (item of menuItems; track item) {
         <div
-          class="menu-item-wrapper"
+          class="setup-menu-item-wrapper"
           [class.options-menu-container]="item.label === 'RDS_MENU_OPTIONS'"
           [class.file-menu-container]="item.label === 'RDS_MENU_FILE'"
           [class.config-menu-container]="item.label === 'RDS_MENU_CONFIG'"
           [class.help-menu-container]="item.label === 'RDS_MENU_HELP'"
         >
           <div
-            class="menu-item"
+            class="setup-menu-item"
             (click)="item.action($event)"
             (mouseenter)="onMenuItemHover(item.label)"
           >
@@ -22,55 +22,73 @@
           </div>
           <!-- Config Dropdown -->
           @if (item.label === "RDS_MENU_CONFIG" && isConfigDropdownOpen) {
-            <div class="menu-dropdown">
-              <div class="menu-dropdown-item" (click)="openDriverManager()">
+            <div class="setup-menu-dropdown">
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openDriverManager()"
+              >
                 {{ "RDS_MENU_DRIVER_MANAGER" | translate }}
               </div>
-              <div class="menu-dropdown-item" (click)="openTeamManager()">
+              <div class="setup-menu-dropdown-item" (click)="openTeamManager()">
                 {{ "RDS_MENU_TEAM_MANAGER" | translate }}
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openTrackManager()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openTrackManager()"
+              >
                 {{ "RDS_MENU_TRACK" | translate }}
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openRaceManager()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div class="setup-menu-dropdown-item" (click)="openRaceManager()">
                 {{ "RDS_MENU_RACE" | translate }}
               </div>
-              <div class="menu-dropdown-item disabled">
+              <div class="setup-menu-dropdown-item disabled">
                 {{ "RDS_MENU_EVENT" | translate }}
               </div>
               <div
-                class="menu-dropdown-item disabled"
+                class="setup-menu-dropdown-item disabled"
                 (click)="closeConfigDropdown()"
               >
                 {{ "RDS_MENU_SEASON" | translate }}
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openAssetManager()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openAssetManager()"
+              >
                 {{ "RDS_MENU_ASSETS" | translate }}
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openDatabaseManager()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openDatabaseManager()"
+              >
                 {{ "RDS_MENU_DATABASES" | translate }}
               </div>
             </div>
           }
           <!-- File Dropdown -->
           @if (item.label === "RDS_MENU_FILE" && isFileDropdownOpen) {
-            <div class="menu-dropdown">
-              <div class="menu-dropdown-item" (click)="loadSavedRaces()">
+            <div class="setup-menu-dropdown">
+              <div class="setup-menu-dropdown-item" (click)="loadSavedRaces()">
                 {{ "RDS_MENU_LOAD_RACE" | translate }}
               </div>
             </div>
           }
           <!-- Options Dropdown -->
           @if (item.label === "RDS_MENU_OPTIONS" && isOptionsDropdownOpen) {
-            <div class="menu-dropdown">
-              <div class="menu-dropdown-item" (click)="configureCustomUI()">
+            <div class="setup-menu-dropdown">
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="configureCustomUI()"
+              >
                 {{ "RDS_MENU_CUSTOM_UI" | translate }}
               </div>
-              <div class="menu-dropdown-item" (click)="openServerSettings()">
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openServerSettings()"
+              >
                 {{ "RDS_MENU_SERVER" | translate }}
               </div>
               <app-language-selector
@@ -78,34 +96,34 @@
                 itemClass="menu-dropdown-item"
                 (languageSelected)="onLanguageSelected()"
               ></app-language-selector>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="configureDemo()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div class="setup-menu-dropdown-item" (click)="configureDemo()">
                 {{ "RDS_MENU_DEMO_CONFIG" | translate }}
               </div>
             </div>
           }
           <!-- Help Dropdown -->
           @if (item.label === "RDS_MENU_HELP" && isHelpDropdownOpen) {
-            <div class="menu-dropdown">
+            <div class="setup-menu-dropdown">
               <div
-                class="menu-dropdown-item has-submenu"
+                class="setup-menu-dropdown-item has-submenu"
                 (click)="toggleLogDropdown($event)"
               >
                 {{ "RDS_MENU_LOG_LEVELS" | translate }}
-                <span class="submenu-arrow">▶</span>
+                <span class="setup-submenu-arrow">▶</span>
                 @if (isLogDropdownOpen) {
                   <div class="menu-dropdown submenu">
                     <div
-                      class="menu-dropdown-item has-submenu"
+                      class="setup-menu-dropdown-item has-submenu"
                       (click)="toggleClientLogDropdown($event)"
                     >
                       {{ "RDS_LOG_CLIENT" | translate }}
-                      <span class="submenu-arrow">▶</span>
+                      <span class="setup-submenu-arrow">▶</span>
                       @if (isClientLogOpen) {
                         <div class="menu-dropdown submenu">
                           @for (level of logLevels; track level) {
                             <div
-                              class="menu-dropdown-item"
+                              class="setup-menu-dropdown-item"
                               (click)="setClientLogLevel(level)"
                               [class.selected]="currentClientLogLevel === level"
                             >
@@ -116,16 +134,16 @@
                       }
                     </div>
                     <div
-                      class="menu-dropdown-item has-submenu"
+                      class="setup-menu-dropdown-item has-submenu"
                       (click)="toggleServerLogDropdown($event)"
                     >
                       {{ "RDS_LOG_SERVER" | translate }}
-                      <span class="submenu-arrow">▶</span>
+                      <span class="setup-submenu-arrow">▶</span>
                       @if (isServerLogOpen) {
                         <div class="menu-dropdown submenu">
                           @for (level of logLevels; track level) {
                             <div
-                              class="menu-dropdown-item"
+                              class="setup-menu-dropdown-item"
                               (click)="setServerLogLevel(level)"
                               [class.selected]="currentServerLogLevel === level"
                             >
@@ -138,12 +156,12 @@
                   </div>
                 }
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openHelpCenter()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div class="setup-menu-dropdown-item" (click)="openHelpCenter()">
                 {{ "RDS_MENU_HELP_CENTER" | translate }}
               </div>
-              <hr class="menu-dropdown-divider" />
-              <div class="menu-dropdown-item" (click)="openAbout()">
+              <hr class="setup-menu-dropdown-divider" />
+              <div class="setup-menu-dropdown-item" (click)="openAbout()">
                 {{ "RDS_HEADER_ABOUT" | translate }}
               </div>
             </div>
@@ -612,7 +630,7 @@
 
         <div class="rigid-spacer"></div>
 
-        <div class="bottom-section">
+        <div class="setup-bottom-section">
           <div class="race-selection-title">
             {{ "RDS_SECTION_ALL_RACES" | translate }}
           </div>
