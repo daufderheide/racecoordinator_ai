@@ -12,7 +12,6 @@ app-default-raceday {
   overflow: hidden;
   background: linear-gradient(90deg, #17253d 35%, #2a3d61 50%, #17253d 65%);
   font-family: 'Tahoma', sans-serif;
-}
 
 .dashboard-wrapper {
   width: 100%;
@@ -989,4 +988,5 @@ app-acknowledgement-modal, app-confirmation-modal {
 .reset-btn:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: #ef4444;
+}
 }
