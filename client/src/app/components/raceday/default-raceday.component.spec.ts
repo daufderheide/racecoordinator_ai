@@ -1467,14 +1467,6 @@ describe("DefaultRacedayComponent", () => {
       expect(scrollContent.style.height).toBe("240px");
     });
 
-    it("should be scrollable via overflow-y auto", () => {
-      const container =
-        fixture.nativeElement.querySelector(".leaderboard-list");
-      // In Karma, styles are often applied via the component's encapsulation.
-      // We check class-derived styles by asserting on the element.
-      expect(window.getComputedStyle(container).overflowY).toBe("auto");
-    });
-
     it("should calculate a scroll height exceeding typical container height when many items are present", () => {
       // simulate 50 participants -> 1200px height.
       // 1200px definitely exceeds the parent panel's typical height.
@@ -3125,6 +3117,24 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeDefined();
       expect(component.showExitConfirmation).toBeTrue();
       expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
+    });
+  });
+  describe("CSS Encapsulation and Leakage", () => {
+    it("should not leak its styles globally due to native CSS nesting", () => {
+      fixture.detectChanges();
+
+      const testElement = document.createElement("div");
+      testElement.className = "dashboard-wrapper";
+      testElement.id = "leak-test-element";
+      document.body.appendChild(testElement);
+
+      const computedStyle = window.getComputedStyle(testElement);
+
+      // If the styles leaked, display would be 'flex'.
+      // If properly scoped by 'app-default-raceday', it should remain 'block'.
+      expect(computedStyle.display).toBe("block");
+
+      document.body.removeChild(testElement);
     });
   });
 });

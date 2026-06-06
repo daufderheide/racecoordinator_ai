@@ -941,8 +941,9 @@ describe("DefaultRacedaySetupComponent", () => {
     });
 
     it("should wrap the race selection title and dropdown in a bottom-section container", () => {
-      const bottomSection =
-        fixture.nativeElement.querySelector(".bottom-section");
+      const bottomSection = fixture.nativeElement.querySelector(
+        ".setup-bottom-section",
+      );
       expect(bottomSection).toBeTruthy();
 
       const title = bottomSection.querySelector(".race-selection-title");
