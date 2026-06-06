@@ -1,0 +1,7 @@
+/* Lane view styles encapsulated or inherited globally */
+.bottom-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}

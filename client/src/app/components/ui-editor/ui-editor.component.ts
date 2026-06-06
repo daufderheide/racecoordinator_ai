@@ -509,6 +509,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.lampGreen = s.lampGreen;
     clone.fuelGaugeImageSet = s.fuelGaugeImageSet;
     clone.demoConfig = s.demoConfig ? { ...s.demoConfig } : undefined;
+    clone.racedayLayout = s.racedayLayout
+      ? deepCopy(s.racedayLayout)
+      : undefined;
 
     return clone;
   }
@@ -552,7 +555,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
-      JSON.stringify(a.columnVisibility) === JSON.stringify(b.columnVisibility)
+      JSON.stringify(a.columnVisibility) ===
+        JSON.stringify(b.columnVisibility) &&
+      JSON.stringify(a.racedayLayout) === JSON.stringify(b.racedayLayout)
     );
   }
 

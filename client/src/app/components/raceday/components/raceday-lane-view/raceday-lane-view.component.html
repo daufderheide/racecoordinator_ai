@@ -1,0 +1,209 @@
+@if (parent && parent.columns && parent.columns.length > 0) {
+  <div class="bottom-section">
+    <!-- Header -->
+    <div
+      class="table-header-row"
+      [style.grid-template-columns]="parent.gridTemplateColumns"
+    >
+      @for (col of parent.columns; track parent.trackByColumn($index, col)) {
+        <div class="header-cell">
+          {{ parent.getColumnLabel(col) }}
+        </div>
+      }
+    </div>
+    <!-- Body (Dynamic rows) -->
+    <div
+      class="table-body"
+      cdkDropList
+      [cdkDropListData]="parent.sortedHeatDrivers"
+      (cdkDropListDropped)="parent.onDrop($event)"
+      [cdkDropListDisabled]="!parent.canSwapLanes"
+    >
+      @for (
+        hd of parent.sortedHeatDrivers;
+        track parent.trackByDriverId($index, hd);
+        let i = $index
+      ) {
+        <div
+          class="table-row"
+          [class.unconfigured-lane]="
+            !parent.getLaneColor(hd, 'background_color')
+          "
+          cdkDrag
+          [cdkDragData]="hd"
+          [cdkDragDisabled]="!parent.canSwapLanes || !parent.isLaneOccupied(hd)"
+          [cdkDragPreviewContainer]="'parent'"
+          (cdkDragStarted)="parent.onDragStarted(hd.laneIndex)"
+          (cdkDragEnded)="parent.onDragEnded()"
+          [class.highlight]="parent.highlightedDrivers.has(hd.objectId)"
+          [class.drag-over]="parent.draggingLane === hd.laneIndex"
+          (mouseenter)="parent.onDragOver(hd.laneIndex)"
+          [style.grid-template-columns]="parent.gridTemplateColumns"
+          [style.height.px]="parent.getRowHeight()"
+          [style.z-index]="
+            parent.isDragging ? 1000 : 100 - parent.getDriverVisualPosition(hd)
+          "
+          [style.top.px]="
+            parent.getDriverVisualPosition(hd) * (parent.getRowHeight() + 2)
+          "
+          [style.transform]="
+            parent.highlightedDrivers.has(hd.objectId)
+              ? 'scale(1.015)'
+              : 'scale(1)'
+          "
+        >
+          @for (
+            col of parent.columns;
+            track parent.trackByColumn($index, col)
+          ) {
+            <div
+              class="body-cell"
+              [style.background]="parent.getLaneColor(hd, 'background_color')"
+              [style.border-left-color]="
+                parent.getLaneColor(hd, 'foreground_color')
+              "
+              [style.border-right-color]="
+                parent.getLaneColor(hd, 'foreground_color')
+              "
+              (click)="parent.onCellClick(hd, col, $event)"
+            >
+              @if (hd.isLastLapDrift && parent.isLapTimeColumn(col)) {
+                <div
+                  class="drift-indicator"
+                  data-testid="drift-badge"
+                  [style.background-color]="
+                    parent.getLaneColor(hd, 'foreground_color')
+                  "
+                  [style.color]="parent.getLaneColor(hd, 'background_color')"
+                >
+                  {{ "RD_DRIFT_LAP" | translate }}
+                </div>
+              }
+              @for (
+                entry of parent.getLayoutEntries(col);
+                track parent.trackByLayout($index, entry)
+              ) {
+                <!-- Text Content -->
+                @if (!parent.isImageProperty(entry.property)) {
+                  <div
+                    [class]="parent.getAnchorClass(entry.anchor)"
+                    [style.color]="parent.getLaneColor(hd, 'foreground_color')"
+                  >
+                    <!-- Team Driver Pulldown -->
+                    @if (
+                      parent.isNameProperty(entry.property) && parent.isTeam(hd)
+                    ) {
+                      <div
+                        style="
+                          position: relative;
+                          width: 100%;
+                          height: 100%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                      >
+                        <span
+                          class="teammate-display-name"
+                          [style.color]="
+                            parent.getLaneColor(hd, 'foreground_color')
+                          "
+                          [style.padding-right]="
+                            (parent.authService.currentRole$ | async) ===
+                            parent.Role.VIEWER
+                              ? '0px'
+                              : '30px'
+                          "
+                        >
+                          {{
+                            entry.property === "driver.nickname"
+                              ? hd.actualDriver?.nickname ||
+                                hd.actualDriver?.name ||
+                                hd.driver.nickname ||
+                                hd.driver.name
+                              : hd.actualDriver?.name || hd.driver.name
+                          }}
+                        </span>
+                        @if (
+                          (parent.authService.currentRole$ | async) !==
+                          parent.Role.VIEWER
+                        ) {
+                          <select
+                            class="teammate-select"
+                            [style.background-image]="
+                              parent.getDropdownArrowBg(hd)
+                            "
+                            [disabled]="parent.isDriverSwapDisabled(hd)"
+                            (change)="parent.onTeammateChange(hd, $event)"
+                          >
+                            @for (tm of parent.getTeammates(hd); track tm) {
+                              <option
+                                [value]="$any(tm).entity_id || $any(tm).id"
+                                [selected]="
+                                  ($any(tm).entity_id || $any(tm).id) ===
+                                  (hd.actualDriver?.entity_id ||
+                                    $any(hd.driver).entity_id)
+                                "
+                              >
+                                {{
+                                  entry.property === "driver.nickname"
+                                    ? $any(tm).nickname || $any(tm).name
+                                    : $any(tm).name
+                                }}
+                                {{
+                                  parent.getDriverStats(
+                                    hd,
+                                    $any(tm).entity_id || $any(tm).id
+                                  )
+                                }}
+                              </option>
+                            }
+                          </select>
+                        }
+                      </div>
+                    }
+                    <!-- Drag Handle -->
+                    @if (
+                      parent.canSwapLanes &&
+                      parent.isNameProperty(entry.property) &&
+                      parent.isLaneOccupied(hd)
+                    ) {
+                      <div
+                        class="drag-handle"
+                        cdkDragHandle
+                        [style.color]="
+                          parent.getLaneColor(hd, 'foreground_color')
+                        "
+                      >
+                        <span class="material-icons">drag_indicator</span>
+                      </div>
+                    }
+                    <!-- Static Text for Individuals or non-name properties -->
+                    @if (
+                      !parent.isNameProperty(entry.property) ||
+                      !parent.isTeam(hd)
+                    ) {
+                      <span>
+                        {{ parent.formatColumnValue(hd, col, entry.property) }}
+                      </span>
+                    }
+                  </div>
+                }
+                <!-- Image Content -->
+                @if (parent.isImageProperty(entry.property)) {
+                  <div [class]="parent.getAnchorClass(entry.anchor)">
+                    @let imageUrl =
+                      parent.formatColumnValue(hd, col, entry.property);
+                    @if (imageUrl || !parent.isAvatarProperty(entry.property)) {
+                      <img [src]="imageUrl" alt="" />
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

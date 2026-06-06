@@ -7,6 +7,32 @@ export enum ColumnVisibility {
   NonFuelRaceOnly = "NonFuelRaceOnly",
 }
 
+export type LayoutNode = SplitNode | WidgetNode;
+
+export interface SplitNode {
+  type: "split";
+  direction: "horizontal" | "vertical";
+  size: number;
+  children: [LayoutNode, LayoutNode];
+}
+
+export interface WidgetNode {
+  type: "widget";
+  widgetType:
+    | "menu-bar"
+    | "race-info"
+    | "branding"
+    | "flag"
+    | "timer"
+    | "records"
+    | "leaderboard"
+    | "lane-view";
+}
+
+export interface LayoutConfig {
+  root: LayoutNode;
+}
+
 export class Settings {
   static readonly DEFAULT_COLUMNS = [
     "driver.nickname",
@@ -91,5 +117,67 @@ export class Settings {
   };
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {
     "imageset_fuel-gauge-builtin": ColumnVisibility.FuelRaceOnly,
+  };
+
+  racedayLayout?: LayoutConfig;
+
+  static readonly DEFAULT_LAYOUT: LayoutConfig = {
+    root: {
+      type: "split",
+      direction: "vertical",
+      size: 5,
+      children: [
+        { type: "widget", widgetType: "menu-bar" },
+        {
+          type: "split",
+          direction: "vertical",
+          size: 7,
+          children: [
+            { type: "widget", widgetType: "race-info" },
+            {
+              type: "split",
+              direction: "vertical",
+              size: 25,
+              children: [
+                {
+                  type: "split",
+                  direction: "horizontal",
+                  size: 20,
+                  children: [
+                    { type: "widget", widgetType: "branding" },
+                    {
+                      type: "split",
+                      direction: "horizontal",
+                      size: 19,
+                      children: [
+                        { type: "widget", widgetType: "flag" },
+                        {
+                          type: "split",
+                          direction: "horizontal",
+                          size: 38,
+                          children: [
+                            { type: "widget", widgetType: "timer" },
+                            {
+                              type: "split",
+                              direction: "horizontal",
+                              size: 50,
+                              children: [
+                                { type: "widget", widgetType: "records" },
+                                { type: "widget", widgetType: "leaderboard" },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                { type: "widget", widgetType: "lane-view" },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   };
 }

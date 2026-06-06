@@ -1,0 +1,8 @@
+/* Flag styles encapsulated or inherited globally */
+.flag-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+}

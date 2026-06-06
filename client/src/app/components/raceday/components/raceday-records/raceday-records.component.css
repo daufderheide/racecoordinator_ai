@@ -1,0 +1,12 @@
+/* Records styles encapsulated or inherited globally */
+.record-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

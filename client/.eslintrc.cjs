@@ -134,6 +134,19 @@ module.exports = {
         "max-lines": "off",
         "max-lines-per-function": "off"
       }
+    },
+    {
+      "files": ["**/components/raceday/components/**/*.ts"],
+      "rules": {
+        "no-restricted-syntax": "off",
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": ["**/components/raceday/components/**/*.html"],
+      "rules": {
+        "@angular-eslint/template/prefer-control-flow": "off"
+      }
     }
   ]
 };

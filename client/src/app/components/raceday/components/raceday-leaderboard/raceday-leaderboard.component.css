@@ -1,0 +1,7 @@
+/* Leaderboard styles encapsulated or inherited globally */
+.leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}

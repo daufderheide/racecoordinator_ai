@@ -1,0 +1,36 @@
+<div class="panel-card leaderboard-panel">
+  <div class="leaderboard-title">Leader Board</div>
+  <div class="leaderboard-list">
+    <div
+      class="leaderboard-scroll-content"
+      [style.height.px]="leaderboardEntries.length * 24"
+    >
+      @for (
+        entry of leaderboardEntries;
+        track trackByLeaderboardEntry($index, entry);
+        let i = $index
+      ) {
+        <div
+          class="leaderboard-item"
+          [class.leaderboard-item-odd]="getLeaderboardPosition(entry) % 2 === 1"
+          [style.transform]="
+            'translateY(' + getLeaderboardPosition(entry) * 24 + 'px)'
+          "
+        >
+          <span
+            [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+            [class.leader-white]="getLeaderboardPosition(entry) > 0"
+          >
+            {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
+          </span>
+          <span
+            [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+            [class.leader-white]="getLeaderboardPosition(entry) > 0"
+          >
+            {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
+          </span>
+        </div>
+      }
+    </div>
+  </div>
+</div>

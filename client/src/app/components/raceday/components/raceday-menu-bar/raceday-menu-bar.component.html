@@ -1,0 +1,213 @@
+<div class="menu-bar no-print">
+  <div class="menu-wrapper">
+    <button
+      class="menu-button-top"
+      (click)="toggleFileMenu()"
+      (mouseenter)="onMenuItemHover('file')"
+    >
+      {{ "RD_MENU_FILE" | translate }}
+    </button>
+    @if (isFileMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div
+          class="menu-item"
+          [class.disabled]="isSaveDisabled"
+          (click)="onFileMenuSelect('SAVE')"
+        >
+          {{ "RD_MENU_SAVE" | translate }}
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" (click)="onFileMenuSelect('EXPORT_CSV')">
+          {{ "RD_MENU_EXPORT_CSV" | translate }}
+        </div>
+        <div class="menu-item" (click)="onFileMenuSelect('EXPORT_PDF')">
+          Export PDF
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" (click)="onFileMenuSelect('EXIT')">
+          {{ "RD_MENU_EXIT" | translate }}
+        </div>
+      </div>
+    }
+  </div>
+  <div class="menu-wrapper">
+    <button
+      class="menu-button-top"
+      (click)="toggleMenu()"
+      (mouseenter)="onMenuItemHover('race')"
+    >
+      {{ "RD_MENU_RACE_DIRECTOR" | translate }}
+    </button>
+    @if (isMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div
+          class="menu-item"
+          [class.disabled]="isStartResumeDisabled"
+          (click)="onMenuSelect('START_RESUME')"
+        >
+          <span>{{ "RD_MENU_START_RESUME" | translate }}</span>
+          <span class="menu-shortcut">{{ startResumeShortcut }}</span>
+        </div>
+
+        <div
+          class="menu-item"
+          [class.disabled]="isPauseDisabled"
+          (click)="onMenuSelect('PAUSE')"
+        >
+          <span>{{ "RD_MENU_PAUSE" | translate }}</span>
+          <span class="menu-shortcut">{{ pauseShortcut }}</span>
+        </div>
+        <div
+          class="menu-item"
+          [class.disabled]="isNextHeatDisabled"
+          (click)="onMenuSelect('NEXT_HEAT')"
+        >
+          <span>{{ "RD_MENU_NEXT_HEAT" | translate }}</span>
+          <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div
+          class="menu-item"
+          [class.disabled]="isRestartHeatDisabled"
+          (click)="onMenuSelect('RESTART_HEAT')"
+        >
+          <span>{{ "RD_MENU_RESTART" | translate }}</span>
+          <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
+        </div>
+        <div
+          class="menu-item"
+          [class.disabled]="isDeferHeatDisabled"
+          (click)="onMenuSelect('DEFER_HEAT')"
+        >
+          <span>{{ "RD_MENU_DEFER" | translate }}</span>
+          <span class="menu-shortcut">{{ deferHeatShortcut }}</span>
+        </div>
+        <div
+          class="menu-item"
+          [class.disabled]="isSkipHeatDisabled"
+          (click)="onMenuSelect('SKIP_HEAT')"
+        >
+          <span>{{ "RD_MENU_SKIP_HEAT" | translate }}</span>
+          <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
+        </div>
+        <div
+          class="menu-item"
+          [class.disabled]="isSkipRaceDisabled"
+          (click)="onMenuSelect('SKIP_RACE')"
+        >
+          {{ "RD_MENU_SKIP_RACE" | translate }}
+        </div>
+        <div class="menu-separator"></div>
+        <div
+          class="menu-item"
+          [class.disabled]="isAddLapDisabled"
+          (click)="onMenuSelect('ADD_LAP')"
+        >
+          {{ "RD_MENU_ADD_LAP" | translate }}
+        </div>
+        <div
+          class="menu-item"
+          [class.disabled]="isModifyDisabled"
+          (click)="onMenuSelect('MODIFY')"
+        >
+          {{ "RD_MENU_MODIFY" | translate }}
+        </div>
+        @if ((authService.currentRole$ | async) === Role.VIEWER) {
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onMenuSelect('LOGIN')">
+            {{ "RD_MENU_LOGIN" | translate }}
+          </div>
+        } @else if ((authService.currentRole$ | async) === Role.ADMIN) {
+          <div class="menu-separator"></div>
+          <div
+            class="menu-item disabled"
+            [title]="'RD_MENU_LOGIN_DISABLED_ADMIN' | translate"
+          >
+            {{ "RD_MENU_LOGIN" | translate }}
+          </div>
+        } @else {
+          <div class="menu-separator"></div>
+          <div class="menu-item" (click)="onMenuSelect('LOGOUT')">
+            {{ "RD_MENU_LOGOUT" | translate }}
+          </div>
+        }
+      </div>
+    }
+  </div>
+  @if (track && track.lanes) {
+    <div class="menu-wrapper">
+      <button
+        class="menu-button-top"
+        (click)="toggleLanesMenu()"
+        (mouseenter)="onMenuItemHover('lanes')"
+      >
+        {{ "RD_MENU_LANES" | translate }}
+      </button>
+      @if (isLanesMenuOpen) {
+        <div class="menu-dropdown top-dropdown">
+          <div
+            class="menu-item has-submenu"
+            (click)="toggleDriversStationMenu(); $event.stopPropagation()"
+          >
+            {{ "RD_MENU_DRIVERS_STATION" | translate }}
+            <span class="submenu-arrow">▶</span>
+            @if (isDriversStationOpen) {
+              <div class="menu-dropdown submenu">
+                @for (lane of track.lanes; track lane; let i = $index) {
+                  <div class="menu-item" (click)="onLaneMenuSelect(i)">
+                    {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+  <div class="menu-wrapper">
+    <button
+      id="windows-menu-button"
+      class="menu-button-top"
+      (click)="toggleWindowsMenu()"
+      (mouseenter)="onMenuItemHover('windows')"
+    >
+      {{ "RD_MENU_WINDOWS" | translate }}
+    </button>
+    @if (isWindowsMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div class="menu-item" (click)="onWindowsMenuSelect('HEAT_RESULTS')">
+          {{ "RD_WIN_HEAT_RESULTS" | translate }}
+        </div>
+        <div class="menu-item" (click)="onWindowsMenuSelect('RACE_RESULTS')">
+          {{ "RD_WIN_RACE_RESULTS" | translate }}
+        </div>
+      </div>
+    }
+  </div>
+  <div class="menu-wrapper">
+    <button
+      id="options-menu-button"
+      class="menu-button-top"
+      (click)="toggleOptionsMenu()"
+      (mouseenter)="onMenuItemHover('options')"
+    >
+      {{ "RD_MENU_OPTIONS" | translate }}
+    </button>
+    @if (isOptionsMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_UI')">
+          {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
+        </div>
+        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_LAYOUT')">
+          Customize Page Layout
+        </div>
+        <app-language-selector
+          wrapperClass="menu-item"
+          itemClass="menu-item"
+          (languageSelected)="onLanguageSelected()"
+        ></app-language-selector>
+      </div>
+    }
+  </div>
+</div>

@@ -1,12 +1,6 @@
 /* eslint-disable max-lines */
 /* eslint-disable max-lines-per-function */
-import {
-  CdkDrag,
-  CdkDragDrop,
-  CdkDragHandle,
-  CdkDropList,
-} from "@angular/cdk/drag-drop";
-import { AsyncPipe, DecimalPipe } from "@angular/common";
+import { CdkDragDrop } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
   Component,
@@ -14,6 +8,7 @@ import {
   HostListener,
   OnDestroy,
   OnInit,
+  ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
@@ -22,7 +17,6 @@ import { Observable, Subject, Subscription } from "rxjs";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
-import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
@@ -41,10 +35,14 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { ColumnVisibility, Settings } from "@app/models/settings";
+import {
+  ColumnVisibility,
+  LayoutConfig,
+  LayoutNode,
+  Settings,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
-import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
@@ -61,6 +59,7 @@ import { createTTSContext, playSound } from "@app/utils/audio";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
+import { RacedayLayoutNodeComponent } from "./components/raceday-layout-node/raceday-layout-node.component";
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -70,18 +69,13 @@ import { AnchorPoint } from "./column_definition";
   selector: "app-default-raceday",
   templateUrl: "./default-raceday.component.html",
   styleUrls: ["./default-raceday.component.css"],
+  encapsulation: ViewEncapsulation.None,
   imports: [
     AcknowledgementModalComponent,
     ConfirmationModalComponent,
-    CdkDropList,
-    CdkDrag,
     FormsModule,
-    CdkDragHandle,
-    DecimalPipe,
-    TranslatePipe,
     LoginDialogComponent,
-    AsyncPipe,
-    LanguageSelectorComponent,
+    RacedayLayoutNodeComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -428,7 +422,20 @@ export class DefaultRacedayComponent
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
 
+  // Layout customization state
+  isLayoutCustomizing = false;
+  layout!: LayoutConfig;
+  draggedWidgetType: string | null = null;
+  draggedNode: LayoutNode | null = null;
+
   ngOnInit() {
+    const settings = this.settingsService.getSettings();
+    if (settings.racedayLayout && settings.racedayLayout.root) {
+      this.layout = settings.racedayLayout;
+    } else {
+      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    }
+
     this.loadColumns();
 
     this.subscriptions.push(
@@ -1295,7 +1302,7 @@ export class DefaultRacedayComponent
   getRowHeight(): number {
     const numLanes = this.track?.lanes?.length || 1;
     const totalGaps = (numLanes - 1) * 2;
-    return (672 - totalGaps) / numLanes;
+    return (668 - totalGaps) / numLanes;
   }
 
   getImageMetrics(colIndex: number) {
@@ -1440,6 +1447,7 @@ export class DefaultRacedayComponent
   isWindowsMenuOpen = false;
   isOptionsMenuOpen = false;
   scale: number = 1;
+  dashboardWidth: number = 1920;
 
   @HostListener("window:resize")
   onResize() {
@@ -1464,17 +1472,19 @@ export class DefaultRacedayComponent
   }
 
   private updateScale() {
-    const targetWidth = 1920;
     const targetHeight = 1080; // 1080 (Total SVG height including menu)
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-
-    const newScale = Math.min(scaleX, scaleY);
+    const newScale = windowHeight / targetHeight;
     if (Math.abs(this.scale - newScale) > 0.001) {
       this.scale = newScale;
+    }
+
+    const calculatedWidth = this.scale > 0 ? windowWidth / this.scale : 1920;
+    if (Math.abs(this.dashboardWidth - calculatedWidth) > 0.1) {
+      this.dashboardWidth = calculatedWidth;
+      this.loadColumns();
     }
   }
 
@@ -1568,6 +1578,8 @@ export class DefaultRacedayComponent
       this.router.navigate(["/ui-editor"], {
         queryParams: { returnUrl },
       });
+    } else if (action === "CUSTOMIZE_LAYOUT") {
+      this.toggleLayoutCustomize();
     }
   }
 
@@ -2200,7 +2212,7 @@ export class DefaultRacedayComponent
 
     const numColumns = selectedColumns.length;
     const totalGapsWidth = numColumns > 1 ? (numColumns - 1) * 2 : 0;
-    const tableContainerWidth = 1896; // 1920 - 24 (margins)
+    const tableContainerWidth = this.dashboardWidth;
     const remainingWidth = Math.max(
       300,
       tableContainerWidth - totalFixedWithoutResizingColumn - totalGapsWidth,
@@ -3123,5 +3135,179 @@ export class DefaultRacedayComponent
       queryParams: { modifyHeats: null },
       queryParamsHandling: "merge",
     });
+  }
+
+  // Layout customization methods
+  toggleLayoutCustomize() {
+    this.isLayoutCustomizing = !this.isLayoutCustomizing;
+    this.cdr.detectChanges();
+  }
+
+  saveLayout() {
+    const settings = this.settingsService.getSettings();
+    settings.racedayLayout = this.layout;
+    this.settingsService.saveSettings(settings);
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  cancelLayoutCustomize() {
+    const settings = this.settingsService.getSettings();
+    if (settings.racedayLayout && settings.racedayLayout.root) {
+      this.layout = settings.racedayLayout;
+    } else {
+      this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    }
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  resetLayoutToDefaults() {
+    this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    const settings = this.settingsService.getSettings();
+    settings.racedayLayout = this.layout;
+    this.settingsService.saveSettings(settings);
+    this.isLayoutCustomizing = false;
+    this.cdr.detectChanges();
+  }
+
+  getUnusedWidgets(): string[] {
+    const allTypes = [
+      "menu-bar",
+      "race-info",
+      "branding",
+      "flag",
+      "timer",
+      "records",
+      "leaderboard",
+      "lane-view",
+    ];
+    const used = new Set<string>();
+    const scan = (node: LayoutNode) => {
+      if (!node) return;
+      if (node.type === "widget") {
+        used.add(node.widgetType);
+      } else if (node.type === "split" && node.children) {
+        scan(node.children[0]);
+        scan(node.children[1]);
+      }
+    };
+    if (this.layout && this.layout.root) {
+      scan(this.layout.root);
+    }
+    return allTypes.filter((t) => !used.has(t));
+  }
+
+  onToolboxDragStart(event: DragEvent, type: string) {
+    this.draggedWidgetType = type;
+    this.draggedNode = null;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", type);
+    }
+  }
+
+  removeNode(root: LayoutNode, target: LayoutNode): LayoutNode | null {
+    if (root === target) {
+      return null;
+    }
+    if (root.type === "split" && root.children) {
+      const left = this.removeNode(root.children[0], target);
+      const right = this.removeNode(root.children[1], target);
+      if (left === null) {
+        return right;
+      }
+      if (right === null) {
+        return left;
+      }
+      root.children = [left, right];
+    }
+    return root;
+  }
+
+  insertSplit(
+    root: LayoutNode,
+    target: LayoutNode,
+    newNode: LayoutNode,
+    zone: string,
+  ): LayoutNode {
+    if (root === target) {
+      if (zone === "center") {
+        return newNode;
+      }
+      const direction =
+        zone === "top" || zone === "bottom" ? "vertical" : "horizontal";
+      const isFirst = zone === "top" || zone === "left";
+      return {
+        type: "split",
+        direction,
+        size: isFirst ? 30 : 70,
+        children: isFirst ? [newNode, target] : [target, newNode],
+      };
+    }
+    if (root.type === "split" && root.children) {
+      root.children[0] = this.insertSplit(
+        root.children[0],
+        target,
+        newNode,
+        zone,
+      );
+      root.children[1] = this.insertSplit(
+        root.children[1],
+        target,
+        newNode,
+        zone,
+      );
+    }
+    return root;
+  }
+
+  dockWidget(
+    sourceNode: LayoutNode | null,
+    targetNode: LayoutNode,
+    zone: string,
+  ) {
+    const draggedType = this.draggedWidgetType;
+    if (!draggedType) return;
+
+    const newNode: LayoutNode = sourceNode || {
+      type: "widget",
+      widgetType: draggedType as any,
+    };
+
+    if (sourceNode && this.layout.root) {
+      const pruned = this.removeNode(this.layout.root, sourceNode);
+      if (pruned) {
+        this.layout.root = pruned;
+      }
+    }
+
+    if (this.layout.root) {
+      this.layout.root = this.insertSplit(
+        this.layout.root,
+        targetNode,
+        newNode,
+        zone,
+      );
+    }
+
+    this.draggedWidgetType = null;
+    this.draggedNode = null;
+    this.cdr.detectChanges();
+  }
+
+  undockWidget(targetNode: LayoutNode) {
+    if (this.layout.root) {
+      const pruned = this.removeNode(this.layout.root, targetNode);
+      if (pruned) {
+        this.layout.root = pruned;
+      } else {
+        this.layout.root = {
+          type: "widget",
+          widgetType: "lane-view",
+        };
+      }
+      this.cdr.detectChanges();
+    }
   }
 }

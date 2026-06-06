@@ -1,4 +1,4 @@
-:host {
+app-default-raceday {
   display: block;
   position: absolute;
   top: 0;
@@ -10,7 +10,7 @@
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: #0d151e;
+  background: linear-gradient(90deg, #17253d 35%, #2a3d61 50%, #17253d 65%);
   font-family: 'Tahoma', sans-serif;
 }
 
@@ -29,8 +29,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 1920px;
-  min-width: 1920px;
+  width: 100%;
+  min-width: 0;
   height: 1080px;
   min-height: 1080px;
   transform-origin: center center;
@@ -60,6 +60,9 @@
   height: 38px;
   flex: 0 0 38px;
   background: transparent;
+  border-bottom: 2px solid #38bdf8;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
+  border-radius: 6px 6px 0 0;
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -490,8 +493,8 @@
 /* Bottom Table */
 .bottom-section {
   flex: 1;
-  margin: 10px 12px 0 12px;
-  width: calc(100% - 24px);
+  margin: 10px 0 0 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -784,7 +787,7 @@ app-acknowledgement-modal, app-confirmation-modal {
     box-shadow: none !important;
   }
 
-  :host {
+  app-default-raceday {
     background: transparent !important;
     width: auto !important;
     height: auto !important;
@@ -835,4 +838,155 @@ app-acknowledgement-modal, app-confirmation-modal {
   .unconfigured-lane {
     display: none !important;
   }
+}
+
+/* Layout customizer and root wrapper */
+.raceday-layout-root-wrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+.raceday-layout-root-wrapper.edit-mode {
+  padding: 12px;
+  background-color: rgba(15, 23, 42, 0.2);
+  border: 2px dashed rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+}
+
+/* Floating customizer toolbox sidebar */
+.layout-customizer-toolbox {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 300px;
+  background: rgba(30, 41, 59, 0.95); /* Slate 800 with transparency */
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.toolbox-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.toolbox-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.toolbox-widget-list {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.toolbox-widget-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  cursor: grab;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toolbox-widget-item:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.toolbox-widget-icon {
+  font-size: 16px;
+  color: #38bdf8;
+}
+
+.toolbox-widget-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.toolbox-empty-msg {
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  padding: 24px 0;
+  font-style: italic;
+}
+
+.toolbox-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toolbox-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.toolbox-btn:active {
+  transform: scale(0.98);
+}
+
+.save-btn {
+  background: #3b82f6;
+  color: #fff;
+}
+.save-btn:hover {
+  background: #2563eb;
+}
+
+.cancel-btn {
+  background: rgba(71, 85, 105, 0.6);
+  color: #e2e8f0;
+}
+.cancel-btn:hover {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+.reset-btn {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.reset-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
 }

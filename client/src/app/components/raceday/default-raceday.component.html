@@ -88,596 +88,64 @@
 
   <div
     class="scalable-content"
+    [style.width.px]="dashboardWidth"
+    [style.min-width.px]="dashboardWidth"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   >
-    <!-- Top Header Wrapper (shares background gradient) -->
-    <div class="top-header-wrapper">
-      <!-- Top Horizontal Menu Bar -->
-      <div class="menu-bar no-print">
-        <div class="menu-wrapper">
-          <button
-            class="menu-button-top"
-            (click)="toggleFileMenu()"
-            (mouseenter)="onMenuItemHover('file')"
-          >
-            {{ "RD_MENU_FILE" | translate }}
-          </button>
-          @if (isFileMenuOpen) {
-            <div class="menu-dropdown top-dropdown">
-              <div
-                class="menu-item"
-                [class.disabled]="isSaveDisabled"
-                (click)="onFileMenuSelect('SAVE')"
-              >
-                {{ "RD_MENU_SAVE" | translate }}
-              </div>
-              <div class="menu-separator"></div>
-              <div class="menu-item" (click)="onFileMenuSelect('EXPORT_CSV')">
-                {{ "RD_MENU_EXPORT_CSV" | translate }}
-              </div>
-              <div class="menu-item" (click)="onFileMenuSelect('EXPORT_PDF')">
-                Export PDF
-              </div>
-              <div class="menu-separator"></div>
-              <div class="menu-item" (click)="onFileMenuSelect('EXIT')">
-                {{ "RD_MENU_EXIT" | translate }}
-              </div>
-            </div>
-          }
-        </div>
-        <div class="menu-wrapper">
-          <button
-            class="menu-button-top"
-            (click)="toggleMenu()"
-            (mouseenter)="onMenuItemHover('race')"
-          >
-            {{ "RD_MENU_RACE_DIRECTOR" | translate }}
-          </button>
-          @if (isMenuOpen) {
-            <div class="menu-dropdown top-dropdown">
-              <div
-                class="menu-item"
-                [class.disabled]="isStartResumeDisabled"
-                (click)="onMenuSelect('START_RESUME')"
-              >
-                <span>{{ "RD_MENU_START_RESUME" | translate }}</span>
-                <span class="menu-shortcut">{{ startResumeShortcut }}</span>
-              </div>
-
-              <div
-                class="menu-item"
-                [class.disabled]="isPauseDisabled"
-                (click)="onMenuSelect('PAUSE')"
-              >
-                <span>{{ "RD_MENU_PAUSE" | translate }}</span>
-                <span class="menu-shortcut">{{ pauseShortcut }}</span>
-              </div>
-              <div
-                class="menu-item"
-                [class.disabled]="isNextHeatDisabled"
-                (click)="onMenuSelect('NEXT_HEAT')"
-              >
-                <span>{{ "RD_MENU_NEXT_HEAT" | translate }}</span>
-                <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
-              </div>
-              <div class="menu-separator"></div>
-              <div
-                class="menu-item"
-                [class.disabled]="isRestartHeatDisabled"
-                (click)="onMenuSelect('RESTART_HEAT')"
-              >
-                <span>{{ "RD_MENU_RESTART" | translate }}</span>
-                <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
-              </div>
-              <div
-                class="menu-item"
-                [class.disabled]="isDeferHeatDisabled"
-                (click)="onMenuSelect('DEFER_HEAT')"
-              >
-                <span>{{ "RD_MENU_DEFER" | translate }}</span>
-                <span class="menu-shortcut">{{ deferHeatShortcut }}</span>
-              </div>
-              <div
-                class="menu-item"
-                [class.disabled]="isSkipHeatDisabled"
-                (click)="onMenuSelect('SKIP_HEAT')"
-              >
-                <span>{{ "RD_MENU_SKIP_HEAT" | translate }}</span>
-                <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
-              </div>
-              <div
-                class="menu-item"
-                [class.disabled]="isSkipRaceDisabled"
-                (click)="onMenuSelect('SKIP_RACE')"
-              >
-                {{ "RD_MENU_SKIP_RACE" | translate }}
-              </div>
-              <div class="menu-separator"></div>
-              <div
-                class="menu-item"
-                [class.disabled]="isAddLapDisabled"
-                (click)="onMenuSelect('ADD_LAP')"
-              >
-                {{ "RD_MENU_ADD_LAP" | translate }}
-              </div>
-              <div
-                class="menu-item"
-                [class.disabled]="isModifyDisabled"
-                (click)="onMenuSelect('MODIFY')"
-              >
-                {{ "RD_MENU_MODIFY" | translate }}
-              </div>
-              @if ((authService.currentRole$ | async) === Role.VIEWER) {
-                <div class="menu-separator"></div>
-                <div class="menu-item" (click)="onMenuSelect('LOGIN')">
-                  {{ "RD_MENU_LOGIN" | translate }}
-                </div>
-              } @else if ((authService.currentRole$ | async) === Role.ADMIN) {
-                <div class="menu-separator"></div>
-                <div
-                  class="menu-item disabled"
-                  [title]="'RD_MENU_LOGIN_DISABLED_ADMIN' | translate"
-                >
-                  {{ "RD_MENU_LOGIN" | translate }}
-                </div>
-              } @else {
-                <div class="menu-separator"></div>
-                <div class="menu-item" (click)="onMenuSelect('LOGOUT')">
-                  {{ "RD_MENU_LOGOUT" | translate }}
-                </div>
-              }
-            </div>
-          }
-        </div>
-        @if (track && track.lanes) {
-          <div class="menu-wrapper">
-            <button
-              class="menu-button-top"
-              (click)="toggleLanesMenu()"
-              (mouseenter)="onMenuItemHover('lanes')"
-            >
-              {{ "RD_MENU_LANES" | translate }}
-            </button>
-            @if (isLanesMenuOpen) {
-              <div class="menu-dropdown top-dropdown">
-                <div
-                  class="menu-item has-submenu"
-                  (click)="toggleDriversStationMenu(); $event.stopPropagation()"
-                >
-                  {{ "RD_MENU_DRIVERS_STATION" | translate }}
-                  <span class="submenu-arrow">▶</span>
-                  @if (isDriversStationOpen) {
-                    <div class="menu-dropdown submenu">
-                      @for (lane of track.lanes; track lane; let i = $index) {
-                        <div class="menu-item" (click)="onLaneMenuSelect(i)">
-                          {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
-        <div class="menu-wrapper">
-          <button
-            id="windows-menu-button"
-            class="menu-button-top"
-            (click)="toggleWindowsMenu()"
-            (mouseenter)="onMenuItemHover('windows')"
-          >
-            {{ "RD_MENU_WINDOWS" | translate }}
-          </button>
-          @if (isWindowsMenuOpen) {
-            <div class="menu-dropdown top-dropdown">
-              <div
-                class="menu-item"
-                (click)="onWindowsMenuSelect('HEAT_RESULTS')"
-              >
-                {{ "RD_WIN_HEAT_RESULTS" | translate }}
-              </div>
-              <div
-                class="menu-item"
-                (click)="onWindowsMenuSelect('RACE_RESULTS')"
-              >
-                {{ "RD_WIN_RACE_RESULTS" | translate }}
-              </div>
-            </div>
-          }
-        </div>
-        <div class="menu-wrapper">
-          <button
-            id="options-menu-button"
-            class="menu-button-top"
-            (click)="toggleOptionsMenu()"
-            (mouseenter)="onMenuItemHover('options')"
-          >
-            {{ "RD_MENU_OPTIONS" | translate }}
-          </button>
-          @if (isOptionsMenuOpen) {
-            <div class="menu-dropdown top-dropdown">
-              <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_UI')">
-                {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
-              </div>
-              <app-language-selector
-                wrapperClass="menu-item"
-                itemClass="menu-item"
-                (languageSelected)="onLanguageSelected()"
-              ></app-language-selector>
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (heat && race && track) {
-        <!-- Race and Track Top Bar -->
-        <div class="top-info-bar">
-          <div class="info-section">
-            <span class="label-text">Race:</span>
-            <span class="value-text">{{ race.name }}</span>
-          </div>
-          <div class="info-section">
-            <span class="value-text">
-              Heat {{ heat.heatNumber }} of {{ totalHeats }}
-              @if (race.group_options && race.group_options.enabled) {
-                - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
-              }
-            </span>
-          </div>
-          <div class="info-section">
-            <span class="label-text">Track:</span>
-            <span class="track-text">{{ track.name }}</span>
-          </div>
-        </div>
-      }
+    <div
+      class="raceday-layout-root-wrapper"
+      [class.edit-mode]="isLayoutCustomizing"
+    >
+      <app-raceday-layout-node
+        [node]="layout.root"
+        [parentComponent]="this"
+        [isCustomizing]="isLayoutCustomizing"
+      ></app-raceday-layout-node>
     </div>
 
-    @if (heat && race && track) {
-      <!-- Mid Panels Section -->
-      <div class="mid-section">
-        <!-- Branding Panel -->
-        <div class="panel-card branding-panel">
-          <div class="logo-text">
-            Race Coordinator <span class="logo-highlight">AI</span>
-          </div>
-          <a
-            href="https://github.com/daufderheide/racecoordinator_ai/tree/main"
-            target="_blank"
-            class="branding-tagline"
-          >
-            {{ "RD_TAGLINE" | translate }}
-          </a>
-          @if (qrCodeUrl) {
-            <div class="branding-qr" title="Scan to connect mobile devices">
-              <img [src]="qrCodeUrl" alt="QR Code" />
+    <!-- Layout Customizer Floating Panel -->
+    @if (isLayoutCustomizing) {
+      <div class="layout-customizer-toolbox">
+        <div class="toolbox-title">Layout Editor</div>
+        <div class="toolbox-subtitle">Drag components to dock indicators</div>
+
+        <div class="toolbox-widget-list">
+          @for (widget of getUnusedWidgets(); track widget) {
+            <div
+              class="toolbox-widget-item"
+              draggable="true"
+              (dragstart)="onToolboxDragStart($event, widget)"
+              title="Drag onto another widget's docking guide to dock"
+            >
+              <span class="material-icons toolbox-widget-icon">extension</span>
+              <span class="toolbox-widget-label">{{ widget }}</span>
+            </div>
+          }
+          @if (getUnusedWidgets().length === 0) {
+            <div class="toolbox-empty-msg">
+              All components are currently docked.
             </div>
           }
         </div>
-        <!-- Flag Panel -->
-        <div class="panel-card flag-panel">
-          <img [src]="getCurrentFlagUrl()" class="flag-image" alt="Race Flag" />
-        </div>
-        <!-- Timer Panel -->
-        <div class="panel-card timer-panel">
-          <div class="timer-wrapper">
-            <div class="timer-text">{{ formattedTime }}</div>
-            <div class="timer-status-labels">
-              @if (autoStatusLabel && !showCountdownOverlay) {
-                <div class="status-label">
-                  {{ autoStatusLabel | translate }}
-                </div>
-              }
-              @if (isWarmup) {
-                <div class="warmup-label">
-                  {{ "RD_WARMUP" | translate }}
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-        <!-- Record Panel -->
-        <div class="panel-card record-panel">
-          <div class="record-header">
-            {{ "RD_RECORD_RACE_LAP" | translate }}
-          </div>
-          <div
-            class="record-row"
-            style="background: #222; margin-top: 2px; padding: 0 10px"
+
+        <div class="toolbox-buttons">
+          <button class="toolbox-btn save-btn" (click)="saveLayout()">
+            Save Layout
+          </button>
+          <button
+            class="toolbox-btn cancel-btn"
+            (click)="cancelLayoutCustomize()"
           >
-            <span class="record-val">{{ raceRecordLapNickname || "---" }}</span>
-            <span class="record-val">{{
-              raceRecordLapTime > 0 && raceRecordLapTime < 1000000
-                ? (raceRecordLapTime | number: "1.3-3")
-                : "--.---"
-            }}</span>
-          </div>
-          <div
-            class="record-header"
-            style="margin-top: 5px; background: transparent"
+            Cancel
+          </button>
+          <button
+            class="toolbox-btn reset-btn"
+            (click)="resetLayoutToDefaults()"
           >
-            {{ "RD_RECORD_RACE_SCORE" | translate }}
-          </div>
-          <div class="record-row" style="padding: 0 10px">
-            <span class="record-val">{{
-              raceRecordScoreNickname || "---"
-            }}</span>
-            <span class="record-val">{{
-              raceRecordScore > 0 ? (raceRecordScore | number: "1.3-3") : "--"
-            }}</span>
-          </div>
-          <div class="record-header" style="margin-top: 5px; background: #222">
-            {{ "RD_RECORD_CURRENT_RACE_BEST" | translate }}
-          </div>
-          <div class="record-row" style="background: #222; padding: 0 10px">
-            <span class="record-val">{{
-              currentRaceBestNickname || "---"
-            }}</span>
-            <span class="record-val">{{
-              currentRaceBestTime > 0 && currentRaceBestTime < 1000000
-                ? (currentRaceBestTime | number: "1.3-3")
-                : "--.---"
-            }}</span>
-          </div>
-          <div
-            class="record-header"
-            style="margin-top: 5px; background: transparent"
-          >
-            {{ "RD_RECORD_HEAT_BEST" | translate }}
-          </div>
-          <div class="record-row" style="padding: 0 10px">
-            <span class="record-val">{{ heatBestNickname || "---" }}</span>
-            <span class="record-val">{{
-              heatBestTime > 0 && heatBestTime < 1000000
-                ? (heatBestTime | number: "1.3-3")
-                : "--.---"
-            }}</span>
-          </div>
-        </div>
-        <!-- Leaderboard Panel -->
-        <div class="panel-card leaderboard-panel">
-          <div class="leaderboard-title">Leader Board</div>
-          <div class="leaderboard-list">
-            <div
-              class="leaderboard-scroll-content"
-              [style.height.px]="leaderboardEntries.length * 24"
-            >
-              @for (
-                entry of leaderboardEntries;
-                track trackByLeaderboardEntry($index, entry);
-                let i = $index
-              ) {
-                <div
-                  class="leaderboard-item"
-                  [class.leaderboard-item-odd]="
-                    getLeaderboardPosition(entry) % 2 === 1
-                  "
-                  [style.transform]="
-                    'translateY(' + getLeaderboardPosition(entry) * 24 + 'px)'
-                  "
-                >
-                  <span
-                    [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                    [class.leader-white]="getLeaderboardPosition(entry) > 0"
-                  >
-                    {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
-                  </span>
-                  <span
-                    [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                    [class.leader-white]="getLeaderboardPosition(entry) > 0"
-                  >
-                    {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
-                  </span>
-                </div>
-              }
-            </div>
-          </div>
+            Reset Defaults
+          </button>
         </div>
       </div>
-      <!-- Bottom Position Table -->
-      @if (columns && columns.length > 0) {
-        <div class="bottom-section">
-          <!-- Header -->
-          <div
-            class="table-header-row"
-            [style.grid-template-columns]="gridTemplateColumns"
-          >
-            @for (col of columns; track trackByColumn($index, col)) {
-              <div class="header-cell">
-                {{ getColumnLabel(col) }}
-              </div>
-            }
-          </div>
-          <!-- Body (Dynamic rows) -->
-          <div
-            class="table-body"
-            cdkDropList
-            [cdkDropListData]="sortedHeatDrivers"
-            (cdkDropListDropped)="onDrop($event)"
-            [cdkDropListDisabled]="!canSwapLanes"
-          >
-            @for (
-              hd of sortedHeatDrivers;
-              track trackByDriverId($index, hd);
-              let i = $index
-            ) {
-              <div
-                class="table-row"
-                [class.unconfigured-lane]="
-                  !getLaneColor(hd, 'background_color')
-                "
-                cdkDrag
-                [cdkDragData]="hd"
-                [cdkDragDisabled]="!canSwapLanes || !isLaneOccupied(hd)"
-                [cdkDragPreviewContainer]="'parent'"
-                (cdkDragStarted)="onDragStarted(hd.laneIndex)"
-                (cdkDragEnded)="onDragEnded()"
-                [class.highlight]="highlightedDrivers.has(hd.objectId)"
-                [class.drag-over]="draggingLane === hd.laneIndex"
-                (mouseenter)="onDragOver(hd.laneIndex)"
-                [style.grid-template-columns]="gridTemplateColumns"
-                [style.height.px]="getRowHeight()"
-                [style.z-index]="
-                  isDragging ? 1000 : 100 - getDriverVisualPosition(hd)
-                "
-                [style.top.px]="
-                  getDriverVisualPosition(hd) * (getRowHeight() + 2)
-                "
-                [style.transform]="
-                  highlightedDrivers.has(hd.objectId)
-                    ? 'scale(1.015)'
-                    : 'scale(1)'
-                "
-              >
-                @for (col of columns; track trackByColumn($index, col)) {
-                  <div
-                    class="body-cell"
-                    [style.background]="getLaneColor(hd, 'background_color')"
-                    [style.border-left-color]="
-                      getLaneColor(hd, 'foreground_color')
-                    "
-                    [style.border-right-color]="
-                      getLaneColor(hd, 'foreground_color')
-                    "
-                    (click)="onCellClick(hd, col, $event)"
-                  >
-                    @if (hd.isLastLapDrift && isLapTimeColumn(col)) {
-                      <div
-                        class="drift-indicator"
-                        data-testid="drift-badge"
-                        [style.background-color]="
-                          getLaneColor(hd, 'foreground_color')
-                        "
-                        [style.color]="getLaneColor(hd, 'background_color')"
-                      >
-                        {{ "RD_DRIFT_LAP" | translate }}
-                      </div>
-                    }
-                    @for (
-                      entry of getLayoutEntries(col);
-                      track trackByLayout($index, entry)
-                    ) {
-                      <!-- Text Content -->
-                      @if (!isImageProperty(entry.property)) {
-                        <div
-                          [class]="getAnchorClass(entry.anchor)"
-                          [style.color]="getLaneColor(hd, 'foreground_color')"
-                        >
-                          <!-- Team Driver Pulldown -->
-                          @if (isNameProperty(entry.property) && isTeam(hd)) {
-                            <div
-                              style="
-                                position: relative;
-                                width: 100%;
-                                height: 100%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                              "
-                            >
-                              <span
-                                class="teammate-display-name"
-                                [style.color]="
-                                  getLaneColor(hd, 'foreground_color')
-                                "
-                                [style.padding-right]="
-                                  (authService.currentRole$ | async) ===
-                                  Role.VIEWER
-                                    ? '0px'
-                                    : '30px'
-                                "
-                              >
-                                {{
-                                  entry.property === "driver.nickname"
-                                    ? hd.actualDriver?.nickname ||
-                                      hd.actualDriver?.name ||
-                                      hd.driver.nickname ||
-                                      hd.driver.name
-                                    : hd.actualDriver?.name || hd.driver.name
-                                }}
-                              </span>
-                              @if (
-                                (authService.currentRole$ | async) !==
-                                Role.VIEWER
-                              ) {
-                                <select
-                                  class="teammate-select"
-                                  [style.background-image]="
-                                    getDropdownArrowBg(hd)
-                                  "
-                                  [disabled]="isDriverSwapDisabled(hd)"
-                                  (change)="onTeammateChange(hd, $event)"
-                                >
-                                  @for (tm of getTeammates(hd); track tm) {
-                                    <option
-                                      [value]="
-                                        $any(tm).entity_id || $any(tm).id
-                                      "
-                                      [selected]="
-                                        ($any(tm).entity_id || $any(tm).id) ===
-                                        (hd.actualDriver?.entity_id ||
-                                          $any(hd.driver).entity_id)
-                                      "
-                                    >
-                                      {{
-                                        entry.property === "driver.nickname"
-                                          ? $any(tm).nickname || $any(tm).name
-                                          : $any(tm).name
-                                      }}
-                                      {{
-                                        getDriverStats(
-                                          hd,
-                                          $any(tm).entity_id || $any(tm).id
-                                        )
-                                      }}
-                                    </option>
-                                  }
-                                </select>
-                              }
-                            </div>
-                          }
-                          <!-- Drag Handle -->
-                          @if (
-                            canSwapLanes &&
-                            isNameProperty(entry.property) &&
-                            isLaneOccupied(hd)
-                          ) {
-                            <div
-                              class="drag-handle"
-                              cdkDragHandle
-                              [style.color]="
-                                getLaneColor(hd, 'foreground_color')
-                              "
-                            >
-                              <span class="material-icons">drag_indicator</span>
-                            </div>
-                          }
-                          <!-- Static Text for Individuals or non-name properties -->
-                          @if (!isNameProperty(entry.property) || !isTeam(hd)) {
-                            <span>
-                              {{ formatColumnValue(hd, col, entry.property) }}
-                            </span>
-                          }
-                        </div>
-                      }
-                      <!-- Image Content -->
-                      @if (isImageProperty(entry.property)) {
-                        <div [class]="getAnchorClass(entry.anchor)">
-                          @let imageUrl =
-                            formatColumnValue(hd, col, entry.property);
-                          @if (imageUrl || !isAvatarProperty(entry.property)) {
-                            <img [src]="imageUrl" alt="" />
-                          }
-                        </div>
-                      }
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
     }
 
     @if (!heat && errorMessage) {
