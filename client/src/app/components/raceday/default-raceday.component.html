@@ -88,6 +88,7 @@
 
   <div
     class="scalable-content"
+    [class.edit-mode]="isLayoutCustomizing"
     [style.width.px]="dashboardWidth"
     [style.min-width.px]="dashboardWidth"
     [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
@@ -139,7 +140,12 @@
       cdkDrag
       [cdkDragScale]="toolboxScale"
     >
-      <div class="toolbox-title" cdkDragHandle style="cursor: move">
+      <div
+        class="toolbox-title"
+        cdkDragHandle
+        style="cursor: move; display: flex; align-items: center; gap: 6px"
+      >
+        <span class="material-icons drag-indicator-icon">drag_indicator</span>
         {{ "UE_LABEL_LAYOUT_EDITOR" | translate }}
       </div>
       <div class="toolbox-subtitle">
@@ -154,6 +160,9 @@
             (dragstart)="onToolboxDragStart($event, widget)"
             [title]="'UE_TITLE_DRAG_WIDGET_DOCK' | translate"
           >
+            <span class="material-icons drag-indicator-icon"
+              >drag_indicator</span
+            >
             <span class="material-icons toolbox-widget-icon">extension</span>
             <span class="toolbox-widget-label">{{ widget }}</span>
           </div>

@@ -1467,10 +1467,23 @@ export class DefaultRacedayComponent
     return this.getColumnX(columnIndex) + this.columns[columnIndex].width / 2;
   }
 
+  getTableBodyHeight(): number {
+    const widget = this.layout?.widgets?.find(
+      (w: any) => w.widgetType === "lane-view",
+    );
+    if (!widget) {
+      return 672; // Default fallback
+    }
+    const editModeOffset = this.isLayoutCustomizing ? 28 : 0;
+    const calculated = widget.height - editModeOffset - 10 - 36;
+    return Math.max(100, calculated);
+  }
+
   getRowHeight(): number {
     const numLanes = this.track?.lanes?.length || 1;
     const totalGaps = (numLanes - 1) * 2;
-    return (668 - totalGaps) / numLanes;
+    const activeHeight = this.getTableBodyHeight();
+    return (activeHeight - totalGaps) / numLanes;
   }
 
   getImageMetrics(colIndex: number) {
@@ -3416,6 +3429,52 @@ export class DefaultRacedayComponent
     const w = this.layout.widgets.find((w: any) => w.id === id);
     if (w) {
       w.zIndex = this.getNextZIndex();
+    }
+  }
+
+  normalizeZIndices() {
+    if (!this.layout?.widgets) return;
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    sorted.forEach((w: any, index: number) => {
+      w.zIndex = 100 + index;
+    });
+  }
+
+  moveWidgetForward(id: string) {
+    if (!this.layout?.widgets) return;
+    this.normalizeZIndices();
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    const idx = sorted.findIndex((w: any) => w.id === id);
+    if (idx !== -1 && idx < sorted.length - 1) {
+      const current = sorted[idx];
+      const next = sorted[idx + 1];
+      const temp = current.zIndex;
+      current.zIndex = next.zIndex;
+      next.zIndex = temp;
+      this.layoutChanged.emit(this.layout);
+      this.cdr.detectChanges();
+    }
+  }
+
+  moveWidgetBackward(id: string) {
+    if (!this.layout?.widgets) return;
+    this.normalizeZIndices();
+    const sorted = [...this.layout.widgets].sort(
+      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
+    );
+    const idx = sorted.findIndex((w: any) => w.id === id);
+    if (idx > 0) {
+      const current = sorted[idx];
+      const prev = sorted[idx - 1];
+      const temp = current.zIndex;
+      current.zIndex = prev.zIndex;
+      prev.zIndex = temp;
+      this.layoutChanged.emit(this.layout);
+      this.cdr.detectChanges();
     }
   }
 

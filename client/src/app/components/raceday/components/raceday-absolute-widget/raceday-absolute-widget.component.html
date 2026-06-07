@@ -6,7 +6,7 @@
   [style.width]="(widget.width / 1920) * 100 + '%'"
   [style.height]="(widget.height / 1080) * 100 + '%'"
   [style.z-index]="
-    widget.widgetType === 'menu-bar' ? 9999 : widget.zIndex || 100
+    widget.widgetType === 'menu-bar' ? 99999 : widget.zIndex || 100
   "
   (pointerdown)="isCustomizing ? bringToFront() : null"
 >
@@ -100,6 +100,24 @@
         <span class="widget-label">{{ widget.widgetType }}</span>
         <span class="material-icons grab-icon">drag_indicator</span>
       </div>
+      @if (widget.widgetType !== "menu-bar") {
+        <div class="widget-zorder-buttons">
+          <button
+            class="widget-zorder-btn"
+            (click)="moveBackward($event)"
+            title="Move backward (draw under)"
+          >
+            <span class="material-icons">arrow_downward</span>
+          </button>
+          <button
+            class="widget-zorder-btn"
+            (click)="moveForward($event)"
+            title="Move forward (draw over)"
+          >
+            <span class="material-icons">arrow_upward</span>
+          </button>
+        </div>
+      }
       <button
         class="widget-remove-btn"
         (click)="removeWidget($event)"

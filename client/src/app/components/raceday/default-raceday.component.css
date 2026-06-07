@@ -40,6 +40,10 @@ app-default-raceday {
   box-sizing: border-box;
 }
 
+.scalable-content.edit-mode {
+  overflow: visible;
+}
+
 /* Top Header Wrapper */
 .top-header-wrapper {
   margin: 0 12px;
@@ -840,7 +844,7 @@ app-acknowledgement-modal, app-confirmation-modal {
 }
 
 /* Layout customizer and root wrapper */
-.raceday-layout-root-wrapper {
+.raceday-absolute-layout-root-wrapper {
   flex: 1;
   width: 100%;
   height: 100%;
@@ -850,11 +854,12 @@ app-acknowledgement-modal, app-confirmation-modal {
   position: relative;
 }
 
-.raceday-layout-root-wrapper.edit-mode {
+.raceday-absolute-layout-root-wrapper.edit-mode {
   padding: 12px;
   background-color: rgba(15, 23, 42, 0.2);
   border: 2px dashed rgba(59, 130, 246, 0.3);
   border-radius: 8px;
+  overflow: visible;
 }
 
 /* Floating customizer toolbox sidebar */
@@ -926,6 +931,13 @@ app-acknowledgement-modal, app-confirmation-modal {
 .toolbox-widget-icon {
   font-size: 16px;
   color: #38bdf8;
+}
+
+.drag-indicator-icon {
+  font-size: 16px;
+  color: #64748b;
+  cursor: grab;
+  user-select: none;
 }
 
 .toolbox-widget-label {
