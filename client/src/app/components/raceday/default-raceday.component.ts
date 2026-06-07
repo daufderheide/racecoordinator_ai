@@ -216,6 +216,33 @@ export class DefaultRacedayComponent
     return "";
   }
 
+  protected get timerColor(): string {
+    if (this.showCountdownOverlay) {
+      return "#00ff00"; // Green
+    }
+    if (this.isWarmup) {
+      return "#00ffff"; // Cyan
+    }
+    if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
+      return "#ffaa00"; // Gold
+    }
+    return "#32cd32"; // LimeGreen
+  }
+
+  protected get timerTextShadow(): string {
+    const color = this.timerColor;
+    if (color === "#00ff00") {
+      return "0 0 28px rgba(0, 255, 0, 0.6)"; // Green
+    }
+    if (color === "#00ffff") {
+      return "0 0 28px rgba(0, 255, 255, 0.6)"; // Cyan
+    }
+    if (color === "#ffaa00") {
+      return "0 0 28px rgba(255, 170, 0, 0.6)"; // Gold
+    }
+    return "0 0 28px rgba(50, 205, 50, 0.6)"; // LimeGreen
+  }
+
   protected get formattedTime(): string {
     const s = this.raceState;
     if (
@@ -589,7 +616,9 @@ export class DefaultRacedayComponent
           this.updateCountdownLamps(this.autoStartRemaining);
         }
 
-        if (time > this.previousTime) {
+        if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
+          this.timeFormat = "1.0-0";
+        } else if (time > this.previousTime) {
           this.timeFormat = "1.0-0";
         } else if (time < this.previousTime) {
           if (time < 10) {
