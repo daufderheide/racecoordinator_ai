@@ -160,7 +160,7 @@ test.describe("Raceday Setup Functional - en", () => {
     const harness = new DefaultRacedaySetupHarnessE2e(container);
 
     await harness.openOptionsMenu();
-    await expect(page.locator(".menu-dropdown")).toBeVisible();
+    await expect(page.locator(".setup-menu-dropdown")).toBeVisible();
 
     await harness.openLocalizationSubMenu();
     await expect(

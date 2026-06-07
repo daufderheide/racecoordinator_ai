@@ -4,16 +4,16 @@ export abstract class DefaultRacedaySetupHarnessBase {
   static readonly selectors = {
     driverItem: ".driver-item",
     driverName: ".driver-name",
-    menuDropdown: ".menu-dropdown",
-    menuDropdownItem: ".menu-dropdown-item",
+    menuDropdown: ".setup-menu-dropdown, .menu-dropdown",
+    menuDropdownItem: ".setup-menu-dropdown-item, .menu-dropdown-item",
     removeAllBtn: '[data-testid="btn-remove-all"]',
     startBtn: ".btn-start",
     raceCard: ".race-card",
     dropdownTrigger: ".dropdown-trigger",
-    optionsMenu: ".options-menu-container .menu-item",
-    fileMenu: ".file-menu-container .menu-item",
-    configMenu: ".config-menu-container .menu-item",
-    helpMenu: ".help-menu-container .menu-item",
+    optionsMenu: ".options-menu-container .setup-menu-item",
+    fileMenu: ".file-menu-container .setup-menu-item",
+    configMenu: ".config-menu-container .setup-menu-item",
+    helpMenu: ".help-menu-container .setup-menu-item",
     driverActionBarBtn: ".header-actions .action-btn",
   };
 

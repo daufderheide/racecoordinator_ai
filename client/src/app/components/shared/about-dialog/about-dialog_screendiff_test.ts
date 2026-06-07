@@ -21,7 +21,7 @@ test.describe("About Dialog", () => {
     await TestSetupHelper.disableAnimations(page);
 
     // 5. Wait for UI to render (waitForLocalization times out here because there is no 'BACK' text)
-    await expect(page.locator(".menu-item").first()).toBeVisible({
+    await expect(page.locator(".setup-menu-item").first()).toBeVisible({
       timeout: 10000,
     });
 
@@ -32,16 +32,16 @@ test.describe("About Dialog", () => {
   test("should open about dialog from help menu", async ({ page }) => {
     // 1. Open Help Menu - The help menu container has a specific class we can target.
     // We use evaluate to click because CSS translate/scale transforms confuse Playwright's mouse click geometry.
-    const helpMenu = page.locator(".help-menu-container .menu-item");
+    const helpMenu = page.locator(".help-menu-container .setup-menu-item");
     await expect(helpMenu).toBeVisible();
     await helpMenu.dispatchEvent("click");
 
     // 2. Click About - Wait for dropdown to ensure it's open
-    const dropdown = page.locator(".help-menu-container .menu-dropdown");
+    const dropdown = page.locator(".help-menu-container .setup-menu-dropdown");
     await expect(dropdown).toBeVisible();
 
     // The About menu item is the last item in the dropdown
-    const aboutItem = dropdown.locator(".menu-dropdown-item").last();
+    const aboutItem = dropdown.locator(".setup-menu-dropdown-item").last();
     await expect(aboutItem).toBeVisible();
     await aboutItem.dispatchEvent("click");
 

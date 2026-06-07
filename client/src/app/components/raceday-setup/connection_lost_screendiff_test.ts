@@ -49,7 +49,7 @@ test.describe("Connection Loss Visuals", () => {
 
     expect(await harness.isSplashScreenVisible()).toBe(false);
 
-    await expect(page.locator(".menu-bar")).toBeVisible();
+    await expect(page.locator(".setup-menu-bar")).toBeVisible();
 
     connectionSucceeds = false;
 
