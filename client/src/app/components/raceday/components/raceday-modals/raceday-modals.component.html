@@ -1,0 +1,63 @@
+<app-acknowledgement-modal
+  [visible]="showAckModal"
+  [title]="ackModalTitle"
+  [message]="ackModalMessage"
+  [buttonText]="ackModalButtonText"
+  (acknowledge)="acknowledge.emit()"
+>
+</app-acknowledgement-modal>
+
+<app-confirmation-modal
+  [visible]="showExitConfirmation"
+  [title]="exitModalTitle"
+  [message]="exitModalMessage"
+  [confirmText]="exitConfirmText"
+  [cancelText]="exitCancelText"
+  (confirm)="exitConfirm.emit()"
+  (cancel)="exitCancel.emit()"
+>
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showSkipHeatConfirmation"
+  [title]="skipHeatModalTitle"
+  [message]="skipHeatModalMessage"
+  [confirmText]="skipHeatConfirmText"
+  [cancelText]="skipHeatCancelText"
+  (confirm)="skipHeatConfirm.emit()"
+  (cancel)="skipHeatCancel.emit()"
+>
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showSkipRaceConfirmation"
+  [title]="skipRaceModalTitle"
+  [message]="skipRaceModalMessage"
+  [confirmText]="skipRaceConfirmText"
+  [cancelText]="skipRaceCancelText"
+  (confirm)="skipRaceConfirm.emit()"
+  (cancel)="skipRaceCancel.emit()"
+>
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showRestartHeatConfirmation"
+  [title]="restartHeatModalTitle"
+  [message]="restartHeatModalMessage"
+  [confirmText]="restartHeatConfirmText"
+  [cancelText]="restartHeatCancelText"
+  (confirm)="restartHeatConfirm.emit()"
+  (cancel)="restartHeatCancel.emit()"
+>
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showDeferHeatConfirmation"
+  [title]="deferHeatModalTitle"
+  [message]="deferHeatModalMessage"
+  [confirmText]="deferHeatConfirmText"
+  [cancelText]="deferHeatCancelText"
+  (confirm)="deferHeatConfirm.emit()"
+  (cancel)="deferHeatCancel.emit()"
+>
+</app-confirmation-modal>
