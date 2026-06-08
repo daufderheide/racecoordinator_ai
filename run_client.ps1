@@ -8,9 +8,14 @@ if (Test-Path "$NodePath\npm.cmd") {
     $env:Path = "$NodePath;" + $env:Path
 }
 
-if (-not (Test-Path "node_modules")) {
-    Write-Host "First time setup: Installing dependencies..." -ForegroundColor Yellow
+$DependenciesMissing = -not (Test-Path "node_modules")
+$PackageJsonChanged = (Test-Path "node_modules") -and ((Get-Item "package.json").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime)
+$PackageLockChanged = (Test-Path "node_modules") -and ((Get-Item "package-lock.json").LastWriteTime -gt (Get-Item "node_modules").LastWriteTime)
+
+if ($DependenciesMissing -or $PackageJsonChanged -or $PackageLockChanged) {
+    Write-Host "Installing/updating dependencies..." -ForegroundColor Yellow
     npm install
+    (Get-Item "node_modules").LastWriteTime = Get-Date
 }
 
 Write-Host "Generating Protos..." -ForegroundColor Cyan

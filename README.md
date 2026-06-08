@@ -7,7 +7,7 @@ RaceCoordinator 2.0 built with google antigravity
 
 #### First Time Setup
 The `run_server_headless.sh` script handles dependency downloading (including `protoc`) automatically.
-The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing.
+The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing or the client dependency manifest changed.
 
 - Check permissions: `chmod +x run_server_headless.sh run_client.sh`
 - Run Server: `./run_server_headless.sh`
@@ -19,7 +19,7 @@ The `run_client.sh` script handles `npm install` automatically if `node_modules`
 
 #### First Time Setup
 The `run_server_headless.ps1` script handles dependency downloading (including `protoc`) automatically.
-The `run_client.ps1` script handles `npm install` automatically if `node_modules` is missing.
+The `run_client.ps1` script handles `npm install` automatically if `node_modules` is missing or the client dependency manifest changed.
 
 - Run Server: `.\run_server_headless.ps1`
 - Run Client: `.\run_client.ps1` (will take a moment to install dependencies first time)
