@@ -32,6 +32,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 @Component({
   standalone: true,
@@ -489,7 +490,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
 
   get availableDrivers(): Driver[] {
     if (!this.allDrivers) return [];
-    return this.allDrivers.filter((d) => !this.isDriverInTeam(d));
+    return this.allDrivers
+      .filter((d) => !this.isDriverInTeam(d))
+      .sort((a, b) => naturalSortCompare(a.name, b.name));
   }
 
   isDriverInTeam(driver: Driver): boolean {
