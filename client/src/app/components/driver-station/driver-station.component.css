@@ -18,6 +18,7 @@
   padding: 15px;
   box-sizing: border-box;
   transition: background-color 0.3s, color 0.3s;
+  overflow: visible;
 }
 
 /* If fuel race, use 3 columns */
@@ -68,6 +69,7 @@
 .data-column {
   grid-column: 2;
   display: contents; /* Let rows participate in grid directly */
+  overflow: visible;
 }
 
 .data-row {
@@ -75,12 +77,13 @@
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: 10px 15px;
+  padding: 5px 8px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   border: 2px solid rgba(0,0,0,0.1);
   container-type: inline-size;
   container-name: data-row;
+  overflow: visible;
 }
 
 .data-row .label {
@@ -111,12 +114,39 @@
   font-size: clamp(2.5rem, 25cqw, 3.6rem);
   max-width: 100%;
   display: block;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   line-height: 1;
+}
+
+/* Override for driver station to allow unlimited wrapping */
+.driver-row .value.nickname-value {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  font-size: 3.6rem;
+  word-break: normal;
+  overflow-wrap: normal;
+  max-width: 100%;
+  line-height: 1.2;
+  padding-bottom: 0.2rem;
+}
+
+/* Scale down based on viewport width for more reliable scaling */
+@media (max-width: 900px) {
+  .driver-row .value.nickname-value {
+    font-size: 3.3rem;
+  }
+}
+
+@media (max-width: 650px) {
+  .driver-row .value.nickname-value {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 550px) {
+  .driver-row .value.nickname-value {
+    font-size: 2rem;
+  }
 }
 
 /* Other values - scale to fit */
@@ -133,6 +163,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow: visible;
 }
 
 .team-name {
@@ -142,6 +173,56 @@
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: -2px;
+}
+
+/* Driver row with 2 columns */
+.driver-row {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+}
+
+.driver-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.driver-col:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+  container-type: inline-size;
+  container-name: driver-col;
+}
+
+.driver-col .label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.driver-col .value {
+  font-size: 3.6rem;
+  font-weight: bold;
+}
+
+/* Align second column (lane info) to the right */
+.driver-col:last-child {
+  align-items: flex-end;
+  text-align: right;
+  flex: 0 0 30px;
+}
+
+/* Make lane label and value scale to fit small space */
+.driver-col:last-child .label {
+  font-size: clamp(0.4rem, 2cqw, 0.9rem);
+}
+
+.driver-col:last-child .value {
+  font-size: clamp(1rem, 8cqw, 3.6rem);
+  line-height: 1.2;
+  padding-bottom: 0.2rem;
 }
 
 /* Rank row with 2 columns */

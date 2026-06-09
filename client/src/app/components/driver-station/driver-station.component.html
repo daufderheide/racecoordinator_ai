@@ -25,19 +25,25 @@
 
   <!-- Column 2: Data Rows -->
   <div class="column data-column" [class.span-all]="!isFuelRace">
-    <div class="data-row">
-      <span class="label shrink-value">{{
-        "RD_COL_NICKNAME" | translate
-      }}</span>
-      <div class="nickname-container">
-        <span class="value nickname-value">{{
-          driverData?.driver?.nickname
+    <div class="data-row driver-row">
+      <div class="driver-col">
+        <span class="label shrink-value">{{
+          "RD_COL_NICKNAME" | translate
         }}</span>
-        @if (driverData?.participant?.team) {
-          <span class="team-name">{{
-            driverData?.participant?.team?.name
+        <div class="nickname-container">
+          <span class="value nickname-value">{{
+            driverData?.driver?.nickname
           }}</span>
-        }
+          @if (driverData?.participant?.team) {
+            <span class="team-name">{{
+              driverData?.participant?.team?.name
+            }}</span>
+          }
+        </div>
+      </div>
+      <div class="driver-col">
+        <span class="label shrink-value">{{ "RD_COL_LANE" | translate }}</span>
+        <span class="value shrink-value">{{ laneIndex + 1 }}</span>
       </div>
     </div>
     <div class="data-row rank-row">
