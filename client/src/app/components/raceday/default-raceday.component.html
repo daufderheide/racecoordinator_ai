@@ -318,10 +318,10 @@
             <span class="value-text">{{ race.name }}</span>
           </div>
           <div class="info-section">
-            <span class="value-text">
+            <span class="value-text heat-text">
               Heat {{ heat.heatNumber }} of {{ totalHeats }}
               @if (race.group_options && race.group_options.enabled) {
-                - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+                - <span class="group-label">{{ "RE_GROUPS_LABEL" | translate }}</span>{{ heat.group + 1 }}
               }
             </span>
           </div>
@@ -359,9 +359,15 @@
           <img [src]="getCurrentFlagUrl()" class="flag-image" alt="Race Flag" />
         </div>
         <!-- Timer Panel -->
-        <div class="panel-card timer-panel">
+        <div
+          class="panel-card timer-panel"
+          [class.timer-panel-warmup]="isWarmup"
+          [class.timer-panel-auto]="autoStatusLabel && !showCountdownOverlay"
+        >
           <div class="timer-wrapper">
-            <div class="timer-text">{{ formattedTime }}</div>
+            <div class="timer-main">
+              <div class="timer-text">{{ formattedTime }}</div>
+            </div>
             <div class="timer-status-labels">
               @if (autoStatusLabel && !showCountdownOverlay) {
                 <div class="status-label">
