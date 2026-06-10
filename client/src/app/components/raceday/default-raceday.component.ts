@@ -2952,6 +2952,8 @@ export class DefaultRacedayComponent
       "records",
       "leaderboard",
       "lane-view",
+      "on-deck",
+      "next-heat",
     ];
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes.filter((t) => !used.has(t));
@@ -2979,13 +2981,17 @@ export class DefaultRacedayComponent
     let x = (event.clientX - rect.left) / scale;
     let y = (event.clientY - rect.top) / scale;
 
+    const isLeaderboardOrDeck =
+      this.draggedWidgetType === "leaderboard" ||
+      this.draggedWidgetType === "on-deck" ||
+      this.draggedWidgetType === "next-heat";
     const newWidget: any = {
       id: "widget-" + Date.now(),
       widgetType: this.draggedWidgetType as any,
       x: Math.round(x),
       y: Math.round(y),
-      width: 400,
-      height: 300,
+      width: isLeaderboardOrDeck ? 384 : 400,
+      height: this.draggedWidgetType === "leaderboard" ? 239 : 300,
       zIndex: this.getNextZIndex(),
     };
 

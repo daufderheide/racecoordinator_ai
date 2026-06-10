@@ -1,0 +1,22 @@
+<div class="panel-card next-heat-panel">
+  <div class="next-heat-title">{{ "RD_WIN_NEXT_HEAT" | translate }}</div>
+  <div class="next-heat-list">
+    @for (hd of nextHeatDrivers; track trackByDriver($index, hd)) {
+      <div class="next-heat-item">
+        <span class="driver-nickname">{{
+          hd.driver.nickname || hd.driver.name
+        }}</span>
+        <span
+          class="lane-badge"
+          [style.background-color]="getLaneBackgroundColor(hd.laneIndex)"
+          [style.color]="getLaneForegroundColor(hd.laneIndex)"
+          [style.border-color]="getLaneForegroundColor(hd.laneIndex)"
+        >
+          L{{ hd.laneIndex + 1 }}
+        </span>
+      </div>
+    } @empty {
+      <div class="next-heat-empty">{{ "GEN_NA" | translate }}</div>
+    }
+  </div>
+</div>

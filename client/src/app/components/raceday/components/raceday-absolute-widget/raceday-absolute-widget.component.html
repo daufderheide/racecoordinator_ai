@@ -87,6 +87,20 @@
           [parent]="parentComponent"
         ></app-raceday-lane-view>
       }
+      @case ("on-deck") {
+        <app-raceday-on-deck
+          [track]="parentComponent.track"
+          [currentHeat]="parentComponent.heat"
+          [heats]="parentComponent.heats"
+        ></app-raceday-on-deck>
+      }
+      @case ("next-heat") {
+        <app-raceday-next-heat
+          [track]="parentComponent.track"
+          [currentHeat]="parentComponent.heat"
+          [heats]="parentComponent.heats"
+        ></app-raceday-next-heat>
+      }
     }
   </div>
 

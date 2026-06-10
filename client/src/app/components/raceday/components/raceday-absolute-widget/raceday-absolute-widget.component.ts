@@ -14,6 +14,8 @@ import { RacedayInfoBarComponent } from "../raceday-info-bar/raceday-info-bar.co
 import { RacedayLaneViewComponent } from "../raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "../raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "../raceday-menu-bar/raceday-menu-bar.component";
+import { RacedayNextHeatComponent } from "../raceday-next-heat/raceday-next-heat.component";
+import { RacedayOnDeckComponent } from "../raceday-on-deck/raceday-on-deck.component";
 import { RacedayRecordsComponent } from "../raceday-records/raceday-records.component";
 import { RacedayTimerComponent } from "../raceday-timer/raceday-timer.component";
 
@@ -34,6 +36,8 @@ import { RacedayTimerComponent } from "../raceday-timer/raceday-timer.component"
     RacedayRecordsComponent,
     RacedayLeaderboardComponent,
     RacedayLaneViewComponent,
+    RacedayOnDeckComponent,
+    RacedayNextHeatComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent {

@@ -15,7 +15,9 @@ export type WidgetType =
   | "timer"
   | "records"
   | "leaderboard"
-  | "lane-view";
+  | "lane-view"
+  | "on-deck"
+  | "next-heat";
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page
