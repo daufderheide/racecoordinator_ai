@@ -56,7 +56,7 @@ describe("RacedayInfoBarComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getRaceName()).toBe("Mock GP");
-    expect((await harness.getHeatStatus()).trim()).toBe("Heat 2 of 5");
+    expect((await harness.getHeatStatus()).trim()).toBe("2 of 5");
     expect(await harness.getTrackName()).toBe("Mock Track");
   });
 

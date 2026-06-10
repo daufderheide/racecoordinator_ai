@@ -108,7 +108,6 @@ describe("DefaultRacedayComponent", () => {
   let raceTimeSubject: Subject<IRaceTime>;
   let lapsSubject: Subject<ILap>;
   let standingsUpdateSubject: Subject<IStandingsUpdate>;
-  let _originalAudio: any;
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
@@ -1422,6 +1421,8 @@ describe("DefaultRacedayComponent", () => {
       expect(component["leaderboardEntries"][0].isTime).toBeTrue();
     });
 
+    // TODO(aufderheide): Move some of these tests out of here and into the widget tests.
+    // TODO(aufderheide): Use a harness rather than the selector directly.
     it("should update transform when ranks change (animation check)", () => {
       // Initial state:
       // Index 0: D1 (Rank 2) -> translateY(24px)
