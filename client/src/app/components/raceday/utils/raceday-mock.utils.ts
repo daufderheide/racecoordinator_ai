@@ -32,7 +32,7 @@ export function createMockEditorData(): MockEditorData {
   } as unknown as Race;
 
   const track = createMockTrack();
-  const participants = createMockRaceParticipant();
+  const participants = createMockRaceParticipants();
 
   const heatDrivers = participants.map((p: any, index) => {
     const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane);
@@ -77,7 +77,7 @@ function createMockTrack(): Track {
   } as unknown as Track;
 }
 
-function createMockRaceParticipant(): RaceParticipant[] {
+function createMockRaceParticipants(): RaceParticipant[] {
   return [
     {
       id: "p1",
