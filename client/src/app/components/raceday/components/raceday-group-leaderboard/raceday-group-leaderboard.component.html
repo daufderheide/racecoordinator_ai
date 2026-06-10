@@ -2,22 +2,24 @@
   <div class="leaderboard-title">
     {{ "RD_WIN_GROUP_LEADER_BOARD" | translate }}
   </div>
-  <div class="leaderboard-subtitle" *ngIf="groupEnabled && groupNumber >= 0">
-    {{ "DR_LABEL_GROUP" | translate: { group: groupNumber + 1 } }}
-  </div>
+  @if (groupEnabled() && groupNumber() >= 0) {
+    <div class="leaderboard-subtitle">
+      {{ "DR_LABEL_GROUP" | translate: { group: groupNumber() + 1 } }}
+    </div>
+  }
 
   <div class="leaderboard-list">
-    @if (!groupEnabled) {
+    @if (!groupEnabled()) {
       <div class="leaderboard-empty-message">
         {{ "RD_NO_GROUP_STANDINGS" | translate }}
       </div>
     } @else {
       <div
         class="leaderboard-scroll-content"
-        [style.height.px]="leaderboardEntries.length * 24"
+        [style.height.px]="leaderboardEntries().length * 24"
       >
         @for (
-          entry of leaderboardEntries;
+          entry of leaderboardEntries();
           track trackByLeaderboardEntry($index, entry);
           let idx = $index
         ) {

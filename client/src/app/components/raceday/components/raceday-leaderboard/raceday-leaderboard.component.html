@@ -3,10 +3,10 @@
   <div class="leaderboard-list">
     <div
       class="leaderboard-scroll-content"
-      [style.height.px]="leaderboardEntries.length * 24"
+      [style.height.px]="leaderboardEntries().length * 24"
     >
       @for (
-        entry of leaderboardEntries;
+        entry of leaderboardEntries();
         track trackByLeaderboardEntry($index, entry);
         let i = $index
       ) {

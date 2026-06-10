@@ -45,7 +45,7 @@ describe("RacedayGroupLeaderboardComponent", () => {
   });
 
   it("should show empty message when group stands are not enabled", async () => {
-    component.groupEnabled = false;
+    fixture.componentRef.setInput("groupEnabled", false);
     fixture.detectChanges();
 
     expect(await harness.getTitle()).toBe("RD_WIN_GROUP_LEADER_BOARD");
@@ -55,12 +55,13 @@ describe("RacedayGroupLeaderboardComponent", () => {
   });
 
   it("should render group standings when enabled", async () => {
-    component.groupEnabled = true;
-    component.groupNumber = 1;
-    component.leaderboardEntries = [
+    fixture.componentRef.setInput("groupEnabled", true);
+    fixture.componentRef.setInput("groupNumber", 1);
+    const entries = [
       { entityId: "e1", rank: 2, name: "Alice", score: 10, isTime: false },
       { entityId: "e2", rank: 1, name: "Bob", score: 12.3456, isTime: true },
     ];
+    fixture.componentRef.setInput("leaderboardEntries", entries);
     fixture.detectChanges();
 
     expect(await harness.getTitle()).toBe("RD_WIN_GROUP_LEADER_BOARD");
@@ -73,10 +74,10 @@ describe("RacedayGroupLeaderboardComponent", () => {
     // The visual position of Alice (e1, rank 2) is 1. Alice is at index 0 in leaderboardEntries input, but rank 2.
     // Wait, getLeaderboardPosition(Bob) should return 0, getLeaderboardPosition(Alice) should return 1.
     expect(
-      component.getLeaderboardPosition(component.leaderboardEntries[1]),
+      component.getLeaderboardPosition(component.leaderboardEntries()[1]),
     ).toBe(0); // Bob
     expect(
-      component.getLeaderboardPosition(component.leaderboardEntries[0]),
+      component.getLeaderboardPosition(component.leaderboardEntries()[0]),
     ).toBe(1); // Alice
 
     const detailBob = await harness.getEntryDetail(1); // Bob is index 1 in the loop

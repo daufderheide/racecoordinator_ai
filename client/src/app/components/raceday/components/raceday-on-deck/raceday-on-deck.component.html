@@ -1,7 +1,7 @@
 <div class="panel-card on-deck-panel">
   <div class="on-deck-title">{{ "RD_WIN_ON_DECK" | translate }}</div>
   <div class="on-deck-list">
-    @for (hd of onDeckDrivers; track trackByDriver($index, hd)) {
+    @for (hd of onDeckDrivers(); track trackByDriver($index, hd)) {
       <div class="on-deck-item">
         <span class="driver-nickname">{{
           hd.driver.nickname || hd.driver.name

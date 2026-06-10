@@ -55,17 +55,17 @@ describe("RacedayRecordsComponent", () => {
   });
 
   it("should display record values and format time using decimal pipe when inputs are provided", async () => {
-    component.raceRecordLapNickname = "Alice";
-    component.raceRecordLapTime = 9.8765;
+    fixture.componentRef.setInput("raceRecordLapNickname", "Alice");
+    fixture.componentRef.setInput("raceRecordLapTime", 9.8765);
 
-    component.raceRecordScoreNickname = "Bob";
-    component.raceRecordScore = 12.3;
+    fixture.componentRef.setInput("raceRecordScoreNickname", "Bob");
+    fixture.componentRef.setInput("raceRecordScore", 12.3);
 
-    component.currentRaceBestNickname = "Charlie";
-    component.currentRaceBestTime = 10.45;
+    fixture.componentRef.setInput("currentRaceBestNickname", "Charlie");
+    fixture.componentRef.setInput("currentRaceBestTime", 10.45);
 
-    component.heatBestNickname = "Dave";
-    component.heatBestTime = 11.2345;
+    fixture.componentRef.setInput("heatBestNickname", "Dave");
+    fixture.componentRef.setInput("heatBestTime", 11.2345);
 
     fixture.detectChanges();
 

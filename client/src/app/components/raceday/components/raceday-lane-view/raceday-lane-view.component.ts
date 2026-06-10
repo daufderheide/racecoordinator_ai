@@ -1,6 +1,6 @@
 import { CdkDrag, CdkDragHandle, CdkDropList } from "@angular/cdk/drag-drop";
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -12,5 +12,5 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [CommonModule, CdkDropList, CdkDrag, CdkDragHandle, TranslatePipe],
 })
 export class RacedayLaneViewComponent {
-  @Input() parent: any;
+  parent = input<any>(undefined);
 }

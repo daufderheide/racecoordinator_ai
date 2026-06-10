@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -11,8 +11,8 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayTimerComponent {
-  @Input() formattedTime = "";
-  @Input() autoStatusLabel = "";
-  @Input() isWarmup = false;
-  @Input() showCountdownOverlay = false;
+  formattedTime = input<string>("");
+  autoStatusLabel = input<string>("");
+  isWarmup = input<boolean>(false);
+  showCountdownOverlay = input<boolean>(false);
 }

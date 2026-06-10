@@ -46,9 +46,9 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
     fixture = TestBed.createComponent(RacedayAbsoluteWidgetComponent);
     component = fixture.componentInstance;
-    component.widget = mockWidget;
-    component.parentComponent = mockParent;
-    component.isCustomizing = true;
+    fixture.componentRef.setInput("widget", mockWidget);
+    fixture.componentRef.setInput("parentComponent", mockParent);
+    fixture.componentRef.setInput("isCustomizing", true);
     harness = await TestbedHarnessEnvironment.harnessForFixture(
       fixture,
       RacedayAbsoluteWidgetHarness,

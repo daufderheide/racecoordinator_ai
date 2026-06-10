@@ -1,21 +1,21 @@
-@if (heat && race && track) {
+@if (heat() && race() && track()) {
   <div class="top-info-bar">
     <div class="info-section">
       <span class="label-text">Race:</span>
-      <span class="value-text">{{ race.name }}</span>
+      <span class="value-text">{{ race()!.name }}</span>
     </div>
     <div class="info-section">
       <span class="label-text">Heat:</span>
       <span class="value-text">
-        {{ heat.heatNumber }} of {{ totalHeats }}
-        @if (race.group_options && race.group_options.enabled) {
-          - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+        {{ heat()!.heatNumber }} of {{ totalHeats() }}
+        @if (race()!.group_options && race()!.group_options.enabled) {
+          - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat()!.group + 1 }}
         }
       </span>
     </div>
     <div class="info-section">
       <span class="label-text">Track:</span>
-      <span class="value-text track-text">{{ track.name }}</span>
+      <span class="value-text track-text">{{ track()!.name }}</span>
     </div>
   </div>
 }

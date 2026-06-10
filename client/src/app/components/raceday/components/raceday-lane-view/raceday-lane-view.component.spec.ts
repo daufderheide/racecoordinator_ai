@@ -110,7 +110,7 @@ describe("RacedayLaneViewComponent", () => {
 
     fixture = TestBed.createComponent(RacedayLaneViewComponent);
     component = fixture.componentInstance;
-    component.parent = mockParent;
+    fixture.componentRef.setInput("parent", mockParent);
     harness = await TestbedHarnessEnvironment.harnessForFixture(
       fixture,
       RacedayLaneViewHarness,

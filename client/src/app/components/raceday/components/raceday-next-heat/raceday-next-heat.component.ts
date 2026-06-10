@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, computed, input, ViewEncapsulation } from "@angular/core";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
@@ -14,31 +14,31 @@ import { Heat } from "@app/race/heat";
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayNextHeatComponent {
-  @Input() track?: Track;
-  @Input() currentHeat?: Heat;
-  @Input() heats: Heat[] = [];
+  track = input<Track | undefined>(undefined);
+  currentHeat = input<Heat | undefined>(undefined);
+  heats = input<Heat[]>([]);
 
-  get nextHeatDrivers(): DriverHeatData[] {
-    if (!this.currentHeat || !this.heats || this.heats.length === 0) {
+  nextHeatDrivers = computed<DriverHeatData[]>(() => {
+    const cur = this.currentHeat();
+    const hts = this.heats();
+    if (!cur || !hts || hts.length === 0) {
       return [];
     }
-    const nextHeat = this.heats.find(
-      (h) => h.heatNumber === this.currentHeat!.heatNumber + 1,
-    );
+    const nextHeat = hts.find((h) => h.heatNumber === cur.heatNumber + 1);
     if (!nextHeat || !nextHeat.heatDrivers) {
       return [];
     }
     return nextHeat.heatDrivers.filter((hd) => {
       return hd.driver && !hd.driver.isEmpty();
     });
-  }
+  });
 
   getLaneBackgroundColor(laneIndex: number): string {
-    return this.track?.lanes?.[laneIndex]?.background_color || "#333333";
+    return this.track()?.lanes?.[laneIndex]?.background_color || "#333333";
   }
 
   getLaneForegroundColor(laneIndex: number): string {
-    return this.track?.lanes?.[laneIndex]?.foreground_color || "#ffffff";
+    return this.track()?.lanes?.[laneIndex]?.foreground_color || "#ffffff";
   }
 
   trackByDriver(index: number, hd: DriverHeatData): string {

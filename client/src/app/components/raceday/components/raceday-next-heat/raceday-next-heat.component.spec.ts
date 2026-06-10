@@ -90,9 +90,9 @@ describe("RacedayNextHeatComponent", () => {
       group: 0,
     };
 
-    component.track = mockTrack;
-    component.currentHeat = currentHeat;
-    component.heats = [currentHeat, nextHeat];
+    fixture.componentRef.setInput("track", mockTrack);
+    fixture.componentRef.setInput("currentHeat", currentHeat);
+    fixture.componentRef.setInput("heats", [currentHeat, nextHeat]);
     fixture.detectChanges();
 
     // In next heat, both d1 (One) and d2 (Two) should be displayed regardless of current heat

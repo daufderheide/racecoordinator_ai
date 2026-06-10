@@ -42,7 +42,7 @@ describe("RacedayBrandingComponent", () => {
   it("should conditionalize QR code visibility via harness", async () => {
     expect(await harness.getQrCodeSrc()).toBeNull();
 
-    component.qrCodeUrl = "data:image/png;base64,mock-qr";
+    fixture.componentRef.setInput("qrCodeUrl", "data:image/png;base64,mock-qr");
     fixture.detectChanges();
 
     expect(await harness.getQrCodeSrc()).toBe("data:image/png;base64,mock-qr");

@@ -28,7 +28,10 @@ describe("RacedayFlagComponent", () => {
   });
 
   it("should display flag image URL via harness", async () => {
-    component.currentFlagUrl = "assets/images/flags/green.png";
+    fixture.componentRef.setInput(
+      "currentFlagUrl",
+      "assets/images/flags/green.png",
+    );
     fixture.detectChanges();
 
     expect(await harness.getFlagUrl()).toBe("assets/images/flags/green.png");

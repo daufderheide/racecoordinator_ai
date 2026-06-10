@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -11,16 +11,16 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayGroupLeaderboardComponent {
-  @Input() leaderboardEntries: any[] = [];
-  @Input() groupNumber: number = 0;
-  @Input() groupEnabled: boolean = false;
+  leaderboardEntries = input<any[]>([]);
+  groupNumber = input<number>(0);
+  groupEnabled = input<boolean>(false);
 
   trackByLeaderboardEntry(index: number, entry: any): string {
     return entry.entityId || String(index);
   }
 
   getLeaderboardPosition(entry: any): number {
-    const sorted = [...this.leaderboardEntries].sort((a, b) => {
+    const sorted = [...this.leaderboardEntries()].sort((a, b) => {
       if (a.rank !== b.rank) {
         if (a.rank === 0) return 1;
         if (b.rank === 0) return -1;

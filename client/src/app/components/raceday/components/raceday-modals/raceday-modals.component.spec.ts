@@ -33,17 +33,17 @@ describe("RacedayModalsComponent", () => {
     expect(await harness.isSkipHeatModalVisible()).toBeFalse();
 
     // Show Ack Modal
-    component.showAckModal = true;
+    fixture.componentRef.setInput("showAckModal", true);
     fixture.detectChanges();
     expect(await harness.isAckModalVisible()).toBeTrue();
 
     // Show Exit Confirmation Modal
-    component.showExitConfirmation = true;
+    fixture.componentRef.setInput("showExitConfirmation", true);
     fixture.detectChanges();
     expect(await harness.isExitModalVisible()).toBeTrue();
 
     // Show Skip Heat Modal
-    component.showSkipHeatConfirmation = true;
+    fixture.componentRef.setInput("showSkipHeatConfirmation", true);
     fixture.detectChanges();
     expect(await harness.isSkipHeatModalVisible()).toBeTrue();
   });
@@ -52,7 +52,7 @@ describe("RacedayModalsComponent", () => {
     spyOn(component.exitConfirm, "emit");
     spyOn(component.exitCancel, "emit");
 
-    component.showExitConfirmation = true;
+    fixture.componentRef.setInput("showExitConfirmation", true);
     fixture.detectChanges();
 
     // Trigger buttons directly on the DOM wrapper (or using child harnesses)

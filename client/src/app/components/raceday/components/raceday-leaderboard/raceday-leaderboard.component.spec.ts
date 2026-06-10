@@ -35,10 +35,10 @@ describe("RacedayLeaderboardComponent", () => {
   });
 
   it("should sort and display leaderboard entries correctly", async () => {
-    component.leaderboardEntries = [
+    fixture.componentRef.setInput("leaderboardEntries", [
       { entityId: "e1", rank: 2, name: "Alice", score: 10 },
       { entityId: "e2", rank: 1, name: "Bob", score: 12 },
-    ];
+    ]);
     fixture.detectChanges();
 
     expect(await harness.getEntryCount()).toBe(2);
@@ -56,9 +56,9 @@ describe("RacedayLeaderboardComponent", () => {
 
   it("should format score correctly based on isTime", async () => {
     // Score as time (isTime: true) should use 3 decimal places
-    component.leaderboardEntries = [
+    fixture.componentRef.setInput("leaderboardEntries", [
       { entityId: "e1", rank: 1, name: "Alice", score: 9.8765, isTime: true },
-    ];
+    ]);
     fixture.detectChanges();
 
     const entryText = await harness.getEntryText(0);

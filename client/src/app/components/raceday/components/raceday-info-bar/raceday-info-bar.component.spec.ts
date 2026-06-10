@@ -45,13 +45,13 @@ describe("RacedayInfoBarComponent", () => {
   });
 
   it("should display race name, track name, and heat info when inputs are provided", async () => {
-    component.race = {
+    fixture.componentRef.setInput("race", {
       name: "Mock GP",
       group_options: { enabled: false },
-    } as Race;
-    component.track = { name: "Mock Track" } as Track;
-    component.heat = { heatNumber: 2, group: 0 } as Heat;
-    component.totalHeats = 5;
+    } as Race);
+    fixture.componentRef.setInput("track", { name: "Mock Track" } as Track);
+    fixture.componentRef.setInput("heat", { heatNumber: 2, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 5);
 
     fixture.detectChanges();
 
@@ -61,13 +61,13 @@ describe("RacedayInfoBarComponent", () => {
   });
 
   it("should show group info if group options are enabled", async () => {
-    component.race = {
+    fixture.componentRef.setInput("race", {
       name: "Mock GP",
       group_options: { enabled: true },
-    } as Race;
-    component.track = { name: "Mock Track" } as Track;
-    component.heat = { heatNumber: 2, group: 1 } as Heat; // group 1 is Group 2 in UI (group + 1)
-    component.totalHeats = 5;
+    } as Race);
+    fixture.componentRef.setInput("track", { name: "Mock Track" } as Track);
+    fixture.componentRef.setInput("heat", { heatNumber: 2, group: 1 } as Heat); // group 1 is Group 2 in UI (group + 1)
+    fixture.componentRef.setInput("totalHeats", 5);
 
     fixture.detectChanges();
 

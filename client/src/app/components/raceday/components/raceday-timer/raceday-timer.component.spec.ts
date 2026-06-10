@@ -36,10 +36,10 @@ describe("RacedayTimerComponent", () => {
   });
 
   it("should render time string and handle conditional labels", async () => {
-    component.formattedTime = "02:30.000";
-    component.autoStatusLabel = "";
-    component.isWarmup = false;
-    component.showCountdownOverlay = false;
+    fixture.componentRef.setInput("formattedTime", "02:30.000");
+    fixture.componentRef.setInput("autoStatusLabel", "");
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("showCountdownOverlay", false);
 
     fixture.detectChanges();
 
@@ -48,15 +48,15 @@ describe("RacedayTimerComponent", () => {
     expect(await harness.getWarmupLabel()).toBeNull();
 
     // With warmup and status labels active
-    component.autoStatusLabel = "RD_PAUSED";
-    component.isWarmup = true;
+    fixture.componentRef.setInput("autoStatusLabel", "RD_PAUSED");
+    fixture.componentRef.setInput("isWarmup", true);
     fixture.detectChanges();
 
     expect(await harness.getStatusLabel()).toBe("RD_PAUSED");
     expect(await harness.getWarmupLabel()).toBe("RD_WARMUP");
 
     // Hide status label when countdown overlay is active
-    component.showCountdownOverlay = true;
+    fixture.componentRef.setInput("showCountdownOverlay", true);
     fixture.detectChanges();
 
     expect(await harness.getStatusLabel()).toBeNull();

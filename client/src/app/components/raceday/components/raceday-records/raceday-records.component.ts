@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -11,12 +11,12 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayRecordsComponent {
-  @Input() raceRecordLapNickname = "";
-  @Input() raceRecordLapTime = 0;
-  @Input() raceRecordScoreNickname = "";
-  @Input() raceRecordScore = 0;
-  @Input() currentRaceBestNickname = "";
-  @Input() currentRaceBestTime = 0;
-  @Input() heatBestNickname = "";
-  @Input() heatBestTime = 0;
+  raceRecordLapNickname = input<string>("");
+  raceRecordLapTime = input<number>(0);
+  raceRecordScoreNickname = input<string>("");
+  raceRecordScore = input<number>(0);
+  currentRaceBestNickname = input<string>("");
+  currentRaceBestTime = input<number>(0);
+  heatBestNickname = input<string>("");
+  heatBestTime = input<number>(0);
 }

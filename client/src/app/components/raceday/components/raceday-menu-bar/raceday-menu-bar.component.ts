@@ -1,10 +1,9 @@
 import { CommonModule } from "@angular/common";
 import {
   Component,
-  EventEmitter,
   HostListener,
-  Input,
-  Output,
+  input,
+  output,
   ViewEncapsulation,
 } from "@angular/core";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
@@ -22,31 +21,31 @@ import { AuthService } from "@app/services/auth.service";
   imports: [CommonModule, LanguageSelectorComponent, TranslatePipe],
 })
 export class RacedayMenuBarComponent {
-  @Input() track?: Track;
-  @Input() isSaveDisabled = false;
-  @Input() isStartResumeDisabled = false;
-  @Input() isPauseDisabled = false;
-  @Input() isNextHeatDisabled = false;
-  @Input() isRestartHeatDisabled = false;
-  @Input() isDeferHeatDisabled = false;
-  @Input() isSkipHeatDisabled = false;
-  @Input() isSkipRaceDisabled = false;
-  @Input() isAddLapDisabled = false;
-  @Input() isModifyDisabled = false;
+  track = input<Track | undefined>(undefined);
+  isSaveDisabled = input<boolean>(false);
+  isStartResumeDisabled = input<boolean>(false);
+  isPauseDisabled = input<boolean>(false);
+  isNextHeatDisabled = input<boolean>(false);
+  isRestartHeatDisabled = input<boolean>(false);
+  isDeferHeatDisabled = input<boolean>(false);
+  isSkipHeatDisabled = input<boolean>(false);
+  isSkipRaceDisabled = input<boolean>(false);
+  isAddLapDisabled = input<boolean>(false);
+  isModifyDisabled = input<boolean>(false);
 
-  @Input() startResumeShortcut = "";
-  @Input() pauseShortcut = "";
-  @Input() nextHeatShortcut = "";
-  @Input() restartHeatShortcut = "";
-  @Input() skipHeatShortcut = "";
-  @Input() deferHeatShortcut = "";
+  startResumeShortcut = input<string>("");
+  pauseShortcut = input<string>("");
+  nextHeatShortcut = input<string>("");
+  restartHeatShortcut = input<string>("");
+  skipHeatShortcut = input<string>("");
+  deferHeatShortcut = input<string>("");
 
-  @Output() fileMenuSelect = new EventEmitter<string>();
-  @Output() menuSelect = new EventEmitter<string>();
-  @Output() laneMenuSelect = new EventEmitter<number>();
-  @Output() windowsMenuSelect = new EventEmitter<string>();
-  @Output() optionsMenuSelect = new EventEmitter<string>();
-  @Output() languageSelected = new EventEmitter<void>();
+  fileMenuSelect = output<string>();
+  menuSelect = output<string>();
+  laneMenuSelect = output<number>();
+  windowsMenuSelect = output<string>();
+  optionsMenuSelect = output<string>();
+  languageSelected = output<void>();
 
   isFileMenuOpen = false;
   isMenuOpen = false;

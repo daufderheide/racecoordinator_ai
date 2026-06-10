@@ -90,9 +90,9 @@ describe("RacedayOnDeckComponent", () => {
       group: 0,
     };
 
-    component.track = mockTrack;
-    component.currentHeat = currentHeat;
-    component.heats = [currentHeat, nextHeat];
+    fixture.componentRef.setInput("track", mockTrack);
+    fixture.componentRef.setInput("currentHeat", currentHeat);
+    fixture.componentRef.setInput("heats", [currentHeat, nextHeat]);
     fixture.detectChanges();
 
     // d1 is in current heat, so only d2 (Two) is on deck.

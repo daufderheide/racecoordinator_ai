@@ -1,13 +1,13 @@
 <div class="panel-card timer-panel">
   <div class="timer-wrapper">
-    <div class="timer-text">{{ formattedTime }}</div>
+    <div class="timer-text">{{ formattedTime() }}</div>
     <div class="timer-status-labels">
-      @if (autoStatusLabel && !showCountdownOverlay) {
+      @if (autoStatusLabel() && !showCountdownOverlay()) {
         <div class="status-label">
-          {{ autoStatusLabel | translate }}
+          {{ autoStatusLabel() | translate }}
         </div>
       }
-      @if (isWarmup) {
+      @if (isWarmup()) {
         <div class="warmup-label">
           {{ "RD_WARMUP" | translate }}
         </div>

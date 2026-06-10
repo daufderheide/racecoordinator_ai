@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 
 @Component({
   standalone: true,
@@ -10,5 +10,5 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
   imports: [CommonModule],
 })
 export class RacedayFlagComponent {
-  @Input() currentFlagUrl = "";
+  currentFlagUrl = input<string>("");
 }

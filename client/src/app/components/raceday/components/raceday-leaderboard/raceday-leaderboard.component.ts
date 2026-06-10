@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { Component, input, ViewEncapsulation } from "@angular/core";
 
 @Component({
   standalone: true,
@@ -10,14 +10,14 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
   imports: [CommonModule],
 })
 export class RacedayLeaderboardComponent {
-  @Input() leaderboardEntries: any[] = [];
+  leaderboardEntries = input<any[]>([]);
 
   trackByLeaderboardEntry(index: number, entry: any): string {
     return entry.entityId || String(index);
   }
 
   getLeaderboardPosition(entry: any): number {
-    const sorted = [...this.leaderboardEntries].sort((a, b) => {
+    const sorted = [...this.leaderboardEntries()].sort((a, b) => {
       if (a.rank !== b.rank) {
         if (a.rank === 0) return 1;
         if (b.rank === 0) return -1;

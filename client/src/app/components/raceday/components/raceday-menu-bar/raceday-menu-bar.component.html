@@ -11,7 +11,7 @@
       <div class="menu-dropdown top-dropdown">
         <div
           class="menu-item"
-          [class.disabled]="isSaveDisabled"
+          [class.disabled]="isSaveDisabled()"
           (click)="onFileMenuSelect('SAVE')"
         >
           {{ "RD_MENU_SAVE" | translate }}
@@ -42,57 +42,57 @@
       <div class="menu-dropdown top-dropdown">
         <div
           class="menu-item"
-          [class.disabled]="isStartResumeDisabled"
+          [class.disabled]="isStartResumeDisabled()"
           (click)="onMenuSelect('START_RESUME')"
         >
           <span>{{ "RD_MENU_START_RESUME" | translate }}</span>
-          <span class="menu-shortcut">{{ startResumeShortcut }}</span>
+          <span class="menu-shortcut">{{ startResumeShortcut() }}</span>
         </div>
 
         <div
           class="menu-item"
-          [class.disabled]="isPauseDisabled"
+          [class.disabled]="isPauseDisabled()"
           (click)="onMenuSelect('PAUSE')"
         >
           <span>{{ "RD_MENU_PAUSE" | translate }}</span>
-          <span class="menu-shortcut">{{ pauseShortcut }}</span>
+          <span class="menu-shortcut">{{ pauseShortcut() }}</span>
         </div>
         <div
           class="menu-item"
-          [class.disabled]="isNextHeatDisabled"
+          [class.disabled]="isNextHeatDisabled()"
           (click)="onMenuSelect('NEXT_HEAT')"
         >
           <span>{{ "RD_MENU_NEXT_HEAT" | translate }}</span>
-          <span class="menu-shortcut">{{ nextHeatShortcut }}</span>
+          <span class="menu-shortcut">{{ nextHeatShortcut() }}</span>
         </div>
         <div class="menu-separator"></div>
         <div
           class="menu-item"
-          [class.disabled]="isRestartHeatDisabled"
+          [class.disabled]="isRestartHeatDisabled()"
           (click)="onMenuSelect('RESTART_HEAT')"
         >
           <span>{{ "RD_MENU_RESTART" | translate }}</span>
-          <span class="menu-shortcut">{{ restartHeatShortcut }}</span>
+          <span class="menu-shortcut">{{ restartHeatShortcut() }}</span>
         </div>
         <div
           class="menu-item"
-          [class.disabled]="isDeferHeatDisabled"
+          [class.disabled]="isDeferHeatDisabled()"
           (click)="onMenuSelect('DEFER_HEAT')"
         >
           <span>{{ "RD_MENU_DEFER" | translate }}</span>
-          <span class="menu-shortcut">{{ deferHeatShortcut }}</span>
+          <span class="menu-shortcut">{{ deferHeatShortcut() }}</span>
         </div>
         <div
           class="menu-item"
-          [class.disabled]="isSkipHeatDisabled"
+          [class.disabled]="isSkipHeatDisabled()"
           (click)="onMenuSelect('SKIP_HEAT')"
         >
           <span>{{ "RD_MENU_SKIP_HEAT" | translate }}</span>
-          <span class="menu-shortcut">{{ skipHeatShortcut }}</span>
+          <span class="menu-shortcut">{{ skipHeatShortcut() }}</span>
         </div>
         <div
           class="menu-item"
-          [class.disabled]="isSkipRaceDisabled"
+          [class.disabled]="isSkipRaceDisabled()"
           (click)="onMenuSelect('SKIP_RACE')"
         >
           {{ "RD_MENU_SKIP_RACE" | translate }}
@@ -100,14 +100,14 @@
         <div class="menu-separator"></div>
         <div
           class="menu-item"
-          [class.disabled]="isAddLapDisabled"
+          [class.disabled]="isAddLapDisabled()"
           (click)="onMenuSelect('ADD_LAP')"
         >
           {{ "RD_MENU_ADD_LAP" | translate }}
         </div>
         <div
           class="menu-item"
-          [class.disabled]="isModifyDisabled"
+          [class.disabled]="isModifyDisabled()"
           (click)="onMenuSelect('MODIFY')"
         >
           {{ "RD_MENU_MODIFY" | translate }}
@@ -134,7 +134,7 @@
       </div>
     }
   </div>
-  @if (track && track.lanes) {
+  @if (track() && track()!.lanes) {
     <div class="menu-wrapper">
       <button
         class="menu-button-top"
@@ -153,7 +153,7 @@
             <span class="submenu-arrow">▶</span>
             @if (isDriversStationOpen) {
               <div class="menu-dropdown submenu">
-                @for (lane of track.lanes; track lane; let i = $index) {
+                @for (lane of track()!.lanes; track lane; let i = $index) {
                   <div class="menu-item" (click)="onLaneMenuSelect(i)">
                     {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
                   </div>
