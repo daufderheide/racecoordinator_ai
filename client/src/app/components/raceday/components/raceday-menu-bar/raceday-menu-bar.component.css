@@ -1,1 +1,122 @@
 /* Menu bar styles encapsulated or inherited globally */
+.menu-bar {
+  position: relative;
+  width: 100%;
+  height: 38px;
+  flex: 0 0 38px;
+  background: transparent;
+  border-bottom: 2px solid #38bdf8;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 1000;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.menu-wrapper {
+  position: relative;
+  pointer-events: auto;
+}
+
+.menu-button-top {
+  background: transparent;
+  color: #e2e8f0;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  border-radius: 4px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-button-top:hover {
+  background-color: #334155;
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+.menu-button-top:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #1a2332;
+  border: 1px solid #2d3748;
+  min-width: 180px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  z-index: 1100;
+  border-radius: 4px;
+  padding: 5px 0;
+}
+
+
+.menu-item {
+  color: #e2e8f0;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.menu-item:hover {
+  background-color: #334155;
+}
+
+.menu-item.selected {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+.menu-item.disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.menu-item.disabled:hover {
+  background-color: transparent;
+}
+
+.menu-shortcut {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-left: 20px;
+}
+
+.menu-separator {
+  height: 1px;
+  background-color: #2d3748;
+  margin: 5px 0;
+}
+
+.menu-item.has-submenu {
+  position: relative;
+}
+
+.menu-dropdown.submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  /* Offset to align with parent item */
+  margin-left: -1px;
+}
+
+.submenu-arrow {
+  font-size: 10px;
+  margin-left: 10px;
+  opacity: 0.7;
+}

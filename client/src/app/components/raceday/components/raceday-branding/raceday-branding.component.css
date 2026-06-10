@@ -2,8 +2,78 @@
 .branding-panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  padding: 15px;
+  background: linear-gradient(145deg, rgba(16, 16, 32, 0.9), rgba(0, 0, 25, 0.7));
+  border-left: 3px solid #0ff;
+  /* Neon cyan accent */
+  position: relative;
   height: 100%;
   box-sizing: border-box;
+}
+
+.branding-qr {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  padding: 2px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.branding-qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logo-text {
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  font-size: 24px;
+  /* Scaled down slightly for dashboard header */
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+}
+
+.logo-highlight {
+  color: #00f0ff;
+  -webkit-text-fill-color: #00f0ff;
+  margin-left: 5px;
+  font-style: italic;
+}
+
+.branding-tagline {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #888;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  text-align: center;
+  opacity: 0.6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.branding-tagline:hover {
+  text-decoration: underline;
+  opacity: 1;
+  color: #0ff;
 }

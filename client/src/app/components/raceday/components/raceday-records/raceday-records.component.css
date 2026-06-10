@@ -4,9 +4,22 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
+  font-size: 19px;
+  color: #eee;
 }
+
 .record-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  margin-bottom: 5px;
+}
+
+.record-header {
+  background: #222;
+  padding-left: 12px;
+  font-size: 17px;
+}
+
+.record-val {
+  color: #ff0;
 }

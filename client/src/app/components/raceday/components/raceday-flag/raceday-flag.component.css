@@ -1,8 +1,14 @@
 /* Flag styles encapsulated or inherited globally */
 .flag-panel {
   display: flex;
-  align-items: center;
-  justify-content: center;
   height: 100%;
   box-sizing: border-box;
+  justify-content: center;
+  align-items: center;
+}
+
+.flag-image {
+  max-width: 100%;
+  max-height: 210px;
+  object-fit: contain;
 }

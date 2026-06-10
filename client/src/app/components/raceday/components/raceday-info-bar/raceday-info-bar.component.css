@@ -1,1 +1,40 @@
 /* Info bar styles encapsulated or inherited globally */
+.top-info-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: 42px;
+  background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.info-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.info-section:last-child {
+  border-right: none;
+}
+
+.label-text {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-right: 8px;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.value-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
