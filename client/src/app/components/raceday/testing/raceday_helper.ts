@@ -144,6 +144,7 @@ export function createRacedayMocks(overrides: any = {}) {
   const mockRaceService = jasmine.createSpyObj("RaceService", [
     "setRace",
     "setParticipants",
+    "setGroupParticipants",
     "setHeats",
     "setCurrentHeat",
     "getRace",
@@ -170,6 +171,8 @@ export function createRacedayMocks(overrides: any = {}) {
   mockRaceService.selectedRace$ = of(mockRaceWithTrack);
   mockRaceService.heats$ = of(mockHeatsWithAudio);
   mockRaceService.participants$ = participantsSubject.asObservable();
+  mockRaceService.groupParticipants$ = of([]);
+  mockRaceService.currentGroup$ = of(0);
   mockRaceService.getRace.and.returnValue(mockRaceWithTrack);
   mockRaceService.getHeats.and.returnValue(mockHeatsWithAudio);
   mockRaceService.getCurrentHeat.and.returnValue(mockHeatsWithAudio[0]);

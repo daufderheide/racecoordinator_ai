@@ -1,0 +1,53 @@
+<div class="panel-card leaderboard-panel">
+  <div class="leaderboard-title">
+    {{ "RD_WIN_GROUP_LEADER_BOARD" | translate }}
+  </div>
+  <div class="leaderboard-subtitle" *ngIf="groupEnabled && groupNumber >= 0">
+    {{ "DR_LABEL_GROUP" | translate: { group: groupNumber + 1 } }}
+  </div>
+
+  <div class="leaderboard-list">
+    @if (!groupEnabled) {
+      <div class="leaderboard-empty-message">
+        {{ "RD_NO_GROUP_STANDINGS" | translate }}
+      </div>
+    } @else {
+      <div
+        class="leaderboard-scroll-content"
+        [style.height.px]="leaderboardEntries.length * 24"
+      >
+        @for (
+          entry of leaderboardEntries;
+          track trackByLeaderboardEntry($index, entry);
+          let idx = $index
+        ) {
+          <div
+            class="leaderboard-item"
+            [class.leaderboard-item-odd]="
+              getLeaderboardPosition(entry) % 2 === 1
+            "
+            [style.transform]="
+              'translateY(' + getLeaderboardPosition(entry) * 24 + 'px)'
+            "
+          >
+            <div
+              class="leaderboard-left"
+              [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+              [class.leader-white]="getLeaderboardPosition(entry) > 0"
+            >
+              <div class="leaderboard-rank">{{ entry.rank || "-" }}</div>
+              <div class="leaderboard-name">{{ entry.name }}</div>
+            </div>
+            <div
+              class="leaderboard-score"
+              [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+              [class.leader-white]="getLeaderboardPosition(entry) > 0"
+            >
+              {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

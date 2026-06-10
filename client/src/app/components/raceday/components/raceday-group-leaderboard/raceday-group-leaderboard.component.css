@@ -1,0 +1,107 @@
+.leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.leaderboard-title {
+  color: #38bdf8;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.leaderboard-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+}
+
+.leaderboard-scroll-content {
+  position: relative;
+  width: 100%;
+}
+
+.leaderboard-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 5px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  height: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  border-left: 3px solid #38bdf8;
+  position: absolute;
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform;
+  top: 0;
+  transition: transform 800ms cubic-bezier(0.35, 0, 0.25, 1), background 0.2s ease;
+}
+
+.leaderboard-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leaderboard-item-odd {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.leaderboard-empty-message {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 15px;
+  text-align: center;
+  padding: 40px 10px;
+  font-style: italic;
+}
+
+.leader-gold {
+  color: #fbbf24;
+}
+
+.leader-white {
+  color: #f8fafc;
+}

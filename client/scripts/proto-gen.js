@@ -67,6 +67,7 @@ const protoFiles = [
   "../server/proto/server/heat.proto",
   "../server/proto/server/standings_update.proto",
   "../server/proto/server/overall_standings_update.proto",
+  "../server/proto/server/group_standings_update.proto",
   "../server/proto/server/record_data.proto",
   "../server/proto/server/demo.proto",
   "../server/proto/server/full_update.proto",

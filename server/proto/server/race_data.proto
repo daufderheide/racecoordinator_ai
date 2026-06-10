@@ -7,6 +7,7 @@ import "server/race.proto";
 
 import "server/standings_update.proto";
 import "server/overall_standings_update.proto";
+import "server/group_standings_update.proto";
 import "server/race_state.proto";
 
 import "server/car_data.proto";
@@ -32,4 +33,5 @@ message RaceData {
   RecordData record_data = 11;
   Heat heat = 12;
   SystemState system_state = 13;
+  GroupStandingsUpdate group_standings_update = 14;
 }

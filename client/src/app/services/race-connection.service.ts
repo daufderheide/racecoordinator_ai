@@ -10,6 +10,7 @@ import { TrackConverter } from "@app/converters/track.converter";
 import { DataService } from "@app/data.service";
 import {
   ICarData,
+  IGroupStandingsUpdate,
   IInterfaceEvent,
   ILap,
   InterfaceStatus,
@@ -54,6 +55,9 @@ export class RaceConnectionService implements OnDestroy {
 
   private overallStandingsSubject = new Subject<IOverallStandingsUpdate>();
   overallStandingsUpdate$ = this.overallStandingsSubject.asObservable();
+
+  private groupStandingsSubject = new Subject<IGroupStandingsUpdate>();
+  groupStandingsUpdate$ = this.groupStandingsSubject.asObservable();
 
   private interfaceEventSubject = new Subject<IInterfaceEvent>();
   interfaceEvents$ = this.interfaceEventSubject.asObservable();
@@ -314,6 +318,23 @@ export class RaceConnectionService implements OnDestroy {
         }
       }),
     );
+
+    if (this.dataService.getGroupStandingsUpdate) {
+      this.subscriptions.push(
+        this.dataService.getGroupStandingsUpdate().subscribe((update) => {
+          if (update && update.participants) {
+            const participants = update.participants.map((p: any) =>
+              RaceParticipantConverter.fromProto(p),
+            );
+            this.raceService.setGroupParticipants(
+              participants,
+              update.group || 0,
+            );
+            this.groupStandingsSubject.next(update);
+          }
+        }),
+      );
+    }
 
     this.subscriptions.push(
       this.dataService.getInterfaceEvents().subscribe((event) => {

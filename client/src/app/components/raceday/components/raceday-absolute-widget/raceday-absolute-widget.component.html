@@ -82,6 +82,13 @@
           [leaderboardEntries]="parentComponent.leaderboardEntries"
         ></app-raceday-leaderboard>
       }
+      @case ("group-leaderboard") {
+        <app-raceday-group-leaderboard
+          [leaderboardEntries]="parentComponent.groupLeaderboardEntries"
+          [groupNumber]="parentComponent.currentGroup"
+          [groupEnabled]="parentComponent.groupEnabled"
+        ></app-raceday-group-leaderboard>
+      }
       @case ("lane-view") {
         <app-raceday-lane-view
           [parent]="parentComponent"

@@ -17,6 +17,7 @@ import {
   ICarData,
   ICustomRotation,
   IDemoConfig,
+  IGroupStandingsUpdate,
   IHeat,
   IInterfaceEvent,
   ILap,
@@ -1149,6 +1150,7 @@ export class DataService {
   private overallStandingsSubject = new ReplaySubject<IOverallStandingsUpdate>(
     1,
   );
+  private groupStandingsSubject = new ReplaySubject<IGroupStandingsUpdate>(1);
   private raceUpdateSubject = new ReplaySubject<IRace>(1);
   private interfaceEventSubject = new Subject<IInterfaceEvent>();
   private carDataSubject = new Subject<ICarData>();
@@ -1197,6 +1199,69 @@ export class DataService {
     this.logger.info(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
 
+  private handleRaceDataMessage(event: MessageEvent) {
+    this.ngZone.run(() => {
+      try {
+        const arrayBuffer = event.data as ArrayBuffer;
+        const raceData = RaceData.decode(
+          Reader.create(new Uint8Array(arrayBuffer)),
+        );
+
+        if (raceData.raceTime) {
+          this.raceTimeSubject.next(raceData.raceTime);
+        }
+        if (raceData.lap) {
+          this.lapSubject.next(raceData.lap);
+        }
+        if (raceData.standingsUpdate) {
+          this.standingsSubject.next(raceData.standingsUpdate);
+        }
+        if (raceData.overallStandingsUpdate) {
+          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+        }
+        if (raceData.groupStandingsUpdate) {
+          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
+        }
+        if (raceData.raceState) {
+          this.logger.debug("WS: Received RaceState", raceData.raceState);
+          this.raceStateSubject.next(raceData.raceState);
+        }
+        if (raceData.race) {
+          this.logger.debug("WS: Received Race", raceData.race);
+          this.raceUpdateSubject.next(raceData.race);
+          if (raceData.race.state) {
+            this.raceStateSubject.next(raceData.race.state);
+          }
+          if (raceData.race.flag) {
+            this.flagSubject.next(raceData.race.flag);
+          }
+        }
+        if (raceData.carData) {
+          this.carDataSubject.next(raceData.carData);
+        }
+        if (raceData.segment) {
+          this.segmentSubject.next(raceData.segment);
+        }
+        if (raceData.flag) {
+          this.logger.debug("WS: Received RaceFlag", raceData.flag);
+          this.flagSubject.next(raceData.flag);
+        }
+        if (raceData.recordData) {
+          this.recordDataSubject.next(raceData.recordData);
+        }
+        if (raceData.heat) {
+          this.logger.debug("WS: Received Heat", raceData.heat);
+          this.heatSubject.next(raceData.heat);
+        }
+        if (raceData.systemState) {
+          this.systemStateSubject.next(raceData.systemState as SystemState);
+        }
+      } catch (e) {
+        this.logger.error("Error parsing race data message", e);
+      }
+    });
+  }
+
   public connectToRaceDataSocket() {
     if (
       this.raceDataSocket &&
@@ -1232,63 +1297,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      this.ngZone.run(() => {
-        try {
-          const arrayBuffer = event.data as ArrayBuffer;
-          const raceData = RaceData.decode(
-            Reader.create(new Uint8Array(arrayBuffer)),
-          );
-
-          if (raceData.raceTime) {
-            this.raceTimeSubject.next(raceData.raceTime);
-          }
-          if (raceData.lap) {
-            this.lapSubject.next(raceData.lap);
-          }
-          if (raceData.standingsUpdate) {
-            this.standingsSubject.next(raceData.standingsUpdate);
-          }
-          if (raceData.overallStandingsUpdate) {
-            this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-          }
-          if (raceData.raceState) {
-            this.logger.debug("WS: Received RaceState", raceData.raceState);
-            this.raceStateSubject.next(raceData.raceState);
-          }
-          if (raceData.race) {
-            this.logger.debug("WS: Received Race", raceData.race);
-            this.raceUpdateSubject.next(raceData.race);
-            if (raceData.race.state) {
-              this.raceStateSubject.next(raceData.race.state);
-            }
-            if (raceData.race.flag) {
-              this.flagSubject.next(raceData.race.flag);
-            }
-          }
-          if (raceData.carData) {
-            this.carDataSubject.next(raceData.carData);
-          }
-          if (raceData.segment) {
-            this.segmentSubject.next(raceData.segment);
-          }
-          if (raceData.flag) {
-            this.logger.debug("WS: Received RaceFlag", raceData.flag);
-            this.flagSubject.next(raceData.flag);
-          }
-          if (raceData.recordData) {
-            this.recordDataSubject.next(raceData.recordData);
-          }
-          if (raceData.heat) {
-            this.logger.debug("WS: Received Heat", raceData.heat);
-            this.heatSubject.next(raceData.heat);
-          }
-          if (raceData.systemState) {
-            this.systemStateSubject.next(raceData.systemState as SystemState);
-          }
-        } catch (e) {
-          this.logger.error("Error parsing race data message", e);
-        }
-      });
+      this.handleRaceDataMessage(event);
     };
 
     this.raceDataSocket.onclose = () => {
@@ -1398,6 +1407,10 @@ export class DataService {
 
   public getOverallStandingsUpdate(): Observable<IOverallStandingsUpdate> {
     return this.overallStandingsSubject.asObservable();
+  }
+
+  public getGroupStandingsUpdate(): Observable<IGroupStandingsUpdate> {
+    return this.groupStandingsSubject.asObservable();
   }
 
   public getRaceUpdate(): Observable<IRace> {

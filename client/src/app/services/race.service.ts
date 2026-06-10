@@ -15,6 +15,12 @@ export class RaceService {
   private participantsSubject = new BehaviorSubject<RaceParticipant[]>([]);
   participants$ = this.participantsSubject.asObservable();
 
+  private groupParticipantsSubject = new BehaviorSubject<RaceParticipant[]>([]);
+  groupParticipants$ = this.groupParticipantsSubject.asObservable();
+
+  private currentGroupSubject = new BehaviorSubject<number>(0);
+  currentGroup$ = this.currentGroupSubject.asObservable();
+
   setRacingDrivers(drivers: Driver[]) {
     this.racingDriversSubject.next(drivers);
   }
@@ -23,6 +29,11 @@ export class RaceService {
     this.participantsSubject.next(participants);
     // Also update drivers for compatibility
     this.setRacingDrivers(participants.map((p) => p.driver));
+  }
+
+  setGroupParticipants(participants: RaceParticipant[], group: number) {
+    this.groupParticipantsSubject.next(participants);
+    this.currentGroupSubject.next(group);
   }
 
   getParticipants(): RaceParticipant[] {
@@ -82,6 +93,8 @@ export class RaceService {
   clear() {
     this.racingDriversSubject.next([]);
     this.participantsSubject.next([]);
+    this.groupParticipantsSubject.next([]);
+    this.currentGroupSubject.next(0);
     this.selectedRaceSubject.next(undefined);
     this.heatsSubject.next([]);
     this.currentHeatSubject.next(undefined);

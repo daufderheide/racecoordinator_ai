@@ -140,7 +140,14 @@ export class DefaultRacedayComponent
 
   // Stable-order list. DOM order never changes; visual position is from rank.
   protected leaderboardEntries: any[] = [];
+  protected groupLeaderboardEntries: any[] = [];
+  protected groupParticipants: RaceParticipant[] = [];
+  protected currentGroup: number = 0;
   protected qrCodeUrl?: string;
+
+  get groupEnabled(): boolean {
+    return this.race?.group_options?.enabled || false;
+  }
 
   /**
    * Update leaderboard entries while maintaining stable DOM order.
@@ -183,6 +190,49 @@ export class DefaultRacedayComponent
     // Remove entries no longer present
     const incomingIds = new Set(incoming.map((e) => e.entityId));
     this.leaderboardEntries = this.leaderboardEntries.filter((e) =>
+      incomingIds.has(e.entityId),
+    );
+  }
+
+  private updateGroupLeaderboardEntries(): void {
+    const rankingMethod = this.race?.overall_scoring?.rankingMethod;
+    const isTime =
+      rankingMethod && rankingMethod !== OverallRanking.OR_LAP_COUNT;
+
+    const incoming = (this.groupParticipants || [])
+      .filter((p) => p && p.driver && !Driver.isEmpty(p.driver))
+      .map((p) => ({
+        name: p.team?.name || p.driver?.nickname || p.driver?.name || "Unknown",
+        score: p.rankValue || 0,
+        rank: p.rank || 0,
+        entityId: p.driver?.entity_id || p.driver?.name || "",
+        isTime: isTime,
+      }));
+
+    const existingIds = new Set(
+      this.groupLeaderboardEntries.map((e) => e.entityId),
+    );
+
+    // Update existing entries in-place (preserving array/DOM order)
+    for (let i = 0; i < this.groupLeaderboardEntries.length; i++) {
+      const id = this.groupLeaderboardEntries[i].entityId;
+      const updated = incoming.find((e) => e.entityId === id);
+      if (updated) {
+        this.groupLeaderboardEntries[i] = updated;
+      }
+    }
+
+    // Append new entries
+    for (const entry of incoming) {
+      if (!existingIds.has(entry.entityId)) {
+        this.groupLeaderboardEntries.push(entry);
+        existingIds.add(entry.entityId);
+      }
+    }
+
+    // Remove entries no longer present
+    const incomingIds = new Set(incoming.map((e) => e.entityId));
+    this.groupLeaderboardEntries = this.groupLeaderboardEntries.filter((e) =>
       incomingIds.has(e.entityId),
     );
   }
@@ -515,6 +565,25 @@ export class DefaultRacedayComponent
       this.raceService.participants$.subscribe((participants) => {
         this.participants = participants || [];
         this.updateLeaderboardEntries();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.groupParticipants$.subscribe((participants) => {
+        this.groupParticipants = participants || [];
+        this.updateGroupLeaderboardEntries();
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.raceService.currentGroup$.subscribe((group) => {
+        this.currentGroup = group || 0;
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -2951,6 +3020,7 @@ export class DefaultRacedayComponent
       "timer",
       "records",
       "leaderboard",
+      "group-leaderboard",
       "lane-view",
       "on-deck",
       "next-heat",
@@ -2983,6 +3053,7 @@ export class DefaultRacedayComponent
 
     const isLeaderboardOrDeck =
       this.draggedWidgetType === "leaderboard" ||
+      this.draggedWidgetType === "group-leaderboard" ||
       this.draggedWidgetType === "on-deck" ||
       this.draggedWidgetType === "next-heat";
     const newWidget: any = {
@@ -2991,7 +3062,11 @@ export class DefaultRacedayComponent
       x: Math.round(x),
       y: Math.round(y),
       width: isLeaderboardOrDeck ? 384 : 400,
-      height: this.draggedWidgetType === "leaderboard" ? 239 : 300,
+      height:
+        this.draggedWidgetType === "leaderboard" ||
+        this.draggedWidgetType === "group-leaderboard"
+          ? 239
+          : 300,
       zIndex: this.getNextZIndex(),
     };
 

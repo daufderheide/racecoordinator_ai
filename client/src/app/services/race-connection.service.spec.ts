@@ -34,6 +34,7 @@ describe("RaceConnectionService", () => {
       "getCarData",
       "getStandingsUpdate",
       "getOverallStandingsUpdate",
+      "getGroupStandingsUpdate",
       "getReactionTimes",
       "getSegments",
       "getRaceState",
@@ -59,6 +60,7 @@ describe("RaceConnectionService", () => {
     mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.getStandingsUpdate.and.returnValue(of({}));
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getGroupStandingsUpdate.and.returnValue(of({}));
     mockDataService.getReactionTimes.and.returnValue(of({}));
     mockDataService.getSegments.and.returnValue(of(null));
     mockDataService.getRaceState.and.returnValue(of(RaceState.NOT_STARTED));

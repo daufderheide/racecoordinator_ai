@@ -90,6 +90,9 @@ export const mockDataService = {
   getOverallStandingsUpdate: jasmine
     .createSpy("getOverallStandingsUpdate")
     .and.returnValue(new Subject().asObservable()),
+  getGroupStandingsUpdate: jasmine
+    .createSpy("getGroupStandingsUpdate")
+    .and.returnValue(new Subject().asObservable()),
   getInterfaceEvents: jasmine
     .createSpy("getInterfaceEvents")
     .and.returnValue(new Subject().asObservable()),
@@ -213,6 +216,9 @@ export function resetMocks() {
     new Subject().asObservable(),
   );
   mockDataService.getOverallStandingsUpdate.and.returnValue(
+    new Subject().asObservable(),
+  );
+  mockDataService.getGroupStandingsUpdate.and.returnValue(
     new Subject().asObservable(),
   );
   mockDataService.getInterfaceEvents.and.returnValue(

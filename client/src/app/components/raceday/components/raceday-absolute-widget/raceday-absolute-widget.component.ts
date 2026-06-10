@@ -10,6 +10,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import { RacedayBrandingComponent } from "../raceday-branding/raceday-branding.component";
 import { RacedayFlagComponent } from "../raceday-flag/raceday-flag.component";
+import { RacedayGroupLeaderboardComponent } from "../raceday-group-leaderboard/raceday-group-leaderboard.component";
 import { RacedayInfoBarComponent } from "../raceday-info-bar/raceday-info-bar.component";
 import { RacedayLaneViewComponent } from "../raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "../raceday-leaderboard/raceday-leaderboard.component";
@@ -35,6 +36,7 @@ import { RacedayTimerComponent } from "../raceday-timer/raceday-timer.component"
     RacedayTimerComponent,
     RacedayRecordsComponent,
     RacedayLeaderboardComponent,
+    RacedayGroupLeaderboardComponent,
     RacedayLaneViewComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,

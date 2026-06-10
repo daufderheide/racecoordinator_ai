@@ -15,6 +15,7 @@ export type WidgetType =
   | "timer"
   | "records"
   | "leaderboard"
+  | "group-leaderboard"
   | "lane-view"
   | "on-deck"
   | "next-heat";

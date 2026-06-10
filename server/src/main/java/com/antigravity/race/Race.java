@@ -13,6 +13,7 @@ import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
+import com.antigravity.proto.GroupStandingsUpdate;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
@@ -42,8 +43,10 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.mongodb.client.model.Filters;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -747,12 +750,51 @@ public class Race implements ProtocolListener {
       if (driver.getDriver() != Driver.EMPTY_DRIVER)
         participants.add(RaceParticipantConverter.toProto(driver, new HashSet<>()));
     }
-    broadcast(
+    RaceData.Builder dataBuilder =
         RaceData.newBuilder()
             .setOverallStandingsUpdate(
                 OverallStandingsUpdate.newBuilder().addAllParticipants(participants).build())
-            .setRecordData(getRecordData())
-            .build());
+            .setRecordData(getRecordData());
+    GroupStandingsUpdate groupStandings = buildGroupStandingsUpdate();
+    if (groupStandings != null) {
+      dataBuilder.setGroupStandingsUpdate(groupStandings);
+    }
+    broadcast(dataBuilder.build());
+  }
+
+  private GroupStandingsUpdate buildGroupStandingsUpdate() {
+    if (this.model.getGroupOptions() != null
+        && this.model.getGroupOptions().isEnabled()
+        && this.currentHeat != null) {
+      int currentGroup = this.currentHeat.getGroup();
+      Map<String, Integer> driverToGroup = new HashMap<>();
+      for (Heat heat : heats) {
+        for (DriverHeatData dhd : heat.getDrivers()) {
+          if (dhd.getDriver() != null) {
+            driverToGroup.put(dhd.getDriver().getStableId(), heat.getGroup());
+          }
+        }
+      }
+      List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
+          new ArrayList<>();
+      int groupRank = 1;
+      for (RaceParticipant driver : this.drivers) {
+        if (driver.getDriver() != Driver.EMPTY_DRIVER) {
+          Integer g = driverToGroup.get(driver.getStableId());
+          if (g != null && g == currentGroup) {
+            com.antigravity.proto.RaceParticipant.Builder builder = // fqn-collision
+                RaceParticipantConverter.toProto(driver, new HashSet<>()).toBuilder();
+            builder.setRank(groupRank++);
+            groupParticipants.add(builder.build());
+          }
+        }
+      }
+      return GroupStandingsUpdate.newBuilder()
+          .setGroup(currentGroup)
+          .addAllParticipants(groupParticipants)
+          .build();
+    }
+    return null;
   }
 
   public void updateScoreRecords() {
@@ -856,6 +898,11 @@ public class Race implements ProtocolListener {
     if (state != null) {
       builder.setRaceState(getProtoState(state));
       builder.setFlag(state.getFlagType(this));
+    }
+
+    GroupStandingsUpdate groupStandings = buildGroupStandingsUpdate();
+    if (groupStandings != null) {
+      builder.setGroupStandingsUpdate(groupStandings);
     }
 
     return builder.build();
