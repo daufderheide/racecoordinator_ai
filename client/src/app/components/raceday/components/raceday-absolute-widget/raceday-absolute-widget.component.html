@@ -49,9 +49,12 @@
         ></app-raceday-info-bar>
       }
       @case ("branding") {
-        <app-raceday-branding
+        <app-raceday-branding></app-raceday-branding>
+      }
+      @case ("qr") {
+        <app-raceday-qr
           [qrCodeUrl]="parentComponent().qrCodeUrl"
-        ></app-raceday-branding>
+        ></app-raceday-qr>
       }
       @case ("flag") {
         <app-raceday-flag

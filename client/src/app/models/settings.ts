@@ -11,6 +11,7 @@ export type WidgetType =
   | "menu-bar"
   | "race-info"
   | "branding"
+  | "qr"
   | "flag"
   | "timer"
   | "records"
@@ -150,6 +151,15 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+      },
+      {
+        id: "widget-qr",
+        widgetType: "qr",
+        x: 328,
+        y: 309,
+        width: 48,
+        height: 48,
+        zIndex: 110,
       },
       {
         id: "widget-flag",

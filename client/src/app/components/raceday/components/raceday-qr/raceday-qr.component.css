@@ -1,0 +1,24 @@
+app-raceday-qr {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.branding-qr {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  padding: 2px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.branding-qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

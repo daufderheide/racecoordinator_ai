@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, input, ViewEncapsulation } from "@angular/core";
+import { Component, ViewEncapsulation } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -10,6 +10,4 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, TranslatePipe],
 })
-export class RacedayBrandingComponent {
-  qrCodeUrl = input<string | undefined>(undefined);
-}
+export class RacedayBrandingComponent {}

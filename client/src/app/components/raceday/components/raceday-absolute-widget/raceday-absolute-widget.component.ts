@@ -15,6 +15,7 @@ import { RacedayLeaderboardComponent } from "@app/components/raceday/components/
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
 import { RacedayNextHeatComponent } from "@app/components/raceday/components/raceday-next-heat/raceday-next-heat.component";
 import { RacedayOnDeckComponent } from "@app/components/raceday/components/raceday-on-deck/raceday-on-deck.component";
+import { RacedayQrComponent } from "@app/components/raceday/components/raceday-qr/raceday-qr.component";
 import { RacedayRecordsComponent } from "@app/components/raceday/components/raceday-records/raceday-records.component";
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
@@ -31,6 +32,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     RacedayMenuBarComponent,
     RacedayInfoBarComponent,
     RacedayBrandingComponent,
+    RacedayQrComponent,
     RacedayFlagComponent,
     RacedayTimerComponent,
     RacedayRecordsComponent,

@@ -107,17 +107,15 @@ public class ClientCommandTaskHandlerTest {
     res = mock(HttpServletResponse.class);
     ctx = new Context(req, res, new HashMap<>());
 
-    // Clear subscription manager
-    ClientSubscriptionManager.getInstance().setRace(null);
-    ClientSubscriptionManager.getInstance().setProtocol(null);
+    // Reset subscription manager
+    ClientSubscriptionManager.setInstance(null);
 
     handler = new ClientCommandTaskHandler(databaseContext, app);
   }
 
   @After
   public void tearDown() {
-    ClientSubscriptionManager.getInstance().setRace(null);
-    ClientSubscriptionManager.getInstance().setProtocol(null);
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test

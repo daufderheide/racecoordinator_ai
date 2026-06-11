@@ -14,9 +14,6 @@ export class RacedayBrandingHarness
   protected getTaglineEl = this.locatorFor(
     RacedayBrandingHarnessBase.selectors.tagline,
   );
-  protected getQrImgEl = this.locatorForOptional(
-    RacedayBrandingHarnessBase.selectors.qrImg,
-  );
 
   async getLogoText(): Promise<string> {
     return await (await this.getLogoTextEl()).text();
@@ -24,10 +21,5 @@ export class RacedayBrandingHarness
 
   async getTagline(): Promise<string> {
     return await (await this.getTaglineEl()).text();
-  }
-
-  async getQrCodeSrc(): Promise<string | null> {
-    const el = await this.getQrImgEl();
-    return el ? await el.getAttribute("src") : null;
   }
 }

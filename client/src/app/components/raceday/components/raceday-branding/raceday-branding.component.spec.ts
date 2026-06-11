@@ -38,13 +38,4 @@ describe("RacedayBrandingComponent", () => {
     expect(await harness.getLogoText()).toContain("Race Coordinator AI");
     expect(await harness.getTagline()).toBe("RD_TAGLINE"); // key returned by mockTranslationService
   });
-
-  it("should conditionalize QR code visibility via harness", async () => {
-    expect(await harness.getQrCodeSrc()).toBeNull();
-
-    fixture.componentRef.setInput("qrCodeUrl", "data:image/png;base64,mock-qr");
-    fixture.detectChanges();
-
-    expect(await harness.getQrCodeSrc()).toBe("data:image/png;base64,mock-qr");
-  });
 });

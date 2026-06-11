@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-test.describe("Raceday Branding Visuals", () => {
+test.describe("Raceday QR Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
@@ -10,7 +10,7 @@ test.describe("Raceday Branding Visuals", () => {
     await page.setViewportSize({ width: 1600, height: 900 });
   });
 
-  test("should display branding widget with logo and tagline", async ({
+  test("should display QR code component in the dashboard layout", async ({
     page,
   }) => {
     await TestSetupHelper.waitForLocalization(
@@ -21,9 +21,12 @@ test.describe("Raceday Branding Visuals", () => {
 
     await page.locator(".dashboard-wrapper").waitFor();
 
-    const branding = page.locator("app-raceday-branding");
-    await expect(branding).toBeVisible();
+    const qrComponent = page.locator("app-raceday-qr");
+    await expect(qrComponent).toBeVisible();
 
-    await expect(branding).toHaveScreenshot("raceday-branding-initial.png");
+    const qrImage = qrComponent.locator(".branding-qr img");
+    await expect(qrImage).toBeVisible();
+
+    await expect(qrComponent).toHaveScreenshot("raceday-qr-initial.png");
   });
 });

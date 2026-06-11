@@ -24,8 +24,9 @@
 .customizing-widget-overlay {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
+  width: 100%;
+  min-width: 150px;
   height: 28px;
   background: rgba(15, 23, 42, 0.85);
   border-bottom: 1px solid rgba(59, 130, 246, 0.5);
@@ -35,6 +36,7 @@
   padding: 0 8px;
   z-index: 1010;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .widget-header-drag {
