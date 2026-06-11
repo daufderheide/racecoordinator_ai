@@ -742,6 +742,30 @@ describe("DefaultRacedaySetupComponent", () => {
     );
   }));
 
+  it("should show error modal when server returns TRACK_DELETED", fakeAsync(() => {
+    component.selectedRace = { entity_id: "r1", name: "Grand Prix" } as any;
+    component.selectedParticipants = [
+      { entity_id: "d1", name: "Alice" },
+    ] as any;
+
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(
+      of({
+        success: false,
+        errorCode: "TRACK_DELETED",
+      } as any),
+    );
+
+    component.startRace();
+    flush();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorTitle).toBe("RDS_ERR_VALIDATION_TITLE");
+    expect(component.errorMessage).toBe(
+      "RDS_ERR_TRACK_DELETED Grand Prix\n\nRDS_ERR_TRACK_DELETED_FIX",
+    );
+  }));
+
   describe("Natural Sorting", () => {
     it("should sort participants naturally using naturalSortParticipants method", () => {
       const participants = [

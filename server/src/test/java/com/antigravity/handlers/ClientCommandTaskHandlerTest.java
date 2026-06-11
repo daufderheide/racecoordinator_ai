@@ -794,6 +794,65 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   @SuppressWarnings("unchecked")
+  public void testInitializeRace_TrackDeleted_ShouldFail() throws Exception {
+    // 1. Setup Data
+    String raceId = "race-1";
+    String driverId = "driver-1";
+
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("deleted-track-id")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Dave", "D", driverId, null);
+
+    // 2. Mock Database interactions
+    FindIterable<Race> raceIterable = mock(FindIterable.class);
+    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
+    when(raceIterable.first()).thenReturn(race);
+
+    FindIterable<Track> trackIterable = mock(FindIterable.class);
+    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
+    when(trackIterable.first()).thenReturn(null); // Track is deleted/null
+
+    FindIterable<Team> teamIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
+    when(teamCollection.find()).thenReturn(teamIterable);
+    doAnswer(
+            invocation -> {
+              List<Team> list = invocation.getArgument(0);
+              return list;
+            })
+        .when(teamIterable)
+        .into(any(List.class));
+
+    FindIterable<Driver> driverIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
+    doAnswer(
+            invocation -> {
+              List<Driver> list = invocation.getArgument(0);
+              list.add(driver);
+              return list;
+            })
+        .when(driverIterable)
+        .into(any(List.class));
+
+    // 3. Mock Request
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder().setRaceId(raceId).addDriverIds("d_" + driverId).build();
+
+    // 4. Execute
+    TaskResult result = handler.handleInitializeRace(request);
+
+    // 5. Verify
+    InitializeRaceResponse response = InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse("Validation should fail", response.getSuccess());
+    assertEquals("TRACK_DELETED", response.getErrorCode());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void testInitializeRace_DeletedCustomRotation_ShouldFail() throws Exception {
     // 1. Setup Data
     String raceId = "race-1";

@@ -462,6 +462,8 @@
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Nessuna rotazione personalizzata definita. La rotazione personalizzata configurata per questa gara non esiste o è stata eliminata.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Selezionare un metodo di rotazione diverso o ricreare la rotazione personalizzata in Gestione Asset.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Rimuovere il pilota o il team ridondante prima di iniziare.",
+  "RDS_ERR_TRACK_DELETED": "Impossibile avviare la gara '{{race}}' perché la pista è stata eliminata.",
+  "RDS_ERR_TRACK_DELETED_FIX": "Aggiorna la configurazione della gara e riprova.",
   "RDS_ERR_VALIDATION_TITLE": "Errore di configurazione",
   "RDS_FILTER_DRIVERS": "Filtra piloti...",
   "RDS_FOOTER_TITLE": "Race Coordinator",

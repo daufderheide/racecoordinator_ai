@@ -462,6 +462,8 @@
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Es sind keine benutzerdefinierten Rotationen definiert. Die für dieses Rennen konfigurierte benutzerdefinierte Rotation existiert nicht oder wurde gelöscht.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Bitte wählen Sie eine andere Rotationsmethode oder erstellen Sie die benutzerdefinierte Rotation im Asset-Manager neu.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Bitte entfernen Sie den redundanten Fahrer oder das Team, bevor Sie starten.",
+  "RDS_ERR_TRACK_DELETED": "Rennen '{{race}}' kann nicht gestartet werden, da die Strecke gelöscht wurde.",
+  "RDS_ERR_TRACK_DELETED_FIX": "Bitte aktualisieren Sie die Rennkonfiguration und versuchen Sie es erneut.",
   "RDS_ERR_VALIDATION_TITLE": "Konfigurationsfehler",
   "RDS_FILTER_DRIVERS": "Fahrer filtern...",
   "RDS_FOOTER_TITLE": "Race Coordinator",

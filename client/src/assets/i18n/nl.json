@@ -462,6 +462,8 @@
   "RDS_ERR_NO_CUSTOM_ROTATIONS": "Er zijn geen aangepaste rotaties gedefinieerd. De voor deze race geconfigureerde aangepaste rotatie bestaat niet of is verwijderd.",
   "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX": "Selecteer een andere rotatiemethode of maak de aangepaste rotatie opnieuw aan in de Asset Manager.",
   "RDS_ERR_START_RACE_FIX_DESCRIPTION": "Verwijder de overtollige coureur of het team voordat u begint.",
+  "RDS_ERR_TRACK_DELETED": "Kan race '{{race}}' niet starten omdat het circuit is verwijderd.",
+  "RDS_ERR_TRACK_DELETED_FIX": "Werk de raceconfiguratie bij en probeer het opnieuw.",
   "RDS_ERR_VALIDATION_TITLE": "Configuratiefout",
   "RDS_FILTER_DRIVERS": "Filter coureurs...",
   "RDS_FOOTER_TITLE": "Race Coordinator",

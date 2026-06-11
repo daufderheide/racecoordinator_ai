@@ -840,6 +840,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
                 driver: response.driverName,
                 teams: response.teamNames.join(", "),
               };
+            } else if (response.errorCode === "TRACK_DELETED") {
+              this.errorMessage = "RDS_ERR_TRACK_DELETED";
+              this.errorMessageParams = {
+                race: this.selectedRace?.name || "",
+              };
             } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
               this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
               this.errorMessageParams = {};
@@ -857,7 +862,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
               const fixKey =
                 response.errorCode === "NO_CUSTOM_ROTATIONS"
                   ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
-                  : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
+                  : response.errorCode === "TRACK_DELETED"
+                    ? "RDS_ERR_TRACK_DELETED_FIX"
+                    : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
               const fixDescription = this.translationService.translate(fixKey);
               this.errorMessage = translatedMessage + "\n\n" + fixDescription;
               // Clear messageParams since we've already done the translation for the main part

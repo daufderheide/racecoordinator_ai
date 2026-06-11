@@ -321,6 +321,15 @@ public class ClientCommandTaskHandler {
         DatabaseService.getInstance()
             .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
 
+    if (raceTrack == null) {
+      InitializeRaceResponse response =
+          InitializeRaceResponse.newBuilder()
+              .setSuccess(false)
+              .setErrorCode("TRACK_DELETED")
+              .build();
+      return TaskResult.success(response.toByteArray());
+    }
+
     com.antigravity.race.Race runtimeRace = null; // fqn-collision
     try {
       runtimeRace =
