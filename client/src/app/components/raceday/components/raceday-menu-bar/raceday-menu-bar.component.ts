@@ -49,7 +49,6 @@ export class RacedayMenuBarComponent {
 
   isFileMenuOpen = false;
   isMenuOpen = false;
-  isLanesMenuOpen = false;
   isDriversStationOpen = false;
   isWindowsMenuOpen = false;
   isOptionsMenuOpen = false;
@@ -66,14 +65,6 @@ export class RacedayMenuBarComponent {
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
     this.closeOthers("menu");
-  }
-
-  toggleLanesMenu() {
-    this.isLanesMenuOpen = !this.isLanesMenuOpen;
-    if (!this.isLanesMenuOpen) {
-      this.isDriversStationOpen = false;
-    }
-    this.closeOthers("lanes");
   }
 
   toggleDriversStationMenu() {
@@ -94,16 +85,14 @@ export class RacedayMenuBarComponent {
     if (
       this.isFileMenuOpen ||
       this.isMenuOpen ||
-      this.isLanesMenuOpen ||
       this.isWindowsMenuOpen ||
       this.isOptionsMenuOpen
     ) {
       this.isFileMenuOpen = menu === "file";
       this.isMenuOpen = menu === "race";
-      this.isLanesMenuOpen = menu === "lanes";
       this.isWindowsMenuOpen = menu === "windows";
       this.isOptionsMenuOpen = menu === "options";
-      if (!this.isLanesMenuOpen) {
+      if (!this.isWindowsMenuOpen) {
         this.isDriversStationOpen = false;
       }
     }
@@ -154,18 +143,16 @@ export class RacedayMenuBarComponent {
   private closeOthers(active: string) {
     if (active !== "file") this.isFileMenuOpen = false;
     if (active !== "menu") this.isMenuOpen = false;
-    if (active !== "lanes") {
-      this.isLanesMenuOpen = false;
+    if (active !== "windows") {
+      this.isWindowsMenuOpen = false;
       this.isDriversStationOpen = false;
     }
-    if (active !== "windows") this.isWindowsMenuOpen = false;
     if (active !== "options") this.isOptionsMenuOpen = false;
   }
 
   private closeAll() {
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
-    this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;

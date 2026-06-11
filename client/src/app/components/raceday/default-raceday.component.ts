@@ -1524,7 +1524,6 @@ export class DefaultRacedayComponent
     if (!isInsideMenu) {
       this.isMenuOpen = false;
       this.isFileMenuOpen = false;
-      this.isLanesMenuOpen = false;
       this.isDriversStationOpen = false;
       this.isWindowsMenuOpen = false;
       this.isOptionsMenuOpen = false;
@@ -1565,7 +1564,6 @@ export class DefaultRacedayComponent
     );
     this.isMenuOpen = !this.isMenuOpen;
     this.isFileMenuOpen = false; // Close other menus
-    this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
@@ -1578,27 +1576,12 @@ export class DefaultRacedayComponent
     );
     this.isFileMenuOpen = !this.isFileMenuOpen;
     this.isMenuOpen = false; // Close other menus
-    this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
   }
 
-  isLanesMenuOpen = false;
   isDriversStationOpen = false;
-
-  toggleLanesMenu() {
-    this.logger.debug(
-      "Toggling Lanes menu. Current state:",
-      this.isLanesMenuOpen,
-    );
-    this.isLanesMenuOpen = !this.isLanesMenuOpen;
-    this.isFileMenuOpen = false;
-    this.isMenuOpen = false;
-    this.isDriversStationOpen = false; // Reset sub-menu on main toggle
-    this.isWindowsMenuOpen = false;
-    this.isOptionsMenuOpen = false;
-  }
 
   toggleDriversStationMenu() {
     this.logger.debug(
@@ -1616,7 +1599,6 @@ export class DefaultRacedayComponent
     this.isWindowsMenuOpen = !this.isWindowsMenuOpen;
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
-    this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isOptionsMenuOpen = false;
   }
@@ -1629,7 +1611,6 @@ export class DefaultRacedayComponent
     this.isOptionsMenuOpen = !this.isOptionsMenuOpen;
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
-    this.isLanesMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isWindowsMenuOpen = false;
   }
@@ -1657,7 +1638,6 @@ export class DefaultRacedayComponent
     return (
       this.isFileMenuOpen ||
       this.isMenuOpen ||
-      this.isLanesMenuOpen ||
       this.isWindowsMenuOpen ||
       this.isOptionsMenuOpen
     );
@@ -1667,13 +1647,11 @@ export class DefaultRacedayComponent
     if (this.isAnyMenuDropdownOpen()) {
       if (menuName === "file" && this.isFileMenuOpen) return;
       if (menuName === "race" && this.isMenuOpen) return;
-      if (menuName === "lanes" && this.isLanesMenuOpen) return;
       if (menuName === "windows" && this.isWindowsMenuOpen) return;
       if (menuName === "options" && this.isOptionsMenuOpen) return;
 
       this.isFileMenuOpen = false;
       this.isMenuOpen = false;
-      this.isLanesMenuOpen = false;
       this.isDriversStationOpen = false;
       this.isWindowsMenuOpen = false;
       this.isOptionsMenuOpen = false;
@@ -1682,8 +1660,6 @@ export class DefaultRacedayComponent
         this.isFileMenuOpen = true;
       } else if (menuName === "race") {
         this.isMenuOpen = true;
-      } else if (menuName === "lanes") {
-        this.isLanesMenuOpen = true;
       } else if (menuName === "windows") {
         this.isWindowsMenuOpen = true;
       } else if (menuName === "options") {
@@ -2149,7 +2125,7 @@ export class DefaultRacedayComponent
 
   onLaneMenuSelect(laneIndex: number) {
     this.logger.debug("Lane selected for Driver Station:", laneIndex);
-    this.isLanesMenuOpen = false; // Close menu
+    this.isWindowsMenuOpen = false; // Close menu
     this.isDriversStationOpen = false;
 
     this.router.navigate(["/driver-station", laneIndex + 1]);

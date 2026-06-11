@@ -134,37 +134,7 @@
       </div>
     }
   </div>
-  @if (track() && track()!.lanes) {
-    <div class="menu-wrapper">
-      <button
-        class="menu-button-top"
-        (click)="toggleLanesMenu()"
-        (mouseenter)="onMenuItemHover('lanes')"
-      >
-        {{ "RD_MENU_LANES" | translate }}
-      </button>
-      @if (isLanesMenuOpen) {
-        <div class="menu-dropdown top-dropdown">
-          <div
-            class="menu-item has-submenu"
-            (click)="toggleDriversStationMenu(); $event.stopPropagation()"
-          >
-            {{ "RD_MENU_DRIVERS_STATION" | translate }}
-            <span class="submenu-arrow">▶</span>
-            @if (isDriversStationOpen) {
-              <div class="menu-dropdown submenu">
-                @for (lane of track()!.lanes; track lane; let i = $index) {
-                  <div class="menu-item" (click)="onLaneMenuSelect(i)">
-                    {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  }
+
   <div class="menu-wrapper">
     <button
       id="windows-menu-button"
@@ -182,6 +152,25 @@
         <div class="menu-item" (click)="onWindowsMenuSelect('RACE_RESULTS')">
           {{ "RD_WIN_RACE_RESULTS" | translate }}
         </div>
+        @if (track() && track()!.lanes) {
+          <div class="menu-separator"></div>
+          <div
+            class="menu-item has-submenu"
+            (click)="toggleDriversStationMenu(); $event.stopPropagation()"
+          >
+            {{ "RD_MENU_DRIVERS_STATION" | translate }}
+            <span class="submenu-arrow">▶</span>
+            @if (isDriversStationOpen) {
+              <div class="menu-dropdown submenu">
+                @for (lane of track()!.lanes; track lane; let i = $index) {
+                  <div class="menu-item" (click)="onLaneMenuSelect(i)">
+                    {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
       </div>
     }
   </div>

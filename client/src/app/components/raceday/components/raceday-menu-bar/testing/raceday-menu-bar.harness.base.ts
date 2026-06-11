@@ -10,6 +10,6 @@ export abstract class RacedayMenuBarHarnessBase {
   abstract clickMenuButton(label: string): Promise<void>;
   abstract clickMenuItem(label: string): Promise<void>;
   abstract isMenuOpen(
-    menuType: "file" | "race" | "lanes" | "windows" | "options",
+    menuType: "file" | "race" | "windows" | "options",
   ): Promise<boolean>;
 }

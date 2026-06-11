@@ -41,7 +41,7 @@ export class RacedayMenuBarHarness
   }
 
   async isMenuOpen(
-    menuType: "file" | "race" | "lanes" | "windows" | "options",
+    menuType: "file" | "race" | "windows" | "options",
   ): Promise<boolean> {
     // Determine open state by checking matching wrapper states
     const host = await this.host();

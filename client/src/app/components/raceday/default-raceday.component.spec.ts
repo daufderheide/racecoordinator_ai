@@ -1936,7 +1936,7 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
-  describe("Lanes Menu and Drivers Station", () => {
+  describe("Windows Menu and Drivers Station", () => {
     beforeEach(() => {
       fixture.detectChanges();
       const mockRouter = TestBed.inject(Router) as any;
@@ -1953,25 +1953,19 @@ describe("DefaultRacedayComponent", () => {
       spyOn(window, "open").and.returnValue(null as any);
     });
 
-    it("should toggle lanes menu", () => {
-      expect(component.isLanesMenuOpen).toBeFalse();
-      component.toggleLanesMenu();
-      expect(component.isLanesMenuOpen).toBeTrue();
-    });
-
     it("should toggle drivers station sub-menu", () => {
-      component.isLanesMenuOpen = true;
+      component.isWindowsMenuOpen = true;
       expect(component.isDriversStationOpen).toBeFalse();
       component.toggleDriversStationMenu();
       expect(component.isDriversStationOpen).toBeTrue();
     });
 
     it("should reset menu states when one is toggled", () => {
-      component.isLanesMenuOpen = true;
+      component.isWindowsMenuOpen = true;
       component.isDriversStationOpen = true;
       component.isOptionsMenuOpen = true;
       component.toggleMenu();
-      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
@@ -1981,13 +1975,13 @@ describe("DefaultRacedayComponent", () => {
 
       component.onLaneMenuSelect(1);
 
-      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 2]);
     });
 
     it("should close all menus on document click outside", () => {
-      component.isLanesMenuOpen = true;
+      component.isWindowsMenuOpen = true;
       component.isDriversStationOpen = true;
       component.isOptionsMenuOpen = true;
 
@@ -1997,7 +1991,7 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       component.onDocumentClick(mockEvent);
 
-      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
@@ -2979,10 +2973,6 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isAnyMenuDropdownOpen()).toBeTrue();
 
       component.isMenuOpen = false;
-      component.isLanesMenuOpen = true;
-      expect(component.isAnyMenuDropdownOpen()).toBeTrue();
-
-      component.isLanesMenuOpen = false;
       component.isWindowsMenuOpen = true;
       expect(component.isAnyMenuDropdownOpen()).toBeTrue();
     });
@@ -2990,7 +2980,6 @@ describe("DefaultRacedayComponent", () => {
     it("should do nothing on hover if no menus are open", () => {
       component.isFileMenuOpen = false;
       component.isMenuOpen = false;
-      component.isLanesMenuOpen = false;
       component.isWindowsMenuOpen = false;
 
       component.onMenuItemHover("race");
@@ -3008,12 +2997,8 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isFileMenuOpen).toBeFalse();
       expect(component.isMenuOpen).toBeTrue();
 
-      component.onMenuItemHover("lanes");
-      expect(component.isMenuOpen).toBeFalse();
-      expect(component.isLanesMenuOpen).toBeTrue();
-
       component.onMenuItemHover("windows");
-      expect(component.isLanesMenuOpen).toBeFalse();
+      expect(component.isMenuOpen).toBeFalse();
       expect(component.isWindowsMenuOpen).toBeTrue();
 
       component.onMenuItemHover("file");
@@ -3029,7 +3014,6 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isFileMenuOpen).toBeFalse();
       expect(component.isMenuOpen).toBeFalse();
-      expect(component.isLanesMenuOpen).toBeFalse();
       expect(component.isWindowsMenuOpen).toBeFalse();
     });
   });
