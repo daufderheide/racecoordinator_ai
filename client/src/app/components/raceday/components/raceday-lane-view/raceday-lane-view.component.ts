@@ -1,6 +1,7 @@
 import { CdkDrag, CdkDragHandle, CdkDropList } from "@angular/cdk/drag-drop";
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -9,7 +10,14 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./raceday-lane-view.component.html",
   styleUrls: ["./raceday-lane-view.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, CdkDropList, CdkDrag, CdkDragHandle, TranslatePipe],
+  imports: [
+    CommonModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
+    TranslatePipe,
+    FormsModule,
+  ],
 })
 export class RacedayLaneViewComponent {
   parent = input<any>(undefined);

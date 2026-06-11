@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 /* eslint-disable max-lines-per-function */
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ChangeDetectorRef,
@@ -454,12 +454,19 @@ export class DefaultRacedayComponent
   }
 
   get toolboxScale(): number {
-    return this.isUIEditorMode() ? this.uiScale() : 1;
+    return this.isUIEditorMode() ? this.scale : 1;
   }
   layoutChanged = output<LayoutConfig>();
+  columnsChanged = output<void>();
   isLayoutCustomizing = false;
+  isLayoutEditorMinimized = false;
   layout!: LayoutConfig;
   draggedWidgetType: string | null = null;
+
+  toggleLayoutEditorMinimize(event: Event) {
+    event.stopPropagation();
+    this.isLayoutEditorMinimized = !this.isLayoutEditorMinimized;
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if (
@@ -1827,6 +1834,242 @@ export class DefaultRacedayComponent
     this.driverStationTabs = [];
   }
 
+  // Layout Editing - Column and Anchor Handlers
+
+  onColumnDrop(event: CdkDragDrop<string[]>) {
+    if (!this.isUIEditorMode()) return;
+    const settings = this.editingSettings();
+    if (!settings || !settings.racedayColumns) return;
+
+    moveItemInArray(
+      settings.racedayColumns,
+      event.previousIndex,
+      event.currentIndex,
+    );
+    this.loadColumns();
+    this.cdr.markForCheck();
+    this.columnsChanged.emit();
+  }
+
+  onColumnDragOver(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    (event.currentTarget as HTMLElement).classList.add("drag-over");
+  }
+
+  onColumnDragLeave(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    (event.currentTarget as HTMLElement).classList.remove("drag-over");
+  }
+
+  onColumnHeaderDrop(event: DragEvent, dropColData: ColumnDefinition) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    event.stopPropagation();
+    (event.currentTarget as HTMLElement).classList.remove("drag-over");
+
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData("application/json");
+        if (dataStr) {
+          const data = JSON.parse(dataStr);
+          if (data.type === "new-column" && data.key) {
+            const settings = this.editingSettings();
+            if (!settings) return;
+            let changed = false;
+
+            const idx = settings.racedayColumns.indexOf(
+              dropColData.propertyName,
+            );
+            if (!settings.racedayColumns.includes(data.key)) {
+              if (idx >= 0) {
+                settings.racedayColumns.splice(idx, 0, data.key);
+              } else {
+                settings.racedayColumns.push(data.key);
+              }
+              changed = true;
+            }
+
+            const fuelKeys = [
+              "participant.fuelLevel",
+              "fuelCapacity",
+              "fuelPercentage",
+              "imageset_fuel-gauge-builtin",
+            ];
+            const defaultVis = fuelKeys.includes(data.key)
+              ? ColumnVisibility.FuelRaceOnly
+              : ColumnVisibility.Always;
+
+            if (settings.columnVisibility?.[data.key] !== defaultVis) {
+              if (!settings.columnVisibility) settings.columnVisibility = {};
+              settings.columnVisibility[data.key] = defaultVis;
+              changed = true;
+            }
+
+            if (changed) {
+              this.loadColumns();
+              this.cdr.markForCheck();
+              this.columnsChanged.emit();
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  onColumnHeaderRowDrop(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    (event.currentTarget as HTMLElement).classList.remove("drag-over");
+
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData("application/json");
+        if (dataStr) {
+          const data = JSON.parse(dataStr);
+          if (data.type === "new-column" && data.key) {
+            const settings = this.editingSettings();
+            if (!settings) return;
+            let changed = false;
+
+            if (!settings.racedayColumns.includes(data.key)) {
+              settings.racedayColumns.push(data.key);
+              changed = true;
+            }
+
+            const fuelKeys = [
+              "participant.fuelLevel",
+              "fuelCapacity",
+              "fuelPercentage",
+              "imageset_fuel-gauge-builtin",
+            ];
+            const defaultVis = fuelKeys.includes(data.key)
+              ? ColumnVisibility.FuelRaceOnly
+              : ColumnVisibility.Always;
+
+            if (settings.columnVisibility?.[data.key] !== defaultVis) {
+              if (!settings.columnVisibility) settings.columnVisibility = {};
+              settings.columnVisibility[data.key] = defaultVis;
+              changed = true;
+            }
+
+            if (changed) {
+              this.loadColumns();
+              this.cdr.markForCheck();
+              this.columnsChanged.emit();
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  deleteColumn(colData: ColumnDefinition) {
+    if (!this.isUIEditorMode()) return;
+    const settings = this.editingSettings();
+    if (!settings) return;
+
+    settings.racedayColumns = settings.racedayColumns.filter(
+      (c) => c !== colData.propertyName,
+    );
+    this.loadColumns();
+    this.cdr.markForCheck();
+    this.columnsChanged.emit();
+  }
+
+  changeColumnVisibility(colData: ColumnDefinition, visibility: string) {
+    if (!this.isUIEditorMode()) return;
+    const settings = this.editingSettings();
+    if (!settings) return;
+    if (!settings.columnVisibility) settings.columnVisibility = {};
+    settings.columnVisibility[colData.propertyName] =
+      visibility as ColumnVisibility;
+    this.loadColumns();
+    this.cdr.markForCheck();
+    this.columnsChanged.emit();
+  }
+
+  onAnchorDragOver(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  }
+
+  onAnchorDragEnter(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    (event.target as HTMLElement).classList.add("drag-over");
+  }
+
+  onAnchorDragLeave(event: DragEvent) {
+    if (!this.isUIEditorMode()) return;
+    (event.target as HTMLElement).classList.remove("drag-over");
+  }
+
+  onAnchorDrop(event: DragEvent, colData: ColumnDefinition, anchor: string) {
+    if (!this.isUIEditorMode()) return;
+    event.preventDefault();
+    (event.target as HTMLElement).classList.remove("drag-over");
+
+    if (event.dataTransfer) {
+      try {
+        const dataStr = event.dataTransfer.getData("application/json");
+        if (dataStr) {
+          const data = JSON.parse(dataStr);
+          if (data.type === "new-column" && data.key) {
+            const settings = this.editingSettings();
+            if (!settings) return;
+            if (!settings.columnLayouts) settings.columnLayouts = {};
+            if (!settings.columnLayouts[colData.propertyName]) {
+              settings.columnLayouts[colData.propertyName] = {
+                "center-center": colData.propertyName,
+              };
+            }
+            settings.columnLayouts[colData.propertyName][
+              anchor as AnchorPoint
+            ] = data.key;
+            this.loadColumns();
+            this.cdr.markForCheck();
+            this.columnsChanged.emit();
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  deleteAnchor(colData: ColumnDefinition, anchor: string, event: Event) {
+    if (!this.isUIEditorMode()) return;
+    event.stopPropagation();
+    const settings = this.editingSettings();
+    if (!settings) return;
+    if (!settings.columnLayouts) settings.columnLayouts = {};
+    if (!settings.columnLayouts[colData.propertyName]) {
+      settings.columnLayouts[colData.propertyName] = {
+        "center-center": colData.propertyName,
+      };
+    }
+
+    delete settings.columnLayouts[colData.propertyName][anchor as AnchorPoint];
+    this.loadColumns();
+    this.cdr.markForCheck();
+    this.columnsChanged.emit();
+  }
+
+  hasAnchorValue(colData: ColumnDefinition, anchor: string): boolean {
+    const settings = this.editingSettings();
+    if (
+      !settings ||
+      !settings.columnLayouts ||
+      !settings.columnLayouts[colData.propertyName]
+    ) {
+      return anchor === "center-center";
+    }
+    return !!settings.columnLayouts[colData.propertyName][
+      anchor as AnchorPoint
+    ];
+  }
+
   onFileMenuSelect(action: string) {
     this.logger.debug("File menu action:", action);
     // Assuming 'activeMenu' is a property that controls which menu is open.
@@ -2104,18 +2347,22 @@ export class DefaultRacedayComponent
 
   getFullUrl(url: string | undefined): string {
     if (!url) return "";
-    if (
-      url.startsWith("http") ||
-      url.startsWith("data:") ||
-      url.startsWith("assets/")
-    )
+
+    // Explicitly allow full URLs and data URIs
+    if (url.startsWith("http") || url.startsWith("data:")) {
       return url;
+    }
 
     const serverUrl = this.dataService.serverUrl;
     if (!serverUrl || serverUrl.includes("undefined")) return url;
 
+    // In local development, the Java backend (port 7070) serves dynamic assets under /assets/
+    // (e.g. uploaded images, generated assets like fuel gauges).
+    // Static frontend assets might reside in assets/, but the DB assets are usually prefixed with /assets/
+    // We want to prepend the backend serverUrl so the Angular Dev Server doesn't 404 them.
     const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
     const path = url.startsWith("/") ? url : "/" + url;
+
     return base + path;
   }
 
@@ -2198,6 +2445,7 @@ export class DefaultRacedayComponent
     const visibilityMap = settings.columnVisibility || {};
 
     selectedColumns = selectedColumns.filter((key) => {
+      if (this.isUIEditorMode()) return true;
       const visibility = visibilityMap[key] || ColumnVisibility.Always;
       if (visibility === ColumnVisibility.Always) return true;
       if (visibility === ColumnVisibility.FuelRaceOnly) return isFuelRace;
@@ -2382,7 +2630,8 @@ export class DefaultRacedayComponent
     const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
     const race = this.raceService.getRace();
     const capacity =
-      (this.track?.hasDigitalFuel()
+      (typeof this.track?.hasDigitalFuel === "function" &&
+      this.track.hasDigitalFuel()
         ? race?.digital_fuel_options?.capacity
         : race?.fuel_options?.capacity) || 100;
 
@@ -2563,7 +2812,7 @@ export class DefaultRacedayComponent
 
   getTeammates(hd: DriverHeatData | any): any[] {
     const team = hd.participant?.team || hd.driver?.team;
-    if (team) {
+    if (team && team.driverIds) {
       return this.allDrivers.filter((d) =>
         team.driverIds.includes(d.entity_id || d.id),
       );
@@ -3031,7 +3280,9 @@ export class DefaultRacedayComponent
       "next-heat",
     ];
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
-    return allTypes.filter((t) => !used.has(t));
+    return allTypes
+      .filter((t) => !used.has(t))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   onToolboxDragStart(event: DragEvent, type: string) {

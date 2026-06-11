@@ -116,63 +116,109 @@
   <!-- Layout Customizer Floating Panel -->
   @if (isLayoutCustomizing) {
     <div
-      class="layout-customizer-toolbox"
-      cdkDrag
-      [cdkDragScale]="toolboxScale"
+      class="layout-customizer-toolbox-wrapper"
+      [style.transform]="isUIEditorMode() ? 'scale(1.6)' : 'none'"
     >
       <div
-        class="toolbox-title"
-        cdkDragHandle
-        style="cursor: move; display: flex; align-items: center; gap: 6px"
+        class="layout-customizer-toolbox"
+        cdkDrag
+        [cdkDragScale]="toolboxScale"
+        cdkDragBoundary=".dashboard-wrapper"
       >
-        <span class="material-icons drag-indicator-icon">drag_indicator</span>
-        {{ "UE_LABEL_LAYOUT_EDITOR" | translate }}
-      </div>
-      <div class="toolbox-subtitle">
-        {{ "UE_HINT_DRAG_COMPONENTS_DOCK" | translate }}
-      </div>
-
-      <div class="toolbox-widget-list">
-        @for (widget of getUnusedWidgets(); track widget) {
-          <div
-            class="toolbox-widget-item"
-            draggable="true"
-            (dragstart)="onToolboxDragStart($event, widget)"
-            [title]="'UE_TITLE_DRAG_WIDGET_DOCK' | translate"
-          >
+        <div
+          class="toolbox-title"
+          cdkDragHandle
+          style="
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 6px">
             <span class="material-icons drag-indicator-icon"
               >drag_indicator</span
             >
-            <span class="material-icons toolbox-widget-icon">extension</span>
-            <span class="toolbox-widget-label">{{ widget }}</span>
+            {{ "UE_LABEL_LAYOUT_EDITOR" | translate }}
           </div>
-        }
-        @if (getUnusedWidgets().length === 0) {
-          <div class="toolbox-empty-msg">
-            {{ "UE_HINT_ALL_COMPONENTS_DOCKED" | translate }}
-          </div>
-        }
-      </div>
-
-      @if (!isUIEditorMode()) {
-        <div class="toolbox-buttons">
-          <button class="toolbox-btn save-btn" (click)="saveLayout()">
-            Save Layout
-          </button>
           <button
-            class="toolbox-btn cancel-btn"
-            (click)="cancelLayoutCustomize()"
+            class="minimize-btn"
+            (click)="toggleLayoutEditorMinimize($event)"
+            [title]="
+              (isLayoutEditorMinimized ? 'UE_BTN_EXPAND' : 'UE_BTN_MINIMIZE')
+                | translate
+            "
+            style="
+              background: none;
+              border: none;
+              color: #38bdf8;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              padding: 2px;
+              margin-left: auto;
+            "
           >
-            Cancel
-          </button>
-          <button
-            class="toolbox-btn reset-btn"
-            (click)="resetLayoutToDefaults()"
-          >
-            Reset Defaults
+            <span class="material-icons" style="font-size: 18px">{{
+              isLayoutEditorMinimized
+                ? "keyboard_arrow_down"
+                : "keyboard_arrow_up"
+            }}</span>
           </button>
         </div>
-      }
+
+        @if (!isLayoutEditorMinimized) {
+          <div class="toolbox-subtitle">
+            {{ "UE_HINT_DRAG_COMPONENTS_DOCK" | translate }}
+          </div>
+
+          <div class="toolbox-widget-list">
+            @for (widget of getUnusedWidgets(); track widget) {
+              <div
+                class="toolbox-widget-item"
+                draggable="true"
+                (dragstart)="onToolboxDragStart($event, widget)"
+                [title]="'UE_TITLE_DRAG_WIDGET_DOCK' | translate"
+              >
+                <span class="material-icons drag-indicator-icon"
+                  >drag_indicator</span
+                >
+                <span class="material-icons toolbox-widget-icon"
+                  >extension</span
+                >
+                <span class="toolbox-widget-label">{{ widget }}</span>
+              </div>
+            }
+            @if (getUnusedWidgets().length === 0) {
+              <div class="toolbox-empty-msg">
+                {{ "UE_HINT_ALL_COMPONENTS_DOCKED" | translate }}
+              </div>
+            }
+          </div>
+
+          @if (!isUIEditorMode()) {
+            <div class="toolbox-buttons">
+              <button class="toolbox-btn save-btn" (click)="saveLayout()">
+                Save Layout
+              </button>
+              <button
+                class="toolbox-btn cancel-btn"
+                (click)="cancelLayoutCustomize()"
+              >
+                Cancel
+              </button>
+              <button
+                class="toolbox-btn reset-btn"
+                (click)="resetLayoutToDefaults()"
+              >
+                Reset Defaults
+              </button>
+            </div>
+          }
+        }
+      </div>
     </div>
   }
 </div>

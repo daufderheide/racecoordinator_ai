@@ -326,3 +326,62 @@
   z-index: 5;
   white-space: nowrap;
 }
+/* UI Editor Mode - Column Drop Zones */
+.anchor-drop-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.drop-zone {
+  position: relative;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  background-color: rgba(59, 130, 246, 0.3);
+  border-color: #3b82f6;
+}
+
+.drop-zone.disabled {
+  pointer-events: none;
+  background-color: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.3);
+}
+
+.delete-anchor-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ef4444;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 110;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.body-cell:hover .delete-anchor-btn {
+  opacity: 1;
+}
+
+.delete-col-btn:hover {
+  color: #ef4444 !important;
+}
+

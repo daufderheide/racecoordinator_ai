@@ -252,89 +252,109 @@ app-default-raceday {
     overflow: visible;
   }
 
-  /* Floating customizer toolbox sidebar */
-  .layout-customizer-toolbox {
+  .layout-customizer-toolbox-wrapper {
     position: absolute;
     top: 12px;
-    right: 12px;
-    width: 300px;
-    background: rgba(30, 41, 59, 0.95);
-    /* Slate 800 with transparency */
-    border: 1px solid rgba(59, 130, 246, 0.5);
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(59, 130, 246, 0.1);
-    backdrop-filter: blur(10px);
-    padding: 16px;
+    left: 12px;
     z-index: 10000;
+    transform-origin: top left;
+  }
+
+  /* Floating customizer toolbox sidebar */
+  .layout-customizer-toolbox {
+    position: relative;
+    width: 260px;
+    background-color: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.05);
     display: flex;
     flex-direction: column;
-    color: #fff;
+    max-height: 40vh;
+    overflow: hidden;
+    font-family: 'Rajdhani', sans-serif;
+    color: #e2e8f0;
     box-sizing: border-box;
   }
 
   .toolbox-title {
-    font-family: 'Orbitron', sans-serif;
+    padding: 12px 16px;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: #38bdf8;
-    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 1px;
+    color: #38bdf8;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    background-color: rgba(15, 23, 42, 0.6);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    display: flex;
+    align-items: center;
+    user-select: none;
   }
 
   .toolbox-subtitle {
-    font-size: 11px;
+    padding: 10px 16px;
+    font-size: 13px;
     color: #94a3b8;
-    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    line-height: 1.4;
   }
 
   .toolbox-widget-list {
     flex: 1;
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-    padding: 8px;
-    min-height: 120px;
-    max-height: 300px;
     overflow-y: auto;
-    margin-bottom: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   .toolbox-widget-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(51, 65, 85, 0.5);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 4px;
     padding: 8px 12px;
-    margin-bottom: 6px;
+    background-color: rgba(56, 189, 248, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    border-radius: 6px;
     cursor: grab;
-    transition: background 0.15s, border-color 0.15s;
+    color: #e2e8f0;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease-in-out;
   }
 
   .toolbox-widget-item:hover {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    background-color: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
   }
 
   .toolbox-widget-icon {
-    font-size: 16px;
+    font-size: 17px;
     color: #38bdf8;
   }
 
   .drag-indicator-icon {
-    font-size: 16px;
-    color: #64748b;
+    font-size: 17px;
+    color: rgba(56, 189, 248, 0.4);
     cursor: grab;
     user-select: none;
   }
 
   .toolbox-widget-label {
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: capitalize;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .toolbox-empty-msg {
@@ -349,6 +369,9 @@ app-default-raceday {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding: 10px 16px 16px 16px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background-color: rgba(15, 23, 42, 0.3);
   }
 
   .toolbox-btn {

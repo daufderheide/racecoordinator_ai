@@ -4,13 +4,104 @@
     <div
       class="table-header-row"
       [style.grid-template-columns]="parent().gridTemplateColumns"
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      (cdkDropListDropped)="parent().onColumnDrop($event)"
+      [cdkDropListDisabled]="!parent().isUIEditorMode()"
+      (dragover)="
+        parent().isUIEditorMode() ? parent().onColumnDragOver($event) : null
+      "
+      (dragleave)="
+        parent().isUIEditorMode() ? parent().onColumnDragLeave($event) : null
+      "
+      (drop)="
+        parent().isUIEditorMode()
+          ? parent().onColumnHeaderRowDrop($event)
+          : null
+      "
     >
       @for (
         col of parent().columns;
         track parent().trackByColumn($index, col)
       ) {
-        <div class="header-cell">
-          {{ parent().getColumnLabel(col) }}
+        <div
+          class="header-cell"
+          cdkDrag
+          [cdkDragData]="col"
+          [cdkDragDisabled]="!parent().isUIEditorMode()"
+          (dragover)="
+            parent().isUIEditorMode() ? parent().onColumnDragOver($event) : null
+          "
+          (drop)="
+            parent().isUIEditorMode()
+              ? parent().onColumnHeaderDrop($event, col)
+              : null
+          "
+        >
+          @if (parent().isUIEditorMode()) {
+            <span
+              class="material-icons"
+              cdkDragHandle
+              style="
+                font-size: 16px;
+                opacity: 0.7;
+                cursor: grab;
+                margin-left: 8px;
+              "
+              >drag_indicator</span
+            >
+          }
+          <div
+            class="header-cell-content"
+            style="
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            {{ parent().getColumnLabel(col) }}
+          </div>
+
+          @if (parent().isUIEditorMode()) {
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <button
+                class="delete-col-btn"
+                (click)="parent().deleteColumn(col)"
+                title="Delete Column"
+                style="
+                  border: none;
+                  background: transparent;
+                  color: inherit;
+                  font-size: 16px;
+                  cursor: pointer;
+                  padding: 0 4px;
+                "
+              >
+                ×
+              </button>
+              <select
+                class="col-visibility-select"
+                [ngModel]="
+                  parent().editingSettings()?.columnVisibility?.[
+                    col.propertyName
+                  ] || 'Always'
+                "
+                (ngModelChange)="parent().changeColumnVisibility(col, $event)"
+                style="
+                  font-size: 10px;
+                  background: rgba(0, 0, 0, 0.5);
+                  color: white;
+                  border: none;
+                  border-radius: 2px;
+                "
+              >
+                <option value="Always">Always</option>
+                <option value="FuelRaceOnly">Fuel Race</option>
+                <option value="NonFuelRaceOnly">No Fuel Race</option>
+              </select>
+            </div>
+          }
         </div>
       }
     </div>
@@ -190,7 +281,6 @@
                         <span class="material-icons">drag_indicator</span>
                       </div>
                     }
-                    <!-- Static Text for Individuals or non-name properties -->
                     @if (
                       !parent().isNameProperty(entry.property) ||
                       !parent().isTeam(hd)
@@ -215,6 +305,164 @@
                     }
                   </div>
                 }
+              }
+
+              <!-- 3x3 Drop Zones overlay for editing -->
+              @if (parent().isUIEditorMode()) {
+                <div class="anchor-drop-grid">
+                  <div
+                    class="drop-zone tl"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'top-left')"
+                  >
+                    @if (parent().hasAnchorValue(col, "top-left")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="parent().deleteAnchor(col, 'top-left', $event)"
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone tc"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'top-center')"
+                  >
+                    @if (parent().hasAnchorValue(col, "top-center")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'top-center', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone tr"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'top-right')"
+                  >
+                    @if (parent().hasAnchorValue(col, "top-right")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'top-right', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone ml"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'center-left')"
+                  >
+                    @if (parent().hasAnchorValue(col, "center-left")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'center-left', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div class="drop-zone mc disabled"></div>
+                  <!-- CenterCenter not allowed -->
+                  <div
+                    class="drop-zone mr"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'center-right')"
+                  >
+                    @if (parent().hasAnchorValue(col, "center-right")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'center-right', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone bl"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'bottom-left')"
+                  >
+                    @if (parent().hasAnchorValue(col, "bottom-left")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'bottom-left', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone bc"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'bottom-center')"
+                  >
+                    @if (parent().hasAnchorValue(col, "bottom-center")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'bottom-center', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="drop-zone br"
+                    (dragover)="parent().onAnchorDragOver($event)"
+                    (dragenter)="parent().onAnchorDragEnter($event)"
+                    (dragleave)="parent().onAnchorDragLeave($event)"
+                    (drop)="parent().onAnchorDrop($event, col, 'bottom-right')"
+                  >
+                    @if (parent().hasAnchorValue(col, "bottom-right")) {
+                      <button
+                        class="delete-anchor-btn"
+                        (click)="
+                          parent().deleteAnchor(col, 'bottom-right', $event)
+                        "
+                        title="Remove item"
+                      >
+                        ×
+                      </button>
+                    }
+                  </div>
+                </div>
               }
             </div>
           }

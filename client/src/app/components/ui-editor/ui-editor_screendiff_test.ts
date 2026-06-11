@@ -78,62 +78,6 @@ test.describe("UI Editor Visuals", () => {
     );
   });
 
-  test("should show column config dialog when clicking configure columns", async ({
-    page,
-  }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/ui-editor"),
-    );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
-
-    const editor = page.locator(".ue-container");
-    const harness = new UIEditorHarnessE2e(editor);
-
-    await harness.clickReorderColumns();
-
-    const _dialog = await harness.getReorderDialogHarness();
-
-    // Wait for reorder modal to be visible
-    await page
-      .locator(".reorder-modal")
-      .waitFor({ state: "visible", timeout: 10000 });
-    // Title checked visually
-
-    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
-      "ui-editor-reorder-modal.png",
-    );
-  });
-
-  test("should show avatar and image set columns in reorder dialog", async ({
-    page,
-  }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/ui-editor"),
-    );
-
-    const editor = page.locator(".ue-container");
-    const harness = new UIEditorHarnessE2e(editor);
-
-    await harness.clickReorderColumns();
-
-    const dialog = await harness.getReorderDialogHarness();
-    // Wait for reorder modal to be visible
-    await page
-      .locator(".reorder-modal")
-      .waitFor({ state: "visible", timeout: 10000 });
-
-    const _values = await dialog.getAvailableValues();
-    // Values checked visually
-
-    await expect(page.locator(".reorder-modal")).toHaveScreenshot(
-      "ui-editor-columns-list.png",
-    );
-  });
-
   test("should highlight duplicate theme name and show confirmation on leave", async ({
     page,
   }) => {

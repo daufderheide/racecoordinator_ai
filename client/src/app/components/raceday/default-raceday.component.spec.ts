@@ -3275,4 +3275,179 @@ describe("DefaultRacedayComponent", () => {
       document.body.removeChild(testElement);
     });
   });
+
+  describe("Column Editor Integration", () => {
+    let mockSettings: Settings;
+
+    beforeEach(() => {
+      mockSettings = Object.assign(new Settings(), {
+        racedayColumns: ["driver.nickname", "lapCount"],
+        columnLayouts: {
+          "driver.nickname": {
+            "center-center": "driver.nickname",
+          },
+        },
+        columnVisibility: {
+          "driver.nickname": ColumnVisibility.Always,
+        },
+      });
+
+      fixture.componentRef.setInput("editingSettings", mockSettings);
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.detectChanges();
+    });
+
+    it("should handle onColumnDragOver correctly", () => {
+      const element = document.createElement("div");
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        dataTransfer: { dropEffect: "" },
+        currentTarget: element,
+      } as any;
+
+      component.onColumnDragOver(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.dataTransfer.dropEffect).toBe("copy");
+      expect(element.classList.contains("drag-over")).toBeTrue();
+    });
+
+    it("should handle onColumnDragLeave correctly", () => {
+      const element = document.createElement("div");
+      element.classList.add("drag-over");
+      const event = {
+        currentTarget: element,
+      } as any;
+
+      component.onColumnDragLeave(event);
+
+      expect(element.classList.contains("drag-over")).toBeFalse();
+    });
+
+    it("should insert a new column on drop at header level", () => {
+      spyOn(component.columnsChanged, "emit");
+      const element = document.createElement("div");
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        currentTarget: element,
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.returnValue(
+            JSON.stringify({
+              type: "new-column",
+              key: "lastLapTime",
+              label: "RD_COL_LAP_TIME",
+            }),
+          ),
+        },
+      } as any;
+
+      const colData = { propertyName: "lapCount" } as any;
+
+      component.onColumnHeaderDrop(event, colData);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(element.classList.contains("drag-over")).toBeFalse();
+      expect(mockSettings.racedayColumns).toContain("lastLapTime");
+      // inserted before lapCount
+      expect(mockSettings.racedayColumns.indexOf("lastLapTime")).toBe(1);
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should append a new column on drop at row level", () => {
+      spyOn(component.columnsChanged, "emit");
+      const element = document.createElement("div");
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        currentTarget: element,
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.returnValue(
+            JSON.stringify({
+              type: "new-column",
+              key: "lastLapTime",
+              label: "RD_COL_LAP_TIME",
+            }),
+          ),
+        },
+      } as any;
+
+      component.onColumnHeaderRowDrop(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(element.classList.contains("drag-over")).toBeFalse();
+      expect(mockSettings.racedayColumns).toContain("lastLapTime");
+      expect(
+        mockSettings.racedayColumns[mockSettings.racedayColumns.length - 1],
+      ).toBe("lastLapTime");
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should delete column on deleteColumn", () => {
+      spyOn(component.columnsChanged, "emit");
+      const colData = { propertyName: "lapCount" } as any;
+
+      component.deleteColumn(colData);
+
+      expect(mockSettings.racedayColumns).not.toContain("lapCount");
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should change column visibility on changeColumnVisibility", () => {
+      spyOn(component.columnsChanged, "emit");
+      const colData = { propertyName: "driver.nickname" } as any;
+
+      component.changeColumnVisibility(colData, "FuelRaceOnly");
+
+      expect(mockSettings.columnVisibility["driver.nickname"]).toBe(
+        ColumnVisibility.FuelRaceOnly,
+      );
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should drop column key into anchor slot", () => {
+      spyOn(component.columnsChanged, "emit");
+      const element = document.createElement("div");
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        target: element,
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.returnValue(
+            JSON.stringify({
+              type: "new-column",
+              key: "lastLapTime",
+            }),
+          ),
+        },
+      } as any;
+
+      const colData = { propertyName: "driver.nickname" } as any;
+
+      component.onAnchorDrop(event, colData, "bottom-left");
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(mockSettings.columnLayouts["driver.nickname"]["bottom-left"]).toBe(
+        "lastLapTime",
+      );
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should delete anchor value on deleteAnchor", () => {
+      spyOn(component.columnsChanged, "emit");
+      const event = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      } as any;
+      const colData = { propertyName: "driver.nickname" } as any;
+
+      // check setup
+      expect(component.hasAnchorValue(colData, "center-center")).toBeTrue();
+
+      component.deleteAnchor(colData, "center-center", event);
+
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(component.hasAnchorValue(colData, "center-center")).toBeFalse();
+      expect(component.columnsChanged.emit).toHaveBeenCalled();
+    });
+  });
 });

@@ -13,7 +13,6 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
-import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
@@ -22,10 +21,6 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
-import {
-  ReorderDialogData,
-  ReorderDialogResult,
-} from "@app/components/ui-editor/reorder-dialog/reorder-dialog.component";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AudioConfig } from "@app/models/driver";
@@ -41,13 +36,12 @@ import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
 import { deepCopy } from "@app/utils/clone.utils";
 
-import { ColumnPreviewComponent } from "./column-preview/column-preview.component";
-import { ReorderDialogComponent } from "./reorder-dialog/reorder-dialog.component";
-
 export interface UIEditorState {
   settings: Settings;
   themes: Theme[];
 }
+
+import { ColumnToolboxComponent } from "./column-toolbox/column-toolbox.component";
 
 @Component({
   standalone: true,
@@ -57,17 +51,16 @@ export interface UIEditorState {
   imports: [
     CommonModule,
     EditorTitleComponent,
-    ColumnPreviewComponent,
     FormsModule,
     ImageSelectorComponent,
     AudioSelectorComponent,
     ToolbarComponent,
     NgTemplateOutlet,
-    ReorderDialogComponent,
     ConfirmationModalComponent,
     TranslatePipe,
     AcknowledgementModalComponent,
     DefaultRacedayComponent,
+    ColumnToolboxComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -112,8 +105,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   customDirectoryName: string | null = null;
   isNavigationApproved = false;
 
-  showReorderModal = false;
-  reorderModalData: ReorderDialogData | null = null;
+  get hasLaneViewWidget(): boolean {
+    return !!this.editingSettings?.racedayLayout?.widgets?.some(
+      (w) => w.widgetType === "lane-view",
+    );
+  }
 
   // Success modal properties
   showSuccessModal = false;
@@ -245,18 +241,29 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return "";
   }
 
-  onRacedayLayoutChanged(newLayout?: any) {
-    if (newLayout) {
-      this.editingSettings.racedayLayout = JSON.parse(
-        JSON.stringify(newLayout),
-      );
-    }
+  onRacedayLayoutChanged(newLayout: any) {
+    if (this.isSaving) return;
+    this.editingSettings.racedayLayout = newLayout;
+    this.undoManager.captureState();
+  }
+
+  onColumnsChanged() {
+    if (this.isSaving) return;
+    // editingSettings.racedayColumns and columnLayouts are mutated directly by default-raceday
+    // we just need to capture the state
     this.undoManager.captureState();
   }
 
   resetRacedayLayout() {
     this.editingSettings.racedayLayout = JSON.parse(
       JSON.stringify(Settings.DEFAULT_LAYOUT),
+    );
+    this.editingSettings.racedayColumns = [...Settings.DEFAULT_COLUMNS];
+    this.editingSettings.columnLayouts = JSON.parse(
+      JSON.stringify(new Settings().columnLayouts),
+    );
+    this.editingSettings.columnVisibility = JSON.parse(
+      JSON.stringify(new Settings().columnVisibility),
     );
     // Provide new object reference for child components to detect change
     this.editingState.settings = deepCopy(this.editingSettings);
@@ -324,7 +331,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   handleKeyboardEvent(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
-      if (this.showReorderModal) return; // Prevent undo during modal
       if (event.shiftKey) {
         this.redo();
       } else {
@@ -333,7 +339,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     if ((event.metaKey || event.ctrlKey) && event.key === "y") {
       event.preventDefault();
-      if (this.showReorderModal) return;
       this.redo();
     }
   }
@@ -482,56 +487,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   trackByThemeId(index: number, theme: Theme): string {
     return theme.entity_id;
-  }
-
-  get resizingColumnKey(): string | null {
-    if (!this.editingSettings) return null;
-    const columns = this.editingSettings.racedayColumns;
-    const layouts = this.editingSettings.columnLayouts || {};
-    const nameKeys = ["driver.name", "driver.nickname"];
-
-    for (const key of columns) {
-      const layout = layouts[key] || { [AnchorPoint.CenterCenter]: key };
-      const containsName = Object.values(layout).some((v) =>
-        nameKeys.includes((v as string).split("_")[0]),
-      );
-      if (containsName) return key;
-    }
-    return columns.length > 0 ? columns[0] : null;
-  }
-
-  openReorderDialog() {
-    this.reorderModalData = {
-      availableValues: this.availableColumns,
-      columnSlots: this.displayColumnSlots,
-      columnLayouts: JSON.parse(
-        JSON.stringify(this.editingSettings.columnLayouts || {}),
-      ),
-      columnVisibility: JSON.parse(
-        JSON.stringify(this.editingSettings.columnVisibility || {}),
-      ),
-      screenName: "Default",
-    };
-    this.showReorderModal = true;
-  }
-
-  onReorderSave(result: ReorderDialogResult) {
-    const newSettings = this.cloneSettings(this.editingState.settings);
-    newSettings.racedayColumns = result.columns;
-    newSettings.columnLayouts = result.columnLayouts;
-    newSettings.columnVisibility = result.columnVisibility;
-    this.editingState.settings = newSettings;
-
-    this.refreshDisplayProperties();
-    this.captureState();
-    if (!this.isDestroyed) {
-      this.cdr.markForCheck();
-    }
-  }
-
-  onReorderCancel() {
-    this.showReorderModal = false;
-    this.reorderModalData = null;
   }
 
   private cloneSettings(s: Settings): Settings {

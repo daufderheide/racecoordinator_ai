@@ -44,6 +44,31 @@ export function createMockEditorData(): MockEditorData {
       p.best_lap_time,
       p.lap_count,
     );
+    hd.reactionTime = p.reaction_time || 0.123;
+    hd.gapLeader = p.gap_leader || 0;
+    hd.gapPosition = p.gap_position || 0;
+
+    // Add mock fuel and seed to participant if missing
+    if (hd.participant) {
+      (hd.participant as any).fuelLevel = p.fuelLevel || 50;
+      (hd.participant as any).seed = p.seed || index + 1;
+      (hd.participant as any).team = p.team || { name: `Team ${index + 1}` };
+    }
+
+    // Add mock segment times
+    hd.addSegmentTime(0, 0.5);
+    hd.addSegmentTime(1, 0.6);
+    hd.addSegmentTime(2, 0.7);
+
+    // Inject custom column attributes that may be dynamically accessed
+    (hd as any).rankHeat = p.rank;
+    (hd as any).rankOverall = p.rank + 1;
+    (hd as any).speedMph = 15.5;
+    (hd as any).speedKph = 25.0;
+    (hd as any).speedFph = 80000;
+    (hd as any).fuelPercentage = p.fuelLevel;
+    (hd as any).fuelCapacity = 100;
+
     return hd;
   });
 
@@ -68,6 +93,7 @@ export function createMockEditorData(): MockEditorData {
 function createMockTrack(): Track {
   return {
     name: "Mock Editor Track",
+    hasDigitalFuel: () => true,
     lanes: [
       { id: 1, color: "#FF0000" },
       { id: 2, color: "#0000FF" },
@@ -85,7 +111,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         id: "d1",
         name: "Mario",
         nickname: "Jumpman",
-        avatarUrl: "",
+        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Mario",
       } as unknown as Driver,
       lane: 1,
       total_time: 120,
@@ -95,6 +121,12 @@ function createMockRaceParticipants(): RaceParticipant[] {
       average_lap_time: 2.5,
       median_lap_time: 2.4,
       rank: 1,
+      reaction_time: 0.05,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: 1,
+      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
     } as unknown as RaceParticipant,
     {
       id: "p2",
@@ -102,7 +134,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         id: "d2",
         name: "Luigi",
         nickname: "Green Mario",
-        avatarUrl: "",
+        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Luigi",
       } as unknown as Driver,
       lane: 2,
       total_time: 125,
@@ -112,6 +144,12 @@ function createMockRaceParticipants(): RaceParticipant[] {
       average_lap_time: 3.0,
       median_lap_time: 2.9,
       rank: 2,
+      reaction_time: 0.15,
+      gap_leader: 5,
+      gap_position: 5,
+      fuelLevel: 80,
+      seed: 2,
+      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
     } as unknown as RaceParticipant,
     {
       id: "p3",
@@ -119,7 +157,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         id: "d3",
         name: "Bowser",
         nickname: "King Koopa",
-        avatarUrl: "",
+        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Bowser",
       } as unknown as Driver,
       lane: 3,
       total_time: 130,
@@ -129,6 +167,12 @@ function createMockRaceParticipants(): RaceParticipant[] {
       average_lap_time: 3.2,
       median_lap_time: 3.1,
       rank: 3,
+      reaction_time: 0.223,
+      gap_leader: 10,
+      gap_position: 5,
+      fuelLevel: 60,
+      seed: 3,
+      team: { name: "Koopa Troop", driverIds: ["d3"] },
     } as unknown as RaceParticipant,
     {
       id: "p4",
@@ -136,7 +180,7 @@ function createMockRaceParticipants(): RaceParticipant[] {
         id: "d4",
         name: "Peach",
         nickname: "Princess",
-        avatarUrl: "",
+        avatarUrl: "https://api.dicebear.com/7.x/pixel-art/svg?seed=Peach",
       } as unknown as Driver,
       lane: 4,
       total_time: 140,
@@ -146,6 +190,12 @@ function createMockRaceParticipants(): RaceParticipant[] {
       average_lap_time: 3.6,
       median_lap_time: 3.5,
       rank: 4,
+      reaction_time: 0.101,
+      gap_leader: 20,
+      gap_position: 10,
+      fuelLevel: 40,
+      seed: 4,
+      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
     } as unknown as RaceParticipant,
   ];
 }

@@ -1,0 +1,71 @@
+<div
+  class="layout-customizer-toolbox"
+  cdkDrag
+  [cdkDragScale]="scale()"
+  cdkDragBoundary=".section-content"
+>
+  <div
+    class="toolbox-title"
+    cdkDragHandle
+    style="
+      cursor: move;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      box-sizing: border-box;
+    "
+  >
+    <div style="display: flex; align-items: center; gap: 6px">
+      <span class="material-icons drag-indicator-icon">drag_indicator</span>
+      {{ "UE_TITLE_COLUMN_EDITOR" | translate }}
+    </div>
+    <button
+      class="minimize-btn"
+      (click)="toggleMinimize($event)"
+      [title]="
+        (isMinimized() ? 'UE_BTN_EXPAND' : 'UE_BTN_MINIMIZE') | translate
+      "
+      style="
+        background: none;
+        border: none;
+        color: #38bdf8;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        margin-left: auto;
+      "
+    >
+      <span class="material-icons" style="font-size: 18px">{{
+        isMinimized() ? "keyboard_arrow_down" : "keyboard_arrow_up"
+      }}</span>
+    </button>
+  </div>
+
+  @if (!isMinimized()) {
+    <div class="toolbox-subtitle">
+      {{ "UE_HINT_DRAG_COLUMNS_DOCK" | translate }}
+    </div>
+
+    <div class="toolbox-widget-list">
+      @for (col of sortedAvailableColumns(); track col.key) {
+        <div
+          class="toolbox-widget-item"
+          draggable="true"
+          (dragstart)="onDragStart($event, col)"
+          title="Drag to add column"
+        >
+          <span class="material-icons drag-indicator-icon">drag_indicator</span>
+          <span class="material-icons toolbox-widget-icon">view_column</span>
+          <span class="toolbox-widget-label">{{ col.label | translate }}</span>
+        </div>
+      }
+      @if (availableColumns().length === 0) {
+        <div class="toolbox-empty-msg">
+          {{ "UE_HINT_ALL_COMPONENTS_DOCKED" | translate }}
+        </div>
+      }
+    </div>
+  }
+</div>

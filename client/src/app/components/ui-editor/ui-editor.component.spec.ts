@@ -81,8 +81,18 @@ class MockEditorTitleComponent {
 class MockColumnPreviewComponent {
   columnSlots = input<any[]>([]);
   columnLayouts = input<any>({});
-  resizingColumnKey = input<string | null>(null);
+
   columnVisibility = input<any>({});
+}
+
+@Component({
+  selector: "app-column-toolbox",
+  standalone: true,
+  template: "",
+})
+class MockColumnToolboxComponent {
+  availableColumns = input<any[]>([]);
+  scale = input<number>(1);
 }
 
 @Component({
@@ -144,18 +154,6 @@ class MockAcknowledgementModalComponent {
   message = input<string>("");
   messageParams = input<any>({});
   acknowledge = output<void>();
-}
-@Component({
-  selector: "app-reorder-dialog",
-  standalone: true,
-  template: "",
-  imports: [FormsModule],
-})
-class MockReorderDialogComponent {
-  visible = input<boolean>(false);
-  data = input<any>();
-  save = output<any>();
-  cancel = output<void>();
 }
 
 @Component({
@@ -310,7 +308,8 @@ describe("UIEditorComponent", () => {
         MockImageSelectorComponent,
         MockEditorTitleComponent,
         MockColumnPreviewComponent,
-        MockReorderDialogComponent,
+        MockColumnToolboxComponent,
+
         MockAssetPreviewComponent,
         MockToolbarComponent,
         MockConfirmationModalComponent,
@@ -417,84 +416,64 @@ describe("UIEditorComponent", () => {
     expect(slots[1].label).toBe("RD_COL_LAP");
   });
 
-  it("should determine resizing column key", () => {
-    component.editingSettings.racedayColumns = ["lapCount", "driver.name"];
-    component.refreshDisplayProperties();
-    component.editingSettings.columnLayouts = {
-      lapCount: { [AnchorPoint.CenterCenter]: "lapCount" },
-      "driver.name": { [AnchorPoint.CenterCenter]: "driver.name" },
-    };
-    // driver.name is a name key, so it should be prioritized for resizing
-    expect(component.resizingColumnKey).toBe("driver.name");
-
-    component.editingSettings.racedayColumns = ["lapCount"];
-    component.refreshDisplayProperties();
-    component.editingSettings.columnLayouts = {
-      lapCount: { [AnchorPoint.CenterCenter]: "lapCount" },
-    };
-    expect(component.resizingColumnKey).toBe("lapCount");
+  it("should capture state on onColumnsChanged", () => {
+    spyOn(component.undoManager, "captureState");
+    component.onColumnsChanged();
+    expect(component.undoManager.captureState).toHaveBeenCalled();
   });
 
-  it("should open and handle reorder dialog", () => {
-    component.openReorderDialog();
-    expect(component.showReorderModal).toBeTrue();
-    expect(component.reorderModalData).toBeTruthy();
+  it("should reset layout to default values", () => {
+    spyOn(component.undoManager, "captureState");
 
-    const result = {
-      columns: ["lapCount"],
-      columnLayouts: { lapCount: { [AnchorPoint.CenterCenter]: "lapCount" } },
-      columnVisibility: { lapCount: "Always" },
-    };
-    component.onReorderSave(result as any);
-    expect(component.editingSettings.racedayColumns).toEqual(["lapCount"]);
-    // Should NOT close automatically on save (auto-save)
-    expect(component.showReorderModal).toBeTrue();
+    // Set some custom values
+    component.editingSettings.racedayColumns = ["custom-col"];
+    component.editingSettings.columnLayouts = { "custom-col": {} };
 
-    component.onReorderCancel();
-    expect(component.showReorderModal).toBeFalse();
+    component.resetRacedayLayout();
+
+    expect(component.editingSettings.racedayColumns).toEqual(
+      Settings.DEFAULT_COLUMNS,
+    );
+    expect(component.undoManager.captureState).toHaveBeenCalled();
   });
 
-  it("should keep reorder dialog open after multiple auto-saves and persist settings", fakeAsync(() => {
-    component.openReorderDialog();
-    expect(component.showReorderModal).toBeTrue();
+  it("should calculate hasLaneViewWidget correctly based on active widgets", () => {
+    // Initially no widgets
+    component.editingSettings.racedayLayout = { widgets: [] };
+    expect(component.hasLaneViewWidget).toBeFalse();
 
-    // First edit (auto-save)
-    const result1 = {
-      columns: ["col1"],
-      columnLayouts: { col1: { [AnchorPoint.CenterCenter]: "col1" } },
-      columnVisibility: { col1: "Always" },
+    // With random widgets
+    component.editingSettings.racedayLayout = {
+      widgets: [
+        {
+          id: "w1",
+          widgetType: "leaderboard",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+        },
+      ],
     };
-    component.onReorderSave(result1 as any);
-    expect(component.showReorderModal).toBeTrue();
-    expect(component.editingSettings.racedayColumns).toEqual(["col1"]);
+    expect(component.hasLaneViewWidget).toBeFalse();
 
-    // Auto-save should be triggered by captureState() -> stateCommitted$ -> autoSaveSettings()
-    tick(200);
-    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-    mockSettingsService.saveSettings.calls.reset();
-    (component as any).isSaving = false;
-
-    // Second edit (auto-save)
-    const result2 = {
-      columns: ["col1", "col2"],
-      columnLayouts: {
-        col1: { [AnchorPoint.CenterCenter]: "col1" },
-        col2: { [AnchorPoint.CenterCenter]: "col2" },
-      },
-      columnVisibility: { col1: "Always", col2: "Always" },
+    // With lane-view widget
+    component.editingSettings.racedayLayout = {
+      widgets: [
+        {
+          id: "w2",
+          widgetType: "lane-view",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          zIndex: 1,
+        },
+      ],
     };
-    component.onReorderSave(result2 as any);
-    expect(component.showReorderModal).toBeTrue();
-    expect(component.editingSettings.racedayColumns).toEqual(["col1", "col2"]);
-
-    tick(200);
-    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
-
-    // Final close
-    component.onReorderCancel();
-    expect(component.showReorderModal).toBeFalse();
-    expect(component.reorderModalData).toBeNull();
-  }));
+    expect(component.hasLaneViewWidget).toBeTrue();
+  });
 
   it("should handle sortByStandings change", () => {
     component.editingSettings.sortByStandings = false;

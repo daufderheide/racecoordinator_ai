@@ -116,17 +116,19 @@ export class RacedayFormatUtils {
     } else if (baseKey === "fuelCapacity") {
       const race = ctx.getRace();
       const track = ctx.getTrack();
-      const capacity = track?.hasDigitalFuel()
-        ? race?.digital_fuel_options?.capacity
-        : race?.fuel_options?.capacity;
+      const capacity =
+        typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
+          ? race?.digital_fuel_options?.capacity
+          : race?.fuel_options?.capacity;
       return capacity !== undefined ? capacity.toFixed(1) : "--.-";
     } else if (baseKey === "fuelPercentage") {
       const level = hd.participant?.fuelLevel ?? (hd.driver as any)?.fuelLevel;
       const race = ctx.getRace();
       const track = ctx.getTrack();
-      const capacity = track?.hasDigitalFuel()
-        ? race?.digital_fuel_options?.capacity
-        : race?.fuel_options?.capacity;
+      const capacity =
+        typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel()
+          ? race?.digital_fuel_options?.capacity
+          : race?.fuel_options?.capacity;
       if (level !== undefined && capacity !== undefined && capacity > 0) {
         const percentage = Math.round((level / capacity) * 100);
         return percentage + "%";
