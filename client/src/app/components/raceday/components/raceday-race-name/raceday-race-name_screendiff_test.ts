@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-test.describe("Raceday Info Bar Visuals", () => {
+test.describe("Raceday Race Name Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
@@ -10,7 +10,7 @@ test.describe("Raceday Info Bar Visuals", () => {
     await page.setViewportSize({ width: 1600, height: 900 });
   });
 
-  test("should display race details in the info bar", async ({ page }) => {
+  test("should display race name correctly", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -19,9 +19,9 @@ test.describe("Raceday Info Bar Visuals", () => {
 
     await page.locator(".dashboard-wrapper").waitFor();
 
-    const infoBar = page.locator("app-raceday-info-bar");
-    await expect(infoBar).toBeVisible();
+    const raceNameWidget = page.locator("app-raceday-race-name");
+    await expect(raceNameWidget).toBeVisible();
 
-    await expect(infoBar).toHaveScreenshot("raceday-info-bar.png");
+    await expect(raceNameWidget).toHaveScreenshot("raceday-race-name.png");
   });
 });

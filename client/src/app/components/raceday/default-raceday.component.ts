@@ -3016,7 +3016,9 @@ export class DefaultRacedayComponent
   getUnusedWidgets(): WidgetType[] {
     const allTypes: WidgetType[] = [
       "menu-bar",
-      "race-info",
+      "race-name",
+      "heat-info",
+      "track-name",
       "branding",
       "qr",
       "flag",

@@ -1,0 +1,15 @@
+@if (heat()) {
+  <div class="info-section">
+    <span class="label-text">{{ "RD_HEAT" | translate }}:</span>
+    <span class="value-text"
+      >{{
+        "RD_HEAT_OF_TOTAL"
+          | translate: { current: heat()!.heatNumber, total: totalHeats() }
+      }}<!--
+   -->
+      @if (race() && race()!.group_options && race()!.group_options.enabled) {
+        - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat()!.group + 1 }}
+      }
+    </span>
+  </div>
+}

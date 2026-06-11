@@ -1,0 +1,32 @@
+app-raceday-race-name {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.info-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.label-text {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-right: 8px;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+.value-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+}

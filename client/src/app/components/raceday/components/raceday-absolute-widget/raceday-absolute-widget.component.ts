@@ -9,15 +9,17 @@ import {
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
-import { RacedayInfoBarComponent } from "@app/components/raceday/components/raceday-info-bar/raceday-info-bar.component";
+import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
 import { RacedayNextHeatComponent } from "@app/components/raceday/components/raceday-next-heat/raceday-next-heat.component";
 import { RacedayOnDeckComponent } from "@app/components/raceday/components/raceday-on-deck/raceday-on-deck.component";
 import { RacedayQrComponent } from "@app/components/raceday/components/raceday-qr/raceday-qr.component";
+import { RacedayRaceNameComponent } from "@app/components/raceday/components/raceday-race-name/raceday-race-name.component";
 import { RacedayRecordsComponent } from "@app/components/raceday/components/raceday-records/raceday-records.component";
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
+import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 @Component({
@@ -30,7 +32,9 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     CommonModule,
     DragDropModule,
     RacedayMenuBarComponent,
-    RacedayInfoBarComponent,
+    RacedayRaceNameComponent,
+    RacedayHeatInfoComponent,
+    RacedayTrackNameComponent,
     RacedayBrandingComponent,
     RacedayQrComponent,
     RacedayFlagComponent,

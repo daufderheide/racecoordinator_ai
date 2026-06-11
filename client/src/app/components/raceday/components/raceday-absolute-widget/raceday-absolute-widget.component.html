@@ -40,13 +40,22 @@
           (languageSelected)="parentComponent().onLanguageSelected()"
         ></app-raceday-menu-bar>
       }
-      @case ("race-info") {
-        <app-raceday-info-bar
+      @case ("race-name") {
+        <app-raceday-race-name
+          [race]="parentComponent().race"
+        ></app-raceday-race-name>
+      }
+      @case ("heat-info") {
+        <app-raceday-heat-info
           [heat]="parentComponent().heat"
           [race]="parentComponent().race"
-          [track]="parentComponent().track"
           [totalHeats]="parentComponent().totalHeats"
-        ></app-raceday-info-bar>
+        ></app-raceday-heat-info>
+      }
+      @case ("track-name") {
+        <app-raceday-track-name
+          [track]="parentComponent().track"
+        ></app-raceday-track-name>
       }
       @case ("branding") {
         <app-raceday-branding></app-raceday-branding>

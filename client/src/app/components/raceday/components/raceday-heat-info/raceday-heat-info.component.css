@@ -1,12 +1,7 @@
-/* Info bar styles encapsulated or inherited globally */
-.top-info-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  height: 42px;
-  background: transparent;
+app-raceday-heat-info {
+  display: block;
   width: 100%;
-  box-sizing: border-box;
-  color: #fff;
+  height: 100%;
 }
 
 .info-section {
@@ -14,11 +9,8 @@
   align-items: center;
   justify-content: center;
   height: 100%;
+  box-sizing: border-box;
   border-right: 1px solid rgba(0, 0, 0, 0.15);
-}
-
-.info-section:last-child {
-  border-right: none;
 }
 
 .label-text {

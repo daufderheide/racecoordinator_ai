@@ -9,7 +9,9 @@ export enum ColumnVisibility {
 
 export type WidgetType =
   | "menu-bar"
-  | "race-info"
+  | "race-name"
+  | "heat-info"
+  | "track-name"
   | "branding"
   | "qr"
   | "flag"
@@ -135,19 +137,37 @@ export class Settings {
         zIndex: 100,
       },
       {
-        id: "widget-race-info",
-        widgetType: "race-info",
+        id: "widget-race-name",
+        widgetType: "race-name",
         x: 0,
         y: 54,
-        width: 1920,
-        height: 72,
+        width: 200,
+        height: 18,
+        zIndex: 100,
+      },
+      {
+        id: "widget-heat-info",
+        widgetType: "heat-info",
+        x: 640,
+        y: 54,
+        width: 200,
+        height: 18,
+        zIndex: 100,
+      },
+      {
+        id: "widget-track-name",
+        widgetType: "track-name",
+        x: 1280,
+        y: 54,
+        width: 200,
+        height: 18,
         zIndex: 100,
       },
       {
         id: "widget-branding",
         widgetType: "branding",
         x: 0,
-        y: 126,
+        y: 90,
         width: 384,
         height: 239,
         zIndex: 100,
@@ -156,7 +176,7 @@ export class Settings {
         id: "widget-qr",
         widgetType: "qr",
         x: 328,
-        y: 309,
+        y: 273,
         width: 48,
         height: 48,
         zIndex: 110,
@@ -165,7 +185,7 @@ export class Settings {
         id: "widget-flag",
         widgetType: "flag",
         x: 384,
-        y: 126,
+        y: 90,
         width: 384,
         height: 239,
         zIndex: 100,
@@ -174,7 +194,7 @@ export class Settings {
         id: "widget-timer",
         widgetType: "timer",
         x: 768,
-        y: 126,
+        y: 90,
         width: 384,
         height: 239,
         zIndex: 100,
@@ -183,7 +203,7 @@ export class Settings {
         id: "widget-records",
         widgetType: "records",
         x: 1152,
-        y: 126,
+        y: 90,
         width: 384,
         height: 239,
         zIndex: 100,
@@ -192,7 +212,7 @@ export class Settings {
         id: "widget-leaderboard",
         widgetType: "leaderboard",
         x: 1536,
-        y: 126,
+        y: 90,
         width: 384,
         height: 239,
         zIndex: 100,
@@ -201,9 +221,9 @@ export class Settings {
         id: "widget-lane-view",
         widgetType: "lane-view",
         x: 0,
-        y: 365,
+        y: 329,
         width: 1920,
-        height: 715,
+        height: 751,
         zIndex: 100,
       },
     ],
