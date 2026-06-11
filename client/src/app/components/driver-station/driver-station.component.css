@@ -149,6 +149,25 @@
   }
 }
 
+/* Non-fuel races have more space, so use same breakpoints but larger fonts */
+@media (max-width: 900px) {
+  .driver-station-container:not(.fuel-race) .driver-row .value.nickname-value {
+    font-size: 3.3rem;
+  }
+}
+
+@media (max-width: 650px) {
+  .driver-station-container:not(.fuel-race) .driver-row .value.nickname-value {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 550px) {
+  .driver-station-container:not(.fuel-race) .driver-row .value.nickname-value {
+    font-size: 2.5rem;
+  }
+}
+
 /* Other values - scale to fit */
 .data-row .value.shrink-value,
 .rank-col .value.shrink-value,
