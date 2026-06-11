@@ -33,13 +33,6 @@
                 {{ "RDS_MENU_TEAM_MANAGER" | translate }}
               </div>
               <hr class="setup-menu-dropdown-divider" />
-              <div
-                class="setup-menu-dropdown-item"
-                (click)="openTrackManager()"
-              >
-                {{ "RDS_MENU_TRACK" | translate }}
-              </div>
-              <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="openRaceManager()">
                 {{ "RDS_MENU_RACE" | translate }}
               </div>
@@ -51,6 +44,13 @@
                 (click)="closeConfigDropdown()"
               >
                 {{ "RDS_MENU_SEASON" | translate }}
+              </div>
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
+                (click)="openTrackManager()"
+              >
+                {{ "RDS_MENU_TRACK" | translate }}
               </div>
               <hr class="setup-menu-dropdown-divider" />
               <div
