@@ -43,6 +43,7 @@ public class DatabaseTaskHandlerTest {
   private MongoCollection<Document> countersCollection;
   private Javalin app;
   private DatabaseTaskHandler handler;
+  private ClientSubscriptionManager mockManager;
 
   @Before
   @SuppressWarnings("unchecked")
@@ -62,7 +63,15 @@ public class DatabaseTaskHandlerTest {
         .thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("counters"))).thenReturn(countersCollection);
 
+    mockManager = mock(ClientSubscriptionManager.class);
+    ClientSubscriptionManager.setInstance(mockManager);
+
     handler = new DatabaseTaskHandler(databaseContext, app);
+  }
+
+  @org.junit.After
+  public void tearDown() {
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test
@@ -470,7 +479,7 @@ public class DatabaseTaskHandlerTest {
     Race raceModel = new Race.Builder().withEntityId("race-123").build();
     when(activeRace.getRaceModel()).thenReturn(raceModel);
     when(activeRace.isDemoMode()).thenReturn(true);
-    ClientSubscriptionManager.getInstance().setRace(activeRace);
+    when(mockManager.getRace()).thenReturn(activeRace);
 
     // Mock db collection and result
     MongoCollection<DriverStatistics> statsCollection = mock(MongoCollection.class);
@@ -494,20 +503,16 @@ public class DatabaseTaskHandlerTest {
             null);
     when(findIterable.first()).thenReturn(stats);
 
-    try {
-      java.lang.reflect.Method method =
-          DatabaseTaskHandler.class.getDeclaredMethod("getDriverStatistics", Context.class);
-      method.setAccessible(true);
-      method.invoke(handler, ctx);
+    java.lang.reflect.Method method =
+        DatabaseTaskHandler.class.getDeclaredMethod("getDriverStatistics", Context.class);
+    method.setAccessible(true);
+    method.invoke(handler, ctx);
 
-      // Verify that it auto-detected demo and requested demo collection
-      verify(mongoDatabase).getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class));
-      verify(mongoDatabase, never())
-          .getCollection(eq("driver_statistics"), eq(DriverStatistics.class));
-      verify(res).setContentType("application/json");
-    } finally {
-      ClientSubscriptionManager.getInstance().setRace(null);
-    }
+    // Verify that it auto-detected demo and requested demo collection
+    verify(mongoDatabase).getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class));
+    verify(mongoDatabase, never())
+        .getCollection(eq("driver_statistics"), eq(DriverStatistics.class));
+    verify(res).setContentType("application/json");
   }
 
   @Test
@@ -536,7 +541,7 @@ public class DatabaseTaskHandlerTest {
     setParams.invoke(ctx, pathParams);
 
     // Mock active race is null
-    ClientSubscriptionManager.getInstance().setRace(null);
+    when(mockManager.getRace()).thenReturn(null);
 
     // Mock db collection and result
     MongoCollection<DriverStatistics> statsCollection = mock(MongoCollection.class);
