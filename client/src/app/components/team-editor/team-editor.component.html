@@ -7,6 +7,8 @@
     titleKey="TEM_TITLE"
     [undoManager]="undoManager"
     [showCopy]="true"
+    [disabledCopy]="!isConfigValid()"
+    [copyDisabledTooltipKey]="'TEM_TOOLTIP_COPY_DISABLED'"
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'teamEditorHelpShown'"

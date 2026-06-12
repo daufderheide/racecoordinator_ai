@@ -7,6 +7,8 @@
     titleKey="TE_TITLE"
     [undoManager]="undoManager"
     [showCopy]="true"
+    [disabledCopy]="!isConfigValid()"
+    [copyDisabledTooltipKey]="'TE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
     [helpSteps]="helpSteps"
     [helpRecordName]="'trackEditorHelpShown'"

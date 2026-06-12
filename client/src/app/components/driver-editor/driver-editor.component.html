@@ -7,6 +7,8 @@
     titleKey="DE_TITLE"
     [undoManager]="undoManager"
     [showCopy]="true"
+    [disabledCopy]="!isConfigValid()"
+    [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'driverEditorHelpShown'"

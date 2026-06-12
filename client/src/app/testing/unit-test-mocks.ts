@@ -254,6 +254,7 @@ export function resetMocks() {
   (mockRouter as any).events = new Subject().asObservable();
   mockRouter.serializeUrl.and.returnValue("mock-url");
   mockRouter.createUrlTree.and.returnValue({});
+  delete (mockRouter as any).url;
 
   // Restore default behaviors for mockAnalyticsService
   mockAnalyticsService.isEnabled.and.returnValue(true);

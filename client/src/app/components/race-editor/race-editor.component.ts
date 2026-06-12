@@ -129,6 +129,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;
@@ -320,6 +321,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.isReverting = false;
             return;
           }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/race-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
           const nextId = paramMap.get("id");
           const currentId = this.editingRace?.entity_id;
           if (
@@ -452,6 +461,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   /* eslint-disable max-lines-per-function */
   loadRace(id: string) {
+    this.isNavigationApproved = false;
     this.isLoading = true;
     this.dataService.getRaces().subscribe({
       next: (races) => {
@@ -687,6 +697,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   createNewRace() {
+    this.isNavigationApproved = false;
     this.editingRace = {
       entity_id: "new",
       name: "",

@@ -132,6 +132,14 @@ export class DriverEditorComponent
             this.isReverting = false;
             return;
           }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/driver-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
           const nextId = paramMap.get("id");
           const currentId = this.editingDriver?.entity_id;
           if (
@@ -227,6 +235,7 @@ export class DriverEditorComponent
   }
 
   loadData() {
+    this.isNavigationApproved = false;
     const idParam = this.route.snapshot.queryParamMap.get("id");
     if (!idParam) {
       throw new Error("Driver Editor: No entity ID provided.");
@@ -419,6 +428,7 @@ export class DriverEditorComponent
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;

@@ -60,7 +60,7 @@
       class="toolbar-btn info"
       (click)="onCopy()"
       [disabled]="isSaving() || disabledCopy()"
-      [title]="'TEM_BTN_SAVE_AS_NEW' | translate"
+      [title]="getCopyTooltip()"
     >
       <span class="material-icons">content_copy</span>
     </button>

@@ -274,6 +274,14 @@ export class CustomRotationEditorComponent
             this.isReverting = false;
             return;
           }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/custom-rotation-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
           const nextId = paramMap.get("id");
           const currentId = this.internalAssetId;
           if (
@@ -310,6 +318,7 @@ export class CustomRotationEditorComponent
   }
 
   private loadAssetData() {
+    this.isNavigationApproved = false;
     const idParam = this.route.snapshot.queryParamMap.get("id");
 
     this.isLoading = true;
@@ -419,6 +428,7 @@ export class CustomRotationEditorComponent
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;

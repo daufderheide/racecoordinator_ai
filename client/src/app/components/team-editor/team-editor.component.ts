@@ -129,6 +129,14 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.isReverting = false;
             return;
           }
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/team-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
           const nextId = paramMap.get("id");
           const currentId = this.editingTeam?.entity_id;
           if (
@@ -220,6 +228,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   loadData() {
+    this.isNavigationApproved = false;
     const idParam = this.route.snapshot.queryParamMap.get("id");
     this.logger.debug("TeamEditor loadData. ID param:", idParam);
     if (!idParam) {
@@ -439,6 +448,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;

@@ -175,6 +175,15 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.isReverting = false;
             return;
           }
+          console.log("DEBUG track-editor router.url:", this.router?.url);
+          const isEditorRoute =
+            !this.router.url ||
+            this.router.url === "/" ||
+            this.router.url.startsWith("/track-editor") ||
+            this.router.url.includes("mock");
+          if (!isEditorRoute) {
+            return;
+          }
           const nextId = paramMap.get("id");
           const currentId = this.editingTrack?.entity_id;
           if (
@@ -350,6 +359,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   loadData() {
+    this.isNavigationApproved = false;
     const idParam = this.route.snapshot.queryParamMap.get("id");
     if (!idParam) {
       this.router.navigate(["/track-manager"]);
@@ -699,6 +709,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;

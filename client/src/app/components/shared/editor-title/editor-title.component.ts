@@ -27,6 +27,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   showRedo = input(true);
   showHelp = input(true);
   showCopy = input(false);
+  disabledCopy = input(false);
+  copyDisabledTooltipKey = input("");
   showAdd = input(false);
   showDelete = input(false);
   showRegenerate = input(false);

@@ -39,6 +39,14 @@ export class ToolbarComponent implements OnInit {
   disabledEdit = input(false);
   disabledDelete = input(false);
   disabledCopy = input(false);
+  copyDisabledTooltipKey = input("");
+  getCopyTooltip(): string {
+    const key =
+      this.disabledCopy() && this.copyDisabledTooltipKey()
+        ? this.copyDisabledTooltipKey()
+        : "TEM_BTN_SAVE_AS_NEW";
+    return this.translationService.translate(key);
+  }
   showActivate = input(false);
   disabledActivate = input(false);
   undoManager = input<UndoManager<any>>();

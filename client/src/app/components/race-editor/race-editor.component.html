@@ -14,6 +14,8 @@
     titleKey="RE_TITLE"
     [undoManager]="undoManager"
     [showCopy]="true"
+    [disabledCopy]="!isConfigValid()"
+    [copyDisabledTooltipKey]="'RE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'raceEditorHelpShown'"
