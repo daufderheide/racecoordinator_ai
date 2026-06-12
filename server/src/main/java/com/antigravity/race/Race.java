@@ -335,6 +335,7 @@ public class Race implements ProtocolListener {
     this.currentHeat = h;
     recordsManager.resetHeatRecords();
     recordsManager.broadcastRecords();
+    updateAndBroadcastOverallStandings();
   }
 
   public IRaceState getState() {

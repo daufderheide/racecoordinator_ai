@@ -42,6 +42,9 @@ public class WarmupBroadcastTest {
             .build();
 
     Track mockTrack = mock(Track.class);
+    when(mockTrack.getEntityId()).thenReturn("mockTrackId");
+    when(mockTrack.getObjectId()).thenReturn(new org.bson.types.ObjectId().toString());
+    when(mockTrack.getName()).thenReturn("Test Track");
     Lane mockLane = new Lane("red", "black", 100);
     when(mockTrack.getLanes()).thenReturn(Collections.singletonList(mockLane));
 

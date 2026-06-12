@@ -169,6 +169,50 @@ public class RaceStateTest {
     verifyBroadcast(RaceState.RACE_OVER);
   }
 
+  @Test
+  public void testHeatOverBroadcastsFullSnapshot() throws Exception {
+    refreshSession();
+    race.changeState(new HeatOver());
+
+    // We expect the state broadcast AND the snapshot broadcast
+    // Verify that a RaceData containing the full Race proto was broadcast
+    verifyFullSnapshotBroadcast(RaceState.HEAT_OVER);
+  }
+
+  @Test
+  public void testRaceOverBroadcastsFullSnapshot() throws Exception {
+    refreshSession();
+    race.changeState(new RaceOver());
+
+    // We expect the state broadcast AND the snapshot broadcast
+    // Verify that a RaceData containing the full Race proto was broadcast
+    verifyFullSnapshotBroadcast(RaceState.RACE_OVER);
+  }
+
+  private void verifyFullSnapshotBroadcast(RaceState expectedState) throws Exception {
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    Session session = (Session) sessionField.get(currentMockWsContext);
+    RemoteEndpoint remote = session.getRemote();
+
+    ArgumentCaptor<ByteBuffer> captor = ArgumentCaptor.forClass(ByteBuffer.class);
+    verify(remote, timeout(200).atLeastOnce()).sendBytesByFuture(captor.capture());
+
+    boolean foundFullSnapshot = false;
+    for (ByteBuffer buf : captor.getAllValues()) {
+      RaceData raceData = RaceData.parseFrom(buf);
+      if (raceData.hasRace()
+          && raceData.getRaceState() == expectedState
+          && raceData.getRace().hasCurrentHeat()) {
+        foundFullSnapshot = true;
+        break;
+      }
+    }
+    assertTrue(
+        "Should have broadcast full snapshot with currentHeat on entering " + expectedState,
+        foundFullSnapshot);
+  }
+
   private void verifyBroadcast(RaceState expectedState) {
     try {
       Field sessionField = WsContext.class.getDeclaredField("session");
@@ -695,5 +739,69 @@ public class RaceStateTest {
     // Verify it goes directly to RaceOver, skipping remaining heats
     verifyBroadcast(RaceState.RACE_OVER);
     assertTrue(race.getState() instanceof RaceOver);
+  }
+
+  @Test
+  public void testSetCurrentHeatBroadcastsGroupStandings() throws Exception {
+    // Enable group options on model
+    Field modelField = com.antigravity.race.Race.class.getDeclaredField("model");
+    modelField.setAccessible(true);
+    Race oldModel = (Race) modelField.get(race);
+    Race newModel =
+        new Race.Builder()
+            .withName(oldModel.getName())
+            .withTrackEntityId(oldModel.getTrackEntityId())
+            .withHeatRotationType(oldModel.getHeatRotationType())
+            .withHeatScoring(oldModel.getHeatScoring())
+            .withOverallScoring(oldModel.getOverallScoring())
+            .withMinLapTime(oldModel.getMinLapTime())
+            .withFuelOptions(oldModel.getFuelOptions())
+            .withDigitalFuelOptions(oldModel.getDigitalFuelOptions())
+            .withTeamOptions(oldModel.getTeamOptions())
+            .withAutoAdvanceTime(oldModel.getAutoAdvanceTime())
+            .withAutoStartTime(oldModel.getAutoStartTime())
+            .withAutoAdvanceWarmupTime(oldModel.getAutoAdvanceWarmupTime())
+            .withAutoStartWarmupTime(oldModel.getAutoStartWarmupTime())
+            .withEntityId(oldModel.getEntityId())
+            .withId(oldModel.getId())
+            .withDriftTime(oldModel.getDriftTime())
+            .withGroupOptions(
+                new com.antigravity.models.GroupOptions(true, 2, false, true, false, true, 0))
+            .build();
+    modelField.set(race, newModel);
+
+    // Add another heat to race
+    List<Heat> heats = race.getHeats();
+    Heat h2 = mock(Heat.class);
+    when(h2.getDrivers()).thenReturn(new ArrayList<>());
+    when(h2.getHeatStandings()).thenReturn(mock(HeatStandings.class));
+    when(h2.getGroup()).thenReturn(1);
+    heats.add(h2);
+
+    refreshSession();
+    race.setCurrentHeat(h2);
+
+    // Verify it broadcasts GroupStandingsUpdate
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    Session session = (Session) sessionField.get(currentMockWsContext);
+    RemoteEndpoint remote = session.getRemote();
+
+    ArgumentCaptor<ByteBuffer> captor = ArgumentCaptor.forClass(ByteBuffer.class);
+    verify(remote, timeout(200).atLeastOnce()).sendBytesByFuture(captor.capture());
+
+    boolean foundGroupUpdate = false;
+    for (ByteBuffer buf : captor.getAllValues()) {
+      try {
+        RaceData raceData = RaceData.parseFrom(buf);
+        if (raceData.hasGroupStandingsUpdate()
+            && raceData.getGroupStandingsUpdate().getGroup() == 1) {
+          foundGroupUpdate = true;
+          break;
+        }
+      } catch (Exception e) {
+      }
+    }
+    assertTrue("Should have broadcast GroupStandingsUpdate with group = 1", foundGroupUpdate);
   }
 }

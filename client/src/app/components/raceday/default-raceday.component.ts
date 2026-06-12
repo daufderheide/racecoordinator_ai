@@ -1377,6 +1377,10 @@ export class DefaultRacedayComponent
         this.hasRacedInCurrentHeat = false;
       }
 
+      if (this.heat && this.heat.group !== undefined) {
+        this.currentGroup = this.heat.group;
+      }
+
       // Initialize rankings
       this.driverRankings.clear();
       if (this.heat) {

@@ -42,6 +42,7 @@ public class HeatOver implements IRaceState {
       if (start > 0) {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
       }
+      race.broadcast(race.createSnapshot());
     }
 
     double autoAdvanceTime = race.getRaceModel().getAutoAdvanceTime();

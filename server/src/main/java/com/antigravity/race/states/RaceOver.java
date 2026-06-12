@@ -49,6 +49,8 @@ public class RaceOver implements IRaceState {
       }
     }
 
+    race.broadcast(race.createSnapshot());
+
     // Save history and update stats (separately if in demo mode)
     try {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
