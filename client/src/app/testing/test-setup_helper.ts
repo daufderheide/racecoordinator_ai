@@ -49,6 +49,12 @@ export class TestSetupHelper {
       console.error(`BROWSER ERROR: ${err.message}`),
     );
 
+    page.on("requestfailed", (request) => {
+      console.log(
+        `BROWSER [REQUEST_FAILED]: ${request.url()} failed with: ${request.failure()?.errorText}`,
+      );
+    });
+
     // Mock WebSockets by default to avoid connection refused/watchdog issues
     await this.setupWebSocketMock(page);
 
@@ -1489,6 +1495,7 @@ export class TestSetupHelper {
    */
   static async setupSettings(page: Page, settings: any) {
     await page.addInitScript((s) => {
+      s.serverPort = parseInt(window.location.port) || 4250;
       localStorage.setItem("racecoordinator_settings", JSON.stringify(s));
     }, settings);
   }
