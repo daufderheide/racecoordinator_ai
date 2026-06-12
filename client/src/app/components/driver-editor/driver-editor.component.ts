@@ -11,10 +11,12 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Driver } from "@app/models/driver";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -39,9 +41,16 @@ import { createTTSContext, mockTTSContext } from "@app/utils/audio";
     FormsModule,
     AudioSelectorComponent,
     TranslatePipe,
+    ConfirmationModalComponent,
   ],
 })
-export class DriverEditorComponent implements OnInit, OnDestroy {
+export class DriverEditorComponent
+  implements OnInit, OnDestroy, DirtyComponent
+{
+  isNavigationApproved = false;
+  showDiscardConfirm = false;
+  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
@@ -114,8 +123,48 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
-    this.loadData();
     this.raceConnectionService.connect();
+
+    if (this.route.queryParamMap) {
+      this.subscriptions.push(
+        this.route.queryParamMap.subscribe((paramMap) => {
+          if (this.isReverting) {
+            this.isReverting = false;
+            return;
+          }
+          const nextId = paramMap.get("id");
+          const currentId = this.editingDriver?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData();
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            this.loadData();
+          }
+        }),
+      );
+    } else {
+      this.loadData();
+    }
 
     if (this.undoManager) {
       this.subscriptions.push(
@@ -330,6 +379,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
+    this.isNavigationApproved = true;
     this.router.navigate(["/driver-manager"], {
       queryParams: {
         id: this.editingDriver?.entity_id,
@@ -352,6 +402,35 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
       this.originalDriver,
     );
     return umChanges || manualChanges;
+  }
+
+  hasChanges(): boolean {
+    return this.isDirtyState();
+  }
+
+  confirmDiscard(): Promise<boolean> {
+    this.showDiscardConfirm = true;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.pendingDeactivate = resolve;
+    });
+  }
+
+  onConfirmDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(true);
+      this.pendingDeactivate = null;
+    }
+  }
+
+  onCancelDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(false);
+      this.pendingDeactivate = null;
+    }
   }
 
   saveAsNew() {
@@ -634,6 +713,7 @@ export class DriverEditorComponent implements OnInit, OnDestroy {
     if (!this.editingDriver) return;
     if (confirm(this.translationService.translate("DE_CONFIRM_DELETE"))) {
       this.isSaving = true;
+      this.isNavigationApproved = true;
       this.dataService.deleteDriver(this.editingDriver.entity_id).subscribe({
         next: () => {
           this.isSaving = false;

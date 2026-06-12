@@ -53,12 +53,16 @@ export const routes: Routes = [
     path: "custom-rotation-editor",
     component: CustomRotationEditorComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "CustomRotationEditorPage" },
   },
   {
     path: "driver-editor",
     component: DriverEditorComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "DriverEditorPage" },
   },
   {
@@ -77,6 +81,8 @@ export const routes: Routes = [
     path: "team-editor",
     component: TeamEditorComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "TeamEditorPage" },
   },
   {
@@ -89,6 +95,8 @@ export const routes: Routes = [
     path: "track-editor",
     component: TrackEditorComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "TrackEditorPage" },
   },
   {
@@ -107,6 +115,8 @@ export const routes: Routes = [
     path: "race-editor",
     component: RaceEditorComponent,
     canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "RaceEditorPage" },
   },
   {
@@ -114,6 +124,7 @@ export const routes: Routes = [
     component: UIEditorComponent,
     canActivate: [AuthGuard],
     canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
     data: { animation: "UIEditorPage", requiredRole: Role.VIEWER },
   },
   {

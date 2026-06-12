@@ -20,11 +20,13 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
 import { DataService } from "@app/data.service";
+import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
@@ -60,9 +62,14 @@ import { deepCopy } from "@app/utils/clone.utils";
     ArduinoEditorComponent,
     InputDialogComponent,
     TranslatePipe,
+    ConfirmationModalComponent,
   ],
 })
-export class TrackEditorComponent implements OnInit, OnDestroy {
+export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
+  isNavigationApproved = false;
+  showDiscardConfirm = false;
+  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -161,12 +168,46 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Subscribe to query params to reload data when ID changes (e.g. after Save as New)
-    this.subscriptions.push(
-      this.route.queryParamMap.subscribe(() => {
-        this.loadData();
-      }),
-    );
+    if (this.route.queryParamMap) {
+      this.subscriptions.push(
+        this.route.queryParamMap.subscribe((paramMap) => {
+          if (this.isReverting) {
+            this.isReverting = false;
+            return;
+          }
+          const nextId = paramMap.get("id");
+          const currentId = this.editingTrack?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData();
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            this.loadData();
+          }
+        }),
+      );
+    } else {
+      this.loadData();
+    }
 
     this.subscriptions.push(
       this.helpService.isVisible$.subscribe((visible) => {
@@ -641,6 +682,35 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
 
   isDirtyState(): boolean {
     return this.undoManager?.hasChanges() || false;
+  }
+
+  hasChanges(): boolean {
+    return this.isDirtyState();
+  }
+
+  confirmDiscard(): Promise<boolean> {
+    this.showDiscardConfirm = true;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.pendingDeactivate = resolve;
+    });
+  }
+
+  onConfirmDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(true);
+      this.pendingDeactivate = null;
+    }
+  }
+
+  onCancelDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(false);
+      this.pendingDeactivate = null;
+    }
   }
 
   onBackClicked() {
@@ -1400,6 +1470,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
+    this.isNavigationApproved = true;
     this.router.navigate(["/track-manager"], {
       queryParams: {
         selectedId: this.editingTrack?.entity_id,

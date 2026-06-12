@@ -11,10 +11,12 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType } from "@app/models/fuel_options";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -40,9 +42,14 @@ import { deepCopy } from "@app/utils/clone.utils";
     FormsModule,
     HeatListComponent,
     TranslatePipe,
+    ConfirmationModalComponent,
   ],
 })
-export class RaceEditorComponent implements OnInit, OnDestroy {
+export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
+  isNavigationApproved = false;
+  showDiscardConfirm = false;
+  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  private isReverting = false;
   editingRace: any;
   originalRace: any;
   isLoading: boolean = true;
@@ -107,6 +114,35 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
     return umChanges || manualChanges;
   }
 
+  hasChanges(): boolean {
+    return this.isDirtyState();
+  }
+
+  confirmDiscard(): Promise<boolean> {
+    this.showDiscardConfirm = true;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.pendingDeactivate = resolve;
+    });
+  }
+
+  onConfirmDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(true);
+      this.pendingDeactivate = null;
+    }
+  }
+
+  onCancelDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(false);
+      this.pendingDeactivate = null;
+    }
+  }
+
   onBackClicked() {
     if (this.isConfigValid()) {
       if (this.isDirtyState()) {
@@ -121,6 +157,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
+    this.isNavigationApproved = true;
     this.router.navigate(["/race-manager"], {
       queryParams: {
         id: this.editingRace?.entity_id,
@@ -276,11 +313,60 @@ export class RaceEditorComponent implements OnInit, OnDestroy {
       this.loadDriverCount();
     }
 
-    const id = this.route.snapshot.queryParamMap.get("id");
-    if (id && id !== "new") {
-      this.loadRace(id);
+    if (this.route.queryParamMap) {
+      this.subscriptions.push(
+        this.route.queryParamMap.subscribe((paramMap) => {
+          if (this.isReverting) {
+            this.isReverting = false;
+            return;
+          }
+          const nextId = paramMap.get("id");
+          const currentId = this.editingRace?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                const id = this.route.snapshot.queryParamMap.get("id");
+                if (id && id !== "new") {
+                  this.loadRace(id);
+                } else {
+                  this.createNewRace();
+                }
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            const id = paramMap.get("id");
+            if (id && id !== "new") {
+              this.loadRace(id);
+            } else {
+              this.createNewRace();
+            }
+          }
+        }),
+      );
     } else {
-      this.createNewRace();
+      const id = this.route.snapshot.queryParamMap.get("id");
+      if (id && id !== "new") {
+        this.loadRace(id);
+      } else {
+        this.createNewRace();
+      }
     }
     this.loadTracks();
     this.loadRaces();

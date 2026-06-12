@@ -16,10 +16,12 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -46,9 +48,14 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
     CdkDropList,
     CdkDrag,
     TranslatePipe,
+    ConfirmationModalComponent,
   ],
 })
-export class TeamEditorComponent implements OnInit, OnDestroy {
+export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
+  isNavigationApproved = false;
+  showDiscardConfirm = false;
+  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
@@ -113,8 +120,48 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
     setTimeout(() => this.updateScale());
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
-    this.loadData();
     this.raceConnectionService.connect();
+
+    if (this.route.queryParamMap) {
+      this.subscriptions.push(
+        this.route.queryParamMap.subscribe((paramMap) => {
+          if (this.isReverting) {
+            this.isReverting = false;
+            return;
+          }
+          const nextId = paramMap.get("id");
+          const currentId = this.editingTeam?.entity_id;
+          if (
+            currentId &&
+            nextId !== currentId &&
+            this.hasChanges() &&
+            !this.isNavigationApproved
+          ) {
+            this.confirmDiscard().then((confirmed) => {
+              if (confirmed) {
+                this.loadData();
+              } else {
+                this.isReverting = true;
+                this.router.navigate([], {
+                  relativeTo: this.route,
+                  queryParams: {
+                    id: currentId,
+                    from: this.route.snapshot.queryParamMap.get("from"),
+                    returnUrl:
+                      this.route.snapshot.queryParamMap.get("returnUrl"),
+                  },
+                  queryParamsHandling: "merge",
+                });
+              }
+            });
+          } else {
+            this.loadData();
+          }
+        }),
+      );
+    } else {
+      this.loadData();
+    }
 
     if (this.undoManager) {
       this.subscriptions.push(
@@ -367,6 +414,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
   }
 
   onBack() {
+    this.isNavigationApproved = true;
     this.router.navigate(["/team-manager"], {
       queryParams: {
         id: this.editingTeam?.entity_id,
@@ -374,6 +422,35 @@ export class TeamEditorComponent implements OnInit, OnDestroy {
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
     });
+  }
+
+  hasChanges(): boolean {
+    return this.isDirtyState();
+  }
+
+  confirmDiscard(): Promise<boolean> {
+    this.showDiscardConfirm = true;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.pendingDeactivate = resolve;
+    });
+  }
+
+  onConfirmDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(true);
+      this.pendingDeactivate = null;
+    }
+  }
+
+  onCancelDiscard() {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(false);
+      this.pendingDeactivate = null;
+    }
   }
 
   updateTeam(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {

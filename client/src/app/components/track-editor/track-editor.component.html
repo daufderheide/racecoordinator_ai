@@ -264,3 +264,13 @@
     <div class="spinner"></div>
   </div>
 }
+
+<!-- Discard Changes Confirmation -->
+<app-confirmation-modal
+  [visible]="showDiscardConfirm"
+  title="UE_CONFIRM_DISCARD_TITLE"
+  message="UE_CONFIRM_DISCARD_MESSAGE"
+  (confirm)="onConfirmDiscard()"
+  (cancel)="onCancelDiscard()"
+>
+</app-confirmation-modal>
