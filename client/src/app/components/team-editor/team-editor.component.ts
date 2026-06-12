@@ -520,6 +520,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                 from: this.route.snapshot.queryParamMap.get("from"),
                 returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
               },
+              replaceUrl: true,
             });
           }
         }
