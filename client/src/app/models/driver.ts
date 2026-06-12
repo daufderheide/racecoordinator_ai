@@ -35,14 +35,18 @@ export class Driver implements Model {
     this.nickname = nickname;
     this.avatarUrl = avatarUrl;
 
-    // Ensure we always have an object to avoid null checks everywhere
-    this.lapAudio = lapAudio && lapAudio.type ? lapAudio : { type: "preset" };
+    this.lapAudio =
+      lapAudio && lapAudio.type
+        ? { ...lapAudio, url: lapAudio.url || "default_beep" }
+        : { type: "preset", url: "default_beep" };
     this.bestLapAudio =
-      bestLapAudio && bestLapAudio.type ? bestLapAudio : { type: "preset" };
+      bestLapAudio && bestLapAudio.type
+        ? { ...bestLapAudio, url: bestLapAudio.url || "default_driveby" }
+        : { type: "preset", url: "default_driveby" };
     this.penaltyAudio =
       penaltyAudio && penaltyAudio.type
-        ? penaltyAudio
-        : { type: "preset", url: "/assets/default_penalty_penalty.wav" };
+        ? { ...penaltyAudio, url: penaltyAudio.url || "default_penalty" }
+        : { type: "preset", url: "default_penalty" };
   }
 
   get objectId(): string {

@@ -31,8 +31,17 @@ export function playSound(
     let playableUrl = url;
     if (url.startsWith("/")) {
       playableUrl = `${serverUrl}${url}`;
-    } else if (url === "default_penalty") {
-      playableUrl = `${serverUrl}/assets/default_penalty_Penalty`;
+    } else {
+      const defaultUrls: Record<string, string> = {
+        default_beep: "/assets/default_beep_Lap_Beep",
+        default_chimes: "/assets/default_chimes_Lap_Chimes",
+        default_driveby: "/assets/default_driveby_Lap_Driveby",
+        default_penalty: "/assets/default_penalty_Penalty",
+        default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
+      };
+      if (defaultUrls[url]) {
+        playableUrl = `${serverUrl}${defaultUrls[url]}`;
+      }
     }
     if (logger) logger.debug("Playing audio from URL:", playableUrl);
     const audio = new Audio(playableUrl);

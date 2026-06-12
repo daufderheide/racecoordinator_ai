@@ -46,7 +46,7 @@ public class Driver extends Model {
     } else if (lapSoundUrl != null || lapSoundType != null || lapSoundText != null) {
       this.lapAudio = new AudioConfig(lapSoundType, lapSoundUrl, lapSoundText);
     } else {
-      this.lapAudio = new AudioConfig();
+      this.lapAudio = new AudioConfig("preset", "default_beep", "");
     }
 
     if (bestLapAudio != null) {
@@ -54,19 +54,20 @@ public class Driver extends Model {
     } else if (bestLapSoundUrl != null || bestLapSoundType != null || bestLapSoundText != null) {
       this.bestLapAudio = new AudioConfig(bestLapSoundType, bestLapSoundUrl, bestLapSoundText);
     } else {
-      this.bestLapAudio = new AudioConfig();
+      this.bestLapAudio = new AudioConfig("preset", "default_driveby", "");
     }
 
     if (penaltyAudio != null) {
       this.penaltyAudio = penaltyAudio;
     } else if (penaltySoundUrl != null || penaltySoundType != null || penaltySoundText != null) {
       String actualUrl = penaltySoundUrl;
-      if ("default_penalty".equals(actualUrl)) {
-        actualUrl = "/assets/default_penalty_penalty.wav";
+      if ("default_penalty".equals(actualUrl)
+          || "/assets/default_penalty_penalty.wav".equals(actualUrl)) {
+        actualUrl = "default_penalty";
       }
       this.penaltyAudio = new AudioConfig(penaltySoundType, actualUrl, penaltySoundText);
     } else {
-      this.penaltyAudio = new AudioConfig("preset", "/assets/default_penalty_penalty.wav", "");
+      this.penaltyAudio = new AudioConfig("preset", "default_penalty", "");
     }
   }
 

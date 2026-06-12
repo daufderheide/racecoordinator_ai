@@ -130,4 +130,20 @@ public class DriverConverterTest {
     assertEquals(original.getPenaltyAudio().getUrl(), reconstructed.getPenaltyAudio().getUrl());
     assertEquals(original.getPenaltyAudio().getText(), reconstructed.getPenaltyAudio().getText());
   }
+
+  @Test
+  public void testDriverConstructorDefaults() {
+    Driver driver = new Driver("Bob", "The Builder", "d2", null);
+    assertNotNull(driver.getLapAudio());
+    assertEquals("preset", driver.getLapAudio().getType());
+    assertEquals("default_beep", driver.getLapAudio().getUrl());
+
+    assertNotNull(driver.getBestLapAudio());
+    assertEquals("preset", driver.getBestLapAudio().getType());
+    assertEquals("default_driveby", driver.getBestLapAudio().getUrl());
+
+    assertNotNull(driver.getPenaltyAudio());
+    assertEquals("preset", driver.getPenaltyAudio().getType());
+    assertEquals("default_penalty", driver.getPenaltyAudio().getUrl());
+  }
 }

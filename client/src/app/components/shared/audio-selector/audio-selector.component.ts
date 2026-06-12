@@ -267,8 +267,17 @@ export class AudioSelectorComponent {
       let playableUrl = url;
       if (url.startsWith("/")) {
         playableUrl = `${this.dataService.serverUrl}${url}`;
-      } else if (url === "default_penalty") {
-        playableUrl = `${this.dataService.serverUrl}/assets/default_penalty_Penalty`;
+      } else {
+        const defaultUrls: Record<string, string> = {
+          default_beep: "/assets/default_beep_Lap_Beep",
+          default_chimes: "/assets/default_chimes_Lap_Chimes",
+          default_driveby: "/assets/default_driveby_Lap_Driveby",
+          default_penalty: "/assets/default_penalty_Penalty",
+          default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
+        };
+        if (defaultUrls[url]) {
+          playableUrl = `${this.dataService.serverUrl}${defaultUrls[url]}`;
+        }
       }
       const audio = new Audio(playableUrl);
       this.currentAudio = audio;

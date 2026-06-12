@@ -550,9 +550,9 @@ export class DriverEditorComponent
         "",
         "",
         "",
-        { type: "preset" },
-        { type: "preset" },
-        { type: "preset", url: "/assets/default_penalty_Penalty" },
+        { type: "preset", url: "default_beep" },
+        { type: "preset", url: "default_driveby" },
+        { type: "preset", url: "default_penalty" },
       );
     } else if (idParam) {
       const found = this.allDrivers.find((d) => d.entity_id === idParam);
