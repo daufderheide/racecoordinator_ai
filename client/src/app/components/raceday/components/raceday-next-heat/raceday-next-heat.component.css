@@ -29,6 +29,27 @@
   padding-right: 4px;
 }
 
+.next-heat-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.next-heat-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+
+.next-heat-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 5px;
+}
+
+.next-heat-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
 .next-heat-item {
   display: flex;
   justify-content: space-between;
