@@ -421,6 +421,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         const settings = this.settingsService.getSettings();
         const editingSettings = this.cloneSettings(settings);
 
+        // Populate default layout if none exists (e.g. fresh install)
+        // so that hasLaneViewWidget evaluates correctly and shows the column toolbox
+        if (!editingSettings.racedayLayout) {
+          editingSettings.racedayLayout = JSON.parse(
+            JSON.stringify(Settings.DEFAULT_LAYOUT),
+          );
+        }
+
         if (!editingSettings.activeThemeId && themes.length > 0) {
           const defaultTheme = themes.find((t) => t.is_default);
           if (defaultTheme) {
