@@ -242,4 +242,69 @@ public class DatabaseServiceTest {
         filter.toString().contains("race_entity_id") && filter.toString().contains(raceId));
     assertEquals(3.5, result.getFastestLapTime(), 0.001);
   }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetDriversPreservesOrder() {
+    MongoCollection<Driver> driverCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("drivers", Driver.class)).thenReturn(driverCollection);
+
+    FindIterable<Driver> findIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    Driver d1 = new Driver("Abby", "Nickname1", "D1", null);
+    Driver d2 = new Driver("Andrea", "Nickname2", "D2", null);
+    Driver d3 = new Driver("Austin", "Nickname3", "D3", null);
+
+    // MongoDB returns them in a different order (e.g. d1, d2, d3)
+    List<Driver> dbDrivers = Arrays.asList(d1, d2, d3);
+    org.mockito.stubbing.Answer<Object> answer =
+        invocation -> {
+          List<Driver> target = invocation.getArgument(0);
+          target.addAll(dbDrivers);
+          return target;
+        };
+    when(findIterable.into(any(List.class))).thenAnswer(answer);
+
+    // We request order: D2, D3, D1
+    List<String> requestedIds = Arrays.asList("D2", "D3", "D1");
+    List<Driver> result = dbService.getDrivers(mongoDatabase, requestedIds);
+
+    assertEquals(3, result.size());
+    assertEquals("Andrea", result.get(0).getName());
+    assertEquals("Austin", result.get(1).getName());
+    assertEquals("Abby", result.get(2).getName());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testGetTeamsPreservesOrder() {
+    MongoCollection<com.antigravity.models.Team> teamCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("teams", com.antigravity.models.Team.class))
+        .thenReturn(teamCollection);
+
+    FindIterable<com.antigravity.models.Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    com.antigravity.models.Team t1 =
+        new com.antigravity.models.Team("Team1", "", new ArrayList<>(), "T1", null);
+    com.antigravity.models.Team t2 =
+        new com.antigravity.models.Team("Team2", "", new ArrayList<>(), "T2", null);
+
+    List<com.antigravity.models.Team> dbTeams = Arrays.asList(t1, t2);
+    org.mockito.stubbing.Answer<Object> answer =
+        invocation -> {
+          List<com.antigravity.models.Team> target = invocation.getArgument(0);
+          target.addAll(dbTeams);
+          return target;
+        };
+    when(findIterable.into(any(List.class))).thenAnswer(answer);
+
+    List<String> requestedIds = Arrays.asList("T2", "T1");
+    List<com.antigravity.models.Team> result = dbService.getTeams(mongoDatabase, requestedIds);
+
+    assertEquals(2, result.size());
+    assertEquals("Team2", result.get(0).getName());
+    assertEquals("Team1", result.get(1).getName());
+  }
 }

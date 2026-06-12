@@ -403,14 +403,35 @@ public class DatabaseService {
     // Using $in filter would be more efficient, but looping is fine for small
     // numbers
     driverCollection.find(Filters.in("entity_id", entityIds)).into(drivers);
-    return drivers;
+
+    // Maintain the order of input entityIds
+    Map<String, Driver> driverMap =
+        drivers.stream().collect(Collectors.toMap(Driver::getEntityId, d -> d));
+    List<Driver> orderedDrivers = new ArrayList<>();
+    for (String id : entityIds) {
+      Driver d = driverMap.get(id);
+      if (d != null) {
+        orderedDrivers.add(d);
+      }
+    }
+    return orderedDrivers;
   }
 
   public List<Team> getTeams(MongoDatabase database, List<String> entityIds) {
     MongoCollection<Team> teamCollection = database.getCollection("teams", Team.class);
     List<Team> teams = new ArrayList<>();
     teamCollection.find(Filters.in("entity_id", entityIds)).into(teams);
-    return teams;
+
+    // Maintain the order of input entityIds
+    Map<String, Team> teamMap = teams.stream().collect(Collectors.toMap(Team::getEntityId, t -> t));
+    List<Team> orderedTeams = new ArrayList<>();
+    for (String id : entityIds) {
+      Team t = teamMap.get(id);
+      if (t != null) {
+        orderedTeams.add(t);
+      }
+    }
+    return orderedTeams;
   }
 
   public List<Team> getAllTeams(MongoDatabase database) {

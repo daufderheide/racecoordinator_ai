@@ -2789,9 +2789,11 @@ export class DefaultRacedayComponent
   getTeammates(hd: DriverHeatData | any): any[] {
     const team = hd.participant?.team || hd.driver?.team;
     if (team && team.driverIds) {
-      return this.allDrivers.filter((d) =>
-        team.driverIds.includes(d.entity_id || d.id),
-      );
+      return team.driverIds
+        .map((id: string) =>
+          this.allDrivers.find((d) => (d.entity_id || d.id) === id),
+        )
+        .filter((d: any) => !!d);
     }
     return [];
   }

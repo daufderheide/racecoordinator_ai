@@ -740,6 +740,33 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("getTeammates", () => {
+    it("should return teammates in the exact order defined by team.driverIds", () => {
+      component["allDrivers"] = [
+        { entity_id: "driver1", name: "Driver 1" },
+        { entity_id: "driver2", name: "Driver 2" },
+        { entity_id: "driver3", name: "Driver 3" },
+        { entity_id: "driver4", name: "Driver 4" },
+      ] as any;
+
+      const mockHd = {
+        participant: {
+          team: {
+            name: "Team Alpha",
+            driverIds: ["driver2", "driver3", "driver4", "driver1"],
+          },
+        },
+      };
+
+      const result = component.getTeammates(mockHd);
+      expect(result.length).toBe(4);
+      expect(result[0].entity_id).toBe("driver2");
+      expect(result[1].entity_id).toBe("driver3");
+      expect(result[2].entity_id).toBe("driver4");
+      expect(result[3].entity_id).toBe("driver1");
+    });
+  });
+
   describe("formatValue", () => {
     let mockHd: any;
 
