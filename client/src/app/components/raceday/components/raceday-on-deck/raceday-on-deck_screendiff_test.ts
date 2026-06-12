@@ -159,4 +159,160 @@ test.describe("Raceday On Deck Visuals", () => {
 
     await expect(widget).toHaveScreenshot("raceday-on-deck-initial.png");
   });
+
+  test("should display on deck list of drivers with team information", async ({
+    page,
+  }) => {
+    // Override settings to place only on-deck widget
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-on-deck",
+            widgetType: "on-deck",
+            x: 100,
+            y: 100,
+            width: 384,
+            height: 300,
+            zIndex: 100,
+          },
+        ],
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#000055",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Alice",
+              nickname: "Ali",
+            },
+            team: {
+              model: { entityId: "t1" },
+              name: "Team Alpha",
+              driverIds: ["d1", "d3"],
+            },
+          },
+          {
+            objectId: "rp2",
+            driver: {
+              model: { entityId: "d2" },
+              name: "Bob",
+              nickname: "Bobby",
+            },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              driver: {
+                objectId: "rp2",
+                driver: {
+                  model: { entityId: "d2" },
+                  name: "Bob",
+                  nickname: "Bobby",
+                },
+              },
+            },
+          ],
+        },
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                driver: {
+                  objectId: "rp2",
+                  driver: {
+                    model: { entityId: "d2" },
+                    name: "Bob",
+                    nickname: "Bobby",
+                  },
+                },
+              },
+            ],
+          },
+          {
+            objectId: "h2",
+            heatNumber: 2,
+            heatDrivers: [
+              {
+                objectId: "hd2",
+                driver: {
+                  objectId: "rp1",
+                  driver: {
+                    model: { entityId: "d1" },
+                    name: "Alice",
+                    nickname: "Ali",
+                  },
+                  team: {
+                    model: { entityId: "t1" },
+                    name: "Team Alpha",
+                    driverIds: ["d1", "d3"],
+                  },
+                },
+              },
+              {
+                objectId: "hd3",
+                driver: {
+                  objectId: "rp2",
+                  driver: {
+                    model: { entityId: "d2" },
+                    name: "Bob",
+                    nickname: "Bobby",
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".on-deck-item").first().waitFor({ state: "visible" });
+
+    const widget = page.locator("app-raceday-on-deck");
+    await expect(widget).toBeVisible();
+
+    await expect(widget).toHaveScreenshot("raceday-on-deck-team.png");
+  });
 });

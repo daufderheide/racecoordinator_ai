@@ -1463,6 +1463,21 @@ export class DataService {
       .pipe(map(() => true));
   }
 
+  public changeActualDriverForHeat(
+    heatNumber: number,
+    lane: number,
+    driverId: string,
+  ): Observable<boolean> {
+    return this.http
+      .post(
+        `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/actual-driver`,
+        {
+          driverId,
+        },
+      )
+      .pipe(map(() => true));
+  }
+
   changeLane(fromLane: number, toLane: number): Observable<boolean> {
     return this.http
       .post(

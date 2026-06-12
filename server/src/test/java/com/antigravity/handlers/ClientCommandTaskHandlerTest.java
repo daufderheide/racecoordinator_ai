@@ -989,6 +989,62 @@ public class ClientCommandTaskHandlerTest {
         "Race should be ended and cleared", ClientSubscriptionManager.getInstance().getRace());
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testChangeHeatActualDriver_Success() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+    Driver mockDriver = mock(Driver.class);
+    when(mockDriver.getEntityId()).thenReturn("driver-1");
+
+    when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat));
+    when(mockHeat.getHeatNumber()).thenReturn(2);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
+    when(mockRace.getCurrentHeat()).thenReturn(mock(com.antigravity.race.Heat.class));
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
+
+    // Mock DB drivers lookup
+    FindIterable<Driver> driverIterable = mock(FindIterable.class);
+    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
+    doAnswer(
+            invocation -> {
+              List<Driver> list = invocation.getArgument(0);
+              list.add(mockDriver);
+              return list;
+            })
+        .when(driverIterable)
+        .into(any(List.class));
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("heatNumber", "2");
+    pathParams.put("lane", "0");
+    doReturn(pathParams).when(ctx).pathParamMap();
+    doReturn("2").when(ctx).pathParam("heatNumber");
+    doReturn("0").when(ctx).pathParam("lane");
+
+    Map<String, String> body = new HashMap<>();
+    body.put("driverId", "driver-1");
+    doReturn(body).when(ctx).bodyAsClass(HashMap.class);
+
+    java.lang.reflect.Method m =
+        handler.getClass().getDeclaredMethod("changeHeatActualDriver", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(mockDhd).setActualDriver(mockDriver);
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(mockRace).broadcast(any());
+    verify(res).setStatus(200);
+  }
+
   private void deleteDirectory(File directory) {
     File[] allContents = directory.listFiles();
     if (allContents != null) {

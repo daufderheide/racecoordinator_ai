@@ -2,15 +2,108 @@
   <div class="on-deck-title">{{ "RD_WIN_ON_DECK" | translate }}</div>
   <div class="on-deck-list">
     @for (hd of onDeckDrivers(); track trackByDriver($index, hd)) {
-      <div class="on-deck-item">
-        <span class="driver-nickname">{{
-          hd.driver.nickname || hd.driver.name
-        }}</span>
+      <div
+        class="on-deck-item"
+        style="
+          position: relative;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        @if (
+          parent() &&
+          isTeam(hd) &&
+          parent().authService.currentRole !== parent().Role.VIEWER
+        ) {
+          <div
+            class="teammate-select-wrapper"
+            style="
+              position: relative;
+              display: flex;
+              align-items: center;
+              flex: 1;
+              min-width: 0;
+            "
+          >
+            <span
+              class="driver-nickname teammate-display-name"
+              style="
+                padding-right: 30px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1;
+              "
+            >
+              {{ hd.driver.nickname || hd.driver.name }}
+              @if (isTeam(hd)) {
+                ({{ hd.participant.team?.name || $any(hd.driver)?.team?.name }})
+              }
+            </span>
+            <select
+              class="teammate-select"
+              [style.background-image]="getDropdownArrowBg(hd)"
+              (change)="onTeammateChange(hd, $event)"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                cursor: pointer;
+                z-index: 2;
+                color: transparent;
+                background-color: transparent;
+                border: none;
+                appearance: none;
+                outline: none;
+                background-repeat: no-repeat;
+                background-position: right center;
+              "
+            >
+              @for (tm of getTeammates(hd); track tm) {
+                <option
+                  [value]="$any(tm).entity_id || $any(tm).id"
+                  [selected]="
+                    ($any(tm).entity_id || $any(tm).id) ===
+                    (hd.actualDriver?.entity_id || $any(hd.driver).entity_id)
+                  "
+                  style="
+                    background-color: #1a2332;
+                    color: #fff;
+                    font-size: 16px;
+                  "
+                >
+                  {{ tm.nickname || tm.name }}
+                  {{ getDriverStats(hd, $any(tm).entity_id || $any(tm).id) }}
+                </option>
+              }
+            </select>
+          </div>
+        } @else {
+          <span
+            class="driver-nickname"
+            style="
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              flex: 1;
+              min-width: 0;
+            "
+          >
+            {{ hd.driver.nickname || hd.driver.name }}
+            @if (isTeam(hd)) {
+              ({{ hd.participant.team?.name || $any(hd.driver)?.team?.name }})
+            }
+          </span>
+        }
         <span
           class="lane-badge"
           [style.background-color]="getLaneBackgroundColor(hd.laneIndex)"
           [style.color]="getLaneForegroundColor(hd.laneIndex)"
           [style.border-color]="getLaneForegroundColor(hd.laneIndex)"
+          style="flex-shrink: 0; margin-left: 8px"
         >
           L{{ hd.laneIndex + 1 }}
         </span>

@@ -2817,6 +2817,34 @@ export class DefaultRacedayComponent
     });
   }
 
+  onNextHeatTeammateChange(hd: DriverHeatData, event: any, heatNumber: number) {
+    const driverId = event.target.value;
+    const lane = hd.laneIndex;
+    this.dataService
+      .changeActualDriverForHeat(heatNumber, lane, driverId)
+      .subscribe({
+        next: () => {
+          this.logger.debug(
+            `Teammate changed for heat ${heatNumber} lane ${lane} to ${driverId}`,
+          );
+        },
+        error: (err) => {
+          this.logger.error(
+            `Error changing teammate for heat ${heatNumber} lane ${lane}:`,
+            err,
+          );
+          this.ackModalTitle = "RD_ERR_DRIVER_CHANGE_TITLE";
+          this.ackModalMessage = err.error || "RD_ERR_DRIVER_CHANGE_MESSAGE";
+          this.showAckModal = true;
+          // Rollback select value
+          if (event.target) {
+            event.target.value =
+              hd.actualDriver?.entity_id || hd.driver?.entity_id;
+          }
+        },
+      });
+  }
+
   trackByLeaderboardEntry(index: number, entry: any) {
     return entry.entityId || entry.name;
   }

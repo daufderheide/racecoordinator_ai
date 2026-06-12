@@ -109,6 +109,10 @@ public class ClientCommandTaskHandler {
         this::changeActualDriver,
         Role.DIRECTOR);
     app.post(
+        "/api/races/heats/{heatNumber}/drivers/{lane}/actual-driver",
+        this::changeHeatActualDriver,
+        Role.DIRECTOR);
+    app.post(
         "/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps, Role.DIRECTOR);
     app.post(
         "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
@@ -906,6 +910,78 @@ public class ClientCommandTaskHandler {
             if (!inPit) {
               ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
               return;
+            }
+          }
+          dhd.setActualDriver(driver);
+          race.updateAndBroadcastOverallStandings();
+          race.broadcast(race.createSnapshot());
+          ctx.status(200);
+        } else {
+          ctx.status(404).result("RD_ERR_DRIVER_NOT_FOUND");
+        }
+      } else {
+        ctx.status(400).result("Invalid lane index: " + lane);
+      }
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void changeHeatActualDriver(Context ctx) {
+    try {
+      int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
+      String driverId = body.get("driverId");
+
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      Heat targetHeat = null;
+      for (Heat h : race.getHeats()) {
+        if (h.getHeatNumber() == heatNumber) {
+          targetHeat = h;
+          break;
+        }
+      }
+
+      if (targetHeat == null) {
+        ctx.status(404).result("Heat not found: " + heatNumber);
+        return;
+      }
+
+      List<DriverHeatData> drivers = targetHeat.getDrivers();
+      if (lane >= 0 && lane < drivers.size()) {
+        DriverHeatData dhd = drivers.get(lane);
+        DatabaseService dbService = DatabaseService.getInstance();
+        List<Driver> driversList =
+            dbService.getDrivers(
+                databaseContext.getDatabase(), Collections.singletonList(driverId));
+        Driver driver = driversList.isEmpty() ? null : driversList.get(0);
+
+        if (driver != null) {
+          if (heatNumber == race.getCurrentHeat().getHeatNumber()) {
+            TeamOptions options = race.getRaceModel().getTeamOptions();
+            if (options != null
+                && options.isRequirePitStopChangeDriver()
+                && race.getState() instanceof Racing) {
+              CarLocation loc = dhd.getCurrentLocation();
+              boolean inPit =
+                  loc == CarLocation.PitRow
+                      || (loc != null
+                          && loc.getValue() >= CarLocation.PitBayBase.getValue()
+                          && loc.getValue()
+                              < CarLocation.PitBayBase.getValue()
+                                  + race.getTrack().getLanes().size());
+              if (!inPit) {
+                ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
+                return;
+              }
             }
           }
           dhd.setActualDriver(driver);
