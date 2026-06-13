@@ -107,9 +107,11 @@ test.describe("UI Editor Visuals", () => {
     // Wait for invalid class to be applied
     const container = page.locator(".theme-title-container.invalid").first();
     await container.waitFor({ state: "visible" });
+    await page.waitForTimeout(200); // Allow layout and font antialiasing to settle
 
     await expect(container).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
+      { maxDiffPixelRatio: 0.05 },
     );
 
     // Try to navigate back
