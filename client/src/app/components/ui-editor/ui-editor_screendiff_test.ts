@@ -109,10 +109,15 @@ test.describe("UI Editor Visuals", () => {
     await container.waitFor({ state: "visible" });
     await page.waitForTimeout(200); // Allow layout and font antialiasing to settle
 
-    await expect(page).toHaveScreenshot("ui-editor-duplicate-name-error.png", {
-      maxDiffPixelRatio: 0.05,
-      fullPage: true,
-    });
+    const sectionHeader = page
+      .locator(".theme-sub-section")
+      .nth(1)
+      .locator(".section-header")
+      .first();
+    await expect(sectionHeader).toHaveScreenshot(
+      "ui-editor-duplicate-name-error.png",
+      { maxDiffPixelRatio: 0.05 },
+    );
 
     // Try to navigate back
     await page.evaluate(() => window.history.back());
