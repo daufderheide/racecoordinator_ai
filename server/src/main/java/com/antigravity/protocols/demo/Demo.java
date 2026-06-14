@@ -9,6 +9,7 @@ import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.PartialTime;
+import com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -217,7 +218,8 @@ public class Demo extends DefaultProtocol {
     statusScheduler = null;
   }
 
-  private void startStatusScheduler() {
+  @Override
+  protected void startStatusScheduler() {
     if (statusFuture != null && !statusFuture.isCancelled()) {
       return;
     }
@@ -390,5 +392,40 @@ public class Demo extends DefaultProtocol {
 
   protected ScheduledExecutorService createScheduler() {
     return Executors.newScheduledThreadPool(1);
+  }
+
+  @Override
+  protected boolean isNormallyClosedLaneSensors() {
+    return true;
+  }
+
+  @Override
+  protected boolean isNormallyClosedRelays() {
+    return true;
+  }
+
+  @Override
+  protected LapPinPitBehavior getLapPinPitBehavior() {
+    return LapPinPitBehavior.NONE;
+  }
+
+  @Override
+  protected boolean useLapsForSegments() {
+    return false;
+  }
+
+  @Override
+  protected double getHardwareDebounceUs() {
+    return 0;
+  }
+
+  @Override
+  protected boolean hasPitInConfigured(int laneIndex) {
+    return false;
+  }
+
+  @Override
+  protected boolean isConnected() {
+    return true;
   }
 }

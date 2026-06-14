@@ -1,4 +1,4 @@
-package com.antigravity.protocols.arduino;
+package com.antigravity.protocols;
 
 public class HwTime {
 

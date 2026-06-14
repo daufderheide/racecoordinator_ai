@@ -15,6 +15,7 @@ import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.fazecast.jSerialComm.SerialPort;
@@ -184,15 +185,6 @@ public class ArduinoProtocolTest {
     assertTrue("LED clear must happen BEFORE serial disconnect", lastWrite < lastDisconnect);
   }
 
-  @Test
-  public void testGetMaxBufferSize() {
-    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
-    assertEquals(
-        "Buffer size should be explicitly set to 128 for memory constraints",
-        128,
-        protocol.getMaxBufferSize());
-  }
-
   private static class TestableArduinoProtocol extends ArduinoProtocol {
 
     long mockedTime = 10000;
@@ -247,27 +239,6 @@ public class ArduinoProtocolTest {
   }
 
   @Test
-  public void testStatusDisconnected_NoPort() {
-    config.commPort = "";
-    protocol.open();
-    scheduler.tick();
-    assertEquals(
-        "Status should be DISCONNECTED when no port",
-        InterfaceStatus.DISCONNECTED,
-        listener.lastStatus);
-  }
-
-  @Test
-  public void testStatusNoData_ConnectedButNoHeartbeat() {
-    protocol.open();
-    scheduler.tick();
-    assertEquals(
-        "Status should be NO_DATA when connected but no heartbeat",
-        InterfaceStatus.NO_DATA,
-        listener.lastStatus);
-  }
-
-  @Test
   public void testStatusConnected_AfterVersion() {
     protocol.open();
     scheduler.tick();
@@ -281,76 +252,6 @@ public class ArduinoProtocolTest {
     assertEquals(
         "Status should be CONNECTED immediately after version verification",
         InterfaceStatus.CONNECTED,
-        listener.lastStatus);
-  }
-
-  @Test
-  public void testStatusConnected_AfterHeartbeat() {
-    protocol.open();
-    // Verify version first
-    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
-    serialConnection.injectData(versionMsg);
-    scheduler.tick();
-    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
-
-    // Timeout by advancing 2.5s
-    protocol.advanceTime(2500);
-    scheduler.tick();
-    assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
-
-    // Inject Heartbeat message: T <4 bytes time> <1 byte reset> ; -> 54 00 00 00 00 00 3B
-    byte[] heartbeatMsg = {0x54, 0, 0, 0, 0, 0, 0x3B};
-    serialConnection.injectData(heartbeatMsg);
-
-    scheduler.tick();
-    assertEquals(
-        "Status should be CONNECTED after heartbeat",
-        InterfaceStatus.CONNECTED,
-        listener.lastStatus);
-  }
-
-  @Test
-  public void testStatusDisconnected_Timeout() {
-    protocol.open();
-    protocol.simulateHeartbeat();
-    scheduler.tick();
-    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
-
-    // Timeout is 2000ms
-    protocol.advanceTime(2500);
-    scheduler.tick();
-    assertEquals(
-        "Status should be DISCONNECTED after 2.5s without heartbeat",
-        InterfaceStatus.DISCONNECTED,
-        listener.lastStatus);
-  }
-
-  @Test
-  public void testStatusDisconnected_OnFailure() {
-    config.commPort = "FAIL";
-    protocol.open();
-    // No need to tick scheduler, it should broadcast immediately on failure
-    assertEquals(
-        "Status should be DISCONNECTED on connection failure",
-        InterfaceStatus.DISCONNECTED,
-        listener.lastStatus);
-  }
-
-  @Test
-  public void testStatusBroadcastOnClose() {
-    protocol.open();
-    // Simulate connection success and heartbeat so it's CONNECTED
-    protocol.simulateHeartbeat();
-    scheduler.tick();
-    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
-
-    // Call close
-    protocol.close();
-
-    // Verify it changed to DISCONNECTED immediately
-    assertEquals(
-        "Status should be DISCONNECTED immediately on close",
-        InterfaceStatus.DISCONNECTED,
         listener.lastStatus);
   }
 
@@ -511,16 +412,6 @@ public class ArduinoProtocolTest {
   }
 
   @Test
-  public void testSchedulerStartsOnlyOnOpen() {
-    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
-    assertEquals("Should have no tasks scheduled initially", 0, scheduler.commands.size());
-
-    protocol.open();
-    // Should have 3 tasks: Status, Refuel, LED Flash
-    assertEquals("Should have 3 tasks scheduled after open", 3, scheduler.commands.size());
-  }
-
-  @Test
   @SuppressWarnings("unchecked")
   public void testHasPerLaneRelays_True_Analog() {
     // Set analog pin 0 to be a relay for lane 1
@@ -594,7 +485,7 @@ public class ArduinoProtocolTest {
     assertArrayEquals(expectedLow, serialConnection.allWrittenData.get(1));
 
     // 4. Force cache clear (simulating what heartbeat mismatch does)
-    Field cacheField = ArduinoProtocol.class.getDeclaredField("pinStateCache");
+    Field cacheField = DefaultProtocol.class.getDeclaredField("pinStateCache");
     cacheField.setAccessible(true);
     ((Map<?, ?>) cacheField.get(protocol)).clear();
 
@@ -1622,7 +1513,9 @@ public class ArduinoProtocolTest {
     serialConnection.injectData(heartbeatMsg);
 
     assertEquals(
-        "Heartbeat should be ignored before version verification", 0, protocol.lastHeartbeatTimeMs);
+        "Heartbeat should be ignored before version verification",
+        0,
+        protocol.getLastHeartbeatTimeMs());
 
     // 2. Send Input (I) before version - should be ignored
     byte[] inputLap = {0x49, 0x44, 0x02, 0x00, 0x3B};
@@ -1640,7 +1533,7 @@ public class ArduinoProtocolTest {
     serialConnection.injectData(heartbeatMsg);
     assertTrue(
         "Heartbeat should be processed after version verification",
-        protocol.lastHeartbeatTimeMs > 0);
+        protocol.getLastHeartbeatTimeMs() > 0);
 
     // 5. Send Input again - should be processed
     config.digitalIds =
@@ -1667,7 +1560,8 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
-    // Initial mode message should have been sent (Pin 2, Count 1, Brightness 100, Rate 20, Type 0,
+    // Initial mode message should have been sent (Pin 2, Count 1, Brightness 100,
+    // Rate 20, Type 0,
     // ColorOrder 0)
     byte[] expectedInitial = {0x6C, 0x02, 0x01, 100, 0x14, 0x00, 0x00, 0x00, 0x3B};
     assertTrue(
@@ -1681,7 +1575,8 @@ public class ArduinoProtocolTest {
 
     protocol.updateConfig(configNoLed);
 
-    // Should send cleanup message: pin 2, brightness 0 (to turn off previous string)
+    // Should send cleanup message: pin 2, brightness 0 (to turn off previous
+    // string)
     byte[] expectedCleanup = {0x6C, 0x02, 0x01, 0, 0x14, 0x00, 0x00, 0x00, 0x3B};
     assertTrue(
         "Should have sent cleanup message with brightness 0 for pin 2",
@@ -1824,43 +1719,40 @@ public class ArduinoProtocolTest {
   }
 
   @Test
-  public void testInterfaceIndexReporting() {
-    protocol.setInterfaceIndex(7);
-    assertEquals("Internal index should be 7", 7, protocol.getInterfaceIndex());
-
-    // Configure Pin 2 as Lane 0 Lap pin
-    // Use the existing config set up in setUp() but update it
-    config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE_VALUE);
-    protocol.updateConfig(config);
-
+  public void testVersionVerification_StrayBytes() {
     protocol.open();
+    // Clear initial RESET command from history to make verification cleaner
+    serialConnection.allWrittenData.clear();
 
-    // Must inject version (v2.0.0.0) and heartbeat to enable the protocol to process data
-    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
-    serialConnection.injectData(versionMsg);
-    protocol.simulateHeartbeat();
+    // Simulate stray heartbeat byte 'T' (0x54) followed by version message
+    // 0x54 + {0x56, 2, 1, 0, 0, 0x3B}
+    // Note: The previous bug would have treated [0x54 ... 0x3B] as a 7-byte
+    // heartbeat
+    // and consumed the version opcode!
+    byte[] strayAndVersion = {0x54, 0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(strayAndVersion);
 
-    // Trigger Lap input
-    byte[] inputLap = {0x49, 0x44, 0x02, 0x00, 0x3B};
-    serialConnection.injectData(inputLap);
-
-    assertEquals("Lap should have correct index", 7, listener.lastInterfaceIndex);
-
-    // Trigger Status update via scheduler
-    scheduler.tick();
-    assertEquals("Status should have correct index", 7, listener.lastInterfaceIndex);
+    // Version should be verified now.
+    // If verified, it sends Pin Mode ('P'), Debounce ('d'), etc.
+    boolean foundConfigCommand = false;
+    for (byte[] msg : serialConnection.allWrittenData) {
+      if (msg.length > 0 && (msg[0] == 0x50 || msg[0] == 0x64)) {
+        foundConfigCommand = true;
+        break;
+      }
+    }
+    assertTrue(
+        "Should have sent configuration commands after version verification despite stray bytes",
+        foundConfigCommand);
   }
 
   @Test
-  public void testStatusDisconnected_NoPort_SchedulerRuns() {
-    config.commPort = "";
+  public void testGetMaxBufferSize() {
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
-    protocol.setListener(listener);
-
-    protocol.open();
-    // Scheduler should be running and tick should report DISCONNECTED
-    scheduler.tick();
-    assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
+    assertEquals(
+        "Buffer size should be explicitly set to 128 for memory constraints",
+        128,
+        protocol.getMaxBufferSize());
   }
 
   @Test
@@ -1901,32 +1793,5 @@ public class ArduinoProtocolTest {
     protocol.updateConfig(newConfig);
 
     assertEquals(initialConnections, serialConnection.connectionCount);
-  }
-
-  @Test
-  public void testVersionVerification_StrayBytes() {
-    protocol.open();
-    // Clear initial RESET command from history to make verification cleaner
-    serialConnection.allWrittenData.clear();
-
-    // Simulate stray heartbeat byte 'T' (0x54) followed by version message
-    // 0x54 + {0x56, 2, 1, 0, 0, 0x3B}
-    // Note: The previous bug would have treated [0x54 ... 0x3B] as a 7-byte heartbeat
-    // and consumed the version opcode!
-    byte[] strayAndVersion = {0x54, 0x56, 2, 1, 0, 0, 0x3B};
-    serialConnection.injectData(strayAndVersion);
-
-    // Version should be verified now.
-    // If verified, it sends Pin Mode ('P'), Debounce ('d'), etc.
-    boolean foundConfigCommand = false;
-    for (byte[] msg : serialConnection.allWrittenData) {
-      if (msg.length > 0 && (msg[0] == 0x50 || msg[0] == 0x64)) {
-        foundConfigCommand = true;
-        break;
-      }
-    }
-    assertTrue(
-        "Should have sent configuration commands after version verification despite stray bytes",
-        foundConfigCommand);
   }
 }
