@@ -1853,4 +1853,63 @@ public class ArduinoProtocolTest {
         "Should send heat leader message again after initializeHardwareState reset",
         serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
   }
+
+  @Test
+  public void testSetHeatStandings_SendsHeatStandingsMessage() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Initial standings update
+    protocol.setHeatStandings(Arrays.asList(3, 2, 1, 0));
+
+    // Expected: 0x45 0x02 0x04 0x03 0x02 0x01 0x00 0x3B
+    byte[] expectedMsg = {0x45, 0x02, 0x04, 0x03, 0x02, 0x01, 0x00, 0x3B};
+    boolean found =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d));
+    assertTrue("Should have sent heat standings message", found);
+
+    // 2. Standings update with same order
+    serialConnection.allWrittenData.clear();
+    protocol.setHeatStandings(Arrays.asList(3, 2, 1, 0));
+    boolean foundDuplicate =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d));
+    assertTrue("Should NOT have sent duplicate heat standings message", !foundDuplicate);
+
+    // 3. Standings update with changed order
+    serialConnection.allWrittenData.clear();
+    protocol.setHeatStandings(Arrays.asList(3, 1, 2, 0));
+    byte[] expectedNewMsg = {0x45, 0x02, 0x04, 0x03, 0x01, 0x02, 0x00, 0x3B};
+    boolean foundNew =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedNewMsg, d));
+    assertTrue("Should have sent updated heat standings message", foundNew);
+  }
+
+  @Test
+  public void testInitializeHardwareState_ResetsStandings() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Initial standings
+    protocol.setHeatStandings(Arrays.asList(3, 2, 1, 0));
+    byte[] expectedMsg = {0x45, 0x02, 0x04, 0x03, 0x02, 0x01, 0x00, 0x3B};
+    assertTrue(
+        "Should have sent heat standings message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+
+    // 2. Initialize hardware state
+    serialConnection.allWrittenData.clear();
+    protocol.initializeHardwareState();
+
+    // 3. Set standings with same order again
+    protocol.setHeatStandings(Arrays.asList(3, 2, 1, 0));
+    assertTrue(
+        "Should send heat standings message again after initializeHardwareState reset",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+  }
 }

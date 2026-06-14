@@ -36,6 +36,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private ArduinoLedHelper ledHelper;
 
   private Integer lastLeaderLane = null;
+  private List<Integer> lastHeatStandings = null;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
@@ -586,6 +587,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   @Override
   public void initializeHardwareState() {
     lastLeaderLane = null;
+    lastHeatStandings = null;
     syncPower();
     ledHelper.initializeHardwareState();
   }
@@ -784,6 +786,11 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         lastLeaderLane = leaderLane;
         sendHeatLeader(leaderLane);
       }
+
+      if (lastHeatStandings == null || !lastHeatStandings.equals(laneIndices)) {
+        lastHeatStandings = new java.util.ArrayList<>(laneIndices);
+        sendHeatStandings(laneIndices);
+      }
     }
   }
 
@@ -800,6 +807,25 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     writeData(message);
     logger.info("Sent HEAT_LEADER - Lane: {}", laneIndex);
+  }
+
+  private void sendHeatStandings(List<Integer> laneIndices) {
+    if (!isConnected()) {
+      logger.warn("Serial connection not open, cannot send heat standings");
+      return;
+    }
+    int numLanes = laneIndices.size();
+    byte[] message = new byte[3 + numLanes + 1];
+    message[0] = 0x45; // 'E'
+    message[1] = 0x02; // Sub-opcode (heat standings)
+    message[2] = (byte) numLanes;
+    for (int i = 0; i < numLanes; i++) {
+      message[3 + i] = laneIndices.get(i).byteValue();
+    }
+    message[3 + numLanes] = TERMINATOR;
+
+    writeData(message);
+    logger.info("Sent HEAT_STANDINGS - Standings: {}", laneIndices);
   }
 
   @Override
