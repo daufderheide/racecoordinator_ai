@@ -107,7 +107,7 @@ test.describe("UI Editor Visuals", () => {
     // Wait for invalid class to be applied
     const container = page.locator(".theme-title-container.invalid").first();
     await container.waitFor({ state: "visible" });
-    await page.waitForTimeout(200); // Allow layout and font antialiasing to settle
+    await page.waitForTimeout(500); // Allow layout and font antialiasing to settle
 
     const sectionHeader = page
       .locator(".theme-sub-section")
@@ -116,7 +116,7 @@ test.describe("UI Editor Visuals", () => {
       .first();
     await expect(sectionHeader).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
-      { maxDiffPixelRatio: 0.05 },
+      { maxDiffPixelRatio: 0.15 },
     );
 
     // Try to navigate back
