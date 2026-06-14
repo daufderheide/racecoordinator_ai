@@ -139,9 +139,9 @@ public class ProtocolDelegate implements IProtocol {
   }
 
   @Override
-  public void setFuelLevel(int laneIndex, int fuelLevelPct) {
+  public void setFuelLevel(int laneIndex, double fuelLevel, double capacity) {
     for (IProtocol protocol : protocols) {
-      protocol.setFuelLevel(laneIndex, fuelLevelPct);
+      protocol.setFuelLevel(laneIndex, fuelLevel, capacity);
     }
   }
 

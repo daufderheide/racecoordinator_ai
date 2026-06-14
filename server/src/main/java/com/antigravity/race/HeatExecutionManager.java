@@ -339,6 +339,7 @@ public class HeatExecutionManager {
         if (currentFuel < capacity) {
           double newFuel = Math.min(capacity, currentFuel + fuelOptions.getRefuelRate() * delta);
           participant.setFuelLevel(newFuel);
+          race.setFuelLevel(i, newFuel, capacity);
 
           // Broadcast fuel update using CarData instead of Lap
           CarData fuelMsg =
@@ -509,6 +510,7 @@ public class HeatExecutionManager {
     double currentFuel = driverData.getDriver().getFuelLevel();
     double newFuel = Math.max(0.0, currentFuel - consumed);
     driverData.getDriver().setFuelLevel(newFuel);
+    race.setFuelLevel(lane, newFuel, fuelOptions.getCapacity());
 
     if (consumed > 0) {
       logger.debug(
@@ -792,6 +794,7 @@ public class HeatExecutionManager {
     double currentFuel = driverData.getDriver().getFuelLevel();
     double newFuel = Math.max(0, currentFuel - lapFuelUsed);
     driverData.getDriver().setFuelLevel(newFuel);
+    race.setFuelLevel(lane, newFuel, fuelOptions.getCapacity());
 
     logger.debug("Lane {} fuel level: {} (used {})", lane, newFuel, lapFuelUsed);
 

@@ -431,7 +431,7 @@ public class Racing implements IRaceState {
             double currentFuel = drivers.get(i).getDriver().getFuelLevel();
             int currentPct = (int) ((currentFuel / capacity) * 100.0);
             if (currentPct != previousFuelLevels[i]) {
-              race.setFuelLevel(i, currentPct);
+              race.setFuelLevel(i, currentFuel, capacity);
               previousFuelLevels[i] = currentPct;
             }
           }

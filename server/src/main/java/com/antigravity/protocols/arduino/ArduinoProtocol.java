@@ -11,6 +11,7 @@ import com.antigravity.proto.RgbLedState;
 import com.antigravity.protocols.AbstractSerialProtocol;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import java.util.HashMap;
 import java.util.List;
@@ -440,8 +441,26 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   }
 
   @Override
-  public void setFuelLevel(int laneIndex, int fuelLevelPct) {
-    ledHelper.setFuelLevel(laneIndex, fuelLevelPct);
+  public void setFuelLevel(int laneIndex, double fuelLevel, double capacity) {
+    int percentage = DefaultProtocol.calculateFuelPercentage(fuelLevel, capacity);
+    ledHelper.setFuelLevel(laneIndex, percentage);
+    sendFuelPercentage(laneIndex, percentage);
+  }
+
+  private void sendFuelPercentage(int laneIndex, int percentage) {
+    if (!isConnected()) {
+      logger.warn("Serial connection not open, cannot send fuel percentage");
+      return;
+    }
+    byte[] message = new byte[5];
+    message[0] = 0x45; // 'E'
+    message[1] = 0x03; // Sub-opcode (Fuel Percentage)
+    message[2] = (byte) laneIndex;
+    message[3] = (byte) percentage;
+    message[4] = TERMINATOR;
+
+    writeData(message);
+    logger.info("Sent FUEL_PERCENTAGE - Lane: {}, Percentage: {}", laneIndex, percentage);
   }
 
   @Override

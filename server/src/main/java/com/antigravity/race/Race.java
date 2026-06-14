@@ -451,8 +451,10 @@ public class Race implements ProtocolListener {
     FuelOptions fuelOptions = getFuelOptions();
     if (fuelOptions != null && fuelOptions.isEnabled()) {
       double initialLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
-      for (RaceParticipant driver : drivers) {
+      for (int i = 0; i < drivers.size(); i++) {
+        RaceParticipant driver = drivers.get(i);
         driver.setFuelLevel(initialLevel);
+        setFuelLevel(i, initialLevel, fuelOptions.getCapacity());
       }
     }
   }
@@ -684,9 +686,9 @@ public class Race implements ProtocolListener {
       hardwareManager.getProtocols().setRefueling(lane, on);
   }
 
-  public void setFuelLevel(int lane, int level) {
+  public void setFuelLevel(int lane, double fuelLevel, double capacity) {
     if (hardwareManager.getProtocols() != null)
-      hardwareManager.getProtocols().setFuelLevel(lane, level);
+      hardwareManager.getProtocols().setFuelLevel(lane, fuelLevel, capacity);
   }
 
   public void setHeatProgress(double progress) {
@@ -710,10 +712,14 @@ public class Race implements ProtocolListener {
     if (fuelOptions == null || !fuelOptions.isEnabled()) return;
     boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
     double startLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
-    for (DriverHeatData heatData : currentHeat.getDrivers()) {
+    for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+      DriverHeatData heatData = currentHeat.getDrivers().get(i);
       RaceParticipant participant = heatData.getDriver();
       if (participant == null || participant.getDriver() == null) continue;
-      if (resetAtStart) participant.setFuelLevel(startLevel);
+      if (resetAtStart) {
+        participant.setFuelLevel(startLevel);
+        setFuelLevel(i, startLevel, fuelOptions.getCapacity());
+      }
       heatData.setInitialFuelLevel(participant.getFuelLevel());
     }
     setLanePower(true, -1);
@@ -727,8 +733,15 @@ public class Race implements ProtocolListener {
       currentHeat.setStarted(false);
       resetRaceTime();
       initializeHeatExecutionState();
-      for (DriverHeatData heatData : currentHeat.getDrivers())
-        heatData.getDriver().setFuelLevel(heatData.getInitialFuelLevel());
+      FuelOptions fuelOptions = getFuelOptions();
+      double capacity =
+          (fuelOptions != null && fuelOptions.isEnabled()) ? fuelOptions.getCapacity() : 0.0;
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData heatData = currentHeat.getDrivers().get(i);
+        double fuelLevel = heatData.getInitialFuelLevel();
+        heatData.getDriver().setFuelLevel(fuelLevel);
+        setFuelLevel(i, fuelLevel, capacity);
+      }
       broadcast(
           RaceData.newBuilder()
               .setRace(

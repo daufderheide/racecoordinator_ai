@@ -419,8 +419,19 @@ public abstract class DefaultProtocol implements IProtocol {
   @Override
   public void setRefueling(int laneIndex, boolean isRefueling) {}
 
+  public static int calculateFuelPercentage(double fuelLevel, double capacity) {
+    if (capacity == 0) {
+      return 100;
+    } else if (fuelLevel <= 0) {
+      return 0;
+    } else {
+      int pct = (int) (fuelLevel / capacity * 100.0 + 0.5);
+      return Math.max(0, Math.min(100, pct));
+    }
+  }
+
   @Override
-  public void setFuelLevel(int laneIndex, int fuelLevelPct) {}
+  public void setFuelLevel(int laneIndex, double fuelLevel, double capacity) {}
 
   @Override
   public void setHeatProgress(double percentage) {}

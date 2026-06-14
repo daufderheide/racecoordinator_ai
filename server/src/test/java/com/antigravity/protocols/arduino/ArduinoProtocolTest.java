@@ -1912,4 +1912,68 @@ public class ArduinoProtocolTest {
         "Should send heat standings message again after initializeHardwareState reset",
         serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
   }
+
+  @Test
+  public void testSetFuelLevel_SendsFuelPercentageMessage() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Regular case: fuelLevel = 50.0, capacity = 100.0 (50%)
+    protocol.setFuelLevel(0, 50.0, 100.0);
+    byte[] expectedMsg1 = {0x45, 0x03, 0x00, 50, 0x3B};
+    assertTrue(
+        "Should have sent 50% fuel percentage message",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg1, d)));
+
+    // 2. Capacity 0 case -> 100%
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(1, 0.0, 0.0);
+    byte[] expectedMsg2 = {0x45, 0x03, 0x01, 100, 0x3B};
+    assertTrue(
+        "Should have sent 100% fuel percentage message for capacity 0",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg2, d)));
+
+    // 3. Level <= 0 case -> 0%
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(0, -5.0, 100.0);
+    byte[] expectedMsg3 = {0x45, 0x03, 0x00, 0, 0x3B};
+    assertTrue(
+        "Should have sent 0% fuel percentage message for negative fuel level",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg3, d)));
+
+    // 4. Level = 0 case -> 0%
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(0, 0.0, 100.0);
+    byte[] expectedMsg4 = {0x45, 0x03, 0x00, 0, 0x3B};
+    assertTrue(
+        "Should have sent 0% fuel percentage message for 0 fuel level",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg4, d)));
+
+    // 5. Rounding case: 0.49% -> 0% (fuelLevel = 0.0049, capacity = 1.0)
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(0, 0.0049, 1.0);
+    byte[] expectedMsg5 = {0x45, 0x03, 0x00, 0, 0x3B};
+    assertTrue(
+        "Should have rounded 0.49% down to 0%",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg5, d)));
+
+    // 6. Rounding case: 0.50% -> 1% (fuelLevel = 0.005, capacity = 1.0)
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(0, 0.005, 1.0);
+    byte[] expectedMsg6 = {0x45, 0x03, 0x00, 1, 0x3B};
+    assertTrue(
+        "Should have rounded 0.50% up to 1%",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg6, d)));
+
+    // 7. Clamp case: level > capacity -> 100%
+    serialConnection.allWrittenData.clear();
+    protocol.setFuelLevel(0, 150.0, 100.0);
+    byte[] expectedMsg7 = {0x45, 0x03, 0x00, 100, 0x3B};
+    assertTrue(
+        "Should have clamped percentage to 100%",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg7, d)));
+  }
 }

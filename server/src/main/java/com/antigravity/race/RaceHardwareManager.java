@@ -99,13 +99,15 @@ public class RaceHardwareManager {
 
     // 3. Fuel Levels
     FuelOptions fuelOptions = race.getFuelOptions();
-    if (fuelOptions != null && fuelOptions.isEnabled() && fuelOptions.getCapacity() > 0) {
-      double capacity = fuelOptions.getCapacity();
-      for (int i = 0; i < race.getDrivers().size(); i++) {
-        int currentPct = (int) ((race.getDrivers().get(i).getFuelLevel() / capacity) * 100.0);
-        this.protocols.setFuelLevel(i, currentPct);
-        this.protocols.setRefueling(i, false);
-      }
+    double capacity =
+        (fuelOptions != null && fuelOptions.isEnabled()) ? fuelOptions.getCapacity() : 0.0;
+    for (int i = 0; i < race.getDrivers().size(); i++) {
+      double fuelLevel =
+          (fuelOptions != null && fuelOptions.isEnabled())
+              ? race.getDrivers().get(i).getFuelLevel()
+              : 0.0;
+      this.protocols.setFuelLevel(i, fuelLevel, capacity);
+      this.protocols.setRefueling(i, false);
     }
 
     // 4. Heat Progress

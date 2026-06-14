@@ -311,13 +311,13 @@ public class RacingTest {
     // Wait for ticker (runs every 100ms)
     Thread.sleep(300);
 
-    verify(mockRace).setFuelLevel(0, 50);
+    verify(mockRace).setFuelLevel(0, 50.0, 100.0);
 
     // Simulate another change
     drivers.get(0).getDriver().setFuelLevel(25.0); // 25%
     Thread.sleep(300);
 
-    verify(mockRace).setFuelLevel(0, 25);
+    verify(mockRace).setFuelLevel(0, 25.0, 100.0);
     racing.exit(mockRace);
   }
 

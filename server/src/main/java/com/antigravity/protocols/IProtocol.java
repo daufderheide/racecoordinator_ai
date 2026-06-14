@@ -39,7 +39,7 @@ public interface IProtocol {
 
   void setRefueling(int laneIndex, boolean isRefueling);
 
-  void setFuelLevel(int laneIndex, int fuelLevelPct);
+  void setFuelLevel(int laneIndex, double fuelLevel, double capacity);
 
   void setHeatProgress(double percentage);
 
