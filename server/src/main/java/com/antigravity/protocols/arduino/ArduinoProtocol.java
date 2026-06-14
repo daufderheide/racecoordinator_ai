@@ -35,6 +35,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private ScheduledFuture<?> ledFlashFuture;
   private ArduinoLedHelper ledHelper;
 
+  private Integer lastLeaderLane = null;
+
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
   private static final byte[] TIME_RESET_COMMAND = {0x54, 0x3B};
@@ -583,6 +585,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   public void initializeHardwareState() {
+    lastLeaderLane = null;
     syncPower();
     ledHelper.initializeHardwareState();
   }
@@ -774,6 +777,29 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   @Override
   public void setHeatStandings(List<Integer> laneIndices) {
     ledHelper.setHeatStandings(laneIndices);
+
+    if (laneIndices != null && !laneIndices.isEmpty()) {
+      int leaderLane = laneIndices.get(0);
+      if (lastLeaderLane == null || lastLeaderLane != leaderLane) {
+        lastLeaderLane = leaderLane;
+        sendHeatLeader(leaderLane);
+      }
+    }
+  }
+
+  private void sendHeatLeader(int laneIndex) {
+    if (!isConnected()) {
+      logger.warn("Serial connection not open, cannot send heat leader");
+      return;
+    }
+    byte[] message = new byte[4];
+    message[0] = 0x45; // 'E'
+    message[1] = 0x01; // Sub-opcode (heat leader)
+    message[2] = (byte) laneIndex;
+    message[3] = TERMINATOR;
+
+    writeData(message);
+    logger.info("Sent HEAT_LEADER - Lane: {}", laneIndex);
   }
 
   @Override

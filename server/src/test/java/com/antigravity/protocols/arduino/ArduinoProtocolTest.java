@@ -1794,4 +1794,63 @@ public class ArduinoProtocolTest {
 
     assertEquals(initialConnections, serialConnection.connectionCount);
   }
+
+  @Test
+  public void testSetHeatStandings_SendsHeatLeaderMessage() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Initial standings update: lane 1 is leader
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+
+    // Expected: 0x45 0x01 0x01 0x3B
+    byte[] expectedMsg = {0x45, 0x01, 0x01, 0x3B};
+    boolean found =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d));
+    assertTrue("Should have sent heat leader message for lane 1", found);
+
+    // 2. Standings update with same leader: lane 1 is still leader
+    serialConnection.allWrittenData.clear();
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+    boolean foundDuplicate =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d));
+    assertTrue("Should NOT have sent duplicate heat leader message", !foundDuplicate);
+
+    // 3. Standings update with new leader: lane 0 is now leader
+    serialConnection.allWrittenData.clear();
+    protocol.setHeatStandings(Arrays.asList(0, 1));
+    byte[] expectedNewMsg = {0x45, 0x01, 0x00, 0x3B};
+    boolean foundNew =
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedNewMsg, d));
+    assertTrue("Should have sent heat leader message for new leader lane 0", foundNew);
+  }
+
+  @Test
+  public void testInitializeHardwareState_ResetsLeader() {
+    protocol.open();
+    // Verify version to allow sending commands
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+
+    // 1. Initial leader: lane 1
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+    byte[] expectedMsg = {0x45, 0x01, 0x01, 0x3B};
+    assertTrue(
+        "Should have sent heat leader message for lane 1",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+
+    // 2. Initialize hardware state
+    serialConnection.allWrittenData.clear();
+    protocol.initializeHardwareState();
+
+    // 3. Set standings with same leader lane 1 again
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+    assertTrue(
+        "Should send heat leader message again after initializeHardwareState reset",
+        serialConnection.allWrittenData.stream().anyMatch(d -> Arrays.equals(expectedMsg, d)));
+  }
 }
