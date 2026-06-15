@@ -110,6 +110,19 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   private driverResultsWindows: Window[] = [];
+  protected isPrinting = false;
+
+  @HostListener("window:beforeprint")
+  onBeforePrint() {
+    this.isPrinting = true;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener("window:afterprint")
+  onAfterPrint() {
+    this.isPrinting = false;
+    this.cdr.detectChanges();
+  }
 
   protected openDriverResults(driverId: string, event: MouseEvent) {
     if (event) {

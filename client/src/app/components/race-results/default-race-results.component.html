@@ -270,109 +270,123 @@
             class="results-table-body"
             [style.height.px]="standingsRows.length * 90"
           >
+            <ng-template #rowContent let-row>
+              <!-- Position Overall Column -->
+              <div class="body-cell col-pos">
+                <div
+                  class="pos-badge"
+                  [class.podium-1]="row.rank === 1"
+                  [class.podium-2]="row.rank === 2"
+                  [class.podium-3]="row.rank === 3"
+                >
+                  {{ row.rank }}
+                </div>
+              </div>
+              <!-- Avatar Column -->
+              <div class="body-cell col-avatar">
+                <div
+                  class="avatar-ring"
+                  [class.gold-ring]="row.rank === 1"
+                  [class.silver-ring]="row.rank === 2"
+                  [class.bronze-ring]="row.rank === 3"
+                >
+                  <img
+                    [src]="row.avatarUrl | avatarUrl"
+                    class="driver-avatar"
+                    alt="Avatar"
+                  />
+                </div>
+              </div>
+              <!-- Driver Details -->
+              <div class="body-cell col-driver">
+                <div class="driver-name-block">
+                  <div class="driver-nickname">
+                    {{ row.driver.nickname || row.driver.name }}
+                  </div>
+                  @if (
+                    row.driver.nickname &&
+                    row.driver.nickname !== row.driver.name
+                  ) {
+                    <div class="driver-full-name">
+                      {{ row.driver.name }}
+                    </div>
+                  }
+                </div>
+              </div>
+              <!-- Overall Score -->
+              <div class="body-cell col-score text-highlight">
+                {{ row.score | number: getScoreFormat() }}
+              </div>
+              <!-- Total Laps Completed -->
+              <div class="body-cell col-laps">
+                {{ row.laps | number: "1.2-2" }}
+              </div>
+              <!-- Average Lap Time -->
+              <div class="body-cell col-avg-lap">
+                {{
+                  row.averageLapTime > 0
+                    ? (row.averageLapTime | number: "1.3-3")
+                    : "--.---"
+                }}
+              </div>
+              <!-- Median Lap Time -->
+              <div class="body-cell col-median-lap">
+                {{
+                  row.medianLapTime > 0
+                    ? (row.medianLapTime | number: "1.3-3")
+                    : "--.---"
+                }}
+              </div>
+              <!-- Best Lap Time -->
+              <div class="body-cell col-best-lap text-best-lap">
+                {{
+                  row.bestLapTime > 0
+                    ? (row.bestLapTime | number: "1.3-3")
+                    : "--.---"
+                }}
+              </div>
+              <!-- Total Time -->
+              <div class="body-cell col-total-time">
+                {{
+                  row.totalTime > 0
+                    ? (row.totalTime | number: "1.3-3")
+                    : "--.---"
+                }}
+              </div>
+              <!-- Gap to Overall 1st -->
+              <div class="body-cell col-gap-leader text-gap">
+                {{ formatGap(row.gap1st) }}
+              </div>
+              <!-- Gap to Driver Ahead -->
+              <div class="body-cell col-gap-ahead text-gap">
+                {{ formatGap(row.gapAhead) }}
+              </div>
+            </ng-template>
+
             @for (
               row of standingsRows;
               track trackByDriver($index, row);
               let idx = $index
             ) {
-              <a
-                class="driver-row"
-                [style.top.px]="row.visualIndex * 90"
-                [routerLink]="['/driver-results', getDriverId(row.driver)]"
-                target="_blank"
-                (click)="openDriverResults(getDriverId(row.driver), $event)"
-              >
-                <!-- Position Overall Column -->
-                <div class="body-cell col-pos">
-                  <div
-                    class="pos-badge"
-                    [class.podium-1]="row.rank === 1"
-                    [class.podium-2]="row.rank === 2"
-                    [class.podium-3]="row.rank === 3"
-                  >
-                    {{ row.rank }}
-                  </div>
+              @if (isPrinting) {
+                <div class="driver-row" [style.top.px]="row.visualIndex * 90">
+                  <ng-container
+                    *ngTemplateOutlet="rowContent; context: { $implicit: row }"
+                  ></ng-container>
                 </div>
-                <!-- Avatar Column -->
-                <div class="body-cell col-avatar">
-                  <div
-                    class="avatar-ring"
-                    [class.gold-ring]="row.rank === 1"
-                    [class.silver-ring]="row.rank === 2"
-                    [class.bronze-ring]="row.rank === 3"
-                  >
-                    <img
-                      [src]="row.avatarUrl | avatarUrl"
-                      class="driver-avatar"
-                      alt="Avatar"
-                    />
-                  </div>
-                </div>
-                <!-- Driver Details -->
-                <div class="body-cell col-driver">
-                  <div class="driver-name-block">
-                    <div class="driver-nickname">
-                      {{ row.driver.nickname || row.driver.name }}
-                    </div>
-                    @if (
-                      row.driver.nickname &&
-                      row.driver.nickname !== row.driver.name
-                    ) {
-                      <div class="driver-full-name">
-                        {{ row.driver.name }}
-                      </div>
-                    }
-                  </div>
-                </div>
-                <!-- Overall Score -->
-                <div class="body-cell col-score text-highlight">
-                  {{ row.score | number: getScoreFormat() }}
-                </div>
-                <!-- Total Laps Completed -->
-                <div class="body-cell col-laps">
-                  {{ row.laps | number: "1.2-2" }}
-                </div>
-                <!-- Average Lap Time -->
-                <div class="body-cell col-avg-lap">
-                  {{
-                    row.averageLapTime > 0
-                      ? (row.averageLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <!-- Median Lap Time -->
-                <div class="body-cell col-median-lap">
-                  {{
-                    row.medianLapTime > 0
-                      ? (row.medianLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <!-- Best Lap Time -->
-                <div class="body-cell col-best-lap text-best-lap">
-                  {{
-                    row.bestLapTime > 0
-                      ? (row.bestLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <!-- Total Time -->
-                <div class="body-cell col-total-time">
-                  {{
-                    row.totalTime > 0
-                      ? (row.totalTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <!-- Gap to Overall 1st -->
-                <div class="body-cell col-gap-leader text-gap">
-                  {{ formatGap(row.gap1st) }}
-                </div>
-                <!-- Gap to Driver Ahead -->
-                <div class="body-cell col-gap-ahead text-gap">
-                  {{ formatGap(row.gapAhead) }}
-                </div>
-              </a>
+              } @else {
+                <a
+                  class="driver-row"
+                  [style.top.px]="row.visualIndex * 90"
+                  [routerLink]="['/driver-results', getDriverId(row.driver)]"
+                  target="_blank"
+                  (click)="openDriverResults(getDriverId(row.driver), $event)"
+                >
+                  <ng-container
+                    *ngTemplateOutlet="rowContent; context: { $implicit: row }"
+                  ></ng-container>
+                </a>
+              }
             }
 
             <!-- No Drivers Row -->

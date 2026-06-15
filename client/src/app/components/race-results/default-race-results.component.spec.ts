@@ -795,6 +795,33 @@ describe("DefaultRaceResultsComponent", () => {
 
       expect(component["raceStartTime"]).toBe(firstTime);
     });
+
+    it("should render driver rows as div (not anchor links) when printing", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const p1 = createParticipant("d1", d1, 1, 5, 25.0, 4.5, 5.0, 5.0, 100, 1);
+      participantsSubject.next([p1]);
+      fixture.detectChanges();
+
+      let rowEl = fixture.nativeElement.querySelector(".driver-row");
+      expect(rowEl).toBeTruthy();
+      expect(rowEl.tagName.toLowerCase()).toBe("a");
+
+      // Simulate beforeprint event
+      window.dispatchEvent(new Event("beforeprint"));
+      fixture.detectChanges();
+
+      rowEl = fixture.nativeElement.querySelector(".driver-row");
+      expect(rowEl).toBeTruthy();
+      expect(rowEl.tagName.toLowerCase()).toBe("div");
+
+      // Simulate afterprint event
+      window.dispatchEvent(new Event("afterprint"));
+      fixture.detectChanges();
+
+      rowEl = fixture.nativeElement.querySelector(".driver-row");
+      expect(rowEl).toBeTruthy();
+      expect(rowEl.tagName.toLowerCase()).toBe("a");
+    });
   });
 
   describe("Laps Subscription (Live Updates)", () => {
