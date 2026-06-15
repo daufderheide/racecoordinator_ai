@@ -2961,6 +2961,85 @@ describe("DefaultRacedayComponent", () => {
       expect(component.formatValue("lapCount", 10.123, hd)).toBe("10.12"); // Rounded to 2
     });
 
+    it("should display --.-- until reaction time, real laps, or adjustments are registered", () => {
+      // 1. None registered
+      const hdNoData: any = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", 0, hdNoData)).toBe("--.--");
+
+      // 2. Reaction time registered
+      const hdReaction: any = {
+        reactionTime: 0.123,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", 0, hdReaction)).toBe("0.00");
+
+      // 3. Real lap registered
+      const hdLaps: any = {
+        reactionTime: 0,
+        lapTimes: [1.234],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", 1, hdLaps)).toBe("1.00");
+
+      // 4. User lap adjustment
+      const hdUserLaps: any = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0.25,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", 0.25, hdUserLaps)).toBe("0.25");
+
+      // 5. Automatic lap adjustment
+      const hdAutoLaps: any = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 1,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", 1, hdAutoLaps)).toBe("1.00");
+
+      // 6. Penalty lap adjustment
+      const hdPenalty: any = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: -1,
+        adjustedLapCount: 0,
+      };
+      expect(component.formatValue("lapCount", -1, hdPenalty)).toBe("-1.00");
+
+      // 7. Adjusted lap count
+      const hdAdjusted: any = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 2,
+      };
+      expect(component.formatValue("lapCount", 2, hdAdjusted)).toBe("2.00");
+    });
+
     it("should call updateUserLaps with current + 0.25 on cell click", () => {
       const mockHd: any = {
         laneIndex: 1,

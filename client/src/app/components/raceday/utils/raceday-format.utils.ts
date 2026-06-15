@@ -83,12 +83,21 @@ export class RacedayFormatUtils {
       const sign = value > 0 ? "+" : "";
       return sign + value.toFixed(3);
     } else if (baseKey === "lapCount") {
+      const hasReactionTime = hd.reactionTime > 0;
+      const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+      const hasAdjustment =
+        (hd.userLaps !== undefined && hd.userLaps !== 0) ||
+        (hd.autoCalculatedLaps !== undefined && hd.autoCalculatedLaps !== 0) ||
+        (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
+        (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
+
       if (
         value === null ||
         value === undefined ||
-        (value === 0 && hd.reactionTime === 0)
-      )
-        return "--";
+        (!hasReactionTime && !hasRealLap && !hasAdjustment)
+      ) {
+        return "--.--";
+      }
       return value.toFixed(2);
     } else if (baseKey === "driver.name") {
       if (RacedayFormatUtils.isEmptyDriver(hd))
