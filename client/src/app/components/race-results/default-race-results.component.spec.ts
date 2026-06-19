@@ -1,13 +1,15 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ActivatedRoute } from "@angular/router";
-import { BehaviorSubject, Subject } from "rxjs";
+import { ActivatedRoute, Router } from "@angular/router";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { Role } from "@app/models/role";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -30,6 +32,7 @@ describe("DefaultRaceResultsComponent", () => {
   let standingsUpdateSubject: Subject<any>;
   let overallStandingsUpdateSubject: Subject<any>;
   let lapsSubject: Subject<any>;
+  let mockRouter: any;
 
   // Reusable test helpers
   const createDriver = (id: string, name: string, nickname: string): Driver => {
@@ -102,6 +105,9 @@ describe("DefaultRaceResultsComponent", () => {
     standingsUpdateSubject = new Subject<any>();
     overallStandingsUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<any>();
+    mockRouter = {
+      navigate: jasmine.createSpy("navigate"),
+    };
 
     mockRaceConnectionService = {
       connect: jasmine.createSpy("connect"),
@@ -156,8 +162,17 @@ describe("DefaultRaceResultsComponent", () => {
         },
         {
           provide: DataService,
-          useValue: { serverUrl: "http://localhost:8080" },
+          useValue: {
+            serverUrl: "http://localhost:8080",
+            getSystemState: () => of(null),
+            updateRaceSubscription: () => {},
+          },
         },
+        {
+          provide: AuthService,
+          useValue: { currentRole: Role.VIEWER },
+        },
+        { provide: Router, useValue: mockRouter },
       ],
     }).compileComponents();
   });
@@ -993,6 +1008,28 @@ describe("DefaultRaceResultsComponent", () => {
       component.ngOnDestroy();
       expect(mockWindow2.close).toHaveBeenCalled();
       expect(component["driverResultsWindows"].length).toBe(0);
+    });
+
+    describe("Viewer Race Ended Redirect", () => {
+      it("should redirect to /raceday-setup on acknowledge if race has ended", () => {
+        const routerSpy = TestBed.inject(Router);
+
+        component.raceHasEnded = true;
+        component.onAcknowledgeModal();
+
+        expect(component.showAckModal).toBeFalse();
+        expect(routerSpy.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+      });
+
+      it("should not redirect to /raceday-setup on acknowledge if race has not ended", () => {
+        const routerSpy = TestBed.inject(Router);
+
+        component.raceHasEnded = false;
+        component.onAcknowledgeModal();
+
+        expect(component.showAckModal).toBeFalse();
+        expect(routerSpy.navigate).not.toHaveBeenCalled();
+      });
     });
   });
 });

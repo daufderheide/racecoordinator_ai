@@ -60,6 +60,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, playSound } from "@app/utils/audio";
+import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
@@ -401,11 +402,45 @@ export class DefaultRacedayComponent
   // Acknowledgement Modal State (kept for interface errors)
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
-  showAckModal = false;
-  ackModalTitle = "";
-  ackModalMessage = "";
-  ackModalButtonText = "ACK_MODAL_BTN_OK";
-  raceHasEnded = false;
+  viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+
+  get showAckModal(): boolean {
+    return this.viewerRaceEndedHandler?.showAckModal ?? false;
+  }
+  set showAckModal(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.showAckModal = v;
+  }
+  get ackModalTitle(): string {
+    return this.viewerRaceEndedHandler?.ackModalTitle ?? "";
+  }
+  set ackModalTitle(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalTitle = v;
+  }
+  get ackModalMessage(): string {
+    return this.viewerRaceEndedHandler?.ackModalMessage ?? "";
+  }
+  set ackModalMessage(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalMessage = v;
+  }
+  get ackModalButtonText(): string {
+    return (
+      this.viewerRaceEndedHandler?.ackModalButtonText ?? "ACK_MODAL_BTN_OK"
+    );
+  }
+  set ackModalButtonText(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalButtonText = v;
+  }
+  get raceHasEnded(): boolean {
+    return this.viewerRaceEndedHandler?.raceHasEnded ?? false;
+  }
+  set raceHasEnded(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.raceHasEnded = v;
+  }
   forceExit = false;
 
   public Role = Role;
@@ -540,6 +575,21 @@ export class DefaultRacedayComponent
   }
 
   private setupInitialState() {
+    this.viewerRaceEndedHandler = new ViewerRaceEndedHandler(
+      this.dataService,
+      this.authService,
+      this.cdr,
+      {
+        onlyForViewer: false,
+        onRaceEnded: () => {
+          this.showExitConfirmation = false;
+          this.showSkipHeatConfirmation = false;
+          this.showRestartHeatConfirmation = false;
+          this.showDeferHeatConfirmation = false;
+        },
+      },
+    );
+
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
@@ -643,34 +693,7 @@ export class DefaultRacedayComponent
       }),
     );
 
-    this.subscriptions.push(
-      this.dataService.getSystemState().subscribe((state) => {
-        if (state) {
-          if (state.resourceLockState === "IDLE") {
-            this.raceHasEnded = true;
-            this.showExitConfirmation = false;
-            this.showSkipHeatConfirmation = false;
-            this.showRestartHeatConfirmation = false;
-            this.showDeferHeatConfirmation = false;
-            this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-            this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-            this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-            this.showAckModal = true;
-            this.cdr.markForCheck();
-          } else if (state.resourceLockState === "RACE_RUNNING") {
-            if (this.raceHasEnded) {
-              this.raceHasEnded = false;
-              this.ackModalTitle = "RD_RACE_STARTED_TITLE";
-              this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
-              this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
-              this.showAckModal = true;
-              this.dataService.updateRaceSubscription(true);
-              this.cdr.markForCheck();
-            }
-          }
-        }
-      }),
-    );
+    this.viewerRaceEndedHandler.startListening();
 
     this.subscriptions.push(
       this.dataService.getServerIp().subscribe({
@@ -1066,6 +1089,9 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    if (this.viewerRaceEndedHandler) {
+      this.viewerRaceEndedHandler.stopListening();
+    }
     this.isDestroyed = true;
     this.raceConnectionService.disconnect();
 

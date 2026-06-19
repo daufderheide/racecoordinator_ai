@@ -3,11 +3,14 @@ import {
   ChangeDetectorRef,
   Component,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
 } from "@angular/core";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { Subscription } from "rxjs";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
@@ -17,10 +20,12 @@ import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IRecordData, IRecordEntry } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
+import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
+import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 interface StandingsRow {
   rank: number;
@@ -81,9 +86,61 @@ const NEON_COLORS = [
     TranslatePipe,
     AvatarUrlPipe,
     RouterModule,
+    AcknowledgementModalComponent,
   ],
 })
 export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+
+  get showAckModal(): boolean {
+    return this.viewerRaceEndedHandler?.showAckModal ?? false;
+  }
+  set showAckModal(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.showAckModal = v;
+  }
+  get ackModalTitle(): string {
+    return this.viewerRaceEndedHandler?.ackModalTitle ?? "";
+  }
+  set ackModalTitle(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalTitle = v;
+  }
+  get ackModalMessage(): string {
+    return this.viewerRaceEndedHandler?.ackModalMessage ?? "";
+  }
+  set ackModalMessage(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalMessage = v;
+  }
+  get ackModalButtonText(): string {
+    return (
+      this.viewerRaceEndedHandler?.ackModalButtonText ?? "ACK_MODAL_BTN_OK"
+    );
+  }
+  set ackModalButtonText(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalButtonText = v;
+  }
+  get raceHasEnded(): boolean {
+    return this.viewerRaceEndedHandler?.raceHasEnded ?? false;
+  }
+  set raceHasEnded(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.raceHasEnded = v;
+  }
+
+  onAcknowledgeModal() {
+    const raceHasEnded = this.raceHasEnded;
+    this.showAckModal = false;
+    if (raceHasEnded) {
+      this.router.navigate(["/raceday-setup"]);
+    }
+  }
+
   protected scale = 1;
   protected participants: RaceParticipant[] = [];
   protected race?: Race;
@@ -225,6 +282,14 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.viewerRaceEndedHandler = new ViewerRaceEndedHandler(
+      this.dataService,
+      this.authService,
+      this.cdr,
+      { onlyForViewer: true },
+    );
+    this.viewerRaceEndedHandler.startListening();
+
     this.updateScale();
     this.raceConnectionService.connect();
 
@@ -289,6 +354,9 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.viewerRaceEndedHandler) {
+      this.viewerRaceEndedHandler.stopListening();
+    }
     this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.closeDriverResultsWindows();

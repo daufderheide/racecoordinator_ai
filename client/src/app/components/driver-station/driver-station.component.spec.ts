@@ -1,12 +1,14 @@
 import { ChangeDetectorRef } from "@angular/core";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { FinishMethod } from "@app/models/heat_scoring";
+import { Role } from "@app/models/role";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
+import { AuthService } from "@app/services/auth.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -27,8 +29,12 @@ describe("DriverStationComponent", () => {
   let mockDataService: any;
   let mockRaceService: any;
   let mockRaceConnectionService: any;
+  let mockRouter: any;
 
   beforeEach(async () => {
+    mockRouter = {
+      navigate: jasmine.createSpy("navigate"),
+    };
     mockDataService = jasmine.createSpyObj("DataService", [
       "updateRaceSubscription",
       "getRaceUpdate",
@@ -39,7 +45,9 @@ describe("DriverStationComponent", () => {
       "connectToInterfaceDataSocket",
       "disconnectFromInterfaceDataSocket",
       "getRaceFlag",
+      "getSystemState",
     ]);
+    mockDataService.getSystemState.and.returnValue(of(null));
     mockDataService.getRaceUpdate.and.returnValue(of({}));
     mockDataService.getRaceTime.and.returnValue(of(0));
     mockDataService.getLaps.and.returnValue(of(null));
@@ -116,6 +124,8 @@ describe("DriverStationComponent", () => {
         { provide: RaceFlagService, useValue: mockRaceFlagService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: AuthService, useValue: { currentRole: Role.VIEWER } },
+        { provide: Router, useValue: mockRouter },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -258,5 +268,29 @@ describe("DriverStationComponent", () => {
     expect(mockRaceFlagService.getFlagTypeForFlag).toHaveBeenCalledWith(
       RaceFlag.CHECKERED,
     );
+  });
+
+  describe("Viewer Race Ended Redirect", () => {
+    it("should redirect to /raceday-setup on acknowledge if race has ended", () => {
+      fixture.detectChanges();
+      const routerSpy = TestBed.inject(Router);
+
+      component.raceHasEnded = true;
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(routerSpy.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should not redirect to /raceday-setup on acknowledge if race has not ended", () => {
+      fixture.detectChanges();
+      const routerSpy = TestBed.inject(Router);
+
+      component.raceHasEnded = false;
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
   });
 });

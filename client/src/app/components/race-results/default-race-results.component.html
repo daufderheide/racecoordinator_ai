@@ -735,3 +735,12 @@
     </div>
   </div>
 </div>
+
+<app-acknowledgement-modal
+  [visible]="showAckModal"
+  [title]="ackModalTitle"
+  [message]="ackModalMessage"
+  [buttonText]="ackModalButtonText"
+  (acknowledge)="onAcknowledgeModal()"
+>
+</app-acknowledgement-modal>

@@ -1,10 +1,14 @@
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
+import { Role } from "@app/models/role";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -24,8 +28,13 @@ describe("HeatResultsComponent", () => {
   let mockRaceConnectionService: any;
   let mockRaceService: any;
   let mockPrintService: any;
+  let mockRouter: any;
 
   beforeEach(async () => {
+    mockRouter = {
+      navigate: jasmine.createSpy("navigate"),
+    };
+
     mockRaceConnectionService = {
       connect: jasmine.createSpy("connect"),
       disconnect: jasmine.createSpy("disconnect"),
@@ -84,6 +93,19 @@ describe("HeatResultsComponent", () => {
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: PrintService, useValue: mockPrintService },
+        {
+          provide: DataService,
+          useValue: {
+            serverUrl: "http://localhost:8080",
+            getSystemState: () => of(null),
+            updateRaceSubscription: () => {},
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: { currentRole: Role.VIEWER },
+        },
+        { provide: Router, useValue: mockRouter },
       ],
     }).compileComponents();
   });
@@ -169,5 +191,27 @@ describe("HeatResultsComponent", () => {
     component.ngOnDestroy();
     expect(mockWindow2.close).toHaveBeenCalled();
     expect(component["driverResultsWindows"].length).toBe(0);
+  });
+
+  describe("Viewer Race Ended Redirect", () => {
+    it("should redirect to /raceday-setup on acknowledge if race has ended", () => {
+      const routerSpy = TestBed.inject(Router);
+
+      component.raceHasEnded = true;
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(routerSpy.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should not redirect to /raceday-setup on acknowledge if race has not ended", () => {
+      const routerSpy = TestBed.inject(Router);
+
+      component.raceHasEnded = false;
+      component.onAcknowledgeModal();
+
+      expect(component.showAckModal).toBeFalse();
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
   });
 });

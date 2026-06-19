@@ -1,7 +1,14 @@
 import { DecimalPipe } from "@angular/common";
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
-import { ActivatedRoute } from "@angular/router";
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { DataService } from "@app/data.service";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -10,20 +17,72 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { createTTSContext, playSound } from "@app/utils/audio";
+import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 @Component({
   standalone: true,
   selector: "app-driver-station",
   templateUrl: "./driver-station.component.html",
   styleUrls: ["./driver-station.component.css"],
-  imports: [DecimalPipe, TranslatePipe],
+  imports: [DecimalPipe, TranslatePipe, AcknowledgementModalComponent],
 })
 export class DriverStationComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+
+  get showAckModal(): boolean {
+    return this.viewerRaceEndedHandler?.showAckModal ?? false;
+  }
+  set showAckModal(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.showAckModal = v;
+  }
+  get ackModalTitle(): string {
+    return this.viewerRaceEndedHandler?.ackModalTitle ?? "";
+  }
+  set ackModalTitle(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalTitle = v;
+  }
+  get ackModalMessage(): string {
+    return this.viewerRaceEndedHandler?.ackModalMessage ?? "";
+  }
+  set ackModalMessage(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalMessage = v;
+  }
+  get ackModalButtonText(): string {
+    return (
+      this.viewerRaceEndedHandler?.ackModalButtonText ?? "ACK_MODAL_BTN_OK"
+    );
+  }
+  set ackModalButtonText(v: string) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.ackModalButtonText = v;
+  }
+  get raceHasEnded(): boolean {
+    return this.viewerRaceEndedHandler?.raceHasEnded ?? false;
+  }
+  set raceHasEnded(v: boolean) {
+    if (this.viewerRaceEndedHandler)
+      this.viewerRaceEndedHandler.raceHasEnded = v;
+  }
+
+  onAcknowledgeModal() {
+    const raceHasEnded = this.raceHasEnded;
+    this.showAckModal = false;
+    if (raceHasEnded) {
+      this.router.navigate(["/raceday-setup"]);
+    }
+  }
+
   // ... existing code ...
   private subscriptions: Subscription[] = [];
   protected laneIndex: number = 0;
@@ -49,6 +108,19 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
+    this.viewerRaceEndedHandler = new ViewerRaceEndedHandler(
+      this.dataService,
+      this.authService,
+      this.cdr,
+      {
+        onlyForViewer: true,
+        onRaceStarted: () => {
+          this.loadRaceData();
+        },
+      },
+    );
+    this.viewerRaceEndedHandler.startListening();
+
     this.route.params.subscribe((params) => {
       this.laneIndex = +params["lane"] - 1;
       this.loadRaceData();
@@ -170,6 +242,9 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.viewerRaceEndedHandler) {
+      this.viewerRaceEndedHandler.stopListening();
+    }
     this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
