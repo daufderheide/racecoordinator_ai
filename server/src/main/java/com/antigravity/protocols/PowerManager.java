@@ -45,7 +45,14 @@ public class PowerManager {
     }
   }
 
+  private boolean isWarmup = false;
+
+  public void setWarmup(boolean warmup) {
+    this.isWarmup = warmup;
+  }
+
   public void reset() {
+    this.isWarmup = false;
     for (ProtocolState state : protocolStates) {
       state.firstMainPower = true;
       Arrays.fill(state.firstLanePower, true);
@@ -58,15 +65,16 @@ public class PowerManager {
       IProtocol protocol = protocols.get(i);
       ProtocolState state = this.protocolStates[i];
       if (protocol.hasMainRelay()) {
-        if (state.firstMainPower || state.currentMainPower != on) {
-          protocol.setMainPower(on);
+        boolean targetMainPower = isWarmup || on;
+        if (state.firstMainPower || state.currentMainPower != targetMainPower) {
+          protocol.setMainPower(targetMainPower);
           state.firstMainPower = false;
-          logger.info("Main Power set to {} for protocol {}", on ? "ON" : "OFF", i);
+          logger.info("Main Power set to {} for protocol {}", targetMainPower ? "ON" : "OFF", i);
         }
       }
       if (protocol.hasPerLaneRelays()) {
         for (int lane = 0; lane < numLanes; lane++) {
-          boolean effectivePower = on && state.desiredLanePower[lane];
+          boolean effectivePower = isWarmup || (on && state.desiredLanePower[lane]);
           if (state.firstLanePower[lane] || state.currentLanePower[lane] != effectivePower) {
             protocol.setLanePower(effectivePower, lane);
             state.firstLanePower[lane] = false;
@@ -79,7 +87,7 @@ public class PowerManager {
           }
         }
       }
-      state.currentMainPower = on;
+      state.currentMainPower = isWarmup || on;
     }
   }
 
@@ -93,7 +101,7 @@ public class PowerManager {
       IProtocol protocol = protocols.get(i);
       ProtocolState state = this.protocolStates[i];
       if (protocol.hasPerLaneRelays()) {
-        boolean effectivePower = state.currentMainPower && on;
+        boolean effectivePower = isWarmup || (state.currentMainPower && on);
         if (state.firstLanePower[lane] || effectivePower != state.currentLanePower[lane]) {
           protocol.setLanePower(effectivePower, lane);
           state.firstLanePower[lane] = false;

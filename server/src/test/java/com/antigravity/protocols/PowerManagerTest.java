@@ -127,4 +127,60 @@ public class PowerManagerTest {
     verify(protocol).setMainPower(false);
     verify(protocol, never()).setLanePower(anyBoolean(), anyInt());
   }
+
+  @Test
+  public void testWarmupPeriodEnablesAllPower() {
+    // Setup protocol with both main and per-lane relays
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // Initial state: lane power is OFF (desired) and main power is OFF
+    for (int i = 0; i < numLanes; i++) {
+      powerManager.setLanePower(false, i);
+    }
+    powerManager.setMainPower(false);
+
+    reset(protocol);
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // Set warmup to true
+    powerManager.setWarmup(true);
+
+    // Set main power to true (as done during warmup GREEN_YELLOW flag)
+    powerManager.setMainPower(true);
+
+    // Main relay should be set to true
+    verify(protocol).setMainPower(true);
+    // AND all per-lane relays should be set to true even though desiredLanePower is false
+    for (int i = 0; i < numLanes; i++) {
+      verify(protocol).setLanePower(true, i);
+    }
+
+    // Even if setLanePower(false, i) is called during warmup (e.g. syncLanePowerWithState called
+    // with penalty/finished),
+    // power should remain ON (so protocol.setLanePower(false, 0) should never be called)
+    reset(protocol);
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    powerManager.setLanePower(false, 0);
+    verify(protocol, never()).setLanePower(false, 0);
+
+    // Set warmup back to false
+    powerManager.setWarmup(false);
+
+    // Call setMainPower(false) to turn power off when warmup ends
+    reset(protocol);
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    powerManager.setMainPower(false);
+
+    // Main relay and per-lane relays should now go to false (OFF)
+    verify(protocol).setMainPower(false);
+    for (int i = 0; i < numLanes; i++) {
+      verify(protocol).setLanePower(false, i);
+    }
+  }
 }

@@ -9,6 +9,7 @@ public class ProtocolDelegate implements IProtocol {
 
   @Override
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    this.powerManager.setWarmup(flag == RaceFlag.GREEN_YELLOW);
     for (IProtocol protocol : protocols) {
       protocol.setRaceState(state, flag, countdown);
     }

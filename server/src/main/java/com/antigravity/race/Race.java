@@ -652,6 +652,10 @@ public class Race implements ProtocolListener {
       setLanePower(false, -1);
       return;
     }
+    if (state != null && state.getFlagType(this) == RaceFlag.GREEN_YELLOW) {
+      setLanePower(true, -1);
+      return;
+    }
     Set<Integer> finishedLanes = executionManager.getFinishedLanes();
     for (int i = 0; i < getTrack().getLanes().size(); i++) {
       boolean hasPenalty =
