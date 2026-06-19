@@ -122,9 +122,7 @@
                         type="number"
                         class="preview-length-input"
                         [ngModel]="lane.length"
-                        (change)="
-                          updateLaneLength(i, $any($event.target).value)
-                        "
+                        (ngModelChange)="updateLaneLength(i, $event)"
                         (focus)="onInputFocus()"
                         (blur)="onInputBlur()"
                       />

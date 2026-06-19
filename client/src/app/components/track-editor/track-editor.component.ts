@@ -1219,7 +1219,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       l.background_color,
       val,
     );
-    this.captureState();
+    this.onInputChange();
   }
 
   // --- Arduino Configuration ---

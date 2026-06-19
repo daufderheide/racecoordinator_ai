@@ -509,6 +509,18 @@ describe("TrackEditorComponent", () => {
       component.trackName = "Unique Name";
       expect(component.isNameInvalid).toBeFalse();
     });
+
+    it("should auto-save on lane length change after debounce", fakeAsync(() => {
+      component.updateLaneLength(0, 150);
+
+      tick(600); // Wait for debounce (500ms) + small buffer
+      flush();
+      fixture.detectChanges();
+
+      expect(dataService.updateTrack).toHaveBeenCalled();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.lanes[0].length).toBe(150);
+    }));
   });
 
   describe("Guided Help", () => {
