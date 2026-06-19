@@ -266,6 +266,13 @@
   background: transparent !important;
 }
 
+/* Disable interactive elements inside widgets when customizing/editing layout */
+.widget-wrapper.edit-mode select,
+.widget-wrapper.edit-mode button,
+.widget-wrapper.edit-mode a {
+  pointer-events: none !important;
+}
+
 /* Color overrides for branding */
 .widget-wrapper.has-custom-color .logo-text {
   background: none !important;

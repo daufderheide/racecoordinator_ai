@@ -259,6 +259,11 @@ app-default-raceday {
     left: 12px;
     z-index: 10000;
     transform-origin: top left;
+    pointer-events: none; /* Make wrapper transparent to pointer events */
+  }
+
+  .layout-customizer-toolbox-wrapper > * {
+    pointer-events: auto; /* Restore pointer events to the actual toolbox content */
   }
 
   /* Floating customizer toolbox sidebar */

@@ -4,6 +4,10 @@ app-raceday-qr {
   height: 100%;
 }
 
+.widget-wrapper.edit-mode app-raceday-qr {
+  pointer-events: none !important;
+}
+
 .branding-qr {
   width: 100%;
   height: 100%;

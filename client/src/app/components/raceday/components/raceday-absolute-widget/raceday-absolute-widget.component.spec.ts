@@ -146,4 +146,31 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     );
     expect(nextHeat).toBeTruthy();
   });
+
+  it("should apply pointer-events: none to interactive elements inside widgets when in edit mode", () => {
+    mockWidget.widgetType = "on-deck";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("edit-mode")).toBeTrue();
+
+    // Create a mock select/button/a element inside the widget content to verify CSS rules
+    const select = document.createElement("select");
+    const button = document.createElement("button");
+    const anchor = document.createElement("a");
+    const content = fixture.nativeElement.querySelector(".widget-content");
+    content.appendChild(select);
+    content.appendChild(button);
+    content.appendChild(anchor);
+
+    const selectStyle = window.getComputedStyle(select);
+    const buttonStyle = window.getComputedStyle(button);
+    const anchorStyle = window.getComputedStyle(anchor);
+
+    expect(selectStyle.pointerEvents).toBe("none");
+    expect(buttonStyle.pointerEvents).toBe("none");
+    expect(anchorStyle.pointerEvents).toBe("none");
+  });
 });
