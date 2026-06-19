@@ -267,9 +267,9 @@
 }
 
 /* Disable interactive elements inside widgets when customizing/editing layout */
-.widget-wrapper.edit-mode select,
-.widget-wrapper.edit-mode button,
-.widget-wrapper.edit-mode a {
+.widget-wrapper.edit-mode .widget-content select,
+.widget-wrapper.edit-mode .widget-content button,
+.widget-wrapper.edit-mode .widget-content a {
   pointer-events: none !important;
 }
 
