@@ -172,5 +172,25 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(selectStyle.pointerEvents).toBe("none");
     expect(buttonStyle.pointerEvents).toBe("none");
     expect(anchorStyle.pointerEvents).toBe("none");
+
+    // Elements with specific column editing classes should have pointer-events: auto
+    const deleteColBtn = document.createElement("button");
+    deleteColBtn.className = "delete-col-btn";
+    const colVisibilitySelect = document.createElement("select");
+    colVisibilitySelect.className = "col-visibility-select";
+    const deleteAnchorBtn = document.createElement("button");
+    deleteAnchorBtn.className = "delete-anchor-btn";
+
+    content.appendChild(deleteColBtn);
+    content.appendChild(colVisibilitySelect);
+    content.appendChild(deleteAnchorBtn);
+
+    const deleteColStyle = window.getComputedStyle(deleteColBtn);
+    const colVisStyle = window.getComputedStyle(colVisibilitySelect);
+    const deleteAnchorStyle = window.getComputedStyle(deleteAnchorBtn);
+
+    expect(deleteColStyle.pointerEvents).toBe("auto");
+    expect(colVisStyle.pointerEvents).toBe("auto");
+    expect(deleteAnchorStyle.pointerEvents).toBe("auto");
   });
 });

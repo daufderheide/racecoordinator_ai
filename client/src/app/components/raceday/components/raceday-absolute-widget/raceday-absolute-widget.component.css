@@ -273,6 +273,13 @@
   pointer-events: none !important;
 }
 
+/* Restore pointer events for lane view layout configuration controls in edit mode */
+.widget-wrapper.edit-mode .widget-content .delete-col-btn,
+.widget-wrapper.edit-mode .widget-content .col-visibility-select,
+.widget-wrapper.edit-mode .widget-content .delete-anchor-btn {
+  pointer-events: auto !important;
+}
+
 /* Color overrides for branding */
 .widget-wrapper.has-custom-color .logo-text {
   background: none !important;
