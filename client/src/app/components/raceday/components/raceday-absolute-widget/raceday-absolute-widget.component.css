@@ -255,10 +255,10 @@
 /* Auto scaling for records */
 .widget-wrapper.scale-auto .record-panel,
 .widget-wrapper.scale-auto .record-val {
-  font-size: calc(11cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(7.5cqh * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .record-header {
-  font-size: calc(10cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(6.5cqh * var(--widget-scale-factor, 1)) !important;
 }
 
 /* Support custom background color on widgets */
