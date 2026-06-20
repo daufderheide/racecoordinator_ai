@@ -3678,4 +3678,23 @@ describe("DefaultRacedayComponent", () => {
       expect(component.dashboardWidth).toBe(1920); // 1024 / (768/1080) = 1440, which is < 1920 (locks to 1920)
     });
   });
+
+  describe("setupMockDataForEditor records mock data", () => {
+    it("should set mock data for the 4 race records", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.detectChanges();
+
+      // Trigger setupMockDataForEditor by calling it directly or via ngOnInit
+      component["setupMockDataForEditor"]();
+
+      expect(component["raceRecordLapNickname"]).toBe("Mario");
+      expect(component["raceRecordLapTime"]).toBe(1.842);
+      expect(component["raceRecordScoreNickname"]).toBe("Luigi");
+      expect(component["raceRecordScore"]).toBe(24.5);
+      expect(component["currentRaceBestNickname"]).toBe("Bowser");
+      expect(component["currentRaceBestTime"]).toBe(1.955);
+      expect(component["heatBestNickname"]).toBe("Peach");
+      expect(component["heatBestTime"]).toBe(2.012);
+    });
+  });
 });

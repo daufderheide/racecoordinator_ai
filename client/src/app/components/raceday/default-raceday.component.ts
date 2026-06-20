@@ -1082,6 +1082,16 @@ export class DefaultRacedayComponent
     this.qrCodeUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><rect x='30' y='30' width='20' height='20' fill='black'/></svg>";
 
+    // Populate mock data for the 4 race records
+    this.raceRecordLapNickname = "Mario";
+    this.raceRecordLapTime = 1.842;
+    this.raceRecordScoreNickname = "Luigi";
+    this.raceRecordScore = 24.5;
+    this.currentRaceBestNickname = "Bowser";
+    this.currentRaceBestTime = 1.955;
+    this.heatBestNickname = "Peach";
+    this.heatBestTime = 2.012;
+
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
     this.updateGroupLeaderboardEntries();
