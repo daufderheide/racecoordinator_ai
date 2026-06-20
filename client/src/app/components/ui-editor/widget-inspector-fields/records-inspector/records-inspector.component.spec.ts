@@ -1,13 +1,16 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 
 import { RecordsInspectorComponent } from "./records-inspector.component";
+import { RecordsInspectorHarness } from "./testing/records-inspector.harness";
 
 describe("RecordsInspectorComponent", () => {
   let component: RecordsInspectorComponent;
   let fixture: ComponentFixture<RecordsInspectorComponent>;
+  let harness: RecordsInspectorHarness;
   let changeSpy: jasmine.Spy;
 
   let fontServiceSpy: jasmine.SpyObj<FontService>;
@@ -35,6 +38,11 @@ describe("RecordsInspectorComponent", () => {
       valueFontSize: 19,
       valueTextColor: "",
     });
+
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      RecordsInspectorHarness,
+    );
 
     changeSpy = spyOn(component.change, "emit");
     fixture.detectChanges();
@@ -72,5 +80,12 @@ describe("RecordsInspectorComponent", () => {
     const selectEl = fixture.nativeElement.querySelector("select");
     selectEl.dispatchEvent(new Event("focus"));
     expect(fontServiceSpy.loadLocalFonts).toHaveBeenCalled();
+  });
+
+  it("should read and write values via harness", async () => {
+    expect(await harness.getHeaderFontSize()).toBe(17);
+    await harness.setHeaderFontSize(45);
+    expect(await harness.getHeaderFontSize()).toBe(45);
+    expect(changeSpy).toHaveBeenCalled();
   });
 });
