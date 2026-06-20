@@ -315,14 +315,16 @@
 }
 
 .btn-danger {
-  background: linear-gradient(to right, #e74c3c, #c0392b);
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
 }
 
 .btn-danger:hover:not(:disabled) {
-  filter: brightness(1.2);
-  box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
 }
 
 .btn-save {
@@ -513,7 +515,7 @@
   right: 15px;
   top: 50%;
   transform: translateY(-50%);
-  color: #38bdf8;
+  color: #000;
   pointer-events: none;
   font-size: 20px;
 }
@@ -713,19 +715,17 @@
 
 .widget-inspector-panel {
   width: 220px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(255, 215, 0, 0.9);
+  border: 2px solid #FFD700;
   border-radius: 8px;
   padding: 15px;
   box-sizing: border-box;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.05);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.2);
   animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  height: 608px;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transform: translateZ(0);
+  max-height: 608px;
+  overflow-y: auto;
+  color: #000;
 }
 
 
@@ -746,13 +746,13 @@
   width: 6px;
 }
 
-.inspector-body::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+.widget-inspector-panel::-webkit-scrollbar-track {
+  background: rgba(255, 215, 0, 0.3);
   border-radius: 3px;
 }
 
-.inspector-body::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.4);
+.widget-inspector-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.6);
   border-radius: 3px;
   border: 1px solid rgba(15, 23, 42, 0.2);
 }
@@ -772,7 +772,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: 2px solid #FFD700;
   padding-bottom: 8px;
   margin-bottom: 12px;
   flex: 0 0 30px;
@@ -783,7 +783,7 @@
 .inspector-header h2 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #38bdf8;
+  color: #000;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -792,7 +792,7 @@
 .inspector-close-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #000;
   font-size: 20px;
   cursor: pointer;
   line-height: 1;
@@ -815,7 +815,7 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #000;
   letter-spacing: 0.5px;
 }
 
@@ -826,19 +826,19 @@
 }
 
 .inspector-val-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
+  color: #000;
+  background: #fff;
   padding: 1px 6px;
   border-radius: 4px;
 }
 
 .inspector-value-readonly {
   font-size: 13px;
-  color: #f8fafc;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  color: #000;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid #FFD700;
   border-radius: 4px;
   padding: 6px 10px;
   font-family: 'SFMono-Regular', Consolas, monospace;
@@ -866,15 +866,15 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #38bdf8;
+  background: #000;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
   transition: transform 0.1s, background-color 0.1s;
 }
 
 .inspector-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  background: #0ea5e9;
+  background: #000;
 }
 
 .inspector-slider:disabled {
@@ -915,8 +915,8 @@
 }
 
 .color-picker-placeholder {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 9px;
+  color: #fff;
   font-style: italic;
   pointer-events: none;
   text-transform: uppercase;
@@ -925,6 +925,7 @@
 }
 
 .color-picker-input {
+  appearance: none;
   -webkit-appearance: none;
   border: none;
   width: 32px;
@@ -947,7 +948,7 @@
 .color-reset-btn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: #fff;
   font-size: 11px;
   cursor: pointer;
   padding: 2px;

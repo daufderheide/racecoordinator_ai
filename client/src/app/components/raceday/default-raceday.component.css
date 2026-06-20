@@ -270,18 +270,18 @@ app-default-raceday {
   .layout-customizer-toolbox {
     position: relative;
     width: 260px;
-    background-color: rgba(10, 15, 30, 0.85);
+    background-color: rgba(255, 215, 0, 0.9);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(56, 189, 248, 0.45);
-    border-top: 4px solid #38bdf8;
+    border: 2px solid #FFD700;
+    border-top: 4px solid #FFD700;
     border-radius: 8px;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.25), 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(56, 189, 248, 0.05);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.2);
     display: flex;
     flex-direction: column;
     max-height: 40vh;
     overflow: hidden;
     font-family: 'Rajdhani', sans-serif;
-    color: #e2e8f0;
+    color: #000;
     box-sizing: border-box;
   }
 
@@ -292,10 +292,10 @@ app-default-raceday {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #38bdf8;
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-    background-color: rgba(15, 23, 42, 0.6);
-    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    color: #000;
+    text-shadow: none;
+    background-color: rgba(255, 215, 0, 0.9);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
     display: flex;
     align-items: center;
     user-select: none;
@@ -304,8 +304,8 @@ app-default-raceday {
   .toolbox-subtitle {
     padding: 10px 16px;
     font-size: 13px;
-    color: #94a3b8;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    color: #000;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
     line-height: 1.4;
   }
 
@@ -323,11 +323,11 @@ app-default-raceday {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background-color: rgba(56, 189, 248, 0.05);
-    border: 1px solid rgba(56, 189, 248, 0.15);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
     cursor: grab;
-    color: #e2e8f0;
+    color: #000;
     font-size: 13.5px;
     font-weight: 600;
     text-transform: uppercase;
@@ -336,20 +336,20 @@ app-default-raceday {
   }
 
   .toolbox-widget-item:hover {
-    background-color: rgba(56, 189, 248, 0.15);
-    border-color: #38bdf8;
-    color: #ffffff;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    background-color: rgba(255, 255, 255, 1);
+    border-color: #000;
+    color: #000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   }
 
   .toolbox-widget-icon {
     font-size: 17px;
-    color: #38bdf8;
+    color: #000;
   }
 
   .drag-indicator-icon {
     font-size: 17px;
-    color: rgba(56, 189, 248, 0.4);
+    color: #000;
     cursor: grab;
     user-select: none;
   }
@@ -366,7 +366,7 @@ app-default-raceday {
 
   .toolbox-empty-msg {
     font-size: 12px;
-    color: #64748b;
+    color: #000;
     text-align: center;
     padding: 24px 0;
     font-style: italic;
@@ -377,7 +377,7 @@ app-default-raceday {
     flex-direction: column;
     gap: 8px;
     padding: 10px 16px 16px 16px;
-    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
     background-color: rgba(15, 23, 42, 0.3);
   }
 
@@ -398,31 +398,31 @@ app-default-raceday {
   }
 
   .save-btn {
-    background: #3b82f6;
-    color: #fff;
+    background: rgba(255, 215, 0, 0.8);
+    color: #000;
   }
 
   .save-btn:hover {
-    background: #2563eb;
+    background: rgba(255, 215, 0, 1);
   }
 
   .cancel-btn {
-    background: rgba(71, 85, 105, 0.6);
-    color: #e2e8f0;
+    background: rgba(255, 215, 0, 0.5);
+    color: #000;
   }
 
   .cancel-btn:hover {
-    background: rgba(71, 85, 105, 0.8);
+    background: rgba(255, 215, 0, 0.7);
   }
 
   .reset-btn {
-    background: transparent;
+    background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(239, 68, 68, 0.5);
   }
 
   .reset-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.3);
     border-color: #ef4444;
   }
 }
