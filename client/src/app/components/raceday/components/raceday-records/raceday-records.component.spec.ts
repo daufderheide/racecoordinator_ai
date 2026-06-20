@@ -85,4 +85,45 @@ describe("RacedayRecordsComponent", () => {
     expect(heatBest.nickname).toBe("Dave");
     expect(heatBest.score).toBe("11.235");
   });
+
+  it("should apply custom widget styles to headers and values when widget settings are provided", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 384,
+      height: 239,
+      zIndex: 100,
+      customSettings: {
+        headerFontFamily: "Arial",
+        headerFontSize: 22,
+        headerTextColor: "#ff0000",
+        valueFontFamily: "Courier New",
+        valueFontSize: 25,
+        valueTextColor: "#00ff00",
+      },
+    });
+
+    fixture.detectChanges();
+
+    const headers = fixture.nativeElement.querySelectorAll(".record-header");
+    expect(headers.length).toBeGreaterThan(0);
+    for (let i = 0; i < headers.length; i++) {
+      const el = headers[i] as HTMLElement;
+      expect(el.style.fontFamily).toBe("Arial");
+      expect(el.style.fontSize).toBe("22px");
+      expect(el.style.color).toBe("rgb(255, 0, 0)");
+    }
+
+    const values = fixture.nativeElement.querySelectorAll(".record-val");
+    expect(values.length).toBeGreaterThan(0);
+    for (let i = 0; i < values.length; i++) {
+      const el = values[i] as HTMLElement;
+      // Some engines might return 'Courier New' or '"Courier New"' for font-family
+      expect(el.style.fontFamily.replace(/['"]/g, "")).toBe("Courier New");
+      expect(el.style.fontSize).toBe("25px");
+      expect(el.style.color).toBe("rgb(0, 255, 0)");
+    }
+  });
 });

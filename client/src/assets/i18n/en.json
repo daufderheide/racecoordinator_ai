@@ -1127,6 +1127,8 @@
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Title Settings",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Overall Leader (1st Place)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Leader Board",
+  "UE_INSPECTOR_RECORDS_HEADER": "Header Settings",
+  "UE_INSPECTOR_RECORDS_VALUE": "Value Settings",
   "UE_LABEL_ACTIVATED": "Activated",
   "UE_LABEL_ACTIVE_THEME": "Active Theme",
   "UE_LABEL_AVAILABLE_VALUES": "Available Values",

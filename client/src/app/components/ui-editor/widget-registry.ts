@@ -16,4 +16,14 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restTextColor: "",
     }),
   },
+  records: {
+    defaultSettings: () => ({
+      headerFontFamily: "",
+      headerFontSize: 17,
+      headerTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 19,
+      valueTextColor: "",
+    }),
+  },
 };

@@ -5,4 +5,10 @@
       (change)="onSettingsChange()"
     ></app-leaderboard-inspector>
   }
+  @case ("records") {
+    <app-records-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-records-inspector>
+  }
 }
