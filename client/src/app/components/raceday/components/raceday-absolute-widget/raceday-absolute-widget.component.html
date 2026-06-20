@@ -137,6 +137,9 @@
           [parent]="parentComponent()"
         ></app-raceday-next-heat>
       }
+      @case ("image") {
+        <app-raceday-image [widget]="widget()"></app-raceday-image>
+      }
     }
   </div>
 

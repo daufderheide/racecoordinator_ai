@@ -17,4 +17,10 @@
       (change)="onSettingsChange()"
     ></app-timer-inspector>
   }
+  @case ("image") {
+    <app-image-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-image-inspector>
+  }
 }

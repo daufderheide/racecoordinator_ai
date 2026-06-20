@@ -1,0 +1,15 @@
+@if (settings()) {
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_IMAGE_SELECT" | translate }}
+  </div>
+
+  <div class="inspector-section" style="display: flex; justify-content: center">
+    <app-image-selector
+      [imageUrl]="settings().imageUrl"
+      (imageUrlChange)="onImageUrlChange($event)"
+      [assets]="imageAssets"
+      [size]="'large'"
+    >
+    </app-image-selector>
+  </div>
+}

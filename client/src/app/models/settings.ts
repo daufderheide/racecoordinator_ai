@@ -21,7 +21,8 @@ export type WidgetType =
   | "group-leaderboard"
   | "lane-view"
   | "on-deck"
-  | "next-heat";
+  | "next-heat"
+  | "image";
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page

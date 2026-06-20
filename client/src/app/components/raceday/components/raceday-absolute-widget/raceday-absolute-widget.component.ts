@@ -10,6 +10,7 @@ import { RacedayBrandingComponent } from "@app/components/raceday/components/rac
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
+import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
@@ -45,6 +46,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     RacedayLaneViewComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
+    RacedayImageComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent {

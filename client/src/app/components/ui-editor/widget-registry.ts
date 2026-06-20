@@ -33,4 +33,9 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       timeTextColor: "",
     }),
   },
+  image: {
+    defaultSettings: () => ({
+      imageUrl: "",
+    }),
+  },
 };

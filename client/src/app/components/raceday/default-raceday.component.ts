@@ -3364,6 +3364,7 @@ export class DefaultRacedayComponent
       "lane-view",
       "on-deck",
       "next-heat",
+      "image",
     ];
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes
@@ -3397,7 +3398,8 @@ export class DefaultRacedayComponent
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
       this.draggedWidgetType === "on-deck" ||
-      this.draggedWidgetType === "next-heat";
+      this.draggedWidgetType === "next-heat" ||
+      this.draggedWidgetType === "image";
     const newWidget: any = {
       id: "widget-" + Date.now(),
       widgetType: this.draggedWidgetType as any,
@@ -3406,11 +3408,16 @@ export class DefaultRacedayComponent
       width: isLeaderboardOrDeck ? 384 : 400,
       height:
         this.draggedWidgetType === "leaderboard" ||
-        this.draggedWidgetType === "group-leaderboard"
+        this.draggedWidgetType === "group-leaderboard" ||
+        this.draggedWidgetType === "image"
           ? 239
           : 300,
       zIndex: this.getNextZIndex(),
     };
+
+    if (this.draggedWidgetType === "image") {
+      newWidget.customSettings = { imageUrl: "" };
+    }
 
     if (!this.layout.widgets) this.layout.widgets = [];
     this.layout.widgets.push(newWidget);
