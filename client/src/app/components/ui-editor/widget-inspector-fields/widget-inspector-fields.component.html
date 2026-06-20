@@ -1,0 +1,8 @@
+@switch (widget().widgetType) {
+  @case ("leaderboard") {
+    <app-leaderboard-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-leaderboard-inspector>
+  }
+}

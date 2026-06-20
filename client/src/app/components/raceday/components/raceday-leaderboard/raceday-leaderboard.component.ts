@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 
 @Component({
   standalone: true,
@@ -11,6 +12,7 @@ import { Component, input, ViewEncapsulation } from "@angular/core";
 })
 export class RacedayLeaderboardComponent {
   leaderboardEntries = input<any[]>([]);
+  widget = input<AbsoluteWidgetNode | null>(null);
 
   trackByLeaderboardEntry(index: number, entry: any): string {
     return entry.entityId || String(index);

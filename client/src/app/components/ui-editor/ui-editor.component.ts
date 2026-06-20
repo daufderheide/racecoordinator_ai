@@ -42,6 +42,8 @@ export interface UIEditorState {
 }
 
 import { ColumnToolboxComponent } from "./column-toolbox/column-toolbox.component";
+import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
+import { WIDGET_REGISTRY } from "./widget-registry";
 
 @Component({
   standalone: true,
@@ -61,6 +63,7 @@ import { ColumnToolboxComponent } from "./column-toolbox/column-toolbox.componen
     AcknowledgementModalComponent,
     DefaultRacedayComponent,
     ColumnToolboxComponent,
+    WidgetInspectorFieldsComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -286,6 +289,21 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           widget.textScaleFactor = 1.0;
           mutated = true;
         }
+        const registryEntry = WIDGET_REGISTRY[widget.widgetType];
+        if (registryEntry?.defaultSettings) {
+          if (!widget.customSettings) {
+            widget.customSettings = registryEntry.defaultSettings();
+            mutated = true;
+          } else {
+            const defaults = registryEntry.defaultSettings();
+            for (const key of Object.keys(defaults)) {
+              if (widget.customSettings[key] === undefined) {
+                widget.customSettings[key] = defaults[key];
+                mutated = true;
+              }
+            }
+          }
+        }
         if (mutated) {
           this.editingState.settings = this.cloneSettings(
             this.editingState.settings,
@@ -334,6 +352,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   resetRacedayLayout() {
+    // Deselect any widget first to prevent the inspector from rendering
+    // with undefined customSettings during the layout replacement.
+    this.selectedWidgetId = null;
     this.editingSettings.racedayLayout = JSON.parse(
       JSON.stringify(Settings.DEFAULT_LAYOUT),
     );

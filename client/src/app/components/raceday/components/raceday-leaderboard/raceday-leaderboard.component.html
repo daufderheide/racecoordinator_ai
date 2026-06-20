@@ -1,5 +1,12 @@
 <div class="panel-card leaderboard-panel">
-  <div class="leaderboard-title">Leader Board</div>
+  <div
+    class="leaderboard-title"
+    [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
+    [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
+    [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
+  >
+    Leader Board
+  </div>
   <div class="leaderboard-list">
     <div
       class="leaderboard-scroll-content"
@@ -20,16 +27,36 @@
             getLeaderboardPosition(entry) +
             ' * var(--row-height, 24px)))'
           "
+          [style.font-family]="
+            getLeaderboardPosition(entry) === 0
+              ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
+              : widget()?.customSettings?.['restFontFamily'] || null
+          "
+          [style.font-size.px]="
+            getLeaderboardPosition(entry) === 0
+              ? widget()?.customSettings?.['overallLeaderFontSize'] || null
+              : widget()?.customSettings?.['restFontSize'] || null
+          "
         >
           <span
             [class.leader-gold]="getLeaderboardPosition(entry) === 0"
             [class.leader-white]="getLeaderboardPosition(entry) > 0"
+            [style.color]="
+              getLeaderboardPosition(entry) === 0
+                ? widget()?.customSettings?.['overallLeaderTextColor'] || null
+                : widget()?.customSettings?.['restTextColor'] || null
+            "
           >
             {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
           </span>
           <span
             [class.leader-gold]="getLeaderboardPosition(entry) === 0"
             [class.leader-white]="getLeaderboardPosition(entry) > 0"
+            [style.color]="
+              getLeaderboardPosition(entry) === 0
+                ? widget()?.customSettings?.['overallLeaderTextColor'] || null
+                : widget()?.customSettings?.['restTextColor'] || null
+            "
           >
             {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
           </span>

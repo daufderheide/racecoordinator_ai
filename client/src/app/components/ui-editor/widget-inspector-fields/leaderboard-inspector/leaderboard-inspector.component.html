@@ -1,0 +1,250 @@
+@if (settings()) {
+  <!-- Title Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LEADERBOARD_TITLE" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().titleFontFamily"
+        (change)="onSettingsChange()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        <option value="Orbitron">
+          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
+        </option>
+        <option value="Courier New">
+          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
+        </option>
+        <option value="Inter">
+          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
+        </option>
+        <option value="Georgia">
+          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().titleFontSize || 18 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().titleFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().titleTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().titleTextColor || '#38bdf8'"
+        (change)="onColorChange('titleTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().titleTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().titleTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('titleTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Overall Leader Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().overallLeaderFontFamily"
+        (change)="onSettingsChange()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        <option value="Orbitron">
+          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
+        </option>
+        <option value="Courier New">
+          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
+        </option>
+        <option value="Inter">
+          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
+        </option>
+        <option value="Georgia">
+          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().overallLeaderFontSize || 16 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().overallLeaderFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().overallLeaderTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().overallLeaderTextColor || '#fbbf24'"
+        (change)="onColorChange('overallLeaderTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().overallLeaderTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().overallLeaderTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('overallLeaderTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Rest Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LEADERBOARD_REST" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().restFontFamily"
+        (change)="onSettingsChange()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        <option value="Orbitron">
+          {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
+        </option>
+        <option value="Courier New">
+          {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
+        </option>
+        <option value="Inter">
+          {{ "UE_INSPECTOR_FONT_INTER" | translate }}
+        </option>
+        <option value="Georgia">
+          {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().restFontSize || 16 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().restFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().restTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().restTextColor || '#f8fafc'"
+        (change)="onColorChange('restTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().restTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().restTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('restTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+}

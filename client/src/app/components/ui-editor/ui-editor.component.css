@@ -1,4 +1,4 @@
-:host {
+:host(app-ui-editor) {
   display: block;
   position: absolute;
   top: 0;
@@ -215,9 +215,14 @@
   box-shadow: none;
 }
 
+.panel.layout-panel {
+  overflow: visible;
+}
+
 .panel-content {
   padding: 0;
 }
+
 
 .directory-selector {
   display: flex;
@@ -708,30 +713,48 @@
 
 .widget-inspector-panel {
   width: 220px;
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 8px;
   padding: 15px;
   box-sizing: border-box;
-  backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.05);
   animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  max-height: 608px;
-  overflow-y: auto;
+  height: 608px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateZ(0);
 }
 
-.widget-inspector-panel::-webkit-scrollbar {
+
+.inspector-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.inspector-divider {
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  margin: 10px 0;
+}
+
+.inspector-body::-webkit-scrollbar {
   width: 6px;
 }
 
-.widget-inspector-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.2);
+.inspector-body::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
   border-radius: 3px;
 }
 
-.widget-inspector-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3);
+.inspector-body::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.4);
   border-radius: 3px;
+  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
 @keyframes slide-in {
@@ -752,6 +775,9 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.25);
   padding-bottom: 8px;
   margin-bottom: 12px;
+  flex: 0 0 30px;
+  height: 30px;
+  min-height: 30px;
 }
 
 .inspector-header h2 {
@@ -860,7 +886,7 @@
 .color-picker-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: rgba(15, 23, 42, 0.4);
   border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 4px;
@@ -868,6 +894,7 @@
   min-height: 30px;
   box-sizing: border-box;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .color-picker-wrapper.is-null {
@@ -876,12 +903,13 @@
 }
 
 .color-picker-placeholder {
-  font-size: 11px;
+  font-size: 10px;
   color: #64748b;
   font-style: italic;
   pointer-events: none;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .color-picker-input {

@@ -37,7 +37,7 @@
                     </div>
                   </div>
 
-                  <!-- Floating Inspector Sidebar -->
+                  <!-- Widget Inspector Sidebar -->
                   @if (selectedWidget) {
                     <div class="widget-inspector-panel">
                       <div class="inspector-header">
@@ -49,7 +49,15 @@
                           ×
                         </button>
                       </div>
+
                       <div class="inspector-body">
+                        <!-- General Section -->
+                        <div
+                          class="inspector-geometry-title"
+                          style="margin-top: 0"
+                        >
+                          {{ "UE_INSPECTOR_GENERAL" | translate }}
+                        </div>
                         <div class="inspector-section">
                           <label class="inspector-label">{{
                             "UE_INSPECTOR_WIDGET_TYPE" | translate
@@ -58,39 +66,6 @@
                             {{ selectedWidget.widgetType }}
                           </div>
                         </div>
-
-                        <!-- Font Family Selector -->
-                        <div class="inspector-section">
-                          <label class="inspector-label">{{
-                            "UE_INSPECTOR_FONT_FAMILY" | translate
-                          }}</label>
-                          <div class="select-container select-sm">
-                            <select
-                              [(ngModel)]="selectedWidget.fontFamily"
-                              (change)="captureState()"
-                            >
-                              <option value="">
-                                {{
-                                  "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate
-                                }}
-                              </option>
-                              <option value="Orbitron">
-                                {{ "UE_INSPECTOR_FONT_ORBITRON" | translate }}
-                              </option>
-                              <option value="Courier New">
-                                {{ "UE_INSPECTOR_FONT_COURIER" | translate }}
-                              </option>
-                              <option value="Inter">
-                                {{ "UE_INSPECTOR_FONT_INTER" | translate }}
-                              </option>
-                              <option value="Georgia">
-                                {{ "UE_INSPECTOR_FONT_GEORGIA" | translate }}
-                              </option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <!-- Scale Mode Selector -->
                         <div class="inspector-section">
                           <label class="inspector-label">{{
                             "UE_INSPECTOR_SCALING_MODE" | translate
@@ -112,172 +87,6 @@
                             </select>
                           </div>
                         </div>
-
-                        <!-- Font Size Slider (Fixed Mode only) -->
-                        @if (selectedWidget.scaleMode === "fixed") {
-                          <div class="inspector-section">
-                            <div class="inspector-label-row">
-                              <label class="inspector-label">{{
-                                "UE_INSPECTOR_FONT_SIZE" | translate
-                              }}</label>
-                              <span class="inspector-val-badge"
-                                >{{ selectedWidget.fontSize || 24 }}px</span
-                              >
-                            </div>
-                            <input
-                              type="range"
-                              min="10"
-                              max="120"
-                              [(ngModel)]="selectedWidget.fontSize"
-                              (change)="captureState()"
-                              class="inspector-slider"
-                            />
-                          </div>
-                        }
-
-                        <!-- Text Scale Factor Slider (Auto Mode only) -->
-                        @if (selectedWidget.scaleMode === "auto") {
-                          <div class="inspector-section">
-                            <div class="inspector-label-row">
-                              <label class="inspector-label">{{
-                                "UE_INSPECTOR_TEXT_SCALE_MULTIPLIER" | translate
-                              }}</label>
-                              <span class="inspector-val-badge"
-                                >{{
-                                  selectedWidget.textScaleFactor || 1
-                                }}x</span
-                              >
-                            </div>
-                            <input
-                              type="range"
-                              min="0.5"
-                              max="2.0"
-                              step="0.05"
-                              [(ngModel)]="selectedWidget.textScaleFactor"
-                              (change)="captureState()"
-                              class="inspector-slider"
-                            />
-                          </div>
-                        }
-
-                        <!-- Color pickers -->
-                        <div class="inspector-row-grid">
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_TEXT_COLOR" | translate
-                            }}</label>
-                            <div
-                              class="color-picker-wrapper"
-                              [class.is-null]="!selectedWidget.textColor"
-                            >
-                              <input
-                                type="color"
-                                [value]="selectedWidget.textColor || '#ffffff'"
-                                (change)="onTextColorChange($event)"
-                                class="color-picker-input"
-                              />
-                              @if (!selectedWidget.textColor) {
-                                <span class="color-picker-placeholder">{{
-                                  "UE_INSPECTOR_COLOR_DEFAULT" | translate
-                                }}</span>
-                              }
-                              @if (selectedWidget.textColor) {
-                                <button
-                                  class="color-reset-btn"
-                                  (click)="
-                                    selectedWidget.textColor = '';
-                                    captureState()
-                                  "
-                                  [title]="
-                                    'UE_INSPECTOR_COLOR_RESET' | translate
-                                  "
-                                >
-                                  ✕
-                                </button>
-                              }
-                            </div>
-                          </div>
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_BACKGROUND" | translate
-                            }}</label>
-                            <div
-                              class="color-picker-wrapper"
-                              [class.is-null]="!selectedWidget.backgroundColor"
-                            >
-                              <input
-                                type="color"
-                                [value]="
-                                  selectedWidget.backgroundColor || '#000000'
-                                "
-                                (change)="onBackgroundColorChange($event)"
-                                class="color-picker-input"
-                              />
-                              @if (!selectedWidget.backgroundColor) {
-                                <span class="color-picker-placeholder">{{
-                                  "UE_INSPECTOR_COLOR_DEFAULT" | translate
-                                }}</span>
-                              }
-                              @if (selectedWidget.backgroundColor) {
-                                <button
-                                  class="color-reset-btn"
-                                  (click)="
-                                    selectedWidget.backgroundColor = '';
-                                    captureState()
-                                  "
-                                  [title]="
-                                    'UE_INSPECTOR_COLOR_RESET' | translate
-                                  "
-                                >
-                                  ✕
-                                </button>
-                              }
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Geometry coordinates info -->
-                        <div class="inspector-geometry-title">
-                          {{ "UE_INSPECTOR_LAYOUT_SPECS" | translate }}
-                        </div>
-                        <div class="inspector-row-grid">
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_X_POS" | translate
-                            }}</label>
-                            <div class="inspector-value-readonly">
-                              {{ selectedWidget.x | number: "1.0-2" }}px
-                            </div>
-                          </div>
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_Y_POS" | translate
-                            }}</label>
-                            <div class="inspector-value-readonly">
-                              {{ selectedWidget.y | number: "1.0-2" }}px
-                            </div>
-                          </div>
-                        </div>
-                        <div class="inspector-row-grid">
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_WIDTH" | translate
-                            }}</label>
-                            <div class="inspector-value-readonly">
-                              {{ selectedWidget.width | number: "1.0-2" }}px
-                            </div>
-                          </div>
-                          <div class="inspector-section">
-                            <label class="inspector-label">{{
-                              "UE_INSPECTOR_HEIGHT" | translate
-                            }}</label>
-                            <div class="inspector-value-readonly">
-                              {{ selectedWidget.height | number: "1.0-2" }}px
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Depth / Z-Index info -->
                         <div class="inspector-section">
                           <label class="inspector-label">{{
                             "UE_INSPECTOR_Z_INDEX" | translate
@@ -286,6 +95,13 @@
                             {{ selectedWidget.zIndex }}
                           </div>
                         </div>
+
+                        <hr class="inspector-divider" />
+
+                        <app-widget-inspector-fields
+                          [widget]="selectedWidget"
+                          (change)="captureState()"
+                        ></app-widget-inspector-fields>
                       </div>
                     </div>
                   }

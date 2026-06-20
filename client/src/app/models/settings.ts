@@ -37,6 +37,7 @@ export interface AbsoluteWidgetNode {
   textScaleFactor?: number;
   textColor?: string;
   backgroundColor?: string;
+  customSettings?: Record<string, any>;
 }
 
 export interface LayoutConfig {
