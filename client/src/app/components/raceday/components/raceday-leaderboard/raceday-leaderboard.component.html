@@ -32,34 +32,22 @@
         {{ "RD_NO_GROUP_STANDINGS" | translate }}
       </div>
     } @else {
-      <div
-        class="leaderboard-scroll-content"
-        [style.height]="
-          'calc(' + leaderboardEntries().length + ' * var(--row-height, 24px))'
-        "
-      >
+      <div class="leaderboard-scroll-content">
         @for (
-          entry of leaderboardEntries();
+          entry of sortedLeaderboardEntries();
           track trackByLeaderboardEntry($index, entry);
           let i = $index
         ) {
           <div
             class="leaderboard-item"
-            [class.leaderboard-item-odd]="
-              getLeaderboardPosition(entry) % 2 === 1
-            "
-            [style.transform]="
-              'translateY(calc(' +
-              getLeaderboardPosition(entry) +
-              ' * var(--row-height, 24px)))'
-            "
+            [class.leaderboard-item-odd]="i % 2 === 1"
             [style.font-family]="
-              getLeaderboardPosition(entry) === 0
+              i === 0
                 ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
                 : widget()?.customSettings?.['restFontFamily'] || null
             "
             [style.font-size.px]="
-              getLeaderboardPosition(entry) === 0
+              i === 0
                 ? widget()?.customSettings?.['overallLeaderFontSize'] || null
                 : widget()?.customSettings?.['restFontSize'] || null
             "
@@ -67,10 +55,10 @@
             @if (isGroupBoard()) {
               <div
                 class="leaderboard-left"
-                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [class.leader-gold]="i === 0"
+                [class.leader-white]="i > 0"
                 [style.color]="
-                  getLeaderboardPosition(entry) === 0
+                  i === 0
                     ? widget()?.customSettings?.['overallLeaderTextColor'] ||
                       null
                     : widget()?.customSettings?.['restTextColor'] || null
@@ -81,10 +69,10 @@
               </div>
               <div
                 class="leaderboard-score"
-                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [class.leader-gold]="i === 0"
+                [class.leader-white]="i > 0"
                 [style.color]="
-                  getLeaderboardPosition(entry) === 0
+                  i === 0
                     ? widget()?.customSettings?.['overallLeaderTextColor'] ||
                       null
                     : widget()?.customSettings?.['restTextColor'] || null
@@ -94,22 +82,22 @@
               </div>
             } @else {
               <span
-                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [class.leader-gold]="i === 0"
+                [class.leader-white]="i > 0"
                 [style.color]="
-                  getLeaderboardPosition(entry) === 0
+                  i === 0
                     ? widget()?.customSettings?.['overallLeaderTextColor'] ||
                       null
                     : widget()?.customSettings?.['restTextColor'] || null
                 "
               >
-                {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
+                {{ i + 1 }} {{ entry.name }}
               </span>
               <span
-                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [class.leader-gold]="i === 0"
+                [class.leader-white]="i > 0"
                 [style.color]="
-                  getLeaderboardPosition(entry) === 0
+                  i === 0
                     ? widget()?.customSettings?.['overallLeaderTextColor'] ||
                       null
                     : widget()?.customSettings?.['restTextColor'] || null

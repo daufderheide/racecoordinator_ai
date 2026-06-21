@@ -59,8 +59,8 @@ describe("RacedayLeaderboardComponent", () => {
     expect(await harness.getEntryCount()).toBe(2);
 
     // Sorted by rank (Bob first, Alice second)
-    const aliceText = await harness.getEntryText(0);
-    const bobText = await harness.getEntryText(1);
+    const bobText = await harness.getEntryText(0);
+    const aliceText = await harness.getEntryText(1);
 
     expect(bobText).toContain("1 Bob");
     expect(bobText).toContain("12");

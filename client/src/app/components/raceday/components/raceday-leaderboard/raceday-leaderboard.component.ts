@@ -22,6 +22,17 @@ export class RacedayLeaderboardComponent {
     return this.isGroup() || this.widget()?.widgetType === "group-leaderboard";
   });
 
+  sortedLeaderboardEntries = computed(() => {
+    return [...this.leaderboardEntries()].sort((a, b) => {
+      if (a.rank !== b.rank) {
+        if (a.rank === 0) return 1;
+        if (b.rank === 0) return -1;
+        return a.rank - b.rank;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  });
+
   trackByLeaderboardEntry(index: number, entry: any): string {
     return entry.entityId || String(index);
   }

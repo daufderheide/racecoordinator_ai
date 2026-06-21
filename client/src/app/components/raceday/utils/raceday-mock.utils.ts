@@ -39,7 +39,7 @@ export function createMockEditorData(): MockEditorData {
   const track = createMockTrack();
   const participants = createMockRaceParticipants();
 
-  const heatDrivers = participants.map((p: any, index) => {
+  const heatDrivers = participants.slice(0, 4).map((p: any, index) => {
     const hd = new DriverHeatData(`mock_hd_${index}`, p, p.lane - 1);
     hd.addLapTime(
       p.lap_count,
@@ -137,105 +137,179 @@ function createMockTrack(): Track {
   } as unknown as Track;
 }
 
+const MOCK_CHARACTERS = [
+  {
+    name: "Mario",
+    nickname: "Jumpman",
+    team: "Mushroom Kingdom",
+    avatar: "Mario",
+  },
+  {
+    name: "Luigi",
+    nickname: "Green Mario",
+    team: "Mushroom Kingdom",
+    avatar: "Luigi",
+  },
+  {
+    name: "Bowser",
+    nickname: "King Koopa",
+    team: "Koopa Troop",
+    avatar: "Bowser",
+  },
+  {
+    name: "Peach",
+    nickname: "Princess",
+    team: "Mushroom Kingdom",
+    avatar: "Peach",
+  },
+  {
+    name: "Yoshi",
+    nickname: "Green Dino",
+    team: "Yoshi Island",
+    avatar: "Yoshi",
+  },
+  { name: "Donkey Kong", nickname: "DK", team: "DK Crew", avatar: "DK" },
+  { name: "Wario", nickname: "Greedy", team: "Wario Land", avatar: "Wario" },
+  {
+    name: "Waluigi",
+    nickname: "Purple",
+    team: "Waluigi Pinball",
+    avatar: "Waluigi",
+  },
+  {
+    name: "Toad",
+    nickname: "Mushroom",
+    team: "Mushroom Kingdom",
+    avatar: "Toad",
+  },
+  {
+    name: "Toadette",
+    nickname: "Pink Toad",
+    team: "Mushroom Kingdom",
+    avatar: "Toadette",
+  },
+  {
+    name: "Rosalina",
+    nickname: "Star Princess",
+    team: "Comet Observatory",
+    avatar: "Rosalina",
+  },
+  {
+    name: "Bowser Jr.",
+    nickname: "Junior",
+    team: "Koopa Troop",
+    avatar: "BowserJr",
+  },
+  {
+    name: "Daisy",
+    nickname: "Flower Princess",
+    team: "Sarasaland",
+    avatar: "Daisy",
+  },
+  {
+    name: "Koopa Troopa",
+    nickname: "Shell Slider",
+    team: "Koopa Troop",
+    avatar: "Koopa",
+  },
+  {
+    name: "Shy Guy",
+    nickname: "Masked",
+    team: "Shy Guy Guild",
+    avatar: "ShyGuy",
+  },
+  {
+    name: "Dry Bones",
+    nickname: "Bony",
+    team: "Koopa Troop",
+    avatar: "DryBones",
+  },
+  {
+    name: "King Boo",
+    nickname: "Ghost King",
+    team: "Paranormal",
+    avatar: "KingBoo",
+  },
+  {
+    name: "Petey Piranha",
+    nickname: "Plant",
+    team: "Flora",
+    avatar: "Petey",
+  },
+  {
+    name: "Funky Kong",
+    nickname: "Surfer Kong",
+    team: "DK Crew",
+    avatar: "Funky",
+  },
+  {
+    name: "Diddy Kong",
+    nickname: "Chimpy",
+    team: "DK Crew",
+    avatar: "Diddy",
+  },
+  { name: "Link", nickname: "Hero of Time", team: "Hyrule", avatar: "Link" },
+  {
+    name: "Zelda",
+    nickname: "Princess Zelda",
+    team: "Hyrule",
+    avatar: "Zelda",
+  },
+  {
+    name: "Isabelle",
+    nickname: "Secretary",
+    team: "Animal Crossing",
+    avatar: "Isabelle",
+  },
+  {
+    name: "Villager",
+    nickname: "Mayor",
+    team: "Animal Crossing",
+    avatar: "Villager",
+  },
+  {
+    name: "Inkling",
+    nickname: "Kid-Squid",
+    team: "Inkopolis",
+    avatar: "Inkling",
+  },
+];
+
 function createMockRaceParticipants(): RaceParticipant[] {
-  return [
-    {
-      id: "p1",
-      objectId: "p1",
+  return MOCK_CHARACTERS.map((char, index) => {
+    const rank = index + 1;
+    const lapCount = Math.max(1, 10 - Math.floor(index / 2));
+    const bestLap = 2.0 + index * 0.1;
+    const lastLap = bestLap + 0.1 + (index % 3) * 0.05;
+    const avgLap = bestLap + 0.3;
+    const medianLap = bestLap + 0.2;
+    const totalTime = 100 + index * 5;
+
+    return {
+      id: `p${rank}`,
+      objectId: `p${rank}`,
       driver: new Driver(
-        "d1",
-        "Mario",
-        "Jumpman",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Mario",
+        `d${rank}`,
+        char.name,
+        char.nickname,
+        `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
       ),
-      lane: 1,
-      total_time: 120,
-      lap_count: 5,
-      last_lap_time: 2.1,
-      best_lap_time: 2.0,
-      average_lap_time: 2.5,
-      median_lap_time: 2.4,
-      rank: 1,
-      reaction_time: 0.05,
-      gap_leader: 0,
-      gap_position: 0,
-      fuelLevel: 100,
-      seed: 1,
-      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
-    } as unknown as RaceParticipant,
-    {
-      id: "p2",
-      objectId: "p2",
-      driver: new Driver(
-        "d2",
-        "Luigi",
-        "Green Mario",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Luigi",
-      ),
-      lane: 2,
-      total_time: 125,
-      lap_count: 4,
-      last_lap_time: 2.8,
-      best_lap_time: 2.5,
-      average_lap_time: 3.0,
-      median_lap_time: 2.9,
-      rank: 2,
-      reaction_time: 0.15,
-      gap_leader: 5,
-      gap_position: 5,
-      fuelLevel: 80,
-      seed: 2,
-      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
-    } as unknown as RaceParticipant,
-    {
-      id: "p3",
-      objectId: "p3",
-      driver: new Driver(
-        "d3",
-        "Bowser",
-        "King Koopa",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Bowser",
-      ),
-      lane: 3,
-      total_time: 130,
-      lap_count: 4,
-      last_lap_time: 3.1,
-      best_lap_time: 2.9,
-      average_lap_time: 3.2,
-      median_lap_time: 3.1,
-      rank: 3,
-      reaction_time: 0.223,
-      gap_leader: 10,
-      gap_position: 5,
-      fuelLevel: 60,
-      seed: 3,
-      team: { name: "Koopa Troop", driverIds: ["d3"] },
-    } as unknown as RaceParticipant,
-    {
-      id: "p4",
-      objectId: "p4",
-      driver: new Driver(
-        "d4",
-        "Peach",
-        "Princess",
-        "https://api.dicebear.com/7.x/pixel-art/svg?seed=Peach",
-      ),
-      lane: 4,
-      total_time: 140,
-      lap_count: 3,
-      last_lap_time: 3.5,
-      best_lap_time: 3.2,
-      average_lap_time: 3.6,
-      median_lap_time: 3.5,
-      rank: 4,
-      reaction_time: 0.101,
-      gap_leader: 20,
-      gap_position: 10,
-      fuelLevel: 40,
-      seed: 4,
-      team: { name: "Mushroom Kingdom", driverIds: ["d1", "d2", "d4"] },
-    } as unknown as RaceParticipant,
-  ];
+      lane: rank <= 4 ? rank : 0,
+      total_time: totalTime,
+      lap_count: lapCount,
+      last_lap_time: lastLap,
+      best_lap_time: bestLap,
+      average_lap_time: avgLap,
+      median_lap_time: medianLap,
+      rank: rank,
+      reaction_time: 0.05 + index * 0.01,
+      gap_leader: index === 0 ? 0 : index * 1.5,
+      gap_position: index === 0 ? 0 : 1.5,
+      fuelLevel: Math.max(0, 100 - index * 4),
+      seed: rank,
+      team: { name: char.team, driverIds: [`d${rank}`] },
+    } as unknown as RaceParticipant;
+  });
 }
 
 function createMockNextHeatParticipants(): RaceParticipant[] {

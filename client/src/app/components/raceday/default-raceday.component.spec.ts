@@ -1450,19 +1450,13 @@ describe("DefaultRacedayComponent", () => {
 
     // TODO(aufderheide): Move some of these tests out of here and into the widget tests.
     // TODO(aufderheide): Use a harness rather than the selector directly.
-    it("should update transform when ranks change (animation check)", () => {
+    it("should update DOM order when ranks change", () => {
       // Initial state:
-      // Index 0: D1 (Rank 2) -> translateY(calc(1 * var(--row-height, 24px)))
-      // Index 1: Team X (Rank 1) -> translateY(calc(0 * var(--row-height, 24px)))
+      // Index 0 (Rank 1): Team X
+      // Index 1 (Rank 2): D1
       let rows = fixture.nativeElement.querySelectorAll(".leaderboard-item");
-      expect(rows[0].textContent).toContain("D1");
-      expect(rows[0].style.transform).toBe(
-        "translateY(calc(1 * var(--row-height, 24px)))",
-      );
-      expect(rows[1].textContent).toContain("Team X");
-      expect(rows[1].style.transform).toBe(
-        "translateY(calc(0 * var(--row-height, 24px)))",
-      );
+      expect(rows[0].textContent).toContain("Team X");
+      expect(rows[1].textContent).toContain("D1");
 
       // Swap ranks: D1 becomes Rank 1 (Pos 0), Team X becomes Rank 2 (Pos 1)
       participantsSubject.next([
@@ -1472,58 +1466,9 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
 
       rows = fixture.nativeElement.querySelectorAll(".leaderboard-item");
-      // Verify stable DOM order (rows[0] is still D1) but visual position updated via transform
+      // Verify DOM order updated to reflect the new ranks
       expect(rows[0].textContent).toContain("D1");
-      expect(rows[0].style.transform).toBe(
-        "translateY(calc(0 * var(--row-height, 24px)))",
-      );
       expect(rows[1].textContent).toContain("Team X");
-      expect(rows[1].style.transform).toBe(
-        "translateY(calc(1 * var(--row-height, 24px)))",
-      );
-    });
-
-    it("should have correct height on scroll content wrapper", () => {
-      // 2 participants * 24px spacing = calc(2 * var(--row-height, 24px))
-      fixture.detectChanges();
-      const scrollContent = fixture.nativeElement.querySelector(
-        ".leaderboard-scroll-content",
-      );
-      expect(scrollContent.style.height).toBe(
-        "calc(2 * var(--row-height, 24px))",
-      );
-
-      // Add more participants
-      participantsSubject.next(
-        new Array(10).fill(0).map((_, i) => ({
-          driver: { name: `D${i}` },
-          rank: i + 1,
-          totalLaps: 0,
-        })),
-      );
-      fixture.detectChanges();
-      expect(scrollContent.style.height).toBe(
-        "calc(10 * var(--row-height, 24px))",
-      );
-    });
-
-    it("should calculate a scroll height exceeding typical container height when many items are present", () => {
-      // simulate 50 participants -> calc(50 * var(--row-height, 24px))
-      // 1200px definitely exceeds the parent panel's typical height.
-      participantsSubject.next(
-        new Array(50).fill(0).map((_, i) => ({
-          driver: { name: `D${i}` },
-          rank: i + 1,
-          totalLaps: 0,
-        })),
-      );
-      fixture.detectChanges();
-      const scrollContent = fixture.nativeElement.querySelector(
-        ".leaderboard-scroll-content",
-      );
-      const match = scrollContent.style.height.match(/calc\((\d+)\s*\*/);
-      const multiplier = match ? parseInt(match[1]) : 0;
-      expect(multiplier * 24).toBeGreaterThan(1000);
     });
 
     it("should return correct leaderboard score format based on entry type", () => {

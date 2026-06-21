@@ -221,17 +221,17 @@
 
 /* Auto scaling for leaderboards */
 .widget-wrapper.scale-auto {
-  --row-height: calc(12cqh * var(--widget-scale-factor, 1));
+  --row-height: calc(12cqmin * var(--widget-scale-factor, 1));
 }
 
 .widget-wrapper.scale-auto .leaderboard-title {
-  font-size: calc(8cqh * var(--widget-scale-factor, 1)) !important;
-  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(8cqmin * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: calc(3cqmin * var(--widget-scale-factor, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .leaderboard-subtitle {
-  font-size: calc(6cqh * var(--widget-scale-factor, 1)) !important;
-  margin-bottom: calc(3cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(6cqmin * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: calc(3cqmin * var(--widget-scale-factor, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .leaderboard-item,
@@ -240,7 +240,7 @@
 .widget-wrapper.scale-auto .leaderboard-name,
 .widget-wrapper.scale-auto .leaderboard-score,
 .widget-wrapper.scale-auto .leaderboard-empty-message {
-  font-size: calc(6.5cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(6.5cqmin * var(--widget-scale-factor, 1)) !important;
 }
 
 /* Fixed scaling for records */

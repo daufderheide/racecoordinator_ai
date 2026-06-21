@@ -80,12 +80,12 @@ describe("RacedayGroupLeaderboardComponent", () => {
       component.getLeaderboardPosition(component.leaderboardEntries()[0]),
     ).toBe(1); // Alice
 
-    const detailBob = await harness.getEntryDetail(1); // Bob is index 1 in the loop
+    const detailBob = await harness.getEntryDetail(0); // Bob is index 0 in the sorted loop
     expect(detailBob.rank).toBe("1");
     expect(detailBob.name).toBe("Bob");
     expect(detailBob.score).toBe("12.346"); // isTime is true -> formatted with 3 decimals
 
-    const detailAlice = await harness.getEntryDetail(0); // Alice is index 0 in the loop
+    const detailAlice = await harness.getEntryDetail(1); // Alice is index 1 in the sorted loop
     expect(detailAlice.rank).toBe("2");
     expect(detailAlice.name).toBe("Alice");
     expect(detailAlice.score).toBe("10.00"); // isTime is false -> formatted with 2 decimals
