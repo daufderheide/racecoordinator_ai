@@ -1,0 +1,45 @@
+@if (settings()) {
+  <!-- Time Columns Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_TIME_SECTION" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_DECIMAL_PLACES" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().timeDecimalPlaces"
+        (change)="onSettingsChange()"
+      >
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lap Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_LAP_SECTION" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_DECIMAL_PLACES" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().lapDecimalPlaces"
+        (change)="onSettingsChange()"
+      >
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+      </select>
+    </div>
+  </div>
+}

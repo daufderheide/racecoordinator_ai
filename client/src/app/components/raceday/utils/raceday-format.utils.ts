@@ -19,6 +19,7 @@ export interface FormatContext {
   getFlagUrl: (flag: any) => string;
   getFullUrl: (url: string | undefined) => string;
   getImageSetUrl: (hd: DriverHeatData, propertyName: string) => string;
+  laneViewWidgetSettings?: any;
 }
 
 export class RacedayFormatUtils {
@@ -59,6 +60,20 @@ export class RacedayFormatUtils {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
+    const timeDecimals =
+      ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
+        : 3;
+    const lapDecimals =
+      ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
+        : 2;
+
+    const timePlaceholder =
+      timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
+    const lapPlaceholder =
+      lapDecimals > 0 ? "--." + "-".repeat(lapDecimals) : "--";
+
     if (RacedayFormatUtils.isEmptyDriver(hd)) {
       if (
         baseKey === "seed" ||
@@ -68,7 +83,7 @@ export class RacedayFormatUtils {
         return "";
       }
       if (baseKey === "gapLeader" || baseKey === "gapPosition") {
-        return "--.---";
+        return timePlaceholder;
       }
     }
 
@@ -77,11 +92,11 @@ export class RacedayFormatUtils {
       baseKey === "reactionTime" ||
       baseKey === "totalTime"
     ) {
-      return value > 0 ? value.toFixed(3) : "--.---";
+      return value > 0 ? value.toFixed(timeDecimals) : timePlaceholder;
     } else if (baseKey === "gapLeader" || baseKey === "gapPosition") {
-      if (value === 0) return "--.---";
+      if (value === 0) return timePlaceholder;
       const sign = value > 0 ? "+" : "";
-      return sign + value.toFixed(3);
+      return sign + value.toFixed(timeDecimals);
     } else if (baseKey === "lapCount") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
@@ -96,9 +111,9 @@ export class RacedayFormatUtils {
         value === undefined ||
         (!hasReactionTime && !hasRealLap && !hasAdjustment)
       ) {
-        return "--.--";
+        return lapPlaceholder;
       }
-      return value.toFixed(2);
+      return value.toFixed(lapDecimals);
     } else if (baseKey === "driver.name") {
       if (RacedayFormatUtils.isEmptyDriver(hd))
         return ctx.translate("RD_EMPTY_LANE");
@@ -208,12 +223,12 @@ export class RacedayFormatUtils {
 
         const segmentVal = hd.currentLapSegments[actualIndex];
         return segmentVal !== undefined && segmentVal > 0
-          ? segmentVal.toFixed(3)
-          : "--.---";
+          ? segmentVal.toFixed(timeDecimals)
+          : timePlaceholder;
       } else {
         return hd.lastSegmentTime > 0
-          ? hd.lastSegmentTime.toFixed(3)
-          : "--.---";
+          ? hd.lastSegmentTime.toFixed(timeDecimals)
+          : timePlaceholder;
       }
     } else if (baseKey === "mph" || baseKey === "kph" || baseKey === "fph") {
       const lastLapTime = hd.lastLapTime;

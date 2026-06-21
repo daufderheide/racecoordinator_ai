@@ -39,4 +39,10 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       imageUrl: "",
     }),
   },
+  "lane-view": {
+    defaultSettings: () => ({
+      timeDecimalPlaces: 3,
+      lapDecimalPlaces: 2,
+    }),
+  },
 };

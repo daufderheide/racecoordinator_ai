@@ -3,6 +3,7 @@ import { Component, input, output } from "@angular/core";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
+import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
 import { RecordsInspectorComponent } from "./records-inspector/records-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
@@ -14,6 +15,7 @@ import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.compo
   imports: [
     CommonModule,
     LeaderboardInspectorComponent,
+    LaneViewInspectorComponent,
     RecordsInspectorComponent,
     TimerInspectorComponent,
     ImageInspectorComponent,

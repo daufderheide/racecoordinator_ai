@@ -23,4 +23,10 @@
       (change)="onSettingsChange()"
     ></app-image-inspector>
   }
+  @case ("lane-view") {
+    <app-lane-view-inspector
+      [settings]="widget().customSettings"
+      (change)="onSettingsChange()"
+    ></app-lane-view-inspector>
+  }
 }

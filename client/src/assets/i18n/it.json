@@ -1125,6 +1125,8 @@
   "UE_INSPECTOR_Y_POS": "Posizione Y",
   "UE_INSPECTOR_Z_INDEX": "Profondità del Livello (Z-Index)",
   "UE_INSPECTOR_DECIMAL_PLACES": "Decimali",
+  "UE_INSPECTOR_LANE_VIEW_LAP_SECTION": "Impostazioni Giro",
+  "UE_INSPECTOR_LANE_VIEW_TIME_SECTION": "Impostazioni Colonne Tempo",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Impostazioni del Titolo",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Leader Generale (1° Posto)",
   "UE_INSPECTOR_LEADERBOARD_REST": "Tabella di Classifica",

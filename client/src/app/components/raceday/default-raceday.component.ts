@@ -1564,6 +1564,11 @@ export class DefaultRacedayComponent
     column: ColumnDefinition,
     propertyName?: string,
   ): string {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    const laneViewWidget = settings.racedayLayout?.widgets?.find(
+      (w) => w.widgetType === "lane-view",
+    );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),
@@ -1573,6 +1578,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
+      laneViewWidgetSettings: laneViewWidget?.customSettings,
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -2797,6 +2803,11 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
   ): string {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    const laneViewWidget = settings.racedayLayout?.widgets?.find(
+      (w: any) => w.widgetType === "lane-view",
+    );
     const ctx: FormatContext = {
       translate: (key) => this.translationService.translate(key),
       getRace: () => this.raceService.getRace(),
@@ -2806,6 +2817,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
+      laneViewWidgetSettings: laneViewWidget?.customSettings,
     };
     return RacedayFormatUtils.formatValue(propertyName, value, hd, column, ctx);
   }
