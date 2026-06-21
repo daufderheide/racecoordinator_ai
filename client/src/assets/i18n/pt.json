@@ -1127,6 +1127,8 @@
   "UE_INSPECTOR_DECIMAL_PLACES": "Casas Decimais",
   "UE_INSPECTOR_LANE_VIEW_LAP_SECTION": "Configurações de Volta",
   "UE_INSPECTOR_LANE_VIEW_TIME_SECTION": "Configurações das Colunas de Tempo",
+  "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Configurações de Colunas",
+  "UE_INSPECTOR_LANE_VIEW_DATA_SECTION": "Configurações de Dados da Faixa",
   "UE_INSPECTOR_LEADERBOARD_TITLE": "Configurações do Título",
   "UE_INSPECTOR_LEADERBOARD_SUBTITLE": "Configurações do Subtítulo",
   "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER": "Líder Geral (1º Lugar)",
@@ -1232,5 +1234,8 @@
   "UI_EDITOR_COL_GAP_LEADER": "DIFERENÇA PARA O LÍDER",
   "UI_EDITOR_COL_GAP_POSITION": "DIFERENÇA PARA A POSIÇÃO",
   "UI_EDITOR_COL_REACTION_TIME": "TEMPO DE REAÇÃO",
-  "UI_EDITOR_COL_TEAM": "NOME DA EQUIPE"
+  "UI_EDITOR_COL_TEAM": "NOME DA EQUIPE",
+  "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES": "Casas Decimais das Colunas de Volta",
+  "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES": "Casas Decimais das Colunas de Tempo",
+  "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION": "Configurações de Dados da Inserção de Faixa"
 }

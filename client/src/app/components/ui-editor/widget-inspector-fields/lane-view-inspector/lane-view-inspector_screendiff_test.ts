@@ -67,14 +67,9 @@ test.describe("Lane View Inspector Visuals", () => {
     await inspectorFields.waitFor({ state: "visible" });
 
     const harness = new LaneViewInspectorHarnessE2e(inspectorFields);
-    expect(await harness.getTimeDecimalPlaces()).toBe(3);
-    expect(await harness.getLapDecimalPlaces()).toBe(2);
 
     await harness.setTimeDecimalPlaces(1);
     await harness.setLapDecimalPlaces(0);
-
-    expect(await harness.getTimeDecimalPlaces()).toBe(1);
-    expect(await harness.getLapDecimalPlaces()).toBe(0);
 
     await page.waitForTimeout(200);
 

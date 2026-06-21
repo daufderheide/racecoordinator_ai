@@ -43,6 +43,17 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
     defaultSettings: () => ({
       timeDecimalPlaces: 3,
       lapDecimalPlaces: 2,
+      columnFontFamily: "",
+      columnFontSize: 24,
+      columnTextColor: "",
+      dataFontFamily: "",
+      dataFontSize: 24,
+      dataTextColor: "",
+      insetTimeDecimalPlaces: 3,
+      insetLapDecimalPlaces: 2,
+      insetFontFamily: "",
+      insetFontSize: 24,
+      insetTextColor: "",
     }),
   },
   "on-deck": {

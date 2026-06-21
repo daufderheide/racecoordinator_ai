@@ -56,16 +56,25 @@ export class RacedayFormatUtils {
     hd: DriverHeatData,
     column: ColumnDefinition | undefined,
     ctx: FormatContext,
+    anchor?: string,
   ): string {
     if (!propertyName) return "";
     const baseKey = propertyName.split("_")[0];
 
-    const timeDecimals =
-      ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
+    const isInset = anchor ? anchor !== "center-center" : false;
+
+    const timeDecimals = isInset
+      ? ctx.laneViewWidgetSettings?.insetTimeDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.insetTimeDecimalPlaces)
+        : 3
+      : ctx.laneViewWidgetSettings?.timeDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.timeDecimalPlaces)
         : 3;
-    const lapDecimals =
-      ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
+    const lapDecimals = isInset
+      ? ctx.laneViewWidgetSettings?.insetLapDecimalPlaces !== undefined
+        ? Number(ctx.laneViewWidgetSettings.insetLapDecimalPlaces)
+        : 2
+      : ctx.laneViewWidgetSettings?.lapDecimalPlaces !== undefined
         ? Number(ctx.laneViewWidgetSettings.lapDecimalPlaces)
         : 2;
 
@@ -262,6 +271,7 @@ export class RacedayFormatUtils {
     column: ColumnDefinition,
     propertyName: string | undefined,
     ctx: FormatContext,
+    anchor?: string,
   ): string {
     const prop = propertyName || column.propertyName;
     if (prop === column.propertyName && column.formatter) {
@@ -272,6 +282,13 @@ export class RacedayFormatUtils {
       );
     }
     const value = RacedayFormatUtils.getPropertyValue(heatDriver, prop);
-    return RacedayFormatUtils.formatValue(prop, value, heatDriver, column, ctx);
+    return RacedayFormatUtils.formatValue(
+      prop,
+      value,
+      heatDriver,
+      column,
+      ctx,
+      anchor,
+    );
   }
 }

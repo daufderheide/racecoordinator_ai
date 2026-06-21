@@ -1,12 +1,88 @@
 @if (settings()) {
-  <!-- Time Columns Section -->
+  <!-- Columns Section -->
   <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_TIME_SECTION" | translate }}
+    {{ "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION" | translate }}
   </div>
 
   <div class="inspector-section">
     <label class="inspector-label">{{
-      "UE_INSPECTOR_DECIMAL_PLACES" | translate
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().columnFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().columnFontSize || 24 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().columnFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().columnTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().columnTextColor || '#ffffff'"
+        (change)="onColorChange('columnTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().columnTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().columnTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('columnTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Lane Data Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_DATA_SECTION" | translate }}
+  </div>
+
+  <!-- Time Decimal Places -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
     }}</label>
     <div class="select-container select-sm">
       <select
@@ -21,14 +97,10 @@
     </div>
   </div>
 
-  <!-- Lap Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_LAP_SECTION" | translate }}
-  </div>
-
+  <!-- Lap Decimal Places -->
   <div class="inspector-section">
     <label class="inspector-label">{{
-      "UE_INSPECTOR_DECIMAL_PLACES" | translate
+      "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
     }}</label>
     <div class="select-container select-sm">
       <select
@@ -40,6 +112,190 @@
         <option [value]="2">2</option>
         <option [value]="3">3</option>
       </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().dataFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().dataFontSize || 24 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().dataFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().dataTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().dataTextColor || '#ffffff'"
+        (change)="onColorChange('dataTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().dataTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().dataTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('dataTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Lane Inset Data Settings Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
+  </div>
+
+  <!-- Inset Time Decimal Places -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().insetTimeDecimalPlaces"
+        (change)="onSettingsChange()"
+      >
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Inset Lap Decimal Places -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().insetLapDecimalPlaces"
+        (change)="onSettingsChange()"
+      >
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Inset Font Family -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <select
+        [(ngModel)]="settings().insetFontFamily"
+        (change)="onSettingsChange()"
+        (focus)="fontService.loadLocalFonts()"
+      >
+        <option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </option>
+        @for (font of fontService.availableFonts(); track font) {
+          <option [value]="font">{{ font }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Inset Font Size -->
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().insetFontSize || 24 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="10"
+      max="120"
+      [(ngModel)]="settings().insetFontSize"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <!-- Inset Text Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().insetTextColor"
+    >
+      <input
+        type="color"
+        [value]="settings().insetTextColor || '#ffffff'"
+        (change)="onColorChange('insetTextColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().insetTextColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().insetTextColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('insetTextColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          ✕
+        </button>
+      }
     </div>
   </div>
 }

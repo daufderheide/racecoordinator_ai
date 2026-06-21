@@ -34,6 +34,8 @@
   display: grid;
   height: 36px;
   gap: 2px;
+  position: relative;
+  z-index: 200;
 }
 
 .header-cell {
@@ -49,6 +51,8 @@
   font-weight: bold;
   font-size: 24px;
   user-select: none;
+  height: 100%;
+  line-height: 1;
 }
 
 .table-body {
@@ -58,6 +62,7 @@
   /* Match the sum of row heights to prevent collapse */
   position: relative;
   overflow: visible;
+  z-index: 1;
 }
 
 .table-row {

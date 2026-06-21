@@ -26,6 +26,15 @@ export class RacedayLayoutUtils {
     );
   }
 
+  static getHeaderHeight(layout: LayoutConfig | undefined): number {
+    const widget = layout?.widgets?.find(
+      (w: any) => w.widgetType === "lane-view",
+    );
+    if (!widget) return 36;
+    const columnFontSize = widget.customSettings?.["columnFontSize"];
+    return columnFontSize ? Math.max(36, Number(columnFontSize) + 12) : 36;
+  }
+
   static getTableBodyHeight(
     layout: LayoutConfig | undefined,
     isLayoutCustomizing: boolean,
@@ -35,7 +44,8 @@ export class RacedayLayoutUtils {
     );
     if (!widget) return 672;
     const editModeOffset = isLayoutCustomizing ? 28 : 0;
-    return Math.max(100, widget.height - editModeOffset - 10 - 36);
+    const headerHeight = RacedayLayoutUtils.getHeaderHeight(layout);
+    return Math.max(100, widget.height - editModeOffset - 10 - headerHeight);
   }
 
   static getRowHeight(

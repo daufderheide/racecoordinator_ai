@@ -1563,6 +1563,7 @@ export class DefaultRacedayComponent
     heatDriver: DriverHeatData,
     column: ColumnDefinition,
     propertyName?: string,
+    anchor?: string,
   ): string {
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
@@ -1585,6 +1586,7 @@ export class DefaultRacedayComponent
       column,
       propertyName,
       ctx,
+      anchor,
     );
   }
 

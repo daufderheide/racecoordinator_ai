@@ -4,6 +4,7 @@
     <div
       class="table-header-row"
       [style.grid-template-columns]="parent().gridTemplateColumns"
+      [style.height.px]="getHeaderHeight()"
       cdkDropList
       cdkDropListOrientation="horizontal"
       (cdkDropListDropped)="parent().onColumnDrop($event)"
@@ -29,6 +30,13 @@
           cdkDrag
           [cdkDragData]="col"
           [cdkDragDisabled]="!parent().isUIEditorMode()"
+          [style.font-family]="
+            widget()?.customSettings?.['columnFontFamily'] || null
+          "
+          [style.font-size.px]="
+            widget()?.customSettings?.['columnFontSize'] || null
+          "
+          [style.color]="widget()?.customSettings?.['columnTextColor'] || null"
           (dragover)="
             parent().isUIEditorMode() ? parent().onColumnDragOver($event) : null
           "
@@ -58,6 +66,8 @@
               display: flex;
               align-items: center;
               justify-content: center;
+              height: 100%;
+              line-height: 1;
             "
           >
             {{ parent().getColumnLabel(col) }}
@@ -172,9 +182,13 @@
                   class="drift-indicator"
                   data-testid="drift-badge"
                   [style.background-color]="
+                    widget()?.customSettings?.['dataTextColor'] ||
                     parent().getLaneColor(hd, 'foreground_color')
                   "
                   [style.color]="parent().getLaneColor(hd, 'background_color')"
+                  [style.font-family]="
+                    widget()?.customSettings?.['dataFontFamily'] || null
+                  "
                 >
                   {{ "RD_DRIFT_LAP" | translate }}
                 </div>
@@ -187,7 +201,20 @@
                 @if (!parent().isImageProperty(entry.property)) {
                   <div
                     [class]="parent().getAnchorClass(entry.anchor)"
+                    [style.font-family]="
+                      entry.anchor === 'center-center'
+                        ? widget()?.customSettings?.['dataFontFamily'] || null
+                        : widget()?.customSettings?.['insetFontFamily'] || null
+                    "
+                    [style.font-size.px]="
+                      entry.anchor === 'center-center'
+                        ? widget()?.customSettings?.['dataFontSize'] || null
+                        : widget()?.customSettings?.['insetFontSize'] || null
+                    "
                     [style.color]="
+                      (entry.anchor === 'center-center'
+                        ? widget()?.customSettings?.['dataTextColor']
+                        : widget()?.customSettings?.['insetTextColor']) ||
                       parent().getLaneColor(hd, 'foreground_color')
                     "
                   >
@@ -209,6 +236,9 @@
                         <span
                           class="teammate-display-name"
                           [style.color]="
+                            (entry.anchor === 'center-center'
+                              ? widget()?.customSettings?.['dataTextColor']
+                              : widget()?.customSettings?.['insetTextColor']) ||
                             parent().getLaneColor(hd, 'foreground_color')
                           "
                           [style.padding-right]="
@@ -275,6 +305,9 @@
                         class="drag-handle"
                         cdkDragHandle
                         [style.color]="
+                          (entry.anchor === 'center-center'
+                            ? widget()?.customSettings?.['dataTextColor']
+                            : widget()?.customSettings?.['insetTextColor']) ||
                           parent().getLaneColor(hd, 'foreground_color')
                         "
                       >
@@ -287,7 +320,12 @@
                     ) {
                       <span>
                         {{
-                          parent().formatColumnValue(hd, col, entry.property)
+                          parent().formatColumnValue(
+                            hd,
+                            col,
+                            entry.property,
+                            entry.anchor
+                          )
                         }}
                       </span>
                     }
@@ -297,7 +335,12 @@
                 @if (parent().isImageProperty(entry.property)) {
                   <div [class]="parent().getAnchorClass(entry.anchor)">
                     @let imageUrl =
-                      parent().formatColumnValue(hd, col, entry.property);
+                      parent().formatColumnValue(
+                        hd,
+                        col,
+                        entry.property,
+                        entry.anchor
+                      );
                     @if (
                       imageUrl || !parent().isAvatarProperty(entry.property)
                     ) {
