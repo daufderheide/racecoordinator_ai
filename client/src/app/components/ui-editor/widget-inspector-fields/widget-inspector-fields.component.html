@@ -5,6 +5,13 @@
       (change)="onSettingsChange()"
     ></app-leaderboard-inspector>
   }
+  @case ("group-leaderboard") {
+    <app-leaderboard-inspector
+      [settings]="widget().customSettings"
+      [isGroup]="true"
+      (change)="onSettingsChange()"
+    ></app-leaderboard-inspector>
+  }
   @case ("records") {
     <app-records-inspector
       [settings]="widget().customSettings"

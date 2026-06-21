@@ -13,6 +13,7 @@ import { FontService } from "@app/services/font.service";
 })
 export class LeaderboardInspectorComponent {
   settings = input.required<any>();
+  isGroup = input<boolean>(false);
   change = output<void>();
   fontService = inject(FontService);
 

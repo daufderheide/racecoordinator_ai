@@ -83,3 +83,26 @@
 .leader-white {
   color: #f8fafc;
 }
+
+.leaderboard-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leaderboard-empty-message {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 15px;
+  text-align: center;
+  padding: 40px 10px;
+  font-style: italic;
+}

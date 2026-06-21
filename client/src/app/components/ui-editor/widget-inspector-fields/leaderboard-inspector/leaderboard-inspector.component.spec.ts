@@ -86,4 +86,33 @@ describe("LeaderboardInspectorComponent", () => {
     expect(Number(component.settings().decimalPlaces)).toBe(2);
     expect(changeSpy).toHaveBeenCalled();
   });
+
+  it("should show subtitle section and update subtitle settings if isGroup is true", () => {
+    fixture.componentRef.setInput("isGroup", true);
+    fixture.componentRef.setInput("settings", {
+      decimalPlaces: 3,
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      subtitleFontFamily: "",
+      subtitleFontSize: 13,
+      subtitleTextColor: "",
+      overallLeaderFontFamily: "",
+      overallLeaderFontSize: 16,
+      overallLeaderTextColor: "",
+      restFontFamily: "",
+      restFontSize: 16,
+      restTextColor: "",
+    });
+    fixture.detectChanges();
+
+    const event = {
+      target: {
+        value: "#00ff00",
+      },
+    } as any;
+    component.onColorChange("subtitleTextColor", event);
+    expect(component.settings().subtitleTextColor).toBe("#00ff00");
+    expect(changeSpy).toHaveBeenCalled();
+  });
 });

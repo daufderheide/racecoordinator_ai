@@ -45,4 +45,21 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       lapDecimalPlaces: 2,
     }),
   },
+  "group-leaderboard": {
+    defaultSettings: () => ({
+      decimalPlaces: 3,
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      subtitleFontFamily: "",
+      subtitleFontSize: 13,
+      subtitleTextColor: "",
+      overallLeaderFontFamily: "",
+      overallLeaderFontSize: 16,
+      overallLeaderTextColor: "",
+      restFontFamily: "",
+      restFontSize: 16,
+      restTextColor: "",
+    }),
+  },
 };

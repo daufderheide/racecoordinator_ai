@@ -5,63 +5,122 @@
     [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
-    Leader Board
+    @if (isGroupBoard()) {
+      {{ "RD_WIN_GROUP_LEADER_BOARD" | translate }}
+    } @else {
+      Leader Board
+    }
   </div>
-  <div class="leaderboard-list">
+  @if (isGroupBoard() && groupEnabled() && groupNumber() >= 0) {
     <div
-      class="leaderboard-scroll-content"
-      [style.height]="
-        'calc(' + leaderboardEntries().length + ' * var(--row-height, 24px))'
+      class="leaderboard-subtitle"
+      [style.font-family]="
+        widget()?.customSettings?.['subtitleFontFamily'] || null
       "
+      [style.font-size.px]="
+        widget()?.customSettings?.['subtitleFontSize'] || null
+      "
+      [style.color]="widget()?.customSettings?.['subtitleTextColor'] || null"
     >
-      @for (
-        entry of leaderboardEntries();
-        track trackByLeaderboardEntry($index, entry);
-        let i = $index
-      ) {
-        <div
-          class="leaderboard-item"
-          [class.leaderboard-item-odd]="getLeaderboardPosition(entry) % 2 === 1"
-          [style.transform]="
-            'translateY(calc(' +
-            getLeaderboardPosition(entry) +
-            ' * var(--row-height, 24px)))'
-          "
-          [style.font-family]="
-            getLeaderboardPosition(entry) === 0
-              ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
-              : widget()?.customSettings?.['restFontFamily'] || null
-          "
-          [style.font-size.px]="
-            getLeaderboardPosition(entry) === 0
-              ? widget()?.customSettings?.['overallLeaderFontSize'] || null
-              : widget()?.customSettings?.['restFontSize'] || null
-          "
-        >
-          <span
-            [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-            [class.leader-white]="getLeaderboardPosition(entry) > 0"
-            [style.color]="
-              getLeaderboardPosition(entry) === 0
-                ? widget()?.customSettings?.['overallLeaderTextColor'] || null
-                : widget()?.customSettings?.['restTextColor'] || null
-            "
-          >
-            {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
-          </span>
-          <span
-            [class.leader-gold]="getLeaderboardPosition(entry) === 0"
-            [class.leader-white]="getLeaderboardPosition(entry) > 0"
-            [style.color]="
-              getLeaderboardPosition(entry) === 0
-                ? widget()?.customSettings?.['overallLeaderTextColor'] || null
-                : widget()?.customSettings?.['restTextColor'] || null
-            "
-          >
-            {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
-          </span>
-        </div>
-      }
+      {{ "DR_LABEL_GROUP" | translate: { group: groupNumber() + 1 } }}
     </div>
+  }
+
+  <div class="leaderboard-list">
+    @if (isGroupBoard() && !groupEnabled()) {
+      <div class="leaderboard-empty-message">
+        {{ "RD_NO_GROUP_STANDINGS" | translate }}
+      </div>
+    } @else {
+      <div
+        class="leaderboard-scroll-content"
+        [style.height]="
+          'calc(' + leaderboardEntries().length + ' * var(--row-height, 24px))'
+        "
+      >
+        @for (
+          entry of leaderboardEntries();
+          track trackByLeaderboardEntry($index, entry);
+          let i = $index
+        ) {
+          <div
+            class="leaderboard-item"
+            [class.leaderboard-item-odd]="
+              getLeaderboardPosition(entry) % 2 === 1
+            "
+            [style.transform]="
+              'translateY(calc(' +
+              getLeaderboardPosition(entry) +
+              ' * var(--row-height, 24px)))'
+            "
+            [style.font-family]="
+              getLeaderboardPosition(entry) === 0
+                ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
+                : widget()?.customSettings?.['restFontFamily'] || null
+            "
+            [style.font-size.px]="
+              getLeaderboardPosition(entry) === 0
+                ? widget()?.customSettings?.['overallLeaderFontSize'] || null
+                : widget()?.customSettings?.['restFontSize'] || null
+            "
+          >
+            @if (isGroupBoard()) {
+              <div
+                class="leaderboard-left"
+                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [style.color]="
+                  getLeaderboardPosition(entry) === 0
+                    ? widget()?.customSettings?.['overallLeaderTextColor'] ||
+                      null
+                    : widget()?.customSettings?.['restTextColor'] || null
+                "
+              >
+                <div class="leaderboard-rank">{{ entry.rank || "-" }}</div>
+                <div class="leaderboard-name">{{ entry.name }}</div>
+              </div>
+              <div
+                class="leaderboard-score"
+                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [style.color]="
+                  getLeaderboardPosition(entry) === 0
+                    ? widget()?.customSettings?.['overallLeaderTextColor'] ||
+                      null
+                    : widget()?.customSettings?.['restTextColor'] || null
+                "
+              >
+                {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
+              </div>
+            } @else {
+              <span
+                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [style.color]="
+                  getLeaderboardPosition(entry) === 0
+                    ? widget()?.customSettings?.['overallLeaderTextColor'] ||
+                      null
+                    : widget()?.customSettings?.['restTextColor'] || null
+                "
+              >
+                {{ getLeaderboardPosition(entry) + 1 }} {{ entry.name }}
+              </span>
+              <span
+                [class.leader-gold]="getLeaderboardPosition(entry) === 0"
+                [class.leader-white]="getLeaderboardPosition(entry) > 0"
+                [style.color]="
+                  getLeaderboardPosition(entry) === 0
+                    ? widget()?.customSettings?.['overallLeaderTextColor'] ||
+                      null
+                    : widget()?.customSettings?.['restTextColor'] || null
+                "
+              >
+                {{ entry.score | number: getLeaderboardScoreFormat(entry) }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
   </div>
 </div>

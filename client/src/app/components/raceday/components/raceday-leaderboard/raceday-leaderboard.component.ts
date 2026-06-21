@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
-import { Component, input, ViewEncapsulation } from "@angular/core";
+import { Component, computed, input, ViewEncapsulation } from "@angular/core";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
@@ -8,11 +9,18 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
   templateUrl: "./raceday-leaderboard.component.html",
   styleUrls: ["./raceday-leaderboard.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
 })
 export class RacedayLeaderboardComponent {
   leaderboardEntries = input<any[]>([]);
   widget = input<AbsoluteWidgetNode | null>(null);
+  isGroup = input<boolean>(false);
+  groupNumber = input<number>(0);
+  groupEnabled = input<boolean>(false);
+
+  isGroupBoard = computed(() => {
+    return this.isGroup() || this.widget()?.widgetType === "group-leaderboard";
+  });
 
   trackByLeaderboardEntry(index: number, entry: any): string {
     return entry.entityId || String(index);

@@ -1,6 +1,9 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { DecimalPipe } from "@angular/common";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { TranslationService } from "@app/services/translation.service";
+import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
 import { RacedayLeaderboardComponent } from "./raceday-leaderboard.component";
 import { RacedayLeaderboardHarness } from "./testing/raceday-leaderboard.harness";
@@ -11,9 +14,21 @@ describe("RacedayLeaderboardComponent", () => {
   let harness: RacedayLeaderboardHarness;
 
   beforeEach(async () => {
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (params && params.group !== undefined) {
+          return `${key} ${params.group}`;
+        }
+        return key;
+      },
+    );
+
     await TestBed.configureTestingModule({
-      imports: [RacedayLeaderboardComponent],
-      providers: [DecimalPipe],
+      imports: [RacedayLeaderboardComponent, TranslatePipe],
+      providers: [
+        DecimalPipe,
+        { provide: TranslationService, useValue: mockTranslationService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RacedayLeaderboardComponent);
@@ -63,5 +78,20 @@ describe("RacedayLeaderboardComponent", () => {
 
     const entryText = await harness.getEntryText(0);
     expect(entryText).toContain("9.877");
+  });
+
+  it("should show group leaderboard title and subtitle when isGroup is true", async () => {
+    fixture.componentRef.setInput("isGroup", true);
+    fixture.componentRef.setInput("groupEnabled", true);
+    fixture.componentRef.setInput("groupNumber", 2);
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".leaderboard-title");
+    expect(titleEl.textContent.trim()).toBe("RD_WIN_GROUP_LEADER_BOARD");
+
+    const subtitleEl = fixture.nativeElement.querySelector(
+      ".leaderboard-subtitle",
+    );
+    expect(subtitleEl.textContent.trim()).toBe("DR_LABEL_GROUP 3");
   });
 });

@@ -92,6 +92,83 @@
     </div>
   </div>
 
+  @if (isGroup()) {
+    <!-- Subtitle Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_LEADERBOARD_SUBTITLE" | translate }}
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <select
+          [(ngModel)]="settings().subtitleFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+        >
+          <option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </option>
+          @for (font of fontService.availableFonts(); track font) {
+            <option [value]="font">{{ font }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ settings().subtitleFontSize || 13 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="10"
+        max="120"
+        [(ngModel)]="settings().subtitleFontSize"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().subtitleTextColor"
+      >
+        <input
+          type="color"
+          [value]="settings().subtitleTextColor || '#ffffff'"
+          (change)="onColorChange('subtitleTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().subtitleTextColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().subtitleTextColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('subtitleTextColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Overall Leader Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_LEADERBOARD_OVERALL_LEADER" | translate }}
