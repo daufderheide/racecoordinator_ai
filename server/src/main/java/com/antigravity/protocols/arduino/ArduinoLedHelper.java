@@ -441,8 +441,7 @@ public class ArduinoLedHelper {
           if (flag == RaceFlag.GREEN_YELLOW) {
             // Rotating effect: shift the interleaving over time
             long rotationOffset = (now / 150) % 2; // Shift every 150ms
-            int n = behavior - raceStateBehavior;
-            if ((n + rotationOffset) % 2 != 0) {
+            if ((i + rotationOffset) % 2 != 0) {
               finalRgb = rgb2;
             } else {
               finalRgb = rgb1;
@@ -459,7 +458,7 @@ public class ArduinoLedHelper {
             }
 
             finalRgb = rgb1;
-            if (isInterleaved && ((behavior - raceStateBehavior) % 2 != 0)) {
+            if (isInterleaved && (i % 2 != 0)) {
               finalRgb = rgb2;
             }
           }

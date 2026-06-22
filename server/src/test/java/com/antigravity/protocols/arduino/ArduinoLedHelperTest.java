@@ -1620,4 +1620,77 @@ public class ArduinoLedHelperTest {
     assertTrue("Should have sent RGB_LED_MODE", foundMode);
     assertTrue("Should have refreshed thermometer LEDs", foundLedUpdate);
   }
+
+  @Test
+  public void testSetRaceState_CheckeredFlag_Interleaved() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.flagFlashRate = 0; // Disable temporal flashing for deterministic test
+    ledString.leds =
+        new ArrayList<>(
+            Collections.nCopies(4, RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE));
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.CHECKERED, 0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    assertEquals(4, data[2]);
+
+    // With flagFlashRate = 0, toggle is false.
+    // rgb1 = White, rgb2 = Black.
+    // i = 0 (even) -> White
+    // i = 1 (odd) -> Black
+    assertEquals((byte) 0xFF, data[4]); // LED 0: R = 255
+    assertEquals((byte) 0xFF, data[5]); // LED 0: G = 255
+    assertEquals((byte) 0xFF, data[6]); // LED 0: B = 255
+
+    assertEquals((byte) 0x00, data[8]); // LED 1: R = 0
+    assertEquals((byte) 0x00, data[9]); // LED 1: G = 0
+    assertEquals((byte) 0x00, data[10]); // LED 1: B = 0
+
+    assertEquals((byte) 0xFF, data[12]); // LED 2: R = 255
+    assertEquals((byte) 0x00, data[16]); // LED 3: R = 0
+  }
+
+  @Test
+  public void testSetRaceState_YellowFlag_Interleaved() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    ledString.flagFlashRate = 0; // Disable temporal flashing for deterministic test
+    ledString.leds =
+        new ArrayList<>(
+            Collections.nCopies(4, RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE));
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.YELLOW, 0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    assertEquals(4, data[2]);
+
+    // Yellow is 255, 255, 0. rgb2 is Black.
+    // i = 0 (even) -> Yellow
+    // i = 1 (odd) -> Black
+    assertEquals((byte) 0xFF, data[4]); // LED 0: R = 255
+    assertEquals((byte) 0xFF, data[5]); // LED 0: G = 255
+    assertEquals((byte) 0x00, data[6]); // LED 0: B = 0
+
+    assertEquals((byte) 0x00, data[8]); // LED 1: R = 0
+    assertEquals((byte) 0x00, data[9]); // LED 1: G = 0
+    assertEquals((byte) 0x00, data[10]); // LED 1: B = 0
+
+    assertEquals((byte) 0xFF, data[12]); // LED 2: R = 255
+    assertEquals((byte) 0x00, data[16]); // LED 3: R = 0
+  }
 }
