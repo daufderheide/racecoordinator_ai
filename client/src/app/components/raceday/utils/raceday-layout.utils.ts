@@ -32,7 +32,9 @@ export class RacedayLayoutUtils {
     );
     if (!widget) return 36;
     const columnFontSize = widget.customSettings?.["columnFontSize"];
-    return columnFontSize ? Math.max(36, Number(columnFontSize) + 12) : 36;
+    return columnFontSize
+      ? Math.max(36, Math.round(Number(columnFontSize) * 1.3 + 8))
+      : 36;
   }
 
   static getTableBodyHeight(

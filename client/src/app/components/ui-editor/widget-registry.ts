@@ -47,7 +47,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       columnFontSize: 24,
       columnTextColor: "",
       dataFontFamily: "",
-      dataFontSize: 24,
+      dataFontSize: 54,
       dataTextColor: "",
       insetTimeDecimalPlaces: 3,
       insetLapDecimalPlaces: 2,

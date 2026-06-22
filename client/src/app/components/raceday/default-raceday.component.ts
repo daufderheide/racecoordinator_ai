@@ -1504,16 +1504,29 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.getColumnCenterX(this.columns, columnIndex);
   }
 
+  getWidgets(): any[] {
+    const layout = this.isUIEditorMode()
+      ? this.editingSettings()?.racedayLayout
+      : this.layout;
+    return layout?.widgets || [];
+  }
+
   getTableBodyHeight(): number {
+    const layout = this.isUIEditorMode()
+      ? this.editingSettings()?.racedayLayout
+      : this.layout;
     return RacedayLayoutUtils.getTableBodyHeight(
-      this.layout,
+      layout,
       this.isLayoutCustomizing,
     );
   }
 
   getRowHeight(): number {
+    const layout = this.isUIEditorMode()
+      ? this.editingSettings()?.racedayLayout
+      : this.layout;
     return RacedayLayoutUtils.getRowHeight(
-      this.layout,
+      layout,
       this.track?.lanes?.length || 1,
       this.isLayoutCustomizing,
     );

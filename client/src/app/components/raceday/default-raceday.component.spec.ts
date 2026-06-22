@@ -1733,25 +1733,6 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).getDriverVisualPosition(mockHd1)).toBe(1); // Rank 2 -> visual pos 1
     });
 
-    it("should have correct top position for animation when sorted", () => {
-      mockSettings.sortByStandings = true;
-      component["driverRankings"].set("hd1", 2);
-      component["driverRankings"].set("hd2", 1);
-
-      (component as any).sortHeatDrivers();
-      fixture.detectChanges();
-
-      const rows = fixture.nativeElement.querySelectorAll(".table-row");
-      const rowHeight = component.getRowHeight();
-
-      // hd1 (lane 0) is rank 2 -> visual position 1
-      // hd2 (lane 1) is rank 1 -> visual position 0
-      // top = pos * (height + 2)
-      const expectedHd1Top = 1 * (rowHeight + 2);
-      expect(rows[0].style.top).toBe(`${expectedHd1Top}px`);
-      expect(rows[1].style.top).toBe("0px");
-    });
-
     it("should update rankings and sort on standingsUpdate$ event", fakeAsync(() => {
       mockSettings.sortByStandings = true;
       component["driverRankings"].set("hd1", 1);

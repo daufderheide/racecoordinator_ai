@@ -1434,6 +1434,14 @@ export class TestSetupHelper {
         body: JSON.stringify(themes),
       });
     });
+
+    await page.route("**/api/themes/*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true }),
+      });
+    });
   }
 
   static async setupFileSystemMock(

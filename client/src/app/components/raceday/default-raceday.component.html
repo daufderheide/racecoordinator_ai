@@ -81,7 +81,7 @@
       style="position: relative; width: 100%; height: 100%"
       (pointerdown)="onCanvasPointerDown($event)"
     >
-      @for (widget of layout.widgets || []; track widget.id) {
+      @for (widget of getWidgets(); track widget.id) {
         <app-raceday-absolute-widget
           [widget]="widget"
           [parentComponent]="this"

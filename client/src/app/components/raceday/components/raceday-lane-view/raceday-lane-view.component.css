@@ -36,6 +36,7 @@
   gap: 2px;
   position: relative;
   z-index: 200;
+  flex-shrink: 0;
 }
 
 .header-cell {
@@ -58,26 +59,30 @@
 .table-body {
   display: block;
   /* Use block for better reordering stability */
-  height: 672px;
+  flex: 1;
   /* Match the sum of row heights to prevent collapse */
   position: relative;
   overflow: visible;
   z-index: 1;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .table-row {
   display: grid;
   gap: 2px;
   position: absolute;
-  /* Use absolute for explicit positioning */
   left: 0;
-  top: 0;
-  will-change: transform, filter;
   width: 100%;
+  height: calc((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes));
+  top: calc(
+    ((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) *
+      var(--lane-index)
+  );
   transition:
-    top 800ms cubic-bezier(0.35, 0, 0.25, 1),
-    transform 800ms cubic-bezier(0.35, 0, 0.25, 1),
-    filter 150ms ease-out;
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 }
 
 .table-row.cdk-drag-dragging {
@@ -87,7 +92,6 @@
 .table-row.highlight {
   filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
-
 
 .body-cell {
   background: #000;
@@ -348,10 +352,13 @@
 .drop-zone {
   position: relative;
   border: 1px dashed rgba(255, 255, 255, 0.2);
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
-.drop-zone:hover, .drop-zone.drag-over {
+.drop-zone:hover,
+.drop-zone.drag-over {
   background-color: rgba(59, 130, 246, 0.3);
   border-color: #3b82f6;
 }
@@ -390,3 +397,44 @@
   color: #ef4444 !important;
 }
 
+/* Auto scaling when scaleMode is set to 'auto' */
+.widget-wrapper.scale-auto .header-cell {
+  font-size: calc(3.4cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .anchor-top-left,
+.widget-wrapper.scale-auto .anchor-top-center,
+.widget-wrapper.scale-auto .anchor-top-right,
+.widget-wrapper.scale-auto .anchor-bottom-left,
+.widget-wrapper.scale-auto .anchor-bottom-center,
+.widget-wrapper.scale-auto .anchor-bottom-right {
+  font-size: calc(3.4cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+.widget-wrapper.scale-auto .anchor-center-left,
+.widget-wrapper.scale-auto .anchor-center-center,
+.widget-wrapper.scale-auto .anchor-center-right,
+.widget-wrapper.scale-auto app-raceday-lane-view .teammate-display-name {
+  font-size: calc(7.6cqh * var(--widget-scale-factor, 1)) !important;
+}
+
+/* Fixed scaling when scaleMode is set to 'fixed' */
+.widget-wrapper.scale-fixed .header-cell {
+  font-size: calc(1 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .anchor-top-left,
+.widget-wrapper.scale-fixed .anchor-top-center,
+.widget-wrapper.scale-fixed .anchor-top-right,
+.widget-wrapper.scale-fixed .anchor-bottom-left,
+.widget-wrapper.scale-fixed .anchor-bottom-center,
+.widget-wrapper.scale-fixed .anchor-bottom-right {
+  font-size: calc(1 * var(--widget-font-size)) !important;
+}
+
+.widget-wrapper.scale-fixed .anchor-center-left,
+.widget-wrapper.scale-fixed .anchor-center-center,
+.widget-wrapper.scale-fixed .anchor-center-right,
+.widget-wrapper.scale-fixed app-raceday-lane-view .teammate-display-name {
+  font-size: calc(2.25 * var(--widget-font-size)) !important;
+}

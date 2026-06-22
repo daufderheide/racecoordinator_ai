@@ -118,7 +118,8 @@
     <!-- Body (Dynamic rows) -->
     <div
       class="table-body"
-      [style.height.px]="parent().getTableBodyHeight()"
+      style="flex: 1"
+      [style.--num-lanes]="parent().track?.lanes?.length || 1"
       cdkDropList
       [cdkDropListData]="parent().sortedHeatDrivers"
       (cdkDropListDropped)="parent().onDrop($event)"
@@ -147,14 +148,11 @@
           [class.drag-over]="parent().draggingLane === hd.laneIndex"
           (mouseenter)="parent().onDragOver(hd.laneIndex)"
           [style.grid-template-columns]="parent().gridTemplateColumns"
-          [style.height.px]="parent().getRowHeight()"
+          [style.--lane-index]="parent().getDriverVisualPosition(hd)"
           [style.z-index]="
             parent().isDragging
               ? 1000
               : 100 - parent().getDriverVisualPosition(hd)
-          "
-          [style.top.px]="
-            parent().getDriverVisualPosition(hd) * (parent().getRowHeight() + 2)
           "
           [style.transform]="
             parent().highlightedDrivers.has(hd.objectId)
@@ -202,17 +200,17 @@
                   <div
                     [class]="parent().getAnchorClass(entry.anchor)"
                     [style.font-family]="
-                      entry.anchor === 'center-center'
+                      entry.anchor?.startsWith('center-')
                         ? widget()?.customSettings?.['dataFontFamily'] || null
                         : widget()?.customSettings?.['insetFontFamily'] || null
                     "
                     [style.font-size.px]="
-                      entry.anchor === 'center-center'
+                      entry.anchor?.startsWith('center-')
                         ? widget()?.customSettings?.['dataFontSize'] || null
                         : widget()?.customSettings?.['insetFontSize'] || null
                     "
                     [style.color]="
-                      (entry.anchor === 'center-center'
+                      (entry.anchor?.startsWith('center-')
                         ? widget()?.customSettings?.['dataTextColor']
                         : widget()?.customSettings?.['insetTextColor']) ||
                       parent().getLaneColor(hd, 'foreground_color')
@@ -236,7 +234,7 @@
                         <span
                           class="teammate-display-name"
                           [style.color]="
-                            (entry.anchor === 'center-center'
+                            (entry.anchor?.startsWith('center-')
                               ? widget()?.customSettings?.['dataTextColor']
                               : widget()?.customSettings?.['insetTextColor']) ||
                             parent().getLaneColor(hd, 'foreground_color')
@@ -305,7 +303,7 @@
                         class="drag-handle"
                         cdkDragHandle
                         [style.color]="
-                          (entry.anchor === 'center-center'
+                          (entry.anchor?.startsWith('center-')
                             ? widget()?.customSettings?.['dataTextColor']
                             : widget()?.customSettings?.['insetTextColor']) ||
                           parent().getLaneColor(hd, 'foreground_color')
