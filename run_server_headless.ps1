@@ -1,9 +1,32 @@
 $ErrorActionPreference = "Stop"
 
 # Setup Java Environment
-$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-21.0.10.7-hotspot"
-$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+if ([string]::IsNullOrEmpty($env:JAVA_HOME) -or -not (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
+    $CommonJavaPaths = @(
+        "C:\Program Files\Java\jdk*",
+        "C:\Program Files\Eclipse Adoptium\jdk*",
+        "C:\Program Files\Amazon Corretto\jdk*",
+        "C:\Program Files\Microsoft\jdk*"
+    )
+    $FoundJdk = Get-Item $CommonJavaPaths -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
+    
+    if ($FoundJdk) {
+        $env:JAVA_HOME = $FoundJdk.FullName
+        Write-Host "Dynamically set JAVA_HOME to $env:JAVA_HOME" -ForegroundColor Green
+    } else {
+        $JavaCmd = Get-Command java.exe -ErrorAction SilentlyContinue
+        if ($JavaCmd) {
+            $env:JAVA_HOME = (Get-Item $JavaCmd.Source).Directory.Parent.FullName
+            Write-Host "Dynamically set JAVA_HOME to $env:JAVA_HOME based on PATH" -ForegroundColor Green
+        } else {
+            Write-Warning "Could not dynamically find a JDK. Ensure JAVA_HOME is set."
+        }
+    }
+}
 
+if (-not [string]::IsNullOrEmpty($env:JAVA_HOME)) {
+    $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
+}
 $SERVER_DIR = "$PSScriptRoot\server"
 $BUILD_DIR = "target_generated"
 
