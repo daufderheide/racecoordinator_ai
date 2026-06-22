@@ -157,8 +157,12 @@
     <profile>
       <id>legacy</id>
       <properties>
+        <os.detected.arch>aarch_64</os.detected.arch>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <os.detected.bitness>64</os.detected.bitness>
+        <os.detected.name>osx</os.detected.name>
         <maven.compiler.source>1.8</maven.compiler.source>
+        <os.detected.classifier>osx-aarch_64</os.detected.classifier>
       </properties>
     </profile>
   </profiles>
