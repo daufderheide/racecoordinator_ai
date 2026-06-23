@@ -3820,4 +3820,38 @@ describe("DefaultRacedayComponent", () => {
       );
     });
   });
+
+  describe("Widget Drop Handling", () => {
+    it("should set scaleMode to 'auto' when dropping a new widget onto the canvas", () => {
+      component.layout = { widgets: [] } as any;
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "timer";
+      spyOn(component.layoutChanged, "emit");
+
+      const element = document.createElement("div");
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        currentTarget: element,
+        clientX: 100,
+        clientY: 200,
+      } as any;
+
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(1);
+      const droppedWidget = component.layout.widgets[0];
+      expect(droppedWidget.widgetType).toBe("timer");
+      expect(droppedWidget.scaleMode).toBe("auto");
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+  });
 });

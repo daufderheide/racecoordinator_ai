@@ -3586,6 +3586,7 @@ export class DefaultRacedayComponent
           ? 239
           : 300,
       zIndex: this.getNextZIndex(),
+      scaleMode: "auto",
     };
 
     if (this.draggedWidgetType === "image") {

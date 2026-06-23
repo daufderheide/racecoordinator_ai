@@ -48,6 +48,13 @@ test.describe("Leaderboard Inspector Visuals", () => {
     const inspectorFields = page.locator("app-leaderboard-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
+    // Switch to custom scaling mode to enable font size sliders
+    await page
+      .locator(".inspector-section")
+      .filter({ hasText: "Scaling Mode" })
+      .locator("select")
+      .selectOption("");
+
     const harness = new LeaderboardInspectorHarnessE2e(inspectorFields);
     // Interact with options to show they work and are displayed properly
     await harness.setDecimalPlaces(1);
@@ -121,6 +128,13 @@ test.describe("Leaderboard Inspector Visuals", () => {
     // Verify inspector contains leaderboard-specific title
     const inspectorFields = page.locator("app-leaderboard-inspector");
     await inspectorFields.waitFor({ state: "visible" });
+
+    // Switch to custom scaling mode to enable font size sliders
+    await page
+      .locator(".inspector-section")
+      .filter({ hasText: "Scaling Mode" })
+      .locator("select")
+      .selectOption("");
 
     // Verify subtitle fields are present in the inspector (since it's a group leaderboard)
     const subtitleTitle = inspectorFields.locator(

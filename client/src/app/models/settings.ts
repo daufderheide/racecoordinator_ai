@@ -149,6 +149,7 @@ export class Settings {
         width: 1920,
         height: 54,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-race-name",
@@ -158,6 +159,7 @@ export class Settings {
         width: 200,
         height: 18,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-heat-info",
@@ -167,6 +169,7 @@ export class Settings {
         width: 200,
         height: 18,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-track-name",
@@ -176,6 +179,7 @@ export class Settings {
         width: 200,
         height: 18,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-branding",
@@ -185,6 +189,7 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-qr",
@@ -194,6 +199,7 @@ export class Settings {
         width: 48,
         height: 48,
         zIndex: 110,
+        scaleMode: "auto",
       },
       {
         id: "widget-flag",
@@ -203,6 +209,7 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-timer",
@@ -212,6 +219,7 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-records",
@@ -221,6 +229,7 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-leaderboard",
@@ -230,6 +239,7 @@ export class Settings {
         width: 384,
         height: 239,
         zIndex: 100,
+        scaleMode: "auto",
       },
       {
         id: "widget-lane-view",
@@ -239,6 +249,7 @@ export class Settings {
         width: 1920,
         height: 751,
         zIndex: 100,
+        scaleMode: "auto",
       },
     ],
   };

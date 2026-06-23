@@ -267,7 +267,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           mutated = true;
         }
         if (widget.scaleMode === undefined || widget.scaleMode === null) {
-          widget.scaleMode = "";
+          widget.scaleMode = "auto";
           mutated = true;
         }
         if (widget.textColor === undefined || widget.textColor === null) {

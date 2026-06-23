@@ -2035,7 +2035,7 @@ describe("UIEditorComponent", () => {
 
       component.onWidgetSelected("widget-test-timer");
       expect(component.selectedWidget.fontFamily).toBe("");
-      expect(component.selectedWidget.scaleMode).toBe("");
+      expect(component.selectedWidget.scaleMode).toBe("auto");
       expect(component.selectedWidget.fontSize).toBe(24);
 
       component.selectedWidget.fontFamily = "Orbitron";

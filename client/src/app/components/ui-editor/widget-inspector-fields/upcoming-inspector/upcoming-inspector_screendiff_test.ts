@@ -77,6 +77,13 @@ test.describe("Upcoming Inspector Visuals", () => {
     const inspectorFields = page.locator("app-upcoming-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
+    // Switch to custom scaling mode to enable font size sliders
+    await page
+      .locator(".inspector-section")
+      .filter({ hasText: "Scaling Mode" })
+      .locator("select")
+      .selectOption("");
+
     const sliders = inspectorFields.locator("input[type='range']");
     const colorPickers = inspectorFields.locator("input[type='color']");
 

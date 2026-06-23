@@ -355,10 +355,10 @@
 
 /* Auto scaling for branding */
 .widget-wrapper.scale-auto .logo-text {
-  font-size: calc(35cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(min(18cqh, 7.5cqw) * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .branding-tagline {
-  font-size: calc(15cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(min(8cqh, 3.2cqw) * var(--widget-scale-factor, 1)) !important;
   margin-top: calc(3cqh * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .branding-panel {
