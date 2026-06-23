@@ -74,6 +74,10 @@ describe("RacedayLaneViewComponent", () => {
       getDriverVisualPosition: (hd: any) => hd.laneIndex,
       isDragging: false,
       onCellClick: jasmine.createSpy("onCellClick"),
+      isTeamDriverSwapActive: (hd: any, col: any) =>
+        col.propertyName === "driver.nickname",
+      isLapCountColumnClickable: (hd: any, col: any) =>
+        col.propertyName === "lapCount",
       isLapTimeColumn: (col: any) => col.propertyName === "lapCount",
       getLayoutEntries: (col: any) => {
         if (!layoutEntriesMap.has(col.propertyName)) {
@@ -150,5 +154,19 @@ describe("RacedayLaneViewComponent", () => {
   it("should trigger parent onCellClick on cell click", async () => {
     await harness.clickCell(0, 1);
     expect(mockParent.onCellClick).toHaveBeenCalled();
+  });
+
+  it("should apply clickable-team-cell class and driver tooltip to the name column cell", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const cells = rowEl.querySelectorAll(".body-cell");
+    expect(cells[0].classList.contains("clickable-team-cell")).toBeTrue();
+    expect(cells[0].getAttribute("title")).toBe("RD_TEAM_DRIVER_TOOLTIP");
+  });
+
+  it("should apply clickable-lap-cell class and lap tooltip to the lap column cell", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const cells = rowEl.querySelectorAll(".body-cell");
+    expect(cells[1].classList.contains("clickable-lap-cell")).toBeTrue();
+    expect(cells[1].getAttribute("title")).toBe("RD_LAP_COLUMN_TOOLTIP");
   });
 });

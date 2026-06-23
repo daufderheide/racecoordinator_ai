@@ -672,6 +672,8 @@
   "RD_LANE": "Baan",
   "RD_LOAD_ERROR": "Fout bij laden race",
   "RD_LOAD_SUCCESS": "Race succesvol geladen",
+  "RD_LAP_COLUMN_TOOLTIP": "Linksklikken: Secties bewerken\nShift + Linksklikken: 0,25 ronden toevoegen\nAlt + Linksklikken: 0,25 ronden aftrekken",
+  "RD_TEAM_DRIVER_TOOLTIP": "Klik om van teamlid te wisselen",
   "RD_MENU_ADD_LAP": "Ronde/Secties Toevoegen",
   "RD_MENU_CUSTOMIZE_UI": "Gebruikersinterface Aanpassen",
   "RD_MENU_DEFER": "Heat Uitstellen",

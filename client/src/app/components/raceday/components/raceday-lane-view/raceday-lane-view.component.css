@@ -278,7 +278,7 @@
 }
 
 .teammate-select {
-  background: transparent !important;
+  background-color: transparent !important;
   border: none;
   color: transparent !important;
   /* Hide text in the closed select */
@@ -287,7 +287,7 @@
   font-weight: bold;
   cursor: pointer;
   appearance: none;
-  padding-right: 30px;
+  padding-right: 44px;
   background-repeat: no-repeat;
   background-position: right center;
   width: 100%;
@@ -317,7 +317,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 30px;
+  padding-right: 44px;
   /* Space for the arrow */
   box-sizing: border-box;
 }
@@ -437,4 +437,16 @@
 .widget-wrapper.scale-fixed .anchor-center-right,
 .widget-wrapper.scale-fixed app-raceday-lane-view .teammate-display-name {
   font-size: calc(2.25 * var(--widget-font-size)) !important;
+}
+
+.body-cell.clickable-lap-cell,
+.body-cell.clickable-team-cell {
+  cursor: pointer;
+  transition: filter 0.2s ease, background-color 0.2s ease;
+}
+
+.body-cell.clickable-lap-cell:hover,
+.body-cell.clickable-team-cell:hover {
+  filter: brightness(1.2);
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }

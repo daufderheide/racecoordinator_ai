@@ -672,6 +672,8 @@
   "RD_LANE": "Lane",
   "RD_LOAD_ERROR": "Failed to load race",
   "RD_LOAD_SUCCESS": "Race loaded successfully",
+  "RD_LAP_COLUMN_TOOLTIP": "Left Click: Edit sections\nShift + Left Click: Add 0.25 laps\nAlt + Left Click: Remove 0.25 laps",
+  "RD_TEAM_DRIVER_TOOLTIP": "Click to change teammate",
   "RD_MENU_ADD_LAP": "Add Lap/Sections",
   "RD_MENU_CUSTOMIZE_UI": "Customize UI",
   "RD_MENU_DEFER": "Defer Heat",

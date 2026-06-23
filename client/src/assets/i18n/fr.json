@@ -672,6 +672,8 @@
   "RD_LANE": "Voie",
   "RD_LOAD_ERROR": "Échec du chargement de la course",
   "RD_LOAD_SUCCESS": "Course chargée avec succès",
+  "RD_LAP_COLUMN_TOOLTIP": "Clic gauche : Modifier les sections\nMaj + Clic gauche : Ajouter 0,25 tour\nAlt + Clic gauche : Retirer 0,25 tour",
+  "RD_TEAM_DRIVER_TOOLTIP": "Cliquez pour changer de coéquipier",
   "RD_MENU_ADD_LAP": "Ajouter Tour",
   "RD_MENU_CUSTOMIZE_UI": "Personnaliser l'interface",
   "RD_MENU_DEFER": "Reporter Manche",

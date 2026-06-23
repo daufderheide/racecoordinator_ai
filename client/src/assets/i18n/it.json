@@ -672,6 +672,8 @@
   "RD_LANE": "Corsia",
   "RD_LOAD_ERROR": "Impossibile caricare la gara",
   "RD_LOAD_SUCCESS": "Gara caricata con successo",
+  "RD_LAP_COLUMN_TOOLTIP": "Clic sinistro: Modifica sezioni\nShift + Clic sinistro: Aggiungi 0.25 giri\nAlt + Clic sinistro: Rimuovi 0.25 giri",
+  "RD_TEAM_DRIVER_TOOLTIP": "Clicca per cambiare compagno di squadra",
   "RD_MENU_ADD_LAP": "Aggiungi Giro",
   "RD_MENU_CUSTOMIZE_UI": "Personalizza Interfaccia",
   "RD_MENU_DEFER": "Rinvia Manche",

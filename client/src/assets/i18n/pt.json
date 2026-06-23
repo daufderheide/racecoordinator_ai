@@ -672,6 +672,8 @@
   "RD_LANE": "Raia",
   "RD_LOAD_ERROR": "Falha ao carregar a corrida",
   "RD_LOAD_SUCCESS": "Corrida carregada com sucesso",
+  "RD_LAP_COLUMN_TOOLTIP": "Clique esquerdo: Editar seções\nShift + Clique esquerdo: Adicionar 0.25 voltas\nAlt + Clique esquerdo: Remover 0.25 voltas",
+  "RD_TEAM_DRIVER_TOOLTIP": "Clique para mudar de companheiro de equipe",
   "RD_MENU_ADD_LAP": "Adicionar Volta",
   "RD_MENU_CUSTOMIZE_UI": "Personalizar Interface",
   "RD_MENU_DEFER": "Adiar Bateria",

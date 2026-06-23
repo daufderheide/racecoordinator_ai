@@ -166,6 +166,19 @@
           ) {
             <div
               class="body-cell"
+              [class.clickable-lap-cell]="
+                parent().isLapCountColumnClickable(hd, col)
+              "
+              [class.clickable-team-cell]="
+                parent().isTeamDriverSwapActive(hd, col)
+              "
+              [attr.title]="
+                parent().isLapCountColumnClickable(hd, col)
+                  ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+                  : parent().isTeamDriverSwapActive(hd, col)
+                    ? ('RD_TEAM_DRIVER_TOOLTIP' | translate)
+                    : null
+              "
               [style.background]="parent().getLaneColor(hd, 'background_color')"
               [style.border-left-color]="
                 parent().getLaneColor(hd, 'foreground_color')
@@ -243,7 +256,7 @@
                             (parent().authService.currentRole$ | async) ===
                             parent().Role.VIEWER
                               ? '0px'
-                              : '30px'
+                              : '44px'
                           "
                         >
                           {{

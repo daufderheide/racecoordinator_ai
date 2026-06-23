@@ -2905,7 +2905,7 @@ export class DefaultRacedayComponent
       return this.dropdownIconCache.get(color)!;
     }
     // Use an inline SVG with the correct fill color
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="${color}" d="M7 10l5 5 5-5z"/></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="${color}" d="M4 8l8 8 8-8z"/></svg>`;
     const url = `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
     this.dropdownIconCache.set(color, url);
     return url;
@@ -2914,6 +2914,38 @@ export class DefaultRacedayComponent
   isNameProperty(property: string): boolean {
     const baseKey = property.split("_")[0];
     return baseKey === "driver.name" || baseKey === "driver.nickname";
+  }
+
+  isTeamDriverSwapActive(hd: DriverHeatData, col: ColumnDefinition): boolean {
+    if (this.isUIEditorMode() || this.isLayoutCustomizing) {
+      return false;
+    }
+    if (!this.isNameProperty(col.propertyName || "")) {
+      return false;
+    }
+    if (!this.isTeam(hd) || this.isDriverSwapDisabled(hd)) {
+      return false;
+    }
+    if (this.authService.currentRole === Role.VIEWER) {
+      return false;
+    }
+    return true;
+  }
+
+  isLapCountColumnClickable(
+    hd: DriverHeatData,
+    col: ColumnDefinition,
+  ): boolean {
+    if (this.isUIEditorMode() || this.isLayoutCustomizing) {
+      return false;
+    }
+    if (col.propertyName !== "lapCount") {
+      return false;
+    }
+    if (this.heat && this.heat.started === false) {
+      return false;
+    }
+    return true;
   }
 
   isTeam(hd: DriverHeatData | any): boolean {

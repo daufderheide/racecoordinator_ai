@@ -672,6 +672,8 @@
   "RD_LANE": "Spur",
   "RD_LOAD_ERROR": "Fehler beim Laden des Rennens",
   "RD_LOAD_SUCCESS": "Rennen erfolgreich geladen",
+  "RD_LAP_COLUMN_TOOLTIP": "Linksklick: Abschnitte bearbeiten\nShift + Linksklick: 0,25 Runden hinzufügen\nAlt + Linksklick: 0,25 Runden abziehen",
+  "RD_TEAM_DRIVER_TOOLTIP": "Klicken, um Teammitglied zu wechseln",
   "RD_MENU_ADD_LAP": "Runde hinzufügen",
   "RD_MENU_CUSTOMIZE_UI": "Benutzeroberfläche anpassen",
   "RD_MENU_DEFER": "Heat verschieben",
