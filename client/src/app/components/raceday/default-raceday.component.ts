@@ -64,6 +64,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 import { ColumnDefinition } from "./column_definition";
 import { AnchorPoint } from "./column_definition";
+import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import {
@@ -89,6 +90,7 @@ import { createMockEditorData } from "./utils/raceday-mock.utils";
     RacedayAbsoluteWidgetComponent,
     DragDropModule,
     TranslatePipe,
+    AddLapSectionsDialogComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -122,6 +124,8 @@ export class DefaultRacedayComponent
   countdownLamps: any[] = [];
   countdownText: string = "";
   protected showModifyHeatsModal: boolean = false;
+  protected showAddLapSectionsDialog: boolean = false;
+  protected selectedHeatDriver: DriverHeatData | null = null;
   protected heats: Heat[] = [];
   countdownColor: string = "";
   countdownTotalLamps: number = 0;
@@ -271,6 +275,12 @@ export class DefaultRacedayComponent
       return "RD_AUTO_ADVANCING";
     }
     return "";
+  }
+
+  protected get isAutoSegments(): boolean {
+    return (
+      (this.race?.heat_scoring?.allowFinish as string) === "NoneAutoSegments"
+    );
   }
 
   protected get formattedTime(): string {
@@ -3193,7 +3203,30 @@ export class DefaultRacedayComponent
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
       } else if (event.shiftKey) {
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
+      } else {
+        this.selectedHeatDriver = hd;
+        this.showAddLapSectionsDialog = true;
+        this.cdr.markForCheck();
       }
+    }
+  }
+
+  protected onAddLapSectionsConfirm(newLaps: number) {
+    this.showAddLapSectionsDialog = false;
+    if (this.selectedHeatDriver) {
+      const hd = this.selectedHeatDriver;
+      this.dataService.updateUserLaps(hd.laneIndex, newLaps).subscribe(
+        (response) => {
+          if (response && response.adjustedLapCount !== undefined) {
+            hd.adjustedLapCount = response.adjustedLapCount;
+            hd.userLaps = newLaps;
+            this.cdr.markForCheck();
+          }
+        },
+        (error) => {
+          this.logger.error("Error updating user laps from dialog:", error);
+        },
+      );
     }
   }
 

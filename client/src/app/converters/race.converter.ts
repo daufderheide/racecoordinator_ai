@@ -84,6 +84,7 @@ export class RaceConverter {
               AllowFinish.AF_NONE,
               AllowFinish.AF_ALLOW,
               AllowFinish.AF_SINGLE_LAP,
+              AllowFinish.AF_NONE_AUTO_SEGMENTS,
             ];
             allowFinish = allowFinishes[allowFinish] || AllowFinish.AF_NONE;
           }
