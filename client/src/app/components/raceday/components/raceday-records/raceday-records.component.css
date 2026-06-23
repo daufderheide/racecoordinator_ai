@@ -8,13 +8,23 @@
   color: #eee;
 }
 
+.record-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.record-group.stripe,
+.record-header.stripe,
+.record-row.stripe {
+  background: #222;
+}
+
 .record-header {
   padding-left: 12px;
   font-size: 17px;
-}
-
-.record-header.stripe {
-  background: #222;
 }
 
 .record-header.no-stripe {
@@ -26,14 +36,11 @@
 }
 
 .record-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
   padding: 0 10px;
   margin-bottom: 5px;
-}
-
-.record-row.stripe {
-  background: #222;
 }
 
 .record-row.first-row {
@@ -42,4 +49,16 @@
 
 .record-val {
   color: #ff0;
+}
+
+.record-val.record-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.record-val.record-value {
+  white-space: nowrap;
+  text-align: right;
 }

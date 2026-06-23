@@ -253,25 +253,36 @@
 }
 
 /* Auto scaling for records */
-.widget-wrapper.scale-auto .record-panel,
+.widget-wrapper.scale-auto .record-panel {
+  display: grid !important;
+  grid-template-rows: repeat(4, 1fr) !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+.widget-wrapper.scale-auto .record-group {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
 .widget-wrapper.scale-auto .record-val {
-  font-size: calc(5.2cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(min(11cqh, 9cqw) * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .record-header {
-  font-size: calc(4.8cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(min(9cqh, 7.5cqw) * var(--widget-scale-factor, 1)) !important;
+  padding-left: calc(1.5cqw * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .record-header:not(:first-child) {
-  margin-top: calc(1.0cqh * var(--widget-scale-factor, 1)) !important;
+  margin-top: 0 !important;
 }
 .widget-wrapper.scale-auto .record-row {
-  margin-bottom: calc(1.0cqh * var(--widget-scale-factor, 1)) !important;
-  padding: 0 calc(2cqh * var(--widget-scale-factor, 1)) !important;
+  margin-bottom: 0 !important;
+  padding: 0 calc(1.5cqw * var(--widget-scale-factor, 1)) !important;
+  gap: calc(1.5cqw * var(--widget-scale-factor, 1)) !important;
 }
 .widget-wrapper.scale-auto .record-row.first-row {
-  margin-top: calc(0.4cqh * var(--widget-scale-factor, 1)) !important;
-}
-.widget-wrapper.scale-auto .record-header {
-  padding-left: calc(2.4cqh * var(--widget-scale-factor, 1)) !important;
+  margin-top: 0 !important;
 }
 
 /* Support custom background color on widgets */

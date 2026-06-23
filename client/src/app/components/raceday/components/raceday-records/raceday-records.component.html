@@ -1,128 +1,171 @@
 <div class="panel-card record-panel">
-  <div
-    class="record-header stripe"
-    [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
-    [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
-    [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
-  >
-    {{ "RD_RECORD_RACE_LAP" | translate }}
+  <div class="record-group stripe">
+    <div
+      class="record-header stripe"
+      [style.font-family]="
+        widget()?.customSettings?.['headerFontFamily'] || null
+      "
+      [style.font-size.px]="
+        widget()?.customSettings?.['headerFontSize'] || null
+      "
+      [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
+    >
+      {{ "RD_RECORD_RACE_LAP" | translate }}
+    </div>
+    <div class="record-row stripe first-row">
+      <span
+        class="record-val record-name"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{ raceRecordLapNickname() || "---" }}</span
+      >
+      <span
+        class="record-val record-value"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{
+          raceRecordLapTime() > 0 && raceRecordLapTime() < 1000000
+            ? (raceRecordLapTime() | number: "1.3-3")
+            : "--.---"
+        }}</span
+      >
+    </div>
   </div>
-  <div class="record-row stripe first-row">
-    <span
-      class="record-val"
+
+  <div class="record-group no-stripe">
+    <div
+      class="record-header no-stripe"
       [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
+        widget()?.customSettings?.['headerFontFamily'] || null
       "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{ raceRecordLapNickname() || "---" }}</span
-    >
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
+      [style.font-size.px]="
+        widget()?.customSettings?.['headerFontSize'] || null
       "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{
-        raceRecordLapTime() > 0 && raceRecordLapTime() < 1000000
-          ? (raceRecordLapTime() | number: "1.3-3")
-          : "--.---"
-      }}</span
+      [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
+      {{ "RD_RECORD_RACE_SCORE" | translate }}
+    </div>
+    <div class="record-row no-stripe">
+      <span
+        class="record-val record-name"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{ raceRecordScoreNickname() || "---" }}</span
+      >
+      <span
+        class="record-val record-value"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{
+          raceRecordScore() > 0 ? (raceRecordScore() | number: "1.3-3") : "--"
+        }}</span
+      >
+    </div>
   </div>
-  <div
-    class="record-header no-stripe"
-    [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
-    [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
-    [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
-  >
-    {{ "RD_RECORD_RACE_SCORE" | translate }}
+
+  <div class="record-group stripe">
+    <div
+      class="record-header stripe"
+      [style.font-family]="
+        widget()?.customSettings?.['headerFontFamily'] || null
+      "
+      [style.font-size.px]="
+        widget()?.customSettings?.['headerFontSize'] || null
+      "
+      [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
+    >
+      {{ "RD_RECORD_CURRENT_RACE_BEST" | translate }}
+    </div>
+    <div class="record-row stripe">
+      <span
+        class="record-val record-name"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{ currentRaceBestNickname() || "---" }}</span
+      >
+      <span
+        class="record-val record-value"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{
+          currentRaceBestTime() > 0 && currentRaceBestTime() < 1000000
+            ? (currentRaceBestTime() | number: "1.3-3")
+            : "--.---"
+        }}</span
+      >
+    </div>
   </div>
-  <div class="record-row no-stripe">
-    <span
-      class="record-val"
+
+  <div class="record-group no-stripe">
+    <div
+      class="record-header no-stripe"
       [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
+        widget()?.customSettings?.['headerFontFamily'] || null
       "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{ raceRecordScoreNickname() || "---" }}</span
-    >
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
+      [style.font-size.px]="
+        widget()?.customSettings?.['headerFontSize'] || null
       "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{
-        raceRecordScore() > 0 ? (raceRecordScore() | number: "1.3-3") : "--"
-      }}</span
+      [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
     >
-  </div>
-  <div
-    class="record-header stripe"
-    [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
-    [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
-    [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
-  >
-    {{ "RD_RECORD_CURRENT_RACE_BEST" | translate }}
-  </div>
-  <div class="record-row stripe">
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
-      "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{ currentRaceBestNickname() || "---" }}</span
-    >
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
-      "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{
-        currentRaceBestTime() > 0 && currentRaceBestTime() < 1000000
-          ? (currentRaceBestTime() | number: "1.3-3")
-          : "--.---"
-      }}</span
-    >
-  </div>
-  <div
-    class="record-header no-stripe"
-    [style.font-family]="widget()?.customSettings?.['headerFontFamily'] || null"
-    [style.font-size.px]="widget()?.customSettings?.['headerFontSize'] || null"
-    [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
-  >
-    {{ "RD_RECORD_HEAT_BEST" | translate }}
-  </div>
-  <div class="record-row no-stripe">
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
-      "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{ heatBestNickname() || "---" }}</span
-    >
-    <span
-      class="record-val"
-      [style.font-family]="
-        widget()?.customSettings?.['valueFontFamily'] || null
-      "
-      [style.font-size.px]="widget()?.customSettings?.['valueFontSize'] || null"
-      [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{
-        heatBestTime() > 0 && heatBestTime() < 1000000
-          ? (heatBestTime() | number: "1.3-3")
-          : "--.---"
-      }}</span
-    >
+      {{ "RD_RECORD_HEAT_BEST" | translate }}
+    </div>
+    <div class="record-row no-stripe">
+      <span
+        class="record-val record-name"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{ heatBestNickname() || "---" }}</span
+      >
+      <span
+        class="record-val record-value"
+        [style.font-family]="
+          widget()?.customSettings?.['valueFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['valueFontSize'] || null
+        "
+        [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+        >{{
+          heatBestTime() > 0 && heatBestTime() < 1000000
+            ? (heatBestTime() | number: "1.3-3")
+            : "--.---"
+        }}</span
+      >
+    </div>
   </div>
 </div>

@@ -143,4 +143,21 @@ describe("RacedayRecordsComponent", () => {
     expect(rows[2].classList.contains("stripe")).toBeTrue();
     expect(rows[3].classList.contains("no-stripe")).toBeTrue();
   });
+
+  it("should render record-group containers and separate name and value classes for alignment", () => {
+    const groups = fixture.nativeElement.querySelectorAll(".record-group");
+    expect(groups.length).toBe(4);
+    expect(groups[0].classList.contains("stripe")).toBeTrue();
+    expect(groups[1].classList.contains("no-stripe")).toBeTrue();
+
+    const names = fixture.nativeElement.querySelectorAll(
+      ".record-row .record-name",
+    );
+    expect(names.length).toBe(4);
+
+    const values = fixture.nativeElement.querySelectorAll(
+      ".record-row .record-value",
+    );
+    expect(values.length).toBe(4);
+  });
 });
