@@ -230,21 +230,23 @@
 <app-login-dialog [visible]="showLoginModal" (close)="showLoginModal = false">
 </app-login-dialog>
 
-<app-add-lap-sections-dialog
-  [visible]="showAddLapSectionsDialog"
-  [driverHeatData]="selectedHeatDriver"
-  [numTrackSections]="track.num_track_sections || 100"
-  [laneBg]="
-    selectedHeatDriver
-      ? getLaneColor(selectedHeatDriver, 'background_color')
-      : ''
-  "
-  [laneFg]="
-    selectedHeatDriver
-      ? getLaneColor(selectedHeatDriver, 'foreground_color')
-      : ''
-  "
-  [isAutoSegments]="isAutoSegments"
-  (confirm)="onAddLapSectionsConfirm($event)"
-  (cancel)="showAddLapSectionsDialog = false"
-></app-add-lap-sections-dialog>
+@if (showAddLapSectionsDialog && track) {
+  <app-add-lap-sections-dialog
+    [visible]="showAddLapSectionsDialog"
+    [driverHeatData]="selectedHeatDriver"
+    [numTrackSections]="track.num_track_sections"
+    [laneBg]="
+      selectedHeatDriver
+        ? getLaneColor(selectedHeatDriver, 'background_color')
+        : ''
+    "
+    [laneFg]="
+      selectedHeatDriver
+        ? getLaneColor(selectedHeatDriver, 'foreground_color')
+        : ''
+    "
+    [isAutoSegments]="isAutoSegments"
+    (confirm)="onAddLapSectionsConfirm($event)"
+    (cancel)="showAddLapSectionsDialog = false"
+  ></app-add-lap-sections-dialog>
+}

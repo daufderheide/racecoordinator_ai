@@ -104,7 +104,7 @@ export class DefaultRacedayComponent
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
-  protected track!: Track;
+  protected track?: Track;
   protected race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;
@@ -2729,7 +2729,7 @@ export class DefaultRacedayComponent
     const race = this.raceService.getRace();
     const capacity =
       (typeof this.track?.hasDigitalFuel === "function" &&
-      this.track.hasDigitalFuel()
+      this.track?.hasDigitalFuel()
         ? race?.digital_fuel_options?.capacity
         : race?.fuel_options?.capacity) || 100;
 
