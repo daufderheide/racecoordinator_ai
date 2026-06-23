@@ -1113,7 +1113,10 @@ export class DefaultRacedayComponent
       this.viewerRaceEndedHandler.stopListening();
     }
     this.isDestroyed = true;
-    this.raceConnectionService.disconnect();
+    const isNavigatingToSetup = (this.router.url || "").includes(
+      "raceday-setup",
+    );
+    this.raceConnectionService.disconnect(isNavigatingToSetup);
 
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.subscriptions = [];

@@ -132,24 +132,29 @@ export class RaceConnectionService implements OnDestroy {
     }
   }
 
-  disconnect() {
+  disconnect(force: boolean = false) {
     this.connectionCount--;
     this.logger.debug(
       `RaceConnectionService: Connection count decremented to ${this.connectionCount}`,
     );
-    if (this.connectionCount <= 0) {
+    if (this.connectionCount <= 0 || force) {
       this.connectionCount = 0;
-      // Delay actual disconnection to handle fast component transitions (e.g. Raceday to Manager)
       if (this.disconnectedTimeout) clearTimeout(this.disconnectedTimeout);
-      this.disconnectedTimeout = setTimeout(() => {
-        if (this.connectionCount === 0) {
-          this.logger.debug(
-            "RaceConnectionService: Disconnecting after grace period",
-          );
-          this.stopConnection();
-        }
-        this.disconnectedTimeout = null;
-      }, 2000);
+
+      if (force) {
+        this.logger.debug("RaceConnectionService: Forcing disconnection");
+        this.stopConnection();
+      } else {
+        this.disconnectedTimeout = setTimeout(() => {
+          if (this.connectionCount === 0) {
+            this.logger.debug(
+              "RaceConnectionService: Disconnecting after grace period",
+            );
+            this.stopConnection();
+          }
+          this.disconnectedTimeout = null;
+        }, 2000);
+      }
     }
   }
 

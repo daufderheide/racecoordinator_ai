@@ -251,10 +251,17 @@ describe("DefaultRacedayComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should disconnect from race on destroy", () => {
+  it("should disconnect from race on destroy, passing force=false when not navigating to raceday-setup", () => {
     fixture.detectChanges();
     fixture.destroy();
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalled();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(false);
+  });
+
+  it("should pass force=true to disconnect when navigating to raceday-setup", () => {
+    (mockRouter as any).url = "/raceday-setup";
+    fixture.detectChanges();
+    fixture.destroy();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
   });
 
   it("should update countdown timers when raceTime$ emits", () => {

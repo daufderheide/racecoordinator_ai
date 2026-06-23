@@ -120,6 +120,17 @@ describe("RaceConnectionService", () => {
       tick(2000); // Wait for delayed disconnection
       expect((service as any).stopConnection).toHaveBeenCalledTimes(1);
     }));
+
+    it("should bypass timeout and call stopConnection immediately if force=true", fakeAsync(() => {
+      spyOn<any>(service, "stopConnection").and.callThrough();
+
+      service.connect(); // Count = 1
+
+      service.disconnect(true);
+
+      // Should be called immediately without ticking
+      expect((service as any).stopConnection).toHaveBeenCalledTimes(1);
+    }));
   });
 
   describe("Watchdog and Alerts", () => {
