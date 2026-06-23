@@ -115,6 +115,11 @@ public class ClientCommandTaskHandler {
     app.post(
         "/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps, Role.DIRECTOR);
     app.post(
+        "/api/races/heats/{heatNumber}/drivers/{lane}/user-laps",
+        this::updateHeatUserLaps,
+        Role.DIRECTOR);
+    app.post("/api/races/heats/user-laps/batch", this::updateBatchUserLaps, Role.DIRECTOR);
+    app.post(
         "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
         this::changeLane,
         Role.DIRECTOR);
@@ -1018,7 +1023,18 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      Heat currentHeat = race.getCurrentHeat();
+      if (currentHeat == null) {
+        ctx.status(404).result("No current heat found");
+        return;
+      }
+
+      if (!currentHeat.isStarted()) {
+        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
+        return;
+      }
+
+      List<DriverHeatData> drivers = currentHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
         if (body.containsKey("userLaps")) {
@@ -1026,7 +1042,7 @@ public class ClientCommandTaskHandler {
           dhd.setUserLaps(value);
 
           // Recalculate standings because laps changed
-          race.getCurrentHeat().initializeStandings(race.getRaceModel().getHeatScoring());
+          currentHeat.initializeStandings(race.getRaceModel().getHeatScoring());
           race.updateAndBroadcastOverallStandings();
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
@@ -1039,6 +1055,126 @@ public class ClientCommandTaskHandler {
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
       }
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void updateHeatUserLaps(Context ctx) {
+    try {
+      int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      Heat targetHeat = null;
+      for (Heat h : race.getHeats()) {
+        if (h.getHeatNumber() == heatNumber) {
+          targetHeat = h;
+          break;
+        }
+      }
+
+      if (targetHeat == null) {
+        ctx.status(404).result("Heat not found: " + heatNumber);
+        return;
+      }
+
+      if (!targetHeat.isStarted()) {
+        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
+        return;
+      }
+
+      List<DriverHeatData> drivers = targetHeat.getDrivers();
+      if (lane >= 0 && lane < drivers.size()) {
+        DriverHeatData dhd = drivers.get(lane);
+        if (body.containsKey("userLaps")) {
+          double value = ((Number) body.get("userLaps")).doubleValue();
+          dhd.setUserLaps(value);
+
+          // Recalculate standings because laps changed
+          targetHeat.initializeStandings(race.getRaceModel().getHeatScoring());
+          race.updateAndBroadcastOverallStandings();
+          race.updateScoreRecords();
+          race.broadcast(race.createSnapshot());
+
+          ctx.status(200)
+              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
+        } else {
+          ctx.status(400).result("Missing userLaps in body");
+        }
+      } else {
+        ctx.status(400).result("Invalid lane index: " + lane);
+      }
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private void updateBatchUserLaps(Context ctx) {
+    try {
+      List<Map<String, Object>> updates = ctx.bodyAsClass(List.class);
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      Set<Heat> heatsToRecalculate = new java.util.HashSet<>();
+
+      for (Map<String, Object> update : updates) {
+        int heatNumber = ((Number) update.get("heatNumber")).intValue();
+        int lane = ((Number) update.get("laneIndex")).intValue();
+        double userLaps = ((Number) update.get("userLaps")).doubleValue();
+
+        Heat targetHeat = null;
+        for (Heat h : race.getHeats()) {
+          if (h.getHeatNumber() == heatNumber) {
+            targetHeat = h;
+            break;
+          }
+        }
+
+        if (targetHeat == null) {
+          ctx.status(404).result("Heat not found: " + heatNumber);
+          return;
+        }
+
+        if (!targetHeat.isStarted()) {
+          ctx.status(400)
+              .result("Cannot add lap sections to a heat that has not run yet: " + heatNumber);
+          return;
+        }
+
+        List<DriverHeatData> drivers = targetHeat.getDrivers();
+        if (lane >= 0 && lane < drivers.size()) {
+          DriverHeatData dhd = drivers.get(lane);
+          dhd.setUserLaps(userLaps);
+          heatsToRecalculate.add(targetHeat);
+        } else {
+          ctx.status(400).result("Invalid lane index: " + lane + " for heat " + heatNumber);
+          return;
+        }
+      }
+
+      // Recalculate standings for each modified heat
+      for (Heat heat : heatsToRecalculate) {
+        heat.initializeStandings(race.getRaceModel().getHeatScoring());
+      }
+      race.updateAndBroadcastOverallStandings();
+      race.updateScoreRecords();
+      race.broadcast(race.createSnapshot());
+
+      ctx.status(200).result("OK");
     } catch (Exception e) {
       ctx.status(500).result("Error: " + e.getMessage());
     }

@@ -635,6 +635,96 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showSkipRaceConfirmation).toBeFalse();
     });
 
+    it("should show add lap sections dialog in menu mode when ADD_LAP selected", () => {
+      fixture.detectChanges();
+      expect(component["showAddLapSectionsDialog"]).toBeFalse();
+      expect(component["isMenuModeForAddLap"]).toBeFalse();
+
+      component.onMenuSelect("ADD_LAP");
+
+      expect(component["showAddLapSectionsDialog"]).toBeTrue();
+      expect(component["isMenuModeForAddLap"]).toBeTrue();
+      expect(component["selectedHeatDriver"]).toBeNull();
+    });
+
+    it("should call updateHeatUserLaps on confirm in menu mode", () => {
+      fixture.detectChanges();
+      component["isMenuModeForAddLap"] = true;
+      component["heats"] = [
+        {
+          heatNumber: 2,
+          heatDrivers: [{ laneIndex: 0, userLaps: 0, adjustedLapCount: 0 }],
+        },
+      ] as any[];
+
+      mockDataService.updateHeatUserLaps.and.returnValue(
+        of({ adjustedLapCount: 1.5 }),
+      );
+
+      component["onAddLapSectionsConfirm"]({
+        heatNumber: 2,
+        laneIndex: 0,
+        userLaps: 1.5,
+      });
+
+      expect(mockDataService.updateHeatUserLaps).toHaveBeenCalledWith(
+        2,
+        0,
+        1.5,
+      );
+      expect(component["heats"][0].heatDrivers[0].adjustedLapCount).toBe(1.5);
+      expect(component["heats"][0].heatDrivers[0].userLaps).toBe(1.5);
+    });
+
+    it("should call updateBatchUserLaps on batch confirm in menu mode", () => {
+      fixture.detectChanges();
+      component["isMenuModeForAddLap"] = true;
+      component["heats"] = [
+        {
+          heatNumber: 2,
+          heatDrivers: [{ laneIndex: 0, userLaps: 0, adjustedLapCount: 0 }],
+        },
+      ] as any[];
+
+      mockDataService.updateBatchUserLaps.and.returnValue(of(true));
+
+      const batchEvent = {
+        isBatch: true,
+        updates: [{ heatNumber: 2, laneIndex: 0, userLaps: 1.5 }],
+      };
+      component["onAddLapSectionsConfirm"](batchEvent);
+
+      expect(mockDataService.updateBatchUserLaps).toHaveBeenCalledWith(
+        batchEvent.updates,
+      );
+      expect(component["heats"][0].heatDrivers[0].userLaps).toBe(1.5);
+    });
+
+    it("should block opening add-lap dialog or shortcut edits on unstarted heats", () => {
+      fixture.detectChanges();
+      const mockHd = { laneIndex: 1, userLaps: 1.0 } as any;
+      component["heat"] = { started: false } as any; // Unstarted heat
+
+      mockDataService.updateUserLaps.calls.reset();
+      component["showAddLapSectionsDialog"] = false;
+
+      // Try click
+      component.onCellClick(
+        mockHd,
+        { propertyName: "lapCount" } as any,
+        new MouseEvent("click"),
+      );
+      expect(component["showAddLapSectionsDialog"]).toBeFalse();
+
+      // Try ctrl+click shortcut
+      component.onCellClick(
+        mockHd,
+        { propertyName: "lapCount" } as any,
+        new MouseEvent("click", { ctrlKey: true }),
+      );
+      expect(mockDataService.updateUserLaps).not.toHaveBeenCalled();
+    });
+
     it("should show restart heat confirmation dialog when RESTART_HEAT selected", () => {
       fixture.detectChanges();
       expect(component.showRestartHeatConfirmation).toBeFalse();

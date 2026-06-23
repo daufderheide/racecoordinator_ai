@@ -72,6 +72,8 @@ export function createRacedayMocks(overrides: any = {}) {
     "changeLane",
     "getAssetUrl",
     "updateUserLaps",
+    "updateHeatUserLaps",
+    "updateBatchUserLaps",
     "getServerIp",
     "startRace",
     "pauseRace",
@@ -86,6 +88,10 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
   mockDataService.getThemes.and.returnValue(of([]));
   mockDataService.startRace.and.returnValue(of(true));
+  mockDataService.updateHeatUserLaps.and.returnValue(
+    of({ adjustedLapCount: 1.0 }),
+  );
+  mockDataService.updateBatchUserLaps.and.returnValue(of(true));
   mockDataService.pauseRace.and.returnValue(of(true));
   mockDataService.nextHeat.and.returnValue(of(true));
   mockDataService.restartHeat.and.returnValue(of(true));

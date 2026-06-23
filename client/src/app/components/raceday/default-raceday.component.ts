@@ -130,6 +130,7 @@ export class DefaultRacedayComponent
   countdownText: string = "";
   protected showModifyHeatsModal: boolean = false;
   protected showAddLapSectionsDialog: boolean = false;
+  protected isMenuModeForAddLap: boolean = false;
   protected selectedHeatDriver: DriverHeatData | null = null;
   protected heats: Heat[] = [];
   countdownColor: string = "";
@@ -1863,6 +1864,11 @@ export class DefaultRacedayComponent
     } else if (action === "MODIFY") {
       const returnUrl = this.router.url.split("?")[0];
       this.router.navigate(["/modify-heats"], { queryParams: { returnUrl } });
+    } else if (action === "ADD_LAP") {
+      this.selectedHeatDriver = null;
+      this.isMenuModeForAddLap = true;
+      this.showAddLapSectionsDialog = true;
+      this.cdr.markForCheck();
     }
   }
 
@@ -2517,7 +2523,7 @@ export class DefaultRacedayComponent
   }
 
   public get isAddLapDisabled(): boolean {
-    return true;
+    return this.authService.currentRole === Role.VIEWER;
   }
 
   public get isModifyDisabled(): boolean {
@@ -3216,34 +3222,89 @@ export class DefaultRacedayComponent
 
   onCellClick(hd: DriverHeatData, col: ColumnDefinition, event: MouseEvent) {
     if (col.propertyName === "lapCount") {
+      if (this.heat && this.heat.started === false) {
+        return;
+      }
       if (event.ctrlKey || event.metaKey) {
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
       } else if (event.shiftKey) {
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
         this.selectedHeatDriver = hd;
+        this.isMenuModeForAddLap = false;
         this.showAddLapSectionsDialog = true;
         this.cdr.markForCheck();
       }
     }
   }
 
-  protected onAddLapSectionsConfirm(newLaps: number) {
+  protected onAddLapSectionsConfirm(event: any) {
     this.showAddLapSectionsDialog = false;
-    if (this.selectedHeatDriver) {
-      const hd = this.selectedHeatDriver;
-      this.dataService.updateUserLaps(hd.laneIndex, newLaps).subscribe(
-        (response) => {
-          if (response && response.adjustedLapCount !== undefined) {
-            hd.adjustedLapCount = response.adjustedLapCount;
-            hd.userLaps = newLaps;
-            this.cdr.markForCheck();
+    if (typeof event === "number") {
+      if (this.selectedHeatDriver) {
+        const hd = this.selectedHeatDriver;
+        this.dataService.updateUserLaps(hd.laneIndex, event).subscribe(
+          (response) => {
+            if (response && response.adjustedLapCount !== undefined) {
+              hd.adjustedLapCount = response.adjustedLapCount;
+              hd.userLaps = event;
+              this.cdr.markForCheck();
+            }
+          },
+          (error) => {
+            this.logger.error("Error updating user laps from dialog:", error);
+          },
+        );
+      }
+    } else if (event && event.isBatch) {
+      const updates = event.updates;
+      this.dataService.updateBatchUserLaps(updates).subscribe(
+        () => {
+          for (const u of updates) {
+            const targetHeat = this.heats.find(
+              (h) => h.heatNumber === u.heatNumber,
+            );
+            if (targetHeat && targetHeat.heatDrivers) {
+              const hd = targetHeat.heatDrivers[u.laneIndex];
+              if (hd) {
+                hd.userLaps = u.userLaps;
+                this.cdr.markForCheck();
+              }
+            }
           }
         },
         (error) => {
-          this.logger.error("Error updating user laps from dialog:", error);
+          this.logger.error(
+            "Error updating batch user laps from dialog:",
+            error,
+          );
         },
       );
+    } else {
+      const { heatNumber, laneIndex, userLaps } = event;
+      this.dataService
+        .updateHeatUserLaps(heatNumber, laneIndex, userLaps)
+        .subscribe(
+          (response) => {
+            const targetHeat = this.heats.find(
+              (h) => h.heatNumber === heatNumber,
+            );
+            if (targetHeat && targetHeat.heatDrivers) {
+              const hd = targetHeat.heatDrivers[laneIndex];
+              if (hd && response && response.adjustedLapCount !== undefined) {
+                hd.adjustedLapCount = response.adjustedLapCount;
+                hd.userLaps = userLaps;
+                this.cdr.markForCheck();
+              }
+            }
+          },
+          (error) => {
+            this.logger.error(
+              "Error updating heat user laps from dialog:",
+              error,
+            );
+          },
+        );
     }
   }
 

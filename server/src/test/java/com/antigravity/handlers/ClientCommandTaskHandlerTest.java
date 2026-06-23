@@ -940,6 +940,7 @@ public class ClientCommandTaskHandlerTest {
 
     when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
     when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
+    when(mockHeat.isStarted()).thenReturn(true);
     when(mockDhd.getAdjustedLapCount()).thenReturn(5.25);
     when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
 
@@ -959,6 +960,50 @@ public class ClientCommandTaskHandlerTest {
     verify(mockDhd).setUserLaps(1.25);
     verify(mockHeat).initializeStandings(any());
     verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(res).setStatus(200);
+  }
+
+  @Test
+  public void testUpdateHeatUserLaps_Success() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
+    when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat));
+    when(mockHeat.getHeatNumber()).thenReturn(2);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
+    when(mockHeat.isStarted()).thenReturn(true);
+    when(mockDhd.getAdjustedLapCount()).thenReturn(5.25);
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("heatNumber", "2");
+    pathParams.put("lane", "0");
+    doReturn(pathParams).when(ctx).pathParamMap();
+    doReturn("2").when(ctx).pathParam("heatNumber");
+    doReturn("0").when(ctx).pathParam("lane");
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("userLaps", 1.25);
+    doReturn(body).when(ctx).bodyAsClass(HashMap.class);
+
+    java.lang.reflect.Method m =
+        handler.getClass().getDeclaredMethod("updateHeatUserLaps", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(mockDhd).setUserLaps(1.25);
+    verify(mockHeat).initializeStandings(any());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(mockRace).updateScoreRecords();
+    verify(mockRace).broadcast(any());
     verify(res).setStatus(200);
   }
 
@@ -1043,6 +1088,149 @@ public class ClientCommandTaskHandlerTest {
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(mockRace).broadcast(any());
     verify(res).setStatus(200);
+  }
+
+  @Test
+  public void testUpdateUserLaps_Fail_NotStarted() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.isStarted()).thenReturn(false);
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = new Context(req, res, new HashMap<>());
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("lane", "0");
+    Map<String, Object> body = new HashMap<>();
+    body.put("userLaps", 1.25);
+
+    handler.updateUserLaps(ctx, pathParams, body);
+
+    verify(res).setStatus(400);
+  }
+
+  @Test
+  public void testUpdateHeatUserLaps_Fail_NotStarted() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat));
+    when(mockHeat.getHeatNumber()).thenReturn(2);
+    when(mockHeat.isStarted()).thenReturn(false);
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("heatNumber", "2");
+    pathParams.put("lane", "0");
+    doReturn(pathParams).when(ctx).pathParamMap();
+    doReturn("2").when(ctx).pathParam("heatNumber");
+    doReturn("0").when(ctx).pathParam("lane");
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("userLaps", 1.25);
+    doReturn(body).when(ctx).bodyAsClass(HashMap.class);
+
+    java.lang.reflect.Method m =
+        handler.getClass().getDeclaredMethod("updateHeatUserLaps", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(res).setStatus(400);
+  }
+
+  @Test
+  public void testUpdateBatchUserLaps_Success() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat1 = mock(com.antigravity.race.Heat.class);
+    com.antigravity.race.Heat mockHeat2 = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd1 = mock(DriverHeatData.class);
+    DriverHeatData mockDhd2 = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
+    when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat1, mockHeat2));
+    when(mockHeat1.getHeatNumber()).thenReturn(1);
+    when(mockHeat1.getDrivers()).thenReturn(Arrays.asList(mockDhd1));
+    when(mockHeat1.isStarted()).thenReturn(true);
+
+    when(mockHeat2.getHeatNumber()).thenReturn(2);
+    when(mockHeat2.getDrivers()).thenReturn(Arrays.asList(mockDhd2));
+    when(mockHeat2.isStarted()).thenReturn(true);
+
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    List<Map<String, Object>> updates = new ArrayList<>();
+    Map<String, Object> u1 = new HashMap<>();
+    u1.put("heatNumber", 1);
+    u1.put("laneIndex", 0);
+    u1.put("userLaps", 1.5);
+    updates.add(u1);
+
+    Map<String, Object> u2 = new HashMap<>();
+    u2.put("heatNumber", 2);
+    u2.put("laneIndex", 0);
+    u2.put("userLaps", 2.25);
+    updates.add(u2);
+
+    doReturn(updates).when(ctx).bodyAsClass(List.class);
+
+    java.lang.reflect.Method m =
+        handler.getClass().getDeclaredMethod("updateBatchUserLaps", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(mockDhd1).setUserLaps(1.5);
+    verify(mockDhd2).setUserLaps(2.25);
+    verify(mockHeat1).initializeStandings(any());
+    verify(mockHeat2).initializeStandings(any());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(mockRace).updateScoreRecords();
+    verify(mockRace).broadcast(any());
+    verify(res).setStatus(200);
+  }
+
+  @Test
+  public void testUpdateBatchUserLaps_Fail_NotStarted() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.race.Heat mockHeat1 = mock(com.antigravity.race.Heat.class);
+    when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat1));
+    when(mockHeat1.getHeatNumber()).thenReturn(1);
+    when(mockHeat1.isStarted()).thenReturn(false); // Unstarted
+
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    List<Map<String, Object>> updates = new ArrayList<>();
+    Map<String, Object> u1 = new HashMap<>();
+    u1.put("heatNumber", 1);
+    u1.put("laneIndex", 0);
+    u1.put("userLaps", 1.5);
+    updates.add(u1);
+
+    doReturn(updates).when(ctx).bodyAsClass(List.class);
+
+    java.lang.reflect.Method m =
+        handler.getClass().getDeclaredMethod("updateBatchUserLaps", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(res).setStatus(400);
   }
 
   private void deleteDirectory(File directory) {

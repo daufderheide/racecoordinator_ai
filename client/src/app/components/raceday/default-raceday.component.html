@@ -234,7 +234,7 @@
   <app-add-lap-sections-dialog
     [visible]="showAddLapSectionsDialog"
     [driverHeatData]="selectedHeatDriver"
-    [numTrackSections]="track.num_track_sections"
+    [numTrackSections]="track ? track.num_track_sections : 100"
     [laneBg]="
       selectedHeatDriver
         ? getLaneColor(selectedHeatDriver, 'background_color')
@@ -246,6 +246,10 @@
         : ''
     "
     [isAutoSegments]="isAutoSegments"
+    [isMenuMode]="isMenuModeForAddLap"
+    [heats]="heats"
+    [track]="track"
+    [currentHeatNumber]="heat?.heatNumber ?? 0"
     (confirm)="onAddLapSectionsConfirm($event)"
     (cancel)="showAddLapSectionsDialog = false"
   ></app-add-lap-sections-dialog>

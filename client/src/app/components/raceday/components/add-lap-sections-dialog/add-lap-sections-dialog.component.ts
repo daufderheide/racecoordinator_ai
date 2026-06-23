@@ -6,6 +6,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -22,89 +23,157 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
             {{ "RD_ADD_LAP_SECTIONS_TITLE" | translate }}
           </h2>
 
-          <div class="driver-info-panel">
-            <div class="info-row">
-              <span class="info-label"
-                >{{ "RD_ADD_LAP_SECTIONS_LANE" | translate }}:</span
-              >
-              <span
-                class="info-value lane-pill"
-                [style.background-color]="laneBg()"
-                [style.color]="laneFg()"
-              >
-                {{ (driverHeatData()?.laneIndex ?? 0) + 1 }}
-              </span>
+          @if (isMenuMode() && activeHeats().length === 0) {
+            <div
+              class="no-heats-panel"
+              style="padding: 2rem 1rem; text-align: center; color: #94a3b8; background: rgba(30, 41, 59, 0.6); border: 1.5px dashed #334155; border-radius: 12px; margin-bottom: 1.5rem;"
+            >
+              {{ "RD_ADD_LAP_SECTIONS_NO_HEATS" | translate }}
             </div>
-            @if (getTeamName()) {
-              <div class="info-row">
-                <span class="info-label"
-                  >{{ "RD_ADD_LAP_SECTIONS_TEAM" | translate }}:</span
-                >
-                <span class="info-value">{{ getTeamName() }}</span>
+          } @else {
+            @if (isMenuMode()) {
+              <div class="menu-selectors-panel">
+                <div class="info-row">
+                  <span class="info-label"
+                    >{{ "RD_ADD_LAP_SECTIONS_SELECT_HEAT" | translate }}:</span
+                  >
+                  <select
+                    id="heatSelect"
+                    [ngModel]="selectedHeatIndex()"
+                    (ngModelChange)="onHeatSelectChange($event)"
+                  >
+                    @for (
+                      heat of activeHeats();
+                      track heat.heatNumber;
+                      let idx = $index
+                    ) {
+                      <option [value]="idx">
+                        {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
+                      </option>
+                    }
+                  </select>
+                </div>
+                <div class="info-row">
+                  <span class="info-label"
+                    >{{
+                      "RD_ADD_LAP_SECTIONS_SELECT_DRIVER" | translate
+                    }}:</span
+                  >
+                  <select
+                    id="driverSelect"
+                    [ngModel]="selectedLaneIndex()"
+                    (ngModelChange)="onDriverSelectChange($event)"
+                  >
+                    @for (
+                      d of currentHeatDrivers();
+                      track d.laneIndex;
+                      let idx = $index
+                    ) {
+                      <option [value]="idx">
+                        {{ "RD_LANE" | translate }} {{ d.laneIndex + 1 }}:
+                        {{ d.driver?.name || ("RD_EMPTY_LANE" | translate) }}
+                      </option>
+                    }
+                  </select>
+                </div>
               </div>
             }
-            <div class="info-row">
-              <span class="info-label"
-                >{{ "RD_ADD_LAP_SECTIONS_DRIVER" | translate }}:</span
-              >
-              <span class="info-value">{{
-                driverHeatData()?.driver?.name
-              }}</span>
+
+            <div class="driver-info-panel">
+              <div class="info-row">
+                <span class="info-label"
+                  >{{ "RD_ADD_LAP_SECTIONS_LANE" | translate }}:</span
+                >
+                <span
+                  class="info-value lane-pill"
+                  [style.background-color]="resolvedLaneBg()"
+                  [style.color]="resolvedLaneFg()"
+                >
+                  {{ (activeDriverHeatData()?.laneIndex ?? 0) + 1 }}
+                </span>
+              </div>
+              @if (getTeamName()) {
+                <div class="info-row">
+                  <span class="info-label"
+                    >{{ "RD_ADD_LAP_SECTIONS_TEAM" | translate }}:</span
+                  >
+                  <span class="info-value">{{ getTeamName() }}</span>
+                </div>
+              }
+              <div class="info-row">
+                <span class="info-label"
+                  >{{ "RD_ADD_LAP_SECTIONS_DRIVER" | translate }}:</span
+                >
+                <span class="info-value">{{
+                  activeDriverHeatData()?.driver?.name ||
+                    ("RD_EMPTY_LANE" | translate)
+                }}</span>
+              </div>
             </div>
-          </div>
 
-          <div class="calculation-info">
-            <span class="calc-label"
-              >{{ "RD_ADD_LAP_SECTIONS_FULL_LAP" | translate }}:</span
-            >
-            <span class="calc-value">{{ numTrackSections() }}</span>
-          </div>
-
-          <div class="input-section">
-            <label for="sectionsInput" class="input-label">
-              {{ "RD_ADD_LAP_SECTIONS_INPUT_LABEL" | translate }}
-            </label>
-            <input
-              id="sectionsInput"
-              type="number"
-              [value]="sectionsInput()"
-              (input)="onInputChange($event)"
-              (keyup.enter)="onConfirm()"
-              placeholder="0"
-              autoFocus
-            />
-          </div>
-
-          <div class="result-preview">
-            <div class="preview-line">
-              <span class="preview-label"
-                >{{ "RD_ADD_LAP_SECTIONS_CURRENT" | translate }}:</span
+            <div class="calculation-info">
+              <span class="calc-label"
+                >{{ "RD_ADD_LAP_SECTIONS_FULL_LAP" | translate }}:</span
               >
-              <span class="preview-value"
-                >{{ sectionsInput() }} ({{ calculatedLaps() | number: "1.2-2" }}
-                {{ "RD_ADD_LAP_SECTIONS_LAPS_REPRESENT" | translate }})</span
-              >
+              <span class="calc-value">{{ numTrackSections() }}</span>
             </div>
-            @if (isAutoSegments()) {
+
+            <div class="input-section">
+              <label for="sectionsInput" class="input-label">
+                {{ "RD_ADD_LAP_SECTIONS_INPUT_LABEL" | translate }}
+              </label>
+              <input
+                id="sectionsInput"
+                type="number"
+                [value]="sectionsInput()"
+                (input)="onInputChange($event)"
+                (keyup.enter)="onConfirm()"
+                placeholder="0"
+                autoFocus
+              />
+            </div>
+
+            <div class="result-preview">
               <div class="preview-line">
                 <span class="preview-label"
-                  >{{ "RD_ADD_LAP_SECTIONS_AUTO_SEGMENTS" | translate }}:</span
+                  >{{ "RD_ADD_LAP_SECTIONS_CURRENT" | translate }}:</span
                 >
                 <span class="preview-value"
-                  >{{ autoSegments() }} ({{
-                    autoCalculatedLaps() | number: "1.2-2"
+                  >{{ sectionsInput() }} ({{
+                    calculatedLaps() | number: "1.2-2"
                   }}
                   {{ "RD_ADD_LAP_SECTIONS_LAPS_REPRESENT" | translate }})</span
                 >
               </div>
-            }
-          </div>
+              @if (isAutoSegments()) {
+                <div class="preview-line">
+                  <span class="preview-label"
+                    >{{
+                      "RD_ADD_LAP_SECTIONS_AUTO_SEGMENTS" | translate
+                    }}:</span
+                  >
+                  <span class="preview-value"
+                    >{{ autoSegments() }} ({{
+                      autoCalculatedLaps() | number: "1.2-2"
+                    }}
+                    {{
+                      "RD_ADD_LAP_SECTIONS_LAPS_REPRESENT" | translate
+                    }})</span
+                  >
+                </div>
+              }
+            </div>
+          }
 
           <div class="modal-actions">
             <button class="btn-cancel" (click)="onCancel()">
               {{ "CANCEL" | translate }}
             </button>
-            <button class="btn-confirm" (click)="onConfirm()">
+            <button
+              class="btn-confirm"
+              [disabled]="isMenuMode() && activeHeats().length === 0"
+              (click)="onConfirm()"
+            >
               {{ "RD_ADD_LAP_SECTIONS_APPLY" | translate }}
             </button>
           </div>
@@ -152,6 +221,33 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         font-weight: 700;
         margin-bottom: 1.5rem;
         text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+      }
+      .menu-selectors-panel {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        box-sizing: border-box;
+      }
+      select {
+        background: #090d16;
+        border: 1.5px solid #334155;
+        border-radius: 8px;
+        color: #f1f5f9;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        width: 180px;
+      }
+      select:focus {
+        border-color: #38bdf8;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
       }
       .driver-info-panel {
         background: rgba(30, 41, 59, 0.6);
@@ -274,6 +370,10 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         font-size: 0.95rem;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       }
+      button[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
       .btn-cancel {
         background: #334155;
         color: #94a3b8;
@@ -287,12 +387,12 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         color: #ffffff;
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
       }
-      .btn-confirm:hover {
+      .btn-confirm:hover:not([disabled]) {
         background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
         box-shadow: 0 6px 16px rgba(14, 165, 233, 0.4);
         transform: translateY(-1px);
       }
-      .btn-confirm:active {
+      .btn-confirm:active:not([disabled]) {
         transform: translateY(0);
       }
 
@@ -325,19 +425,74 @@ export class AddLapSectionsDialogComponent {
   laneBg = input<string>("#334155");
   laneFg = input<string>("#38bdf8");
   isAutoSegments = input<boolean>(false);
+  isMenuMode = input<boolean>(false);
+  heats = input<any[] | null>(null);
+  track = input<any | null>(null);
+  currentHeatNumber = input<number>(0);
 
-  confirm = output<number>();
+  confirm = output<any>();
   cancel = output<void>();
 
+  selectedHeatIndex = signal<number>(0);
+  selectedLaneIndex = signal<number>(0);
+
   sectionsInput = signal<number>(0);
+
+  private editedSectionsMap = new Map<string, number>();
+
+  activeHeats = computed(() => {
+    return (this.heats() || []).filter((h) => h.started);
+  });
+
+  currentHeatDrivers = computed(() => {
+    const heatsList = this.activeHeats();
+    if (!heatsList || heatsList.length === 0) return [];
+    const hIdx = this.selectedHeatIndex();
+    const heat = heatsList[hIdx];
+    return heat ? heat.heatDrivers || [] : [];
+  });
+
+  activeDriverHeatData = computed(() => {
+    if (!this.isMenuMode()) {
+      return this.driverHeatData();
+    }
+    const drivers = this.currentHeatDrivers();
+    const lIdx = this.selectedLaneIndex();
+    return drivers[lIdx] || null;
+  });
+
+  resolvedLaneBg = computed(() => {
+    if (!this.isMenuMode()) {
+      return this.laneBg();
+    }
+    const hd = this.activeDriverHeatData();
+    const t = this.track();
+    if (hd && t && t.lanes && t.lanes[hd.laneIndex]) {
+      return t.lanes[hd.laneIndex].background_color || "#334155";
+    }
+    return "#334155";
+  });
+
+  resolvedLaneFg = computed(() => {
+    if (!this.isMenuMode()) {
+      return this.laneFg();
+    }
+    const hd = this.activeDriverHeatData();
+    const t = this.track();
+    if (hd && t && t.lanes && t.lanes[hd.laneIndex]) {
+      return t.lanes[hd.laneIndex].foreground_color || "#38bdf8";
+    }
+    return "#38bdf8";
+  });
+
   autoSegments = computed(() => {
-    const hd = this.driverHeatData();
+    const hd = this.activeDriverHeatData();
     if (!hd) return 0;
     const divisor = this.numTrackSections() || 100;
     return Math.round((hd.autoCalculatedLaps || 0) * divisor);
   });
   autoCalculatedLaps = computed(() => {
-    const hd = this.driverHeatData();
+    const hd = this.activeDriverHeatData();
     return hd ? hd.autoCalculatedLaps || 0 : 0;
   });
   calculatedLaps = computed(() => {
@@ -349,40 +504,128 @@ export class AddLapSectionsDialogComponent {
   constructor() {
     effect(() => {
       if (this.visible()) {
-        const hd = this.driverHeatData();
-        const divisor = this.numTrackSections() || 100;
-        if (hd) {
-          const sections = Math.round((hd.userLaps || 0) * divisor);
-          this.sectionsInput.set(sections);
-        } else {
-          this.sectionsInput.set(0);
-        }
+        untracked(() => {
+          this.editedSectionsMap.clear();
+          if (this.isMenuMode()) {
+            const startedHeats = this.activeHeats();
+            if (startedHeats.length > 0) {
+              const currentHeatNum = this.currentHeatNumber();
+              const currentHeat = (this.heats() || []).find(
+                (h) => h.heatNumber === currentHeatNum,
+              );
+              const isCurrentHeatStarted = currentHeat?.started === true;
+
+              if (isCurrentHeatStarted) {
+                const currentIdx = startedHeats.findIndex(
+                  (h) => h.heatNumber === currentHeatNum,
+                );
+                this.selectedHeatIndex.set(currentIdx >= 0 ? currentIdx : 0);
+              } else {
+                this.selectedHeatIndex.set(startedHeats.length - 1);
+              }
+            } else {
+              this.selectedHeatIndex.set(0);
+            }
+            this.selectedLaneIndex.set(0);
+          }
+          this.loadActiveDriverValue();
+        });
       }
     });
   }
 
+  private loadActiveDriverValue() {
+    const hd = this.activeDriverHeatData();
+    if (!hd) {
+      this.sectionsInput.set(0);
+      return;
+    }
+    const heatsList = this.activeHeats();
+    const heatNum = this.isMenuMode()
+      ? (heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0)
+      : this.currentHeatNumber();
+    const key = `${heatNum}_${hd.laneIndex}`;
+    if (this.editedSectionsMap.has(key)) {
+      this.sectionsInput.set(this.editedSectionsMap.get(key)!);
+    } else {
+      const divisor = this.numTrackSections() || 100;
+      this.sectionsInput.set(Math.round((hd.userLaps || 0) * divisor));
+    }
+  }
+
   getTeamName(): string | null {
-    const hd = this.driverHeatData();
+    const hd = this.activeDriverHeatData();
     if (!hd) return null;
     const team = hd.participant?.team || (hd.driver as any)?.team;
     return team ? team.name : null;
   }
 
-  getLaneBg(): string {
-    return "#334155";
-  }
-
-  getLaneFg(): string {
-    return "#38bdf8";
-  }
-
   onInputChange(event: Event) {
     const target = event.target as HTMLInputElement;
     const val = parseInt(target.value, 10);
-    this.sectionsInput.set(isNaN(val) ? 0 : val);
+    const sections = isNaN(val) ? 0 : val;
+    this.sectionsInput.set(sections);
+
+    const hd = this.activeDriverHeatData();
+    if (hd) {
+      const heatsList = this.activeHeats();
+      const heatNum = this.isMenuMode()
+        ? (heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0)
+        : this.currentHeatNumber();
+      const key = `${heatNum}_${hd.laneIndex}`;
+      this.editedSectionsMap.set(key, sections);
+    }
+  }
+
+  onHeatSelectChange(idx: number) {
+    this.selectedHeatIndex.set(idx);
+    this.selectedLaneIndex.set(0);
+    this.loadActiveDriverValue();
+  }
+
+  onDriverSelectChange(idx: number) {
+    this.selectedLaneIndex.set(idx);
+    this.loadActiveDriverValue();
   }
 
   onConfirm() {
+    if (this.isMenuMode()) {
+      const heatsList = this.activeHeats();
+      if (heatsList && heatsList.length > 0) {
+        const divisor = this.numTrackSections() || 100;
+        const updates = Array.from(this.editedSectionsMap.entries()).map(
+          ([key, sections]) => {
+            const [heatNumber, laneIndex] = key.split("_").map(Number);
+            return {
+              heatNumber,
+              laneIndex,
+              userLaps: sections / divisor,
+            };
+          },
+        );
+
+        if (updates.length === 0) {
+          const hd = this.activeDriverHeatData();
+          if (hd) {
+            const heatNum =
+              heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0;
+            updates.push({
+              heatNumber: heatNum,
+              laneIndex: hd.laneIndex,
+              userLaps: this.sectionsInput() / divisor,
+            });
+          }
+        }
+
+        if (updates.length > 0) {
+          this.confirm.emit({
+            isBatch: true,
+            updates,
+          });
+        }
+      }
+      return;
+    }
     this.confirm.emit(this.calculatedLaps());
   }
 

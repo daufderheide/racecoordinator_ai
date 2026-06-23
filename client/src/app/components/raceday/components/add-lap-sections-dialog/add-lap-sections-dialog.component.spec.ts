@@ -153,4 +153,259 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(textContent).toContain("75"); // 0.75 * 100 auto segments
     expect(textContent).toContain("0.75");
   });
+
+  it("should display heat and driver selectors in menu mode", () => {
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: true,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            userLaps: 1.0,
+            driver: { name: "Alice" },
+          },
+          {
+            laneIndex: 1,
+            userLaps: 2.0,
+            driver: { name: "Bob" },
+          },
+        ],
+      },
+      {
+        heatNumber: 2,
+        started: true,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            userLaps: 3.0,
+            driver: { name: "Charlie" },
+          },
+        ],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("numTrackSections", 100);
+    fixture.componentRef.setInput("currentHeatNumber", 1);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const heatSelect = fixture.nativeElement.querySelector(
+      "#heatSelect",
+    ) as HTMLSelectElement;
+    const driverSelect = fixture.nativeElement.querySelector(
+      "#driverSelect",
+    ) as HTMLSelectElement;
+    expect(heatSelect).not.toBeNull();
+    expect(driverSelect).not.toBeNull();
+
+    // Alice is selected by default in Heat 1
+    const driverInfoText =
+      fixture.nativeElement.querySelector(".driver-info-panel").textContent;
+    expect(driverInfoText).toContain("Alice");
+
+    // Change heat to 2
+    heatSelect.value = "1";
+    heatSelect.dispatchEvent(new Event("change"));
+    fixture.detectChanges();
+
+    // Charlie should be active
+    const driverInfoText2 =
+      fixture.nativeElement.querySelector(".driver-info-panel").textContent;
+    expect(driverInfoText2).toContain("Charlie");
+  });
+
+  it("should display no heats message and disable apply button if no heats are started in menu mode", () => {
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: false,
+        heatDrivers: [],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const noHeatsPanel = fixture.nativeElement.querySelector(".no-heats-panel");
+    expect(noHeatsPanel).not.toBeNull();
+    expect(noHeatsPanel.textContent).toContain("RD_ADD_LAP_SECTIONS_NO_HEATS");
+
+    const confirmBtn = fixture.nativeElement.querySelector(
+      ".btn-confirm",
+    ) as HTMLButtonElement;
+    expect(confirmBtn.disabled).toBeTrue();
+  });
+
+  it("should preserve edits across selectors and emit batch confirm payload on confirm in menu mode", () => {
+    spyOn(component.confirm, "emit");
+
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: true,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            userLaps: 1.0,
+            driver: { name: "Alice" },
+          },
+          {
+            laneIndex: 1,
+            userLaps: 2.0,
+            driver: { name: "Bob" },
+          },
+        ],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("numTrackSections", 100);
+    fixture.componentRef.setInput("currentHeatNumber", 1);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    // Set Alice's input to 50
+    const inputEl = fixture.nativeElement.querySelector(
+      "input",
+    ) as HTMLInputElement;
+    inputEl.value = "50";
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    // Select Bob
+    const driverSelect = fixture.nativeElement.querySelector(
+      "#driverSelect",
+    ) as HTMLSelectElement;
+    driverSelect.value = "1";
+    driverSelect.dispatchEvent(new Event("change"));
+    fixture.detectChanges();
+
+    // Verify Bob's value loads (2.0 * 100 = 200)
+    expect(inputEl.value).toBe("200");
+
+    // Set Bob's input to 250
+    inputEl.value = "250";
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    // Select Alice again
+    driverSelect.value = "0";
+    driverSelect.dispatchEvent(new Event("change"));
+    fixture.detectChanges();
+
+    // Verify Alice's edited value (50) is preserved
+    expect(inputEl.value).toBe("50");
+
+    // Confirm/Apply
+    component.onConfirm();
+
+    expect(component.confirm.emit).toHaveBeenCalledWith({
+      isBatch: true,
+      updates: [
+        { heatNumber: 1, laneIndex: 0, userLaps: 0.5 },
+        { heatNumber: 1, laneIndex: 1, userLaps: 2.5 },
+      ],
+    });
+  });
+
+  it("should default to the current heat if it has started, or the last started heat in the list if the current heat is not started", () => {
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: true,
+        heatDrivers: [
+          { laneIndex: 0, userLaps: 1.0, driver: { name: "Alice" } },
+        ],
+      },
+      {
+        heatNumber: 2,
+        started: true,
+        heatDrivers: [{ laneIndex: 0, userLaps: 2.0, driver: { name: "Bob" } }],
+      },
+      {
+        heatNumber: 3,
+        started: false,
+        heatDrivers: [
+          { laneIndex: 0, userLaps: 3.0, driver: { name: "Charlie" } },
+        ],
+      },
+    ] as any[];
+
+    // Case 1: Current heat has started (heat 2)
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("currentHeatNumber", 2);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    // Since heat 2 is started, it should default to heat 2 (index 1 of active/started heats)
+    expect(component.selectedHeatIndex()).toBe(1);
+
+    // Close and reset visible to re-trigger dialog opening effect
+    fixture.componentRef.setInput("visible", false);
+    fixture.detectChanges();
+
+    // Case 2: Current heat has not started (heat 3 is unstarted)
+    fixture.componentRef.setInput("currentHeatNumber", 3);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    // Since heat 3 is not started, it should default to the last started heat in the list (heat 2, index 1)
+    expect(component.selectedHeatIndex()).toBe(1);
+  });
+
+  it("should register updates specifically to the selected heat instead of the current heat when selecting a different heat in the dropdown", () => {
+    spyOn(component.confirm, "emit");
+
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: true,
+        heatDrivers: [
+          { laneIndex: 0, userLaps: 1.0, driver: { name: "Alice" } },
+        ],
+      },
+      {
+        heatNumber: 2,
+        started: true,
+        heatDrivers: [{ laneIndex: 0, userLaps: 2.0, driver: { name: "Bob" } }],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("currentHeatNumber", 2);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    // Default should be index 1 (Heat 2) because currentHeatNumber is 2 and it has started
+    expect(component.selectedHeatIndex()).toBe(1);
+
+    // Simulate changing dropdown to index 0 (Heat 1)
+    component.onHeatSelectChange(0);
+    fixture.detectChanges();
+
+    // Set input to 150 sections (1.5 laps)
+    const inputEl = fixture.nativeElement.querySelector(
+      "input",
+    ) as HTMLInputElement;
+    inputEl.value = "150";
+    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    fixture.detectChanges();
+
+    // Confirm/Apply
+    component.onConfirm();
+
+    // Verification: updates must only contain Heat 1 update, NOT Heat 2
+    expect(component.confirm.emit).toHaveBeenCalledWith({
+      isBatch: true,
+      updates: [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5 }],
+    });
+  });
 });

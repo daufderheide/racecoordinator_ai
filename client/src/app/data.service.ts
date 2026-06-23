@@ -1555,6 +1555,26 @@ export class DataService {
     );
   }
 
+  updateHeatUserLaps(
+    heatNumber: number,
+    lane: number,
+    userLaps: number,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/${heatNumber}/drivers/${lane}/user-laps`,
+      { userLaps },
+    );
+  }
+
+  updateBatchUserLaps(
+    updates: { heatNumber: number; laneIndex: number; userLaps: number }[],
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/races/heats/user-laps/batch`,
+      updates,
+    );
+  }
+
   getDriverStatistics(
     driverId: string,
     raceId?: string,
