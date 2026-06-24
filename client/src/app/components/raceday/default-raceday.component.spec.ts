@@ -3309,6 +3309,72 @@ describe("DefaultRacedayComponent", () => {
       expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
     });
   });
+  describe("Z-Order Widget Reordering", () => {
+    beforeEach(() => {
+      component.layout = {
+        widgets: [
+          { id: "w1", zIndex: 100 },
+          { id: "w2", zIndex: 105 },
+          { id: "w3", zIndex: 102 },
+        ],
+      } as any;
+      spyOn(component.layoutChanged, "emit");
+      spyOn(component.widgetSelected, "emit");
+    });
+
+    it("should normalize z-indices to start at 100 sequentially based on current z-index order", () => {
+      component.normalizeZIndices();
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w1")?.zIndex,
+      ).toBe(100);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w3")?.zIndex,
+      ).toBe(101);
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w2")?.zIndex,
+      ).toBe(102);
+    });
+
+    it("should bring a widget to the front and emit layoutChanged if it is not already at the front", () => {
+      component.bringToFront("w3");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w3")?.zIndex,
+      ).toBe(106);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w3");
+    });
+
+    it("should not change zIndex or emit layoutChanged if the widget is already at the front", () => {
+      component.bringToFront("w2");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w2")?.zIndex,
+      ).toBe(105);
+      expect(component.layoutChanged.emit).not.toHaveBeenCalled();
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w2");
+    });
+
+    it("should handle bringToFront when it is the only widget", () => {
+      component.layout.widgets = [{ id: "w1", zIndex: 100 }] as any;
+      component.bringToFront("w1");
+      expect(component.layout.widgets[0].zIndex).toBe(100);
+      expect(component.layoutChanged.emit).not.toHaveBeenCalled();
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w1");
+    });
+
+    it("should set zIndex to maxOtherZ + 1 and emit layoutChanged if widget had no zIndex", () => {
+      component.layout.widgets.push({ id: "w4" } as any);
+      component.bringToFront("w4");
+      expect(
+        component.layout.widgets.find((w: any) => w.id === "w4")?.zIndex,
+      ).toBe(106);
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w4");
+    });
+  });
 
   describe("Dynamic Table Body Height", () => {
     it("should calculate correct table body height based on lane-view widget height", () => {

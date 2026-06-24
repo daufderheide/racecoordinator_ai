@@ -3608,9 +3608,19 @@ export class DefaultRacedayComponent
 
   bringToFront(id: string) {
     if (!this.layout?.widgets) return;
+
+    const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    const maxOtherZ =
+      otherWidgets.length > 0
+        ? Math.max(...otherWidgets.map((w: any) => w.zIndex || 0))
+        : 0;
+
     const w = this.layout.widgets.find((w: any) => w.id === id);
     if (w) {
-      w.zIndex = this.getNextZIndex();
+      if (w.zIndex == null || w.zIndex <= maxOtherZ) {
+        w.zIndex = maxOtherZ + 1;
+        this.layoutChanged.emit(this.layout);
+      }
       this.widgetSelected.emit(id);
     }
   }
