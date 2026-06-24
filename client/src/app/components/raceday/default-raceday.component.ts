@@ -559,7 +559,10 @@ export class DefaultRacedayComponent
       const settings = this.editingSettings();
       if (settings) {
         this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
-        this.layoutEditorPosition = { x: 0, y: 0 };
+        this.layoutEditorPosition = {
+          x: settings.layoutEditorPositionX ?? 0,
+          y: settings.layoutEditorPositionY ?? 0,
+        };
         if (settings.racedayLayout?.widgets) {
           this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
         } else {
@@ -612,7 +615,10 @@ export class DefaultRacedayComponent
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
-    this.layoutEditorPosition = { x: 0, y: 0 };
+    this.layoutEditorPosition = {
+      x: settings.layoutEditorPositionX ?? 0,
+      y: settings.layoutEditorPositionY ?? 0,
+    };
     if (settings.racedayLayout && settings.racedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
     } else {
