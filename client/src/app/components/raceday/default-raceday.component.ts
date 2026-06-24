@@ -1918,6 +1918,14 @@ export class DefaultRacedayComponent
     }
   }
 
+  @HostListener("window:beforeunload", ["$event"])
+  onBeforeUnload($event: any) {
+    if (this.authService.currentRole !== Role.VIEWER && !this.raceHasEnded) {
+      $event.preventDefault();
+      $event.returnValue = true;
+    }
+  }
+
   @HostListener("window:unload", ["$event"])
   onUnload(_event: any) {
     if (this.leaderBoardWindow) {

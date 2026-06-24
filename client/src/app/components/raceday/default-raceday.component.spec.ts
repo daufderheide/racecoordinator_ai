@@ -1931,6 +1931,44 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("onBeforeUnload", () => {
+    it("should prevent default and set returnValue when role is DIRECTOR and race is active", () => {
+      const mockEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        returnValue: false,
+      };
+      (component as any).authService = { currentRole: Role.DIRECTOR };
+      spyOnProperty(component, "raceHasEnded", "get").and.returnValue(false);
+      component.onBeforeUnload(mockEvent);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      expect(mockEvent.returnValue).toBeTrue();
+    });
+
+    it("should not prevent default when role is VIEWER", () => {
+      const mockEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        returnValue: false,
+      };
+      (component as any).authService = { currentRole: Role.VIEWER };
+      spyOnProperty(component, "raceHasEnded", "get").and.returnValue(false);
+      component.onBeforeUnload(mockEvent);
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+      expect(mockEvent.returnValue).toBeFalse();
+    });
+
+    it("should not prevent default when race has ended", () => {
+      const mockEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        returnValue: false,
+      };
+      (component as any).authService = { currentRole: Role.DIRECTOR };
+      spyOnProperty(component, "raceHasEnded", "get").and.returnValue(true);
+      component.onBeforeUnload(mockEvent);
+      expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+      expect(mockEvent.returnValue).toBeFalse();
+    });
+  });
+
   describe("getCurrentFlagUrl", () => {
     let mockRace: any;
     let mockScoring: any;
