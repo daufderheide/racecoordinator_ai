@@ -40,6 +40,7 @@ describe("RacedayNextHeatComponent", () => {
 
     mockParent = {
       isTeam: (_hd: any) => false,
+      isEmptyDriver: (_hd: any) => false,
       getTeammates: (_hd: any) => [],
       getDropdownIcon: (_color: string) => "arrow-url",
       getDriverStats: (_hd: any, _driverId: string) => "(H: 1 L / 10s)",
@@ -197,7 +198,7 @@ describe("RacedayNextHeatComponent", () => {
     const nameSpan = element.querySelector(".teammate-display-name");
     expect(nameSpan).toBeTruthy();
     expect(nameSpan.textContent).toContain("One");
-    expect(nameSpan.textContent).toContain("(Team A)");
+    expect(nameSpan.textContent).toContain("Team A");
 
     const select = element.querySelector("select");
     expect(select).toBeTruthy();

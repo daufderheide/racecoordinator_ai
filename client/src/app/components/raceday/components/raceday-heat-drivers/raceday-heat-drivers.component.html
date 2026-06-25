@@ -2,6 +2,20 @@
   #driversPanel
   class="panel-card"
   [ngClass]="type() === 'on-deck' ? 'on-deck-panel' : 'next-heat-panel'"
+  [style.--custom-title-size]="
+    widget()?.scaleMode === 'auto'
+      ? null
+      : widget()?.customSettings?.['titleFontSize']
+        ? widget()?.customSettings?.['titleFontSize'] + 'px'
+        : null
+  "
+  [style.--custom-lane-size]="
+    widget()?.scaleMode === 'auto'
+      ? null
+      : widget()?.customSettings?.['laneFontSize']
+        ? widget()?.customSettings?.['laneFontSize'] + 'px'
+        : null
+  "
 >
   <div
     [ngClass]="type() === 'on-deck' ? 'on-deck-title' : 'next-heat-title'"
@@ -51,7 +65,7 @@
               min-width: 0;
             "
           >
-            <span
+            <div
               class="driver-nickname teammate-display-name"
               [style.color]="
                 widget()?.customSettings?.['laneTextColor'] || null
@@ -60,17 +74,42 @@
                 widget()?.scaleMode === 'auto' ? '2.75em' : '44px'
               "
               style="
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                display: flex;
+                flex-direction: column;
                 flex: 1;
+                min-width: 0;
+                line-height: 1.1;
+                align-items: flex-start;
               "
             >
-              {{ hd.driver.nickname || hd.driver.name }}
-              @if (isTeam(hd)) {
-                ({{ hd.participant.team?.name || $any(hd.driver)?.team?.name }})
+              <span
+                style="
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 100%;
+                "
+              >
+                {{ hd.driver.nickname || hd.driver.name }}
+              </span>
+              @if (
+                isTeam(hd) &&
+                (hd.participant.team?.name || $any(hd.driver)?.team?.name)
+              ) {
+                <span
+                  style="
+                    font-size: 0.7em;
+                    opacity: 0.8;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 100%;
+                  "
+                >
+                  {{ hd.participant.team?.name || $any(hd.driver)?.team?.name }}
+                </span>
               }
-            </span>
+            </div>
             <select
               class="teammate-select"
               [style.background-image]="getDropdownArrowBg(hd)"
@@ -113,34 +152,52 @@
             </select>
           </div>
         } @else {
-          <span
+          <div
             class="driver-nickname"
             [style.color]="widget()?.customSettings?.['laneTextColor'] || null"
             style="
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+              display: flex;
+              flex-direction: column;
               flex: 1;
               min-width: 0;
+              line-height: 1.1;
+              align-items: flex-start;
             "
           >
-            {{ hd.driver.nickname || hd.driver.name }}
-            @if (isTeam(hd)) {
-              ({{ hd.participant.team?.name || $any(hd.driver)?.team?.name }})
+            <span
+              style="
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+              "
+            >
+              {{ hd.driver.nickname || hd.driver.name }}
+            </span>
+            @if (
+              isTeam(hd) &&
+              (hd.participant.team?.name || $any(hd.driver)?.team?.name)
+            ) {
+              <span
+                style="
+                  font-size: 0.7em;
+                  opacity: 0.8;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  max-width: 100%;
+                "
+              >
+                {{ hd.participant.team?.name || $any(hd.driver)?.team?.name }}
+              </span>
             }
-          </span>
+          </div>
         }
         <span
           class="lane-badge"
           [style.background-color]="getLaneBackgroundColor(hd.laneIndex)"
-          [style.color]="
-            widget()?.customSettings?.['laneTextColor'] ||
-            getLaneForegroundColor(hd.laneIndex)
-          "
-          [style.border-color]="
-            widget()?.customSettings?.['laneTextColor'] ||
-            getLaneForegroundColor(hd.laneIndex)
-          "
+          [style.color]="getLaneForegroundColor(hd.laneIndex)"
+          [style.border-color]="getLaneForegroundColor(hd.laneIndex)"
           [style.font-family]="
             widget()?.customSettings?.['laneFontFamily'] || null
           "

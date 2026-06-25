@@ -462,6 +462,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       assets: this.dataService.listAssets(),
       dirHandle: this.fileSystem.getCustomDirectoryHandle(),
       themes: this.dataService.getThemes(),
+      tracks: this.dataService.getTracks(),
     }).subscribe({
       next: (result) => {
         // Include both images and image_sets
@@ -520,6 +521,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         this.customDirectoryName = result.dirHandle?.name || null;
         const themes = result.themes || [];
+        const tracks = result.tracks || [];
+        if (tracks.length > 0) {
+          this.track = tracks[0];
+        }
+
         const settings = this.settingsService.getSettings();
         const editingSettings = this.cloneSettings(settings);
 

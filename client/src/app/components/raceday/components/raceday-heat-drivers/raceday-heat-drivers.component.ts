@@ -121,13 +121,17 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     const limitWidthRow = availableWidth / (maxRowWidthAt100 / 100 + 0.24);
 
     // Calculate height limit
-    const N = this.drivers().length;
+    const trackLaneCount = this.track()?.lanes?.length || 0;
+    const N = Math.max(trackLaneCount, this.drivers().length, 1);
+
     let heightFactor = 0;
-    if (N > 0) {
-      heightFactor = 2.35 + 2.7 * N;
-    } else {
-      heightFactor = 1.35 + 0.75 + 1.125 + 1.25 + 0.75;
-    }
+    const hasTeams = this.drivers().some((hd) => this.isTeam(hd));
+    // normal item = 1.0 + 1.0 padding = 2.0
+    // stacked item = 1.0 + 0.7 + 1.0 padding = 2.7
+    const itemHeightMultiplier = hasTeams ? 2.7 : 2.0;
+    // padding-y * 2 = 1.5, title margin = 0.75, title size = 1.125
+    // 1.5 + 0.75 + 1.125 = 3.375. minus 0.5 for gap adjustment: 2.875
+    heightFactor = 2.875 + itemHeightMultiplier * N;
 
     const limitHeight = availableHeight / heightFactor;
 
@@ -170,13 +174,11 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
 
     let maxWidth = 0;
     for (const hd of driversList) {
-      let driverText = hd.driver.nickname || hd.driver.name || "";
+      let driverText = hd.driver?.nickname || hd.driver?.name || "";
+      let teamName = "";
       if (this.isTeam(hd)) {
-        const teamName =
-          hd.participant.team?.name || (hd.driver as any)?.team?.name || "";
-        if (teamName) {
-          driverText += ` (${teamName})`;
-        }
+        teamName =
+          hd.participant?.team?.name || (hd.driver as any)?.team?.name || "";
       }
 
       let textPadding = 0;
@@ -189,7 +191,13 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
       }
 
       context.font = `600 100px ${laneFontFamily}`;
-      const driverWidth = context.measureText(driverText).width || 1;
+      let driverWidth = context.measureText(driverText).width || 1;
+
+      if (teamName) {
+        context.font = `600 70px ${laneFontFamily}`;
+        const teamWidth = context.measureText(teamName).width || 1;
+        driverWidth = Math.max(driverWidth, teamWidth);
+      }
 
       // Lane badge text
       const badgeText = `L${hd.laneIndex + 1}`;
@@ -259,8 +267,13 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     if (!nextHeat || !nextHeat.heatDrivers) {
       return [];
     }
+
+    if (this.type() === "next-heat") {
+      return nextHeat.heatDrivers;
+    }
+
     const activeDrivers = nextHeat.heatDrivers.filter((hd) => {
-      return hd.driver && !hd.driver.isEmpty();
+      return hd.driver && !this.parent()?.isEmptyDriver(hd);
     });
 
     if (this.type() === "on-deck") {
@@ -270,7 +283,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
           .filter(Boolean) || [],
       );
       return activeDrivers.filter((hd) => {
-        const id = hd.driver.objectId || hd.driver.entity_id;
+        const id = hd.driver?.objectId || hd.driver?.entity_id;
         return id && !currentDriverIds.has(id);
       });
     }
@@ -297,11 +310,9 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     return this.parent()?.getTeammates(hd) ?? [];
   }
 
-  getDropdownArrowBg(hd: DriverHeatData): string {
+  getDropdownArrowBg(_hd: DriverHeatData): string {
     if (!this.parent()) return "";
-    const color =
-      this.widget()?.customSettings?.["laneTextColor"] ||
-      this.getLaneForegroundColor(hd.laneIndex);
+    const color = this.widget()?.customSettings?.["laneTextColor"] || "#f8fafc";
     return this.parent().getDropdownIcon(color);
   }
 

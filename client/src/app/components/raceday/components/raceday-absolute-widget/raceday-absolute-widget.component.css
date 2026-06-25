@@ -341,7 +341,7 @@
 
 .widget-wrapper.scale-fixed .next-heat-title,
 .widget-wrapper.scale-fixed .on-deck-title {
-  font-size: calc(1.125 * var(--widget-font-size)) !important;
+  font-size: var(--custom-title-size, calc(1.125 * var(--widget-font-size))) !important;
   margin-bottom: calc(0.5 * var(--widget-font-size)) !important;
 }
 
@@ -360,7 +360,7 @@
 .widget-wrapper.scale-fixed .teammate-display-name,
 .widget-wrapper.scale-fixed .next-heat-empty,
 .widget-wrapper.scale-fixed .on-deck-empty {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--custom-lane-size, var(--widget-font-size)) !important;
 }
 
 .widget-wrapper.scale-fixed .lane-badge {
