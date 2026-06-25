@@ -408,4 +408,56 @@ describe("AddLapSectionsDialogComponent", () => {
       updates: [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5 }],
     });
   });
+
+  it("should focus and select the input when heat or driver changes in menu mode", async () => {
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: true,
+        heatDrivers: [
+          { laneIndex: 0, userLaps: 1.0, driver: { name: "Alice" } },
+          { laneIndex: 1, userLaps: 1.0, driver: { name: "Charlie" } },
+        ],
+      },
+      {
+        heatNumber: 2,
+        started: true,
+        heatDrivers: [{ laneIndex: 0, userLaps: 2.0, driver: { name: "Bob" } }],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("currentHeatNumber", 1);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 0)); // clear initial timeout
+
+    const inputEl = fixture.nativeElement.querySelector(
+      "input",
+    ) as HTMLInputElement;
+    spyOn(inputEl, "focus");
+    spyOn(inputEl, "select");
+
+    // Change heat
+    component.onHeatSelectChange(1);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(inputEl.focus).toHaveBeenCalled();
+    expect(inputEl.select).toHaveBeenCalled();
+
+    (inputEl.focus as jasmine.Spy).calls.reset();
+    (inputEl.select as jasmine.Spy).calls.reset();
+
+    // Change heat back to test driver change
+    component.onHeatSelectChange(0);
+    await new Promise((r) => setTimeout(r, 0));
+    (inputEl.focus as jasmine.Spy).calls.reset();
+    (inputEl.select as jasmine.Spy).calls.reset();
+
+    // Change driver
+    component.onDriverSelectChange(1);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(inputEl.focus).toHaveBeenCalled();
+    expect(inputEl.select).toHaveBeenCalled();
+  });
 });

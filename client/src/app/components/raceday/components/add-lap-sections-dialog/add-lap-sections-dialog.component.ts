@@ -3,10 +3,12 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   input,
   output,
   signal,
   untracked,
+  ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -123,13 +125,13 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                 {{ "RD_ADD_LAP_SECTIONS_INPUT_LABEL" | translate }}
               </label>
               <input
+                #sectionsInputRef
                 id="sectionsInput"
                 type="number"
                 [value]="sectionsInput()"
                 (input)="onInputChange($event)"
                 (keyup.enter)="onConfirm()"
                 placeholder="0"
-                autoFocus
               />
             </div>
 
@@ -433,6 +435,9 @@ export class AddLapSectionsDialogComponent {
   confirm = output<any>();
   cancel = output<void>();
 
+  @ViewChild("sectionsInputRef")
+  sectionsInputRef?: ElementRef<HTMLInputElement>;
+
   selectedHeatIndex = signal<number>(0);
   selectedLaneIndex = signal<number>(0);
 
@@ -529,6 +534,7 @@ export class AddLapSectionsDialogComponent {
             this.selectedLaneIndex.set(0);
           }
           this.loadActiveDriverValue();
+          this.focusInput();
         });
       }
     });
@@ -581,11 +587,20 @@ export class AddLapSectionsDialogComponent {
     this.selectedHeatIndex.set(idx);
     this.selectedLaneIndex.set(0);
     this.loadActiveDriverValue();
+    this.focusInput();
   }
 
   onDriverSelectChange(idx: number) {
     this.selectedLaneIndex.set(idx);
     this.loadActiveDriverValue();
+    this.focusInput();
+  }
+
+  private focusInput() {
+    setTimeout(() => {
+      this.sectionsInputRef?.nativeElement.focus();
+      this.sectionsInputRef?.nativeElement.select();
+    }, 0);
   }
 
   onConfirm() {
