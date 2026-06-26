@@ -134,6 +134,9 @@ export class RacedayFormatUtils {
       const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
       return d?.nickname || d?.name || "";
     } else if (baseKey === "participant.team.name") {
+      if (ctx.getRace()?.practice) {
+        return "";
+      }
       if (RacedayFormatUtils.isEmptyDriver(hd)) {
         if (
           column &&

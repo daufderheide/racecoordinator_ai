@@ -3000,15 +3000,38 @@ export class DefaultRacedayComponent
         entity_id: "EMPTY_LANE",
         id: "EMPTY_LANE",
       };
-      const raceDrivers = this.participants
-        .map((p) =>
-          this.allDrivers.find(
+
+      const raceDrivers: any[] = [];
+      this.participants.forEach((p) => {
+        if (p.driver) {
+          const d = this.allDrivers.find(
             (d) =>
               (d.entity_id || d.id) ===
               (p.driver?.entity_id || (p as any).driverId),
-          ),
-        )
-        .filter((d) => !!d);
+          );
+          if (
+            d &&
+            !raceDrivers.find(
+              (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
+            )
+          ) {
+            raceDrivers.push(d);
+          }
+        } else if (p.team && p.team.driverIds) {
+          p.team.driverIds.forEach((id: string) => {
+            const d = this.allDrivers.find((d) => (d.entity_id || d.id) === id);
+            if (
+              d &&
+              !raceDrivers.find(
+                (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
+              )
+            ) {
+              raceDrivers.push(d);
+            }
+          });
+        }
+      });
+
       return [emptyDriver, ...raceDrivers];
     }
     const team = hd.participant?.team || hd.driver?.team;
