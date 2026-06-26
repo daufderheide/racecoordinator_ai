@@ -64,7 +64,7 @@ public class AutoSegmentsTest {
     when(heat.getDrivers()).thenReturn(drivers);
 
     // Set up standings mock
-    HeatStandings standings = new HeatStandings(drivers, raceModel.getHeatScoring());
+    HeatStandings standings = new HeatStandings(drivers, raceModel.getHeatScoring(), false);
     when(heat.getHeatStandings()).thenReturn(standings);
 
     // Initialize racing state with race

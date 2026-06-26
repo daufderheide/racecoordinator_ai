@@ -95,20 +95,7 @@ public class Race implements ProtocolListener {
             : new ArrayList<>();
 
     this.recordsManager = new RaceRecords(this);
-    if (this.databaseContext != null && this.model != null && this.model.getEntityId() != null) {
-      RecordData existingRecords =
-          DatabaseService.getInstance()
-              .getRaceRecords( // fqn-collision
-                  this.databaseContext.getDatabase(), this.model.getEntityId(), builder.isDemoMode);
-      if (existingRecords != null) {
-        // Only load Overall records — Current session always starts fresh.
-        // Loading stale current records from a previous session causes the UI to show
-        // old per-session records before any laps have been run.
-        if (existingRecords.hasOverall()) {
-          this.recordsManager.loadOverallRaceRecords(existingRecords.getOverall());
-        }
-      }
-    }
+    loadExistingRecords(builder.isDemoMode);
 
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
@@ -135,23 +122,7 @@ public class Race implements ProtocolListener {
       recordsManager.resetHeatRecords();
     } else {
       this.heats = new ArrayList<>(builder.heats);
-      // Link the DriverHeatData's driver references to the master driver list in this.drivers.
-      // This is crucial because MongoDB deserialization creates separate instances, causing overall
-      // standings updates to not propagate to the heat's driver objects.
-      java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
-      for (RaceParticipant rp : this.drivers) {
-        masterDrivers.put(rp.getStableId(), rp);
-      }
-      for (Heat heat : this.heats) {
-        for (DriverHeatData dhd : heat.getDrivers()) {
-          if (dhd.getDriver() != null) {
-            RaceParticipant master = masterDrivers.get(dhd.getDriver().getStableId());
-            if (master != null) {
-              dhd.setDriver(master);
-            }
-          }
-        }
-      }
+      linkDriverReferences();
 
       if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
         this.currentHeat = this.heats.get(builder.currentHeatIndex);
@@ -170,7 +141,10 @@ public class Race implements ProtocolListener {
 
     this.overallStandings =
         new OverallStandings(
-            model.getHeatScoring(), model.getOverallScoring(), model.getGroupOptions());
+            model.getHeatScoring(),
+            model.getOverallScoring(),
+            model.getGroupOptions(),
+            model.isPractice());
     this.demoConfig = builder.demoConfig;
     this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
     this.isDemoMode = builder.isDemoMode;
@@ -178,17 +152,7 @@ public class Race implements ProtocolListener {
     this.executionManager = new HeatExecutionManager(this);
     initializeHeatExecutionState();
 
-    if (builder.stateClassName != null) {
-      try {
-        Class<?> clazz = Class.forName(builder.stateClassName);
-        this.state = (IRaceState) clazz.getDeclaredConstructor().newInstance();
-      } catch (Exception e) {
-        logger.error("Failed to restore race state", e);
-        this.state = new NotStarted();
-      }
-    } else {
-      this.state = new NotStarted();
-    }
+    this.state = restoreState(builder.stateClassName);
 
     if (builder.heats == null) {
       initializeFuelLevels();
@@ -201,6 +165,55 @@ public class Race implements ProtocolListener {
     }
     recordsManager.broadcastRecords();
     updateAndBroadcastOverallStandings();
+  }
+
+  private void loadExistingRecords(boolean isDemoMode) {
+    if (this.databaseContext != null && this.model != null && this.model.getEntityId() != null) {
+      RecordData existingRecords =
+          DatabaseService.getInstance()
+              .getRaceRecords( // fqn-collision
+                  this.databaseContext.getDatabase(), this.model.getEntityId(), isDemoMode);
+      if (existingRecords != null) {
+        // Only load Overall records — Current session always starts fresh.
+        // Loading stale current records from a previous session causes the UI to show
+        // old per-session records before any laps have been run.
+        if (existingRecords.hasOverall()) {
+          this.recordsManager.loadOverallRaceRecords(existingRecords.getOverall());
+        }
+      }
+    }
+  }
+
+  private void linkDriverReferences() {
+    // Link the DriverHeatData's driver references to the master driver list in this.drivers.
+    // This is crucial because MongoDB deserialization creates separate instances, causing overall
+    // standings updates to not propagate to the heat's driver objects.
+    java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
+    for (RaceParticipant rp : this.drivers) {
+      masterDrivers.put(rp.getStableId(), rp);
+    }
+    for (Heat heat : this.heats) {
+      for (DriverHeatData dhd : heat.getDrivers()) {
+        if (dhd.getDriver() != null) {
+          RaceParticipant master = masterDrivers.get(dhd.getDriver().getStableId());
+          if (master != null) {
+            dhd.setDriver(master);
+          }
+        }
+      }
+    }
+  }
+
+  private IRaceState restoreState(String stateClassName) {
+    if (stateClassName != null) {
+      try {
+        Class<?> clazz = Class.forName(stateClassName);
+        return (IRaceState) clazz.getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+        logger.error("Failed to restore race state", e);
+      }
+    }
+    return new NotStarted();
   }
 
   public void init() {

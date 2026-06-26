@@ -766,6 +766,7 @@ public class DatabaseTaskHandler {
       raceMap.put("false_start_lap_penalty", race.getFalseStartLapPenalty());
       raceMap.put("false_start_time_penalty", race.getFalseStartTimePenalty());
       raceMap.put("group_options", race.getGroupOptions());
+      raceMap.put("practice", race.isPractice());
       response.add(raceMap);
     }
     ctx.json(response);

@@ -38,10 +38,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
     List<String> results = standings.getStandings();
 
     assertEquals(d1.getObjectId(), results.get(0));
@@ -70,10 +68,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
     List<String> results = standings.getStandings();
 
     assertEquals(d2.getObjectId(), results.get(0));
@@ -101,10 +97,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.AVERAGE_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME),
+            false);
     assertEquals(d1.getObjectId(), standings.getStandings().get(0));
   }
 
@@ -131,7 +125,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.MEDIAN_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.MEDIAN_LAP_TIME),
+            false);
     List<String> results = standings.getStandings();
 
     assertEquals(d1.getObjectId(), results.get(0));
@@ -163,10 +158,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
 
     standings.getStandings(); // Triggers calculateStandings -> calculateGaps
 
@@ -206,7 +199,8 @@ public class HeatStandingsTest {
                 FinishMethod.Timed,
                 300,
                 HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
 
     standings.getStandings(); // Triggers calculateStandings -> calculateGaps
 
@@ -239,10 +233,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
     List<String> results = standings.getStandings();
 
     assertEquals(d1.getObjectId(), results.get(0));
@@ -269,10 +261,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
 
     List<String> results = standings.getStandings();
 
@@ -309,10 +299,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
 
     // Initially, d1 should be first
     assertEquals(d1.getObjectId(), standings.getStandings().get(0));
@@ -356,10 +344,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
     List<String> results = standings.getStandings();
 
     // d2 has more laps (1.5) than d1 (1.25)
@@ -390,10 +376,8 @@ public class HeatStandingsTest {
         new HeatStandings(
             data,
             new HeatScoring(
-                FinishMethod.Lap,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
     standings.getStandings();
 
     // d1 is leader (1.5 laps)
@@ -434,7 +418,8 @@ public class HeatStandingsTest {
                 HeatScoring.FinishMethod.Lap,
                 0,
                 HeatScoring.HeatRanking.LAP_COUNT,
-                HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME));
+                HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
 
     List<String> results = standings.getStandings();
 
@@ -444,5 +429,42 @@ public class HeatStandingsTest {
 
     // d2 and d3 are both Double.MAX_VALUE, so they maintain their relative order
     // or sort by name/objectId.
+  }
+
+  @Test
+  public void testPracticeStandings() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p2");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.addLap(10.0, false); // 1 lap
+
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.addLap(10.0, false);
+    d2.addLap(10.0, false); // 2 laps (should be first if not practice)
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1); // Added first
+    data.add(d2);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            true); // Practice mode
+
+    List<String> results = standings.getStandings();
+
+    // In practice mode, sorting is skipped, so original order is preserved.
+    // d1 remains first, d2 remains second
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+
+    // Verify ranks are 99 for both
+    com.antigravity.proto.StandingsUpdate update = standings.updateStandings();
+    for (com.antigravity.proto.HeatPositionUpdate pos : update.getUpdatesList()) {
+      assertEquals(99, pos.getRank());
+    }
   }
 }

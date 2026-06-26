@@ -1809,6 +1809,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       hot_start: race.hot_start,
       restart_on_false_start: race.restart_on_false_start,
       start_behind_sensor: race.start_behind_sensor,
+      practice: race.practice,
       false_start_lap_penalty: race.false_start_lap_penalty,
       false_start_time_penalty: race.false_start_time_penalty,
       group_options: race.group_options

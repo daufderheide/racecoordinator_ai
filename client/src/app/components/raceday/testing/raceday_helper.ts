@@ -83,6 +83,7 @@ export function createRacedayMocks(overrides: any = {}) {
     "skipHeat",
     "skipRace",
     "getSystemState",
+    "resetLaneHeatData",
   ]);
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
@@ -98,6 +99,7 @@ export function createRacedayMocks(overrides: any = {}) {
   mockDataService.deferHeat.and.returnValue(of(true));
   mockDataService.skipHeat.and.returnValue(of(true));
   mockDataService.skipRace.and.returnValue(of(true));
+  mockDataService.resetLaneHeatData.and.returnValue(of(true));
   mockDataService.getDrivers.and.callFake(() =>
     of(
       deepCopy(MOCK_DRIVERS).map((d: any) => ({

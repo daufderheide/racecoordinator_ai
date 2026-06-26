@@ -1486,6 +1486,12 @@ export class DataService {
       .pipe(map(() => true));
   }
 
+  public resetLaneHeatData(lane: number | string): Observable<boolean> {
+    return this.http
+      .post(`${this.baseUrl}/api/races/current-heat/drivers/${lane}/reset`, {})
+      .pipe(map(() => true));
+  }
+
   changeLane(fromLane: number, toLane: number): Observable<boolean> {
     return this.http
       .post(

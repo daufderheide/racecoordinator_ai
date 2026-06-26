@@ -98,7 +98,8 @@ public class HeatBuilder {
                   totalHeatIdx + 1,
                   clonedDrivers,
                   h.getGroup(),
-                  race.getRaceModel().getHeatScoring()));
+                  race.getRaceModel().getHeatScoring(),
+                  race.getRaceModel().isPractice()));
         }
       }
     }
@@ -151,7 +152,8 @@ public class HeatBuilder {
       int numLanes,
       List<Integer> rotationSequence,
       boolean friendly,
-      HeatScoring scoring) {
+      HeatScoring scoring,
+      boolean practice) {
     if (rotationSequence != null) {
       Set<Integer> uniqueLanes = new HashSet<>();
       for (Integer lane : rotationSequence) {
@@ -227,13 +229,13 @@ public class HeatBuilder {
           }
         }
       }
-      heatList.add(new Heat(h + 1, heatDrivers, scoring));
+      heatList.add(new Heat(h + 1, heatDrivers, scoring, practice));
     }
     return heatList;
   }
 
   private static List<Heat> getSingleHeatHeats(
-      List<RaceParticipant> drivers, int numLanes, HeatScoring scoring) {
+      List<RaceParticipant> drivers, int numLanes, HeatScoring scoring, boolean practice) {
     List<Heat> heatList = new ArrayList<>();
     if (drivers.isEmpty()) {
       return heatList;
@@ -268,13 +270,17 @@ public class HeatBuilder {
           heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
         }
       }
-      heatList.add(new Heat(h + 1, heatDrivers, scoring));
+      heatList.add(new Heat(h + 1, heatDrivers, scoring, practice));
     }
     return heatList;
   }
 
   private static List<Heat> getSingleHeatSoloHeats(
-      List<RaceParticipant> drivers, int numLanes, HeatScoring scoring, int soloLaneIndex) {
+      List<RaceParticipant> drivers,
+      int numLanes,
+      HeatScoring scoring,
+      int soloLaneIndex,
+      boolean practice) {
     List<Heat> heatList = new ArrayList<>();
     if (drivers.isEmpty()) {
       return heatList;
@@ -306,7 +312,7 @@ public class HeatBuilder {
         }
       }
 
-      heatList.add(new Heat(h + 1, heatDrivers, scoring));
+      heatList.add(new Heat(h + 1, heatDrivers, scoring, practice));
     }
     return heatList;
   }
@@ -315,7 +321,8 @@ public class HeatBuilder {
       List<RaceParticipant> drivers,
       int numLanes,
       List<CustomRotation> customRotations,
-      HeatScoring scoring) {
+      HeatScoring scoring,
+      boolean practice) {
     if (customRotations == null || customRotations.isEmpty()) {
       throw new IllegalArgumentException("No custom rotations defined");
     }
@@ -391,7 +398,7 @@ public class HeatBuilder {
           heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
         }
       }
-      heatList.add(new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring));
+      heatList.add(new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring, practice));
     }
 
     return heatList;
@@ -413,7 +420,8 @@ public class HeatBuilder {
                 numLanes,
                 getRoundRobinRotationSequence(numLanes),
                 false,
-                race.getRaceModel().getHeatScoring());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       case FriendlyRoundRobin:
         heatList =
@@ -422,7 +430,8 @@ public class HeatBuilder {
                 numLanes,
                 getRoundRobinRotationSequence(numLanes),
                 true,
-                race.getRaceModel().getHeatScoring());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       case EuropeanRoundRobin:
         heatList =
@@ -431,10 +440,16 @@ public class HeatBuilder {
                 numLanes,
                 getEuroRoundRobinRotationSequence(numLanes),
                 false,
-                race.getRaceModel().getHeatScoring());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       case SingleHeat:
-        heatList = getSingleHeatHeats(drivers, numLanes, race.getRaceModel().getHeatScoring());
+        heatList =
+            getSingleHeatHeats(
+                drivers,
+                numLanes,
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       case SingleHeatSolo:
         heatList =
@@ -442,7 +457,8 @@ public class HeatBuilder {
                 drivers,
                 numLanes,
                 race.getRaceModel().getHeatScoring(),
-                race.getRaceModel().getSoloLaneIndex());
+                race.getRaceModel().getSoloLaneIndex(),
+                race.getRaceModel().isPractice());
         break;
       case CustomRoundRobin:
         heatList =
@@ -451,12 +467,17 @@ public class HeatBuilder {
                 numLanes,
                 race.getRaceModel().getCustomRotationSequence(),
                 false,
-                race.getRaceModel().getHeatScoring());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       case Custom:
         heatList =
             getCustomHeats(
-                drivers, numLanes, customRotations, race.getRaceModel().getHeatScoring());
+                drivers,
+                numLanes,
+                customRotations,
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().isPractice());
         break;
       default:
         throw new IllegalArgumentException("Unknown HeatRotationType: " + rotationType);

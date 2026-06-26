@@ -20,12 +20,14 @@ public class HeatStandings {
   private final HeatRankingTiebreaker tieBreaker;
   private final List<DriverHeatData> driverHeatData;
   private List<String> currentStandings;
+  private final boolean practice;
 
-  public HeatStandings(List<DriverHeatData> driverHeatData, HeatScoring scoring) {
+  public HeatStandings(List<DriverHeatData> driverHeatData, HeatScoring scoring, boolean practice) {
     this.driverHeatData = new ArrayList<>(driverHeatData);
     this.scoring = scoring != null ? scoring : new HeatScoring();
     this.sortType = this.scoring.getHeatRanking();
     this.tieBreaker = this.scoring.getHeatRankingTiebreaker();
+    this.practice = practice;
     this.currentStandings = this.calculateStandings();
   }
 
@@ -62,7 +64,7 @@ public class HeatStandings {
               .orElse(null);
       if (dhd != null) {
         boolean isEmpty = dhd.getActualDriver() == null || dhd.getActualDriver().isEmpty();
-        int rank = isEmpty ? 99 : currentRank++;
+        int rank = isEmpty || practice ? 99 : currentRank++;
 
         updateBuilder.addUpdates(
             HeatPositionUpdate.newBuilder()
@@ -83,10 +85,13 @@ public class HeatStandings {
   }
 
   private List<String> calculateStandings() {
-    List<DriverHeatData> sortedDrivers =
-        driverHeatData.stream().sorted(getComparator()).collect(Collectors.toList());
-
-    calculateGaps(sortedDrivers);
+    List<DriverHeatData> sortedDrivers;
+    if (practice) {
+      sortedDrivers = new ArrayList<>(driverHeatData);
+    } else {
+      sortedDrivers = driverHeatData.stream().sorted(getComparator()).collect(Collectors.toList());
+      calculateGaps(sortedDrivers);
+    }
 
     List<String> standings =
         sortedDrivers.stream().map(DriverHeatData::getObjectId).collect(Collectors.toList());

@@ -24,6 +24,8 @@ export class ViewerRaceEndedHandler {
     },
   ) {}
 
+  private previousState: string | null = null;
+
   public startListening() {
     const onlyForViewer = this.options?.onlyForViewer ?? true;
 
@@ -35,28 +37,33 @@ export class ViewerRaceEndedHandler {
       if (state) {
         if (state.resourceLockState === "IDLE") {
           this.raceHasEnded = true;
-          this.ackModalTitle = "RD_RACE_ENDED_TITLE";
-          this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
-          this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
-          this.showAckModal = true;
-          if (this.options?.onRaceEnded) {
-            this.options.onRaceEnded();
-          }
-          this.cdr.markForCheck();
-        } else if (state.resourceLockState === "RACE_RUNNING") {
-          if (this.raceHasEnded) {
-            this.raceHasEnded = false;
-            this.ackModalTitle = "RD_RACE_STARTED_TITLE";
-            this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
-            this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
+          if (this.previousState === "RACE_RUNNING") {
+            this.ackModalTitle = "RD_RACE_ENDED_TITLE";
+            this.ackModalMessage = "RD_RACE_ENDED_MESSAGE";
+            this.ackModalButtonText = "RD_RACE_ENDED_BTN_OK";
             this.showAckModal = true;
-            this.dataService.updateRaceSubscription(true);
-            if (this.options?.onRaceStarted) {
-              this.options.onRaceStarted();
+            if (this.options?.onRaceEnded) {
+              this.options.onRaceEnded();
             }
             this.cdr.markForCheck();
           }
+        } else if (state.resourceLockState === "RACE_RUNNING") {
+          if (this.raceHasEnded || this.previousState === "IDLE") {
+            this.raceHasEnded = false;
+            if (this.previousState === "IDLE") {
+              this.ackModalTitle = "RD_RACE_STARTED_TITLE";
+              this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
+              this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
+              this.showAckModal = true;
+              this.dataService.updateRaceSubscription(true);
+              if (this.options?.onRaceStarted) {
+                this.options.onRaceStarted();
+              }
+              this.cdr.markForCheck();
+            }
+          }
         }
+        this.previousState = state.resourceLockState;
       }
     });
   }

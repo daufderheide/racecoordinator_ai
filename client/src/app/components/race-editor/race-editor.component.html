@@ -218,6 +218,21 @@
                       data-testid="drift-time-input"
                     />
                   </div>
+                  <div class="config-section checkbox-section">
+                    <label class="checkbox-container">
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingRace.practice"
+                        (ngModelChange)="captureState()"
+                        class="practice-input"
+                        data-testid="practice-input"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">
+                        {{ "RE_PRACTICE" | translate }}
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </div>
             }
@@ -450,7 +465,7 @@
                             type="number"
                             [(ngModel)]="editingRace.heat_scoring.finish_value"
                             (ngModelChange)="captureState()"
-                            min="1"
+                            min="0"
                             max="3600"
                           />
                         </div>

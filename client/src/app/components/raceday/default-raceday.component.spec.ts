@@ -251,6 +251,27 @@ describe("DefaultRacedayComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  describe("practice mode teammates", () => {
+    it("should return empty driver and other drivers for getTeammates in practice mode", () => {
+      component["race"] = { ...component["race"], practice: true } as any;
+      component["allDrivers"] = [
+        { entity_id: "id1", name: "Driver 1" },
+        { entity_id: "id2", name: "Driver 2" },
+      ] as any;
+      component["participants"] = [{ driver: { entity_id: "id1" } }] as any;
+
+      const teammates = component.getTeammates({});
+      expect(teammates.length).toBe(2);
+      expect(teammates[0].entity_id).toBe("EMPTY_LANE");
+      expect(teammates[1].entity_id).toBe("id1");
+    });
+
+    it("isTeam should be true if practice is true", () => {
+      component["race"] = { ...component["race"], practice: true } as any;
+      expect(component.isTeam({})).toBeTrue();
+    });
+  });
+
   it("should disconnect from race on destroy, passing force=false when not navigating to raceday-setup", () => {
     fixture.detectChanges();
     fixture.destroy();
@@ -644,7 +665,61 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["showAddLapSectionsDialog"]).toBeTrue();
       expect(component["isMenuModeForAddLap"]).toBeTrue();
+      expect(component["showAddLapSectionsDialog"]).toBeTrue();
+      expect(component["isMenuModeForAddLap"]).toBeTrue();
       expect(component["selectedHeatDriver"]).toBeNull();
+    });
+
+    it("should call resetLane and handle success", () => {
+      mockDataService.resetLaneHeatData.and.returnValue(of(true));
+      const mockEvent = new MouseEvent("click");
+      spyOn(mockEvent, "stopPropagation");
+
+      component.resetLane(2, mockEvent);
+
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(2);
+    });
+
+    it("should call resetLane and handle error", () => {
+      const subject = new Subject<any>();
+      mockDataService.resetLaneHeatData.and.returnValue(subject.asObservable());
+      const mockEvent = new MouseEvent("click");
+      spyOn(mockEvent, "stopPropagation");
+      fixture.detectChanges();
+
+      component.resetLane(2, mockEvent);
+      subject.error({ error: "Custom Error" });
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_ERR_RESET_LANE_TITLE");
+      expect(component.ackModalMessage).toBe("Custom Error");
+    });
+
+    it("should call resetAllLanes and handle success", () => {
+      mockDataService.resetLaneHeatData.and.returnValue(of(true));
+      const mockEvent = new MouseEvent("click");
+      spyOn(mockEvent, "stopPropagation");
+
+      component.resetAllLanes(mockEvent);
+
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith("all");
+    });
+
+    it("should call resetAllLanes and handle error", () => {
+      const subject = new Subject<any>();
+      mockDataService.resetLaneHeatData.and.returnValue(subject.asObservable());
+      const mockEvent = new MouseEvent("click");
+      spyOn(mockEvent, "stopPropagation");
+      fixture.detectChanges();
+
+      component.resetAllLanes(mockEvent);
+      subject.error({ error: "Reset All Error" });
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_ERR_RESET_ALL_TITLE");
+      expect(component.ackModalMessage).toBe("Reset All Error");
     });
 
     it("should call updateHeatUserLaps on confirm in menu mode", () => {
@@ -863,6 +938,41 @@ describe("DefaultRacedayComponent", () => {
       expect(result[1].entity_id).toBe("driver3");
       expect(result[2].entity_id).toBe("driver4");
       expect(result[3].entity_id).toBe("driver1");
+    });
+
+    it("should return all drivers plus EMPTY_LANE if race is practice", () => {
+      component["allDrivers"] = [
+        { entity_id: "driver1", name: "Driver 1" },
+        { entity_id: "driver2", name: "Driver 2" },
+      ] as any;
+      component["participants"] = [
+        { driver: { entity_id: "driver1" } },
+        { driver: { entity_id: "driver2" } },
+      ] as any;
+      component["race"] = { practice: true } as any;
+
+      const result = component.getTeammates({});
+      expect(result.length).toBe(3);
+      expect(result[0].entity_id).toBe("EMPTY_LANE");
+      expect(result[1].entity_id).toBe("driver1");
+      expect(result[2].entity_id).toBe("driver2");
+    });
+  });
+
+  describe("isTeam", () => {
+    it("should return true if driver is on a team", () => {
+      expect(component.isTeam({ participant: { team: {} } })).toBeTrue();
+      expect(component.isTeam({ driver: { team: {} } })).toBeTrue();
+    });
+
+    it("should return true if race is practice", () => {
+      component["race"] = { practice: true } as any;
+      expect(component.isTeam({})).toBeTrue();
+    });
+
+    it("should return false otherwise", () => {
+      component["race"] = { practice: false } as any;
+      expect(component.isTeam({})).toBeFalse();
     });
   });
 
@@ -3269,6 +3379,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showAckModal).toBeFalse();
       expect(component.raceHasEnded).toBeFalse();
 
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
       systemStateSubject.next({ resourceLockState: "IDLE" });
 
       expect(component.raceHasEnded).toBeTrue();
@@ -3284,6 +3395,7 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
       const systemStateSubject = mockDataService.getSystemState();
 
+      systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
       systemStateSubject.next({ resourceLockState: "IDLE" });
       expect(component.raceHasEnded).toBeTrue();
       expect(component.showAckModal).toBeTrue();

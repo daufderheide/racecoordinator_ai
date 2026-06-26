@@ -148,7 +148,7 @@ public class RacePersistenceTest {
     List<DriverHeatData> heatDrivers = new ArrayList<>();
     heatDrivers.add(new DriverHeatData(deserializedRp));
     List<Heat> heats = new ArrayList<>();
-    heats.add(new Heat(1, heatDrivers));
+    heats.add(new Heat(1, heatDrivers, new HeatScoring(), false));
 
     // Build the race with these heats
     com.antigravity.race.Race restoredRace =

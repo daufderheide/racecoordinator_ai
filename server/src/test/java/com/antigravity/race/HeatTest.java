@@ -18,7 +18,7 @@ public class HeatTest {
     drivers.add(createMockDriver("d1"));
     drivers.add(createMockDriver("d2"));
 
-    Heat heat = new Heat(1, drivers, new HeatScoring());
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(2, heat.getActiveDriverCount());
   }
 
@@ -28,7 +28,7 @@ public class HeatTest {
     drivers.add(createMockDriver("d1"));
     drivers.add(createMockDriver(null)); // Empty driver (no entityId)
 
-    Heat heat = new Heat(1, drivers, new HeatScoring());
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(1, heat.getActiveDriverCount());
   }
 
@@ -39,7 +39,7 @@ public class HeatTest {
     drivers.add(createMockDriver(null));
     drivers.add(createMockDriver("d3"));
 
-    Heat heat = new Heat(1, drivers, new HeatScoring());
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(2, heat.getActiveDriverCount());
   }
 
@@ -49,7 +49,7 @@ public class HeatTest {
     drivers.add(createMockDriver(null));
     drivers.add(createMockDriver(null));
 
-    Heat heat = new Heat(1, drivers, new HeatScoring());
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(0, heat.getActiveDriverCount());
   }
 
@@ -59,7 +59,7 @@ public class HeatTest {
     drivers.add(createMockDriver("d1"));
     drivers.add(createMockDriver(Driver.EMPTY_DRIVER_ID));
 
-    Heat heat = new Heat(1, drivers, new HeatScoring());
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(1, heat.getActiveDriverCount());
   }
 

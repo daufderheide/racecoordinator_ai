@@ -78,6 +78,9 @@ describe("ViewerRaceEndedHandler", () => {
     );
     handler.startListening();
 
+    systemStateSubject.next({
+      resourceLockState: "RACE_RUNNING",
+    } as SystemState);
     systemStateSubject.next({ resourceLockState: "IDLE" } as SystemState);
 
     expect(handler.showAckModal).toBeTrue();
@@ -98,6 +101,9 @@ describe("ViewerRaceEndedHandler", () => {
     );
     handler.startListening();
 
+    systemStateSubject.next({
+      resourceLockState: "RACE_RUNNING",
+    } as SystemState);
     systemStateSubject.next({ resourceLockState: "IDLE" } as SystemState);
 
     expect(handler.showAckModal).toBeTrue();
@@ -150,6 +156,9 @@ describe("ViewerRaceEndedHandler", () => {
     );
     handler.startListening();
 
+    systemStateSubject.next({
+      resourceLockState: "RACE_RUNNING",
+    } as SystemState);
     systemStateSubject.next({ resourceLockState: "IDLE" } as SystemState);
     expect(handler.showAckModal).toBeTrue();
 

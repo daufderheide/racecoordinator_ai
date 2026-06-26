@@ -158,9 +158,11 @@ public class Racing implements IRaceState {
               lastTime = now;
 
               HeatScoring scoring = race.getRaceModel().getHeatScoring();
+              long limit = scoring != null ? scoring.getFinishValue() : 0;
               boolean isTimed = scoring != null && scoring.getFinishMethod() == FinishMethod.Timed;
+              boolean isInfiniteTimed = isTimed && limit <= 0;
 
-              if (isTimed) {
+              if (isTimed && !isInfiniteTimed) {
                 race.addRaceTime(-delta);
               } else {
                 race.addRaceTime(delta);
@@ -196,7 +198,7 @@ public class Racing implements IRaceState {
               if (scoring != null) {
                 Set<Integer> finishedLanes = executionManager.getFinishedLanes();
                 if (isTimed) {
-                  if (race.getRaceTime() <= 0) {
+                  if (!isInfiniteTimed && race.getRaceTime() <= 0) {
                     race.resetRaceTime();
                     if (allowFinish == AllowFinish.None
                         || allowFinish == AllowFinish.NoneAutoSegments) {
@@ -211,7 +213,6 @@ public class Racing implements IRaceState {
                   }
                 } else {
                   // Lap based
-                  long limit = scoring.getFinishValue();
                   if (allowFinish == AllowFinish.None
                       || allowFinish == AllowFinish.NoneAutoSegments) {
                     if (race.getCurrentHeat().getDrivers() != null) {
@@ -235,10 +236,11 @@ public class Racing implements IRaceState {
               // Update heat progress
               if (scoring != null) {
                 double currentProgress = 0;
-                long limit = scoring.getFinishValue();
-                if (limit > 0) {
+                long limitValue = scoring.getFinishValue();
+                if (limitValue > 0) {
                   if (scoring.getFinishMethod() == FinishMethod.Timed) {
-                    currentProgress = Math.min(1.0, (limit - race.getRaceTime()) / (double) limit);
+                    currentProgress =
+                        Math.min(1.0, (limitValue - race.getRaceTime()) / (double) limitValue);
                   } else {
                     int maxLaps = 0;
                     if (race.getCurrentHeat().getDrivers() != null) {
@@ -246,8 +248,11 @@ public class Racing implements IRaceState {
                         maxLaps = Math.max(maxLaps, driver.getLapCount());
                       }
                     }
-                    currentProgress = Math.min(1.0, (double) maxLaps / limit);
+                    currentProgress = Math.min(1.0, (double) maxLaps / limitValue);
                   }
+                } else if (isInfiniteTimed) {
+                  // For infinite timed races, progress stays at 0
+                  currentProgress = 0.0;
                 }
 
                 // Update if changed significantly or at the very end

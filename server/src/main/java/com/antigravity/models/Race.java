@@ -144,6 +144,10 @@ public class Race extends Model {
   @JsonAlias("startBehindSensor")
   private final boolean startBehindSensor;
 
+  @BsonProperty("practice")
+  @JsonProperty("practice")
+  private final boolean practice;
+
   @BsonCreator
   @JsonCreator
   public Race(
@@ -236,6 +240,7 @@ public class Race extends Model {
           @JsonProperty("start_behind_sensor")
           @JsonAlias("startBehindSensor")
           Boolean startBehindSensor,
+      @BsonProperty("practice") @JsonProperty("practice") @JsonAlias("practice") Boolean practice,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -274,6 +279,7 @@ public class Race extends Model {
     this.falseStartTimePenalty = falseStartTimePenalty != null ? falseStartTimePenalty : 0.0;
     this.groupOptions = groupOptions != null ? groupOptions : new GroupOptions();
     this.startBehindSensor = startBehindSensor != null ? startBehindSensor : true;
+    this.practice = practice != null ? practice : false;
   }
 
   public static class Builder {
@@ -308,6 +314,7 @@ public class Race extends Model {
     private double falseStartTimePenalty = 0.0;
     private GroupOptions groupOptions = new GroupOptions();
     private boolean startBehindSensor = true;
+    private boolean practice = false;
     private String entityId;
     private ObjectId id;
 
@@ -342,6 +349,7 @@ public class Race extends Model {
       this.falseStartTimePenalty = other.getFalseStartTimePenalty();
       this.groupOptions = other.getGroupOptions();
       this.startBehindSensor = other.isStartBehindSensor();
+      this.practice = other.isPractice();
       this.entityId = other.getEntityId();
       this.id = other.getId();
       return this;
@@ -497,6 +505,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withPractice(boolean practice) {
+      this.practice = practice;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -540,6 +553,7 @@ public class Race extends Model {
           falseStartTimePenalty,
           groupOptions,
           startBehindSensor,
+          practice,
           entityId,
           id);
     }
@@ -674,5 +688,9 @@ public class Race extends Model {
   @BsonProperty("start_behind_sensor")
   public boolean isStartBehindSensor() {
     return startBehindSensor;
+  }
+
+  public boolean isPractice() {
+    return practice;
   }
 }

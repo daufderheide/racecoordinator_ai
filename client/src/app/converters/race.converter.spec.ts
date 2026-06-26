@@ -95,4 +95,27 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.start_behind_sensor).toBeTrue();
   });
+
+  it("should map practice from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r8" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      practice: true,
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.practice).toBeTrue();
+  });
+
+  it("should default practice to false if missing in proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r9" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.practice).toBeFalse();
+  });
 });

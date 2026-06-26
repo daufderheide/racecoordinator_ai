@@ -2226,6 +2226,36 @@ export class DefaultRacedayComponent
     });
   }
 
+  resetLane(lane: number, event: Event) {
+    event.stopPropagation();
+    this.dataService.resetLaneHeatData(lane).subscribe({
+      next: () => {
+        this.logger.debug(`Reset lane ${lane}`);
+      },
+      error: (err) => {
+        this.logger.error(`Error resetting lane ${lane}:`, err);
+        this.ackModalTitle = "RD_ERR_RESET_LANE_TITLE";
+        this.ackModalMessage = err.error || "RD_ERR_RESET_LANE_MESSAGE";
+        this.showAckModal = true;
+      },
+    });
+  }
+
+  resetAllLanes(event: Event) {
+    event.stopPropagation();
+    this.dataService.resetLaneHeatData("all").subscribe({
+      next: () => {
+        this.logger.debug(`Reset all lanes`);
+      },
+      error: (err) => {
+        this.logger.error(`Error resetting all lanes:`, err);
+        this.ackModalTitle = "RD_ERR_RESET_ALL_TITLE";
+        this.ackModalMessage = err.error || "RD_ERR_RESET_ALL_MESSAGE";
+        this.showAckModal = true;
+      },
+    });
+  }
+
   async exportToCsv() {
     try {
       const suggestedName = `race_export_${this.race?.name || "data"}.csv`;
@@ -2957,10 +2987,30 @@ export class DefaultRacedayComponent
   }
 
   isTeam(hd: DriverHeatData | any): boolean {
-    return !!(hd?.participant?.team || hd?.driver?.team);
+    return (
+      !!(hd?.participant?.team || hd?.driver?.team) || !!this.race?.practice
+    );
   }
 
   getTeammates(hd: DriverHeatData | any): any[] {
+    if (this.race?.practice) {
+      const emptyDriver = {
+        name: this.translationService.translate("RD_EMPTY_LANE"),
+        nickname: "",
+        entity_id: "EMPTY_LANE",
+        id: "EMPTY_LANE",
+      };
+      const raceDrivers = this.participants
+        .map((p) =>
+          this.allDrivers.find(
+            (d) =>
+              (d.entity_id || d.id) ===
+              (p.driver?.entity_id || (p as any).driverId),
+          ),
+        )
+        .filter((d) => !!d);
+      return [emptyDriver, ...raceDrivers];
+    }
     const team = hd.participant?.team || hd.driver?.team;
     if (team && team.driverIds) {
       return team.driverIds
@@ -2975,22 +3025,27 @@ export class DefaultRacedayComponent
   onTeammateChange(hd: DriverHeatData, event: any) {
     const driverId = event.target.value;
     const lane = hd.laneIndex;
-    this.dataService.changeActualDriver(lane, driverId).subscribe({
-      next: () => {
-        this.logger.debug(`Teammate changed for lane ${lane} to ${driverId}`);
-      },
-      error: (err) => {
-        this.logger.error(`Error changing teammate for lane ${lane}:`, err);
-        this.ackModalTitle = "RD_ERR_DRIVER_CHANGE_TITLE";
-        this.ackModalMessage = err.error || "RD_ERR_DRIVER_CHANGE_MESSAGE";
-        this.showAckModal = true;
-        // Rollback select value
-        if (event.target) {
-          event.target.value =
-            hd.actualDriver?.entity_id || hd.driver?.entity_id;
-        }
-      },
-    });
+
+    const doChange = () => {
+      this.dataService.changeActualDriver(lane, driverId).subscribe({
+        next: () => {
+          this.logger.debug(`Teammate changed for lane ${lane} to ${driverId}`);
+        },
+        error: (err) => {
+          this.logger.error(`Error changing teammate for lane ${lane}:`, err);
+          this.ackModalTitle = "RD_ERR_DRIVER_CHANGE_TITLE";
+          this.ackModalMessage = err.error || "RD_ERR_DRIVER_CHANGE_MESSAGE";
+          this.showAckModal = true;
+          // Rollback select value
+          if (event.target) {
+            event.target.value =
+              hd.actualDriver?.entity_id || hd.driver?.entity_id;
+          }
+        },
+      });
+    };
+
+    doChange();
   }
 
   onNextHeatTeammateChange(hd: DriverHeatData, event: any, heatNumber: number) {

@@ -15,12 +15,17 @@ public class OverallStandings {
   private final HeatScoring heatScoring;
   private final OverallScoring overallScoring;
   private final GroupOptions groupOptions;
+  private final boolean practice;
 
   public OverallStandings(
-      HeatScoring heatScoring, OverallScoring overallScoring, GroupOptions groupOptions) {
+      HeatScoring heatScoring,
+      OverallScoring overallScoring,
+      GroupOptions groupOptions,
+      boolean practice) {
     this.heatScoring = heatScoring;
     this.overallScoring = overallScoring;
     this.groupOptions = groupOptions;
+    this.practice = practice;
   }
 
   public int getDroppedHeats() {
@@ -94,10 +99,12 @@ public class OverallStandings {
     }
 
     // 3. Rank drivers
-    if (groupOptions != null && groupOptions.isEnabled() && groupOptions.getMinAdvancing() > 0) {
-      rankWithMinAdvancing(drivers, heats);
-    } else {
-      drivers.sort(getComparator());
+    if (!practice) {
+      if (groupOptions != null && groupOptions.isEnabled() && groupOptions.getMinAdvancing() > 0) {
+        rankWithMinAdvancing(drivers, heats);
+      } else {
+        drivers.sort(getComparator());
+      }
     }
 
     // 4. Assign ranks
@@ -105,7 +112,7 @@ public class OverallStandings {
     for (int i = 0; i < drivers.size(); i++) {
       RaceParticipant driver = drivers.get(i);
       boolean isEmpty = driver.getDriver() != null && driver.getDriver().isEmpty();
-      driver.setRank(isEmpty ? 99 : currentRank++);
+      driver.setRank(isEmpty || practice ? 99 : currentRank++);
 
       double rankValue = 0;
       if (overallScoring != null && overallScoring.getRankingMethod() != null) {

@@ -80,6 +80,19 @@ describe("DataService", () => {
     req.flush({ adjustedLapCount: 1.25 });
   });
 
+  it("should call resetLaneHeatData endpoint", (done) => {
+    service.resetLaneHeatData(2).subscribe((response) => {
+      expect(response).toBeTrue();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/races/current-heat/drivers/2/reset"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush({});
+  });
+
   it("should not close websocket if server address has not changed", () => {
     service["serverIp"] = "192.168.1.10";
     service["serverPort"] = 4200;

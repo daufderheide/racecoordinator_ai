@@ -167,6 +167,14 @@ public class ClientSubscriptionManager {
         logger.warn("Snapshot MISSING Current Heat!");
       }
       ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
+    } else {
+      com.antigravity.proto.SystemState sysState = // fqn-collision
+          com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+              .setResourceLockState("IDLE")
+              .setOwnerId("")
+              .build();
+      RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
+      ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
     }
   }
 
@@ -308,6 +316,10 @@ public class ClientSubscriptionManager {
       cancelPendingCleanup();
       deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
       setRace(null);
+    } else {
+      logger.info(
+          "Force stop requested, but no race running. Broadcasting IDLE state to resync clients.");
+      broadcastSystemState("IDLE", "");
     }
   }
 

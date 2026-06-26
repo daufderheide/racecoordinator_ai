@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.race.DriverHeatData;
@@ -84,7 +85,7 @@ public class DriverStatisticsTest {
     DriverHeatData hd1_p2 = new DriverHeatData(p2);
     hd1_p2.addLap(6.2, false); // Best lap 6.2, lap count 1
 
-    Heat heat1 = new Heat(1, Arrays.asList(hd1_p1, hd1_p2));
+    Heat heat1 = new Heat(1, Arrays.asList(hd1_p1, hd1_p2), new HeatScoring(), false);
     heat1.setStarted(true);
 
     // Heat 2: p2 in Lane 0, p1 in Lane 1
@@ -95,7 +96,7 @@ public class DriverStatisticsTest {
     hd2_p1.addLap(5.2, false);
     hd2_p1.addLap(5.4, false); // Best lap 5.2, lap count 2
 
-    Heat heat2 = new Heat(2, Arrays.asList(hd2_p2, hd2_p1));
+    Heat heat2 = new Heat(2, Arrays.asList(hd2_p2, hd2_p1), new HeatScoring(), false);
     heat2.setStarted(true);
 
     Race runtimeRace =
@@ -291,13 +292,13 @@ public class DriverStatisticsTest {
     DriverHeatData hd1_pEmpty = new DriverHeatData(pEmpty);
     hd1_pEmpty.addLap(6.2, false); // Best lap 6.2, lap count 1
 
-    Heat heat1 = new Heat(1, Arrays.asList(hd1_p1, hd1_pEmpty));
+    Heat heat1 = new Heat(1, Arrays.asList(hd1_p1, hd1_pEmpty), new HeatScoring(), false);
     heat1.setStarted(true); // Mark as started
 
     // Heat 2: NOT started
     DriverHeatData hd2_pEmpty = new DriverHeatData(pEmpty);
     DriverHeatData hd2_p1 = new DriverHeatData(p1);
-    Heat heat2 = new Heat(2, Arrays.asList(hd2_pEmpty, hd2_p1));
+    Heat heat2 = new Heat(2, Arrays.asList(hd2_pEmpty, hd2_p1), new HeatScoring(), false);
     // Do NOT call heat2.start()
 
     Race runtimeRace =

@@ -388,6 +388,12 @@ export class RaceConnectionService implements OnDestroy {
 
     this.raceService.clear();
 
+    // Reset subjects to prevent old state from immediately firing on reconnect
+    this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
+    this.raceFlagSubject.next(RaceFlag.UNKNOWN_FLAG);
+    this.raceTimeSubject.next({ time: 0 });
+    this.recordDataSubject.next(null);
+
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
     this.clearDisconnectedError();
   }

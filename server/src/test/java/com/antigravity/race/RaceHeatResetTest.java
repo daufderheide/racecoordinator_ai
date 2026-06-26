@@ -71,7 +71,7 @@ public class RaceHeatResetTest {
     // 2. Advance to next heat (simulated by setCurrentHeat)
     // In a real scenario, this is called by Race.nextHeat()
     Heat nextHeat =
-        new Heat(1, new ArrayList<>(), new com.antigravity.models.HeatScoring()); // Heat 2
+        new Heat(1, new ArrayList<>(), new com.antigravity.models.HeatScoring(), false); // Heat 2
     race.setCurrentHeat(nextHeat);
 
     // 3. Verify heat record is reset to 0

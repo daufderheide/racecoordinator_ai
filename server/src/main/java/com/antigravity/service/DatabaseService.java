@@ -803,7 +803,8 @@ public class DatabaseService {
                     // Re-initialize transient standings after load
                     if (race.getHeats() != null && race.getModel() != null) {
                       for (Heat heat : race.getHeats()) {
-                        heat.initializeStandings(race.getModel().getHeatScoring());
+                        heat.initializeStandings(
+                            race.getModel().getHeatScoring(), race.getModel().isPractice());
                       }
                     }
 

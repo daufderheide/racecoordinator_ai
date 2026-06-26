@@ -337,7 +337,10 @@ public class RaceHeatManager {
     }
     com.antigravity.race.Heat newHeat = // fqn-collision
         new com.antigravity.race.Heat( // fqn-collision
-            protoHeat.getHeatNumber(), newHeatDrivers, this.race.getRaceModel().getHeatScoring());
+            protoHeat.getHeatNumber(),
+            newHeatDrivers,
+            this.race.getRaceModel().getHeatScoring(),
+            this.race.getRaceModel().isPractice());
     newHeat.setObjectId(protoHeat.getObjectId());
     newHeat.setStarted(protoHeat.getStarted());
     newHeat.setGroup(protoHeat.getGroup());

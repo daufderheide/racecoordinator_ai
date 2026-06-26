@@ -34,6 +34,7 @@ export class Race implements Model {
   readonly false_start_lap_penalty: number;
   readonly false_start_time_penalty: number;
   readonly group_options: GroupOptions;
+  readonly practice: boolean;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
@@ -76,6 +77,7 @@ export class Race implements Model {
     false_start_lap_penalty: number = 0,
     false_start_time_penalty: number = 0,
     group_options: GroupOptions = new GroupOptions(),
+    practice: boolean = false,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -108,6 +110,7 @@ export class Race implements Model {
     this.false_start_lap_penalty = false_start_lap_penalty;
     this.false_start_time_penalty = false_start_time_penalty;
     this.group_options = group_options;
+    this.practice = practice;
   }
 
   get objectId(): string {

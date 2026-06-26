@@ -228,6 +228,7 @@ export class RaceConverter {
                   0,
               )
             : new GroupOptions(),
+          p.practice || false,
         );
       },
       () => {

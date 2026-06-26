@@ -71,6 +71,29 @@
             "
           >
             {{ parent().getColumnLabel(col) }}
+            @if (
+              parent().isNameProperty(col.propertyName) &&
+              parent().race?.practice &&
+              (parent().authService.currentRole$ | async) !==
+                parent().Role.VIEWER
+            ) {
+              <button
+                class="material-icons reset-all-btn"
+                title="{{ 'RD_RESET_ALL_LANES_TOOLTIP' | translate }}"
+                style="
+                  background: none;
+                  border: none;
+                  color: inherit;
+                  font-size: 16px;
+                  cursor: pointer;
+                  margin-left: 8px;
+                  padding: 0;
+                "
+                (click)="parent().resetAllLanes($event)"
+              >
+                refresh
+              </button>
+            }
           </div>
 
           @if (parent().isUIEditorMode()) {
@@ -176,7 +199,10 @@
                 parent().isLapCountColumnClickable(hd, col)
                   ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
                   : parent().isTeamDriverSwapActive(hd, col)
-                    ? ('RD_TEAM_DRIVER_TOOLTIP' | translate)
+                    ? ((parent().race?.practice
+                        ? 'RD_PRACTICE_DRIVER_TOOLTIP'
+                        : 'RD_TEAM_DRIVER_TOOLTIP'
+                      ) | translate)
                     : null
               "
               [style.background]="parent().getLaneColor(hd, 'background_color')"
@@ -277,10 +303,21 @@
                             [style.background-image]="
                               parent().getDropdownArrowBg(hd)
                             "
+                            [style.background-position]="
+                              parent().race?.practice
+                                ? 'right top'
+                                : 'right center'
+                            "
                             [disabled]="parent().isDriverSwapDisabled(hd)"
-                            (change)="parent().onTeammateChange(hd, $event)"
+                            (change)="
+                              parent().onTeammateChange(hd, $event);
+                              $any($event.target)?.blur()
+                            "
                           >
-                            @for (tm of parent().getTeammates(hd); track tm) {
+                            @for (
+                              tm of parent().getTeammates(hd);
+                              track $any(tm).entity_id || $any(tm).id
+                            ) {
                               <option
                                 [value]="$any(tm).entity_id || $any(tm).id"
                                 [selected]="
@@ -294,15 +331,39 @@
                                     ? $any(tm).nickname || $any(tm).name
                                     : $any(tm).name
                                 }}
-                                {{
-                                  parent().getDriverStats(
-                                    hd,
-                                    $any(tm).entity_id || $any(tm).id
-                                  )
-                                }}
+                                @if (!parent().race?.practice) {
+                                  {{
+                                    parent().getDriverStats(
+                                      hd,
+                                      $any(tm).entity_id || $any(tm).id
+                                    )
+                                  }}
+                                }
                               </option>
                             }
                           </select>
+                          @if (parent().race?.practice) {
+                            <button
+                              class="material-icons reset-lane-btn"
+                              title="{{ 'RD_RESET_LANE_TOOLTIP' | translate }}"
+                              style="
+                                position: absolute;
+                                right: 4px;
+                                bottom: 0;
+                                background: none;
+                                border: none;
+                                color: inherit;
+                                font-size: 36px;
+                                cursor: pointer;
+                                margin: 0;
+                                padding: 0;
+                                z-index: 10;
+                              "
+                              (click)="parent().resetLane(hd.laneIndex, $event)"
+                            >
+                              refresh
+                            </button>
+                          }
                         }
                       </div>
                     }

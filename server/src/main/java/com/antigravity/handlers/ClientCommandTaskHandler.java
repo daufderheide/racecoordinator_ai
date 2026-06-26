@@ -109,6 +109,8 @@ public class ClientCommandTaskHandler {
         this::changeActualDriver,
         Role.DIRECTOR);
     app.post(
+        "/api/races/current-heat/drivers/{lane}/reset", this::resetLaneHeatData, Role.DIRECTOR);
+    app.post(
         "/api/races/heats/{heatNumber}/drivers/{lane}/actual-driver",
         this::changeHeatActualDriver,
         Role.DIRECTOR);
@@ -876,6 +878,44 @@ public class ClientCommandTaskHandler {
     }
   }
 
+  private void resetLaneHeatData(Context ctx) {
+    try {
+      String laneParam = ctx.pathParam("lane");
+      int lane = "all".equalsIgnoreCase(laneParam) ? -1 : Integer.parseInt(laneParam);
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+
+      Heat currentHeat = race.getCurrentHeat();
+      if (currentHeat == null) {
+        ctx.status(404).result("No active heat found");
+        return;
+      }
+
+      List<DriverHeatData> drivers = currentHeat.getDrivers();
+      if (lane == -1) {
+        for (DriverHeatData dhd : drivers) {
+          dhd.reset();
+        }
+      } else if (lane >= 0 && lane < drivers.size()) {
+        drivers.get(lane).reset();
+      } else {
+        ctx.status(400).result("Invalid lane index: " + lane);
+        return;
+      }
+
+      race.updateAndBroadcastOverallStandings();
+      race.broadcast(race.createSnapshot());
+      ctx.status(200);
+    } catch (Exception e) {
+      logger.error("Error resetting heat data", e);
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
   @SuppressWarnings("unchecked")
   private void changeActualDriver(Context ctx) {
     try {
@@ -898,6 +938,9 @@ public class ClientCommandTaskHandler {
             dbService.getDrivers(
                 databaseContext.getDatabase(), Collections.singletonList(driverId));
         Driver driver = driversList.isEmpty() ? null : driversList.get(0);
+        if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
+          driver = Driver.EMPTY_DRIVER;
+        }
 
         if (driver != null) {
           TeamOptions options = race.getRaceModel().getTeamOptions();
@@ -917,6 +960,32 @@ public class ClientCommandTaskHandler {
               return;
             }
           }
+
+          if (race.getRaceModel().isPractice() && driver != null) {
+            for (DriverHeatData otherDhd : drivers) {
+              if (otherDhd != dhd && !Driver.EMPTY_DRIVER_ID.equals(driverId)) {
+                boolean matchesActual =
+                    otherDhd.getActualDriver() != null
+                        && otherDhd.getActualDriver().getEntityId() != null
+                        && otherDhd.getActualDriver().getEntityId().equals(driverId);
+
+                boolean matchesScheduled =
+                    otherDhd.getDriver() != null
+                        && otherDhd.getDriver().getDriver() != null
+                        && otherDhd.getDriver().getDriver().getEntityId() != null
+                        && otherDhd.getDriver().getDriver().getEntityId().equals(driverId);
+
+                if (matchesActual || matchesScheduled) {
+                  otherDhd.setActualDriver(Driver.EMPTY_DRIVER);
+                  otherDhd.setDriver(new RaceParticipant(Driver.EMPTY_DRIVER));
+                  otherDhd.reset();
+                }
+              }
+            }
+            dhd.reset();
+            dhd.setDriver(new RaceParticipant(driver));
+          }
+
           dhd.setActualDriver(driver);
           race.updateAndBroadcastOverallStandings();
           race.broadcast(race.createSnapshot());
@@ -968,6 +1037,9 @@ public class ClientCommandTaskHandler {
             dbService.getDrivers(
                 databaseContext.getDatabase(), Collections.singletonList(driverId));
         Driver driver = driversList.isEmpty() ? null : driversList.get(0);
+        if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
+          driver = Driver.EMPTY_DRIVER;
+        }
 
         if (driver != null) {
           if (heatNumber == race.getCurrentHeat().getHeatNumber()) {
@@ -989,6 +1061,21 @@ public class ClientCommandTaskHandler {
               }
             }
           }
+
+          if (race.getRaceModel().isPractice() && driver != null) {
+            for (DriverHeatData otherDhd : drivers) {
+              if (otherDhd != dhd
+                  && otherDhd.getActualDriver() != null
+                  && otherDhd.getActualDriver().getEntityId() != null
+                  && otherDhd.getActualDriver().getEntityId().equals(driverId)
+                  && !Driver.EMPTY_DRIVER_ID.equals(driverId)) {
+                otherDhd.setActualDriver(Driver.EMPTY_DRIVER);
+                otherDhd.reset();
+              }
+            }
+            dhd.reset();
+          }
+
           dhd.setActualDriver(driver);
           race.updateAndBroadcastOverallStandings();
           race.broadcast(race.createSnapshot());
@@ -1042,7 +1129,8 @@ public class ClientCommandTaskHandler {
           dhd.setUserLaps(value);
 
           // Recalculate standings because laps changed
-          currentHeat.initializeStandings(race.getRaceModel().getHeatScoring());
+          currentHeat.initializeStandings(
+              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
           race.updateAndBroadcastOverallStandings();
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
@@ -1100,7 +1188,8 @@ public class ClientCommandTaskHandler {
           dhd.setUserLaps(value);
 
           // Recalculate standings because laps changed
-          targetHeat.initializeStandings(race.getRaceModel().getHeatScoring());
+          targetHeat.initializeStandings(
+              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
           race.updateAndBroadcastOverallStandings();
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
@@ -1168,7 +1257,8 @@ public class ClientCommandTaskHandler {
 
       // Recalculate standings for each modified heat
       for (Heat heat : heatsToRecalculate) {
-        heat.initializeStandings(race.getRaceModel().getHeatScoring());
+        heat.initializeStandings(
+            race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
       }
       race.updateAndBroadcastOverallStandings();
       race.updateScoreRecords();
@@ -1195,7 +1285,8 @@ public class ClientCommandTaskHandler {
             new OverallStandings(
                 race.getRaceModel().getHeatScoring(),
                 race.getRaceModel().getOverallScoring(),
-                race.getRaceModel().getGroupOptions());
+                race.getRaceModel().getGroupOptions(),
+                race.getRaceModel().isPractice());
         standings.recalculate(race.getDrivers(), race.getHeats());
         csv = CsvExporter.export(race);
       }
@@ -1328,7 +1419,8 @@ public class ClientCommandTaskHandler {
       // Re-initialize Standings
       if (saveData.getHeats() != null) {
         for (Heat heat : saveData.getHeats()) {
-          heat.initializeStandings(saveData.getModel().getHeatScoring());
+          heat.initializeStandings(
+              saveData.getModel().getHeatScoring(), saveData.getModel().isPractice());
         }
       }
 

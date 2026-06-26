@@ -77,13 +77,13 @@ public class RaceModifyHeatsTest {
     List<DriverHeatData> heat1Drivers = new ArrayList<>();
     heat1Drivers.add(new DriverHeatData(participants.get(0)));
     heat1Drivers.add(new DriverHeatData(participants.get(1)));
-    Heat heat1 = new Heat(1, heat1Drivers, mockHeatScoring);
+    Heat heat1 = new Heat(1, heat1Drivers, mockHeatScoring, false);
     heat1.setObjectId("heat1");
 
     List<DriverHeatData> heat2Drivers = new ArrayList<>();
     heat2Drivers.add(new DriverHeatData(participants.get(2)));
     heat2Drivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
-    Heat heat2 = new Heat(2, heat2Drivers, mockHeatScoring);
+    Heat heat2 = new Heat(2, heat2Drivers, mockHeatScoring, false);
     heat2.setObjectId("heat2");
 
     List<Heat> heats = new ArrayList<>(Arrays.asList(heat1, heat2));
@@ -106,7 +106,7 @@ public class RaceModifyHeatsTest {
     drivers.add(new DriverHeatData(participants.get(1))); // p2
     drivers.add(new DriverHeatData(participants.get(0))); // p1
 
-    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat1.setObjectId(heat1.getObjectId());
 
     ModifyHeatsRequest request =
@@ -170,7 +170,7 @@ public class RaceModifyHeatsTest {
     drivers.add(new DriverHeatData(participants.get(1)));
     drivers.add(new DriverHeatData(participants.get(0)));
 
-    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat1.setObjectId(heat1.getObjectId());
     modifiedHeat1.setStarted(true);
 
@@ -192,7 +192,7 @@ public class RaceModifyHeatsTest {
     List<DriverHeatData> drivers = new ArrayList<>();
     drivers.add(new DriverHeatData(participants.get(0)));
 
-    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat1.setObjectId(heat1.getObjectId());
     modifiedHeat1.setStarted(true);
 
@@ -216,7 +216,7 @@ public class RaceModifyHeatsTest {
     drivers.add(new DriverHeatData(participants.get(2))); // p3
     drivers.add(new DriverHeatData(participants.get(0))); // p1
 
-    Heat modifiedHeat2 = new Heat(2, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat2 = new Heat(2, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat2.setObjectId(heat2.getObjectId());
     modifiedHeat2.setStarted(true);
 
@@ -243,7 +243,7 @@ public class RaceModifyHeatsTest {
     drivers.add(new DriverHeatData(participants.get(2))); // p3
     drivers.add(new DriverHeatData(p4)); // p4
 
-    Heat modifiedHeat2 = new Heat(2, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat2 = new Heat(2, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat2.setObjectId(heat2.getObjectId());
 
     ModifyHeatsRequest request =
@@ -379,7 +379,7 @@ public class RaceModifyHeatsTest {
     drivers.add(new DriverHeatData(participants.get(0))); // p1
     drivers.add(new DriverHeatData(participants.get(0))); // p1 (duplicate!)
 
-    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat1.setObjectId(heat1.getObjectId());
 
     ModifyHeatsRequest request =
@@ -476,7 +476,7 @@ public class RaceModifyHeatsTest {
     List<DriverHeatData> heat2Drivers = new ArrayList<>();
     heat2Drivers.add(new DriverHeatData(participants.get(0))); // p1
     heat2Drivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
-    Heat modifiedHeat2 = new Heat(2, heat2Drivers, raceModel.getHeatScoring());
+    Heat modifiedHeat2 = new Heat(2, heat2Drivers, raceModel.getHeatScoring(), false);
     modifiedHeat2.setObjectId(heat2.getObjectId());
     modifiedHeat2.setGroup(1);
 
@@ -581,7 +581,7 @@ public class RaceModifyHeatsTest {
     List<DriverHeatData> heat3Drivers = new ArrayList<>();
     heat3Drivers.add(new DriverHeatData(participants.get(0)));
     heat3Drivers.add(new DriverHeatData(participants.get(1)));
-    Heat heat3 = new Heat(3, heat3Drivers, raceModel.getHeatScoring());
+    Heat heat3 = new Heat(3, heat3Drivers, raceModel.getHeatScoring(), false);
     heat3.setObjectId("heat3");
 
     // 3. Request modifying heats to contain Heat 1 and Heat 3 (effectively deleting Heat 2, but
@@ -706,7 +706,7 @@ public class RaceModifyHeatsTest {
     List<DriverHeatData> heat3Drivers = new ArrayList<>();
     heat3Drivers.add(new DriverHeatData(participants.get(2)));
     heat3Drivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
-    Heat heat3 = new Heat(2, heat3Drivers, raceModel.getHeatScoring());
+    Heat heat3 = new Heat(2, heat3Drivers, raceModel.getHeatScoring(), false);
     heat3.setObjectId("heat3");
 
     ModifyHeatsRequest request =

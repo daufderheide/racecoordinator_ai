@@ -737,4 +737,57 @@ public class RacingTest {
 
     spyRace.stop();
   }
+
+  @Test
+  public void testPracticeTimedRace_DoesNotFinishAndTimeGoesUp() throws InterruptedException {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.isPractice()).thenReturn(true);
+
+    // Timed race with 0 limit (infinite)
+    HeatScoring scoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            0L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    when(mockModel.getHeatScoring()).thenReturn(scoring);
+
+    Heat mockHeat = mock(Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getStatistics()).thenReturn(new RaceHeatStatistics());
+
+    DriverHeatData d1 = new DriverHeatData(participants.get(0));
+    when(mockHeat.getDrivers()).thenReturn(Collections.singletonList(d1));
+
+    HeatExecutionManager mockExecutionManager = mock(HeatExecutionManager.class);
+    when(mockExecutionManager.getFinishedLanes()).thenReturn(new java.util.HashSet<>());
+    when(mockRace.getHeatExecutionManager()).thenReturn(mockExecutionManager);
+
+    when(mockRace.getRaceTime()).thenReturn(10.0f); // Arbitrary time
+
+    racing.enter(mockRace);
+
+    // Wait a bit for the ticker to execute
+    Thread.sleep(300);
+
+    // Because limit is 0, progress should remain 0, and time should count up (positive delta)
+    // Verify that addRaceTime is called with a positive value
+    org.mockito.ArgumentCaptor<Float> captor = org.mockito.ArgumentCaptor.forClass(Float.class);
+    verify(mockRace, atLeastOnce()).addRaceTime(captor.capture());
+    for (Float val : captor.getAllValues()) {
+      assertTrue(val > 0);
+    }
+
+    // And verify the flag is still GREEN
+    com.antigravity.proto.RaceFlag flag = racing.getFlagType(mockRace);
+    assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
+
+    racing.exit(mockRace);
+  }
 }

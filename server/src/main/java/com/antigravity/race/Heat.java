@@ -14,22 +14,27 @@ public class Heat extends ServerToClientObject {
   private boolean started = false;
   private int group = 0;
 
-  public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring) {
+  public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring, boolean practice) {
     super();
     this.heatNumber = heatNumber;
     this.drivers = drivers != null ? drivers : new ArrayList<>();
     if (this.drivers != null) {
       HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
-      this.heatStandings = new HeatStandings(this.drivers, safeScoring);
+      this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
     }
   }
 
-  public Heat(int heatNumber, List<DriverHeatData> drivers) {
-    this(heatNumber, drivers, null);
+  public Heat(int heatNumber, List<DriverHeatData> drivers, boolean practice) {
+    this(heatNumber, drivers, null, practice);
   }
 
-  public Heat(int heatNumber, List<DriverHeatData> drivers, int group, HeatScoring scoring) {
-    this(heatNumber, drivers, scoring);
+  public Heat(
+      int heatNumber,
+      List<DriverHeatData> drivers,
+      int group,
+      HeatScoring scoring,
+      boolean practice) {
+    this(heatNumber, drivers, scoring, practice);
     this.group = group;
   }
 
@@ -42,9 +47,9 @@ public class Heat extends ServerToClientObject {
     this.drivers = drivers != null ? drivers : new ArrayList<>();
   }
 
-  public void initializeStandings(HeatScoring scoring) {
+  public void initializeStandings(HeatScoring scoring, boolean practice) {
     HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
-    this.heatStandings = new HeatStandings(this.drivers, safeScoring);
+    this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
   }
 
   public int getHeatNumber() {
