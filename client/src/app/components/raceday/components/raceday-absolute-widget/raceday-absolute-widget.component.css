@@ -149,16 +149,16 @@
   padding: 12px !important;
 }
 .widget-wrapper.scale-fixed .timer-text {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--widget-font-size);
   line-height: 1 !important;
 }
 .widget-wrapper.scale-fixed .value-text {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--widget-font-size);
 }
 .widget-wrapper.scale-fixed .label-text,
 .widget-wrapper.scale-fixed .status-label,
 .widget-wrapper.scale-fixed .warmup-label {
-  font-size: calc(0.6 * var(--widget-font-size)) !important;
+  font-size: calc(0.6 * var(--widget-font-size));
 }
 
 /* Fixed scaling for lists and tables */
@@ -169,7 +169,7 @@
 .widget-wrapper.scale-fixed .driver-nickname,
 .widget-wrapper.scale-fixed .cell-value,
 .widget-wrapper.scale-fixed .row-value {
-  font-size: var(--widget-font-size) !important;
+  font-size: inherit;
 }
 
 /* Fixed scaling for leaderboards */
@@ -178,22 +178,24 @@
 }
 
 .widget-wrapper.scale-fixed .leaderboard-title {
-  font-size: calc(1.125 * var(--widget-font-size)) !important;
+  font-size: calc(1.125 * var(--widget-font-size));
   margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
 }
 
 .widget-wrapper.scale-fixed .leaderboard-subtitle {
-  font-size: calc(0.8125 * var(--widget-font-size)) !important;
+  font-size: calc(0.8125 * var(--widget-font-size));
   margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
 }
 
 .widget-wrapper.scale-fixed .leaderboard-item,
+.widget-wrapper.scale-fixed .leaderboard-empty-message {
+  font-size: var(--widget-font-size);
+}
 .widget-wrapper.scale-fixed .leaderboard-item span,
 .widget-wrapper.scale-fixed .leaderboard-rank,
 .widget-wrapper.scale-fixed .leaderboard-name,
-.widget-wrapper.scale-fixed .leaderboard-score,
-.widget-wrapper.scale-fixed .leaderboard-empty-message {
-  font-size: var(--widget-font-size) !important;
+.widget-wrapper.scale-fixed .leaderboard-score {
+  font-size: inherit;
 }
 
 /* Auto scaling for leaderboards */
@@ -223,10 +225,10 @@
 /* Fixed scaling for records */
 .widget-wrapper.scale-fixed .record-panel,
 .widget-wrapper.scale-fixed .record-val {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--widget-font-size);
 }
 .widget-wrapper.scale-fixed .record-header {
-  font-size: calc(0.9 * var(--widget-font-size)) !important;
+  font-size: calc(0.9 * var(--widget-font-size));
 }
 
 /* Auto scaling for records */
@@ -311,10 +313,10 @@
 
 /* Fixed scaling for branding */
 .widget-wrapper.scale-fixed .logo-text {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--widget-font-size);
 }
 .widget-wrapper.scale-fixed .branding-tagline {
-  font-size: calc(0.42 * var(--widget-font-size)) !important;
+  font-size: calc(0.42 * var(--widget-font-size));
   margin-top: calc(0.3 * var(--widget-font-size)) !important;
 }
 .widget-wrapper.scale-fixed .branding-panel {
@@ -341,7 +343,7 @@
 
 .widget-wrapper.scale-fixed .next-heat-title,
 .widget-wrapper.scale-fixed .on-deck-title {
-  font-size: var(--custom-title-size, calc(1.125 * var(--widget-font-size))) !important;
+  font-size: var(--custom-title-size, calc(1.125 * var(--widget-font-size)));
   margin-bottom: calc(0.5 * var(--widget-font-size)) !important;
 }
 
@@ -360,11 +362,11 @@
 .widget-wrapper.scale-fixed .teammate-display-name,
 .widget-wrapper.scale-fixed .next-heat-empty,
 .widget-wrapper.scale-fixed .on-deck-empty {
-  font-size: var(--custom-lane-size, var(--widget-font-size)) !important;
+  font-size: var(--custom-lane-size, var(--widget-font-size));
 }
 
 .widget-wrapper.scale-fixed .lane-badge {
-  font-size: calc(0.875 * var(--widget-font-size)) !important;
+  font-size: calc(0.875 * var(--widget-font-size));
   min-width: calc(1.75 * var(--widget-font-size)) !important;
   height: calc(1.5 * var(--widget-font-size)) !important;
   padding: 0 calc(0.375 * var(--widget-font-size)) !important;
@@ -425,11 +427,11 @@
 /* Fixed scaling for menu-bar */
 .widget-wrapper.scale-fixed .menu-button-top,
 .widget-wrapper.scale-fixed .menu-item {
-  font-size: var(--widget-font-size) !important;
+  font-size: var(--widget-font-size);
 }
 .widget-wrapper.scale-fixed .menu-shortcut,
 .widget-wrapper.scale-fixed .submenu-arrow {
-  font-size: calc(0.75 * var(--widget-font-size)) !important;
+  font-size: calc(0.75 * var(--widget-font-size));
 }
 
 /* Auto scaling for menu-bar */

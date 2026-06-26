@@ -94,4 +94,59 @@ describe("RacedayLeaderboardComponent", () => {
     );
     expect(subtitleEl.textContent.trim()).toBe("DR_LABEL_GROUP 3");
   });
+
+  it("should apply custom font sizes from widget settings when in fixed mode", async () => {
+    fixture.componentRef.setInput("leaderboardEntries", [
+      { entityId: "e1", rank: 1, name: "Alice", score: 12 },
+      { entityId: "e2", rank: 2, name: "Bob", score: 10 },
+    ]);
+    fixture.componentRef.setInput("widget", {
+      id: "w1",
+      widgetType: "leaderboard",
+      scaleMode: "fixed",
+      customSettings: {
+        titleFontSize: 42,
+        overallLeaderFontSize: 30,
+        restFontSize: 20,
+      },
+    });
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".leaderboard-title");
+    expect(titleEl.style.fontSize).toBe("42px");
+
+    const items = fixture.nativeElement.querySelectorAll(".leaderboard-item");
+    expect(items.length).toBe(2);
+    // 1st place
+    expect(items[0].style.fontSize).toBe("30px");
+    // rest
+    expect(items[1].style.fontSize).toBe("20px");
+  });
+
+  it("should NOT apply custom font sizes when in auto mode", async () => {
+    fixture.componentRef.setInput("leaderboardEntries", [
+      { entityId: "e1", rank: 1, name: "Alice", score: 12 },
+      { entityId: "e2", rank: 2, name: "Bob", score: 10 },
+    ]);
+    fixture.componentRef.setInput("widget", {
+      id: "w1",
+      widgetType: "leaderboard",
+      scaleMode: "auto",
+      customSettings: {
+        titleFontSize: 42,
+        overallLeaderFontSize: 30,
+        restFontSize: 20,
+      },
+    });
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".leaderboard-title");
+    expect(titleEl.style.fontSize).toBeFalsy();
+
+    const items = fixture.nativeElement.querySelectorAll(".leaderboard-item");
+    expect(items.length).toBe(2);
+    // Should be null/empty since auto mode suppresses it
+    expect(items[0].style.fontSize).toBeFalsy();
+    expect(items[1].style.fontSize).toBeFalsy();
+  });
 });

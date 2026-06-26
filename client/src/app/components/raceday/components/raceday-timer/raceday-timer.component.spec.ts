@@ -82,6 +82,23 @@ describe("RacedayTimerComponent", () => {
     expect(timerTextEl.style.color).toBe("rgb(255, 0, 0)");
   });
 
+  it("should NOT apply custom font sizes for timer text when scaleMode is auto", () => {
+    const mockWidget: any = {
+      widgetType: "timer",
+      scaleMode: "auto",
+      customSettings: {
+        timeFontFamily: "Arial",
+        timeFontSize: 85,
+        timeTextColor: "#ff0000",
+      },
+    };
+    fixture.componentRef.setInput("widget", mockWidget);
+    fixture.detectChanges();
+
+    const timerTextEl = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerTextEl.style.fontSize).toBeFalsy();
+  });
+
   it("should render with timer-panel and timer-text classes for styling", () => {
     fixture.componentRef.setInput("formattedTime", "01:23");
     fixture.detectChanges();

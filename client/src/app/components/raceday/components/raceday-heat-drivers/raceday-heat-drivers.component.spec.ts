@@ -88,4 +88,60 @@ describe("RacedayHeatDriversComponent", () => {
     expect(drivers.length).toBe(1);
     expect(drivers[0].driver.entity_id).toBe("d2");
   });
+
+  it("should apply custom font sizes when in fixed scale mode", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [{ driver: { name: "A", isEmpty: () => false } }],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        titleFontSize: 30,
+        laneFontSize: 25,
+      },
+    });
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".next-heat-title");
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.style.fontSize).toBe("30px");
+
+    const itemEl = fixture.nativeElement.querySelector(".next-heat-item");
+    expect(itemEl).toBeTruthy();
+    expect(itemEl.style.fontSize).toBe("25px");
+  });
+
+  it("should NOT apply custom font sizes when in auto scale mode", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [{ driver: { name: "A", isEmpty: () => false } }],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "auto",
+      customSettings: {
+        titleFontSize: 30,
+        laneFontSize: 25,
+      },
+    });
+    fixture.detectChanges();
+
+    const titleEl = fixture.nativeElement.querySelector(".next-heat-title");
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.style.fontSize).toBeFalsy();
+
+    const itemEl = fixture.nativeElement.querySelector(".next-heat-item");
+    expect(itemEl).toBeTruthy();
+    expect(itemEl.style.fontSize).toBeFalsy();
+  });
 });

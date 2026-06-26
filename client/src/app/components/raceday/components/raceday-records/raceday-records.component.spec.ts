@@ -127,6 +127,38 @@ describe("RacedayRecordsComponent", () => {
     }
   });
 
+  it("should NOT apply custom widget styles to headers and values when scaleMode is auto", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      scaleMode: "auto",
+      customSettings: {
+        headerFontFamily: "Arial",
+        headerFontSize: 22,
+        headerTextColor: "#ff0000",
+        valueFontFamily: "Courier New",
+        valueFontSize: 25,
+        valueTextColor: "#00ff00",
+      },
+    });
+
+    fixture.detectChanges();
+
+    const headers = fixture.nativeElement.querySelectorAll(".record-header");
+    expect(headers.length).toBeGreaterThan(0);
+    for (let i = 0; i < headers.length; i++) {
+      const el = headers[i] as HTMLElement;
+      expect(el.style.fontSize).toBeFalsy();
+    }
+
+    const values = fixture.nativeElement.querySelectorAll(".record-val");
+    expect(values.length).toBeGreaterThan(0);
+    for (let i = 0; i < values.length; i++) {
+      const el = values[i] as HTMLElement;
+      expect(el.style.fontSize).toBeFalsy();
+    }
+  });
+
   it("should apply correct styling classes (stripe, no-stripe, first-row) on headers and rows", () => {
     const headers = fixture.nativeElement.querySelectorAll(".record-header");
     expect(headers.length).toBe(4);
