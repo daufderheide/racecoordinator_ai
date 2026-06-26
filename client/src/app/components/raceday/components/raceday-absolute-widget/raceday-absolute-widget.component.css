@@ -59,7 +59,7 @@
 
 .grab-icon {
   font-size: 14px;
-  color: #3b82f6;
+  color: #FFD700;
 }
 
 .widget-remove-btn {
@@ -80,7 +80,7 @@
 /* Resize Handles */
 .resize-handle {
   position: absolute;
-  background-color: #3b82f6;
+  background-color: #FFD700;
   border: 1px solid white;
   width: 8px;
   height: 8px;
