@@ -454,7 +454,8 @@ public class AssetService {
     if (isNew) {
       collection.insertOne(doc);
     } else {
-      collection.replaceOne(Filters.eq("_id", id), doc);
+      collection.replaceOne(
+          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
     }
 
     return documentToAsset(doc);
@@ -526,7 +527,8 @@ public class AssetService {
     if (isNew) {
       collection.insertOne(doc);
     } else {
-      collection.replaceOne(Filters.eq("_id", id), doc);
+      collection.replaceOne(
+          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
     }
 
     return documentToAsset(doc);
@@ -610,7 +612,8 @@ public class AssetService {
     if (isNew) {
       collection.insertOne(doc);
     } else {
-      collection.replaceOne(Filters.eq("_id", id), doc);
+      collection.replaceOne(
+          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
     }
 
     return documentToAsset(doc);
@@ -961,6 +964,20 @@ public class AssetService {
 
     // 5. Ensure all themes have the necessary slots
     backfillThemeSlots();
+
+    // 6. Practice Single Heat Rotation
+    List<CustomRotation> practiceRotations = new ArrayList<>();
+    practiceRotations.add(
+        CustomRotation.newBuilder()
+            .setNumDrivers(4)
+            .addHeats(
+                CustomHeat.newBuilder()
+                    .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
+                    .setGroup(0)
+                    .build())
+            .build());
+    saveCustomRotation(
+        "default_practice_single_heat", "Practice -- Single Heat", 4, practiceRotations);
   }
 
   @SuppressWarnings("checkstyle:MethodLength")
@@ -1203,6 +1220,20 @@ public class AssetService {
       for (String id : EXCLUDED_AUDIO_IDS) {
         deleteAsset(id);
       }
+
+      // Backfill Practice Rotation Asset
+      List<CustomRotation> practiceRotations = new ArrayList<>();
+      practiceRotations.add(
+          CustomRotation.newBuilder()
+              .setNumDrivers(4)
+              .addHeats(
+                  CustomHeat.newBuilder()
+                      .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
+                      .setGroup(0)
+                      .build())
+              .build());
+      saveCustomRotation(
+          "default_practice_single_heat", "Practice -- Single Heat", 4, practiceRotations);
 
       // Backfill default theme
       backfillDefaultTheme();

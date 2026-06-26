@@ -311,6 +311,31 @@ public class DatabaseService {
 
     raceCollection.insertOne(race);
 
+    // Practice Race
+    heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+
+    Race practiceRace =
+        new Race.Builder()
+            .withName("Practice")
+            .withTrackEntityId(track.getEntityId())
+            .withHeatRotationType(HeatRotationType.Custom)
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(overallScoring)
+            .withMinLapTime(3.0)
+            .withAutoAdvanceTime(0.0)
+            .withAutoStartTime(0.0)
+            .withAutoAdvanceWarmupTime(0.0)
+            .withAutoStartWarmupTime(0.0)
+            .withStartBehindSensor(true)
+            .withCustomRotationAssetId("default_practice_single_heat")
+            .withPractice(true)
+            .withEntityId(getNextSequence(database, "races"))
+            .build();
+
+    raceCollection.insertOne(practiceRace);
+
     logger.info("Races reset.");
   }
 
@@ -320,6 +345,38 @@ public class DatabaseService {
       if (!doc.containsKey("start_behind_sensor")) {
         raceDocs.updateOne(
             Filters.eq("_id", doc.getObjectId("_id")), Updates.set("start_behind_sensor", true));
+      }
+    }
+
+    if (raceDocs.find(Filters.eq("name", "Practice")).first() == null) {
+      MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
+      Track track = trackCollection.find().first();
+      if (track != null) {
+        MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
+        HeatScoring heatScoring =
+            new HeatScoring(
+                FinishMethod.Timed,
+                0,
+                HeatRanking.LAP_COUNT,
+                HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+        Race practiceRace =
+            new Race.Builder()
+                .withName("Practice")
+                .withTrackEntityId(track.getEntityId())
+                .withHeatRotationType(HeatRotationType.Custom)
+                .withHeatScoring(heatScoring)
+                .withOverallScoring(new OverallScoring())
+                .withMinLapTime(3.0)
+                .withAutoAdvanceTime(0.0)
+                .withAutoStartTime(0.0)
+                .withAutoAdvanceWarmupTime(0.0)
+                .withAutoStartWarmupTime(0.0)
+                .withStartBehindSensor(true)
+                .withCustomRotationAssetId("default_practice_single_heat")
+                .withPractice(true)
+                .withEntityId(getNextSequence(database, "races"))
+                .build();
+        raceCollection.insertOne(practiceRace);
       }
     }
   }

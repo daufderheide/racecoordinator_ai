@@ -201,6 +201,24 @@ public class AssetServiceTest {
     List<Document> images = (List<Document>) fuelSet.get("images");
     assertNotNull(images);
     assertTrue("Should have multiple images in set", images.size() > 0);
+
+    ArgumentCaptor<Document> updateCaptor = ArgumentCaptor.forClass(Document.class);
+    verify(collection, atLeastOnce())
+        .replaceOne(
+            any(Bson.class),
+            updateCaptor.capture(),
+            any(com.mongodb.client.model.ReplaceOptions.class));
+
+    List<Document> updatedDocs = updateCaptor.getAllValues();
+    Document practiceRotation =
+        updatedDocs.stream()
+            .filter(d -> "Practice -- Single Heat".equals(d.getString("name")))
+            .findFirst()
+            .orElse(null);
+
+    assertNotNull("Practice rotation should be created", practiceRotation);
+    assertEquals("custom_rotation", practiceRotation.getString("type"));
+    assertEquals("default_practice_single_heat", practiceRotation.getString("_id"));
   }
 
   @Test
@@ -302,6 +320,24 @@ public class AssetServiceTest {
 
     List<Document> insertedDocs = captor.getAllValues();
     assertTrue("Should have inserted many default assets", insertedDocs.size() > 10);
+
+    ArgumentCaptor<Document> updateCaptor = ArgumentCaptor.forClass(Document.class);
+    verify(collection, atLeastOnce())
+        .replaceOne(
+            any(Bson.class),
+            updateCaptor.capture(),
+            any(com.mongodb.client.model.ReplaceOptions.class));
+
+    List<Document> updatedDocs = updateCaptor.getAllValues();
+    Document practiceRotation =
+        updatedDocs.stream()
+            .filter(d -> "Practice -- Single Heat".equals(d.getString("name")))
+            .findFirst()
+            .orElse(null);
+
+    assertNotNull("Practice rotation should be created", practiceRotation);
+    assertEquals("custom_rotation", practiceRotation.getString("type"));
+    assertEquals("default_practice_single_heat", practiceRotation.getString("_id"));
 
     // 2. Second backfill (should do nothing as they exist)
     // We need to mock the find calls for the subsequent backfill

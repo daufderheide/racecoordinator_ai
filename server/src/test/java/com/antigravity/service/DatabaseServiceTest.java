@@ -15,11 +15,13 @@ import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.Before;
 import org.junit.Test;
@@ -306,5 +308,59 @@ public class DatabaseServiceTest {
     assertEquals(2, result.size());
     assertEquals("Team2", result.get(0).getName());
     assertEquals("Team1", result.get(1).getName());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testBackfillRacesAddsPracticeRace() {
+    MongoCollection<Document> raceDocs = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("races")).thenReturn(raceDocs);
+
+    MongoCollection<Document> counters = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("counters")).thenReturn(counters);
+    Document counterDoc = new Document("seq", 1);
+    when(counters.findOneAndUpdate(
+            any(Bson.class),
+            any(Bson.class),
+            any(com.mongodb.client.model.FindOneAndUpdateOptions.class)))
+        .thenReturn(counterDoc);
+
+    MongoCollection<com.antigravity.models.Track> trackCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("tracks", com.antigravity.models.Track.class))
+        .thenReturn(trackCollection);
+
+    MongoCollection<com.antigravity.models.Race> raceCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection("races", com.antigravity.models.Race.class))
+        .thenReturn(raceCollection);
+
+    FindIterable<Document> emptyIterable = mock(FindIterable.class);
+    MongoCursor<Document> emptyCursor = mock(MongoCursor.class);
+    when(emptyCursor.hasNext()).thenReturn(false);
+    when(emptyIterable.iterator()).thenReturn(emptyCursor);
+    when(emptyIterable.first()).thenReturn(null);
+
+    when(raceDocs.find()).thenReturn(emptyIterable);
+    when(raceDocs.find(any(Bson.class))).thenReturn(emptyIterable);
+
+    FindIterable<com.antigravity.models.Track> trackIterable = mock(FindIterable.class);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track(
+            "Track", 100, new ArrayList<>(), new ArrayList<>(), "T1", null);
+    when(trackIterable.first()).thenReturn(track);
+    when(trackCollection.find()).thenReturn(trackIterable);
+
+    dbService.backfillRaces(mongoDatabase);
+
+    ArgumentCaptor<com.antigravity.models.Race> raceCaptor =
+        ArgumentCaptor.forClass(com.antigravity.models.Race.class);
+    verify(raceCollection).insertOne(raceCaptor.capture());
+
+    com.antigravity.models.Race practiceRace = raceCaptor.getValue();
+    assertEquals("Practice", practiceRace.getName());
+    assertEquals("T1", practiceRace.getTrackEntityId());
+    assertEquals(
+        com.antigravity.models.HeatRotationType.Custom, practiceRace.getHeatRotationType());
+    assertTrue(practiceRace.isPractice());
+    assertEquals(0, practiceRace.getHeatScoring().getFinishValue());
   }
 }
