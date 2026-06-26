@@ -940,22 +940,29 @@ describe("DefaultRacedayComponent", () => {
       expect(result[3].entity_id).toBe("driver1");
     });
 
-    it("should return all drivers plus EMPTY_LANE if race is practice", () => {
+    it("should return all drivers including team members plus EMPTY_LANE if race is practice", () => {
       component["allDrivers"] = [
         { entity_id: "driver1", name: "Driver 1" },
         { entity_id: "driver2", name: "Driver 2" },
+        { entity_id: "driver3", name: "Driver 3" },
+        { entity_id: "driver4", name: "Driver 4" },
       ] as any;
       component["participants"] = [
         { driver: { entity_id: "driver1" } },
-        { driver: { entity_id: "driver2" } },
+        {
+          driver: { entity_id: "EMPTY_LANE" },
+          team: { driverIds: ["driver2", "driver3"] },
+        },
+        { driver: { entity_id: "EMPTY_LANE" } },
       ] as any;
       component["race"] = { practice: true } as any;
 
       const result = component.getTeammates({});
-      expect(result.length).toBe(3);
+      expect(result.length).toBe(4);
       expect(result[0].entity_id).toBe("EMPTY_LANE");
       expect(result[1].entity_id).toBe("driver1");
       expect(result[2].entity_id).toBe("driver2");
+      expect(result[3].entity_id).toBe("driver3");
     });
   });
 
@@ -1098,6 +1105,30 @@ describe("DefaultRacedayComponent", () => {
       mockHd.participant.seed = 5;
       const result = component.formatValue("seed", 5, mockHd);
       expect(result).toBe("(5)");
+    });
+
+    it("should hide participant.team.name in practice races", () => {
+      mockHd.participant.team = { name: "Team Rocket" };
+      const mockRace = (component as any).raceService.getRace();
+      mockRace.practice = true;
+      const result = component.formatValue(
+        "participant.team.name",
+        null,
+        mockHd,
+      );
+      expect(result).toBe("");
+    });
+
+    it("should show participant.team.name in non-practice races", () => {
+      mockHd.participant.team = { name: "Team Rocket" };
+      const mockRace = (component as any).raceService.getRace();
+      mockRace.practice = false;
+      const result = component.formatValue(
+        "participant.team.name",
+        null,
+        mockHd,
+      );
+      expect(result).toBe("Team Rocket");
     });
 
     it("should format rankHeat directly", () => {
