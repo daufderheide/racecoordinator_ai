@@ -3003,7 +3003,7 @@ export class DefaultRacedayComponent
 
       const raceDrivers: any[] = [];
       this.participants.forEach((p) => {
-        if (p.driver) {
+        if (p.driver && p.driver.entity_id !== "EMPTY_LANE") {
           const d = this.allDrivers.find(
             (d) =>
               (d.entity_id || d.id) ===
@@ -3017,7 +3017,8 @@ export class DefaultRacedayComponent
           ) {
             raceDrivers.push(d);
           }
-        } else if (p.team && p.team.driverIds) {
+        }
+        if (p.team && p.team.driverIds) {
           p.team.driverIds.forEach((id: string) => {
             const d = this.allDrivers.find((d) => (d.entity_id || d.id) === id);
             if (
