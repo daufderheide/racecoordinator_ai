@@ -1974,6 +1974,30 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
+    it("should handle practice raceday layout change", () => {
+      spyOn(component.undoManager, "captureState");
+      const newLayout = {
+        widgets: [
+          {
+            id: "test",
+            widgetType: "timer",
+            x: 10,
+            y: 20,
+            width: 100,
+            height: 100,
+            zIndex: 1,
+          },
+        ],
+      };
+
+      component.onPracticeRacedayLayoutChanged(newLayout as any);
+
+      expect(component.editingSettings.practiceRacedayLayout).toEqual(
+        newLayout as any,
+      );
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
     it("should reset raceday layout", () => {
       spyOn(component.undoManager, "captureState");
       spyOn(component, "refreshDisplayProperties");
@@ -1988,6 +2012,34 @@ describe("UIEditorComponent", () => {
       );
       expect(component.undoManager.captureState).toHaveBeenCalled();
       expect(component.refreshDisplayProperties).toHaveBeenCalled();
+    });
+
+    it("should reset practice raceday layout", () => {
+      spyOn(component.undoManager, "captureState");
+      spyOn(component, "refreshDisplayProperties");
+
+      component.editingSettings.practiceRacedayLayout = { widgets: [] };
+      component.editingSettings.practiceRacedayColumns = ["test"];
+      component.editingSettings.practiceColumnLayouts = { test: {} };
+      component.editingSettings.practiceColumnVisibility = {};
+
+      component.resetPracticeRacedayLayout();
+
+      expect(component.selectedPracticeWidgetId).toBeNull();
+      expect(component.editingSettings.practiceRacedayLayout).toEqual(
+        Settings.DEFAULT_LAYOUT,
+      );
+      expect(component.editingSettings.practiceRacedayColumns).toEqual(
+        Settings.DEFAULT_COLUMNS,
+      );
+      expect(component.editingSettings.practiceColumnLayouts).toEqual(
+        new Settings().practiceColumnLayouts,
+      );
+      expect(component.editingSettings.practiceColumnVisibility).toEqual(
+        new Settings().practiceColumnVisibility,
+      );
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+      expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
     it("should select and deselect a widget", () => {

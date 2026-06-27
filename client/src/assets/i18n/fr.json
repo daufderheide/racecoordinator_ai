@@ -678,7 +678,7 @@
   "RD_LOAD_SUCCESS": "Course chargée avec succès",
   "RD_LAP_COLUMN_TOOLTIP": "Clic gauche : Modifier les sections\nMaj + Clic gauche : Ajouter 0,25 tour\nAlt + Clic gauche : Retirer 0,25 tour",
   "RD_PRACTICE_DRIVER_TOOLTIP": "Click to change practicing driver",
-"RD_TEAM_DRIVER_TOOLTIP": "Cliquez pour changer de coéquipier",
+  "RD_TEAM_DRIVER_TOOLTIP": "Cliquez pour changer de coéquipier",
   "RD_MENU_ADD_LAP": "Ajouter Tour",
   "RD_MENU_CUSTOMIZE_UI": "Personnaliser l'interface",
   "RD_MENU_DEFER": "Reporter Manche",
@@ -1190,7 +1190,7 @@
   "UE_LABEL_NEW_THEME": "Nouveau thème",
   "UE_LABEL_NO_DIRECTORY": "Aucun répertoire sélectionné",
   "UE_LABEL_PAGE_TRANSITION": "Transition de page",
-  "UE_LABEL_RACEDAY_LAYOUT": "Mise en page du jour de course",
+  "UE_LABEL_RACEDAY_LAYOUT": "Mise en page du jour de course (Défaut)",
   "UE_LABEL_RACE_OVER_AUDIO": "Audio de Fin de Course",
   "UE_LABEL_RED_FLAG": "Drapeau rouge",
   "UE_LABEL_SECONDS_LEFT_10": "10 secondes restantes",
@@ -1260,5 +1260,6 @@
   "UI_EDITOR_COL_TEAM": "NOM DE L'ÉQUIPE",
   "RE_PRACTICE": "Practice",
   "RD_RESET_LANE_TOOLTIP": "Reset Lane Data",
-  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data"
+  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data",
+  "UE_LABEL_RACEDAY_LAYOUT_PRACTICE": "Mise en page du jour de course (Pratique)"
 }

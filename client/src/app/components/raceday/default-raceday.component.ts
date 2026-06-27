@@ -503,6 +503,7 @@ export class DefaultRacedayComponent
 
   // Layout customization state
   isUIEditorMode = input<boolean>(false);
+  isPracticeLayoutEditor = input<boolean>(false);
   uiScale = input<number>(1);
   editingSettings = input<Settings | undefined>(undefined);
   selectedWidgetId = input<string | null>(null);
@@ -522,6 +523,87 @@ export class DefaultRacedayComponent
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
   draggedWidgetType: string | null = null;
+
+  get isPracticeLayout(): boolean {
+    const isDemo = this.race?.entity_id?.startsWith("demo_") || false;
+    return (
+      this.isPracticeLayoutEditor() || (this.race?.practice ?? false) || isDemo
+    );
+  }
+
+  get currentRacedayLayout(): LayoutConfig | undefined {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    return this.isPracticeLayout
+      ? settings.practiceRacedayLayout
+      : settings.racedayLayout;
+  }
+  set currentRacedayLayout(layout: LayoutConfig | undefined) {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) settings.practiceRacedayLayout = layout;
+    else settings.racedayLayout = layout;
+  }
+
+  get currentRacedayColumns(): string[] {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    return this.isPracticeLayout
+      ? settings.practiceRacedayColumns || []
+      : settings.racedayColumns || [];
+  }
+  set currentRacedayColumns(cols: string[]) {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) settings.practiceRacedayColumns = cols;
+    else settings.racedayColumns = cols;
+  }
+
+  get currentColumnAnchors(): { [key: string]: AnchorPoint } {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    return this.isPracticeLayout
+      ? settings.practiceColumnAnchors || {}
+      : settings.columnAnchors || {};
+  }
+  set currentColumnAnchors(anchors: { [key: string]: AnchorPoint }) {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) settings.practiceColumnAnchors = anchors;
+    else settings.columnAnchors = anchors;
+  }
+
+  get currentColumnLayouts(): {
+    [columnKey: string]: { [A in AnchorPoint]?: string };
+  } {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    return this.isPracticeLayout
+      ? settings.practiceColumnLayouts || {}
+      : settings.columnLayouts || {};
+  }
+  set currentColumnLayouts(layouts: {
+    [columnKey: string]: { [A in AnchorPoint]?: string };
+  }) {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) settings.practiceColumnLayouts = layouts;
+    else settings.columnLayouts = layouts;
+  }
+
+  get currentColumnVisibility(): { [columnKey: string]: ColumnVisibility } {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    return this.isPracticeLayout
+      ? settings.practiceColumnVisibility || {}
+      : settings.columnVisibility || {};
+  }
+  set currentColumnVisibility(vis: { [columnKey: string]: ColumnVisibility }) {
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) settings.practiceColumnVisibility = vis;
+    else settings.columnVisibility = vis;
+  }
 
   toggleLayoutEditorMinimize(event: Event) {
     event.stopPropagation();
@@ -563,8 +645,8 @@ export class DefaultRacedayComponent
           x: settings.layoutEditorPositionX ?? 0,
           y: settings.layoutEditorPositionY ?? 0,
         };
-        if (settings.racedayLayout?.widgets) {
-          this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+        if (this.currentRacedayLayout?.widgets) {
+          this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
         } else {
           this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
         }
@@ -619,8 +701,8 @@ export class DefaultRacedayComponent
       x: settings.layoutEditorPositionX ?? 0,
       y: settings.layoutEditorPositionY ?? 0,
     };
-    if (settings.racedayLayout && settings.racedayLayout.widgets) {
-      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+    if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
       this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     }
@@ -1441,6 +1523,13 @@ export class DefaultRacedayComponent
       );
       this.race = race;
       this.track = race.track;
+
+      if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
+        this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
+      } else {
+        this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      }
+
       this.loadColumns();
       this.initializeHeat();
 
@@ -1600,9 +1689,7 @@ export class DefaultRacedayComponent
     propertyName?: string,
     anchor?: string,
   ): string {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
-    const laneViewWidget = settings.racedayLayout?.widgets?.find(
+    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w) => w.widgetType === "lane-view",
     );
     const ctx: FormatContext = {
@@ -1953,10 +2040,10 @@ export class DefaultRacedayComponent
   onColumnDrop(event: CdkDragDrop<string[]>) {
     if (!this.isUIEditorMode()) return;
     const settings = this.editingSettings();
-    if (!settings || !settings.racedayColumns) return;
+    if (!settings || !this.currentRacedayColumns) return;
 
     moveItemInArray(
-      settings.racedayColumns,
+      this.currentRacedayColumns,
       event.previousIndex,
       event.currentIndex,
     );
@@ -1993,14 +2080,14 @@ export class DefaultRacedayComponent
             if (!settings) return;
             let changed = false;
 
-            const idx = settings.racedayColumns.indexOf(
+            const idx = this.currentRacedayColumns.indexOf(
               dropColData.propertyName,
             );
-            if (!settings.racedayColumns.includes(data.key)) {
+            if (!this.currentRacedayColumns.includes(data.key)) {
               if (idx >= 0) {
-                settings.racedayColumns.splice(idx, 0, data.key);
+                this.currentRacedayColumns.splice(idx, 0, data.key);
               } else {
-                settings.racedayColumns.push(data.key);
+                this.currentRacedayColumns.push(data.key);
               }
               changed = true;
             }
@@ -2015,9 +2102,10 @@ export class DefaultRacedayComponent
               ? ColumnVisibility.FuelRaceOnly
               : ColumnVisibility.Always;
 
-            if (settings.columnVisibility?.[data.key] !== defaultVis) {
-              if (!settings.columnVisibility) settings.columnVisibility = {};
-              settings.columnVisibility[data.key] = defaultVis;
+            if (this.currentColumnVisibility?.[data.key] !== defaultVis) {
+              if (!this.currentColumnVisibility)
+                this.currentColumnVisibility = {};
+              this.currentColumnVisibility[data.key] = defaultVis;
               changed = true;
             }
 
@@ -2047,8 +2135,8 @@ export class DefaultRacedayComponent
             if (!settings) return;
             let changed = false;
 
-            if (!settings.racedayColumns.includes(data.key)) {
-              settings.racedayColumns.push(data.key);
+            if (!this.currentRacedayColumns.includes(data.key)) {
+              this.currentRacedayColumns.push(data.key);
               changed = true;
             }
 
@@ -2062,9 +2150,10 @@ export class DefaultRacedayComponent
               ? ColumnVisibility.FuelRaceOnly
               : ColumnVisibility.Always;
 
-            if (settings.columnVisibility?.[data.key] !== defaultVis) {
-              if (!settings.columnVisibility) settings.columnVisibility = {};
-              settings.columnVisibility[data.key] = defaultVis;
+            if (this.currentColumnVisibility?.[data.key] !== defaultVis) {
+              if (!this.currentColumnVisibility)
+                this.currentColumnVisibility = {};
+              this.currentColumnVisibility[data.key] = defaultVis;
               changed = true;
             }
 
@@ -2084,7 +2173,7 @@ export class DefaultRacedayComponent
     const settings = this.editingSettings();
     if (!settings) return;
 
-    settings.racedayColumns = settings.racedayColumns.filter(
+    this.currentRacedayColumns = this.currentRacedayColumns.filter(
       (c) => c !== colData.propertyName,
     );
     this.loadColumns();
@@ -2096,8 +2185,8 @@ export class DefaultRacedayComponent
     if (!this.isUIEditorMode()) return;
     const settings = this.editingSettings();
     if (!settings) return;
-    if (!settings.columnVisibility) settings.columnVisibility = {};
-    settings.columnVisibility[colData.propertyName] =
+    if (!this.currentColumnVisibility) this.currentColumnVisibility = {};
+    this.currentColumnVisibility[colData.propertyName] =
       visibility as ColumnVisibility;
     this.loadColumns();
     this.cdr.markForCheck();
@@ -2134,13 +2223,13 @@ export class DefaultRacedayComponent
           if (data.type === "new-column" && data.key) {
             const settings = this.editingSettings();
             if (!settings) return;
-            if (!settings.columnLayouts) settings.columnLayouts = {};
-            if (!settings.columnLayouts[colData.propertyName]) {
-              settings.columnLayouts[colData.propertyName] = {
+            if (!this.currentColumnLayouts) this.currentColumnLayouts = {};
+            if (!this.currentColumnLayouts[colData.propertyName]) {
+              this.currentColumnLayouts[colData.propertyName] = {
                 "center-center": colData.propertyName,
               };
             }
-            settings.columnLayouts[colData.propertyName][
+            this.currentColumnLayouts[colData.propertyName][
               anchor as AnchorPoint
             ] = data.key;
             this.loadColumns();
@@ -2157,14 +2246,16 @@ export class DefaultRacedayComponent
     event.stopPropagation();
     const settings = this.editingSettings();
     if (!settings) return;
-    if (!settings.columnLayouts) settings.columnLayouts = {};
-    if (!settings.columnLayouts[colData.propertyName]) {
-      settings.columnLayouts[colData.propertyName] = {
+    if (!this.currentColumnLayouts) this.currentColumnLayouts = {};
+    if (!this.currentColumnLayouts[colData.propertyName]) {
+      this.currentColumnLayouts[colData.propertyName] = {
         "center-center": colData.propertyName,
       };
     }
 
-    delete settings.columnLayouts[colData.propertyName][anchor as AnchorPoint];
+    delete this.currentColumnLayouts[colData.propertyName][
+      anchor as AnchorPoint
+    ];
     this.loadColumns();
     this.cdr.markForCheck();
     this.columnsChanged.emit();
@@ -2174,12 +2265,12 @@ export class DefaultRacedayComponent
     const settings = this.editingSettings();
     if (
       !settings ||
-      !settings.columnLayouts ||
-      !settings.columnLayouts[colData.propertyName]
+      !this.currentColumnLayouts ||
+      !this.currentColumnLayouts[colData.propertyName]
     ) {
       return anchor === "center-center";
     }
-    return !!settings.columnLayouts[colData.propertyName][
+    return !!this.currentColumnLayouts[colData.propertyName][
       anchor as AnchorPoint
     ];
   }
@@ -2574,7 +2665,7 @@ export class DefaultRacedayComponent
   private loadColumns() {
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
-    let selectedColumns = settings.racedayColumns;
+    let selectedColumns = this.currentRacedayColumns;
     if (!selectedColumns || selectedColumns.length === 0) {
       selectedColumns = Settings.DEFAULT_COLUMNS;
     }
@@ -2584,7 +2675,7 @@ export class DefaultRacedayComponent
     const isFuelRace =
       (race?.fuel_options?.enabled || race?.digital_fuel_options?.enabled) ??
       false;
-    const visibilityMap = settings.columnVisibility || {};
+    const visibilityMap = this.currentColumnVisibility || {};
 
     selectedColumns = selectedColumns.filter((key) => {
       if (this.isUIEditorMode()) return true;
@@ -2599,7 +2690,7 @@ export class DefaultRacedayComponent
       this.resolveColumnLayout(selectedColumns, settings);
 
     this.columns = selectedColumns.map((key) => {
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = (this.currentColumnLayouts || {})[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const primaryProp =
@@ -2609,7 +2700,7 @@ export class DefaultRacedayComponent
       const labelKey = this.getLabelKeyForColumn(key, layout);
       const isResizing = key === resizingColumnKey;
       const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
-      const anchor = settings.columnAnchors[key] || AnchorPoint.CenterCenter;
+      const anchor = this.currentColumnAnchors[key] || AnchorPoint.CenterCenter;
 
       const renderer = (v: any, hd: DriverHeatData, col: ColumnDefinition) => {
         return this.formatValue(primaryProp, v, hd, col);
@@ -2668,7 +2759,7 @@ export class DefaultRacedayComponent
 
   private resolveColumnLayout(
     selectedColumns: string[],
-    settings: any,
+    _settings: any,
   ): {
     resizingColumnKey: string | null;
     remainingWidth: number;
@@ -2705,7 +2796,7 @@ export class DefaultRacedayComponent
 
     let resizingColumnKey: string | null = null;
     for (const key of selectedColumns) {
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = (this.currentColumnLayouts || {})[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const containsName = Object.values(layout).some((v) =>
@@ -2723,7 +2814,7 @@ export class DefaultRacedayComponent
     let totalFixed = 0;
     selectedColumns.forEach((key) => {
       if (key === resizingColumnKey) return;
-      const layout = (settings.columnLayouts || {})[key] || {
+      const layout = (this.currentColumnLayouts || {})[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
       const primaryProp =
@@ -2883,9 +2974,7 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
   ): string {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
-    const laneViewWidget = settings.racedayLayout?.widgets?.find(
+    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
     const ctx: FormatContext = {
@@ -3582,16 +3671,15 @@ export class DefaultRacedayComponent
   saveLayout() {
     console.log("saveLayout called");
     const settings = this.settingsService.getSettings();
-    settings.racedayLayout = this.layout;
+    this.currentRacedayLayout = this.layout;
     this.settingsService.saveSettings(settings);
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();
   }
 
   cancelLayoutCustomize() {
-    const settings = this.settingsService.getSettings();
-    if (settings.racedayLayout && settings.racedayLayout.widgets) {
-      this.layout = JSON.parse(JSON.stringify(settings.racedayLayout));
+    if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
       this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     }
@@ -3602,7 +3690,7 @@ export class DefaultRacedayComponent
   resetLayoutToDefaults() {
     this.layout = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
     const settings = this.settingsService.getSettings();
-    settings.racedayLayout = this.layout;
+    this.currentRacedayLayout = this.layout;
     this.settingsService.saveSettings(settings);
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();

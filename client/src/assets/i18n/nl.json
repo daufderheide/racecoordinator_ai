@@ -678,7 +678,7 @@
   "RD_LOAD_SUCCESS": "Race succesvol geladen",
   "RD_LAP_COLUMN_TOOLTIP": "Linksklikken: Secties bewerken\nShift + Linksklikken: 0,25 ronden toevoegen\nAlt + Linksklikken: 0,25 ronden aftrekken",
   "RD_PRACTICE_DRIVER_TOOLTIP": "Click to change practicing driver",
-"RD_TEAM_DRIVER_TOOLTIP": "Klik om van teamlid te wisselen",
+  "RD_TEAM_DRIVER_TOOLTIP": "Klik om van teamlid te wisselen",
   "RD_MENU_ADD_LAP": "Ronde/Secties Toevoegen",
   "RD_MENU_CUSTOMIZE_UI": "Gebruikersinterface Aanpassen",
   "RD_MENU_DEFER": "Heat Uitstellen",
@@ -1190,7 +1190,7 @@
   "UE_LABEL_NEW_THEME": "Nieuw thema",
   "UE_LABEL_NO_DIRECTORY": "Geen directorie geselecteerd",
   "UE_LABEL_PAGE_TRANSITION": "Paginatransitie",
-  "UE_LABEL_RACEDAY_LAYOUT": "Racedag lay-out",
+  "UE_LABEL_RACEDAY_LAYOUT": "Racedag lay-out (Standaard)",
   "UE_LABEL_RACE_OVER_AUDIO": "Race over audio",
   "UE_LABEL_RED_FLAG": "RODE VLAG",
   "UE_LABEL_SECONDS_LEFT_10": "Nog 10 seconden",
@@ -1260,5 +1260,6 @@
   "UI_EDITOR_COL_TEAM": "TEAMNAAM",
   "RE_PRACTICE": "Practice",
   "RD_RESET_LANE_TOOLTIP": "Reset Lane Data",
-  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data"
+  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data",
+  "UE_LABEL_RACEDAY_LAYOUT_PRACTICE": "Racedag lay-out (Oefening)"
 }

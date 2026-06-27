@@ -139,6 +139,38 @@ export class Settings {
 
   racedayLayout?: LayoutConfig;
 
+  practiceRacedayColumns: string[] = Settings.DEFAULT_COLUMNS;
+  practiceColumnAnchors: { [key: string]: AnchorPoint } = {};
+  practiceColumnLayouts: {
+    [columnKey: string]: { [A in AnchorPoint]?: string };
+  } = {
+    "driver.nickname": {
+      [AnchorPoint.CenterCenter]: "driver.nickname",
+      [AnchorPoint.BottomRight]: "participant.team.name",
+    },
+    "imageset_fuel-gauge-builtin": {
+      [AnchorPoint.CenterCenter]: "imageset_fuel-gauge-builtin",
+    },
+    lapCount: {
+      [AnchorPoint.CenterCenter]: "lapCount",
+      [AnchorPoint.BottomLeft]: "flag",
+    },
+    lastLapTime: {
+      [AnchorPoint.CenterCenter]: "lastLapTime",
+      [AnchorPoint.TopRight]: "bestLapTime",
+      [AnchorPoint.BottomRight]: "averageLapTime",
+    },
+    gapLeader: {
+      [AnchorPoint.CenterCenter]: "gapLeader",
+      [AnchorPoint.BottomRight]: "gapPosition",
+    },
+  };
+  practiceColumnVisibility: { [columnKey: string]: ColumnVisibility } = {
+    "imageset_fuel-gauge-builtin": ColumnVisibility.FuelRaceOnly,
+  };
+
+  practiceRacedayLayout?: LayoutConfig;
+
   static readonly DEFAULT_LAYOUT: LayoutConfig = {
     widgets: [
       {

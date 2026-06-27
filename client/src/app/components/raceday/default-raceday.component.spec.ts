@@ -251,6 +251,31 @@ describe("DefaultRacedayComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  describe("isPracticeLayout", () => {
+    it("should return true if it is practice layout editor", () => {
+      spyOn(component, "isPracticeLayoutEditor").and.returnValue(true);
+      expect(component.isPracticeLayout).toBeTrue();
+    });
+
+    it("should return true if race is practice", () => {
+      spyOn(component, "isPracticeLayoutEditor").and.returnValue(false);
+      component["race"] = { practice: true, entity_id: "race_123" } as any;
+      expect(component.isPracticeLayout).toBeTrue();
+    });
+
+    it("should return true if race is a demo race", () => {
+      spyOn(component, "isPracticeLayoutEditor").and.returnValue(false);
+      component["race"] = { practice: false, entity_id: "demo_123" } as any;
+      expect(component.isPracticeLayout).toBeTrue();
+    });
+
+    it("should return false for regular races", () => {
+      spyOn(component, "isPracticeLayoutEditor").and.returnValue(false);
+      component["race"] = { practice: false, entity_id: "race_123" } as any;
+      expect(component.isPracticeLayout).toBeFalse();
+    });
+  });
+
   describe("practice mode teammates", () => {
     it("should return empty driver and other drivers for getTeammates in practice mode", () => {
       component["race"] = { ...component["race"], practice: true } as any;

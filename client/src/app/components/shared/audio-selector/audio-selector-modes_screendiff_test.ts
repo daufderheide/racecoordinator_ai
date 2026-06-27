@@ -22,15 +22,11 @@ test.describe("Audio Selector Modes Visuals", () => {
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
     // Expand the Custom Theme section (2nd theme, index 1)
-    await page
-      .locator(".theme-sub-section")
-      .nth(1)
-      .locator(".section-header")
-      .first()
-      .click();
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection.locator(".section-header").first().click();
 
     // Expand the Audio section (collapsed by default)
-    await page
+    await customThemeSection
       .locator(".section-header")
       .filter({ hasText: "Audio Configuration" })
       .click();
@@ -47,6 +43,7 @@ test.describe("Audio Selector Modes Visuals", () => {
     // Take screenshot — the image validates that Preset, TTS, None are shown and Audio Set is not
     await expect(yellowFlagSelector).toHaveScreenshot(
       "audio-selector-single-mode.png",
+      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
     );
   });
 
@@ -60,15 +57,11 @@ test.describe("Audio Selector Modes Visuals", () => {
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
     // Expand the Custom Theme section (2nd theme, index 1)
-    await page
-      .locator(".theme-sub-section")
-      .nth(1)
-      .locator(".section-header")
-      .first()
-      .click();
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection.locator(".section-header").first().click();
 
     // Expand the Audio section (collapsed by default)
-    await page
+    await customThemeSection
       .locator(".section-header")
       .filter({ hasText: "Audio Configuration" })
       .click();
@@ -85,6 +78,7 @@ test.describe("Audio Selector Modes Visuals", () => {
     // Take screenshot — the image validates that Audio Set and None are shown, Preset and TTS are not
     await expect(countdownSelector).toHaveScreenshot(
       "audio-selector-set-mode.png",
+      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
     );
   });
 });

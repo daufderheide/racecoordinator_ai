@@ -678,7 +678,7 @@
   "RD_LOAD_SUCCESS": "Corrida carregada com sucesso",
   "RD_LAP_COLUMN_TOOLTIP": "Clique esquerdo: Editar seções\nShift + Clique esquerdo: Adicionar 0.25 voltas\nAlt + Clique esquerdo: Remover 0.25 voltas",
   "RD_PRACTICE_DRIVER_TOOLTIP": "Click to change practicing driver",
-"RD_TEAM_DRIVER_TOOLTIP": "Clique para mudar de companheiro de equipe",
+  "RD_TEAM_DRIVER_TOOLTIP": "Clique para mudar de companheiro de equipe",
   "RD_MENU_ADD_LAP": "Adicionar Volta",
   "RD_MENU_CUSTOMIZE_UI": "Personalizar Interface",
   "RD_MENU_DEFER": "Adiar Bateria",
@@ -1190,7 +1190,7 @@
   "UE_LABEL_NEW_THEME": "Novo tema",
   "UE_LABEL_NO_DIRECTORY": "Nenhum diretório selecionado",
   "UE_LABEL_PAGE_TRANSITION": "Transição de página",
-  "UE_LABEL_RACEDAY_LAYOUT": "Layout do dia de corrida",
+  "UE_LABEL_RACEDAY_LAYOUT": "Layout do dia de corrida (Padrão)",
   "UE_LABEL_RACE_OVER_AUDIO": "Áudio de Fim da Corrida",
   "UE_LABEL_RED_FLAG": "Bandeira vermelha",
   "UE_LABEL_SECONDS_LEFT_10": "10 segundos restantes",
@@ -1260,5 +1260,6 @@
   "UI_EDITOR_COL_TEAM": "NOME DA EQUIPE",
   "RE_PRACTICE": "Practice",
   "RD_RESET_LANE_TOOLTIP": "Reset Lane Data",
-  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data"
+  "RD_RESET_ALL_LANES_TOOLTIP": "Reset All Lanes Data",
+  "UE_LABEL_RACEDAY_LAYOUT_PRACTICE": "Layout do dia de corrida (Treino)"
 }

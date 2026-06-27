@@ -162,6 +162,166 @@
         }
       </div>
 
+      <!-- Raceday Layout (Practice) Section -->
+      <div class="config-section">
+        <div
+          class="section-header"
+          (click)="toggleSection('practiceRacedayLayout')"
+        >
+          <span
+            class="expander-icon"
+            [class.collapsed]="!sectionsExpanded['practiceRacedayLayout']"
+            >▼</span
+          >
+          <h1>{{ "UE_LABEL_RACEDAY_LAYOUT_PRACTICE" | translate }}</h1>
+        </div>
+        @if (sectionsExpanded["practiceRacedayLayout"]) {
+          <div class="section-content" style="position: relative">
+            <div class="panel layout-panel">
+              <div class="panel-content practice-raceday-layout-section">
+                <div class="raceday-editor-workspace">
+                  <!-- Raceday Full Integration -->
+                  <div class="raceday-preview-container">
+                    <div class="raceday-preview-scaler">
+                      <app-default-raceday
+                        [isUIEditorMode]="true"
+                        [isPracticeLayoutEditor]="true"
+                        [editingSettings]="editingSettings"
+                        [uiScale]="scale * 0.5625"
+                        [selectedWidgetId]="selectedPracticeWidgetId"
+                        (widgetSelected)="onWidgetSelected($event, true)"
+                        (layoutChanged)="onPracticeRacedayLayoutChanged($event)"
+                        (columnsChanged)="onColumnsChanged()"
+                      ></app-default-raceday>
+                    </div>
+                  </div>
+
+                  <!-- Widget Inspector Sidebar -->
+                  @if (selectedPracticeWidget) {
+                    <div class="widget-inspector-panel">
+                      <div class="inspector-header">
+                        <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                        <button
+                          class="inspector-close-btn"
+                          (click)="onWidgetSelected(null, true)"
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div class="inspector-body">
+                        <!-- General Section -->
+                        <div
+                          class="inspector-geometry-title"
+                          style="margin-top: 0"
+                        >
+                          {{ "UE_INSPECTOR_GENERAL" | translate }}
+                        </div>
+                        <div class="inspector-section">
+                          <label class="inspector-label">{{
+                            "UE_INSPECTOR_WIDGET_TYPE" | translate
+                          }}</label>
+                          <div class="inspector-value-readonly">
+                            {{ selectedPracticeWidget.widgetType }}
+                          </div>
+                        </div>
+                        <div class="inspector-section">
+                          <label class="inspector-label">{{
+                            "UE_INSPECTOR_SCALING_MODE" | translate
+                          }}</label>
+                          <div class="select-container select-sm">
+                            <select
+                              [(ngModel)]="selectedPracticeWidget.scaleMode"
+                              (change)="captureState()"
+                            >
+                              <option value="">
+                                {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}
+                              </option>
+                              <option value="auto">
+                                {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <hr class="inspector-divider" />
+
+                        <app-widget-inspector-fields
+                          [widget]="selectedPracticeWidget"
+                          (change)="captureState()"
+                        ></app-widget-inspector-fields>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <div
+                  class="layout-controls"
+                  style="
+                    margin-top: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                  "
+                >
+                  <div style="display: flex; gap: 25px; align-items: center">
+                    <label
+                      class="checkbox-container"
+                      style="margin: 0; white-space: nowrap"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingSettings.sortByStandings"
+                        (change)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      {{ "UE_LABEL_SORT_STANDINGS" | translate }}
+                    </label>
+                    <label
+                      class="checkbox-container"
+                      style="margin: 0; white-space: nowrap"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingSettings.highlightRowOnLap"
+                        (change)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
+                    </label>
+                  </div>
+
+                  <button
+                    class="btn btn-danger"
+                    (click)="resetPracticeRacedayLayout()"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 8px;
+                    "
+                  >
+                    <span class="material-icons">refresh</span>
+                    Reset Layout to Defaults
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column Toolbox (inside the expander) -->
+            @if (hasPracticeLaneViewWidget) {
+              <app-column-toolbox
+                [availableColumns]="availableColumns"
+                [scale]="scale"
+                [settings]="editingSettings"
+                (settingsChanged)="onColumnsChanged()"
+                [isPracticeLayoutEditor]="true"
+              ></app-column-toolbox>
+            }
+          </div>
+        }
+      </div>
+
       <!-- THEME CONTENT TEMPLATE -->
       <ng-template #themeContent let-theme="theme">
         <!-- Nested Flag Image Settings -->

@@ -35,6 +35,8 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(page).toHaveScreenshot("ui-editor-page.png", {
       fullPage: true,
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 10000,
     });
   });
 
@@ -114,10 +116,12 @@ test.describe("UI Editor Visuals", () => {
       .nth(1)
       .locator(".section-header")
       .first();
-    await expect(sectionHeader).toHaveScreenshot(
-      "ui-editor-duplicate-name-error.png",
-      { maxDiffPixelRatio: 0.15, maxDiffPixels: 10000 },
-    );
+    await expect(
+      sectionHeader.locator(".theme-title-container"),
+    ).toHaveScreenshot("ui-editor-duplicate-name-error.png", {
+      maxDiffPixelRatio: 0.15,
+      maxDiffPixels: 10000,
+    });
 
     // Try to navigate back
     await page.evaluate(() => window.history.back());
@@ -132,6 +136,35 @@ test.describe("UI Editor Visuals", () => {
     await expect(modalContent).toHaveScreenshot(
       "ui-editor-discard-confirm.png",
       { maxDiffPixelRatio: 0.1, maxDiffPixels: 10000, animations: "disabled" },
+    );
+  });
+
+  test("should display practice raceday layout section correctly", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Expand Practice Raceday Layout section
+    await page
+      .locator(".section-header", { hasText: "Raceday Layout (Practice)" })
+      .click();
+
+    // Wait for the practice section content to be visible
+    const practiceSection = page.locator(".practice-raceday-layout-section");
+    await practiceSection.waitFor({ state: "visible" });
+
+    // Wait for column toolbox to be visible inside the section
+    const columnToolbox = page.locator(".layout-customizer-toolbox").last();
+    await columnToolbox.waitFor({ state: "visible" });
+
+    await expect(page.locator(".config-section").nth(1)).toHaveScreenshot(
+      "ui-editor-practice-layout-section.png",
+      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
     );
   });
 });

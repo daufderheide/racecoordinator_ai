@@ -24,6 +24,7 @@ export class ColumnToolboxComponent {
   availableColumns = input<{ key: string; label: string }[]>([]);
   scale = input<number>(1);
   settings = input<Settings | undefined>(undefined);
+  isPracticeLayoutEditor = input<boolean>(false);
   settingsChanged = output<void>();
 
   isMinimized = signal<boolean>(false);

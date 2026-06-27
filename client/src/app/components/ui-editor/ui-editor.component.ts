@@ -114,6 +114,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  get hasPracticeLaneViewWidget(): boolean {
+    return !!this.editingSettings?.practiceRacedayLayout?.widgets?.some(
+      (w) => w.widgetType === "lane-view",
+    );
+  }
+
   // Success modal properties
   showSuccessModal = false;
   successModalTitle = "";
@@ -168,6 +174,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   sectionsExpanded: { [key: string]: boolean } = {
     racedayLayout: true,
+    practiceRacedayLayout: false,
     layout: true,
     themes: true,
     config: true,
@@ -241,6 +248,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   leaderboardEntries: any[] = [];
 
   selectedWidgetId: string | null = null;
+  selectedPracticeWidgetId: string | null = null;
 
   get selectedWidget(): any | null {
     if (
@@ -256,10 +264,30 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  onWidgetSelected(id: string | null) {
-    this.selectedWidgetId = id;
+  get selectedPracticeWidget(): any | null {
+    if (
+      !this.selectedPracticeWidgetId ||
+      !this.editingSettings?.practiceRacedayLayout?.widgets
+    ) {
+      return null;
+    }
+    return (
+      this.editingSettings.practiceRacedayLayout.widgets.find(
+        (w: any) => w.id === this.selectedPracticeWidgetId,
+      ) || null
+    );
+  }
+
+  onWidgetSelected(id: string | null, isPractice: boolean = false) {
+    if (isPractice) {
+      this.selectedPracticeWidgetId = id;
+    } else {
+      this.selectedWidgetId = id;
+    }
     if (id) {
-      const widget = this.selectedWidget;
+      const widget = isPractice
+        ? this.selectedPracticeWidget
+        : this.selectedWidget;
       if (widget) {
         let mutated = false;
         if (widget.fontFamily === undefined || widget.fontFamily === null) {
@@ -314,9 +342,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.cdr.markForCheck();
   }
 
-  onTextColorChange(event: Event) {
+  onTextColorChange(event: Event, isPractice: boolean = false) {
     const value = (event.target as HTMLInputElement).value;
-    const widget = this.selectedWidget;
+    const widget = isPractice
+      ? this.selectedPracticeWidget
+      : this.selectedWidget;
     if (widget) {
       widget.textColor = value;
       this.captureState();
@@ -324,9 +354,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  onBackgroundColorChange(event: Event) {
+  onBackgroundColorChange(event: Event, isPractice: boolean = false) {
     const value = (event.target as HTMLInputElement).value;
-    const widget = this.selectedWidget;
+    const widget = isPractice
+      ? this.selectedPracticeWidget
+      : this.selectedWidget;
     if (widget) {
       widget.backgroundColor = value;
       this.captureState();
@@ -341,6 +373,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onRacedayLayoutChanged(newLayout: any) {
     if (this.isSaving) return;
     this.editingSettings.racedayLayout = newLayout;
+    this.undoManager.captureState();
+  }
+
+  onPracticeRacedayLayoutChanged(newLayout: any) {
+    if (this.isSaving) return;
+    this.editingSettings.practiceRacedayLayout = newLayout;
     this.undoManager.captureState();
   }
 
@@ -366,6 +404,24 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       JSON.stringify(new Settings().columnVisibility),
     );
     // Provide new object reference for child components to detect change
+    this.editingState.settings = deepCopy(this.editingSettings);
+    this.undoManager.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.detectChanges();
+  }
+
+  resetPracticeRacedayLayout() {
+    this.selectedPracticeWidgetId = null;
+    this.editingSettings.practiceRacedayLayout = JSON.parse(
+      JSON.stringify(Settings.DEFAULT_LAYOUT),
+    );
+    this.editingSettings.practiceRacedayColumns = [...Settings.DEFAULT_COLUMNS];
+    this.editingSettings.practiceColumnLayouts = JSON.parse(
+      JSON.stringify(new Settings().practiceColumnLayouts),
+    );
+    this.editingSettings.practiceColumnVisibility = JSON.parse(
+      JSON.stringify(new Settings().practiceColumnVisibility),
+    );
     this.editingState.settings = deepCopy(this.editingSettings);
     this.undoManager.captureState();
     this.refreshDisplayProperties();
@@ -537,6 +593,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           );
         }
 
+        if (!editingSettings.practiceRacedayLayout) {
+          editingSettings.practiceRacedayLayout = JSON.parse(
+            JSON.stringify(Settings.DEFAULT_LAYOUT),
+          );
+        }
+
         if (!editingSettings.activeThemeId && themes.length > 0) {
           const defaultTheme = themes.find((t) => t.is_default);
           if (defaultTheme) {
@@ -611,6 +673,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
     clone.racedayColumns = [...(s.racedayColumns || [])];
     clone.columnAnchors = { ...(s.columnAnchors || {}) };
+    clone.practiceRacedayColumns = [...(s.practiceRacedayColumns || [])];
+    clone.practiceColumnAnchors = { ...(s.practiceColumnAnchors || {}) };
 
     // Safely clone layouts and visibility
     const layouts = s.columnLayouts || {};
@@ -618,6 +682,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     const visibility = s.columnVisibility || {};
     clone.columnVisibility = deepCopy(visibility);
+
+    const practiceLayouts = s.practiceColumnLayouts || {};
+    clone.practiceColumnLayouts = deepCopy(practiceLayouts);
+
+    const practiceVisibility = s.practiceColumnVisibility || {};
+    clone.practiceColumnVisibility = deepCopy(practiceVisibility);
 
     clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
     clone.pageTransition = s.pageTransition || "slide";
@@ -632,6 +702,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     clone.demoConfig = s.demoConfig ? { ...s.demoConfig } : undefined;
     clone.racedayLayout = s.racedayLayout
       ? deepCopy(s.racedayLayout)
+      : undefined;
+    clone.practiceRacedayLayout = s.practiceRacedayLayout
+      ? deepCopy(s.practiceRacedayLayout)
       : undefined;
 
     return clone;
@@ -684,7 +757,17 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
       JSON.stringify(a.columnVisibility) ===
         JSON.stringify(b.columnVisibility) &&
-      JSON.stringify(a.racedayLayout) === JSON.stringify(b.racedayLayout)
+      JSON.stringify(a.racedayLayout) === JSON.stringify(b.racedayLayout) &&
+      JSON.stringify(a.practiceRacedayColumns) ===
+        JSON.stringify(b.practiceRacedayColumns) &&
+      JSON.stringify(a.practiceColumnAnchors) ===
+        JSON.stringify(b.practiceColumnAnchors) &&
+      JSON.stringify(a.practiceColumnLayouts) ===
+        JSON.stringify(b.practiceColumnLayouts) &&
+      JSON.stringify(a.practiceColumnVisibility) ===
+        JSON.stringify(b.practiceColumnVisibility) &&
+      JSON.stringify(a.practiceRacedayLayout) ===
+        JSON.stringify(b.practiceRacedayLayout)
     );
   }
 
