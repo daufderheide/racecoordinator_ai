@@ -1,5 +1,5 @@
 @if (parent() && parent().columns && parent().columns.length > 0) {
-  <div class="bottom-section">
+  <div class="bottom-section" #laneViewContainer>
     <!-- Header -->
     <div
       class="table-header-row"
@@ -237,6 +237,7 @@
                 <!-- Text Content -->
                 @if (!parent().isImageProperty(entry.property)) {
                   <div
+                    #fitTextTarget
                     [class]="parent().getAnchorClass(entry.anchor)"
                     [style.font-family]="
                       entry.anchor?.startsWith('center-')
@@ -405,7 +406,10 @@
                 }
                 <!-- Image Content -->
                 @if (parent().isImageProperty(entry.property)) {
-                  <div [class]="parent().getAnchorClass(entry.anchor)">
+                  <div
+                    #fitTextTarget
+                    [class]="parent().getAnchorClass(entry.anchor)"
+                  >
                     @let imageUrl =
                       parent().formatColumnValue(
                         hd,

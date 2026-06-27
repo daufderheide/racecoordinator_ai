@@ -117,6 +117,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-top-center {
@@ -132,6 +135,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-top-right {
@@ -146,6 +152,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-center-left {
@@ -160,6 +169,9 @@
   height: 100%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-center-center {
@@ -174,6 +186,9 @@
   font-weight: bold;
   width: 100%;
   height: 100%;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-center-right {
@@ -188,6 +203,9 @@
   height: 100%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-bottom-left {
@@ -202,6 +220,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-bottom-center {
@@ -217,6 +238,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .anchor-bottom-right {
@@ -231,6 +255,9 @@
   height: 33%;
   padding: 2px;
   box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
 }
 
 .body-cell img {
@@ -314,9 +341,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.1;
+  word-break: break-word;
   overflow: hidden;
-  text-overflow: ellipsis;
   padding-right: 44px;
   /* Space for the arrow */
   box-sizing: border-box;
@@ -408,14 +436,14 @@
 .widget-wrapper.scale-auto .anchor-bottom-left,
 .widget-wrapper.scale-auto .anchor-bottom-center,
 .widget-wrapper.scale-auto .anchor-bottom-right {
-  font-size: calc(3.4cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(3.4cqh * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .anchor-center-left,
 .widget-wrapper.scale-auto .anchor-center-center,
 .widget-wrapper.scale-auto .anchor-center-right,
 .widget-wrapper.scale-auto app-raceday-lane-view .teammate-display-name {
-  font-size: calc(7.6cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(7.6cqh * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
 
 /* Fixed scaling when scaleMode is set to 'fixed' */
@@ -429,14 +457,14 @@
 .widget-wrapper.scale-fixed .anchor-bottom-left,
 .widget-wrapper.scale-fixed .anchor-bottom-center,
 .widget-wrapper.scale-fixed .anchor-bottom-right {
-  font-size: calc(1 * var(--widget-font-size)) !important;
+  font-size: calc(1 * var(--widget-font-size) * var(--text-fit-scale, 1)) !important;
 }
 
 .widget-wrapper.scale-fixed .anchor-center-left,
 .widget-wrapper.scale-fixed .anchor-center-center,
 .widget-wrapper.scale-fixed .anchor-center-right,
 .widget-wrapper.scale-fixed app-raceday-lane-view .teammate-display-name {
-  font-size: calc(2.25 * var(--widget-font-size)) !important;
+  font-size: calc(2.25 * var(--widget-font-size) * var(--text-fit-scale, 1)) !important;
 }
 
 .body-cell.clickable-lap-cell,

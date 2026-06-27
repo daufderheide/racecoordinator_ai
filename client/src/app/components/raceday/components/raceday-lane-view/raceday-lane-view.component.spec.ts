@@ -169,4 +169,64 @@ describe("RacedayLaneViewComponent", () => {
     expect(cells[1].classList.contains("clickable-lap-cell")).toBeTrue();
     expect(cells[1].getAttribute("title")).toBe("RD_LAP_COLUMN_TOOLTIP");
   });
+
+  it("should scale down text that overflows the container", async () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const targetCell = rowEl.querySelector(
+      ".anchor-center-center",
+    ) as HTMLElement;
+
+    // Force overflow for test, but make it respect the scale so the binary search works
+    Object.defineProperty(targetCell, "scrollWidth", {
+      get: () => {
+        const scale = Number(
+          targetCell.style.getPropertyValue("--text-fit-scale") || 1,
+        );
+        return 200 * scale;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(targetCell, "clientWidth", {
+      get: () => 100,
+      configurable: true,
+    });
+
+    // Mock height to not overflow
+    Object.defineProperty(targetCell, "scrollHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+    Object.defineProperty(targetCell, "clientHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+
+    // Force fitTexts to run again now that we mocked the size
+    (component as any).fitTexts();
+
+    // Wait for the setTimeout in fitTexts
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const targets = (component as any).fitTextTargets();
+    if (targets.length === 0) {
+      throw new Error("No fitTextTargets found!");
+    }
+    const targetNodes = targets.map((t: any) => t.nativeElement);
+    if (!targetNodes.includes(targetCell)) {
+      throw new Error(
+        `targetCell is NOT in targets! targetCell classes: ${targetCell.className}, targets: ${targetNodes.map((n: any) => n.className).join(", ")}`,
+      );
+    }
+
+    const scale = targetCell.style.getPropertyValue("--text-fit-scale");
+    if (scale === "1" || scale === "") {
+      throw new Error(
+        `Scale was not updated! It is ${scale}. scrollWidth=${targetCell.scrollWidth}, clientWidth=${targetCell.clientWidth}`,
+      );
+    }
+
+    expect(scale).toBeTruthy();
+    expect(Number(scale)).toBeLessThan(1.0);
+    expect(Number(scale)).toBeGreaterThan(0.0);
+  });
 });
