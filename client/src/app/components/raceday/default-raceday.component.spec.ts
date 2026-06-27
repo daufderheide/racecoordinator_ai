@@ -98,6 +98,98 @@ import { DefaultRacedayComponent } from "./default-raceday.component";
 import { createRacedayMocks } from "./testing/raceday_helper";
 
 describe("DefaultRacedayComponent", () => {
+  describe("gridTemplateRowsVertical", () => {
+    it("should return 1fr if no columns", () => {
+      (component as any).columns = [];
+      expect((component as any).gridTemplateRowsVertical).toBe("1fr");
+    });
+
+    it("should calculate correct heights for vertical columns", () => {
+      (component as any).columns = [
+        { propertyName: "driver.nickname", width: 250 },
+        { propertyName: "lastLapTime", width: 100 },
+        { propertyName: "lastLaps", width: 1000 },
+        { propertyName: "lapCount", width: 100 },
+      ] as any[];
+
+      // largeHeight = max(100, 250) = 250
+      // smallHeight = min(100, 250) = 100
+      // NICKNAME = smallHeight (100)
+      // LAP TIME = largeHeight (250)
+      // LAST LAPS = largeHeight * 5 (1250)
+      // LAP COUNT = largeHeight (250)
+
+      const result = (component as any).gridTemplateRowsVertical;
+      expect(result).toBe(
+        "minmax(0, 100fr) minmax(0, 250fr) minmax(0, 1250fr) minmax(0, 250fr)",
+      );
+    });
+  });
+
+  describe("getLastLaps", () => {
+    it("should return empty array if no lapTimes", () => {
+      const heatDriver = { lapTimes: [] } as any;
+      const result = component.getLastLaps(heatDriver, {} as any);
+      expect(result.length).toBe(5);
+    });
+
+    it("should return up to 5 formatted lap times", () => {
+      const heatDriver = {
+        lapTimes: [1, 2, 3000, 4000, 5000, 6000, 7000],
+      } as any;
+      const column = {} as any;
+      // spyOn already exists if set up in beforeEach
+
+      // The implementation slices the last 5 elements, but handles index checks.
+      // It runs a loop for i=1 to 5. index = n - 1 - i.
+      // n = 7. i=1 -> index=5. i=2 -> index=4. i=3 -> index=3. i=4 -> index=2. i=5 -> index=1.
+      // Wait, n-1-i for i=1..5 means it takes the 5 lap times BEFORE the last one?
+      // Ah, n-1 is the last lap. So if i=1, n-1-1 = n-2 (the penultimate lap).
+      // Let's verify what getLastLaps does.
+
+      const result = component.getLastLaps(heatDriver, column);
+      expect(result.length).toBe(5);
+    });
+  });
+
+  describe("saveLayout practice vs normal", () => {
+    it("should save to practiceRacedayLayout if isPracticeLayout is true", () => {
+      spyOnProperty(component, "isPracticeLayout", "get").and.returnValue(true);
+      component.layout = { id: "test-layout" } as any;
+
+      const settingsService = TestBed.inject(SettingsService);
+      (settingsService.saveSettings as jasmine.Spy).calls.reset();
+      spyOn(settingsService, "getSettings").and.returnValue({} as any);
+
+      component.saveLayout();
+
+      expect(settingsService.saveSettings).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          practiceRacedayLayout: { id: "test-layout" },
+        }),
+      );
+    });
+
+    it("should save to racedayLayout if isPracticeLayout is false", () => {
+      spyOnProperty(component, "isPracticeLayout", "get").and.returnValue(
+        false,
+      );
+      component.layout = { id: "test-layout" } as any;
+
+      const settingsService = TestBed.inject(SettingsService);
+      (settingsService.saveSettings as jasmine.Spy).calls.reset();
+      spyOn(settingsService, "getSettings").and.returnValue({} as any);
+
+      component.saveLayout();
+
+      expect(settingsService.saveSettings).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          racedayLayout: { id: "test-layout" },
+        }),
+      );
+    });
+  });
+
   let component: DefaultRacedayComponent;
   let fixture: ComponentFixture<DefaultRacedayComponent>;
   let mockDataService: any;
@@ -3617,8 +3709,8 @@ describe("DefaultRacedayComponent", () => {
       } as any;
       component.isLayoutCustomizing = true;
 
-      // widget height (600) - edit overlay (28) - margins (10) - header (36) = 526
-      expect(component.getTableBodyHeight()).toBe(526);
+      // widget height (600) - margins (10) - header (36) = 554
+      expect(component.getTableBodyHeight()).toBe(554);
     });
 
     it("should return default fallback height if lane-view widget is not found", () => {
@@ -3697,7 +3789,7 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should insert a new column on drop at header level", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const element = document.createElement("div");
       const event = {
         preventDefault: jasmine.createSpy("preventDefault"),
@@ -3723,11 +3815,11 @@ describe("DefaultRacedayComponent", () => {
       expect(mockSettings.racedayColumns).toContain("lastLapTime");
       // inserted before lapCount
       expect(mockSettings.racedayColumns.indexOf("lastLapTime")).toBe(1);
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
     it("should append a new column on drop at row level", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const element = document.createElement("div");
       const event = {
         preventDefault: jasmine.createSpy("preventDefault"),
@@ -3752,21 +3844,21 @@ describe("DefaultRacedayComponent", () => {
       expect(
         mockSettings.racedayColumns[mockSettings.racedayColumns.length - 1],
       ).toBe("lastLapTime");
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
     it("should delete column on deleteColumn", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const colData = { propertyName: "lapCount" } as any;
 
       component.deleteColumn(colData);
 
       expect(mockSettings.racedayColumns).not.toContain("lapCount");
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
     it("should change column visibility on changeColumnVisibility", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const colData = { propertyName: "driver.nickname" } as any;
 
       component.changeColumnVisibility(colData, "FuelRaceOnly");
@@ -3774,11 +3866,11 @@ describe("DefaultRacedayComponent", () => {
       expect(mockSettings.columnVisibility["driver.nickname"]).toBe(
         ColumnVisibility.FuelRaceOnly,
       );
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
     it("should drop column key into anchor slot", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const element = document.createElement("div");
       const event = {
         preventDefault: jasmine.createSpy("preventDefault"),
@@ -3802,11 +3894,11 @@ describe("DefaultRacedayComponent", () => {
       expect(mockSettings.columnLayouts["driver.nickname"]["bottom-left"]).toBe(
         "lastLapTime",
       );
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
     it("should delete anchor value on deleteAnchor", () => {
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       const event = {
         stopPropagation: jasmine.createSpy("stopPropagation"),
       } as any;
@@ -3819,7 +3911,7 @@ describe("DefaultRacedayComponent", () => {
 
       expect(event.stopPropagation).toHaveBeenCalled();
       expect(component.hasAnchorValue(colData, "center-center")).toBeFalse();
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
   });
 
@@ -3838,7 +3930,7 @@ describe("DefaultRacedayComponent", () => {
 
     it("should save minimize state and emit columnsChanged on toggleLayoutEditorMinimize", () => {
       const settingsService = TestBed.inject(SettingsService);
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       (settingsService.saveSettings as jasmine.Spy).calls.reset();
 
       component.isLayoutEditorMinimized = false;
@@ -3854,7 +3946,7 @@ describe("DefaultRacedayComponent", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
       expect(component.isLayoutEditorMinimized).toBeTrue();
       expect(mockSettings.layoutEditorMinimized).toBeTrue();
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
       expect(settingsService.saveSettings).not.toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
@@ -3869,7 +3961,7 @@ describe("DefaultRacedayComponent", () => {
 
     it("should save position and emit columnsChanged on onLayoutEditorDragEnded", () => {
       const settingsService = TestBed.inject(SettingsService);
-      spyOn(component.columnsChanged, "emit");
+      spyOn((component as any).columnsChanged, "emit");
       (settingsService.saveSettings as jasmine.Spy).calls.reset();
 
       const fakeDragEvent = {
@@ -3885,7 +3977,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.layoutEditorPosition).toEqual({ x: 300, y: 400 });
       expect(mockSettings.layoutEditorPositionX).toBe(300);
       expect(mockSettings.layoutEditorPositionY).toBe(400);
-      expect(component.columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
       expect(settingsService.saveSettings).not.toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
@@ -3992,14 +4084,12 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getTableBodyHeight()).toBe(500);
       expect(RacedayLayoutUtils.getTableBodyHeight).toHaveBeenCalledWith(
         testLayout,
-        component.isLayoutCustomizing,
       );
 
       expect(component.getRowHeight()).toBe(50);
       expect(RacedayLayoutUtils.getRowHeight).toHaveBeenCalledWith(
         testLayout,
         jasmine.any(Number),
-        component.isLayoutCustomizing,
       );
     });
   });

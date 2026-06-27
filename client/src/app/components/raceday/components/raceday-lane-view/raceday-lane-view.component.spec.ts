@@ -176,8 +176,12 @@ describe("RacedayLaneViewComponent", () => {
       ".anchor-center-center",
     ) as HTMLElement;
 
+    const textEl =
+      (targetCell.querySelector(".teammate-display-name") as HTMLElement) ||
+      targetCell;
+
     // Force overflow for test, but make it respect the scale so the binary search works
-    Object.defineProperty(targetCell, "scrollWidth", {
+    Object.defineProperty(textEl, "scrollWidth", {
       get: () => {
         const scale = Number(
           targetCell.style.getPropertyValue("--text-fit-scale") || 1,
@@ -186,17 +190,17 @@ describe("RacedayLaneViewComponent", () => {
       },
       configurable: true,
     });
-    Object.defineProperty(targetCell, "clientWidth", {
+    Object.defineProperty(textEl, "clientWidth", {
       get: () => 100,
       configurable: true,
     });
 
     // Mock height to not overflow
-    Object.defineProperty(targetCell, "scrollHeight", {
+    Object.defineProperty(textEl, "scrollHeight", {
       get: () => 20,
       configurable: true,
     });
-    Object.defineProperty(targetCell, "clientHeight", {
+    Object.defineProperty(textEl, "clientHeight", {
       get: () => 20,
       configurable: true,
     });

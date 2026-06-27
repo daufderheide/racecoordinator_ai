@@ -478,3 +478,38 @@
   filter: brightness(1.2);
   background-color: rgba(255, 255, 255, 0.08) !important;
 }
+
+/* Vertical Layout overrides */
+.bottom-section.vertical-layout {
+  flex-direction: row;
+}
+
+.bottom-section.vertical-layout .table-header-row {
+  height: 100% !important; /* height is set via inline style to null, so it will fill, but we want 100% */
+}
+
+.bottom-section.vertical-layout .header-cell {
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+  border-bottom: 1px solid #fff;
+  padding: 0 16px;
+}
+
+.bottom-section.vertical-layout .table-row {
+  top: 0 !important;
+  height: 100% !important;
+  width: calc((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes));
+  left: calc(
+    ((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) *
+      var(--lane-index)
+  );
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bottom-section.vertical-layout [class*="anchor-"],
+.bottom-section.vertical-layout .teammate-display-name {
+  word-break: normal;
+  overflow-wrap: normal;
+}

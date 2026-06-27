@@ -329,6 +329,42 @@ export class DefaultRacedayComponent
     return this.columns.map((c) => `minmax(0, ${c.width}fr)`).join(" ");
   }
 
+  protected get gridTemplateRowsVertical(): string {
+    if (!this.columns || this.columns.length === 0) return "1fr";
+
+    const lapTimeCol = this.columns.find((c) =>
+      c.propertyName.startsWith("lastLapTime"),
+    );
+    const nicknameCol = this.columns.find(
+      (c) =>
+        c.propertyName.startsWith("driver.nickname") ||
+        c.propertyName.startsWith("driver.name"),
+    );
+
+    const lapTimeWidth = lapTimeCol ? lapTimeCol.width : 150;
+    const nicknameWidth = nicknameCol ? nicknameCol.width : 300;
+
+    // In horizontal mode, nickname is typically wider than lap time.
+    // To ensure lap/lapTime rows are larger in vertical mode, we assign the larger width to largeHeight.
+    const largeHeight = Math.max(lapTimeWidth, nicknameWidth);
+    const smallHeight = Math.min(lapTimeWidth, nicknameWidth);
+
+    return this.columns
+      .map((c) => {
+        if (c.propertyName === "lastLaps") {
+          return `minmax(0, ${largeHeight * 5}fr)`;
+        }
+        if (
+          c.propertyName === "lapCount" ||
+          c.propertyName.startsWith("lastLapTime")
+        ) {
+          return `minmax(0, ${largeHeight}fr)`;
+        }
+        return `minmax(0, ${smallHeight}fr)`;
+      })
+      .join(" ");
+  }
+
   protected getLayoutEntries(
     column: ColumnDefinition,
   ): { anchor: string; property: string }[] {
@@ -1628,10 +1664,7 @@ export class DefaultRacedayComponent
 
   getTableBodyHeight(): number {
     const layout = this.layout;
-    return RacedayLayoutUtils.getTableBodyHeight(
-      layout,
-      this.isLayoutCustomizing,
-    );
+    return RacedayLayoutUtils.getTableBodyHeight(layout);
   }
 
   getRowHeight(): number {
@@ -1639,7 +1672,6 @@ export class DefaultRacedayComponent
     return RacedayLayoutUtils.getRowHeight(
       layout,
       this.track?.lanes?.length || 1,
-      this.isLayoutCustomizing,
     );
   }
 
@@ -1710,6 +1742,46 @@ export class DefaultRacedayComponent
       ctx,
       anchor,
     );
+  }
+
+  getLastLaps(
+    heatDriver: DriverHeatData,
+    column: ColumnDefinition,
+    anchor?: string,
+  ): string[] {
+    const laps = heatDriver.lapTimes || [];
+    const n = laps.length;
+    const result: string[] = [];
+    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
+      (w) => w.widgetType === "lane-view",
+    );
+    const ctx: FormatContext = {
+      translate: (key) => this.translationService.translate(key),
+      getRace: () => this.raceService.getRace(),
+      getTrack: () => this.track,
+      getDriverRanking: (objectId) => this.driverRankings.get(objectId),
+      getFlagType: () => this.raceFlagService.getFlagType(),
+      getFlagUrl: (flag) => this.getFlagUrl(flag),
+      getFullUrl: (url) => this.getFullUrl(url),
+      getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
+      laneViewWidgetSettings: laneViewWidget?.customSettings,
+    };
+
+    for (let i = 1; i <= 5; i++) {
+      const index = n - 1 - i;
+      const val = index >= 0 && laps[index] > 0 ? laps[index] : 0;
+      result.push(
+        RacedayFormatUtils.formatValue(
+          "lastLapTime",
+          val,
+          heatDriver,
+          column,
+          ctx,
+          anchor,
+        ),
+      );
+    }
+    return result;
   }
 
   // Menu logic
@@ -2770,6 +2842,7 @@ export class DefaultRacedayComponent
       lapCount: 216,
       reactionTime: 330,
       lastLapTime: 330,
+      lastLaps: 1650,
       medianLapTime: 330,
       averageLapTime: 330,
       bestLapTime: 330,
@@ -3670,8 +3743,14 @@ export class DefaultRacedayComponent
 
   saveLayout() {
     console.log("saveLayout called");
-    const settings = this.settingsService.getSettings();
-    this.currentRacedayLayout = this.layout;
+    this.normalizeZIndices();
+    const settings =
+      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isPracticeLayout) {
+      settings.practiceRacedayLayout = this.layout;
+    } else {
+      settings.racedayLayout = this.layout;
+    }
     this.settingsService.saveSettings(settings);
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();

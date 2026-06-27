@@ -4,9 +4,8 @@
 }
 
 .widget-wrapper.edit-mode {
-  border: 1px dashed rgba(59, 130, 246, 0.4);
+  outline: 1px dashed rgba(59, 130, 246, 0.4);
   background-color: rgba(59, 130, 246, 0.02);
-  padding-top: 28px;
 }
 
 .widget-content {
@@ -104,7 +103,7 @@
 
 /* Selected state outline */
 .widget-wrapper.edit-mode.selected {
-  border: 2px solid #38bdf8 !important;
+  outline: 2px solid #38bdf8 !important;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.5) !important;
 }
 

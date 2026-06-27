@@ -1,4 +1,20 @@
 @if (settings()) {
+  <!-- General Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_LANE_VIEW_GENERAL_SECTION" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().isVertical"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_LANE_VIEW_VERTICAL_LAYOUT" | translate }}
+    </label>
+  </div>
+
   <!-- Columns Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION" | translate }}

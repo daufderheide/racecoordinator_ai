@@ -1,12 +1,30 @@
 @if (parent() && parent().columns && parent().columns.length > 0) {
-  <div class="bottom-section" #laneViewContainer>
+  <div
+    class="bottom-section"
+    [class.vertical-layout]="widget()?.customSettings?.['isVertical']"
+    #laneViewContainer
+  >
     <!-- Header -->
     <div
       class="table-header-row"
-      [style.grid-template-columns]="parent().gridTemplateColumns"
-      [style.height.px]="getHeaderHeight()"
+      [style.grid-template-columns]="
+        !widget()?.customSettings?.['isVertical']
+          ? parent().gridTemplateColumns
+          : '1fr'
+      "
+      [style.grid-template-rows]="
+        widget()?.customSettings?.['isVertical']
+          ? parent().gridTemplateRowsVertical
+          : 'none'
+      "
+      [style.height.px]="
+        !widget()?.customSettings?.['isVertical'] ? getHeaderHeight() : null
+      "
+      [style.width]="widget()?.customSettings?.['isVertical'] ? 'auto' : null"
       cdkDropList
-      cdkDropListOrientation="horizontal"
+      [cdkDropListOrientation]="
+        widget()?.customSettings?.['isVertical'] ? 'vertical' : 'horizontal'
+      "
       (cdkDropListDropped)="parent().onColumnDrop($event)"
       [cdkDropListDisabled]="!parent().isUIEditorMode()"
       (dragover)="
@@ -54,7 +72,9 @@
                 font-size: 16px;
                 opacity: 0.7;
                 cursor: grab;
-                margin-left: 8px;
+                position: absolute;
+                left: 4px;
+                z-index: 10;
               "
               >drag_indicator</span
             >
@@ -97,7 +117,17 @@
           </div>
 
           @if (parent().isUIEditorMode()) {
-            <div style="display: flex; flex-direction: column; gap: 2px">
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                position: absolute;
+                right: 4px;
+                z-index: 10;
+                align-items: flex-end;
+              "
+            >
               <button
                 class="delete-col-btn"
                 (click)="parent().deleteColumn(col)"
@@ -170,7 +200,16 @@
           [class.highlight]="parent().highlightedDrivers.has(hd.objectId)"
           [class.drag-over]="parent().draggingLane === hd.laneIndex"
           (mouseenter)="parent().onDragOver(hd.laneIndex)"
-          [style.grid-template-columns]="parent().gridTemplateColumns"
+          [style.grid-template-columns]="
+            !widget()?.customSettings?.['isVertical']
+              ? parent().gridTemplateColumns
+              : '1fr'
+          "
+          [style.grid-template-rows]="
+            widget()?.customSettings?.['isVertical']
+              ? parent().gridTemplateRowsVertical
+              : 'none'
+          "
           [style.--lane-index]="parent().getDriverVisualPosition(hd)"
           [style.z-index]="
             parent().isDragging
@@ -387,7 +426,35 @@
                         <span class="material-icons">drag_indicator</span>
                       </div>
                     }
-                    @if (
+                    @if (entry.property === "lastLaps") {
+                      <div
+                        [style.display]="'flex'"
+                        [style.flex-direction]="
+                          widget()?.customSettings?.['isVertical']
+                            ? 'column'
+                            : 'row'
+                        "
+                        [style.justify-content]="'space-between'"
+                        [style.align-items]="'center'"
+                        [style.width]="
+                          widget()?.customSettings?.['isVertical']
+                            ? 'auto'
+                            : '100%'
+                        "
+                        [style.height]="
+                          widget()?.customSettings?.['isVertical']
+                            ? '100%'
+                            : 'auto'
+                        "
+                      >
+                        @for (
+                          lap of parent().getLastLaps(hd, col, entry.anchor);
+                          track $index
+                        ) {
+                          <span>{{ lap }}</span>
+                        }
+                      </div>
+                    } @else if (
                       !parent().isNameProperty(entry.property) ||
                       !parent().isTeam(hd)
                     ) {

@@ -118,9 +118,12 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       // If it contains an image, scaling font-size won't fix overflow, skip it to avoid thrashing.
       if (el.querySelector("img")) continue;
 
+      const textEl =
+        (el.querySelector(".teammate-display-name") as HTMLElement) || el;
+
       const isOverflowing =
-        el.scrollHeight > el.clientHeight + 1 ||
-        el.scrollWidth > el.clientWidth + 1;
+        textEl.scrollHeight > textEl.clientHeight + 1 ||
+        textEl.scrollWidth > textEl.clientWidth + 1;
 
       if (isOverflowing) {
         let minScale = 0.1;
@@ -133,8 +136,8 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
           el.style.setProperty("--text-fit-scale", scale.toString());
 
           if (
-            el.scrollHeight > el.clientHeight + 1 ||
-            el.scrollWidth > el.clientWidth + 1
+            textEl.scrollHeight > textEl.clientHeight + 1 ||
+            textEl.scrollWidth > textEl.clientWidth + 1
           ) {
             maxScale = scale; // still too big
           } else {

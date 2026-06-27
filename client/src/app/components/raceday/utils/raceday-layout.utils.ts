@@ -37,29 +37,21 @@ export class RacedayLayoutUtils {
       : 36;
   }
 
-  static getTableBodyHeight(
-    layout: LayoutConfig | undefined,
-    isLayoutCustomizing: boolean,
-  ): number {
+  static getTableBodyHeight(layout: LayoutConfig | undefined): number {
     const widget = layout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
     );
     if (!widget) return 672;
-    const editModeOffset = isLayoutCustomizing ? 28 : 0;
     const headerHeight = RacedayLayoutUtils.getHeaderHeight(layout);
-    return Math.max(100, widget.height - editModeOffset - 10 - headerHeight);
+    return Math.max(100, widget.height - 10 - headerHeight);
   }
 
   static getRowHeight(
     layout: LayoutConfig | undefined,
     numLanes: number,
-    isLayoutCustomizing: boolean,
   ): number {
     const totalGaps = (Math.max(1, numLanes) - 1) * 2;
-    const activeHeight = RacedayLayoutUtils.getTableBodyHeight(
-      layout,
-      isLayoutCustomizing,
-    );
+    const activeHeight = RacedayLayoutUtils.getTableBodyHeight(layout);
     return (activeHeight - totalGaps) / Math.max(1, numLanes);
   }
 
@@ -237,6 +229,7 @@ export class RacedayLayoutUtils {
     const labels: { [key: string]: string } = {
       lapCount: "RD_COL_LAP",
       lastLapTime: "RD_COL_LAP_TIME",
+      lastLaps: "RD_COL_LAST_LAPS",
       medianLapTime: "RD_COL_MEDIAN_LAP",
       averageLapTime: "RD_COL_AVG_LAP",
       bestLapTime: "RD_COL_BEST_LAP",
