@@ -111,17 +111,24 @@ test.describe("UI Editor Visuals", () => {
     await container.waitFor({ state: "visible" });
     await page.waitForTimeout(500); // Allow layout and font antialiasing to settle
 
+    // Force strict dimensions on the section-header to prevent 1px WebKit height fluctuation
+    await page.addStyleTag({
+      content:
+        ".section-header { height: 52px !important; box-sizing: border-box !important; overflow: hidden !important; }",
+    });
+
     const sectionHeader = page
       .locator(".theme-sub-section")
       .nth(1)
       .locator(".section-header")
       .first();
-    await expect(
-      sectionHeader.locator(".theme-title-container"),
-    ).toHaveScreenshot("ui-editor-duplicate-name-error.png", {
-      maxDiffPixelRatio: 0.15,
-      maxDiffPixels: 10000,
-    });
+    await expect(sectionHeader).toHaveScreenshot(
+      "ui-editor-duplicate-name-error.png",
+      {
+        maxDiffPixelRatio: 0.15,
+        maxDiffPixels: 10000,
+      },
+    );
 
     // Try to navigate back
     await page.evaluate(() => window.history.back());

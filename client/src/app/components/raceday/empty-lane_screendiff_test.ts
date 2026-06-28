@@ -89,6 +89,14 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     // Wait for the main content area to ensure page is loaded
     await page.locator(".scalable-content").waitFor({ state: "visible" });
 
+    const info = await page.evaluate(() => {
+      const headerCell = document.querySelector(".header-cell") as HTMLElement;
+      return headerCell
+        ? window.getComputedStyle(headerCell).fontSize
+        : "no header cell";
+    });
+    console.log("EMPTY LANE TEST DOM INFO:", info);
+
     const raceData = {
       race: {
         race: {

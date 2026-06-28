@@ -111,6 +111,8 @@
   font-size: 1.6rem;
   font-family: inherit;
   width: 600px;
+  height: 32px;
+  box-sizing: border-box;
   transition: all 0.2s ease;
 }
 

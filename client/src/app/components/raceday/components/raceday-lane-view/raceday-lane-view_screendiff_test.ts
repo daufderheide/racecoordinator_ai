@@ -200,4 +200,105 @@ test.describe("Raceday Lane View Visuals", () => {
 
     await expect(laneView).toHaveScreenshot("raceday-lane-view-long-names.png");
   });
+
+  test("should scale header row dynamically when a large custom column font size is configured", async ({
+    page,
+  }) => {
+    // Navigate and set settings
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: [
+        "driver.name",
+        "driver.nickname",
+        "seed",
+        "rankHeat",
+        "rankOverall",
+        "lapCount",
+        "participant.fuelLevel",
+      ],
+      columnLayouts: {
+        "driver.name": { CenterCenter: "driver.name" },
+        "driver.nickname": { CenterCenter: "driver.nickname" },
+        seed: { CenterCenter: "seed" },
+        rankHeat: { CenterCenter: "rankHeat" },
+        rankOverall: { CenterCenter: "rankOverall" },
+        lapCount: { CenterCenter: "lapCount" },
+        "participant.fuelLevel": { CenterCenter: "participant.fuelLevel" },
+      },
+      columnAnchors: {
+        CenterCenter: "center-center",
+      },
+      customLayouts: [
+        {
+          id: "widget-lane-view",
+          widgetType: "lane-view",
+          x: 0,
+          y: 0,
+          width: 1600,
+          height: 900,
+          zIndex: 157,
+          scaleMode: "auto",
+          customSettings: {
+            isVertical: true,
+            columnFontSize: 80,
+          },
+        },
+      ],
+      columnVisibility: {},
+    });
+
+    const container = page.locator(".dashboard-wrapper");
+    await container.waitFor();
+
+    const raceData = {
+      race: {
+        race: {
+          heat: 1,
+        },
+      },
+      drivers: [
+        {
+          lane: 1,
+          name: "Driver 1",
+          nickname: "D1",
+        },
+        {
+          lane: 2,
+          name: "Driver 2",
+          nickname: "D2",
+        },
+      ],
+      lanes: [
+        {
+          lane: 1,
+          lapCount: 10,
+        },
+        {
+          lane: 2,
+          lapCount: 15,
+        },
+      ],
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+
+    const laneView = page.locator("app-raceday-lane-view");
+    await expect(laneView).toBeVisible();
+
+    // Disable blinking cursor to prevent flaky screenshots
+    await page.addStyleTag({
+      content:
+        "* { caret-color: transparent !important; } .blink { animation: none !important; }",
+    });
+
+    await expect(laneView).toHaveScreenshot(
+      "raceday-lane-view-large-header.png",
+    );
+  });
 });
