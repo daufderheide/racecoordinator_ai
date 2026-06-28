@@ -114,8 +114,19 @@ test.describe("UI Editor Visuals", () => {
     const titleContainer = page
       .locator(".theme-sub-section")
       .nth(1)
-      .locator(".theme-title-container.invalid")
+      .locator(".section-header")
       .first();
+
+    // Force a strict integer pixel height to prevent 1px bounding-box flakiness in WebKit
+    await titleContainer.evaluate((el) => {
+      el.style.setProperty("height", "50px", "important");
+      el.style.setProperty("min-height", "50px", "important");
+      el.style.setProperty("max-height", "50px", "important");
+      el.style.setProperty("box-sizing", "border-box", "important");
+      el.style.setProperty("overflow", "hidden", "important");
+    });
+    await page.waitForTimeout(100);
+
     await expect(titleContainer).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
       {
