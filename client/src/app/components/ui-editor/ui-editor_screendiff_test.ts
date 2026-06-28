@@ -111,10 +111,11 @@ test.describe("UI Editor Visuals", () => {
     await container.waitFor({ state: "visible" });
     await page.waitForTimeout(500); // Allow layout and font antialiasing to settle
 
-    const titleContainer = page
-      .locator(".theme-title-container.invalid")
+    const sectionHeader = page
+      .locator(".theme-sub-section .section-header")
+      .filter({ has: page.locator(".theme-title-container.invalid") })
       .first();
-    await expect(titleContainer).toHaveScreenshot(
+    await expect(sectionHeader).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
       {
         maxDiffPixelRatio: 0.15,
