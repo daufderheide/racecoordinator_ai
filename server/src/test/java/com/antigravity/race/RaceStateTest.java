@@ -388,6 +388,7 @@ public class RaceStateTest {
     // 1. Setup Race in HeatOver with Auto-Advance
     race.changeState(new HeatOver());
     race.setAutoAdvanceRemaining(10.0);
+    race.addRaceTime(12.3f);
     assertTrue(race.getState() instanceof HeatOver);
 
     // 2. Press Call button
@@ -395,6 +396,7 @@ public class RaceStateTest {
 
     // 3. Verify timer aborted (stay in HeatOver)
     assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
+    assertEquals(0.0, race.getRaceTime(), 0.001);
     assertTrue(race.getState() instanceof HeatOver);
   }
 
@@ -402,6 +404,7 @@ public class RaceStateTest {
   public void testPauseDuringAutoStartCancelsTimer() throws Exception {
     // 1. Setup Race with Auto-Start
     race.setAutoStartRemaining(10.0);
+    race.addRaceTime(5.5f);
     assertTrue(race.getState() instanceof NotStarted);
 
     // 2. Pause
@@ -410,6 +413,7 @@ public class RaceStateTest {
 
     // 3. Verify
     assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+    assertEquals(0.0, race.getRaceTime(), 0.001);
     assertTrue(race.getState() instanceof NotStarted);
     // Note: We don't call verifyBroadcast(RaceState.PAUSED) because state doesn't
     // change.

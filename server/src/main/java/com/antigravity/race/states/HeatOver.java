@@ -85,6 +85,11 @@ public class HeatOver implements IRaceState {
     stopTimer();
     race.setAutoAdvanceFired(true);
     race.clearAutoTimers();
+    RaceFlag flag = getFlagType(race);
+    race.broadcastFlag(flag);
+    race.setRaceState(RaceState.HEAT_OVER, flag, 0);
+    race.resetRaceTime();
+    broadcastTime(race);
   }
 
   @Override

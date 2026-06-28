@@ -113,7 +113,11 @@ public class NotStarted implements IRaceState {
     stopTimer();
     race.setAutoStartFired(true);
     race.clearAutoTimers();
-    race.broadcastFlag(getFlagType(race));
+    RaceFlag flag = getFlagType(race);
+    race.broadcastFlag(flag);
+    race.setRaceState(RaceState.NOT_STARTED, flag, 0);
+    race.resetRaceTime();
+    broadcastTime(race);
   }
 
   @Override

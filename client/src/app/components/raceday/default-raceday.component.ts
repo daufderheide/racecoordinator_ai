@@ -305,6 +305,10 @@ export class DefaultRacedayComponent
     }
 
     const time = this.time || 0;
+
+    if (s === RaceState.HEAT_OVER && time <= 0) {
+      return "--";
+    }
     const hours = Math.floor(time / 3600);
     const minutes = Math.floor((time % 3600) / 60);
     const seconds = Math.floor(time % 60);

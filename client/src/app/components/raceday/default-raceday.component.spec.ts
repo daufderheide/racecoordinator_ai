@@ -1904,6 +1904,15 @@ describe("DefaultRacedayComponent", () => {
       component["timeFormat"] = "1.0-0";
       expect(component["formattedTime"]).toBe("0");
     });
+
+    it("should show '--' when state is HEAT_OVER and time is <= 0", () => {
+      component["raceState"] = RaceState.HEAT_OVER;
+      component["time"] = 0;
+      expect(component["formattedTime"]).toBe("--");
+
+      component["time"] = -1;
+      expect(component["formattedTime"]).toBe("--");
+    });
   });
 
   describe("Lap Highlighting", () => {
