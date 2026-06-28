@@ -1,9 +1,4 @@
 @if (settings()) {
-  <!-- General Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_GENERAL_SECTION" | translate }}
-  </div>
-
   <div class="inspector-section">
     <label class="inspector-checkbox-label">
       <input
@@ -172,37 +167,6 @@
     />
   </div>
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_TEXT_COLOR" | translate
-    }}</label>
-    <div
-      class="color-picker-wrapper"
-      [class.is-null]="!settings().dataTextColor"
-    >
-      <input
-        type="color"
-        [value]="settings().dataTextColor || '#ffffff'"
-        (change)="onColorChange('dataTextColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!settings().dataTextColor) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
-      }
-      @if (settings().dataTextColor) {
-        <button
-          class="color-reset-btn"
-          (click)="resetColor('dataTextColor')"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-        >
-          ✕
-        </button>
-      }
-    </div>
-  </div>
-
   <!-- Lane Inset Data Settings Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
@@ -284,37 +248,5 @@
       (change)="onSettingsChange()"
       class="inspector-slider"
     />
-  </div>
-
-  <!-- Inset Text Color -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_TEXT_COLOR" | translate
-    }}</label>
-    <div
-      class="color-picker-wrapper"
-      [class.is-null]="!settings().insetTextColor"
-    >
-      <input
-        type="color"
-        [value]="settings().insetTextColor || '#ffffff'"
-        (change)="onColorChange('insetTextColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!settings().insetTextColor) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
-      }
-      @if (settings().insetTextColor) {
-        <button
-          class="color-reset-btn"
-          (click)="resetColor('insetTextColor')"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-        >
-          ✕
-        </button>
-      }
-    </div>
   </div>
 }
