@@ -4,6 +4,8 @@ import { TestSetupHelper } from "@app/testing/test-setup_helper";
 import { UIEditorHarnessE2e } from "./testing/ui-editor.harness.e2e";
 
 test.describe("UI Editor Visuals", () => {
+  test.use({ viewport: { width: 1600, height: 900 } });
+
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
