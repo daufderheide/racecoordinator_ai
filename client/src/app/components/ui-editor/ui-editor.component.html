@@ -16,6 +16,58 @@
             >▼</span
           >
           <h1>{{ "UE_LABEL_RACEDAY_LAYOUT" | translate }}</h1>
+          <div
+            class="expander-actions"
+            style="
+              margin-left: auto;
+              display: flex;
+              gap: 8px;
+              padding-right: 15px;
+            "
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              class="icon-btn"
+              (click)="racedayLayoutFileInput.click()"
+              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
+              style="
+                background: none;
+                border: none;
+                color: #38bdf8;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
+              "
+            >
+              <span class="material-icons">upload</span>
+            </button>
+            <button
+              class="icon-btn"
+              (click)="exportRacedayLayout()"
+              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
+              style="
+                background: none;
+                border: none;
+                color: #38bdf8;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
+              "
+            >
+              <span class="material-icons">download</span>
+            </button>
+            <input
+              #racedayLayoutFileInput
+              type="file"
+              accept=".json,.txt"
+              style="display: none"
+              (change)="onImportRacedayLayout($event)"
+            />
+          </div>
         </div>
         @if (sectionsExpanded["racedayLayout"]) {
           <div class="section-content" style="position: relative">
@@ -174,6 +226,58 @@
             >▼</span
           >
           <h1>{{ "UE_LABEL_RACEDAY_LAYOUT_PRACTICE" | translate }}</h1>
+          <div
+            class="expander-actions"
+            style="
+              margin-left: auto;
+              display: flex;
+              gap: 8px;
+              padding-right: 15px;
+            "
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              class="icon-btn"
+              (click)="practiceRacedayLayoutFileInput.click()"
+              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
+              style="
+                background: none;
+                border: none;
+                color: #38bdf8;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
+              "
+            >
+              <span class="material-icons">upload</span>
+            </button>
+            <button
+              class="icon-btn"
+              (click)="exportPracticeRacedayLayout()"
+              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
+              style="
+                background: none;
+                border: none;
+                color: #38bdf8;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
+              "
+            >
+              <span class="material-icons">download</span>
+            </button>
+            <input
+              #practiceRacedayLayoutFileInput
+              type="file"
+              accept=".json,.txt"
+              style="display: none"
+              (change)="onImportPracticeRacedayLayout($event)"
+            />
+          </div>
         </div>
         @if (sectionsExpanded["practiceRacedayLayout"]) {
           <div class="section-content" style="position: relative">

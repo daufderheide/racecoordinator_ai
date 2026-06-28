@@ -431,6 +431,134 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.cdr.detectChanges();
   }
 
+  exportRacedayLayout() {
+    const layoutExport = {
+      layout: this.editingSettings.racedayLayout,
+      columns: this.editingSettings.racedayColumns,
+      columnLayouts: this.editingSettings.columnLayouts,
+      columnVisibility: this.editingSettings.columnVisibility,
+      columnAnchors: this.editingSettings.columnAnchors,
+    };
+    this.downloadJson(layoutExport, "raceday-layout.json");
+  }
+
+  onImportRacedayLayout(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const layoutData = JSON.parse(e.target?.result as string);
+        const layout =
+          layoutData.layout ||
+          layoutData.racedayLayout ||
+          layoutData.practiceRacedayLayout;
+
+        if (layout) {
+          this.editingSettings.racedayLayout = layout;
+          this.editingSettings.racedayColumns =
+            layoutData.columns ||
+            layoutData.racedayColumns ||
+            layoutData.practiceRacedayColumns ||
+            Settings.DEFAULT_COLUMNS;
+          this.editingSettings.columnLayouts =
+            layoutData.columnLayouts || layoutData.practiceColumnLayouts || {};
+          this.editingSettings.columnVisibility =
+            layoutData.columnVisibility ||
+            layoutData.practiceColumnVisibility ||
+            {};
+
+          const anchors =
+            layoutData.columnAnchors || layoutData.practiceColumnAnchors;
+          if (anchors) {
+            this.editingSettings.columnAnchors = anchors;
+          }
+          this.editingState.settings = deepCopy(this.editingSettings);
+          this.undoManager.captureState();
+          this.refreshDisplayProperties();
+          this.cdr.detectChanges();
+        }
+      } catch (err) {
+        this.logger.error("Failed to parse layout file", err);
+      }
+    };
+    reader.readAsText(file);
+    input.value = "";
+  }
+
+  exportPracticeRacedayLayout() {
+    const layoutExport = {
+      layout: this.editingSettings.practiceRacedayLayout,
+      columns: this.editingSettings.practiceRacedayColumns,
+      columnLayouts: this.editingSettings.practiceColumnLayouts,
+      columnVisibility: this.editingSettings.practiceColumnVisibility,
+      columnAnchors: this.editingSettings.practiceColumnAnchors,
+    };
+    this.downloadJson(layoutExport, "practice-raceday-layout.json");
+  }
+
+  onImportPracticeRacedayLayout(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const layoutData = JSON.parse(e.target?.result as string);
+        const layout =
+          layoutData.layout ||
+          layoutData.practiceRacedayLayout ||
+          layoutData.racedayLayout;
+
+        if (layout) {
+          this.editingSettings.practiceRacedayLayout = layout;
+          this.editingSettings.practiceRacedayColumns =
+            layoutData.columns ||
+            layoutData.practiceRacedayColumns ||
+            layoutData.racedayColumns ||
+            Settings.DEFAULT_PRACTICE_COLUMNS;
+          this.editingSettings.practiceColumnLayouts =
+            layoutData.columnLayouts || layoutData.practiceColumnLayouts || {};
+          this.editingSettings.practiceColumnVisibility =
+            layoutData.columnVisibility ||
+            layoutData.practiceColumnVisibility ||
+            {};
+
+          const anchors =
+            layoutData.columnAnchors || layoutData.practiceColumnAnchors;
+          if (anchors) {
+            this.editingSettings.practiceColumnAnchors = anchors;
+          }
+          this.editingState.settings = deepCopy(this.editingSettings);
+          this.undoManager.captureState();
+          this.refreshDisplayProperties();
+          this.cdr.detectChanges();
+        }
+      } catch (err) {
+        this.logger.error("Failed to parse layout file", err);
+      }
+    };
+    reader.readAsText(file);
+    input.value = "";
+  }
+
+  private downloadJson(data: any, filename: string) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
   constructor(
     private settingsService: SettingsService,
     private fileSystem: FileSystemService,

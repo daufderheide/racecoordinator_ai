@@ -2049,6 +2049,100 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
+    describe("Layout Import/Export", () => {
+      it("should export raceday layout", () => {
+        spyOn(component as any, "downloadJson");
+        component.exportRacedayLayout();
+        expect((component as any).downloadJson).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            layout: component.editingSettings.racedayLayout,
+            columns: component.editingSettings.racedayColumns,
+          }),
+          "raceday-layout.json",
+        );
+      });
+
+      it("should export practice raceday layout", () => {
+        spyOn(component as any, "downloadJson");
+        component.exportPracticeRacedayLayout();
+        expect((component as any).downloadJson).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            layout: component.editingSettings.practiceRacedayLayout,
+            columns: component.editingSettings.practiceRacedayColumns,
+          }),
+          "practice-raceday-layout.json",
+        );
+      });
+
+      it("should import raceday layout", () => {
+        spyOn(component.undoManager, "captureState");
+        spyOn(component, "refreshDisplayProperties");
+
+        const mockLayout = { layout: { widgets: [] }, columns: ["col1"] };
+        const file = new File([JSON.stringify(mockLayout)], "test.json", {
+          type: "application/json",
+        });
+        const event = { target: { files: [file], value: "test" } } as any;
+
+        const dummyFileReader = {
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload({ target: { result: JSON.stringify(mockLayout) } });
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        component.onImportRacedayLayout(event);
+
+        expect(component.editingSettings.racedayLayout).toEqual(
+          mockLayout.layout as any,
+        );
+        expect(component.editingSettings.racedayColumns).toEqual(
+          mockLayout.columns,
+        );
+        expect(component.undoManager.captureState).toHaveBeenCalled();
+        expect(component.refreshDisplayProperties).toHaveBeenCalled();
+        expect(event.target.value).toBe("");
+      });
+
+      it("should import practice raceday layout", () => {
+        spyOn(component.undoManager, "captureState");
+        spyOn(component, "refreshDisplayProperties");
+
+        const mockLayout = { layout: { widgets: [] }, columns: ["col2"] };
+        const file = new File([JSON.stringify(mockLayout)], "test.json", {
+          type: "application/json",
+        });
+        const event = { target: { files: [file], value: "test" } } as any;
+
+        const dummyFileReader = {
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload({ target: { result: JSON.stringify(mockLayout) } });
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        component.onImportPracticeRacedayLayout(event);
+
+        expect(component.editingSettings.practiceRacedayLayout).toEqual(
+          mockLayout.layout as any,
+        );
+        expect(component.editingSettings.practiceRacedayColumns).toEqual(
+          mockLayout.columns,
+        );
+        expect(component.undoManager.captureState).toHaveBeenCalled();
+        expect(component.refreshDisplayProperties).toHaveBeenCalled();
+        expect(event.target.value).toBe("");
+      });
+    });
+
     it("should select and deselect a widget", () => {
       expect(component.selectedWidgetId).toBeNull();
       expect(component.selectedWidget).toBeNull();
