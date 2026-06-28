@@ -396,7 +396,12 @@ public class ArduinoLedHelper {
           boolean isInterleaved = false;
           boolean canFlash = false;
 
-          switch (flag) {
+          RaceFlag currentFlag = flag;
+          if (state == RaceState.STARTING) {
+            currentFlag = RaceFlag.RED;
+          }
+
+          switch (currentFlag) {
             case RED:
               rgb1 = new int[] {255, 0, 0};
               rgb2 = new int[] {0, 0, 0};
@@ -432,7 +437,6 @@ public class ArduinoLedHelper {
           }
 
           if (state == RaceState.STARTING) {
-            flag = RaceFlag.RED;
             isInterleaved = false;
             canFlash = false;
           }

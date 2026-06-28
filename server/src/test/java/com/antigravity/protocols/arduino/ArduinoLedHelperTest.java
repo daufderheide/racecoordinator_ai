@@ -1203,6 +1203,62 @@ public class ArduinoLedHelperTest {
   }
 
   @Test
+  public void testSetRaceState_Starting_FromYellow_AllLedsAreRed() {
+    LedString ledString = new LedString();
+    ledString.pin = 2;
+    int base = RgbLedBehavior.RGB_LED_BEHAVIOR_RACE_STATE_BASE_VALUE;
+    // 2 LEDs for the race state countdown
+    ledString.leds = Arrays.asList(base, base + 1);
+    config.ledStrings = Collections.singletonList(ledString);
+
+    ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    // Starting with YELLOW flag (restart) at 2.0s
+    // startingDuration becomes 2.
+    // At 2.0s: onCount = max(1, 2 - 2 + 1) = 1.
+    // LED 0: n=0. OFF
+    // LED 1: n=1. ON (should be RED)
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.YELLOW, 2.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    byte[] data = captor.getValue();
+
+    // Verify both were sent (one off, one on)
+    assertEquals(2, data[2]);
+
+    // LED 0: OFF
+    assertEquals(0, data[3]);
+    assertEquals(0, data[4] & 0xFF);
+
+    // LED 1: RED (Not Yellow)
+    assertEquals(1, data[7]);
+    assertEquals(255, data[8] & 0xFF); // R
+    assertEquals(0, data[9] & 0xFF); // G
+    assertEquals(0, data[10] & 0xFF); // B
+
+    // Countdown to 1.0s
+    reset(protocol);
+    when(protocol.isOpen()).thenReturn(true);
+    when(protocol.getConfig()).thenReturn(config);
+    when(protocol.getMaxBufferSize()).thenReturn(128);
+
+    helper.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.YELLOW, 1.0);
+
+    verify(protocol, atLeastOnce()).writeData(captor.capture());
+    data = captor.getValue();
+
+    // Now LED 0 turns on and must be RED
+    assertEquals(1, data[2]); // Only LED 0 changed
+    assertEquals(0, data[3]);
+    assertEquals(255, data[4] & 0xFF); // R
+    assertEquals(0, data[5] & 0xFF); // G
+    assertEquals(0, data[6] & 0xFF); // B
+  }
+
+  @Test
   public void testSetRaceState_Starting_RaceState_Countdown_F1() {
     LedString ledString = new LedString();
     ledString.pin = 2;
