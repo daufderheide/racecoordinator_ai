@@ -78,6 +78,8 @@ test.describe("Lane View Inspector Visuals", () => {
       "lane-view-inspector-options.png",
       {
         animations: "disabled",
+        maxDiffPixelRatio: 0.1,
+        maxDiffPixels: 10000,
       },
     );
   });

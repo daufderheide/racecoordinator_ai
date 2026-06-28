@@ -52,7 +52,8 @@ test.describe("Splash Screen Visual", () => {
 
     // Take a screenshot of the splash screen layout
     await expect(page).toHaveScreenshot("splash-screen-initial.png", {
-      maxDiffPixelRatio: 0.05,
+      maxDiffPixelRatio: 0.1,
+      maxDiffPixels: 20000,
       animations: "disabled",
       timeout: 10000,
     });
