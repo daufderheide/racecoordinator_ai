@@ -427,7 +427,7 @@
 
 /* Auto scaling when scaleMode is set to 'auto' */
 .widget-wrapper.scale-auto .header-cell {
-  font-size: calc(3.4cqh * var(--widget-scale-factor, 1)) !important;
+  font-size: calc(var(--custom-column-font-size, 3.4cqh) * var(--widget-scale-factor, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .anchor-top-left,
@@ -436,19 +436,19 @@
 .widget-wrapper.scale-auto .anchor-bottom-left,
 .widget-wrapper.scale-auto .anchor-bottom-center,
 .widget-wrapper.scale-auto .anchor-bottom-right {
-  font-size: calc(3.4cqh * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
+  font-size: calc(var(--custom-font-size, 3.4cqh) * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .anchor-center-left,
 .widget-wrapper.scale-auto .anchor-center-center,
 .widget-wrapper.scale-auto .anchor-center-right,
 .widget-wrapper.scale-auto app-raceday-lane-view .teammate-display-name {
-  font-size: calc(7.6cqh * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
+  font-size: calc(var(--custom-font-size, 7.6cqh) * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
 
 /* Fixed scaling when scaleMode is set to 'fixed' */
 .widget-wrapper.scale-fixed .header-cell {
-  font-size: calc(1 * var(--widget-font-size)) !important;
+  font-size: var(--custom-column-font-size, calc(1 * var(--widget-font-size))) !important;
 }
 
 .widget-wrapper.scale-fixed .anchor-top-left,
@@ -457,14 +457,14 @@
 .widget-wrapper.scale-fixed .anchor-bottom-left,
 .widget-wrapper.scale-fixed .anchor-bottom-center,
 .widget-wrapper.scale-fixed .anchor-bottom-right {
-  font-size: calc(1 * var(--widget-font-size) * var(--text-fit-scale, 1)) !important;
+  font-size: calc(var(--custom-font-size, calc(1 * var(--widget-font-size))) * var(--text-fit-scale, 1)) !important;
 }
 
 .widget-wrapper.scale-fixed .anchor-center-left,
 .widget-wrapper.scale-fixed .anchor-center-center,
 .widget-wrapper.scale-fixed .anchor-center-right,
 .widget-wrapper.scale-fixed app-raceday-lane-view .teammate-display-name {
-  font-size: calc(2.25 * var(--widget-font-size) * var(--text-fit-scale, 1)) !important;
+  font-size: calc(var(--custom-font-size, calc(2.25 * var(--widget-font-size))) * var(--text-fit-scale, 1)) !important;
 }
 
 .body-cell.clickable-lap-cell,

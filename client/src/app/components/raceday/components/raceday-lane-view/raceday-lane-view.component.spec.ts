@@ -233,4 +233,28 @@ describe("RacedayLaneViewComponent", () => {
     expect(Number(scale)).toBeLessThan(1.0);
     expect(Number(scale)).toBeGreaterThan(0.0);
   });
+
+  it("should apply custom font sizes as CSS variables when configured", () => {
+    fixture.componentRef.setInput("widget", {
+      customSettings: {
+        columnFontSize: 24,
+        dataFontSize: 32,
+        insetFontSize: 16,
+      },
+    });
+    fixture.detectChanges();
+
+    const headerCell = fixture.nativeElement.querySelector(".header-cell");
+    expect(headerCell.style.getPropertyValue("--custom-column-font-size")).toBe(
+      "24px",
+    );
+
+    // The mock getLayoutEntries maps to "center-center" which uses dataFontSize
+    const centerCell = fixture.nativeElement.querySelector(
+      ".anchor-center-center",
+    );
+    expect(centerCell.style.getPropertyValue("--custom-font-size")).toBe(
+      "32px",
+    );
+  });
 });

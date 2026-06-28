@@ -51,7 +51,7 @@
           [style.font-family]="
             widget()?.customSettings?.['columnFontFamily'] || null
           "
-          [style.font-size.px]="
+          [style.--custom-column-font-size.px]="
             widget()?.customSettings?.['columnFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['columnTextColor'] || null"
@@ -294,7 +294,7 @@
                         ? widget()?.customSettings?.['dataFontFamily'] || null
                         : widget()?.customSettings?.['insetFontFamily'] || null
                     "
-                    [style.font-size.px]="
+                    [style.--custom-font-size.px]="
                       entry.anchor?.startsWith('center-')
                         ? widget()?.customSettings?.['dataFontSize'] || null
                         : widget()?.customSettings?.['insetFontSize'] || null
