@@ -2,6 +2,8 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -803,5 +805,25 @@ public class RaceStateTest {
       }
     }
     assertTrue("Should have broadcast GroupStandingsUpdate with group = 1", foundGroupUpdate);
+  }
+
+  @Test
+  public void testBroadcastFlagUpdatesProtocols() throws Exception {
+    com.antigravity.protocols.ProtocolDelegate mockProtocols =
+        mock(com.antigravity.protocols.ProtocolDelegate.class);
+    race.injectProtocols(mockProtocols);
+
+    // Initial state in tests is NotStarted
+    assertTrue(race.getState() instanceof NotStarted);
+
+    // Call broadcastFlag with a specific flag, e.g. WHITE
+    race.broadcastFlag(com.antigravity.proto.RaceFlag.WHITE);
+
+    // Verify setRaceState was called on the mockProtocols with the appropriate arguments
+    verify(mockProtocols)
+        .setRaceState(
+            eq(com.antigravity.proto.RaceState.NOT_STARTED),
+            eq(com.antigravity.proto.RaceFlag.WHITE),
+            anyDouble());
   }
 }

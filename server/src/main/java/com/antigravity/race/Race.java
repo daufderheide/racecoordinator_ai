@@ -602,6 +602,14 @@ public class Race implements ProtocolListener {
     } else {
       broadcast(RaceData.newBuilder().setFlag(flag).build());
     }
+
+    if (hardwareManager != null && hardwareManager.getProtocols() != null) {
+      hardwareManager
+          .getProtocols()
+          .setRaceState(
+              getProtoState(state), flag, getAutoStartRemaining() + getAutoAdvanceRemaining());
+    }
+    updatePowerForFlag(flag);
   }
 
   public boolean startRace() {
