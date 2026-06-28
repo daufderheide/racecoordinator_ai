@@ -234,8 +234,9 @@ describe("RacedayLaneViewComponent", () => {
     expect(Number(scale)).toBeGreaterThan(0.0);
   });
 
-  it("should apply custom font sizes as CSS variables when configured", () => {
+  it("should apply custom font sizes as CSS variables when configured and scaleMode is not auto", () => {
     fixture.componentRef.setInput("widget", {
+      scaleMode: "",
       customSettings: {
         columnFontSize: 24,
         dataFontSize: 32,
@@ -256,5 +257,27 @@ describe("RacedayLaneViewComponent", () => {
     expect(centerCell.style.getPropertyValue("--custom-font-size")).toBe(
       "32px",
     );
+  });
+
+  it("should not apply custom font sizes as CSS variables when scaleMode is auto", () => {
+    fixture.componentRef.setInput("widget", {
+      scaleMode: "auto",
+      customSettings: {
+        columnFontSize: 24,
+        dataFontSize: 32,
+        insetFontSize: 16,
+      },
+    });
+    fixture.detectChanges();
+
+    const container = fixture.nativeElement.querySelector(".bottom-section");
+    expect(container.style.getPropertyValue("--custom-column-font-size")).toBe(
+      "",
+    );
+
+    const centerCell = fixture.nativeElement.querySelector(
+      ".anchor-center-center",
+    );
+    expect(centerCell.style.getPropertyValue("--custom-font-size")).toBe("");
   });
 });

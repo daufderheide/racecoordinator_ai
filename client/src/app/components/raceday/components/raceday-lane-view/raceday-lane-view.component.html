@@ -3,6 +3,7 @@
     class="bottom-section"
     [class.vertical-layout]="widget()?.customSettings?.['isVertical']"
     [style.--custom-column-font-size]="
+      widget()?.scaleMode !== 'auto' &&
       widget()?.customSettings?.['columnFontSize']
         ? widget()?.customSettings?.['columnFontSize'] + 'px'
         : null
@@ -294,13 +295,15 @@
                         : widget()?.customSettings?.['insetFontFamily'] || null
                     "
                     [style.--custom-font-size]="
-                      entry.anchor?.startsWith('center-')
-                        ? widget()?.customSettings?.['dataFontSize']
-                          ? widget()?.customSettings?.['dataFontSize'] + 'px'
-                          : null
-                        : widget()?.customSettings?.['insetFontSize']
-                          ? widget()?.customSettings?.['insetFontSize'] + 'px'
-                          : null
+                      widget()?.scaleMode !== 'auto'
+                        ? entry.anchor?.startsWith('center-')
+                          ? widget()?.customSettings?.['dataFontSize']
+                            ? widget()?.customSettings?.['dataFontSize'] + 'px'
+                            : null
+                          : widget()?.customSettings?.['insetFontSize']
+                            ? widget()?.customSettings?.['insetFontSize'] + 'px'
+                            : null
+                        : null
                     "
                     [style.color]="
                       (entry.anchor?.startsWith('center-')
