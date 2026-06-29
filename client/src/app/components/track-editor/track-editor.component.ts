@@ -523,9 +523,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private initializeInterfaces() {
-    if (this.arduinoConfigs.length > 0) {
+    if (this.arduinoConfigs.length > 0 || this.trackmateConfigs.length > 0) {
       this.dataService
-        .initializeInterface(this.arduinoConfigs, this.lanes.length)
+        .initializeInterface(
+          this.arduinoConfigs,
+          this.trackmateConfigs,
+          this.lanes.length,
+        )
         .subscribe({
           next: (response) => {
             if (!response.success) {

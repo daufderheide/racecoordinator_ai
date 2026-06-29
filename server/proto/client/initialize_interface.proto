@@ -2,6 +2,7 @@ syntax = "proto3";
 package com.antigravity;
 
 import "client/arduino_config.proto";
+import "client/trackmate_config.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -10,6 +11,7 @@ option java_outer_classname = "InitializeInterfaceProto";
 message InitializeInterfaceRequest {
   repeated ArduinoConfig configs = 1;
   int32 lane_count = 2;
+  repeated TrackmateConfig trackmate_configs = 3;
 }
 
 message InitializeInterfaceResponse {

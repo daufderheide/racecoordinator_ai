@@ -2,6 +2,7 @@ package com.antigravity.converters;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import org.junit.Test;
@@ -48,5 +49,34 @@ public class TrackmateConfigConverterTest {
     assertNotNull(proto);
     assertEquals("", proto.getName());
     assertEquals("", proto.getCommPort());
+  }
+
+  @Test
+  public void testFromProto_NullProto_ReturnsNull() {
+    TrackmateConfig config = TrackmateConfigConverter.fromProto(null);
+    assertNull(config);
+  }
+
+  @Test
+  public void testFromProto_PopulatedProto_ConvertsCorrectly() {
+    com.antigravity.proto.TrackmateConfig proto =
+        com.antigravity.proto.TrackmateConfig.newBuilder()
+            .setName("Test Trackmate")
+            .setCommPort("COM3")
+            .setNormallyClosedRelays(true)
+            .setUseIr(true)
+            .setDebounce(5)
+            .setNumLanes(4)
+            .build();
+
+    TrackmateConfig config = TrackmateConfigConverter.fromProto(proto);
+
+    assertNotNull(config);
+    assertEquals("Test Trackmate", config.name);
+    assertEquals("COM3", config.commPort);
+    assertEquals(true, config.normallyClosedRelays);
+    assertEquals(true, config.useIR);
+    assertEquals(5, config.debounce);
+    assertEquals(4, config.numLanes);
   }
 }

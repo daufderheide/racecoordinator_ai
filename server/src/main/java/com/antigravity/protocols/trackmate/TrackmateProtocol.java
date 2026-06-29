@@ -36,6 +36,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         serialConnection,
         statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1));
     this.config = config;
+    logger.info("TrackmateProtocol initialized with {} lanes", numLanes);
   }
 
   @Override
@@ -50,6 +51,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   @Override
   protected void onPortConnected() {
+    logger.info("Connected to {}. Initializing hardware.", config.commPort);
     initializeHardware();
   }
 
@@ -66,21 +68,26 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     if (hwNumLanes == 0) hwNumLanes = 1; // Minimum 1
 
     byte lanesByte = (byte) (0x30 + hwNumLanes);
+    logger.info("Setting hardware lanes to {}", hwNumLanes);
     writeData(new byte[] {0x41, lanesByte, TERMINATOR_LF}); // An
 
     // Sensor type - now driven by normallyClosedLaneSensors
     byte sensorByte = config.normallyClosedLaneSensors ? (byte) 0x31 : (byte) 0x30;
+    logger.info("Setting sensor type normally closed to {}", config.normallyClosedLaneSensors);
     writeData(new byte[] {0x43, sensorByte, TERMINATOR_LF}); // Cn
 
     // Debounce
     byte debounceByte = (byte) (0x30 + config.debounce);
+    logger.info("Setting debounce to {}", config.debounce);
     writeData(new byte[] {0x44, debounceByte, TERMINATOR_LF}); // Dn
 
     // Relay type 1 = normally on, 0 = normally off
     byte relayByte = config.normallyClosedRelays ? (byte) 0x31 : (byte) 0x30;
+    logger.info("Setting relay normally closed to {}", config.normallyClosedRelays);
     writeData(new byte[] {0x49, relayByte, TERMINATOR_LF}); // I0 / I1
 
     // Start sending data
+    logger.info("Sending START_COMMAND");
     writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
   }
 
@@ -174,6 +181,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void startTimer() {
     super.startTimer();
+    logger.info("Sending START_COMMAND (start timer)");
     writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
   }
 
@@ -182,6 +190,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     super.setMainPower(on);
     boolean powerState = config.normallyClosedRelays ? !on : on;
     byte command = powerState ? ENERGIZE_COMMAND : DEENERGIZE_COMMAND;
+    logger.info("Setting main power. On: {}, powerState: {}", on, powerState);
     writeData(new byte[] {command, TERMINATOR_LF});
   }
 
@@ -205,6 +214,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
     // Convert bitmask to string bytes
     String bitmaskStr = String.valueOf(bitmask);
+    logger.info("Setting lane power. Lane: {}, On: {}, Bitmask: {}", lane, on, bitmaskStr);
     byte[] message = new byte[1 + bitmaskStr.length() + 1];
     message[0] = commandPrefix;
     for (int i = 0; i < bitmaskStr.length(); i++) {
