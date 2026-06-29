@@ -44,9 +44,8 @@ public class TrackmateConfigConverter {
     config.debounce = protoConfig.getDebounce();
     config.numLanes = protoConfig.getNumLanes();
     config.lapPinPitBehavior =
-        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior
-            .fromValue( // fqn-collision
-                protoConfig.getLapPinPitBehaviorValue());
+        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior // fqn-collision
+            .fromValue(protoConfig.getLapPinPitBehaviorValue());
     if (protoConfig.getLapPinBehaviorsList() != null) {
       config.lapPinBehaviors = new ArrayList<>(protoConfig.getLapPinBehaviorsList());
     } else {
