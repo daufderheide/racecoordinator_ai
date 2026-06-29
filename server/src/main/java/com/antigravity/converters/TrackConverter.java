@@ -29,6 +29,10 @@ public class TrackConverter {
               track.getLanes().stream()
                   .map(l -> LaneConverter.toProto(l, sentObjectIds))
                   .collect(Collectors.toList()))
+          .addAllTrackmateConfigs(
+              track.getTrackmateConfigs().stream()
+                  .map(TrackmateConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

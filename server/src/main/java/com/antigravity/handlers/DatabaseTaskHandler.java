@@ -498,13 +498,15 @@ public class DatabaseTaskHandler {
           || "new".equals(track.getEntityId())) {
         String nextId = getNextSequence("tracks");
         track =
-            new Track(
-                track.getName(),
-                track.getNumTrackSections(),
-                track.getLanes(),
-                track.getArduinoConfigs(),
-                nextId,
-                null);
+            new Track.Builder()
+                .name(track.getName())
+                .numTrackSections(track.getNumTrackSections())
+                .lanes(track.getLanes())
+                .arduinoConfigs(track.getArduinoConfigs())
+                .trackmateConfigs(track.getTrackmateConfigs())
+                .entityId(nextId)
+                .id(null)
+                .build();
       }
       col.insertOne(track);
       ctx.status(201).json(track);
@@ -530,13 +532,15 @@ public class DatabaseTaskHandler {
       }
 
       track =
-          new Track(
-              track.getName(),
-              track.getNumTrackSections(),
-              track.getLanes(),
-              track.getArduinoConfigs(),
-              id,
-              track.getId());
+          new Track.Builder()
+              .name(track.getName())
+              .numTrackSections(track.getNumTrackSections())
+              .lanes(track.getLanes())
+              .arduinoConfigs(track.getArduinoConfigs())
+              .trackmateConfigs(track.getTrackmateConfigs())
+              .entityId(id)
+              .id(track.getId())
+              .build();
 
       logger.debug("updateTrack for {}", id);
       if (track.getArduinoConfigs() != null && !track.getArduinoConfigs().isEmpty()) {

@@ -28,7 +28,14 @@ public class DemoModePersistenceTest {
   public void setUp() {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100, "l1", null));
-    track = new Track("Test Track", lanes, new ArrayList<>(), "track1", null);
+    track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("track1")
+            .id(null)
+            .build();
 
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
@@ -92,7 +99,13 @@ public class DemoModePersistenceTest {
     configs.add(config);
 
     Track normalTrack =
-        new Track(track.getName(), track.getLanes(), configs, track.getEntityId(), null);
+        new Track.Builder()
+            .name(track.getName())
+            .lanes(track.getLanes())
+            .arduinoConfigs(configs)
+            .entityId(track.getEntityId())
+            .id(null)
+            .build();
 
     com.antigravity.race.Race normalRace =
         new com.antigravity.race.Race.Builder()

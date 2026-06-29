@@ -68,7 +68,7 @@ public class DriverStatisticsTest {
     // Create track with 2 lanes
     List<Lane> lanes =
         Arrays.asList(new Lane("#ff0000", "#ffffff", 100), new Lane("#00ff00", "#000000", 100));
-    Track track = new Track("2-Lane Track", lanes);
+    Track track = new Track.Builder().name("2-Lane Track").lanes(lanes).build();
 
     Driver d1 = new Driver("Driver 1", "d1", "d1", null);
     RaceParticipant p1 = new RaceParticipant(d1);
@@ -152,7 +152,7 @@ public class DriverStatisticsTest {
             new Lane("#00ff00", "#000000", 100),
             new Lane("#0000ff", "#ffffff", 100),
             new Lane("#ffff00", "#000000", 100));
-    Track track = new Track("4-Lane Track", lanes);
+    Track track = new Track.Builder().name("4-Lane Track").lanes(lanes).build();
 
     Driver d1 = new Driver("Driver 1", "d1", "d1", null);
     RaceParticipant p1 = new RaceParticipant(d1);
@@ -275,7 +275,7 @@ public class DriverStatisticsTest {
     // Create track with 2 lanes
     List<Lane> lanes =
         Arrays.asList(new Lane("#ff0000", "#ffffff", 100), new Lane("#00ff00", "#000000", 100));
-    Track track = new Track("2-Lane Track", lanes);
+    Track track = new Track.Builder().name("2-Lane Track").lanes(lanes).build();
 
     Driver d1 = new Driver("Driver 1", "d1", "d1", null);
     RaceParticipant p1 = new RaceParticipant(d1);

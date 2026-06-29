@@ -79,12 +79,13 @@ public class TeamRacingTest {
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
     track =
-        new Track(
-            "Test Track",
-            lanes,
-            Collections.singletonList(new ArduinoConfig()),
-            "track1",
-            new ObjectId());
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(new ArduinoConfig()))
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     race =
         new com.antigravity.race.Race.Builder()

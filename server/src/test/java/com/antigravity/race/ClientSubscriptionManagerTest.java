@@ -135,7 +135,13 @@ public class ClientSubscriptionManagerTest {
 
     when(mockRace.getRaceModel()).thenReturn(realModel);
     when(mockRace.getTrack())
-        .thenReturn(new Track("Track", Collections.emptyList(), "track1", null));
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
     when(mockRace.getHeats()).thenReturn(Collections.emptyList());
     IRaceState mockState = mock(IRaceState.class);
     when(mockRace.getState()).thenReturn(mockState);

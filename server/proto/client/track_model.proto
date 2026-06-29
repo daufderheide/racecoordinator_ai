@@ -4,6 +4,7 @@ package com.antigravity;
 import "client/lane_model.proto";
 import "client/model.proto";
 import "client/arduino_config.proto";
+import "client/trackmate_config.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -16,4 +17,5 @@ message TrackModel {
   bool has_digital_fuel = 4;
   repeated ArduinoConfig arduino_configs = 5;
   int32 num_track_sections = 6;
+  repeated TrackmateConfig trackmate_configs = 7;
 }

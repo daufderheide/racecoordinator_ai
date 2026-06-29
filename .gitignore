@@ -83,6 +83,7 @@ server/target_dist/
 server/target_dev/
 server/target_exec/
 server/target_release/
+server/target_cli/
 client/tmp-karma/
 server/generated-sources/
 server/target_generated/
@@ -129,3 +130,5 @@ client/pw-result.json
 server/checkstyle_report.txt
 server/checkstyle_report_final.txt
 
+# OS generated files
+[Tt]humbs.db

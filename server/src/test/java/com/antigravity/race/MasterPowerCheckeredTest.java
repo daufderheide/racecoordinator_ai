@@ -37,7 +37,14 @@ public class MasterPowerCheckeredTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "white", 100));
-    Track track = new Track("Track", lanes, new ArrayList<>(), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("t1")
+            .id(null)
+            .build();
 
     race =
         new com.antigravity.race.Race.Builder()
@@ -84,7 +91,14 @@ public class MasterPowerCheckeredTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "white", 100));
-    Track track = new Track("Track", lanes, new ArrayList<>(), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("t1")
+            .id(null)
+            .build();
 
     com.antigravity.race.Race noAllowRace =
         new com.antigravity.race.Race.Builder()
@@ -126,7 +140,14 @@ public class MasterPowerCheckeredTest {
     List<com.antigravity.models.Lane> lanes = new ArrayList<>();
     lanes.add(lane0);
     lanes.add(lane1);
-    Track track = new Track("Track", lanes, new ArrayList<>(), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("t1")
+            .id(null)
+            .build();
 
     com.antigravity.race.Race resumeRace =
         new com.antigravity.race.Race.Builder()

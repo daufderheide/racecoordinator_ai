@@ -29,7 +29,7 @@ public class RaceTimeTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100, "l1", null));
     lanes.add(new Lane("blue", "black", 100, "l2", null));
-    track = new Track("Test Track", lanes, "track1", null);
+    track = new Track.Builder().name("Test Track").lanes(lanes).entityId("track1").id(null).build();
 
     // Setup drivers
     drivers = new ArrayList<>();

@@ -83,11 +83,13 @@ public class RaceRecordsTest {
             .build();
 
     Track track =
-        new Track(
-            "Track",
-            Arrays.asList(
-                new com.antigravity.models.Lane("#ff0000", "#ffffff", 100),
-                new com.antigravity.models.Lane("#00ff00", "#000000", 100)));
+        new Track.Builder()
+            .name("Track")
+            .lanes(
+                Arrays.asList(
+                    new com.antigravity.models.Lane("#ff0000", "#ffffff", 100),
+                    new com.antigravity.models.Lane("#00ff00", "#000000", 100)))
+            .build();
 
     Race runtimeRace =
         new Race.Builder()

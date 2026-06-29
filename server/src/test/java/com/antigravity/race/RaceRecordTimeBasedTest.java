@@ -29,7 +29,7 @@ public class RaceRecordTimeBasedTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100, "l1", null));
     lanes.add(new Lane("blue", "black", 100, "l2", null));
-    track = new Track("Test Track", lanes, "track1", null);
+    track = new Track.Builder().name("Test Track").lanes(lanes).entityId("track1").id(null).build();
 
     // Setup drivers
     drivers = new ArrayList<>();
@@ -136,6 +136,13 @@ public class RaceRecordTimeBasedTest {
             .drivers(drivers)
             .track(track)
             .isDemoMode(true)
+            .demoConfig(
+                com.antigravity.proto.DemoConfig.newBuilder()
+                    .setMinReactionTimeMs(9999999)
+                    .setMaxReactionTimeMs(9999999)
+                    .setMinLapTimeMs(9999999)
+                    .setMaxLapTimeMs(9999999)
+                    .build())
             .build();
 
     race.changeState(new Racing());

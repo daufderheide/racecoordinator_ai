@@ -38,7 +38,14 @@ public class MasterPowerStartingTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "white", 100));
-    Track track = new Track("Track", lanes, new ArrayList<>(), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("t1")
+            .id(null)
+            .build();
 
     race =
         new com.antigravity.race.Race.Builder()

@@ -191,7 +191,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track with lanes
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
@@ -292,7 +298,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
@@ -336,7 +348,14 @@ public class ClientCommandTaskHandlerTest {
     OverallScoring overallScoring = new OverallScoring();
     Race raceModel = new Race.Builder().withName("MyTestRace").withEntityId("race-1").build();
     when(race.getRaceModel()).thenReturn(raceModel);
-    when(race.getTrack()).thenReturn(new Track("Track1", new ArrayList<>(), "track1", null));
+    when(race.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track1")
+                .lanes(new ArrayList<>())
+                .entityId("track1")
+                .id(null)
+                .build());
     when(race.getDrivers()).thenReturn(new ArrayList<>());
     when(race.getHeats()).thenReturn(new ArrayList<>());
     when(race.isDemoMode()).thenReturn(true);
@@ -902,7 +921,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
