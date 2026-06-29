@@ -22,7 +22,7 @@
 }
 
 .timer-text {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Tahoma', sans-serif;
   font-size: 100px;
   /* Scaled down slightly to fit labels */
   font-weight: bold;
