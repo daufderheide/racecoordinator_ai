@@ -1,5 +1,15 @@
 <div #timerPanel class="panel-card timer-panel">
   <div class="timer-wrapper">
+    <!-- Top area for auto-advance label (always rendered to reserve space) -->
+    <div class="label-container top-label">
+      @if (autoStatusLabel() && !showCountdownOverlay()) {
+        <div class="status-label">
+          {{ autoStatusLabel() | translate }}
+        </div>
+      }
+    </div>
+
+    <!-- Clock: fixed height, always centered exactly -->
     <div
       #timerText
       class="timer-text"
@@ -13,12 +23,9 @@
     >
       {{ formattedTime() }}
     </div>
-    <div class="timer-status-labels">
-      @if (autoStatusLabel() && !showCountdownOverlay()) {
-        <div class="status-label">
-          {{ autoStatusLabel() | translate }}
-        </div>
-      }
+
+    <!-- Bottom area for warmup label (always rendered to reserve space) -->
+    <div class="label-container bottom-label">
       @if (isWarmup()) {
         <div class="warmup-label">
           {{ "RD_WARMUP" | translate }}
