@@ -127,9 +127,17 @@
                               [(ngModel)]="selectedWidget.scaleMode"
                               (change)="captureState()"
                             >
-                              <option value="">
-                                {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}
-                              </option>
+                              @if (
+                                selectedWidget.widgetType !== "branding" &&
+                                selectedWidget.widgetType !== "qr" &&
+                                selectedWidget.widgetType !== "flag"
+                              ) {
+                                <option value="">
+                                  {{
+                                    "UE_INSPECTOR_SCALING_DEFAULT" | translate
+                                  }}
+                                </option>
+                              }
                               <option value="auto">
                                 {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
                               </option>
@@ -338,9 +346,18 @@
                               [(ngModel)]="selectedPracticeWidget.scaleMode"
                               (change)="captureState()"
                             >
-                              <option value="">
-                                {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}
-                              </option>
+                              @if (
+                                selectedPracticeWidget.widgetType !==
+                                  "branding" &&
+                                selectedPracticeWidget.widgetType !== "qr" &&
+                                selectedPracticeWidget.widgetType !== "flag"
+                              ) {
+                                <option value="">
+                                  {{
+                                    "UE_INSPECTOR_SCALING_DEFAULT" | translate
+                                  }}
+                                </option>
+                              }
                               <option value="auto">
                                 {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
                               </option>

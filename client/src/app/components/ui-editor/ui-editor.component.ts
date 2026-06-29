@@ -299,6 +299,17 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           widget.scaleMode = "auto";
           mutated = true;
         }
+
+        if (
+          widget.widgetType === "branding" ||
+          widget.widgetType === "qr" ||
+          widget.widgetType === "flag"
+        ) {
+          if (widget.scaleMode !== "auto") {
+            widget.scaleMode = "auto";
+            mutated = true;
+          }
+        }
         if (widget.textColor === undefined || widget.textColor === null) {
           widget.textColor = "";
           mutated = true;
