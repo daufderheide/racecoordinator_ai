@@ -1,6 +1,8 @@
 syntax = "proto3";
 package com.antigravity;
 
+import "client/arduino_config.proto";
+
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "TrackmateConfigProto";
@@ -12,4 +14,8 @@ message TrackmateConfig {
   bool use_ir = 4;
   int32 debounce = 5;
   int32 num_lanes = 6;
+  bool normally_closed_lane_sensors = 7;
+  bool has_per_lane_relays = 8;
+  LapPinPitBehavior lap_pin_pit_behavior = 9;
+  repeated int32 lap_pin_behaviors = 10;
 }

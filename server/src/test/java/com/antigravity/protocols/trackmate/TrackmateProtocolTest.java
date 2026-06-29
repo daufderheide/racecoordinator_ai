@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import com.antigravity.mocks.MockScheduler;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.PinBehavior;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.interfaces.SerialConnection;
@@ -129,7 +130,12 @@ public class TrackmateProtocolTest {
     config.numLanes = 2;
     config.debounce = 2;
     config.useIR = false;
+    config.normallyClosedLaneSensors = false;
     config.normallyClosedRelays = false;
+
+    config.lapPinBehaviors = new ArrayList<>();
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 0);
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 1);
 
     protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
     listener = new TestListener();

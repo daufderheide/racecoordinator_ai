@@ -1,5 +1,6 @@
 package com.antigravity.protocols.trackmate;
 
+import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.AbstractSerialProtocol;
@@ -53,12 +54,22 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   }
 
   private void initializeHardware() {
-    // Number of lanes
-    byte lanesByte = (byte) (0x30 + config.numLanes);
+    // Number of lanes sent to hardware is based on the max pin mapped to a behavior
+    int hwNumLanes = 0;
+    if (config.lapPinBehaviors != null) {
+      for (int i = 0; i < config.lapPinBehaviors.size(); i++) {
+        if (config.lapPinBehaviors.get(i) != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
+          hwNumLanes = i + 1;
+        }
+      }
+    }
+    if (hwNumLanes == 0) hwNumLanes = 1; // Minimum 1
+
+    byte lanesByte = (byte) (0x30 + hwNumLanes);
     writeData(new byte[] {0x41, lanesByte, TERMINATOR_LF}); // An
 
-    // Sensor type
-    byte sensorByte = config.useIR ? (byte) 0x31 : (byte) 0x30;
+    // Sensor type - now driven by normallyClosedLaneSensors
+    byte sensorByte = config.normallyClosedLaneSensors ? (byte) 0x31 : (byte) 0x30;
     writeData(new byte[] {0x43, sensorByte, TERMINATOR_LF}); // Cn
 
     // Debounce
@@ -66,7 +77,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     writeData(new byte[] {0x44, debounceByte, TERMINATOR_LF}); // Dn
 
     // Relay type 1 = normally on, 0 = normally off
-    writeData(new byte[] {0x49, 0x30, TERMINATOR_LF}); // I0
+    byte relayByte = config.normallyClosedRelays ? (byte) 0x31 : (byte) 0x30;
+    writeData(new byte[] {0x49, relayByte, TERMINATOR_LF}); // I0 / I1
 
     // Start sending data
     writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
@@ -90,11 +102,28 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
           // basic debounce via getHardwareDebounceUs.
         }
       } else if (data >= 0x41 && data <= 0x48) { // 'A' through 'H'
-        int laneNumber = data - 0x41;
-        if (laneNumber < getNumLanes()) {
-          // A lap trigger. We pass state 1 assuming we matched the expected state (always
-          // 1 for lap trigger).
-          handleLapCounter(laneNumber, isNormallyClosedLaneSensors() ? 1 : 0, laneNumber);
+        int pinIndex = data - 0x41;
+        if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
+          int behavior = config.lapPinBehaviors.get(pinIndex);
+          int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
+
+          if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
+              && behavior < PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE) {
+            int lane = behavior - PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
+            handleLapCounter(lane, activeState, pinIndex);
+          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE
+              && behavior < PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE) {
+            int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
+            handlePitIn(lane, activeState);
+          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
+              && behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE) {
+            int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
+            handlePitOut(lane, activeState);
+          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
+              && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1000) {
+            int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
+            handlePitInOut(lane, activeState);
+          }
         }
       } else if (data == 0x57) { // 'W' Call button
         handleCallButton(0, 1, 0); // Reset to unpressed state
@@ -192,7 +221,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   @Override
   protected boolean isNormallyClosedLaneSensors() {
-    return true; // Lap triggers are always active when we get 'A'-'H'
+    return config.normallyClosedLaneSensors;
   }
 
   @Override
@@ -202,7 +231,9 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   @Override
   protected ArduinoConfig.LapPinPitBehavior getLapPinPitBehavior() {
-    return ArduinoConfig.LapPinPitBehavior.NONE;
+    return config.lapPinPitBehavior != null
+        ? config.lapPinPitBehavior
+        : ArduinoConfig.LapPinPitBehavior.NONE;
   }
 
   @Override
@@ -217,12 +248,15 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   @Override
   protected boolean hasPitInConfigured(int laneIndex) {
-    return false;
+    if (config == null || config.lapPinBehaviors == null) {
+      return false;
+    }
+    return config.lapPinBehaviors.contains(PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex);
   }
 
   @Override
   public boolean hasPerLaneRelays() {
-    return true;
+    return config.hasPerLaneRelays;
   }
 
   @Override

@@ -207,3 +207,5 @@ export import IEndRaceRequest = _proto_com.antigravity.IEndRaceRequest;
 export import IEndRaceResponse = _proto_com.antigravity.IEndRaceResponse;
 export import GroupStandingsUpdate = _proto_com.antigravity.GroupStandingsUpdate;
 export import IGroupStandingsUpdate = _proto_com.antigravity.IGroupStandingsUpdate;
+export import TrackmateConfig = _proto_com.antigravity.TrackmateConfig;
+export import ITrackmateConfig = _proto_com.antigravity.ITrackmateConfig;

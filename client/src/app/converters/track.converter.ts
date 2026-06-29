@@ -4,6 +4,7 @@ import { ITrackModel } from "@app/proto/antigravity";
 import { ArduinoConfigConverter } from "./arduino_config.converter";
 import { ConverterCache } from "./converter_cache";
 import { LaneConverter } from "./lane.converter";
+import { TrackmateConfigConverter } from "./trackmate_config.converter";
 
 export class TrackConverter {
   private static cache = new ConverterCache<Track>();
@@ -41,6 +42,9 @@ export class TrackConverter {
           proto.hasDigitalFuel ?? false,
           (proto.arduinoConfigs || []).map((ac) =>
             ArduinoConfigConverter.fromProto(ac),
+          ),
+          (proto.trackmateConfigs || []).map((tc) =>
+            TrackmateConfigConverter.fromProto(tc),
           ),
         );
       },

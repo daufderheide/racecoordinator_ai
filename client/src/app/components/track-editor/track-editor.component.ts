@@ -25,6 +25,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
+import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Lane } from "@app/models/lane";
@@ -34,6 +35,7 @@ import {
   MAX_ANALOG_PINS,
   MAX_DIGITAL_PINS,
   Track,
+  TrackmateConfig,
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { PinBehavior, RgbLedBehavior } from "@app/proto/antigravity";
@@ -60,6 +62,7 @@ import { deepCopy } from "@app/utils/clone.utils";
     CdkDrag,
     CdkDragHandle,
     ArduinoEditorComponent,
+    TrakmateEditorComponent,
     InputDialogComponent,
     TranslatePipe,
     ConfirmationModalComponent,
@@ -78,6 +81,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
+  trackmateConfigs: TrackmateConfig[] = [];
   helpSteps: GuideStep[] = [];
 
   scale: number = 1;
@@ -91,6 +95,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @ViewChildren(ArduinoEditorComponent)
   arduinoEditors!: QueryList<ArduinoEditorComponent>;
+  @ViewChildren(TrakmateEditorComponent)
+  trakmateEditors!: QueryList<TrakmateEditorComponent>;
   sectionsExpanded = {
     general: true,
     interfaces: true,
@@ -145,6 +151,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               );
             } else {
               this.arduinoConfigs = [];
+            }
+            // Restore Trakmate Configs
+            if (
+              this.editingTrack.trackmate_configs &&
+              this.editingTrack.trackmate_configs.length > 0
+            ) {
+              this.trackmateConfigs = JSON.parse(
+                JSON.stringify(this.editingTrack.trackmate_configs),
+              );
+            } else {
+              this.trackmateConfigs = [];
             }
             this.cdr.detectChanges();
           }
@@ -467,6 +484,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.arduinoConfigs = [];
       }
 
+      // Restore Trakmate Config
+      if (
+        this.editingTrack.trackmate_configs &&
+        this.editingTrack.trackmate_configs.length > 0
+      ) {
+        this.trackmateConfigs = JSON.parse(
+          JSON.stringify(this.editingTrack.trackmate_configs),
+        );
+      } else {
+        this.trackmateConfigs = [];
+      }
+
       this.trackName = this.editingTrack.name;
       this.numTrackSections = this.editingTrack.num_track_sections;
       this.lanes = [...this.editingTrack.lanes];
@@ -479,6 +508,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.numTrackSections = 100;
       this.lanes = [];
       this.arduinoConfigs = [];
+      this.trackmateConfigs = [];
       this.undoManager.initialize(this.editingTrack);
     }
 
@@ -529,7 +559,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         new Lane(l.entity_id, l.foreground_color, l.background_color, l.length),
     );
     const arduinoCopy = track.arduino_configs
-      ? deepCopy(track.arduino_configs)
+      ? JSON.parse(JSON.stringify(track.arduino_configs))
+      : [];
+    const trackmateCopy = track.trackmate_configs
+      ? JSON.parse(JSON.stringify(track.trackmate_configs))
       : [];
     return new Track(
       track.entity_id,
@@ -538,6 +571,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       lanesCopy,
       track.has_digital_fuel,
       arduinoCopy,
+      trackmateCopy,
     );
   }
 
@@ -546,6 +580,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       return new Track("new", "", 100, [], false);
     }
     const configs = this.arduinoConfigs ? deepCopy(this.arduinoConfigs) : [];
+    const tmConfigs = this.trackmateConfigs
+      ? deepCopy(this.trackmateConfigs)
+      : [];
     return new Track(
       this.editingTrack.entity_id,
       this.trackName,
@@ -561,6 +598,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ),
       this.editingTrack.has_digital_fuel,
       configs,
+      tmConfigs,
     );
   }
 
@@ -633,6 +671,34 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             if (vc2[lane as any] !== val) {
               return false;
             }
+          }
+        } else if (v1 !== v2) {
+          return false;
+        }
+      }
+    }
+
+    // Check Trackmate Configs equality
+    const tcs1 = t1.trackmate_configs || [];
+    const tcs2 = t2.trackmate_configs || [];
+    if (tcs1.length !== tcs2.length) {
+      return false;
+    }
+
+    for (let c = 0; c < tcs1.length; c++) {
+      const tc1 = tcs1[c];
+      const tc2 = tcs2[c];
+
+      const keys = Object.keys(tc1) as (keyof TrackmateConfig)[];
+      for (const key of keys) {
+        const v1 = tc1[key];
+        const v2 = (tc2 as any)[key];
+
+        if (Array.isArray(v1)) {
+          const v2Arr = Array.isArray(v2) ? v2 : [];
+          if (v1.length !== v2Arr.length) return false;
+          for (let i = 0; i < v1.length; i++) {
+            if (v1[i] !== v2Arr[i]) return false;
           }
         } else if (v1 !== v2) {
           return false;
@@ -1228,20 +1294,20 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.arduinoConfigs.push({
       name: `Arduino ${this.arduinoConfigs.length + 1}`,
       commPort: "",
-      baudRate: 115200,
-      debounceUs: 200,
-      normallyClosedLaneSensors: true,
-      normallyClosedRelays: true,
+      baudRate: 9600,
+      debounceUs: 3,
+      hardwareType: 0,
+      normallyClosedLaneSensors: false,
+      normallyClosedRelays: false,
       globalInvertLights: 0,
       useLapsForPits: 0,
       useLapsForPitEnd: 0,
       usePitsAsLaps: false,
-      useLapsForSegments: true,
-      hardwareType: 0, // 0 = Uno, 1 = Mega
-      digitalIds: new Array(MAX_DIGITAL_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
-      analogIds: new Array(MAX_ANALOG_PINS).fill(PinBehavior.BEHAVIOR_UNUSED),
+      useLapsForSegments: false,
+      lapPinPitBehavior: 0,
+      digitalIds: [],
+      analogIds: [],
       ledStrings: [],
-      lapPinPitBehavior: 3,
     });
     this.arduinoConfigs = [...this.arduinoConfigs]; // Ensure reference change for Angular change detection
     this.captureState();
@@ -1263,6 +1329,43 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.cdr.detectChanges();
     }
     this.initializeInterfaces();
+  }
+
+  addTrackmateConfig() {
+    this.trackmateConfigs.push({
+      name: `Trackmate ${this.trackmateConfigs.length + 1}`,
+      commPort: "",
+      normallyClosedRelays: true,
+      normallyClosedLaneSensors: true,
+      useIR: true,
+      debounce: 1,
+      numLanes: this.lanes.length,
+      hasPerLaneRelays: false,
+      lapPinPitBehavior: 3,
+      lapPinBehaviors: Array(this.lanes.length)
+        .fill(0)
+        .map((_, i) => PinBehavior.BEHAVIOR_LAP_BASE + i),
+    });
+    this.trackmateConfigs = [...this.trackmateConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  removeTrackmateConfig(index: number) {
+    this.trackmateConfigs.splice(index, 1);
+    this.trackmateConfigs = [...this.trackmateConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  trackByTrackmateConfig(index: number, _config: any): number {
+    return index;
   }
 
   saveAsNew() {

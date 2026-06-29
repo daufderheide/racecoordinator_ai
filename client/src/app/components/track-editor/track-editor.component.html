@@ -192,9 +192,39 @@
                   >
                   <div class="spacer"></div>
                   <button
-                    id="add-interface-btn"
+                    id="add-arduino-btn"
                     class="action-btn small add-list-btn"
                     (click)="addArduinoConfig(); $event.stopPropagation()"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="editor-section">
+                <div
+                  class="section-header"
+                  style="
+                    cursor: default;
+                    background: transparent;
+                    padding-left: 0;
+                    min-height: auto;
+                    margin-bottom: 0;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 1.1rem;
+                      color: #94a3b8;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
+                    >Trakmate</span
+                  >
+                  <div class="spacer"></div>
+                  <button
+                    id="add-trakmate-btn"
+                    class="action-btn small add-list-btn"
+                    (click)="addTrackmateConfig(); $event.stopPropagation()"
                   >
                     +
                   </button>
@@ -214,12 +244,33 @@
     <div class="rhs-interface-wrapper">
       <div
         class="preview-panel"
-        [style.overflow-y]="arduinoConfigs.length > 0 ? 'auto' : 'hidden'"
+        [style.overflow-y]="
+          arduinoConfigs.length + trackmateConfigs.length > 0
+            ? 'auto'
+            : 'hidden'
+        "
       >
-        @if (arduinoConfigs.length === 0) {
+        @if (arduinoConfigs.length === 0 && trackmateConfigs.length === 0) {
           <div class="empty-state">
             <h3>{{ "TE_NO_INTERFACES_ADDED" | translate }}</h3>
             <p>{{ "TE_NO_INTERFACES_DESC" | translate }}</p>
+          </div>
+        }
+
+        @for (
+          config of trackmateConfigs;
+          track trackByTrackmateConfig(i, config);
+          let i = $index
+        ) {
+          <div class="interface-container">
+            <app-trakmate-editor
+              [config]="config"
+              [lanes]="lanes.length"
+              [interfaceIndex]="i"
+              (change)="captureState()"
+              (remove)="removeTrackmateConfig(i)"
+            >
+            </app-trakmate-editor>
           </div>
         }
 
@@ -233,7 +284,7 @@
               [config]="config"
               [lanes]="lanes"
               (configChange)="captureState()"
-              [index]="i"
+              [index]="i + trackmateConfigs.length"
               [count]="arduinoConfigs.length"
               (remove)="removeArduinoConfig(i)"
               (requestLedStringDialog)="onRequestLedStringDialog(i)"
