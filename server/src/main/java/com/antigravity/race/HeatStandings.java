@@ -119,52 +119,7 @@ public class HeatStandings {
   }
 
   private void calculateGaps(List<DriverHeatData> sortedDrivers) {
-    if (sortedDrivers.isEmpty()) {
-      return;
-    }
-
-    DriverHeatData leader = sortedDrivers.get(0);
-    leader.setGapLeader(0.0);
-    leader.setGapPosition(0.0);
-
-    for (int i = 1; i < sortedDrivers.size(); i++) {
-      DriverHeatData current = sortedDrivers.get(i);
-      DriverHeatData ahead = sortedDrivers.get(i - 1);
-
-      current.setGapLeader(calculateGap(leader, current));
-      current.setGapPosition(calculateGap(ahead, current));
-    }
-  }
-
-  private double calculateGap(DriverHeatData leadDriver, DriverHeatData curDriver) {
-    switch (sortType) {
-      case LAP_COUNT:
-        return calculateGapForLapCount(leadDriver, curDriver);
-      case TOTAL_TIME:
-        return curDriver.getTotalTime() - leadDriver.getTotalTime();
-      case FASTEST_LAP:
-        return curDriver.getBestLapTime() - leadDriver.getBestLapTime();
-      default:
-        throw new IllegalArgumentException("Invalid sort type for gap calculation: " + sortType);
-    }
-  }
-
-  private double calculateGapForLapCount(DriverHeatData leadDriver, DriverHeatData curDriver) {
-    if (leadDriver.getAdjustedLapCount() == curDriver.getAdjustedLapCount()) {
-      return curDriver.getTotalTime() - leadDriver.getTotalTime();
-    } else if (curDriver.getLapCount() == 0) {
-      return leadDriver.getTotalTime();
-    } else {
-      double avgLapTime = curDriver.getAverageLapTime();
-      double lapDiff =
-          (double) leadDriver.getAdjustedLapCount() - (double) curDriver.getAdjustedLapCount();
-      if (avgLapTime < leadDriver.getAverageLapTime()) {
-        return avgLapTime * lapDiff;
-      } else {
-        double timeDiff = curDriver.getTotalTime() - leadDriver.getTotalTime();
-        return Math.min(avgLapTime, timeDiff) + (avgLapTime * lapDiff);
-      }
-    }
+    GapCalculator.calculateGaps(sortedDrivers, scoring.getFinishMethod());
   }
 
   private Comparator<DriverHeatData> getComparator() {

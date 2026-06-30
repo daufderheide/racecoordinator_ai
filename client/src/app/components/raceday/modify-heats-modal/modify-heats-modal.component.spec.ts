@@ -187,6 +187,8 @@ describe("ModifyHeatsModalComponent", () => {
       0,
       0,
       100,
+      0,
+      0,
       team,
     );
     const heat = new Heat("h1", 1, [
@@ -267,6 +269,8 @@ describe("ModifyHeatsModalComponent", () => {
         0,
         0,
         100,
+        0,
+        0,
         t1,
       );
       component["localParticipants"] = [p1];
@@ -291,6 +295,8 @@ describe("ModifyHeatsModalComponent", () => {
         0,
         0,
         100,
+        0,
+        0,
         t1,
       );
       component["localParticipants"] = [p1];
@@ -516,7 +522,22 @@ describe("ModifyHeatsModalComponent", () => {
       d1 = new Driver("d1", "Driver 1", "D1");
       d2 = new Driver("d2", "Driver 2", "D2");
       t1 = new Team("t1", "Team 1", undefined, ["d1", "d2"]);
-      pTeam = new RaceParticipant("rp-t1", d1, 0, 0, 0, 0, 0, 0, 0, 0, 100, t1);
+      pTeam = new RaceParticipant(
+        "rp-t1",
+        d1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+        0,
+        0,
+        t1,
+      );
       heat1 = new Heat("h1", 1, [new DriverHeatData("dhd1", pTeam, 0, d1)]);
 
       component["allDrivers"] = [d1, d2];

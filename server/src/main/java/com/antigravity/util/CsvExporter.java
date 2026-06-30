@@ -242,14 +242,8 @@ public class CsvExporter {
     List<RaceParticipant> drivers = race.getDrivers(); // Usually sorted after standings recalculate
     for (int i = 0; i < drivers.size(); i++) {
       RaceParticipant p = drivers.get(i);
-      double gapLeader = 0;
-      double gapPosition = 0;
-      if (i > 0 && drivers.get(0) != p) {
-        RaceParticipant leader = drivers.get(0);
-        RaceParticipant prev = drivers.get(i - 1);
-        gapLeader = Math.abs(leader.getRankValue() - p.getRankValue());
-        gapPosition = Math.abs(prev.getRankValue() - p.getRankValue());
-      }
+      double gapLeader = p.getGapLeader();
+      double gapPosition = p.getGapPosition();
       sb.append(p.getRank())
           .append(",")
           .append(p.getSeed())

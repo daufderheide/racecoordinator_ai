@@ -54,6 +54,8 @@ export function createParticipantFromDriver(driver: Driver): RaceParticipant {
     0,
     0,
     100,
+    0,
+    0,
   );
 }
 
@@ -71,6 +73,8 @@ export function createParticipantFromTeam(team: Team): RaceParticipant {
     0,
     0,
     100,
+    0,
+    0,
     team,
   );
 }

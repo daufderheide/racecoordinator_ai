@@ -1,5 +1,5 @@
-import { Driver } from './driver';
-import { Team } from './team';
+import { Driver } from "./driver";
+import { Team } from "./team";
 
 export class RaceParticipant {
   constructor(
@@ -14,6 +14,8 @@ export class RaceParticipant {
     public rankValue: number,
     public seed: number,
     public fuelLevel: number,
-    public team?: Team
-  ) { }
+    public gapLeader: number = 0,
+    public gapPosition: number = 0,
+    public team?: Team,
+  ) {}
 }

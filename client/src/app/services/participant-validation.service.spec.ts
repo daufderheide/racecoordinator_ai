@@ -86,6 +86,8 @@ describe("ParticipantValidationService", () => {
       0,
       0,
       100,
+      0,
+      0,
       allTeams[1],
     );
 
@@ -120,6 +122,8 @@ describe("ParticipantValidationService", () => {
       0,
       0,
       100,
+      0,
+      0,
       allTeams[0],
     ); // team 0 has d1
 

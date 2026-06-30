@@ -137,6 +137,13 @@ public class OverallStandings {
       }
       driver.setRankValue(rankValue);
     }
+
+    // 5. Calculate gaps
+    if (!practice) {
+      HeatScoring.FinishMethod finishMethod =
+          heatScoring != null ? heatScoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
+      GapCalculator.calculateGaps(drivers, finishMethod);
+    }
   }
 
   private List<DriverHeatData> getScoringHeats(List<DriverHeatData> allHeats) {

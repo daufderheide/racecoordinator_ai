@@ -38,6 +38,8 @@ public class RaceParticipantConverter {
         .setRankValue(participant.getRankValue())
         .setSeed(participant.getSeed())
         .setFuelLevel(participant.getFuelLevel())
+        .setGapLeader(participant.getGapLeader())
+        .setGapPosition(participant.getGapPosition())
         .build();
   }
 }

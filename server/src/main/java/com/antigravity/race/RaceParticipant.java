@@ -4,7 +4,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
 import java.util.List;
 
-public class RaceParticipant extends ServerToClientObject {
+public class RaceParticipant extends ServerToClientObject implements GapParticipant {
 
   private Driver driver;
   private Team team;
@@ -19,7 +19,9 @@ public class RaceParticipant extends ServerToClientObject {
   private double medianLapTime;
   private double rankValue;
   private int seed;
-  private double fuelLevel;
+  private double fuelLevel = 100.0;
+  private double gapLeader;
+  private double gapPosition;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -189,5 +191,33 @@ public class RaceParticipant extends ServerToClientObject {
     }
     // TODO(aufderheide): Is this an error case? What happens if we fallback here?
     return getObjectId(); // Fallback to objectId if both are missing
+  }
+
+  @Override
+  public double getAdjustedLapCount() {
+    return getTotalLaps();
+  }
+
+  @Override
+  public boolean hasNoFullLaps() {
+    return getTotalTime() == 0.0;
+  }
+
+  @Override
+  public void setGapLeader(double gapLeader) {
+    this.gapLeader = gapLeader;
+  }
+
+  public double getGapLeader() {
+    return gapLeader;
+  }
+
+  @Override
+  public void setGapPosition(double gapPosition) {
+    this.gapPosition = gapPosition;
+  }
+
+  public double getGapPosition() {
+    return gapPosition;
   }
 }

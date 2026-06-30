@@ -28,6 +28,8 @@ export class RaceParticipantConverter {
       cached.rankValue = proto.rankValue || 0;
       cached.seed = proto.seed || 0;
       cached.fuelLevel = proto.fuelLevel || 0;
+      cached.gapLeader = proto.gapLeader || 0;
+      cached.gapPosition = proto.gapPosition || 0;
       if (proto.team) {
         cached.team = TeamConverter.fromProto(proto.team);
       }
@@ -52,6 +54,8 @@ export class RaceParticipantConverter {
         proto.rankValue || 0,
         proto.seed || 0,
         proto.fuelLevel || 0,
+        proto.gapLeader || 0,
+        proto.gapPosition || 0,
         team,
       );
     });

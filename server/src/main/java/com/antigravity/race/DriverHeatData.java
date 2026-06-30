@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
-public class DriverHeatData extends ServerToClientObject {
+public class DriverHeatData extends ServerToClientObject implements GapParticipant {
 
   private RaceParticipant driver;
   private Driver actualDriver;
@@ -231,6 +231,11 @@ public class DriverHeatData extends ServerToClientObject {
     gapPosition = 0.0;
     falseStarts = 0;
     remainingFalseStartTimePenalty = 0.0;
+  }
+
+  @Override
+  public boolean hasNoFullLaps() {
+    return getLapCount() == 0;
   }
 
   public double getPendingLapTime() {

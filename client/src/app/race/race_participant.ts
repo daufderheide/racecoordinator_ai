@@ -18,6 +18,8 @@ export class RaceParticipant {
     public rankValue: number = 0,
     public seed: number = 0,
     public fuelLevel: number = 100,
+    public gapLeader: number = 0,
+    public gapPosition: number = 0,
     team?: Team,
   ) {
     this.driver = driver;

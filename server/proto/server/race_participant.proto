@@ -21,4 +21,6 @@ message RaceParticipant {
   int32 seed = 10;
   TeamModel team = 11;
   double fuel_level = 12;
+  double gap_leader = 13;
+  double gap_position = 14;
 }
