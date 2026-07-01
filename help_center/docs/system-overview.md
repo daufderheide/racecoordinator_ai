@@ -1,13 +1,13 @@
 # System Overview
 
-Race Coordinator has higher system requirements than most other lap counting software packages. Make sure your PC meets all the requirements listed below.
+Race Coordinator AI has higher system requirements than most other lap counting software packages. Make sure your PC meets all the requirements listed below.
 
 ## System Architecture
 
-Race Coordinator consists of a central software application running on a PC that interfaces with various hardware components. The system architecture includes the following:
+Race Coordinator AI consists of a central software application running on a PC, Mac, or Linux system that interfaces with various hardware components. The system architecture includes the following:
 
-- Race Coordinator software
-- Windows PC
+- Race Coordinator AI software (Java server and angular web client)
+- Windows PC, Mac, or Linux system
 - Track sensors
 - Slot Car controllers (analog or digital)
 - Slot cars (analog or digital)
@@ -16,23 +16,37 @@ Race Coordinator consists of a central software application running on a PC that
 
 ## Hardware Requirements
 
-- Track compatible with Race Coordinator software
+- Track compatible with Race Coordinator AI software
 - Analog slot cars or Digital slot cars fitted with the appropriate sensors
-- Analog or Digital controllers compatible with RC
+- Analog or Digital controllers compatible with RC AI
 - Sensors: Lap counting, optional position, optional pit in/out
-- Minimum PC hardware: 1 GHz processor, 1 GB RAM, 500 MB hard disk space.
-- Although sound capability in the PC is not required for RC operation, it does enrich the race experience.
+- Although sound capability in the PC is not required for RC AI operation, it does enrich the race experience.
 
 ## Software Requirements
 
-The current major version of RC, 1.15, requires a minimum Windows Operating System (OS) of Windows XP. Thus Windows XP, Vista, 7, 8, 10, and 11 are supported.
+### Windows 8 and older
+- Java 8
+- MongoDB 3.2
 
-!!! note
-    The next major version of RC, 1.16, will require a minimum of Windows 10.
+### Windows 10 and higher
+- Java 17
+- MongoDB 6.0
 
-Race Coordinator requires Microsoft .NET 4, and as such it has the minimum system requirements of .NET 4. The Microsoft website indicates that .NET 4 requires Windows XP or higher and the installer enforces this. The installer should handle checking if .NET 4 is installed already and install it for you if it is not.
+### MacOs and Linux
+- Java 17
+- MongoDB 6.0
 
-For more information on .NET check out: [http://msdn.microsoft.com/en-us/netframework/aa569263.aspx](http://msdn.microsoft.com/en-us/netframework/aa569263.aspx)
+### Mobile Devices and Tablets
+- Web browser capable of displaying the RC AI web pages (virtually any modern mobile device will work).
 
-!!! warning
-    Microsoft .NET 4 imposes many requirements on the Operating System. If it does not install, it is most likely because you need to perform one or more Windows updates before you can install it. It is highly recommended that your OS be fully updated before installing Race Coordinator.
+### Raspberry Pi
+- Java 17
+- MongoDB 6.0
+
+!!! Raspberry Pi is currently not supported, but it can be and is planned to be in the future.
+
+!!! NOTE:
+    Mobile devices currentl do not support running the RC AI server/database.  They can, however, be used to display the RC AI web pages and allow remote control of the race.
+    
+!!! NOTE:
+    Support for Windows 8 and older is continginent on Java 8 and MongoDB 3.2 being able to support RC AI.  If a feature of Java 17 or MongoDB 6.0 is needed, support for Windows 8 and older will be immediately dropped.
