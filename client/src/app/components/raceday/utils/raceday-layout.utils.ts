@@ -252,6 +252,7 @@ export class RacedayLayoutUtils {
       segmentTime: "RD_COL_SEGMENT_TIME",
       "driver.avatarUrl": "RD_COL_AVATAR",
       flag: "",
+      laneNumber: "RD_COL_LANE",
     };
     return labels[baseKey] ?? "UNKNOWN";
   }

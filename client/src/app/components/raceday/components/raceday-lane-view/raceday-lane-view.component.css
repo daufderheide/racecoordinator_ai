@@ -78,10 +78,7 @@
   left: 0;
   width: 100%;
   height: calc((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes));
-  top: calc(
-    ((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) *
-      var(--lane-index)
-  );
+  top: calc(((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) * var(--lane-index));
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -366,6 +363,7 @@
   z-index: 5;
   white-space: nowrap;
 }
+
 /* UI Editor Mode - Column Drop Zones */
 .anchor-drop-grid {
   position: absolute;
@@ -525,7 +523,8 @@
 }
 
 .bottom-section.vertical-layout .table-header-row {
-  height: 100% !important; /* height is set via inline style to null, so it will fill, but we want 100% */
+  height: 100% !important;
+  /* height is set via inline style to null, so it will fill, but we want 100% */
 }
 
 .bottom-section.vertical-layout .header-cell {
@@ -539,10 +538,7 @@
   top: 0 !important;
   height: 100% !important;
   width: calc((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes));
-  left: calc(
-    ((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) *
-      var(--lane-index)
-  );
+  left: calc(((100% - (var(--num-lanes) - 1) * 2px) / var(--num-lanes) + 2px) * var(--lane-index));
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -561,10 +557,12 @@
     grid-template-rows: auto 1fr !important;
     height: 100% !important;
   }
+
   .table-header-row {
     position: relative !important;
     height: auto !important;
   }
+
   .table-body {
     display: grid !important;
     grid-template-rows: repeat(var(--num-lanes), 1fr) !important;
@@ -572,6 +570,7 @@
     position: relative !important;
     overflow: hidden !important;
   }
+
   .table-row {
     position: relative !important;
     top: auto !important;
@@ -586,17 +585,19 @@
     grid-template-columns: auto 1fr !important;
     grid-template-rows: 100% !important;
   }
+
   .bottom-section.vertical-layout .table-header-row {
     height: 100% !important;
     width: auto !important;
   }
+
   .bottom-section.vertical-layout .table-body {
     grid-template-columns: repeat(var(--num-lanes), 1fr) !important;
     grid-template-rows: none !important;
   }
+
   .bottom-section.vertical-layout .table-row {
     height: 100% !important;
     width: 100% !important;
   }
 }
-

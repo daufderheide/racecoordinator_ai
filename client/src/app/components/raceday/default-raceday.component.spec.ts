@@ -1125,6 +1125,27 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("getColumnLabel", () => {
+    it("should return empty string for driver.avatarUrl", () => {
+      const col = {
+        propertyName: "driver.avatarUrl",
+        labelKey: "RD_COL_AVATAR",
+      } as any;
+      expect(component.getColumnLabel(col)).toBe("");
+    });
+
+    it("should translate the labelKey for other columns including laneNumber", () => {
+      mockTranslationService.translate.and.callFake(
+        (key: string) => key + "_TRANSLATED",
+      );
+      const col = {
+        propertyName: "laneNumber",
+        labelKey: "RD_COL_LANE",
+      } as any;
+      expect(component.getColumnLabel(col)).toBe("RD_COL_LANE_TRANSLATED");
+    });
+  });
+
   describe("formatValue", () => {
     let mockHd: any;
 
@@ -1386,6 +1407,12 @@ describe("DefaultRacedayComponent", () => {
         RaceFlag.CHECKERED,
       );
     });
+
+    it("should format laneNumber correctly (1-indexed)", () => {
+      const mockLaneHd = { ...mockHd, laneIndex: 2 } as any;
+      const result = component.formatValue("laneNumber", null, mockLaneHd);
+      expect(result).toBe("3");
+    });
   });
 
   describe("themed audio events", () => {
@@ -1505,6 +1532,11 @@ describe("DefaultRacedayComponent", () => {
     it("should return empty string label key for flag column", () => {
       const result = (component as any).getLabelKeyForColumn("flag");
       expect(result).toBe("");
+    });
+
+    it("should return RD_COL_LANE label key for laneNumber column", () => {
+      const result = (component as any).getLabelKeyForColumn("laneNumber");
+      expect(result).toBe("RD_COL_LANE");
     });
   });
 

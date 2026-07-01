@@ -123,6 +123,8 @@ export class RacedayFormatUtils {
         return lapPlaceholder;
       }
       return value.toFixed(lapDecimals);
+    } else if (baseKey === "laneNumber") {
+      return String((hd?.laneIndex ?? 0) + 1);
     } else if (baseKey === "driver.name") {
       if (RacedayFormatUtils.isEmptyDriver(hd))
         return ctx.translate("RD_EMPTY_LANE");

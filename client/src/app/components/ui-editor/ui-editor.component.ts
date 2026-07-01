@@ -161,6 +161,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "fph", label: "RD_COL_FPH" },
     { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
     { key: "flag", label: "RD_COL_DRIVER_STATE" },
+    { key: "laneNumber", label: "RD_COL_LANE" },
   ];
   availableTransitions = [
     { key: "none", label: "UE_TRANSITION_NONE" },
@@ -715,6 +716,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "fph", label: "RD_COL_FPH" },
           { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
           { key: "flag", label: "RD_COL_DRIVER_STATE" },
+          { key: "laneNumber", label: "RD_COL_LANE" },
           ...imageSetColumns,
         ];
 

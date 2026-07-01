@@ -2998,6 +2998,7 @@ export class DefaultRacedayComponent
       fph: 330,
       segmentTime: 330,
       flag: 120,
+      laneNumber: 120,
       imageset: 216,
     };
 

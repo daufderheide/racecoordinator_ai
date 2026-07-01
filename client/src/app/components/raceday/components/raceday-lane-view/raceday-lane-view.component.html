@@ -286,6 +286,13 @@
                         : widget()?.customSettings?.['insetTextColor']) ||
                       parent().getLaneColor(hd, 'foreground_color')
                     "
+                    [style.padding]="
+                      !parent().isNameProperty(entry.property) &&
+                      entry.property !== 'laneNumber' &&
+                      entry.anchor !== 'center-center'
+                        ? '10px'
+                        : '0'
+                    "
                   >
                     <!-- Team Driver Pulldown -->
                     @if (
