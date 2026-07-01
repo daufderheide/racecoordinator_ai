@@ -1271,12 +1271,32 @@ export class DefaultRacedaySetupComponent implements OnInit {
         position: "right",
       },
       {
+        selector: "#racing-drivers-section .section-header",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_ACTIONS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_ACTIONS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         targetId: "available-drivers-section",
         title: this.translationService.translate(
           "RDS_HELP_DRIVER_AVAILABLE_TITLE",
         ),
         content: this.translationService.translate(
           "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#available-drivers-section .header-actions",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
         ),
         position: "right",
       },
