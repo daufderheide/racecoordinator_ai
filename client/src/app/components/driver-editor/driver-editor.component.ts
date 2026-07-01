@@ -87,6 +87,32 @@ export class DriverEditorComponent
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+    this.saveExpanderState();
+  }
+
+  saveExpanderState() {
+    try {
+      localStorage.setItem(
+        "driver_editor_expanders",
+        JSON.stringify(this.sectionsExpanded),
+      );
+    } catch (e) {
+      this.logger.error("Error saving expander state", e);
+    }
+  }
+
+  loadExpanderState() {
+    try {
+      const saved = localStorage.getItem("driver_editor_expanders");
+      if (saved) {
+        this.sectionsExpanded = {
+          ...this.sectionsExpanded,
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (e) {
+      this.logger.error("Error loading expander state", e);
+    }
   }
 
   constructor(
@@ -124,7 +150,16 @@ export class DriverEditorComponent
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
     this.raceConnectionService.connect();
+    this.loadExpanderState();
 
+    this.subscriptions.push(
+      this.helpService.currentStep$.subscribe((step) => {
+        if (step?.selector?.includes("audio")) {
+          this.sectionsExpanded.audio = true;
+          this.cdr.detectChanges();
+        }
+      }),
+    );
     if (this.route.queryParamMap) {
       this.subscriptions.push(
         this.route.queryParamMap.subscribe((paramMap) => {
@@ -768,6 +803,38 @@ export class DriverEditorComponent
         title: this.translationService.translate("DE_HELP_NICKNAME_TITLE"),
         content: this.translationService.translate("DE_HELP_NICKNAME_CONTENT"),
         position: "bottom",
+      },
+      {
+        selector: "#driver-audio-section",
+        title: this.translationService.translate("DE_HELP_AUDIO_SECTION_TITLE"),
+        content: this.translationService.translate(
+          "DE_HELP_AUDIO_SECTION_CONTENT",
+        ),
+        position: "left",
+      },
+      {
+        selector: "#driver-lap-audio",
+        title: this.translationService.translate("DE_HELP_LAP_SOUND_TITLE"),
+        content: this.translationService.translate("DE_HELP_LAP_SOUND_CONTENT"),
+        position: "left",
+      },
+      {
+        selector: "#driver-best-lap-audio",
+        title: this.translationService.translate(
+          "DE_HELP_BEST_LAP_SOUND_TITLE",
+        ),
+        content: this.translationService.translate(
+          "DE_HELP_BEST_LAP_SOUND_CONTENT",
+        ),
+        position: "left",
+      },
+      {
+        selector: "#driver-penalty-audio",
+        title: this.translationService.translate("DE_HELP_PENALTY_SOUND_TITLE"),
+        content: this.translationService.translate(
+          "DE_HELP_PENALTY_SOUND_CONTENT",
+        ),
+        position: "left",
       },
     ];
   }

@@ -82,7 +82,7 @@
       </div>
       <!-- Right Panel: Audio Config -->
       <div class="preview-panel">
-        <div class="config-section">
+        <div class="config-section" id="driver-audio-section">
           <div class="section-header" (click)="toggleSection('audio')">
             <span
               class="expander-icon"
@@ -94,7 +94,7 @@
           @if (sectionsExpanded.audio) {
             <div class="section-content">
               <div class="audio-grid">
-                <div class="audio-section">
+                <div class="audio-section" id="driver-lap-audio">
                   @if (editingDriver.lapAudio) {
                     <app-audio-selector
                       [label]="'DE_LABEL_LAP_SOUNDS' | translate"
@@ -116,7 +116,7 @@
                     </app-audio-selector>
                   }
                 </div>
-                <div class="audio-section">
+                <div class="audio-section" id="driver-best-lap-audio">
                   @if (editingDriver.bestLapAudio) {
                     <app-audio-selector
                       [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
@@ -139,7 +139,7 @@
                     </app-audio-selector>
                   }
                 </div>
-                <div class="audio-section">
+                <div class="audio-section" id="driver-penalty-audio">
                   @if (editingDriver.penaltyAudio) {
                     <app-audio-selector
                       [label]="'DE_LABEL_PENALTY_SOUNDS' | translate"

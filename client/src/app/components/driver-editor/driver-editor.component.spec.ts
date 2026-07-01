@@ -150,6 +150,7 @@ describe("DriverEditorComponent", () => {
   let router: any;
   let mockConnectionMonitor: any;
   let mockActivatedRoute: any;
+  let mockHelpStepSubject: BehaviorSubject<any>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -159,6 +160,7 @@ describe("DriverEditorComponent", () => {
       startMonitoring: jasmine.createSpy("startMonitoring"),
       stopMonitoring: jasmine.createSpy("stopMonitoring"),
     };
+    mockHelpStepSubject = new BehaviorSubject(null);
 
     mockActivatedRoute = {
       snapshot: {
@@ -197,7 +199,7 @@ describe("DriverEditorComponent", () => {
           provide: HelpService,
           useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
             isVisible$: of(false),
-            currentStep$: of(null),
+            currentStep$: mockHelpStepSubject.asObservable(),
             hasNext$: of(false),
             hasPrevious$: of(false),
           }),
@@ -650,6 +652,26 @@ describe("DriverEditorComponent", () => {
 
       component.editingDriver!.nickname = "TakenNick";
       expect(component.isConfigValid()).toBeFalse();
+    });
+  });
+
+  describe("guided help", () => {
+    it("should force expand audio section when step selector includes 'audio'", () => {
+      component.sectionsExpanded.audio = false;
+
+      mockHelpStepSubject.next({ selector: "#driver-audio-section" });
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeTrue();
+    });
+
+    it("should not expand audio section when step selector does not include 'audio'", () => {
+      component.sectionsExpanded.audio = false;
+
+      mockHelpStepSubject.next({ selector: "#driver-name-section" });
+      fixture.detectChanges();
+
+      expect(component.sectionsExpanded.audio).toBeFalse();
     });
   });
 });
