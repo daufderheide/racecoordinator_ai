@@ -322,11 +322,13 @@ export class DefaultRacedayComponent
       base = `${seconds}`;
     }
 
-    // High precision countdown logic (only for seconds < 10 and we have a decimal format)
-    if (hours === 0 && minutes === 0 && this.timeFormat.includes(".")) {
-      const parts = this.timeFormat.split(".");
-      const fractionDigits = parts[1].split("-")[1]; // e.g., '1.2-2' -> 2
-      const formatted = time.toFixed(Number(fractionDigits));
+    // High precision countdown logic (only when we have a decimal format > 0)
+    const parts = this.timeFormat.split(".");
+    const fractionDigits =
+      parts.length > 1 ? Number(parts[1].split("-")[1]) : 0;
+
+    if (hours === 0 && minutes === 0 && fractionDigits > 0) {
+      const formatted = time.toFixed(fractionDigits);
       return formatted;
     }
 

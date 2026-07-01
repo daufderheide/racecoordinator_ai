@@ -1924,6 +1924,18 @@ describe("DefaultRacedayComponent", () => {
       expect(component["formattedTime"]).toBe("1:01");
     });
 
+    it("should format 59.9s as 59 when decimal format has 0 fraction digits (1.0-0)", () => {
+      component["time"] = 59.9;
+      component["timeFormat"] = "1.0-0";
+      expect(component["formattedTime"]).toBe("59");
+    });
+
+    it("should show high-precision decimals for countdown when format has decimals > 0 (59.9s -> 59.90)", () => {
+      component["time"] = 59.9;
+      component["timeFormat"] = "1.2-2";
+      expect(component["formattedTime"]).toBe("59.90");
+    });
+
     it("should handle zero correctly", () => {
       component["time"] = 0;
       component["timeFormat"] = "1.0-0";
