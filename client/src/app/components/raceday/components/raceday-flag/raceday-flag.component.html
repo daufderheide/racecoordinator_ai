@@ -1,3 +1,8 @@
 <div class="panel-card flag-panel">
-  <img [src]="currentFlagUrl()" class="flag-image" alt="Race Flag" />
+  <img
+    [src]="currentFlagUrl() || null"
+    [style.display]="currentFlagUrl() ? '' : 'none'"
+    class="flag-image"
+    alt="Race Flag"
+  />
 </div>

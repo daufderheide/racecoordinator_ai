@@ -151,7 +151,7 @@ describe("RaceFlagService", () => {
       expect(url).toBe("http://custom/green.png");
     });
 
-    it("should fallback to default assets if neither theme nor settings provide a URL", () => {
+    it("should fallback to an empty string if neither theme nor settings provide a URL", () => {
       themeService.resolveAssetId.and.returnValue(null);
       settingsService.getSettings.and.returnValue({
         serverIp: "localhost",
@@ -159,31 +159,7 @@ describe("RaceFlagService", () => {
       });
 
       const url = service.getFlagUrl(RaceFlag.GREEN);
-      expect(url).toBe("/assets/images/flags/green.png");
-    });
-
-    it("should handle black flag fallback with svg extension", () => {
-      themeService.resolveAssetId.and.returnValue(null);
-      settingsService.getSettings.and.returnValue({});
-
-      const url = service.getFlagUrl(RaceFlag.BLACK);
-      expect(url).toBe("/assets/images/flags/black.svg");
-    });
-
-    it("should map green_yellow to yellow_green asset filename", () => {
-      themeService.resolveAssetId.and.returnValue(null);
-      settingsService.getSettings.and.returnValue({});
-
-      const url = service.getFlagUrl(RaceFlag.GREEN_YELLOW);
-      expect(url).toBe("/assets/images/flags/yellow_green.png");
-    });
-
-    it("should default to red flag for unknown string types", () => {
-      themeService.resolveAssetId.and.returnValue(null);
-      settingsService.getSettings.and.returnValue({});
-
-      const url = service.getFlagUrl("unknown-type" as any);
-      expect(url).toBe("/assets/images/flags/red.png");
+      expect(url).toBe("");
     });
   });
 

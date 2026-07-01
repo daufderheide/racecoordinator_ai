@@ -140,20 +140,10 @@ export class RaceFlagService implements OnDestroy {
 
     if (url) return url;
 
-    // 3. Fallback to default assets
-    // Note: We use relative paths that are expected to exist in the theme or server
-    const nameMap: Record<string, string> = {
-      green: "green",
-      yellow: "yellow",
-      red: "red",
-      white: "white",
-      checkered: "checkered",
-      green_yellow: "yellow_green", // Map for asset filename consistency
-      black: "black",
-    };
-    const name = nameMap[flagType] || "red"; // Default to red for unknown types
-    const ext = name === "black" ? "svg" : "png";
-    return `/assets/images/flags/${name}.${ext}`; // Adjusted path to more common convention
+    // 3. Fallback to empty string
+    // Note: Since there are no default flag assets, we return an empty string
+    // to avoid 404 errors in the debug panel and missing image icons.
+    return "";
   }
 
   private getFullUrl(url: string | undefined): string {
