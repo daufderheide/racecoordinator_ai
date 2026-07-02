@@ -168,7 +168,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       timeLength = 0;
       // Trackmate time is in ms. hwLapTime uses microseconds.
       long timeUs = t * 1000;
-      logger.debug("Processed time message: {} ms", t);
+      logger.trace("Processed time message: {} ms", t);
       for (int i = 0; i < getNumLanes(); i++) {
         hwLapTime[i].add(timeUs);
         hwSegmentTime[i].add(timeUs);
@@ -196,8 +196,16 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   public void setMainPower(boolean on) {
     super.setMainPower(on);
     boolean powerState = config.normallyClosedRelays ? !on : on;
-    byte command = powerState ? ENERGIZE_COMMAND : DEENERGIZE_COMMAND;
-    logger.info("Setting main power. State: " + powerState + ", Command: " + (char) command);
+    byte command = powerState ? DEENERGIZE_COMMAND : ENERGIZE_COMMAND;
+    logger.info(
+        "Setting main power. on: "
+            + on
+            + ", NC: "
+            + config.normallyClosedRelays
+            + ", State: "
+            + powerState
+            + ", Command: "
+            + (char) command);
     writeData(new byte[] {command});
   }
 

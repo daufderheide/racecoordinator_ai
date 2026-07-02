@@ -117,7 +117,7 @@ public abstract class DefaultProtocol implements IProtocol {
                     status = InterfaceStatus.NO_DATA;
                   } else {
                     long age = now() - lastHeartbeatTimeMs;
-                    logger.debug(
+                    logger.trace(
                         "Timeout age: {}ms (now: {}, lastHeartbeat: {})",
                         age,
                         now(),
@@ -205,13 +205,17 @@ public abstract class DefaultProtocol implements IProtocol {
       }
     } else {
       if (!arduinoReset && pcExpectedReset) {
-        // Mismatch: Arduino hasn't reset yet, but PC expects reset (e.g. late in-flight message).
-        // Discard the pre-reset time but keep hwReset = 1, waiting for the reset heartbeat.
+        // Mismatch: Arduino hasn't reset yet, but PC expects reset (e.g. late in-flight
+        // message).
+        // Discard the pre-reset time but keep hwReset = 1, waiting for the reset
+        // heartbeat.
         logger.info(
             "Received Heartbeat - Reset expected but not set yet. Discarding in-flight time.");
       } else {
-        // Mismatch: Arduino reset unexpectedly (arduinoReset is true, pcExpectedReset is false).
-        // Treat as a reset event: clear pin cache and initialize hardware state, and set hwReset =
+        // Mismatch: Arduino reset unexpectedly (arduinoReset is true, pcExpectedReset
+        // is false).
+        // Treat as a reset event: clear pin cache and initialize hardware state, and
+        // set hwReset =
         // 0.
         logger.warn(
             "Received Heartbeat - Reset mismatch: got {}, expected {}. Clearing pin cache.",

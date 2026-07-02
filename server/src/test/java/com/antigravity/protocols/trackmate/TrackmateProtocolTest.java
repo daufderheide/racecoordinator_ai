@@ -194,11 +194,11 @@ public class TrackmateProtocolTest {
     protocol.open();
     serialConnection.allWrittenData.clear();
 
-    protocol.setMainPower(true); // Turn ON, normally closed is FALSE, so ENERGIZE (R)
-    assertArrayEquals(new byte[] {0x52}, serialConnection.lastWrittenData);
-
-    protocol.setMainPower(false); // Turn OFF, DEENERGIZE (E)
+    protocol.setMainPower(true); // Turn ON, normally closed is FALSE, so DEENERGIZE (E)
     assertArrayEquals(new byte[] {0x45}, serialConnection.lastWrittenData);
+
+    protocol.setMainPower(false); // Turn OFF, ENERGIZE (R)
+    assertArrayEquals(new byte[] {0x52}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -209,11 +209,11 @@ public class TrackmateProtocolTest {
     protocol.open();
     serialConnection.allWrittenData.clear();
 
-    protocol.setMainPower(true); // Turn ON, normally closed is TRUE, so DEENERGIZE (E)
-    assertArrayEquals(new byte[] {0x45}, serialConnection.lastWrittenData);
-
-    protocol.setMainPower(false); // Turn OFF, ENERGIZE (R)
+    protocol.setMainPower(true); // Turn ON, normally closed is TRUE, so ENERGIZE (R)
     assertArrayEquals(new byte[] {0x52}, serialConnection.lastWrittenData);
+
+    protocol.setMainPower(false); // Turn OFF, DEENERGIZE (E)
+    assertArrayEquals(new byte[] {0x45}, serialConnection.lastWrittenData);
   }
 
   @Test
