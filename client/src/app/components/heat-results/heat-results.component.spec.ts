@@ -163,9 +163,12 @@ describe("HeatResultsComponent", () => {
     expect(component["driverLines"].length).toBe(2);
   });
 
-  it("should trigger PDF export with Heat Results when exportPdf is called", () => {
+  it("should trigger PDF export with Heat Results and fullScroll enabled when exportPdf is called", () => {
     component.exportPdf();
-    expect(mockPrintService.print).toHaveBeenCalledWith("Heat Results");
+    expect(mockPrintService.print).toHaveBeenCalledWith(
+      "Race 1-HeatResults",
+      true,
+    );
   });
 
   it("should open driver results window, track it, and close it on destroy or unload", () => {

@@ -218,7 +218,8 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
   }
 
   exportPdf() {
-    this.printService.print("Heat Results");
+    const raceName = this.race?.name || "Race";
+    this.printService.print(`${raceName}-HeatResults`, true);
   }
 
   // TODO(aufderheide): This shouldn't be done on the client, the server should be sending us the standings already sorted.
