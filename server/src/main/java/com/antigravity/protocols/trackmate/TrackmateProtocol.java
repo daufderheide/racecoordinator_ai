@@ -168,7 +168,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       timeLength = 0;
       // Trackmate time is in ms. hwLapTime uses microseconds.
       long timeUs = t * 1000;
-      logger.trace("Processed time message: {} ms", t);
+      logger.debug("Processed time message: {} ms", t);
       for (int i = 0; i < getNumLanes(); i++) {
         hwLapTime[i].add(timeUs);
         hwSegmentTime[i].add(timeUs);
@@ -196,7 +196,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   public void setMainPower(boolean on) {
     super.setMainPower(on);
     boolean powerState = config.normallyClosedRelays ? !on : on;
-    byte command = powerState ? DEENERGIZE_COMMAND : ENERGIZE_COMMAND;
+    byte command = powerState ? ENERGIZE_COMMAND : DEENERGIZE_COMMAND;
     logger.info(
         "Setting main power. on: "
             + on
@@ -223,11 +223,15 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         bitmask |= (1 << i);
       }
     }
+    byte commandPrefix = config.normallyClosedRelays ? (byte) 0x6E : (byte) 0x66; // 'n' or 'f'
 
-    boolean invert = config.normallyClosedRelays;
-    byte commandPrefix = invert ? (byte) 0x66 : (byte) 0x6E; // 'f' or 'n'
-
-    logger.info("Setting lane power. Lane: {}, On: {}, Bitmask: {}", lane, on, bitmask);
+    logger.info(
+        "Setting lane power. NC: {},  Lane: {}, On: {}, Command: {}, Bitmask: {}",
+        config.normallyClosedRelays,
+        lane,
+        on,
+        (char) commandPrefix,
+        bitmask);
     byte[] message = new byte[] {commandPrefix, (byte) bitmask};
     writeData(message);
   }
