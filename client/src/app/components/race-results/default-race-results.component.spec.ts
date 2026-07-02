@@ -372,54 +372,6 @@ describe("DefaultRaceResultsComponent", () => {
     });
   });
 
-  describe("Gap Calculation", () => {
-    it("should set gap to 0 for the leader", () => {
-      const d1 = createDriver("d1", "Alice", "Ally");
-      const p1 = createParticipant(
-        "d1",
-        d1,
-        1,
-        10,
-        50.0,
-        4.5,
-        5.0,
-        5.0,
-        100,
-        1,
-      );
-
-      participantsSubject.next([p1]);
-
-      expect(component["standingsRows"][0].gap1st).toBe(0);
-      expect(component["standingsRows"][0].gapAhead).toBe(0);
-    });
-
-    it("should calculate time gap when drivers have same lap count", () => {
-      const d1 = createDriver("d1", "Alice", "Ally");
-      const d2 = createDriver("d2", "Bob", "Bobby");
-
-      const p1 = createParticipant(
-        "d1",
-        d1,
-        1,
-        10,
-        50.0,
-        4.5,
-        5.0,
-        5.0,
-        100,
-        1,
-      );
-      const p2 = createParticipant("d2", d2, 2, 10, 53.0, 5.0, 5.3, 5.3, 80, 2);
-
-      participantsSubject.next([p1, p2]);
-
-      const rows = component["standingsRows"];
-      expect(rows[1].gap1st).toBe(3.0); // 53 - 50
-      expect(rows[1].gapAhead).toBe(3.0); // 53 - 50
-    });
-  });
-
   describe("Graph Generation", () => {
     it("should generate driver lines from standings data", () => {
       const d1 = createDriver("d1", "Alice", "Ally");

@@ -35,6 +35,7 @@ export class DriverHeatData {
   private _adjustedLapCount: number = 0;
   public isRefueling: boolean = false;
   public currentLocation: number = -1;
+  public rank: number = 0;
   public flag: number = 0;
 
   constructor(

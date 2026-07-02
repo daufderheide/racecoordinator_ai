@@ -405,54 +405,9 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         return a.totalTime - b.totalTime;
       });
 
-    const lead = sorted[0];
     this.standingsRows = sorted.map((curr, i) => {
-      let gap1st: number | null = 0;
-      let gapAhead: number | null = 0;
-
-      if (i > 0) {
-        // Gap to Leader
-        const leadLaps = lead.totalLaps || 0;
-        const leadTime = lead.totalTime || 0;
-        const leadAvg = lead.averageLapTime || 0;
-
-        const currLaps = curr.totalLaps || 0;
-        const currTime = curr.totalTime || 0;
-        const currAvg = curr.averageLapTime || 0;
-
-        if (currLaps === leadLaps) {
-          gap1st = currTime - leadTime;
-        } else if (currLaps === 0) {
-          gap1st = leadTime;
-        } else {
-          const lapDiff = leadLaps - currLaps;
-          if (currAvg < leadAvg) {
-            gap1st = currAvg * lapDiff;
-          } else {
-            gap1st = Math.min(currAvg, currTime - leadTime) + currAvg * lapDiff;
-          }
-        }
-
-        // Gap to Driver Ahead
-        const prev = sorted[i - 1];
-        const prevLaps = prev.totalLaps || 0;
-        const prevTime = prev.totalTime || 0;
-        const prevAvg = prev.averageLapTime || 0;
-
-        if (currLaps === prevLaps) {
-          gapAhead = currTime - prevTime;
-        } else if (currLaps === 0) {
-          gapAhead = prevTime;
-        } else {
-          const lapDiff = prevLaps - currLaps;
-          if (currAvg < prevAvg) {
-            gapAhead = currAvg * lapDiff;
-          } else {
-            gapAhead =
-              Math.min(currAvg, currTime - prevTime) + currAvg * lapDiff;
-          }
-        }
-      }
+      let gap1st: number | null = curr.gapLeader ?? 0;
+      let gapAhead: number | null = curr.gapPosition ?? 0;
 
       return {
         rank: curr.rank || i + 1,

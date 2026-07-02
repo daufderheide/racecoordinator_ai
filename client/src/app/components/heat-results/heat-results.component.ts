@@ -241,15 +241,8 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
         `[HeatStandings] validHeatDrivers length: ${validHeatDrivers.length}`,
       );
 
-      const sortedHeatDrivers = [...validHeatDrivers].sort((a, b) => {
-        const lapsA = a.adjustedLapCount;
-        const lapsB = b.adjustedLapCount;
-        if (lapsA !== lapsB) return lapsB - lapsA;
-        return a.totalTime - b.totalTime;
-      });
-
-      this.heat.heatDrivers.forEach((heatDriver) => {
-        const data = this.buildHeatExpanderData(heatDriver, sortedHeatDrivers);
+      validHeatDrivers.forEach((heatDriver) => {
+        const data = this.buildHeatExpanderData(heatDriver);
         if (data) {
           this.heatData.push(data);
           this.expandedHeats.add(heatDriver.objectId); // Default expand all
@@ -269,10 +262,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private buildHeatExpanderData(
-    heatDriver: any,
-    sortedHeatDrivers: any[],
-  ): HeatExpanderData | null {
+  private buildHeatExpanderData(heatDriver: any): HeatExpanderData | null {
     const dName =
       heatDriver.actualDriver?.name ??
       heatDriver.driver?.name ??
@@ -284,49 +274,16 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     );
     if (isSkip) return null;
 
-    const idx = sortedHeatDrivers.findIndex(
-      (hd) => hd.objectId === heatDriver.objectId,
-    );
-    const lead = sortedHeatDrivers[0];
-
-    let gap1st: number | null = 0;
-    let gapAhead: number | null = 0;
-
-    if (idx > 0 && lead) {
-      const leadLaps = lead.adjustedLapCount;
-      const leadTime = lead.totalTime;
-      const currLaps = heatDriver.adjustedLapCount;
-      const currTime = heatDriver.totalTime;
-      const currAvg = heatDriver.averageLapTime;
-
-      if (currLaps === leadLaps) gap1st = currTime - leadTime;
-      else if (currLaps === 0) gap1st = leadTime;
-      else
-        gap1st =
-          Math.min(currAvg, currTime - leadTime) +
-          currAvg * (leadLaps - currLaps);
-
-      const prev = sortedHeatDrivers[idx - 1];
-      const prevLaps = prev.adjustedLapCount;
-      const prevTime = prev.totalTime;
-      if (currLaps === prevLaps) gapAhead = currTime - prevTime;
-      else if (currLaps === 0) gapAhead = prevTime;
-      else
-        gapAhead =
-          Math.min(currAvg, currTime - prevTime) +
-          currAvg * (prevLaps - currLaps);
-    }
-
     const row: HeatStandingsRow = {
-      rank: idx !== -1 ? idx + 1 : 1,
+      rank: heatDriver.rank || 1,
       objectId: heatDriver.objectId,
       laps: heatDriver.adjustedLapCount,
       averageLapTime: heatDriver.averageLapTime,
       medianLapTime: heatDriver.medianLapTime,
       bestLapTime: heatDriver.bestLapTime,
       totalTime: heatDriver.totalTime,
-      gap1st,
-      gapAhead,
+      gap1st: heatDriver.gapLeader ?? 0,
+      gapAhead: heatDriver.gapPosition ?? 0,
       reactionTime: heatDriver.reactionTime,
     };
 

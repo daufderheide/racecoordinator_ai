@@ -473,6 +473,7 @@ export class RaceConnectionService implements OnDestroy {
             (d: any) => d.objectId === u.objectId,
           );
           if (driverData) {
+            driverData.rank = u.rank || 0;
             driverData.gapLeader = u.gapLeader || 0;
             driverData.gapPosition = u.gapPosition || 0;
           }
