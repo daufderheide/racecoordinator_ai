@@ -221,6 +221,7 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     this.printService.print("Heat Results");
   }
 
+  // TODO(aufderheide): This shouldn't be done on the client, the server should be sending us the standings already sorted.
   private calculateHeatStandings() {
     try {
       if (!this.heat || !this.heat.heatDrivers) return;
@@ -248,103 +249,11 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
       });
 
       this.heat.heatDrivers.forEach((heatDriver) => {
-        const dName =
-          heatDriver.actualDriver?.name ??
-          heatDriver.driver?.name ??
-          (heatDriver as any).driver?.driver?.name;
-        const isSkip =
-          !dName ||
-          dName.trim().toLowerCase() === "empty" ||
-          dName.trim() === "";
-        console.log(
-          `[HeatStandings] Loop processing driver ${heatDriver?.driver?.name}, isSkip: ${isSkip}`,
-        );
-        if (isSkip) return;
-
-        const idx = sortedHeatDrivers.findIndex(
-          (hd) => hd.objectId === heatDriver.objectId,
-        );
-        const lead = sortedHeatDrivers[0];
-
-        let gap1st: number | null = 0;
-        let gapAhead: number | null = 0;
-
-        if (idx > 0 && lead) {
-          const leadLaps = lead.adjustedLapCount;
-          const leadTime = lead.totalTime;
-          const currLaps = heatDriver.adjustedLapCount;
-          const currTime = heatDriver.totalTime;
-          const currAvg = heatDriver.averageLapTime;
-
-          if (currLaps === leadLaps) gap1st = currTime - leadTime;
-          else if (currLaps === 0) gap1st = leadTime;
-          else
-            gap1st =
-              Math.min(currAvg, currTime - leadTime) +
-              currAvg * (leadLaps - currLaps);
-
-          const prev = sortedHeatDrivers[idx - 1];
-          const prevLaps = prev.adjustedLapCount;
-          const prevTime = prev.totalTime;
-          if (currLaps === prevLaps) gapAhead = currTime - prevTime;
-          else if (currLaps === 0) gapAhead = prevTime;
-          else
-            gapAhead =
-              Math.min(currAvg, currTime - prevTime) +
-              currAvg * (prevLaps - currLaps);
+        const data = this.buildHeatExpanderData(heatDriver, sortedHeatDrivers);
+        if (data) {
+          this.heatData.push(data);
+          this.expandedHeats.add(heatDriver.objectId); // Default expand all
         }
-
-        const row: HeatStandingsRow = {
-          rank: idx !== -1 ? idx + 1 : 1,
-          objectId: heatDriver.objectId,
-          laps: heatDriver.adjustedLapCount,
-          averageLapTime: heatDriver.averageLapTime,
-          medianLapTime: heatDriver.medianLapTime,
-          bestLapTime: heatDriver.bestLapTime,
-          totalTime: heatDriver.totalTime,
-          gap1st,
-          gapAhead,
-          reactionTime: heatDriver.reactionTime,
-        };
-
-        let foreground = "#ffffff";
-        let background = "#333333";
-        let name = `Lane ${heatDriver.laneIndex + 1}`;
-        if (
-          this.race?.track?.lanes &&
-          this.race.track.lanes[heatDriver.laneIndex]
-        ) {
-          const lane = this.race.track.lanes[heatDriver.laneIndex];
-          foreground = lane.foreground_color || foreground;
-          background = lane.background_color || background;
-        }
-        const maxLapTime =
-          heatDriver.lapsWithDetails && heatDriver.lapsWithDetails.length > 0
-            ? Math.max(...heatDriver.lapsWithDetails.map((l) => l.time))
-            : 0;
-
-        const actual = heatDriver.actualDriver;
-        const driver = heatDriver.participant?.driver;
-        const team = heatDriver.participant?.team;
-        let participantName = "";
-        if (team) participantName = team.name;
-        else if (actual) participantName = actual.nickname || actual.name;
-        else if (driver) participantName = driver.nickname || driver.name;
-        else
-          participantName =
-            heatDriver.driver?.nickname ||
-            heatDriver.driver?.name ||
-            (heatDriver as any).driver?.driver?.name;
-
-        this.heatData.push({
-          heat: this.heat!,
-          heatDriver,
-          row,
-          laneColor: { foreground, background, name },
-          maxLapTime,
-          driverName: participantName,
-        });
-        this.expandedHeats.add(heatDriver.objectId); // Default expand all
       });
 
       // Sort by lane index
@@ -358,6 +267,106 @@ export class HeatResultsComponent implements OnInit, OnDestroy {
     } catch (e) {
       console.error("ERROR in calculateHeatStandings", e);
     }
+  }
+
+  private buildHeatExpanderData(
+    heatDriver: any,
+    sortedHeatDrivers: any[],
+  ): HeatExpanderData | null {
+    const dName =
+      heatDriver.actualDriver?.name ??
+      heatDriver.driver?.name ??
+      (heatDriver as any).driver?.driver?.name;
+    const isSkip =
+      !dName || dName.trim().toLowerCase() === "empty" || dName.trim() === "";
+    console.log(
+      `[HeatStandings] Loop processing driver ${heatDriver?.driver?.name}, isSkip: ${isSkip}`,
+    );
+    if (isSkip) return null;
+
+    const idx = sortedHeatDrivers.findIndex(
+      (hd) => hd.objectId === heatDriver.objectId,
+    );
+    const lead = sortedHeatDrivers[0];
+
+    let gap1st: number | null = 0;
+    let gapAhead: number | null = 0;
+
+    if (idx > 0 && lead) {
+      const leadLaps = lead.adjustedLapCount;
+      const leadTime = lead.totalTime;
+      const currLaps = heatDriver.adjustedLapCount;
+      const currTime = heatDriver.totalTime;
+      const currAvg = heatDriver.averageLapTime;
+
+      if (currLaps === leadLaps) gap1st = currTime - leadTime;
+      else if (currLaps === 0) gap1st = leadTime;
+      else
+        gap1st =
+          Math.min(currAvg, currTime - leadTime) +
+          currAvg * (leadLaps - currLaps);
+
+      const prev = sortedHeatDrivers[idx - 1];
+      const prevLaps = prev.adjustedLapCount;
+      const prevTime = prev.totalTime;
+      if (currLaps === prevLaps) gapAhead = currTime - prevTime;
+      else if (currLaps === 0) gapAhead = prevTime;
+      else
+        gapAhead =
+          Math.min(currAvg, currTime - prevTime) +
+          currAvg * (prevLaps - currLaps);
+    }
+
+    const row: HeatStandingsRow = {
+      rank: idx !== -1 ? idx + 1 : 1,
+      objectId: heatDriver.objectId,
+      laps: heatDriver.adjustedLapCount,
+      averageLapTime: heatDriver.averageLapTime,
+      medianLapTime: heatDriver.medianLapTime,
+      bestLapTime: heatDriver.bestLapTime,
+      totalTime: heatDriver.totalTime,
+      gap1st,
+      gapAhead,
+      reactionTime: heatDriver.reactionTime,
+    };
+
+    let foreground = "#ffffff";
+    let background = "#333333";
+    let name = `Lane ${heatDriver.laneIndex + 1}`;
+    if (
+      this.race?.track?.lanes &&
+      this.race.track.lanes[heatDriver.laneIndex]
+    ) {
+      const lane = this.race.track.lanes[heatDriver.laneIndex];
+      foreground = lane.foreground_color || foreground;
+      background = lane.background_color || background;
+    }
+    const maxLapTime =
+      heatDriver.lapsWithDetails && heatDriver.lapsWithDetails.length > 0
+        ? Math.max(...heatDriver.lapsWithDetails.map((l: any) => l.time))
+        : 0;
+
+    const actual = heatDriver.actualDriver;
+    const driver = heatDriver.participant?.driver;
+    const team = heatDriver.participant?.team;
+    let participantName = "";
+    if (team) participantName = team.name;
+    else if (actual) participantName = actual.nickname || actual.name;
+    else if (driver) participantName = driver.nickname || driver.name;
+    else
+      participantName =
+        heatDriver.driver?.nickname ||
+        heatDriver.driver?.name ||
+        (heatDriver as any).driver?.driver?.name;
+
+    return {
+      heat: this.heat!,
+      heatDriver,
+      row,
+      laneColor: { foreground, background, name },
+      maxLapTime,
+      driverName: participantName,
+    };
   }
 
   private loadRaceData() {
