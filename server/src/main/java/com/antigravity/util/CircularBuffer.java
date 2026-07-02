@@ -1,9 +1,13 @@
 package com.antigravity.util;
 
 import java.nio.BufferOverflowException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A thread-safe circular buffer for bytes. */
 public class CircularBuffer {
+
+  private static final Logger logger = LoggerFactory.getLogger(CircularBuffer.class);
 
   private final byte[] buffer;
   private final int capacity;
@@ -98,6 +102,13 @@ public class CircularBuffer {
       count++;
       written++;
     }
+    if (logger.isDebugEnabled()) {
+      StringBuilder newBytes = new StringBuilder();
+      for (byte b : data) {
+        newBytes.append(String.format("%02X ", b));
+      }
+      logger.debug("Wrote bytes: {}. Full buffer: {}", newBytes.toString().trim(), toHexString());
+    }
     return written;
   }
 
@@ -114,6 +125,13 @@ public class CircularBuffer {
       result[i] = buffer[head];
       head = (head + 1) % capacity;
       count--;
+    }
+    if (logger.isDebugEnabled()) {
+      StringBuilder readBytes = new StringBuilder();
+      for (byte b : result) {
+        readBytes.append(String.format("%02X ", b));
+      }
+      logger.debug("Read bytes: {}. Full buffer: {}", readBytes.toString().trim(), toHexString());
     }
     return result;
   }

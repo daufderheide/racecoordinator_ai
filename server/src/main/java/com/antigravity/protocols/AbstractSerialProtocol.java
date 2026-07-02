@@ -70,7 +70,7 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
               byte[] data = event.getReceivedData();
               if (data != null && data.length > 0) {
-                logger.debug("Received: {} bytes", data.length);
+                // logger.debug("Received: {} bytes", data.length);
                 rxBuffer.write(data);
                 processData();
               }
