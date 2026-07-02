@@ -17,8 +17,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   private static final byte START_COMMAND = 0x53; // 'S'
 
-  private static final byte ENERGIZE_COMMAND = 0x52; // 'R'
+  // NC Relay turns track power on with 'E'
   private static final byte DEENERGIZE_COMMAND = 0x45; // 'E'
+  // NC Relay turns track power off with 'R'
+  private static final byte ENERGIZE_COMMAND = 0x52; // 'R'
   private static final byte TERMINATOR_LF = 0x0A;
   private static final byte TERMINATOR_CR = 0x0D;
 
@@ -56,6 +58,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   }
 
   private void initializeHardware() {
+    logger.info("Initializing trackmate hardware");
+
     // Number of lanes sent to hardware is based on the max pin mapped to a behavior
     int hwNumLanes = 0;
     if (config.lapPinBehaviors != null) {
@@ -65,7 +69,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         }
       }
     }
-    if (hwNumLanes == 0) hwNumLanes = 1; // Minimum 1
+    if (hwNumLanes == 0) {
+      // Set to max lanes
+      hwNumLanes = 8;
+    }
 
     byte lanesByte = (byte) (0x30 + hwNumLanes);
     logger.info("Setting hardware lanes to {}", hwNumLanes);
@@ -159,7 +166,6 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         exp *= 10;
       }
       timeLength = 0;
-
       // Trackmate time is in ms. hwLapTime uses microseconds.
       long timeUs = t * 1000;
       for (int i = 0; i < getNumLanes(); i++) {
@@ -181,7 +187,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void startTimer() {
     super.startTimer();
-    logger.info("Sending START_COMMAND (start timer)");
+    logger.info("Starting timer");
     writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
   }
 
@@ -190,8 +196,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     super.setMainPower(on);
     boolean powerState = config.normallyClosedRelays ? !on : on;
     byte command = powerState ? ENERGIZE_COMMAND : DEENERGIZE_COMMAND;
-    logger.info("Setting main power. On: {}, powerState: {}", on, powerState);
-    writeData(new byte[] {command, TERMINATOR_LF});
+    logger.info("Setting main power. State: " + powerState + ", Command: " + (char) command);
+    writeData(new byte[] {command});
   }
 
   @Override
@@ -212,15 +218,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     boolean invert = config.normallyClosedRelays;
     byte commandPrefix = invert ? (byte) 0x66 : (byte) 0x6E; // 'f' or 'n'
 
-    // Convert bitmask to string bytes
-    String bitmaskStr = String.valueOf(bitmask);
-    logger.info("Setting lane power. Lane: {}, On: {}, Bitmask: {}", lane, on, bitmaskStr);
-    byte[] message = new byte[1 + bitmaskStr.length() + 1];
-    message[0] = commandPrefix;
-    for (int i = 0; i < bitmaskStr.length(); i++) {
-      message[i + 1] = (byte) bitmaskStr.charAt(i);
-    }
-    message[message.length - 1] = TERMINATOR_LF;
+    logger.info("Setting lane power. Lane: {}, On: {}, Bitmask: {}", lane, on, bitmask);
+    byte[] message = new byte[] {commandPrefix, (byte) bitmask};
     writeData(message);
   }
 
@@ -272,5 +271,24 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public boolean hasMainRelay() {
     return true;
+  }
+
+  @Override
+  protected boolean requiresDtrRts() {
+    return false;
+  }
+
+  @Override
+  protected boolean requiresHeartbeat() {
+    return true;
+  }
+
+  @Override
+  public boolean isHealthy() {
+    // TODO(aufderheide): Add check to make sure we've received data. We should
+    // get time messages something like every 100 or 200ms so if we haven't
+    // gotten data in a few seconds we must have lost the connection. For now
+    // just check the serial connection.
+    return isConnected();
   }
 }

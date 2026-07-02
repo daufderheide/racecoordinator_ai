@@ -111,6 +111,8 @@ public abstract class DefaultProtocol implements IProtocol {
                   InterfaceStatus status;
                   if (!isConnected()) {
                     status = InterfaceStatus.DISCONNECTED;
+                  } else if (!requiresHeartbeat()) {
+                    status = InterfaceStatus.CONNECTED;
                   } else if (lastHeartbeatTimeMs == 0) {
                     status = InterfaceStatus.NO_DATA;
                   } else {
@@ -395,6 +397,10 @@ public abstract class DefaultProtocol implements IProtocol {
   @Override
   public void setListener(ProtocolListener listener) {
     this.listener = listener;
+  }
+
+  protected boolean requiresHeartbeat() {
+    return true;
   }
 
   @Override

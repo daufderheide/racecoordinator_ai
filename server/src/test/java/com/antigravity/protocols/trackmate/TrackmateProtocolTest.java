@@ -42,6 +42,11 @@ public class TrackmateProtocolTest {
     }
 
     @Override
+    public void connect(String portName, int baudRate, boolean setDtrRts) throws IOException {
+      open = true;
+    }
+
+    @Override
     public void disconnect() {
       open = false;
     }
@@ -190,10 +195,10 @@ public class TrackmateProtocolTest {
     serialConnection.allWrittenData.clear();
 
     protocol.setMainPower(true); // Turn ON, normally closed is FALSE, so ENERGIZE (R)
-    assertArrayEquals(new byte[] {0x52, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x52}, serialConnection.lastWrittenData);
 
     protocol.setMainPower(false); // Turn OFF, DEENERGIZE (E)
-    assertArrayEquals(new byte[] {0x45, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x45}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -205,10 +210,10 @@ public class TrackmateProtocolTest {
     serialConnection.allWrittenData.clear();
 
     protocol.setMainPower(true); // Turn ON, normally closed is TRUE, so DEENERGIZE (E)
-    assertArrayEquals(new byte[] {0x45, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x45}, serialConnection.lastWrittenData);
 
     protocol.setMainPower(false); // Turn OFF, ENERGIZE (R)
-    assertArrayEquals(new byte[] {0x52, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x52}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -217,9 +222,9 @@ public class TrackmateProtocolTest {
     serialConnection.allWrittenData.clear();
 
     protocol.setLanePower(true, 0); // Turn Lane 0 ON. bitmask = 1
-    assertArrayEquals(new byte[] {0x6E, 0x31, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x6E, 0x01}, serialConnection.lastWrittenData);
 
     protocol.setLanePower(true, 1); // Turn Lane 1 ON. bitmask = 3
-    assertArrayEquals(new byte[] {0x6E, 0x33, 0x0A}, serialConnection.lastWrittenData);
+    assertArrayEquals(new byte[] {0x6E, 0x03}, serialConnection.lastWrittenData);
   }
 }

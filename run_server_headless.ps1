@@ -30,6 +30,12 @@ if (-not [string]::IsNullOrEmpty($env:JAVA_HOME)) {
 $SERVER_DIR = "$PSScriptRoot\server"
 $BUILD_DIR = "target_generated"
 
+# Add local maven to PATH if it exists
+$LocalMavenBin = Join-Path $PSScriptRoot "tools\maven\bin"
+if (Test-Path $LocalMavenBin) {
+    $env:Path = "$LocalMavenBin;" + $env:Path
+}
+
 # Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
 # Tell it to use the same output directory as this headless build
 Write-Host "Generating Protobuf files..." -ForegroundColor Cyan

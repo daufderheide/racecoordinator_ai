@@ -60,6 +60,11 @@ public class ArduinoProtocolTest {
 
     @Override
     public void connect(String portName, int baudRate) throws IOException {
+      connect(portName, baudRate, true);
+    }
+
+    @Override
+    public void connect(String portName, int baudRate, boolean setDtrRts) throws IOException {
       connectionCount++;
       lastPortName = portName;
       lastBaudRate = baudRate;
