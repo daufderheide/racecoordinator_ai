@@ -22,6 +22,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+SetupIconFile=client\src\favicon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -41,7 +42,7 @@ Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ig
 ; Desktop Icons
 Name: "{autodesktop}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
     Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) || pause"""; \
-    IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+    IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{autodesktop}\Race Coordinator Client"; Filename: "{cmd}"; \
     Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
@@ -49,11 +50,11 @@ Name: "{autodesktop}\Race Coordinator Client"; Filename: "{cmd}"; \
 ; Start Menu Icons
 Name: "{group}\Race Coordinator Server"; Filename: "{cmd}"; \
     Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") || pause"""; \
-    IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+    IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{group}\Race Coordinator Server (Headless)"; Filename: "{cmd}"; \
     Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) || pause"""; \
-    IconFilename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+    IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{group}\Race Coordinator Client"; Filename: "cmd.exe"; \
     Parameters: "/c start {#MyAppURL}"; IconFilename: "{app}\server\web\favicon.ico"
