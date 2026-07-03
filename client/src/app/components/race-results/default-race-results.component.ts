@@ -13,7 +13,11 @@ import { AcknowledgementModalComponent } from "@app/components/shared/acknowledg
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
-import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
+import {
+  AllowFinish,
+  FinishMethod,
+  HeatRanking,
+} from "@app/models/heat_scoring";
 import { getOverallScoreFormat } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -41,6 +45,7 @@ interface StandingsRow {
   gap1st: number | null;
   gapAhead: number | null;
   avatarUrl: string;
+  laneScores: (number | null)[];
 }
 
 interface GraphPoint {
@@ -96,6 +101,17 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+  protected HeatRanking = HeatRanking;
+
+  protected getGridColumns(): string {
+    const baseColumns =
+      "80px 80px 200px 100px 90px 120px 120px 120px 120px 120px 120px";
+    const numLanes = this.race?.track?.lanes?.length || 0;
+    if (numLanes > 0) {
+      return baseColumns + " " + Array(numLanes).fill("110px").join(" ");
+    }
+    return baseColumns;
+  }
 
   get showAckModal(): boolean {
     return this.viewerRaceEndedHandler?.showAckModal ?? false;
@@ -171,12 +187,16 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   @HostListener("window:beforeprint")
   onBeforePrint() {
     this.isPrinting = true;
+    this.standingsRows.sort((a, b) => a.visualIndex - b.visualIndex);
     this.cdr.detectChanges();
   }
 
   @HostListener("window:afterprint")
   onAfterPrint() {
     this.isPrinting = false;
+    this.standingsRows.sort((a, b) =>
+      this.getDriverKey(a.driver).localeCompare(this.getDriverKey(b.driver)),
+    );
     this.cdr.detectChanges();
   }
 
@@ -199,6 +219,17 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     return (d?.nickname || d?.name || d?.model?.name || "")
       .trim()
       .toLowerCase();
+  }
+
+  protected getDriverFromHeatDriver(d: any): any {
+    if (!d) return null;
+    if (d.participant?.driver) return d.participant.driver;
+    if (d.driver) {
+      if (d.driver.driver) return d.driver.driver; // d.driver is RaceParticipant
+      return d.driver; // d.driver is Driver
+    }
+    if (d.actualDriver) return d.actualDriver;
+    return null;
   }
 
   // SVG Dimensions
@@ -365,6 +396,23 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     return entry.holderNickname || entry.holderName || "---";
   }
 
+  get currentScale(): number {
+    if (this.isPrinting) {
+      const numLanes = this.race?.track?.lanes?.length || 0;
+      const baseColumnsWidth = 1270;
+      const laneColumnsWidth = numLanes * 110;
+      const paddingWidth = 30; // padding of wrapper
+      const gridWidth = baseColumnsWidth + laneColumnsWidth + paddingWidth;
+
+      const availableWidth = 1920 - 80;
+      if (gridWidth > availableWidth) {
+        return availableWidth / gridWidth;
+      }
+      return 1;
+    }
+    return this.scale;
+  }
+
   private updateScale() {
     const targetWidth = 1920;
     const targetHeight = 1080;
@@ -405,9 +453,61 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         return a.totalTime - b.totalTime;
       });
 
+    const laneCount = this.race?.track?.lanes?.length || 0;
+    const rankingMethod = this.race?.heat_scoring?.heatRanking;
+
+    const heats = this.raceService.getHeats() || [];
+    const currentHeat = this.raceService.getCurrentHeat();
+
+    // Merge completed heats with the current (live) heat, deduplicating by objectId
+    const heatMap = new Map<string, Heat>();
+    heats.forEach((h) => heatMap.set(h.objectId, h));
+    if (currentHeat) {
+      heatMap.set(currentHeat.objectId, currentHeat);
+    }
+    const allHeats = Array.from(heatMap.values());
+
     this.standingsRows = sorted.map((curr, i) => {
       let gap1st: number | null = curr.gapLeader ?? 0;
       let gapAhead: number | null = curr.gapPosition ?? 0;
+
+      const laneScores: (number | null)[] = Array(laneCount).fill(null);
+
+      allHeats.forEach((heat) => {
+        const hd = heat.heatDrivers.find((d) => {
+          if (!d) return false;
+          const dDriver = this.getDriverFromHeatDriver(d);
+          return (
+            dDriver &&
+            this.getDriverKey(dDriver) === this.getDriverKey(curr.driver)
+          );
+        });
+
+        if (hd) {
+          const laneIndex = hd.laneIndex;
+          if (laneIndex >= 0 && laneIndex < laneCount) {
+            let score = 0;
+            if (rankingMethod === HeatRanking.HR_FASTEST_LAP) {
+              score = hd.bestLapTime;
+            } else if (rankingMethod === HeatRanking.HR_TOTAL_TIME) {
+              score = hd.totalTime;
+            } else {
+              // HR_LAP_COUNT
+              score = hd.lapCount;
+            }
+
+            if (laneScores[laneIndex] === null) {
+              laneScores[laneIndex] = score;
+            } else {
+              if (rankingMethod === HeatRanking.HR_FASTEST_LAP) {
+                laneScores[laneIndex] = Math.min(laneScores[laneIndex]!, score);
+              } else {
+                laneScores[laneIndex]! += score;
+              }
+            }
+          }
+        }
+      });
 
       return {
         rank: curr.rank || i + 1,
@@ -422,6 +522,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         gap1st,
         gapAhead,
         avatarUrl: curr.driver.avatarUrl || "",
+        laneScores,
       };
     });
 
@@ -489,16 +590,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     // standings (i.e. the RaceParticipant's driver, which in team races is the
     // team entity).  actualDriver is only the individual who happened to drive
     // in that heat, so we try participant.driver first.
-    const getDriverFromHeatDriver = (d: any): any => {
-      if (!d) return null;
-      if (d.participant?.driver) return d.participant.driver;
-      if (d.driver) {
-        if (d.driver.driver) return d.driver.driver; // d.driver is RaceParticipant
-        return d.driver; // d.driver is Driver
-      }
-      if (d.actualDriver) return d.actualDriver;
-      return null;
-    };
 
     // Get stable unique driver keys sorted by seed (registration order), falling back to nickname/name alphabetically.
     // This ensures colors and legends are permanently stable under all race/position changes.
@@ -541,7 +632,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       sortedHeats.forEach((heat) => {
         const hd = heat.heatDrivers.find((d) => {
           if (!d) return false;
-          const dDriver = getDriverFromHeatDriver(d);
+          const dDriver = this.getDriverFromHeatDriver(d);
           return dDriver && this.getDriverKey(dDriver) === driverKey;
         });
         if (hd) {
@@ -588,7 +679,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       sortedHeats.forEach((heat) => {
         const hd = heat.heatDrivers.find((d) => {
           if (!d) return false;
-          const dDriver = getDriverFromHeatDriver(d);
+          const dDriver = this.getDriverFromHeatDriver(d);
           return dDriver && this.getDriverKey(dDriver) === line.objectId;
         });
         if (hd) {

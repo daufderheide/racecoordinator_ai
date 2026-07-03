@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
+import { HeatRanking } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
@@ -91,7 +92,7 @@ describe("DefaultRaceResultsComponent", () => {
         d.driver,
       );
       d.laps.forEach((lap, idx) => {
-        hd.addLapTime(idx + 1, lap, 0, 0, 0, idx + 1);
+        hd.addLapTime(idx + 1, lap, 0, 0, Math.min(...d.laps), idx + 1);
       });
       return hd;
     });
@@ -208,6 +209,82 @@ describe("DefaultRaceResultsComponent", () => {
     it("should produce no standings rows when there are no participants", () => {
       participantsSubject.next([]);
       expect(component["standingsRows"].length).toBe(0);
+    });
+
+    it("should calculate laneScores based on heatRanking HR_LAP_COUNT", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const p1 = createParticipant(
+        "d1",
+        d1,
+        1,
+        15,
+        60.0,
+        3.5,
+        4.0,
+        4.0,
+        100,
+        1,
+      );
+
+      component["race"] = {
+        track: { lanes: [{}, {}, {}, {}] },
+        heat_scoring: { heatRanking: HeatRanking.HR_LAP_COUNT },
+      } as any;
+
+      const heat = createHeatWithLaps("h1", 1, [
+        { driver: d1, laps: [4.0, 4.5, 3.5] }, // 3 laps, lane 0
+      ]);
+      const heat2 = createHeatWithLaps("h2", 2, [
+        { driver: createDriver("d2", "Bob", "Bob"), laps: [] },
+        { driver: d1, laps: [4.1, 4.2, 4.3, 4.4] }, // 4 laps, lane 1
+      ]);
+
+      mockRaceService.getHeats.and.returnValue([heat, heat2]);
+      participantsSubject.next([p1]);
+      heatsSubject.next([heat, heat2]);
+
+      const rows = component["standingsRows"];
+      expect(rows[0].laneScores).toEqual([3, 4, null, null]);
+    });
+
+    it("should calculate laneScores based on heatRanking HR_FASTEST_LAP", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const p1 = createParticipant(
+        "d1",
+        d1,
+        1,
+        15,
+        60.0,
+        3.5,
+        4.0,
+        4.0,
+        100,
+        1,
+      );
+
+      component["race"] = {
+        track: { lanes: [{}, {}, {}, {}] },
+        heat_scoring: { heatRanking: HeatRanking.HR_FASTEST_LAP },
+      } as any;
+
+      const heat = createHeatWithLaps("h1", 1, [
+        { driver: d1, laps: [4.0, 4.5, 3.5] }, // best lap 3.5, lane 0
+      ]);
+      const heat2 = createHeatWithLaps("h2", 2, [
+        { driver: d1, laps: [3.9, 4.5] }, // best lap 3.9, lane 0 (different heat, same lane)
+      ]);
+      const heat3 = createHeatWithLaps("h3", 3, [
+        { driver: createDriver("d2", "Bob", "Bob"), laps: [] },
+        { driver: d1, laps: [4.1, 4.2] }, // best lap 4.1, lane 1
+      ]);
+
+      mockRaceService.getHeats.and.returnValue([heat, heat2, heat3]);
+      participantsSubject.next([p1]);
+      heatsSubject.next([heat, heat2, heat3]);
+
+      const rows = component["standingsRows"];
+      // HR_FASTEST_LAP takes the min score for the lane
+      expect(rows[0].laneScores).toEqual([3.5, 4.1, null, null]);
     });
 
     it("should calculate standings from participants", () => {
@@ -701,6 +778,41 @@ describe("DefaultRaceResultsComponent", () => {
       rowEl = fixture.nativeElement.querySelector(".driver-row");
       expect(rowEl).toBeTruthy();
       expect(rowEl.tagName.toLowerCase()).toBe("a");
+    });
+
+    it("should scale properly when printing with many lanes", () => {
+      component["scale"] = 1.0;
+      component["isPrinting"] = false;
+
+      component["race"] = { track: { lanes: [{}, {}, {}, {}] } } as any;
+      expect(component.currentScale).toBe(1.0);
+
+      component["isPrinting"] = true;
+      expect(component.currentScale).toBe(1); // 4 lanes fit in 1920
+
+      component["race"] = {
+        track: { lanes: [{}, {}, {}, {}, {}, {}, {}, {}] },
+      } as any;
+      const expectedScale = 1840 / 2180; // 8 lanes = 2180px grid width
+      expect(component.currentScale).toBeCloseTo(expectedScale, 4);
+    });
+  });
+
+  describe("Grid Layout", () => {
+    it("should dynamically calculate grid columns based on lane count", () => {
+      component["race"] = { track: { lanes: [{}, {}, {}, {}] } } as any; // 4 lanes
+      const cols4 = component["getGridColumns"]();
+      const baseCols =
+        "80px 80px 200px 100px 90px 120px 120px 120px 120px 120px 120px";
+      expect(cols4).toBe(baseCols + " 110px 110px 110px 110px");
+
+      component["race"] = {
+        track: { lanes: [{}, {}, {}, {}, {}, {}, {}, {}] },
+      } as any; // 8 lanes
+      const cols8 = component["getGridColumns"]();
+      expect(cols8).toBe(
+        baseCols + " 110px 110px 110px 110px 110px 110px 110px 110px",
+      );
     });
   });
 

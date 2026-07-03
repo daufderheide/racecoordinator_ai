@@ -115,8 +115,31 @@
 
 .results-table-wrapper {
   flex-shrink: 0;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 15px;
+  padding-bottom: 25px; /* Extra padding so the scrollbar doesn't cover content */
+}
+
+/* Horizontal scrollbar for table wrapper */
+.results-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.results-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(10, 16, 26, 0.4);
+  border-radius: 4px;
+}
+
+.results-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.results-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
 }
 
 /* Custom Scrollbars */
@@ -144,12 +167,12 @@
 /* Table Layout */
 .results-table {
   width: 100%;
-  min-width: 1590px;
+  min-width: max-content;
 }
 
 .results-table-header {
   display: grid;
-  grid-template-columns: 80px 80px 240px 120px 100px 140px 140px 140px 140px 140px 140px;
+  grid-template-columns: 80px 80px 200px 100px 90px 120px 120px 120px 120px 120px 120px;
   border-bottom: 2px solid rgba(0, 229, 255, 0.25);
   box-sizing: border-box;
   padding: 0 10px;
@@ -182,7 +205,7 @@
 
 .driver-row {
   display: grid;
-  grid-template-columns: 80px 80px 240px 120px 100px 140px 140px 140px 140px 140px 140px;
+  grid-template-columns: 80px 80px 200px 100px 90px 120px 120px 120px 120px 120px 120px;
   height: 82px;
   background: rgba(13, 22, 38, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -647,4 +670,41 @@
   letter-spacing: 0.5px;
   font-family: 'Inter', 'Tahoma', monospace;
   opacity: 0.8;
+}
+
+@media print {
+  .dashboard-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+    background: #06090e !important;
+    display: block !important;
+  }
+  .scalable-content {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform-origin: top left !important;
+    width: max-content !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 20px !important;
+  }
+  .results-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .results-table-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 0 !important;
+  }
+  .driver-row {
+    position: relative !important;
+    top: auto !important;
+    transform: none !important;
+    margin-bottom: 8px;
+  }
+  .results-table-body {
+    height: auto !important;
+  }
 }

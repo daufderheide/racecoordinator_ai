@@ -35,9 +35,7 @@ test.describe("Race Results Visuals", () => {
     });
   });
 
-  test("should toggle driver visibility on single-click legend item", async ({
-    page,
-  }) => {
+  test("should hide driver when clicking a legend item", async ({ page }) => {
     const mockData = RaceResultsHelper.createMockRaceData();
     await RaceResultsHelper.injectMockRaceData(page, mockData);
 
@@ -62,8 +60,25 @@ test.describe("Race Results Visuals", () => {
     await expect(page).toHaveScreenshot("race-results-alice-hidden.png", {
       maxDiffPixelRatio: 0.05,
     });
+  });
 
-    // Click again to toggle Alice back on
+  test("should restore driver visibility when clicking a hidden legend item", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    const harness = new RaceResultsHarnessE2e(page.locator("app-race-results"));
+
+    // Click "Alice" legend item to toggle her visibility off, then on
+    await harness.clickLegendItem("Alice");
+    await page.waitForTimeout(400);
     await harness.clickLegendItem("Alice");
     await page.waitForTimeout(400);
 
@@ -93,8 +108,25 @@ test.describe("Race Results Visuals", () => {
     await expect(page).toHaveScreenshot("race-results-bob-soloed.png", {
       maxDiffPixelRatio: 0.05,
     });
+  });
 
-    // Double-click Bob again to toggle back to showing all
+  test("should restore all drivers when double-clicking a soloed legend item", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    const harness = new RaceResultsHarnessE2e(page.locator("app-race-results"));
+
+    // Double-click Bob to solo, then double click again to restore all
+    await harness.doubleClickLegendItem("Bob");
+    await page.waitForTimeout(400);
     await harness.doubleClickLegendItem("Bob");
     await page.waitForTimeout(400);
 

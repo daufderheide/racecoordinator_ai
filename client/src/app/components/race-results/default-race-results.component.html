@@ -1,7 +1,11 @@
 <div class="dashboard-wrapper">
   <div
     class="scalable-content"
-    [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+    [style.transform]="
+      isPrinting
+        ? 'scale(' + currentScale + ')'
+        : 'translate(-50%, -50%) scale(' + currentScale + ')'
+    "
   >
     <!-- Top Cyberpunk Title Bar -->
     <div class="header-bar">
@@ -231,7 +235,10 @@
       <div class="results-table-wrapper">
         <div class="results-table">
           <!-- Header -->
-          <div class="results-table-header">
+          <div
+            class="results-table-header"
+            [style.grid-template-columns]="getGridColumns()"
+          >
             <div class="header-cell col-pos">
               {{ "RD_COL_RANK_OVERALL" | translate }}
             </div>
@@ -263,6 +270,14 @@
             <div class="header-cell col-gap-ahead">
               {{ "RD_COL_GAP_POSITION" | translate }}
             </div>
+            @for (lane of race?.track?.lanes; track $index; let idx = $index) {
+              <div
+                class="header-cell col-lane-score"
+                [style.color]="getLaneColor(idx)"
+              >
+                {{ "LANE" | translate }} {{ idx + 1 }}
+              </div>
+            }
           </div>
 
           <!-- Body (Dynamic rows) -->
@@ -361,6 +376,33 @@
               <div class="body-cell col-gap-ahead text-gap">
                 {{ formatGap(row.gapAhead) }}
               </div>
+              <!-- Lane Scores -->
+              @for (score of row.laneScores; track $index; let idx = $index) {
+                <div
+                  class="body-cell col-lane-score text-highlight"
+                  [style.color]="getLaneColor(idx)"
+                >
+                  @if (score !== null && score > 0) {
+                    {{
+                      race?.heat_scoring?.heatRanking ===
+                        HeatRanking.HR_FASTEST_LAP ||
+                      race?.heat_scoring?.heatRanking ===
+                        HeatRanking.HR_TOTAL_TIME
+                        ? (score | number: "1.3-3")
+                        : (score | number: "1.2-2")
+                    }}
+                  } @else {
+                    {{
+                      race?.heat_scoring?.heatRanking ===
+                        HeatRanking.HR_FASTEST_LAP ||
+                      race?.heat_scoring?.heatRanking ===
+                        HeatRanking.HR_TOTAL_TIME
+                        ? "--.---"
+                        : "--.--"
+                    }}
+                  }
+                </div>
+              }
             </ng-template>
 
             @for (
@@ -369,7 +411,11 @@
               let idx = $index
             ) {
               @if (isPrinting) {
-                <div class="driver-row" [style.top.px]="row.visualIndex * 90">
+                <div
+                  class="driver-row"
+                  [style.top.px]="row.visualIndex * 90"
+                  [style.grid-template-columns]="getGridColumns()"
+                >
                   <ng-container
                     *ngTemplateOutlet="rowContent; context: { $implicit: row }"
                   ></ng-container>
@@ -378,6 +424,7 @@
                 <a
                   class="driver-row"
                   [style.top.px]="row.visualIndex * 90"
+                  [style.grid-template-columns]="getGridColumns()"
                   [routerLink]="['/driver-results', getDriverId(row.driver)]"
                   target="_blank"
                   (click)="openDriverResults(getDriverId(row.driver), $event)"
