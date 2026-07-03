@@ -605,6 +605,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       { label: "UI_EDITOR_RESOLUTION_DESKTOP_TV", width: 1920, height: 1080 },
       { label: "UI_EDITOR_RESOLUTION_MAC_PC", width: 1920, height: 1200 },
       { label: "UI_EDITOR_RESOLUTION_OLDER_PC", width: 1600, height: 1200 },
+      { label: "UI_EDITOR_RESOLUTION_1280_1024", width: 1280, height: 1024 },
       { label: "UI_EDITOR_RESOLUTION_ULTRAWIDE", width: 2560, height: 1080 },
       {
         label: "UI_EDITOR_RESOLUTION_MODERN_PHONES",
