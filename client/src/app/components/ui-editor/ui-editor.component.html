@@ -73,6 +73,90 @@
           <div class="section-content" style="position: relative">
             <div class="panel layout-panel">
               <div class="panel-content raceday-layout-section">
+                <div
+                  class="layout-controls"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                  "
+                >
+                  <div style="display: flex; gap: 25px; align-items: center">
+                    <label
+                      class="checkbox-container"
+                      style="margin: 0; white-space: nowrap"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingSettings.sortByStandings"
+                        (change)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      {{ "UE_LABEL_SORT_STANDINGS" | translate }}
+                    </label>
+                    <label
+                      class="checkbox-container"
+                      style="margin: 0; white-space: nowrap"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingSettings.highlightRowOnLap"
+                        (change)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
+                    </label>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-left: 20px;
+                      "
+                    >
+                      <label style="color: #94a3b8; font-size: 14px">{{
+                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
+                      }}</label>
+                      <div
+                        class="select-container select-sm"
+                        style="width: 150px"
+                      >
+                        <select
+                          class="layout-resolution-select"
+                          [ngModel]="getLayoutResolution(false)"
+                          (change)="setLayoutResolution(false, $event)"
+                        >
+                          @for (
+                            option of layoutResolutionOptions;
+                            track option
+                          ) {
+                            <option
+                              [value]="option.width + 'x' + option.height"
+                            >
+                              {{ option.label | translate }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    class="btn btn-danger"
+                    (click)="resetRacedayLayout()"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 8px;
+                    "
+                  >
+                    <span class="material-icons">refresh</span>
+                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
+                  </button>
+                </div>
                 <div class="raceday-editor-workspace">
                   <!-- Raceday Full Integration -->
                   <div
@@ -168,90 +252,6 @@
                     </div>
                   }
                 </div>
-                <div
-                  class="layout-controls"
-                  style="
-                    margin-top: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 30px;
-                  "
-                >
-                  <div style="display: flex; gap: 25px; align-items: center">
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.sortByStandings"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_SORT_STANDINGS" | translate }}
-                    </label>
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.highlightRowOnLap"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                    </label>
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        margin-left: 20px;
-                      "
-                    >
-                      <label style="color: #94a3b8; font-size: 14px">{{
-                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
-                      }}</label>
-                      <div
-                        class="select-container select-sm"
-                        style="width: 150px"
-                      >
-                        <select
-                          class="layout-resolution-select"
-                          [ngModel]="getLayoutResolution(false)"
-                          (change)="setLayoutResolution(false, $event)"
-                        >
-                          @for (
-                            option of layoutResolutionOptions;
-                            track option
-                          ) {
-                            <option
-                              [value]="option.width + 'x' + option.height"
-                            >
-                              {{ option.label | translate }}
-                            </option>
-                          }
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    class="btn btn-danger"
-                    (click)="resetRacedayLayout()"
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 8px;
-                    "
-                  >
-                    <span class="material-icons">refresh</span>
-                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -337,6 +337,78 @@
           <div class="section-content" style="position: relative">
             <div class="panel layout-panel">
               <div class="panel-content practice-raceday-layout-section">
+                <div
+                  class="layout-controls"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                  "
+                >
+                  <div style="display: flex; gap: 25px; align-items: center">
+                    <label
+                      class="checkbox-container"
+                      style="margin: 0; white-space: nowrap"
+                    >
+                      <input
+                        type="checkbox"
+                        [(ngModel)]="editingSettings.highlightPracticeRowOnLap"
+                        (change)="captureState()"
+                      />
+                      <span class="checkmark"></span>
+                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
+                    </label>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-left: 20px;
+                      "
+                    >
+                      <label style="color: #94a3b8; font-size: 14px">{{
+                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
+                      }}</label>
+                      <div
+                        class="select-container select-sm"
+                        style="width: 150px"
+                      >
+                        <select
+                          class="layout-resolution-select"
+                          [ngModel]="getLayoutResolution(true)"
+                          (change)="setLayoutResolution(true, $event)"
+                        >
+                          @for (
+                            option of layoutResolutionOptions;
+                            track option
+                          ) {
+                            <option
+                              [value]="option.width + 'x' + option.height"
+                            >
+                              {{ option.label | translate }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    class="btn btn-danger"
+                    (click)="resetPracticeRacedayLayout()"
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 8px;
+                    "
+                  >
+                    <span class="material-icons">refresh</span>
+                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
+                  </button>
+                </div>
                 <div class="raceday-editor-workspace">
                   <!-- Raceday Full Integration -->
                   <div
@@ -434,78 +506,6 @@
                       </div>
                     </div>
                   }
-                </div>
-                <div
-                  class="layout-controls"
-                  style="
-                    margin-top: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 30px;
-                  "
-                >
-                  <div style="display: flex; gap: 25px; align-items: center">
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.highlightPracticeRowOnLap"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                    </label>
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        margin-left: 20px;
-                      "
-                    >
-                      <label style="color: #94a3b8; font-size: 14px">{{
-                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
-                      }}</label>
-                      <div
-                        class="select-container select-sm"
-                        style="width: 150px"
-                      >
-                        <select
-                          class="layout-resolution-select"
-                          [ngModel]="getLayoutResolution(true)"
-                          (change)="setLayoutResolution(true, $event)"
-                        >
-                          @for (
-                            option of layoutResolutionOptions;
-                            track option
-                          ) {
-                            <option
-                              [value]="option.width + 'x' + option.height"
-                            >
-                              {{ option.label | translate }}
-                            </option>
-                          }
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    class="btn btn-danger"
-                    (click)="resetPracticeRacedayLayout()"
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 8px;
-                    "
-                  >
-                    <span class="material-icons">refresh</span>
-                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
-                  </button>
                 </div>
               </div>
             </div>
