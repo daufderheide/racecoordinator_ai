@@ -695,15 +695,10 @@ export class DefaultRacedayComponent
         if (this.currentRacedayLayout?.widgets) {
           this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
         } else {
-          this.layout = JSON.parse(
-            JSON.stringify(
-              this.isPracticeLayout
-                ? Settings.DEFAULT_PRACTICE_LAYOUT
-                : Settings.DEFAULT_LAYOUT,
-            ),
-          );
+          this.layout = this.getDefaultLayout();
         }
       }
+      this.updateScale();
       this.loadColumns();
       if (this.heat) {
         this.sortHeatDrivers();
@@ -757,13 +752,7 @@ export class DefaultRacedayComponent
     if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
-      this.layout = JSON.parse(
-        JSON.stringify(
-          this.isPracticeLayout
-            ? Settings.DEFAULT_PRACTICE_LAYOUT
-            : Settings.DEFAULT_LAYOUT,
-        ),
-      );
+      this.layout = this.getDefaultLayout();
     }
 
     this.loadColumns();
@@ -1597,13 +1586,7 @@ export class DefaultRacedayComponent
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
         this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
       } else {
-        this.layout = JSON.parse(
-          JSON.stringify(
-            this.isPracticeLayout
-              ? Settings.DEFAULT_PRACTICE_LAYOUT
-              : Settings.DEFAULT_LAYOUT,
-          ),
-        );
+        this.layout = this.getDefaultLayout();
       }
 
       this.loadColumns();
@@ -1860,6 +1843,7 @@ export class DefaultRacedayComponent
   isOptionsMenuOpen = false;
   scale: number = 1;
   dashboardWidth: number = 1920;
+  dashboardHeight: number = 1080;
 
   @HostListener("window:resize")
   onResize() {
@@ -1883,29 +1867,40 @@ export class DefaultRacedayComponent
   }
 
   private updateScale() {
+    const layout = this.layout;
+    const targetWidth = layout?.baseWidth || 1920;
+    const targetHeight = layout?.baseHeight || 1080;
+
     if (this.isUIEditorMode()) {
       this.scale = 1;
-      if (this.dashboardWidth !== 1920) {
-        this.dashboardWidth = 1920;
+      if (
+        this.dashboardWidth !== targetWidth ||
+        this.dashboardHeight !== targetHeight
+      ) {
+        this.dashboardWidth = targetWidth;
+        this.dashboardHeight = targetHeight;
         this.loadColumns();
       }
       return;
     }
 
-    const targetHeight = 1080;
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    const newScale = windowHeight / targetHeight;
+    const scaleX = windowWidth / targetWidth;
+    const scaleY = windowHeight / targetHeight;
+    const newScale = Math.min(scaleX, scaleY);
 
     if (Math.abs(this.scale - newScale) > 0.001) {
       this.scale = newScale;
     }
 
-    const calculatedWidth =
-      this.scale > 0 ? Math.max(1920, windowWidth / this.scale) : 1920;
-    if (Math.abs(this.dashboardWidth - calculatedWidth) > 0.1) {
-      this.dashboardWidth = calculatedWidth;
+    if (
+      this.dashboardWidth !== targetWidth ||
+      this.dashboardHeight !== targetHeight
+    ) {
+      this.dashboardWidth = targetWidth;
+      this.dashboardHeight = targetHeight;
       this.loadColumns();
     }
   }
@@ -3031,9 +3026,11 @@ export class DefaultRacedayComponent
       totalFixed += fixedWidths[baseKey] || 275;
     });
 
-    const numColumns = selectedColumns.length;
-    const totalGapsWidth = numColumns > 1 ? (numColumns - 1) * 2 : 0;
-    const remainingWidth = Math.max(300, 1920 - totalFixed - totalGapsWidth);
+    const totalGapsWidth = Math.max(0, selectedColumns.length - 1) * 20;
+    const remainingWidth = Math.max(
+      300,
+      this.dashboardWidth - totalFixed - totalGapsWidth,
+    );
 
     return { resizingColumnKey, remainingWidth, fixedWidths };
   }
@@ -3903,26 +3900,14 @@ export class DefaultRacedayComponent
     if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
-      this.layout = JSON.parse(
-        JSON.stringify(
-          this.isPracticeLayout
-            ? Settings.DEFAULT_PRACTICE_LAYOUT
-            : Settings.DEFAULT_LAYOUT,
-        ),
-      );
+      this.layout = this.getDefaultLayout();
     }
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();
   }
 
   resetLayoutToDefaults() {
-    this.layout = JSON.parse(
-      JSON.stringify(
-        this.isPracticeLayout
-          ? Settings.DEFAULT_PRACTICE_LAYOUT
-          : Settings.DEFAULT_LAYOUT,
-      ),
-    );
+    this.layout = this.getDefaultLayout();
     const settings = this.settingsService.getSettings();
     this.currentRacedayLayout = this.layout;
     this.settingsService.saveSettings(settings);
@@ -4062,6 +4047,8 @@ export class DefaultRacedayComponent
     h: number,
     ignoreId: string,
     handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
   ): { x: number; y: number; w: number; h: number } {
     return RacedayLayoutUtils.snapToEdges(
       this.layout?.widgets || [],
@@ -4071,6 +4058,8 @@ export class DefaultRacedayComponent
       h,
       ignoreId,
       handle,
+      layoutWidth,
+      layoutHeight,
     );
   }
 
@@ -4080,5 +4069,37 @@ export class DefaultRacedayComponent
     if (target.classList.contains("raceday-absolute-layout-root-wrapper")) {
       this.widgetSelected.emit(null);
     }
+  }
+
+  private getDefaultLayout(): LayoutConfig {
+    const layout = JSON.parse(
+      JSON.stringify(
+        this.isPracticeLayout
+          ? Settings.DEFAULT_PRACTICE_LAYOUT
+          : Settings.DEFAULT_LAYOUT,
+      ),
+    ) as LayoutConfig;
+
+    const targetW = window.innerWidth;
+    const targetH = window.innerHeight;
+    const oldWidth = 1920;
+    const oldHeight = 1080;
+
+    const scaleX = targetW / oldWidth;
+    const scaleY = targetH / oldHeight;
+
+    layout.baseWidth = targetW;
+    layout.baseHeight = targetH;
+
+    if (layout.widgets) {
+      layout.widgets.forEach((w) => {
+        w.x = Math.round(w.x * scaleX);
+        w.y = Math.round(w.y * scaleY);
+        w.width = Math.round(w.width * scaleX);
+        w.height = Math.round(w.height * scaleY);
+      });
+    }
+
+    return layout;
   }
 }

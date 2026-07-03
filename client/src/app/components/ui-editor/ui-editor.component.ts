@@ -24,7 +24,7 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AudioConfig } from "@app/models/driver";
-import { Settings } from "@app/models/settings";
+import { LayoutConfig, Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FileSystemService } from "@app/services/file-system.service";
@@ -134,6 +134,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private pendingDeactivate: ((result: boolean) => void) | null = null;
 
   // TODO(aufderheide): I think this list is duplicated below.  If they're the same they should share the code.
+  layoutResolutionOptions: { label: string; width: number; height: number }[] =
+    [];
   availableColumns = [
     { key: "driver.name", label: "RD_COL_NAME" },
     { key: "driver.nickname", label: "RD_COL_NICKNAME" },
@@ -406,9 +408,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     // Deselect any widget first to prevent the inspector from rendering
     // with undefined customSettings during the layout replacement.
     this.selectedWidgetId = null;
-    this.editingSettings.racedayLayout = JSON.parse(
-      JSON.stringify(Settings.DEFAULT_LAYOUT),
-    );
+    if (
+      this.layoutResolutionOptions &&
+      this.layoutResolutionOptions.length > 0
+    ) {
+      this.layoutResolutionOptions[0].width = window.innerWidth;
+      this.layoutResolutionOptions[0].height = window.innerHeight;
+    }
+    this.editingSettings.racedayLayout = this.getScaledDefaultLayout(false);
     this.editingSettings.racedayColumns = [...Settings.DEFAULT_COLUMNS];
     this.editingSettings.columnLayouts = JSON.parse(
       JSON.stringify(new Settings().columnLayouts),
@@ -425,9 +432,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   resetPracticeRacedayLayout() {
     this.selectedPracticeWidgetId = null;
-    this.editingSettings.practiceRacedayLayout = JSON.parse(
-      JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
-    );
+    if (
+      this.layoutResolutionOptions &&
+      this.layoutResolutionOptions.length > 0
+    ) {
+      this.layoutResolutionOptions[0].width = window.innerWidth;
+      this.layoutResolutionOptions[0].height = window.innerHeight;
+    }
+    this.editingSettings.practiceRacedayLayout =
+      this.getScaledDefaultLayout(true);
     this.editingSettings.practiceRacedayColumns = [
       ...Settings.DEFAULT_PRACTICE_COLUMNS,
     ];
@@ -583,6 +596,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private route: ActivatedRoute,
     private raceConnectionService: RaceConnectionService,
   ) {
+    this.layoutResolutionOptions = [
+      {
+        label: "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY",
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+      { label: "UI_EDITOR_RESOLUTION_DESKTOP_TV", width: 1920, height: 1080 },
+      { label: "UI_EDITOR_RESOLUTION_MAC_PC", width: 1920, height: 1200 },
+      { label: "UI_EDITOR_RESOLUTION_OLDER_PC", width: 1600, height: 1200 },
+      { label: "UI_EDITOR_RESOLUTION_ULTRAWIDE", width: 2560, height: 1080 },
+      {
+        label: "UI_EDITOR_RESOLUTION_MODERN_PHONES",
+        width: 2532,
+        height: 1170,
+      },
+      { label: "UI_EDITOR_RESOLUTION_IPAD_TABLET", width: 1024, height: 768 },
+    ];
     this.undoManager = new UndoManager<UIEditorState>(
       {
         clonner: (s: UIEditorState) => this.cloneState(s),
@@ -1487,5 +1517,108 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.isDestroyed) {
       this.cdr.markForCheck();
     }
+  }
+
+  getLayoutResolution(isPractice: boolean): string {
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+    if (layout && layout.baseWidth && layout.baseHeight) {
+      return `${layout.baseWidth}x${layout.baseHeight}`;
+    }
+    return "1920x1080";
+  }
+
+  setLayoutResolution(isPractice: boolean, event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+    if (!layout) return;
+    const [widthStr, heightStr] = value.split("x");
+    const newWidth = parseInt(widthStr, 10);
+    const newHeight = parseInt(heightStr, 10);
+    const oldWidth = layout.baseWidth || 1920;
+    const oldHeight = layout.baseHeight || 1080;
+
+    const scaleX = newWidth / oldWidth;
+    const scaleY = newHeight / oldHeight;
+
+    layout.baseWidth = newWidth;
+    layout.baseHeight = newHeight;
+
+    if (layout.widgets) {
+      layout.widgets.forEach((widget) => {
+        widget.x = Math.round(widget.x * scaleX);
+        widget.y = Math.round(widget.y * scaleY);
+        widget.width = Math.round(widget.width * scaleX);
+        widget.height = Math.round(widget.height * scaleY);
+      });
+    }
+
+    this.captureState();
+  }
+
+  getPreviewScale(isPractice: boolean): string {
+    return `scale(${this.getPreviewScaleNumber(isPractice)})`;
+  }
+
+  getPreviewScaleNumber(isPractice: boolean): number {
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+    const baseWidth = layout?.baseWidth || 1920;
+    const baseHeight = layout?.baseHeight || 1080;
+
+    // Use the container dimensions that `.raceday-preview-container` is constrained to
+    const containerWidth = 1080;
+    const containerHeight = 608;
+    return Math.min(containerWidth / baseWidth, containerHeight / baseHeight);
+  }
+
+  getPreviewContainerWidth(isPractice: boolean): number {
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+    const baseWidth = layout?.baseWidth || 1920;
+    return baseWidth * this.getPreviewScaleNumber(isPractice);
+  }
+
+  getPreviewContainerHeight(isPractice: boolean): number {
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+    const baseHeight = layout?.baseHeight || 1080;
+    return baseHeight * this.getPreviewScaleNumber(isPractice);
+  }
+
+  private getScaledDefaultLayout(isPractice: boolean): LayoutConfig {
+    const layout = JSON.parse(
+      JSON.stringify(
+        isPractice ? Settings.DEFAULT_PRACTICE_LAYOUT : Settings.DEFAULT_LAYOUT,
+      ),
+    ) as LayoutConfig;
+
+    const targetW = window.innerWidth;
+    const targetH = window.innerHeight;
+    const oldWidth = 1920;
+    const oldHeight = 1080;
+
+    const scaleX = targetW / oldWidth;
+    const scaleY = targetH / oldHeight;
+
+    layout.baseWidth = targetW;
+    layout.baseHeight = targetH;
+
+    if (layout.widgets) {
+      layout.widgets.forEach((w: any) => {
+        w.x = Math.round(w.x * scaleX);
+        w.y = Math.round(w.y * scaleY);
+        w.width = Math.round(w.width * scaleX);
+        w.height = Math.round(w.height * scaleY);
+      });
+    }
+
+    return layout;
   }
 }

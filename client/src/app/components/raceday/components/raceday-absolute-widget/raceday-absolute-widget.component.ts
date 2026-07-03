@@ -123,6 +123,8 @@ export class RacedayAbsoluteWidgetComponent {
           newH,
           this.widget().id,
           handle,
+          this.parentComponent().layout?.baseWidth || 1920,
+          this.parentComponent().layout?.baseHeight || 1080,
         );
       }
 
@@ -189,6 +191,8 @@ export class RacedayAbsoluteWidgetComponent {
           this.widget().height,
           this.widget().id,
           "all",
+          this.parentComponent().layout?.baseWidth || 1920,
+          this.parentComponent().layout?.baseHeight || 1080,
         );
       }
 

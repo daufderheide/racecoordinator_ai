@@ -296,6 +296,8 @@ export class RacedayLayoutUtils {
     h: number,
     ignoreId: string,
     handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
   ): { x: number; y: number; w: number; h: number } {
     const snapThreshold = 10;
     let newX = x;
@@ -303,8 +305,8 @@ export class RacedayLayoutUtils {
     let newW = w;
     let newH = h;
 
-    const edgesX: number[] = [0, 1920];
-    const edgesY: number[] = [0, 1080];
+    const edgesX: number[] = [0, layoutWidth];
+    const edgesY: number[] = [0, layoutHeight];
 
     for (const widget of widgets || []) {
       if (widget.id === ignoreId) continue;

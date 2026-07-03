@@ -43,6 +43,8 @@ export interface AbsoluteWidgetNode {
 
 export interface LayoutConfig {
   widgets: AbsoluteWidgetNode[];
+  baseWidth?: number;
+  baseHeight?: number;
 }
 
 export class Settings {

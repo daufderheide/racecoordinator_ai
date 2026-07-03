@@ -75,12 +75,25 @@
               <div class="panel-content raceday-layout-section">
                 <div class="raceday-editor-workspace">
                   <!-- Raceday Full Integration -->
-                  <div class="raceday-preview-container">
-                    <div class="raceday-preview-scaler">
+                  <div
+                    class="raceday-preview-container"
+                    [style.width.px]="getPreviewContainerWidth(false)"
+                    [style.height.px]="getPreviewContainerHeight(false)"
+                  >
+                    <div
+                      class="raceday-preview-scaler"
+                      [style.width.px]="
+                        editingSettings.racedayLayout?.baseWidth || 1920
+                      "
+                      [style.height.px]="
+                        editingSettings.racedayLayout?.baseHeight || 1080
+                      "
+                      [style.transform]="getPreviewScale(false)"
+                    >
                       <app-default-raceday
                         [isUIEditorMode]="true"
                         [editingSettings]="editingSettings"
-                        [uiScale]="scale * 0.5625"
+                        [uiScale]="getPreviewScaleNumber(false)"
                         [selectedWidgetId]="selectedWidgetId"
                         (widgetSelected)="onWidgetSelected($event)"
                         (layoutChanged)="onRacedayLayoutChanged($event)"
@@ -190,6 +203,39 @@
                       <span class="checkmark"></span>
                       {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
                     </label>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-left: 20px;
+                      "
+                    >
+                      <label style="color: #94a3b8; font-size: 14px">{{
+                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
+                      }}</label>
+                      <div
+                        class="select-container select-sm"
+                        style="width: 150px"
+                      >
+                        <select
+                          class="layout-resolution-select"
+                          [ngModel]="getLayoutResolution(false)"
+                          (change)="setLayoutResolution(false, $event)"
+                        >
+                          @for (
+                            option of layoutResolutionOptions;
+                            track option
+                          ) {
+                            <option
+                              [value]="option.width + 'x' + option.height"
+                            >
+                              {{ option.label | translate }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
                   <button
@@ -203,7 +249,7 @@
                     "
                   >
                     <span class="material-icons">refresh</span>
-                    Reset Layout to Defaults
+                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
                   </button>
                 </div>
               </div>
@@ -293,13 +339,27 @@
               <div class="panel-content practice-raceday-layout-section">
                 <div class="raceday-editor-workspace">
                   <!-- Raceday Full Integration -->
-                  <div class="raceday-preview-container">
-                    <div class="raceday-preview-scaler">
+                  <div
+                    class="raceday-preview-container"
+                    [style.width.px]="getPreviewContainerWidth(true)"
+                    [style.height.px]="getPreviewContainerHeight(true)"
+                  >
+                    <div
+                      class="raceday-preview-scaler"
+                      [style.width.px]="
+                        editingSettings.practiceRacedayLayout?.baseWidth || 1920
+                      "
+                      [style.height.px]="
+                        editingSettings.practiceRacedayLayout?.baseHeight ||
+                        1080
+                      "
+                      [style.transform]="getPreviewScale(true)"
+                    >
                       <app-default-raceday
                         [isUIEditorMode]="true"
                         [isPracticeLayoutEditor]="true"
                         [editingSettings]="editingSettings"
-                        [uiScale]="scale * 0.5625"
+                        [uiScale]="getPreviewScaleNumber(true)"
                         [selectedWidgetId]="selectedPracticeWidgetId"
                         (widgetSelected)="onWidgetSelected($event, true)"
                         (layoutChanged)="onPracticeRacedayLayoutChanged($event)"
@@ -398,6 +458,39 @@
                       <span class="checkmark"></span>
                       {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
                     </label>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-left: 20px;
+                      "
+                    >
+                      <label style="color: #94a3b8; font-size: 14px">{{
+                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
+                      }}</label>
+                      <div
+                        class="select-container select-sm"
+                        style="width: 150px"
+                      >
+                        <select
+                          class="layout-resolution-select"
+                          [ngModel]="getLayoutResolution(true)"
+                          (change)="setLayoutResolution(true, $event)"
+                        >
+                          @for (
+                            option of layoutResolutionOptions;
+                            track option
+                          ) {
+                            <option
+                              [value]="option.width + 'x' + option.height"
+                            >
+                              {{ option.label | translate }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
                   <button
@@ -411,7 +504,7 @@
                     "
                   >
                     <span class="material-icons">refresh</span>
-                    Reset Layout to Defaults
+                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
                   </button>
                 </div>
               </div>

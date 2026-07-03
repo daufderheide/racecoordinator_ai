@@ -4207,7 +4207,9 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("Scaling and Viewport Fitting", () => {
-    it("should lock scale to 1 and dashboardWidth to 1920 when in UI Editor Mode", () => {
+    it("should lock scale to 1 and dashboardWidth to layout baseWidth when in UI Editor Mode", () => {
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(1920);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(1080);
       fixture.componentRef.setInput("isUIEditorMode", true);
       fixture.detectChanges();
 
@@ -4217,38 +4219,40 @@ describe("DefaultRacedayComponent", () => {
       expect(component.dashboardWidth).toBe(1920);
     });
 
-    it("should calculate scale based on min aspect ratio and keep dashboardWidth at 1920 in normal mode", () => {
-      fixture.componentRef.setInput("isUIEditorMode", false);
-      fixture.detectChanges();
-
+    it("should calculate scale based on min aspect ratio and keep dashboardWidth at layout baseWidth in normal mode", () => {
       const widthSpy = spyOnProperty(
         window,
         "innerWidth",
         "get",
-      ).and.returnValue(1440);
+      ).and.returnValue(1920);
       const heightSpy = spyOnProperty(
         window,
         "innerHeight",
         "get",
-      ).and.returnValue(900);
+      ).and.returnValue(1080);
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      fixture.detectChanges();
+
+      widthSpy.and.returnValue(1440);
+      heightSpy.and.returnValue(900);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(900 / 1080, 3); // scale = windowHeight / 1080
-      expect(component.dashboardWidth).toBe(1920); // 1440 / (900/1080) = 1728, which is < 1920 (locks to 1920)
+      expect(component.scale).toBeCloseTo(1440 / 1920, 3); // scaleX (0.75) < scaleY (0.833)
+      expect(component.dashboardWidth).toBe(1920);
 
       widthSpy.and.returnValue(2560);
       heightSpy.and.returnValue(1080);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(1.0, 3); // scale = 1080 / 1080 = 1.0
-      expect(component.dashboardWidth).toBe(2560); // 2560 / 1.0 = 2560 (wider screen, extends to edges)
+      expect(component.scale).toBeCloseTo(1.0, 3); // scaleY (1.0) < scaleX (1.33)
+      expect(component.dashboardWidth).toBe(1920);
 
       widthSpy.and.returnValue(1024);
       heightSpy.and.returnValue(768);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(768 / 1080, 3); // scale = 768 / 1080
-      expect(component.dashboardWidth).toBe(1920); // 1024 / (768/1080) = 1440, which is < 1920 (locks to 1920)
+      expect(component.scale).toBeCloseTo(1024 / 1920, 3); // scaleX (0.533) < scaleY (0.711)
+      expect(component.dashboardWidth).toBe(1920);
     });
   });
 

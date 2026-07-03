@@ -169,4 +169,37 @@ test.describe("UI Editor Visuals", () => {
       { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
     );
   });
+
+  test("should display layout resolution dropdown correctly", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // The first section (Raceday Layout) is expanded by default
+    const section = page.locator(".config-section").first();
+    await section.waitFor({ state: "visible" });
+
+    const resolutionSelect = page.locator(".layout-resolution-select").first();
+    await resolutionSelect.scrollIntoViewIfNeeded();
+    await resolutionSelect.waitFor({ state: "visible" });
+
+    await expect(section.locator(".layout-controls").first()).toHaveScreenshot(
+      "ui-editor-layout-resolution-dropdown.png",
+      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
+    );
+    await resolutionSelect.selectOption("1920x1080");
+    await page.waitForTimeout(500); // Wait for scaling animation
+
+    await expect(
+      page.locator(".raceday-preview-scaler").first(),
+    ).toHaveScreenshot("ui-editor-layout-preview-scaled.png", {
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 10000,
+    });
+  });
 });

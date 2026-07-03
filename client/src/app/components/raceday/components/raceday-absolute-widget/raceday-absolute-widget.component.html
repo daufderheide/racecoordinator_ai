@@ -7,10 +7,19 @@
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
-  [style.left]="(widget().x / 1920) * 100 + '%'"
-  [style.top]="(widget().y / 1080) * 100 + '%'"
-  [style.width]="(widget().width / 1920) * 100 + '%'"
-  [style.height]="(widget().height / 1080) * 100 + '%'"
+  [style.left]="
+    (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+  "
+  [style.top]="
+    (widget().y / (parentComponent().layout?.baseHeight || 1080)) * 100 + '%'
+  "
+  [style.width]="
+    (widget().width / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
+  "
+  [style.height]="
+    (widget().height / (parentComponent().layout?.baseHeight || 1080)) * 100 +
+    '%'
+  "
   [style.z-index]="
     widget().widgetType === 'menu-bar' ? 99999 : widget().zIndex || 100
   "

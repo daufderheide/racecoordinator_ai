@@ -2008,14 +2008,23 @@ describe("UIEditorComponent", () => {
     it("should reset raceday layout", () => {
       spyOn(component.undoManager, "captureState");
       spyOn(component, "refreshDisplayProperties");
+      component.layoutResolutionOptions = [
+        { label: "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY", width: 0, height: 0 },
+      ];
 
       component.resetRacedayLayout();
 
-      expect(component.editingSettings.racedayLayout).toEqual(
-        Settings.DEFAULT_LAYOUT,
-      );
+      const expectedLayout = (component as any).getScaledDefaultLayout(false);
+
+      expect(component.editingSettings.racedayLayout).toEqual(expectedLayout);
       expect(component.editingState.settings.racedayLayout).toEqual(
-        Settings.DEFAULT_LAYOUT,
+        expectedLayout,
+      );
+      expect(component.layoutResolutionOptions[0].width).toEqual(
+        window.innerWidth,
+      );
+      expect(component.layoutResolutionOptions[0].height).toEqual(
+        window.innerHeight,
       );
       expect(component.undoManager.captureState).toHaveBeenCalled();
       expect(component.refreshDisplayProperties).toHaveBeenCalled();
@@ -2024,6 +2033,9 @@ describe("UIEditorComponent", () => {
     it("should reset practice raceday layout", () => {
       spyOn(component.undoManager, "captureState");
       spyOn(component, "refreshDisplayProperties");
+      component.layoutResolutionOptions = [
+        { label: "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY", width: 0, height: 0 },
+      ];
 
       component.editingSettings.practiceRacedayLayout = { widgets: [] };
       component.editingSettings.practiceRacedayColumns = ["test"];
@@ -2032,9 +2044,13 @@ describe("UIEditorComponent", () => {
 
       component.resetPracticeRacedayLayout();
 
+      const expectedPracticeLayout = (component as any).getScaledDefaultLayout(
+        true,
+      );
+
       expect(component.selectedPracticeWidgetId).toBeNull();
       expect(component.editingSettings.practiceRacedayLayout).toEqual(
-        Settings.DEFAULT_PRACTICE_LAYOUT,
+        expectedPracticeLayout,
       );
       expect(component.editingSettings.practiceRacedayColumns).toEqual(
         Settings.DEFAULT_PRACTICE_COLUMNS,
@@ -2045,8 +2061,41 @@ describe("UIEditorComponent", () => {
       expect(component.editingSettings.practiceColumnVisibility).toEqual(
         new Settings().practiceColumnVisibility,
       );
-      expect(component.refreshDisplayProperties).toHaveBeenCalled();
       expect(component.undoManager.captureState).toHaveBeenCalled();
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+    });
+
+    it("should handle getLayoutResolution and setLayoutResolution", () => {
+      component.editingSettings.racedayLayout = {
+        baseWidth: 1600,
+        baseHeight: 900,
+        widgets: [
+          { x: 100, y: 100, width: 200, height: 200, name: "lane-view" } as any,
+        ],
+      } as any;
+      expect(component.getLayoutResolution(false)).toEqual("1600x900");
+
+      spyOn(component as any, "captureState");
+
+      const mockEvent = { target: { value: "800x450" } } as any;
+      component.setLayoutResolution(false, mockEvent);
+
+      expect(component.editingSettings.racedayLayout!.baseWidth).toEqual(800);
+      expect(component.editingSettings.racedayLayout!.baseHeight).toEqual(450);
+      expect(component.editingSettings.racedayLayout!.widgets![0].x).toEqual(
+        50,
+      );
+      expect(component.editingSettings.racedayLayout!.widgets![0].y).toEqual(
+        50,
+      );
+      expect(
+        component.editingSettings.racedayLayout!.widgets![0].width,
+      ).toEqual(100);
+      expect(
+        component.editingSettings.racedayLayout!.widgets![0].height,
+      ).toEqual(100);
+
+      expect((component as any).captureState).toHaveBeenCalled();
     });
 
     describe("Layout Import/Export", () => {
