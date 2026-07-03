@@ -11,6 +11,9 @@ import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
 import com.antigravity.service.ServerConfigService;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -231,6 +234,33 @@ public class StartingStateTest {
     race.setHasRacedInCurrentHeat(true);
     race.changeState(starting);
     assertEquals("Flag should be YELLOW for restart", RaceFlag.YELLOW, starting.getFlagType(race));
+  }
+
+  @Test
+  public void testExitDoesNotInterruptTickerThread() throws InterruptedException {
+    Starting testStarting = new Starting();
+    Race mockRace = mock(Race.class);
+    when(mockRace.getRaceModel())
+        .thenReturn(new com.antigravity.models.Race.Builder().withStartTime(0.1).build());
+    when(mockRace.hasRacedInCurrentHeat()).thenReturn(false);
+
+    AtomicBoolean wasInterrupted = new AtomicBoolean(false);
+    CountDownLatch latch = new CountDownLatch(1);
+
+    doAnswer(
+            invocation -> {
+              testStarting.exit(mockRace);
+              wasInterrupted.set(Thread.currentThread().isInterrupted());
+              latch.countDown();
+              return null;
+            })
+        .when(mockRace)
+        .changeState(any(Racing.class));
+
+    testStarting.enter(mockRace);
+
+    assertTrue("Timer should have triggered transition", latch.await(2, TimeUnit.SECONDS));
+    assertFalse("Ticker thread should not be interrupted by exit()", wasInterrupted.get());
   }
 
   @After

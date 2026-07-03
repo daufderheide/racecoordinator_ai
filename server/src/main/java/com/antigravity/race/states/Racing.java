@@ -137,7 +137,7 @@ public class Racing implements IRaceState {
     race.startProtocols();
     initializeFalseStartTimePenalties();
     if (scheduler != null) {
-      scheduler.shutdownNow();
+      scheduler.shutdown();
     }
     scheduler = Executors.newScheduledThreadPool(1);
     final Runnable ticker =
@@ -304,7 +304,7 @@ public class Racing implements IRaceState {
       timerHandle.cancel(false);
     }
     if (scheduler != null) {
-      scheduler.shutdownNow();
+      scheduler.shutdown();
       scheduler = null;
     }
     race.stopProtocols();

@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
@@ -829,5 +830,34 @@ public class RaceStateTest {
             eq(com.antigravity.proto.RaceState.NOT_STARTED),
             eq(com.antigravity.proto.RaceFlag.WHITE),
             anyDouble());
+  }
+
+  @Test
+  public void testHeatOverExitDoesNotInterruptTickerThread() throws InterruptedException {
+    HeatOver heatOver = new HeatOver();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getAutoAdvanceTime()).thenReturn(0.1);
+
+    java.util.concurrent.atomic.AtomicBoolean wasInterrupted =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+
+    org.mockito.stubbing.Answer<Void> answer =
+        invocation -> {
+          heatOver.exit(mockRace);
+          wasInterrupted.set(Thread.currentThread().isInterrupted());
+          latch.countDown();
+          return null;
+        };
+    org.mockito.Mockito.doAnswer(answer).when(mockRace).broadcastTime();
+
+    heatOver.enter(mockRace);
+
+    assertTrue(
+        "Timer should have triggered broadcastTime",
+        latch.await(2, java.util.concurrent.TimeUnit.SECONDS));
+    assertFalse("Ticker thread should not be interrupted by exit()", wasInterrupted.get());
   }
 }

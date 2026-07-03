@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -789,5 +790,47 @@ public class RacingTest {
     assertTrue(flag == com.antigravity.proto.RaceFlag.GREEN);
 
     racing.exit(mockRace);
+  }
+
+  @Test
+  public void testExitDoesNotInterruptTickerThread() throws InterruptedException {
+    Racing racing = new Racing();
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatScoring()).thenReturn(new HeatScoring());
+    when(mockRace.getTrack())
+        .thenReturn(new Track("Test", Arrays.asList(new Lane("red", "black", 100))));
+
+    com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList());
+    when(mockHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+
+    HeatExecutionManager manager = new HeatExecutionManager(mockRace);
+    manager.initialize(1);
+    when(mockRace.getHeatExecutionManager()).thenReturn(manager);
+
+    java.util.concurrent.atomic.AtomicBoolean wasInterrupted =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+
+    doAnswer(
+            invocation -> {
+              racing.exit(mockRace);
+              wasInterrupted.set(Thread.currentThread().isInterrupted());
+              latch.countDown();
+              return null;
+            })
+        .when(mockRace)
+        .broadcastTime();
+
+    racing.enter(mockRace);
+
+    assertTrue(
+        "Timer should have triggered broadcastTime",
+        latch.await(2, java.util.concurrent.TimeUnit.SECONDS));
+    assertFalse("Ticker thread should not be interrupted by exit()", wasInterrupted.get());
   }
 }

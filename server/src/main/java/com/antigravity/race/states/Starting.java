@@ -47,7 +47,7 @@ public class Starting implements IRaceState {
     logger.info("Starting countdown: {}s + {} random ticks", startTimeVal, randomTicks);
 
     if (scheduler != null) {
-      scheduler.shutdownNow();
+      scheduler.shutdown();
     }
     scheduler =
         Executors.newSingleThreadScheduledExecutor(
@@ -103,7 +103,7 @@ public class Starting implements IRaceState {
       timerHandle = null;
     }
     if (scheduler != null) {
-      scheduler.shutdownNow();
+      scheduler.shutdown();
       scheduler = null;
     }
   }
