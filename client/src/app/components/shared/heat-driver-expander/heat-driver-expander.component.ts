@@ -43,6 +43,7 @@ export class HeatDriverExpanderComponent {
   @Input() participants: RaceParticipant[] = [];
   @Input() allHeats: Heat[] = [];
   @Input() customStatsTitle?: string;
+  @Input() isGroupRace = false;
 
   @Output() toggle = new EventEmitter<void>();
 

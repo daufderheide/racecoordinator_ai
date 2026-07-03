@@ -285,6 +285,7 @@
           [isTeam]="!!dh.heatDriver.participant.team"
           [participants]="participants"
           [allHeats]="heats"
+          [isGroupRace]="race?.group_options?.enabled ?? false"
           (toggle)="toggleHeat(dh.heat.objectId)"
         ></app-heat-driver-expander>
       }
