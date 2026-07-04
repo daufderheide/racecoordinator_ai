@@ -99,7 +99,7 @@ public class App {
 
   private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-  public static final String SERVER_VERSION = "0.0.0.25";
+  public static final String SERVER_VERSION = "0.0.0.25_main_1";
 
   static boolean shouldUseEmbeddedMongo(String[] args) {
     boolean useEmbeddedMongo = true;
