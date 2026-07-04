@@ -9,6 +9,12 @@ $SERVER_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PROJECT_ROOT = Split-Path -Parent $SERVER_DIR
 $PROTO_ROOT = Join-Path $SERVER_DIR "proto"
 
+# Setup local Node.js if exists
+$LocalNodeDir = Join-Path $PROJECT_ROOT "tools\node"
+if (Test-Path $LocalNodeDir) {
+    $env:Path = $LocalNodeDir + ";" + $env:Path
+}
+
 $PROTOC_VERSION = "3.25.1"
 
 # Protoc binary name (matches maven protobuf plugin layout for Windows)

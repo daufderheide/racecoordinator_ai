@@ -81,12 +81,12 @@ var
 begin
   Result := True;
   // Kill java and mongod processes that might be using our ports or files.
-  // We use PowerShell to specifically target processes using our known ports (7070, 27017)
+  // We use PowerShell to specifically target processes using our known ports (7070, 8085, 27017)
   // as well as a fallback by name for our specific JAR.
   Log('Attempting to kill existing Race Coordinator processes...');
   
   // 1. Kill by port (most reliable for clearing locks)
-  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 7070, 27017 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 7070, 8085, 27017 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   
   // 2. Kill by name/command line (fallback)
   Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-Process -Name java, mongod -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like ''*RaceCoordinator*'' -or $_.Name -eq ''mongod'' } | Stop-Process -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);

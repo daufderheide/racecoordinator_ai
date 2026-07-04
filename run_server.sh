@@ -1,5 +1,18 @@
 #!/bin/bash
 cd "$(dirname "$0")/server"
+
+# Find and kill any process using port 7070 or 8085
+for port in 7070 8085; do
+  if command -v lsof >/dev/null 2>&1; then
+    pids=$(lsof -t -i:$port 2>/dev/null)
+    if [ ! -z "$pids" ]; then
+      echo "Killing stale process(es) on port $port..."
+      kill -9 $pids 2>/dev/null || true
+    fi
+  elif command -v fuser >/dev/null 2>&1; then
+    fuser -k $port/tcp >/dev/null 2>&1 || true
+  fi
+done
 # Run mvn clean first to ensure a fresh build, but this removes protoc executable if we are not careful.
 # Actually, mvn clean removes target/. 
 # So generated_protos.sh needs to handle missing protoc.
@@ -14,5 +27,6 @@ cd "$(dirname "$0")/server"
 
 chmod +x generate_protos.sh
 mvn clean -Dmaven.repo.local="$(pwd)/.m2/repository" || true
-./generate_protos.sh
+./generate_protos.sh --server-only
+
 mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dapp.data.dir="$(pwd)/../data" -Dmaven.repo.local="$(pwd)/.m2/repository"

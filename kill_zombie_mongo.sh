@@ -1,17 +1,14 @@
 #!/bin/bash
-# Find and kill mongod processes on port 27017
-# Using lsof as ps seems to have permission issues on some macs
+# Find and kill mongod processes on ports 8085 and 27017
 
-echo "Checking for processes on port 27017..."
+echo "Checking for processes on ports 8085 (embedded) and 27017 (default)..."
 
-# Get PID using lsof
-PID=$(lsof -ti :27017)
-
-if [ -z "$PID" ]; then
-  echo "No process found on port 27017."
-else
-  echo "Found process $PID on port 27017."
-  echo "Killing process..."
-  kill -9 $PID
-  echo "Process killed."
-fi
+for Port in 8085 27017; do
+  PID=$(lsof -ti :$Port)
+  if [ ! -z "$PID" ]; then
+    echo "Found process(es) $PID on port $Port."
+    echo "Killing process..."
+    kill -9 $PID 2>/dev/null || true
+    echo "Process killed."
+  fi
+done

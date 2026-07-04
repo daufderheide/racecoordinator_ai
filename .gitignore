@@ -132,3 +132,7 @@ server/checkstyle_report_final.txt
 
 # OS generated files
 [Tt]humbs.db
+
+# Local portable tools
+/tools/
+

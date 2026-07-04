@@ -28,7 +28,7 @@ echo "Building Server (Modern - Java 11)..."
 cd server
 mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
 chmod +x generate_protos.sh
-PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh
+PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh --server-only
 mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
 cd ..
 
@@ -49,7 +49,7 @@ cp -r server/src/main/resources/arduino release/RaceCoordinator/
 echo "Building Server (Legacy - Java 1.8 Profile)..."
 cd server
 mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
-PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh
+PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh --server-only
 mvn package -Plegacy -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
 cd ..
 

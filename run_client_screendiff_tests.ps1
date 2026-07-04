@@ -3,6 +3,12 @@ $ErrorActionPreference = "Continue"
 # Resolve project root even when invoked via Start-Process
 $ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
 $ClientDir = Join-Path $ProjectRoot "client"
+
+# Setup local Node.js if exists
+$LocalNodeDir = Join-Path $ProjectRoot "tools\node"
+if (Test-Path $LocalNodeDir) {
+    $env:Path = $LocalNodeDir + ";" + $env:Path
+}
 $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-visual"
 
 if (-not (Test-Path $IsolatedDir)) {

@@ -39,7 +39,7 @@ Exec { mvn clean "-Dbuild.dist.dir=target_dist" }
 if (Get-Command chmod -ErrorAction SilentlyContinue) {
     Exec { chmod +x generate_protos.sh }
 }
-Exec { ./generate_protos.sh }
+Exec { ./generate_protos.sh --server-only }
 Exec { mvn package "-Dmaven.test.skip=true" "-Dbuild.dist.dir=target_dist" }
 Set-Location "$PSScriptRoot"
 

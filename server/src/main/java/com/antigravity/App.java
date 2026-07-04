@@ -53,6 +53,7 @@ import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -620,6 +621,17 @@ public class App {
         Files.createDirectories(Paths.get(dataDir));
       }
 
+      // If port is already in use, try to free it by terminating the process listening on it
+      if (isPortInUse(MONGO_PORT)) {
+        logger.warn("MongoDB port {} is already in use. Attempting to free it...", MONGO_PORT);
+        freePort(MONGO_PORT);
+        try {
+          Thread.sleep(1000); // Small delay to let the OS release the socket/lock
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+        }
+      }
+
       // Cleanup stale lock file if it exists (prevents boot failure after crash on
       // legacy Windows)
       File lockFile = new File(dataDir, "mongod.lock");
@@ -772,7 +784,9 @@ public class App {
       if (!flapdoodleRetried) {
         String msg = e.getMessage();
         if (msg != null
-            && (msg.contains("62") || msg.contains("compatibility") || msg.contains("exit code"))) {
+            && (msg.contains("62") || msg.contains("compatibility") || msg.contains("exit code"))
+            && !msg.contains("DBPathInUse")
+            && !msg.contains("mongod.lock")) {
           logger.warn(
               "Detected possible MongoDB version incompatibility or startup failure. Attempting to back up and start a fresh database...");
           flapdoodleRetried = true;
@@ -877,5 +891,66 @@ public class App {
       return backupPath;
     }
     return null;
+  }
+
+  private static boolean isPortInUse(int port) {
+    try (ServerSocket serverSocket = new ServerSocket(port)) {
+      return false;
+    } catch (IOException e) {
+      return true;
+    }
+  }
+
+  private static void freePort(int port) {
+    String osName = System.getProperty("os.name").toLowerCase();
+    if (osName.contains("win")) {
+      try {
+        Process p = Runtime.getRuntime().exec("cmd /c netstat -ano -p tcp");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            String[] parts = line.trim().split("\\s+");
+            if (parts.length >= 5 && parts[1].endsWith(":" + port)) {
+              String pid = parts[parts.length - 1];
+              try {
+                int pidInt = Integer.parseInt(pid);
+                if (pidInt > 0) {
+                  logger.info("Found process with PID {} using port {}. Killing it...", pidInt, port);
+                  Runtime.getRuntime().exec("taskkill /F /PID " + pidInt).waitFor();
+                }
+              } catch (NumberFormatException nfe) {
+                // Ignore
+              }
+            }
+          }
+        }
+      } catch (Exception e) {
+        logger.error("Failed to free port {} on Windows: {}", port, e.getMessage());
+      }
+    } else {
+      // Unix-like systems (Linux, macOS)
+      try {
+        Process p = Runtime.getRuntime().exec(new String[]{"sh", "-c", "lsof -t -i:" + port});
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+          String line;
+          while ((line = reader.readLine()) != null) {
+            String pid = line.trim();
+            if (!pid.isEmpty()) {
+              try {
+                int pidInt = Integer.parseInt(pid);
+                if (pidInt > 0) {
+                  logger.info("Found process with PID {} using port {}. Killing it...", pidInt, port);
+                  Runtime.getRuntime().exec(new String[]{"kill", "-9", String.valueOf(pidInt)}).waitFor();
+                }
+              } catch (NumberFormatException nfe) {
+                // Ignore
+              }
+            }
+          }
+        }
+      } catch (Exception e) {
+        logger.error("Failed to free port {} on Unix: {}", port, e.getMessage());
+      }
+    }
   }
 }

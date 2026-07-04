@@ -1,7 +1,7 @@
 Write-Host "Killing client and server processes..." -ForegroundColor Cyan
 
-# Ports: 4200 (Client), 7070 (Server), 27017 (Mongo)
-$Ports = @(4200, 7070, 27017)
+# Ports: 4200 (Client), 7070 (Server), 8085 (Embedded Mongo), 27017 (Mongo)
+$Ports = @(4200, 7070, 8085, 27017)
 $KilledProcesses = @()
 
 foreach ($Port in $Ports) {

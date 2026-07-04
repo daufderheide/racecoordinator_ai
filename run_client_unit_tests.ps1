@@ -4,6 +4,12 @@ $ErrorActionPreference = "Continue"
 $ProjectRoot = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Definition) { Split-Path -Parent $MyInvocation.MyCommand.Definition } else { $PWD.Path }
 $ClientDir = Join-Path $ProjectRoot "client"
 
+# Setup local Node.js if exists
+$LocalNodeDir = Join-Path $ProjectRoot "tools\node"
+if (Test-Path $LocalNodeDir) {
+    $env:Path = $LocalNodeDir + ";" + $env:Path
+}
+
 Write-Host "--- Running Client Unit Tests ---" -ForegroundColor Cyan
 
 Set-Location $ClientDir

@@ -1,9 +1,13 @@
-Write-Host "Checking for processes on port 27017..." -ForegroundColor Cyan
-$conn = Get-NetTCPConnection -LocalPort 27017 -ErrorAction SilentlyContinue
-if ($conn) {
-    Write-Host "Found process $($conn.OwningProcess) on port 27017. Killing..." -ForegroundColor Yellow
-    Stop-Process -Id $conn.OwningProcess -Force
-    Write-Host "Process killed." -ForegroundColor Green
-} else {
-    Write-Host "No process found on port 27017." -ForegroundColor Green
+Write-Host "Checking for processes on ports 8085 (embedded) and 27017 (default)..." -ForegroundColor Cyan
+$Ports = @(8085, 27017)
+foreach ($Port in $Ports) {
+    $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+    foreach ($conn in $connections) {
+        $processId = $conn.OwningProcess
+        if ($processId -gt 0) {
+            Write-Host "Found process $processId on port $Port. Killing..." -ForegroundColor Yellow
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+            Write-Host "Process $processId killed." -ForegroundColor Green
+        }
+    }
 }
