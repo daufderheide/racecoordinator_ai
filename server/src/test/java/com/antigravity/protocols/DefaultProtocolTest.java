@@ -196,11 +196,17 @@ public class DefaultProtocolTest {
 
   @Test
   public void testIsHealthy() {
+    protocol.connected = true;
     assertFalse("Initially unhealthy", protocol.isHealthy());
     protocol.simulateHeartbeat();
     assertTrue("Healthy after heartbeat", protocol.isHealthy());
     protocol.advanceTime(2500);
     assertFalse("Unhealthy after timeout", protocol.isHealthy());
+
+    protocol.simulateHeartbeat();
+    assertTrue("Healthy again after heartbeat", protocol.isHealthy());
+    protocol.connected = false;
+    assertFalse("Unhealthy if disconnected despite recent heartbeat", protocol.isHealthy());
   }
 
   @Test

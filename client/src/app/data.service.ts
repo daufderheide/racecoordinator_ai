@@ -4,7 +4,7 @@ import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
-import { ArduinoConfig } from "@app/models/track";
+import { ArduinoConfig, TrackmateConfig } from "@app/models/track";
 import {
   ArduinoConfig as ProtoArduinoConfig,
   DeferHeatRequest,
@@ -73,6 +73,7 @@ import {
   StartRaceRequest,
   StartRaceResponse,
   SystemState,
+  TrackmateConfig as ProtoTrackmateConfig,
   UpdateInterfaceConfigRequest,
   UpdateInterfaceConfigResponse,
   UploadAssetRequest,
@@ -318,6 +319,7 @@ export class DataService {
 
   initializeInterface(
     configs: ArduinoConfig[],
+    trackmateConfigs: TrackmateConfig[],
     laneCount: number,
   ): Observable<InitializeInterfaceResponse> {
     const request = InitializeInterfaceRequest.create({
@@ -355,6 +357,20 @@ export class DataService {
                 maxVoltage: maxVoltage as number,
               }),
           ),
+        }),
+      ),
+      trackmateConfigs: trackmateConfigs.map((config) =>
+        ProtoTrackmateConfig.create({
+          name: config.name,
+          commPort: config.commPort,
+          normallyClosedRelays: config.normallyClosedRelays,
+          useIr: config.useIR,
+          debounce: config.debounce,
+          numLanes: config.numLanes,
+          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
+          hasPerLaneRelays: config.hasPerLaneRelays,
+          lapPinPitBehavior: config.lapPinPitBehavior,
+          lapPinBehaviors: config.lapPinBehaviors,
         }),
       ),
       laneCount,
@@ -647,7 +663,11 @@ export class DataService {
   }
 
   setMainPower(on: boolean): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/track/power/main?on=${on}`, {});
+    return this.http.post(
+      `${this.baseUrl}/api/track/power/main?on=${on}`,
+      {},
+      { responseType: "text" },
+    );
   }
 
   setLanePower(lane: number, on: boolean): Observable<any> {
@@ -655,6 +675,7 @@ export class DataService {
     return this.http.post(
       `${this.baseUrl}/api/track/power/lane/${lane}?on=${on}`,
       {},
+      { responseType: "text" },
     );
   }
 

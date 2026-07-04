@@ -20,7 +20,9 @@ export class Track implements Model {
   readonly has_per_lane_relays: boolean;
   readonly has_main_relay: boolean;
   readonly arduino_configs: ArduinoConfig[];
+  readonly trackmate_configs: TrackmateConfig[];
 
+  // TODO(aufderheide): Cleanup this constructor.
   constructor(
     entity_id: string,
     name: string,
@@ -30,6 +32,7 @@ export class Track implements Model {
     arduino_configs?: ArduinoConfig[],
     has_per_lane_relays: boolean = false,
     has_main_relay: boolean = false,
+    trackmate_configs?: TrackmateConfig[],
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -39,6 +42,7 @@ export class Track implements Model {
     this.arduino_configs = arduino_configs || [];
     this.has_per_lane_relays = has_per_lane_relays;
     this.has_main_relay = has_main_relay;
+    this.trackmate_configs = trackmate_configs || [];
   }
 
   get objectId(): string {
@@ -79,6 +83,19 @@ export interface LedString {
   colorOrder: number;
   flagFlashRate: number;
   ledLaneColorOverrides: string[];
+}
+
+export interface TrackmateConfig {
+  name: string;
+  commPort: string;
+  normallyClosedRelays: boolean;
+  normallyClosedLaneSensors: boolean;
+  useIR: boolean; // deprecated, use normallyClosedLaneSensors
+  debounce: number;
+  numLanes: number;
+  hasPerLaneRelays: boolean;
+  lapPinPitBehavior: number;
+  lapPinBehaviors: number[];
 }
 
 export interface ArduinoConfig {

@@ -26,10 +26,14 @@ public class SerialConnection {
   }
 
   public void connect(String portName) throws IOException {
-    connect(portName, 115200);
+    connect(portName, 115200, true);
   }
 
   public void connect(String portName, int baudRate) throws IOException {
+    connect(portName, baudRate, true);
+  }
+
+  public void connect(String portName, int baudRate, boolean setDtrRts) throws IOException {
     if (serialPort != null && serialPort.isOpen()) {
       return;
     }
@@ -49,12 +53,17 @@ public class SerialConnection {
     // Note: Except for the baud rate, all other parameters should be default
     serialPort.setComPortParameters(baudRate, 8, SerialPort.ONE_STOP_BIT, SerialPort.NO_PARITY);
 
-    if (serialPort.setDTR()) {
-      if (!serialPort.setRTS()) {
-        logger.warn("Failed to set RTS");
+    if (setDtrRts) {
+      if (serialPort.setDTR()) {
+        if (!serialPort.setRTS()) {
+          logger.warn("Failed to set RTS");
+        }
+      } else {
+        logger.warn("Failed to set DTR");
       }
     } else {
-      logger.warn("Failed to set DTR");
+      serialPort.clearDTR();
+      serialPort.clearRTS();
     }
 
     if (serialPort.openPort()) {

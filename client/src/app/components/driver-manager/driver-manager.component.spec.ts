@@ -35,6 +35,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { DriverManagerComponent } from "./driver-manager.component";
 import { createDriverManagerDataServiceMock } from "./testing/driver-manager_helper";
 
@@ -173,6 +174,26 @@ describe("DriverManagerComponent", () => {
 
       expect(component.selectedDriver?.entity_id).toBe("d2");
       expect(component.editingDriver?.entity_id).toBe("d2");
+    }));
+
+    it("should select driver from NavigationService lastEditedId on loadDrivers", fakeAsync(() => {
+      const navService = TestBed.inject(NavigationService);
+      spyOn(navService, "getLastEditedId").and.returnValue("d3");
+      spyOn(navService, "clearLastEditedId");
+
+      component.loadData();
+      tick();
+      fixture.detectChanges();
+
+      expect(navService.getLastEditedId).toHaveBeenCalledWith("driver");
+      expect(navService.clearLastEditedId).toHaveBeenCalledWith("driver");
+      expect(component.selectedDriver?.entity_id).toBe("d3");
+      expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+        relativeTo: jasmine.any(Object),
+        queryParams: { id: "d3" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
     }));
   });
 

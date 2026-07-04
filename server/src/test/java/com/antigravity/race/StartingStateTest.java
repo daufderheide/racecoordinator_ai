@@ -34,7 +34,8 @@ public class StartingStateTest {
     when(configService.getRestartRandomizer()).thenReturn(0.0);
 
     Lane lane = new Lane("red", "white", 100);
-    Track track = new Track("Test Track", Collections.singletonList(lane));
+    Track track =
+        new Track.Builder().name("Test Track").lanes(Collections.singletonList(lane)).build();
 
     mockParticipant = mock(RaceParticipant.class);
     when(mockParticipant.getObjectId()).thenReturn("p1");

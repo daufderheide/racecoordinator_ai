@@ -2,11 +2,14 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  ElementRef,
   HostListener,
   inject,
   OnDestroy,
   OnInit,
+  QueryList,
   ViewChild,
+  ViewChildren,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -24,6 +27,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -97,10 +101,13 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {}
 
   drivers: Driver[] = [];
   driversMap: Map<string, Driver> = new Map();
+
+  @ViewChildren("teamRow") teamRows!: QueryList<ElementRef>;
 
   ngOnInit() {
     this.updateScale();
@@ -156,7 +163,19 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
             ),
         );
 
-        const selectedId = this.route.snapshot.queryParamMap.get("id");
+        const lastEdited = this.navigationService.getLastEditedId("team");
+        let selectedId = this.route.snapshot.queryParamMap.get("id");
+        if (lastEdited) {
+          selectedId = lastEdited;
+          this.navigationService.clearLastEditedId("team");
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: lastEdited },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        }
+
         if (selectedId) {
           const found = this.teams.find((t) => t.entity_id === selectedId);
           if (found) {
@@ -167,6 +186,11 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         } else if (this.teams.length > 0 && !this.selectedTeam) {
           this.selectTeam(this.teams[0]);
         }
+
+        if (this.selectedTeam) {
+          this.scrollToSelected();
+        }
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -213,6 +237,30 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
     this.editingTeam = new Team(team.entity_id, team.name, team.avatarUrl, [
       ...team.driverIds,
     ]);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { id: team.entity_id },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+    this.scrollToSelected();
+  }
+
+  private scrollToSelected() {
+    if (!this.selectedTeam) return;
+    const teamId = this.selectedTeam.entity_id;
+    setTimeout(() => {
+      const row = this.teamRows?.find(
+        (r) => r.nativeElement.getAttribute("data-id") === teamId,
+      );
+      if (row) {
+        row.nativeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, 100);
   }
 
   monitorConnection() {

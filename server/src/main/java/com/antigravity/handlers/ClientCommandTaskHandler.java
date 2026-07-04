@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.ArduinoConfigConverter;
+import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
@@ -40,6 +41,8 @@ import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.protocols.trackmate.TrackmateConfig;
+import com.antigravity.protocols.trackmate.TrackmateProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
@@ -710,13 +713,25 @@ public class ClientCommandTaskHandler {
       List<IProtocol> protocols = new ArrayList<>();
       List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
           request.getConfigsList();
+      int interfaceIndex = 0;
       for (int i = 0; i < configsList.size(); i++) {
         com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
         ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
         ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
-        arduino.setInterfaceIndex(i);
+        arduino.setInterfaceIndex(interfaceIndex++);
         arduino.setListener(new TestInterfaceListener());
         protocols.add(arduino);
+      }
+
+      List<com.antigravity.proto.TrackmateConfig> tmConfigsList = // fqn-collision
+          request.getTrackmateConfigsList();
+      for (int i = 0; i < tmConfigsList.size(); i++) {
+        com.antigravity.proto.TrackmateConfig protoConfig = tmConfigsList.get(i); // fqn-collision
+        TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
+        TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
+        trackmate.setInterfaceIndex(interfaceIndex++);
+        trackmate.setListener(new TestInterfaceListener());
+        protocols.add(trackmate);
       }
 
       ProtocolDelegate finalProtocol;
@@ -774,12 +789,18 @@ public class ClientCommandTaskHandler {
       boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
+      if (race != null) {
+        race.setMainPower(on);
+        ctx.status(200).result("Main power set to " + on);
+      } else {
+        ProtocolDelegate protocol = ClientSubscriptionManager.getInstance().getProtocol();
+        if (protocol != null) {
+          protocol.setMainPower(on);
+          ctx.status(200).result("Main power set to " + on);
+        } else {
+          ctx.status(404).result("No active race or interface found");
+        }
       }
-      race.setMainPower(on);
-      ctx.status(200).result("Main power set to " + on);
     } catch (Exception e) {
       logger.error("Error setting main power", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
@@ -792,12 +813,18 @@ public class ClientCommandTaskHandler {
       boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
+      if (race != null) {
+        race.setLanePower(on, lane);
+        ctx.status(200).result("Lane " + lane + " power set to " + on);
+      } else {
+        ProtocolDelegate protocol = ClientSubscriptionManager.getInstance().getProtocol();
+        if (protocol != null) {
+          protocol.setLanePower(on, lane);
+          ctx.status(200).result("Lane " + lane + " power set to " + on);
+        } else {
+          ctx.status(404).result("No active race or interface found");
+        }
       }
-      race.setLanePower(on, lane);
-      ctx.status(200).result("Lane " + lane + " power set to " + on);
     } catch (Exception e) {
       logger.error("Error setting lane power", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());

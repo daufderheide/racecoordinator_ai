@@ -25,6 +25,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { createTrackManagerDataServiceMock } from "./testing/track-manager_helper";
 import { TrackManagerComponent } from "./track-manager.component";
 
@@ -104,7 +105,7 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should load tracks on init", () => {
-    expect(component.tracks.length).toBe(2);
+    expect(component.tracks.length).toBe(3);
     expect(component.selectedTrack?.name).toBe("Classic Circuit");
   });
 
@@ -123,6 +124,24 @@ describe("TrackManagerComponent", () => {
 
     component.ngOnInit();
     expect(component.selectedTrack?.entity_id).toBe("t2");
+  });
+
+  it("should select track from NavigationService lastEditedId on loadTracks", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "getLastEditedId").and.returnValue("t3");
+    spyOn(navService, "clearLastEditedId");
+
+    component.loadTracks();
+
+    expect(navService.getLastEditedId).toHaveBeenCalledWith("track");
+    expect(navService.clearLastEditedId).toHaveBeenCalledWith("track");
+    expect(component.selectedTrack?.entity_id).toBe("t3");
+    expect(router.navigate).toHaveBeenCalledWith([], {
+      relativeTo: jasmine.any(Object),
+      queryParams: { id: "t3" },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
   });
 
   it("should navigate to editor for editing", () => {

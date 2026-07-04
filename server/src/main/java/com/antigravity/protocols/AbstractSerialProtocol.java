@@ -29,6 +29,10 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
   protected abstract void sendTimeReset();
 
+  protected boolean requiresDtrRts() {
+    return true;
+  }
+
   @Override
   public synchronized boolean open() {
     if (serialConnection.isOpen()) {
@@ -49,7 +53,7 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
     try {
       int baudRateToUse = getBaudRate();
       logger.info("Attempting to connect to {} at {} baud", commPort, baudRateToUse);
-      serialConnection.connect(commPort, baudRateToUse);
+      serialConnection.connect(commPort, baudRateToUse, requiresDtrRts());
 
       serialConnection.addListener(
           new SerialPortDataListener() {
@@ -66,7 +70,7 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
               byte[] data = event.getReceivedData();
               if (data != null && data.length > 0) {
-                logger.debug("Received: {} bytes", data.length);
+                // logger.debug("Received: {} bytes", data.length);
                 rxBuffer.write(data);
                 processData();
               }

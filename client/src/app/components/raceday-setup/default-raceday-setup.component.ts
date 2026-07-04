@@ -130,7 +130,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isServerLogOpen: boolean = false;
   isCustomUIPanelOpen: boolean = false;
 
-  logLevels = ["DEBUG", "INFO", "WARN", "ERROR"];
+  clientLogLevels = ["DEBUG", "INFO", "WARN", "ERROR"];
+  serverLogLevels = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"];
   currentClientLogLevel: string = "INFO";
   currentServerLogLevel: string = "INFO";
   menuItems = [

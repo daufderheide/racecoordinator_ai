@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
-import { TestBed } from "@angular/core/testing";
+import { fakeAsync, TestBed, tick } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { Router } from "@angular/router";
@@ -31,11 +31,13 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { RaceManagerComponent } from "./race-manager.component";
 import { createRaceManagerDataServiceMock } from "./testing/race-manager_helper";
 
 describe("RaceManagerComponent", () => {
   let component: RaceManagerComponent;
+  let fixture: import("@angular/core/testing").ComponentFixture<RaceManagerComponent>;
   let dataService: any;
   let _router: any;
   let _activatedRoute: any;
@@ -87,7 +89,7 @@ describe("RaceManagerComponent", () => {
       schemas: [NO_ERRORS_SCHEMA],
     });
 
-    const fixture = TestBed.createComponent(RaceManagerComponent);
+    fixture = TestBed.createComponent(RaceManagerComponent);
     component = fixture.componentInstance;
     dataService = TestBed.inject(DataService);
     _router = TestBed.inject(Router);
@@ -122,6 +124,26 @@ describe("RaceManagerComponent", () => {
     expect(component.races[1].name).toBe("Endurance Challenge");
     expect(component.races[2].name).toBe("Grand Prix");
   });
+
+  it("should select race from NavigationService lastEditedId on loadData", fakeAsync(() => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "getLastEditedId").and.returnValue("r3");
+    spyOn(navService, "clearLastEditedId");
+
+    component.loadData();
+    tick();
+    fixture.detectChanges();
+
+    expect(navService.getLastEditedId).toHaveBeenCalledWith("race");
+    expect(navService.clearLastEditedId).toHaveBeenCalledWith("race");
+    expect(component.selectedRace?.entity_id).toBe("r3");
+    expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+      relativeTo: jasmine.any(Object),
+      queryParams: { id: "r3" },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }));
 
   it("should filter races based on search query", () => {
     component.races = [

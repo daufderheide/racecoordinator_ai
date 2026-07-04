@@ -7,7 +7,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -126,6 +126,7 @@ import {
   resetMocks,
 } from "@app/testing/unit-test-mocks";
 
+import { NavigationService } from "../../services/navigation.service";
 import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
 
@@ -172,6 +173,7 @@ describe("DriverEditorComponent", () => {
         },
       },
       queryParams: of({ help: "false" }),
+      queryParamMap: of(convertToParamMap({ id: "d1" })),
     };
 
     await TestBed.configureTestingModule({
@@ -356,6 +358,16 @@ describe("DriverEditorComponent", () => {
         returnUrl: "/default-raceday",
       },
     });
+  });
+
+  it("should set lastEditedId in NavigationService when loading driver id", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    mockActivatedRoute.queryParamMap = of(convertToParamMap({ id: "d2" }));
+    component.ngOnInit();
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith("driver", "d2");
   });
 
   it("should not delete if confirm is cancelled", () => {

@@ -3,7 +3,11 @@ import {
   HttpTestingController,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
-import { SaveAudioSetResponse } from "@app/proto/antigravity";
+import { ArduinoConfig, TrackmateConfig } from "@app/models/track";
+import {
+  InitializeInterfaceResponse,
+  SaveAudioSetResponse,
+} from "@app/proto/antigravity";
 
 import { DataService } from "./data.service";
 
@@ -26,6 +30,68 @@ describe("DataService", () => {
 
   it("should be created", () => {
     expect(service).toBeTruthy();
+  });
+
+  it("should call initialize-interface endpoint with configs", (done) => {
+    const arduinoConfigs: ArduinoConfig[] = [
+      {
+        name: "Arduino 1",
+        commPort: "COM1",
+        baudRate: 9600,
+        debounceUs: 1000,
+        hardwareType: 0,
+        normallyClosedLaneSensors: true,
+        normallyClosedRelays: true,
+        globalInvertLights: 0,
+        useLapsForPits: 0,
+        useLapsForPitEnd: 0,
+        usePitsAsLaps: false,
+        useLapsForSegments: false,
+        lapPinPitBehavior: 0,
+        digitalIds: [],
+        analogIds: [],
+        ledStrings: [],
+      } as ArduinoConfig,
+    ];
+    const trackmateConfigs: TrackmateConfig[] = [
+      {
+        name: "Trackmate 1",
+        commPort: "COM2",
+        normallyClosedRelays: true,
+        normallyClosedLaneSensors: false,
+        useIR: false,
+        debounce: 5,
+        numLanes: 4,
+        hasPerLaneRelays: false,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [],
+      } as TrackmateConfig,
+    ];
+
+    service
+      .initializeInterface(arduinoConfigs, trackmateConfigs, 4)
+      .subscribe((response) => {
+        expect(response).toBeTruthy();
+        expect(response.success).toBeTrue();
+        done();
+      });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/initialize-interface"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(
+      req.request.body instanceof ArrayBuffer ||
+        req.request.body instanceof Blob,
+    ).toBeTrue();
+
+    const mockResponse = InitializeInterfaceResponse.create({
+      success: true,
+      message: "OK",
+    });
+    const buffer = InitializeInterfaceResponse.encode(mockResponse).finish();
+    // Angular HttpTestingController requires ArrayBuffer for arraybuffer response types
+    req.flush(buffer.slice().buffer);
   });
 
   it("should call save-audio-set endpoint", (done) => {

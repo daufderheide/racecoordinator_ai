@@ -92,6 +92,39 @@ export const MOCK_TRACKS = [
       },
     ],
   },
+  {
+    entity_id: "t3",
+    name: "Trakmate Track",
+    lanes: [
+      {
+        entity_id: "l1",
+        length: 12.5,
+        background_color: "#ff0000",
+        foreground_color: "#ffffff",
+      },
+      {
+        entity_id: "l2",
+        length: 12.5,
+        background_color: "#0000ff",
+        foreground_color: "#ffffff",
+      },
+    ],
+    arduino_configs: [],
+    trackmate_configs: [
+      {
+        name: "Trakmate 1",
+        commPort: "COM2",
+        normallyClosedRelays: false,
+        normallyClosedLaneSensors: false,
+        useIR: false,
+        debounce: 2000,
+        numLanes: 2,
+        hasPerLaneRelays: true,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [],
+      },
+    ],
+  },
 ];
 
 export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
@@ -111,6 +144,9 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       ),
       t.has_digital_fuel || false,
       t.arduino_configs,
+      t.has_per_lane_relays || false,
+      t.has_main_relay || false,
+      t.trackmate_configs,
     ),
 );
 

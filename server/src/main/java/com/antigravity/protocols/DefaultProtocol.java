@@ -111,11 +111,13 @@ public abstract class DefaultProtocol implements IProtocol {
                   InterfaceStatus status;
                   if (!isConnected()) {
                     status = InterfaceStatus.DISCONNECTED;
+                  } else if (!requiresHeartbeat()) {
+                    status = InterfaceStatus.CONNECTED;
                   } else if (lastHeartbeatTimeMs == 0) {
                     status = InterfaceStatus.NO_DATA;
                   } else {
                     long age = now() - lastHeartbeatTimeMs;
-                    logger.debug(
+                    logger.trace(
                         "Timeout age: {}ms (now: {}, lastHeartbeat: {})",
                         age,
                         now(),
@@ -203,13 +205,17 @@ public abstract class DefaultProtocol implements IProtocol {
       }
     } else {
       if (!arduinoReset && pcExpectedReset) {
-        // Mismatch: Arduino hasn't reset yet, but PC expects reset (e.g. late in-flight message).
-        // Discard the pre-reset time but keep hwReset = 1, waiting for the reset heartbeat.
+        // Mismatch: Arduino hasn't reset yet, but PC expects reset (e.g. late in-flight
+        // message).
+        // Discard the pre-reset time but keep hwReset = 1, waiting for the reset
+        // heartbeat.
         logger.info(
             "Received Heartbeat - Reset expected but not set yet. Discarding in-flight time.");
       } else {
-        // Mismatch: Arduino reset unexpectedly (arduinoReset is true, pcExpectedReset is false).
-        // Treat as a reset event: clear pin cache and initialize hardware state, and set hwReset =
+        // Mismatch: Arduino reset unexpectedly (arduinoReset is true, pcExpectedReset
+        // is false).
+        // Treat as a reset event: clear pin cache and initialize hardware state, and
+        // set hwReset =
         // 0.
         logger.warn(
             "Received Heartbeat - Reset mismatch: got {}, expected {}. Clearing pin cache.",
@@ -397,6 +403,10 @@ public abstract class DefaultProtocol implements IProtocol {
     this.listener = listener;
   }
 
+  protected boolean requiresHeartbeat() {
+    return true;
+  }
+
   @Override
   public void startTimer() {
     for (int i = 0; i < numLanes; i++) {
@@ -465,8 +475,8 @@ public abstract class DefaultProtocol implements IProtocol {
 
   @Override
   public boolean isHealthy() {
-    if (lastHeartbeatTimeMs == 0) {
-      return false; // No heartbeat yet
+    if (!isConnected() || lastHeartbeatTimeMs == 0) {
+      return false; // Not connected or no heartbeat yet
     }
     // Healthy if we received a heartbeat in the last 2 seconds
     return (now() - lastHeartbeatTimeMs) < 2000;

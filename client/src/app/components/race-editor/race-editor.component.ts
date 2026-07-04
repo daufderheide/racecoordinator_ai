@@ -26,6 +26,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -277,6 +278,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private connectionMonitor: ConnectionMonitorService,
     private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {
     this.undoManager = new UndoManager<any>(
       {
@@ -330,6 +332,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             return;
           }
           const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("race", nextId);
+          }
           const currentId = this.editingRace?.entity_id;
           if (
             currentId &&
@@ -1027,6 +1032,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         next: (created) => {
           this.isSaving = false;
           this.isAutoSaving = false;
+          this.navigationService.setLastEditedId("race", created.entity_id);
           // Update the current race to the newly created one
           this.editingRace.entity_id = created.entity_id;
           this.originalRace = deepCopy(this.editingRace);
@@ -1072,6 +1078,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           next: () => {
             this.isSaving = false;
             this.isAutoSaving = false;
+            this.navigationService.setLastEditedId(
+              "race",
+              this.editingRace.entity_id,
+            );
             // Sync originalRace with editingRace so isDirtyState() returns false
             this.originalRace = deepCopy(this.editingRace);
             // Reset tracking point but keep history
@@ -1109,6 +1119,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.dataService.createRace(payload).subscribe({
       next: (created) => {
         this.isSaving = false;
+        this.navigationService.setLastEditedId("race", created.entity_id);
         // Update the current race to the newly created one
         this.editingRace = created;
         this.originalRace = deepCopy(created);

@@ -74,4 +74,31 @@ describe("NavigationService", () => {
     routerEvents.next(new NavigationEnd(3, "/page1", "/page1"));
     expect(service.getPreviousUrl()).toBe("/page2");
   });
+
+  describe("lastEditedId management", () => {
+    it("should set and retrieve last edited ID by entity type", () => {
+      service.setLastEditedId("track", "track-123");
+      expect(service.getLastEditedId("track")).toBe("track-123");
+    });
+
+    it("should return null for unset entity types", () => {
+      expect(service.getLastEditedId("race")).toBeNull();
+    });
+
+    it("should separate IDs by entity type", () => {
+      service.setLastEditedId("track", "track-123");
+      service.setLastEditedId("driver", "driver-456");
+
+      expect(service.getLastEditedId("track")).toBe("track-123");
+      expect(service.getLastEditedId("driver")).toBe("driver-456");
+    });
+
+    it("should clear last edited ID", () => {
+      service.setLastEditedId("team", "team-789");
+      expect(service.getLastEditedId("team")).toBe("team-789");
+
+      service.clearLastEditedId("team");
+      expect(service.getLastEditedId("team")).toBeNull();
+    });
+  });
 });

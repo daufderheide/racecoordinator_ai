@@ -40,7 +40,9 @@
       <div class="list-container">
         @for (track of tracks; track track; let i = $index) {
           <div
+            #trackRow
             class="list-item"
+            [attr.data-id]="track.entity_id"
             [class.selected]="track.entity_id === selectedTrack?.entity_id"
             (click)="selectTrack(track)"
             [class.odd]="i % 2 !== 0"
@@ -83,6 +85,37 @@
                   "
                 >
                 </app-arduino-summary>
+              }
+            </div>
+          }
+          @if (
+            selectedTrack.trackmate_configs &&
+            selectedTrack.trackmate_configs.length > 0
+          ) {
+            <div
+              class="arduino-summary-container"
+              style="
+                padding: 0;
+                border: none;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+              "
+            >
+              @for (
+                config of selectedTrack.trackmate_configs;
+                track config;
+                let i = $index
+              ) {
+                <app-trakmate-summary
+                  [config]="config"
+                  [index]="
+                    selectedTrack.trackmate_configs.length > 1
+                      ? i + 1
+                      : undefined
+                  "
+                >
+                </app-trakmate-summary>
               }
             </div>
           }

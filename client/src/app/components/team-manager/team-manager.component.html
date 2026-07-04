@@ -30,7 +30,9 @@
       <div class="list-container">
         @for (team of filteredTeams; track team; let i = $index) {
           <div
+            #teamRow
             class="list-item"
+            [attr.data-id]="team.entity_id"
             [class.selected]="team.entity_id === selectedTeam?.entity_id"
             (click)="selectTeam(team)"
             [class.odd]="i % 2 !== 0"

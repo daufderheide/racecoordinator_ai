@@ -27,7 +27,14 @@ public class RaceLaneSwapTest {
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "white", 100));
 
-    Track realTrack = new Track("Test Track", lanes, new ArrayList<>(), "track1", new ObjectId());
+    Track realTrack =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     HeatScoring heatScoring =
         new HeatScoring(
@@ -92,7 +99,14 @@ public class RaceLaneSwapTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "white", 100));
-    Track realTrack = new Track("Test Track", lanes, new ArrayList<>(), "track1", new ObjectId());
+    Track realTrack =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     // Rebuild race with RoundRobin
     Race roundRobinModel =

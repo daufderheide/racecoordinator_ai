@@ -71,6 +71,7 @@ class MockEditorTitleComponent {
 
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { TrackEditorComponent } from "./track-editor.component";
 
 describe("TrackEditorComponent", () => {
@@ -202,6 +203,17 @@ describe("TrackEditorComponent", () => {
     expect(component.editingTrack?.entity_id).toBe("t1");
   });
 
+  it("should preserve trackmate_configs when cloning track for editing", () => {
+    const track = MOCK_TRACK_INSTANCES[0]; // Assuming this has trackmate_configs or we can mock it
+    const cloned = (component as any).cloneTrack({
+      ...track,
+      trackmate_configs: [{ commPort: "COM1", lapPinPitBehavior: 1 }],
+    });
+    expect(cloned.trackmate_configs).toEqual([
+      { commPort: "COM1", lapPinPitBehavior: 1 },
+    ]);
+  });
+
   it("should load factory settings for a new track", fakeAsync(() => {
     // Setup for 'new' ID
     const route = TestBed.inject(ActivatedRoute) as any;
@@ -265,6 +277,16 @@ describe("TrackEditorComponent", () => {
         returnUrl: null,
       },
     });
+  });
+
+  it("should set lastEditedId in NavigationService when loading track id", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    const route = TestBed.inject(ActivatedRoute) as any;
+    route.setQueryParams({ id: "t2" });
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith("track", "t2");
   });
 
   it("should propagate 'from' and 'returnUrl' when navigating back", () => {

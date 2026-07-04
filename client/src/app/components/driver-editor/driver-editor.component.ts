@@ -25,6 +25,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -127,6 +128,7 @@ export class DriverEditorComponent
     private raceConnectionService: RaceConnectionService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {
     this.undoManager = new UndoManager<Driver>(
       {
@@ -176,6 +178,9 @@ export class DriverEditorComponent
             return;
           }
           const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("driver", nextId);
+          }
           const currentId = this.editingDriver?.entity_id;
           if (
             currentId &&
@@ -657,6 +662,7 @@ export class DriverEditorComponent
       next: (result) => {
         this.isSaving = false;
         this.isAutoSaving = false;
+        this.navigationService.setLastEditedId("driver", result.entity_id);
 
         if (this.editingDriver) {
           this.editingDriver.entity_id = result.entity_id;

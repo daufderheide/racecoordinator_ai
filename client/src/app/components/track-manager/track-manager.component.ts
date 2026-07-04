@@ -2,11 +2,14 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  ElementRef,
   HostListener,
   inject,
   OnDestroy,
   OnInit,
+  QueryList,
   ViewChild,
+  ViewChildren,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -23,11 +26,13 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.component";
+import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.component";
 
 @Component({
   standalone: true,
@@ -38,11 +43,13 @@ import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.compo
     ConfirmationModalComponent,
     ManagerHeaderComponent_1,
     ArduinoSummaryComponent,
+    TrakmateSummaryComponent,
     TranslatePipe,
   ],
 })
 export class TrackManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
+  @ViewChildren("trackRow") trackRows!: QueryList<ElementRef>;
   tracks: Track[] = [];
   selectedTrack?: Track;
   scale: number = 1;
@@ -89,6 +96,7 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {}
 
   toggleLaneSummary() {
@@ -170,10 +178,27 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
               t.lanes || [],
               t.has_digital_fuel ?? false,
               t.arduino_configs,
+              t.has_per_lane_relays ?? false,
+              t.has_main_relay ?? false,
+              t.trackmate_configs,
             ),
         );
         if (this.tracks.length > 0) {
-          const queryId = this.route.snapshot.queryParamMap.get("selectedId");
+          const lastEdited = this.navigationService.getLastEditedId("track");
+          let queryId =
+            this.route.snapshot.queryParamMap.get("id") ||
+            this.route.snapshot.queryParamMap.get("selectedId");
+          if (lastEdited) {
+            queryId = lastEdited;
+            this.navigationService.clearLastEditedId("track");
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: lastEdited },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          }
+
           if (queryId) {
             const found = this.tracks.find((t) => t.entity_id === queryId);
             this.selectedTrack = found || this.tracks[0];
@@ -187,6 +212,11 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
             this.selectedTrack = this.tracks[0];
           }
         }
+
+        if (this.selectedTrack) {
+          this.scrollToSelected();
+        }
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -200,6 +230,30 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
 
   selectTrack(track: Track) {
     this.selectedTrack = track;
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { id: track.entity_id },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+    this.scrollToSelected();
+  }
+
+  private scrollToSelected() {
+    if (!this.selectedTrack) return;
+    const trackId = this.selectedTrack.entity_id;
+    setTimeout(() => {
+      const row = this.trackRows?.find(
+        (r) => r.nativeElement.getAttribute("data-id") === trackId,
+      );
+      if (row) {
+        row.nativeElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, 100);
   }
 
   monitorConnection() {

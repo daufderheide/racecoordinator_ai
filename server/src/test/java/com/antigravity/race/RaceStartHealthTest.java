@@ -38,7 +38,14 @@ public class RaceStartHealthTest {
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
 
-    Track realTrack = new Track("Test Track", lanes, configs, "track1", new ObjectId());
+    Track realTrack =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(configs)
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     HeatScoring mockHeatScoring = mock(HeatScoring.class);
     when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);

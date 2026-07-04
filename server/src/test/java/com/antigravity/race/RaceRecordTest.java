@@ -36,7 +36,7 @@ public class RaceRecordTest {
     lanes.add(new Lane("blue", "black", 100, "l2", null));
     lanes.add(new Lane("yellow", "black", 100, "l3", null));
     lanes.add(new Lane("green", "black", 100, "l4", null));
-    track = new Track("Test Track", lanes, "track1", null);
+    track = new Track.Builder().name("Test Track").lanes(lanes).entityId("track1").id(null).build();
 
     // Setup drivers
     drivers = new ArrayList<>();

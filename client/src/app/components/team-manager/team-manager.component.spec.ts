@@ -36,6 +36,7 @@ import {
   resetMocks,
 } from "@app/testing/unit-test-mocks";
 
+import { NavigationService } from "../../services/navigation.service";
 import { TeamManagerComponent } from "./team-manager.component";
 import { TeamManagerHarness } from "./testing/team-manager.harness";
 import { createTeamManagerDataServiceMock } from "./testing/team-manager_helper";
@@ -176,6 +177,26 @@ describe("TeamManagerComponent", () => {
       it("should select team from query param", async () => {
         await setupFixture();
         expect(await harness.getSelectedTeamName()).toBe("Team Beta");
+      });
+    });
+
+    describe("With NavigationService lastEditedId", () => {
+      it("should select team from NavigationService on loadTeams", async () => {
+        const navService = TestBed.inject(NavigationService);
+        spyOn(navService, "getLastEditedId").and.returnValue("t2");
+        spyOn(navService, "clearLastEditedId");
+
+        await setupFixture();
+
+        expect(navService.getLastEditedId).toHaveBeenCalledWith("team");
+        expect(navService.clearLastEditedId).toHaveBeenCalledWith("team");
+        expect(component.selectedTeam?.entity_id).toBe("t2");
+        expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+          relativeTo: jasmine.any(Object),
+          queryParams: { id: "t2" },
+          queryParamsHandling: "merge",
+          replaceUrl: true,
+        });
       });
     });
   });

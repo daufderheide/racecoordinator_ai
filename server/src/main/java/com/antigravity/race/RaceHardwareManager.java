@@ -9,6 +9,8 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.demo.Demo;
+import com.antigravity.protocols.trackmate.TrackmateConfig;
+import com.antigravity.protocols.trackmate.TrackmateProtocol;
 import com.antigravity.race.states.Starting;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,24 +41,34 @@ public class RaceHardwareManager {
       protocols_list.add(protocol);
     } else {
       List<ArduinoConfig> configs = race.getTrack().getArduinoConfigs();
+      List<TrackmateConfig> tmConfigs = race.getTrack().getTrackmateConfigs();
       List<String> laneColors = new ArrayList<>();
+      int numLanes = race.getTrack().getLanes().size();
       if (race.getTrack().getLanes() != null) {
         for (Lane lane : race.getTrack().getLanes()) {
           laneColors.add(lane.getBackground_color());
         }
       }
 
-      if (configs != null && !configs.isEmpty()) {
-        for (int i = 0; i < configs.size(); i++) {
-          ArduinoConfig config = configs.get(i);
-          ArduinoProtocol protocol =
-              new ArduinoProtocol(config, race.getTrack().getLanes().size(), laneColors);
-          protocol.setInterfaceIndex(i);
-          protocols_list.add(protocol);
+      if ((configs != null && !configs.isEmpty()) || (tmConfigs != null && !tmConfigs.isEmpty())) {
+        int interfaceIndex = 0;
+        if (configs != null) {
+          for (ArduinoConfig config : configs) {
+            ArduinoProtocol protocol = new ArduinoProtocol(config, numLanes, laneColors);
+            protocol.setInterfaceIndex(interfaceIndex++);
+            protocols_list.add(protocol);
+          }
+        }
+        if (tmConfigs != null) {
+          for (TrackmateConfig config : tmConfigs) {
+            TrackmateProtocol protocol = new TrackmateProtocol(config, numLanes);
+            protocol.setInterfaceIndex(interfaceIndex++);
+            protocols_list.add(protocol);
+          }
         }
       } else {
         throw new IllegalArgumentException(
-            "Race created in Real Mode, but no ArduinoConfig found for track: "
+            "Race created in Real Mode, but no hardware configs found for track: "
                 + race.getTrack().getName());
       }
     }

@@ -44,7 +44,14 @@ public class RaceModifyHeatsTest {
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "white", 101));
 
-    track = new Track("Test Track", lanes, mockConfig, "track1", new ObjectId());
+    track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(mockConfig)
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     HeatScoring mockHeatScoring = mock(HeatScoring.class);
     when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);

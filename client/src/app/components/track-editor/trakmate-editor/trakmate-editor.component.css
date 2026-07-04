@@ -1,0 +1,920 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Right Panel Arduino Styles */
+
+.arduino-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 0 10px 5px 10px;
+  box-sizing: border-box;
+  color: #ffffff;
+  position: relative;
+}
+
+.panel-header {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+/* Top Section: Controls + Image Side-by-Side */
+.config-top-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.board-controls {
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board-preview {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.board-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 250px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+}
+
+.right-controls {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.checkbox-label {
+  font-size: 1.125rem;
+  /* 18px */
+  color: #e2e8f0;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-group label.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #e2e8f0;
+}
+
+.control-group label.checkbox-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.control-group label.checkbox-label input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.control-group label.checkbox-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.control-group label {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-group label .unit-lowercase {
+  text-transform: none;
+}
+
+.control-group select,
+.control-group input[type="number"],
+.control-group input[type="text"] {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f1f5f9;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 4px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.control-group select:focus,
+.control-group input[type="number"]:focus,
+.control-group input[type="text"]:focus {
+  border-color: #38bdf8;
+}
+
+.control-group input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.com-port-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  transition: background-color 0.3s;
+  cursor: help;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.status-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #475569;
+  transition: all 0.3s;
+}
+
+.status-badge.connected .status-dot {
+  background-color: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+/* Pins Section */
+.pins-section.scrollable {
+  flex: 1;
+  padding-right: 5px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding-top: 20px;
+}
+
+.sections-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.sections-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sections-wrapper::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.sections-wrapper::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.config-section {
+  margin-bottom: 10px;
+}
+
+.section-content {
+  padding: 10px 0 10px 0;
+}
+
+.pins-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pins-section::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.pins-section::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.pins-config h4,
+.section-header h4 {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  margin: 0;
+  border-left: 3px solid #38bdf8;
+  padding-left: 10px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.pin-item {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-sizing: border-box;
+}
+
+.pin-item label {
+  font-size: 1.125rem;
+  /* 18px */
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.pin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+
+.status-badge.small {
+  position: relative;
+  right: auto;
+  top: auto;
+  transform: none;
+  width: 10px;
+  height: 10px;
+  background-color: #475569;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.status-badge.small.connected {
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+  background-color: #22c55e;
+}
+
+.status-badge.active {
+  background-color: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dropdown-trigger {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  color: #cbd5e1;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+.dropdown-trigger:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.dropdown-trigger.open {
+  border-color: #38bdf8;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.selected-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85%;
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+  color: #38bdf8;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.dropdown-menu.open-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.dropdown-item.selected {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.group-header {
+  padding: 8px 12px;
+  background: rgba(30, 41, 59, 0.5);
+  color: #38bdf8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.05);
+}
+
+.group-header:first-child {
+  border-top: none;
+}
+
+.group-header:hover {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.group-header .expander-icon {
+  font-size: 0.6rem;
+  transition: transform 0.2s;
+}
+
+.group-header .expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.group-items {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.group-items .dropdown-item {
+  padding-left: 28px;
+}
+
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+
+/* Specific adjustments for LED selectors */
+.led-selector .dropdown-menu {
+  width: 300px;
+}
+
+/* Enlarged Voltage Configuration Items */
+.voltage-config-section .pin-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.voltage-config-section .pin-item {
+  padding: 12px;
+}
+
+.voltage-config-section .pin-item label {
+  font-size: 1rem;
+}
+
+.voltage-config-section .pin-item input[type="number"] {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 8px;
+}
+
+.voltage-config-section .unit-lowercase {
+  font-size: 0.9rem !important;
+}
+
+.voltage-config-section .live-voltage-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  margin-top: 5px;
+}
+
+.voltage-config-section .live-label {
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+.voltage-config-section .live-value {
+  font-size: 1.3rem;
+  color: #38bdf8;
+  font-weight: bold;
+}
+
+/* Link Toggle Button */
+.link-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.link-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.05);
+  color: #cbd5e1;
+}
+
+.link-toggle-btn.linked {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.8);
+  color: #38bdf8;
+}
+
+.voltage-lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.clickable-link-icon {
+  cursor: pointer;
+  font-size: 1rem;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+  padding: 4px;
+}
+
+.clickable-link-icon:hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.clickable-link-icon.linked {
+  color: #38bdf8;
+}
+
+/* Set Max Button */
+.set-max-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  border-radius: 4px;
+  padding: 6px;
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.set-max-btn:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.set-max-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+/* Shared Spacer */
+.spacer {
+  flex: 1;
+}
+
+/* Actions Buttons (shared from track-editor) */
+.action-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: #475569;
+  color: white;
+}
+
+.action-btn:hover {
+  background: #64748b;
+}
+
+.action-btn.small {
+  padding: 5px 12px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* LED Configuration Styles */
+.led-config-section {
+  margin-top: -10px;
+}
+
+.led-strings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.led-string-item {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 8px;
+}
+
+.led-string-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background: rgba(15, 23, 42, 0.4);
+  cursor: pointer;
+  gap: 10px;
+  user-select: none;
+  border-radius: 8px;
+  transition: background-color 0.2s, border-radius 0.2s;
+}
+
+.led-string-item.expanded .led-string-header {
+  border-radius: 8px 8px 0 0;
+}
+
+.led-string-header:hover {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.drag-handle {
+  cursor: move;
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.ls-label {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.ls-summary {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.ls-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.icon-button.delete:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.led-string-details {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.ls-settings-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.ls-settings-row .control-group {
+  width: 100%;
+  min-width: 0;
+}
+
+.ls-settings-row .control-group label {
+  height: 2.8em;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  margin-bottom: 4px;
+  white-space: normal;
+  overflow: visible;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.ls-settings-row .control-group input,
+.ls-settings-row .control-group select {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+
+.ls-settings-row .control-group .unit-lowercase {
+  text-transform: none;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.lane-colors-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lane-colors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.lane-color-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.lane-tag {
+  width: 30px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+.lane-color-item input[type="color"] {
+  border: none;
+  width: 30px;
+  height: 25px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.leds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.led-item {
+  background: rgba(15, 23, 42, 0.3);
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-sizing: border-box;
+}
+
+.led-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+
+.led-item label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.led-item select {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Drag & Drop Styles */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+
+.status-badge.active-red {
+  background-color: #ef4444 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6) !important;
+  border-color: #f87171 !important;
+}
+
+.status-badge.active-green {
+  background-color: #22c55e !important;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6) !important;
+  border-color: #4ade80 !important;
+}
+
+.status-badge.active-blue {
+  background-color: #3b82f6 !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6) !important;
+  border-color: #60a5fa !important;
+}
+
+.led-strings-list.cdk-drop-list-dragging .led-string-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

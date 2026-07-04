@@ -344,8 +344,14 @@ public class DatabaseServiceTest {
 
     FindIterable<com.antigravity.models.Track> trackIterable = mock(FindIterable.class);
     com.antigravity.models.Track track =
-        new com.antigravity.models.Track(
-            "Track", 100, new ArrayList<>(), new ArrayList<>(), "T1", null);
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .numTrackSections(100)
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(new ArrayList<>())
+            .entityId("T1")
+            .id(null)
+            .build();
     when(trackIterable.first()).thenReturn(track);
     when(trackCollection.find()).thenReturn(trackIterable);
 

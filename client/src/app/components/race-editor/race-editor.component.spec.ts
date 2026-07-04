@@ -9,7 +9,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -36,6 +36,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
 import { RaceEditorComponent } from "./race-editor.component";
 import { RaceEditorHarness } from "./testing/race-editor.harness";
@@ -62,6 +63,7 @@ describe("RaceEditorComponent", () => {
         },
       },
       queryParams: of({ help: "false" }),
+      queryParamMap: of(convertToParamMap({ id: "r1" })),
     };
 
     const mockConnectionMonitor = jasmine.createSpyObj(
@@ -181,6 +183,7 @@ describe("RaceEditorComponent", () => {
       if (key === "id") return "r_custom";
       return null;
     });
+    activatedRoute.queryParamMap = of(convertToParamMap({ id: "r_custom" }));
 
     component.ngOnInit();
     tick();
@@ -785,6 +788,17 @@ describe("RaceEditorComponent", () => {
         returnUrl: "/default-raceday",
       },
     });
+  }));
+
+  it("should set lastEditedId in NavigationService when loading race id", fakeAsync(() => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    activatedRoute.queryParamMap = of(convertToParamMap({ id: "r2" }));
+    component.ngOnInit();
+    tick();
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith("race", "r2");
   }));
 
   it("should include team options in updateRace payload", fakeAsync(() => {

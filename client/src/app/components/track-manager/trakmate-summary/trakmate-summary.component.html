@@ -1,0 +1,39 @@
+@if (config()) {
+  <div class="arduino-summary">
+    <div
+      class="section-header"
+      (click)="toggleExpanded()"
+      style="cursor: pointer"
+    >
+      <span class="expander-icon" [class.collapsed]="!isExpanded">▼</span>
+      <h1>
+        {{ "TMS_TITLE" | translate
+        }}{{ index() !== undefined ? " " + index() : "" }}
+      </h1>
+    </div>
+    @if (isExpanded) {
+      <div class="section-content">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">{{ "TMS_COM_PORT" | translate }}:</span>
+            <span class="value">{{
+              config()?.commPort || ("TMS_NO_PORT" | translate)
+            }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "TMS_PER_LANE_RELAYS" | translate }}:</span>
+            <span class="value">{{
+              (config()?.hasPerLaneRelays ? "TMS_YES" : "TMS_NO") | translate
+            }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "TMS_PIT_ROW" | translate }}:</span>
+            <span class="value">{{
+              (hasPitRow() ? "TMS_YES" : "TMS_NO") | translate
+            }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

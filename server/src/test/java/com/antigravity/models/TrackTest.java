@@ -36,17 +36,24 @@ public class TrackTest {
     config.ledStrings = Collections.singletonList(ls);
 
     Track track =
-        new Track("Test Track", lanes, Collections.singletonList(config), "test-id", null);
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(config))
+            .entityId("test-id")
+            .id(null)
+            .build();
 
     // 2. ACTION: Remove Lane 2 (Green) and change Lane 1 color to Blue
     Lane lane1Blue = new Lane("#0000FF", "#FFFFFF", 10);
     Track updatedTrack =
-        new Track(
-            track.getName(),
-            Collections.singletonList(lane1Blue),
-            track.getArduinoConfigs(),
-            track.getEntityId(),
-            track.getId());
+        new Track.Builder()
+            .name(track.getName())
+            .lanes(Collections.singletonList(lane1Blue))
+            .arduinoConfigs(track.getArduinoConfigs())
+            .entityId(track.getEntityId())
+            .id(track.getId())
+            .build();
 
     // 3. EXECUTE SYNC
     Track syncedTrack = updatedTrack.syncWithLanes();
@@ -119,8 +126,13 @@ public class TrackTest {
             new HashMap<>());
 
     Track track =
-        new Track(
-            "Test", lanes, Collections.singletonList(config), "t1", new org.bson.types.ObjectId());
+        new Track.Builder()
+            .name("Test")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(config))
+            .entityId("t1")
+            .id(new org.bson.types.ObjectId())
+            .build();
 
     // 2. EXECUTE
     Track syncedTrack = track.syncWithLanes();
@@ -162,22 +174,24 @@ public class TrackTest {
     config.ledStrings = Collections.singletonList(ls);
 
     Track track =
-        new Track(
-            "Test Track",
-            Collections.singletonList(lane1),
-            Collections.singletonList(config),
-            "id",
-            null);
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Collections.singletonList(lane1))
+            .arduinoConfigs(Collections.singletonList(config))
+            .entityId("id")
+            .id(null)
+            .build();
 
     // 2. ACTION: Add Lane 2 (Yellow)
     Lane lane2 = new Lane("#FFFF00", "#FFFFFF", 10);
     Track updatedTrack =
-        new Track(
-            track.getName(),
-            Arrays.asList(lane1, lane2),
-            track.getArduinoConfigs(),
-            track.getEntityId(),
-            track.getId());
+        new Track.Builder()
+            .name(track.getName())
+            .lanes(Arrays.asList(lane1, lane2))
+            .arduinoConfigs(track.getArduinoConfigs())
+            .entityId(track.getEntityId())
+            .id(track.getId())
+            .build();
 
     // 3. EXECUTE SYNC
     Track syncedTrack = updatedTrack.syncWithLanes();
@@ -200,7 +214,13 @@ public class TrackTest {
     config.digitalIds = new ArrayList<>(Collections.nCopies(60, 0));
     config.analogIds = new ArrayList<>(Collections.nCopies(16, 0));
 
-    Track track = new Track("Test", lanes, Collections.singletonList(config), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(config))
+            .entityId("t1")
+            .build();
     assertEquals(false, track.hasPerLaneRelays());
 
     // Set a relay for Lane 1 (index 0)
@@ -222,7 +242,13 @@ public class TrackTest {
     config.digitalIds = new ArrayList<>(Collections.nCopies(60, 0));
     config.analogIds = new ArrayList<>(Collections.nCopies(16, 0));
 
-    Track track = new Track("Test", lanes, Collections.singletonList(config), "t1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(config))
+            .entityId("t1")
+            .build();
     assertEquals(false, track.hasMainRelay());
 
     // Set main relay
@@ -233,5 +259,24 @@ public class TrackTest {
     config.digitalIds.set(4, 0);
     config.analogIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_VALUE);
     assertEquals(true, track.hasMainRelay());
+  }
+
+  @Test
+  public void testTrackBuilder_WithTrackmateConfig() {
+    com.antigravity.protocols.trackmate.TrackmateConfig tmConfig =
+        new com.antigravity.protocols.trackmate.TrackmateConfig();
+    tmConfig.name = "My TM";
+    tmConfig.commPort = "COM5";
+
+    Track track =
+        new Track.Builder()
+            .name("TM Track")
+            .trackmateConfigs(Collections.singletonList(tmConfig))
+            .build();
+
+    assertEquals("TM Track", track.getName());
+    assertEquals(1, track.getTrackmateConfigs().size());
+    assertEquals("My TM", track.getTrackmateConfigs().get(0).name);
+    assertEquals("COM5", track.getTrackmateConfigs().get(0).commPort);
   }
 }

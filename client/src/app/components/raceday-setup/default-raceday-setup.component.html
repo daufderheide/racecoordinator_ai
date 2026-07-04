@@ -121,7 +121,7 @@
                       <span class="setup-submenu-arrow">▶</span>
                       @if (isClientLogOpen) {
                         <div class="menu-dropdown submenu">
-                          @for (level of logLevels; track level) {
+                          @for (level of clientLogLevels; track level) {
                             <div
                               class="setup-menu-dropdown-item"
                               (click)="setClientLogLevel(level)"
@@ -141,7 +141,7 @@
                       <span class="setup-submenu-arrow">▶</span>
                       @if (isServerLogOpen) {
                         <div class="menu-dropdown submenu">
-                          @for (level of logLevels; track level) {
+                          @for (level of serverLogLevels; track level) {
                             <div
                               class="setup-menu-dropdown-item"
                               (click)="setServerLogLevel(level)"

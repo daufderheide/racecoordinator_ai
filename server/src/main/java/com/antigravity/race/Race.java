@@ -185,8 +185,10 @@ public class Race implements ProtocolListener {
   }
 
   private void linkDriverReferences() {
-    // Link the DriverHeatData's driver references to the master driver list in this.drivers.
-    // This is crucial because MongoDB deserialization creates separate instances, causing overall
+    // Link the DriverHeatData's driver references to the master driver list in
+    // this.drivers.
+    // This is crucial because MongoDB deserialization creates separate instances,
+    // causing overall
     // standings updates to not propagate to the heat's driver objects.
     java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
     for (RaceParticipant rp : this.drivers) {
@@ -613,8 +615,10 @@ public class Race implements ProtocolListener {
   }
 
   public boolean startRace() {
-    if (hardwareManager.getProtocols() != null && !hardwareManager.getProtocols().isHealthy())
+    if (hardwareManager.getProtocols() != null && !hardwareManager.getProtocols().isHealthy()) {
+      logger.warn("startRace: protocol reports unhealthy not starting.");
       return false;
+    }
     state.start(this);
     return true;
   }

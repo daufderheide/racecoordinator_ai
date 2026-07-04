@@ -28,6 +28,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -125,6 +126,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {}
 
   ngOnInit() {
@@ -193,7 +195,19 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
             ),
         );
 
-        const selectedId = this.route.snapshot.queryParamMap.get("id");
+        const lastEdited = this.navigationService.getLastEditedId("driver");
+        let selectedId = this.route.snapshot.queryParamMap.get("id");
+        if (lastEdited) {
+          selectedId = lastEdited;
+          this.navigationService.clearLastEditedId("driver");
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: lastEdited },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        }
+
         if (selectedId) {
           const found = this.drivers.find((d) => d.entity_id === selectedId);
           if (found) {
@@ -230,6 +244,14 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
       { ...driver.lapAudio },
       { ...driver.bestLapAudio },
     );
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { id: driver.entity_id },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+
     this.scrollToSelected();
   }
 

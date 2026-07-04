@@ -53,7 +53,8 @@ public class RacePersistenceTest {
     lanes.add(new Lane("red", "black", 100, "l1", null));
     lanes.add(new Lane("blue", "black", 100, "l2", null));
 
-    Track track = new Track("Track", lanes, "track1", null);
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).entityId("track1").id(null).build();
 
     Race raceModel =
         new Race.Builder()
@@ -127,7 +128,8 @@ public class RacePersistenceTest {
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100, "l1", null));
-    Track track = new Track("Track", lanes, "track1", null);
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).entityId("track1").id(null).build();
 
     Race raceModel =
         new Race.Builder()

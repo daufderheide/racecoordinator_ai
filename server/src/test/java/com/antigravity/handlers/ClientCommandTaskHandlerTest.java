@@ -32,6 +32,7 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.proto.InitializeRaceResponse;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.RaceParticipant;
@@ -191,7 +192,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track with lanes
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
@@ -292,7 +299,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
@@ -336,7 +349,14 @@ public class ClientCommandTaskHandlerTest {
     OverallScoring overallScoring = new OverallScoring();
     Race raceModel = new Race.Builder().withName("MyTestRace").withEntityId("race-1").build();
     when(race.getRaceModel()).thenReturn(raceModel);
-    when(race.getTrack()).thenReturn(new Track("Track1", new ArrayList<>(), "track1", null));
+    when(race.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track1")
+                .lanes(new ArrayList<>())
+                .entityId("track1")
+                .id(null)
+                .build());
     when(race.getDrivers()).thenReturn(new ArrayList<>());
     when(race.getHeats()).thenReturn(new ArrayList<>());
     when(race.isDemoMode()).thenReturn(true);
@@ -569,6 +589,108 @@ public class ClientCommandTaskHandlerTest {
     verify(mockRace).setLanePower(false, 1);
     verify(mockCtx).status(200);
     verify(mockCtx).result("Lane 1 power set to false");
+  }
+
+  @Test
+  public void testSetMainPower_FallbackToProtocol_Success() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/main"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setMainPowerHandler = handlerCaptor.getValue();
+
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+    ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(mockProtocol);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.queryParam("on")).thenReturn("true");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setMainPowerHandler.handle(mockCtx);
+
+    verify(mockProtocol).setMainPower(true);
+    verify(mockCtx).status(200);
+    verify(mockCtx).result("Main power set to true");
+  }
+
+  @Test
+  public void testSetMainPower_NoRaceOrProtocol_NotFound() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/main"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setMainPowerHandler = handlerCaptor.getValue();
+
+    ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.queryParam("on")).thenReturn("true");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setMainPowerHandler.handle(mockCtx);
+
+    verify(mockCtx).status(404);
+    verify(mockCtx).result("No active race or interface found");
+  }
+
+  @Test
+  public void testSetLanePower_FallbackToProtocol_Success() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/lane/{lane}"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setLanePowerHandler = handlerCaptor.getValue();
+
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+    ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(mockProtocol);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("lane")).thenReturn("1");
+    when(mockCtx.queryParam("on")).thenReturn("false");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setLanePowerHandler.handle(mockCtx);
+
+    verify(mockProtocol).setLanePower(false, 1);
+    verify(mockCtx).status(200);
+    verify(mockCtx).result("Lane 1 power set to false");
+  }
+
+  @Test
+  public void testSetLanePower_NoRaceOrProtocol_NotFound() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> handlerCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/track/power/lane/{lane}"),
+            handlerCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler setLanePowerHandler = handlerCaptor.getValue();
+
+    ClientSubscriptionManager.getInstance().setRace(null);
+    ClientSubscriptionManager.getInstance().setProtocol(null);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("lane")).thenReturn("1");
+    when(mockCtx.queryParam("on")).thenReturn("false");
+    when(mockCtx.status(anyInt())).thenReturn(mockCtx);
+
+    setLanePowerHandler.handle(mockCtx);
+
+    verify(mockCtx).status(404);
+    verify(mockCtx).result("No active race or interface found");
   }
 
   @Test
@@ -953,7 +1075,13 @@ public class ClientCommandTaskHandlerTest {
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
-    Track track = new Track("Test Track", Arrays.asList(lane), "track-1", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
 
     FindIterable<Track> trackIterable = mock(FindIterable.class);
     when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);

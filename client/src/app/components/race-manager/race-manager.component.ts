@@ -26,6 +26,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -122,6 +123,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     private helpService: HelpService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {}
 
   ngOnInit() {
@@ -171,7 +173,19 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       next: (races) => {
         this.races = races;
 
-        const selectedId = this.route.snapshot.queryParamMap.get("id");
+        const lastEdited = this.navigationService.getLastEditedId("race");
+        let selectedId = this.route.snapshot.queryParamMap.get("id");
+        if (lastEdited) {
+          selectedId = lastEdited;
+          this.navigationService.clearLastEditedId("race");
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { id: lastEdited },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        }
+
         if (selectedId) {
           const found = this.races.find(
             (r) => (r as any).entity_id === selectedId,
@@ -208,6 +222,13 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   selectRace(race: any) {
     this.selectedRace = race;
     this.editingRace = { ...race };
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { id: race.entity_id },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
 
     // Clear the previous heats first
     this.generatedHeats = [];

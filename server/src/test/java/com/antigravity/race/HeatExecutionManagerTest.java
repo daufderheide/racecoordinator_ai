@@ -70,12 +70,13 @@ public class HeatExecutionManagerTest {
     lanes.add(new Lane("red", "black", 100));
     lanes.add(new Lane("blue", "black", 100));
     track =
-        new Track(
-            "Test Track",
-            lanes,
-            Collections.singletonList(mock(ArduinoConfig.class)),
-            "track1",
-            new ObjectId());
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(lanes)
+            .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
+            .entityId("track1")
+            .id(new ObjectId())
+            .build();
 
     race =
         new com.antigravity.race.Race.Builder()

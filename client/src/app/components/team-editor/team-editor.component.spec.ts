@@ -9,7 +9,7 @@ import {
   tick as _tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -39,6 +39,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import { NavigationService } from "../../services/navigation.service";
 import { createTeamManagerDataServiceMock } from "../team-manager/testing/team-manager_helper";
 import { TeamEditorComponent } from "./team-editor.component";
 
@@ -156,6 +157,7 @@ describe("TeamEditorComponent", () => {
         },
       },
       queryParams: of({ help: "false" }),
+      queryParamMap: of(convertToParamMap({ id: "t1" })),
     };
 
     mockRaceConnectionService = jasmine.createSpyObj("RaceConnectionService", [
@@ -398,6 +400,16 @@ describe("TeamEditorComponent", () => {
       queryParams: { id: "t1", from: null, returnUrl: null },
     });
   }));
+
+  it("should set lastEditedId in NavigationService when loading team id", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    mockActivatedRoute.queryParamMap = of(convertToParamMap({ id: "t2" }));
+    component.ngOnInit();
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith("team", "t2");
+  });
 
   it("should propagate 'from' and 'returnUrl' when navigating back", fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(

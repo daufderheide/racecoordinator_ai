@@ -31,6 +31,7 @@ import {
 } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -99,6 +100,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private raceConnectionService: RaceConnectionService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private navigationService: NavigationService,
   ) {
     this.undoManager = new UndoManager<Team>(
       {
@@ -138,6 +140,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             return;
           }
           const nextId = paramMap.get("id");
+          if (nextId && nextId !== "new") {
+            this.navigationService.setLastEditedId("team", nextId);
+          }
           const currentId = this.editingTeam?.entity_id;
           if (
             currentId &&
@@ -494,6 +499,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       next: (result) => {
         this.isSaving = false;
         this.isAutoSaving = false;
+        this.navigationService.setLastEditedId("team", result.entity_id);
         if (this.editingTeam) {
           this.editingTeam.entity_id = result.entity_id;
           this.isDirty = false;

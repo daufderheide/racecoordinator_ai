@@ -31,7 +31,14 @@ public class RaceConverterTest {
             .withTrackEntityId("track-id")
             .withHeatScoring(heatScoring)
             .build();
-    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
 
@@ -55,7 +62,14 @@ public class RaceConverterTest {
             .withTrackEntityId("track-id")
             .withHeatScoring(heatScoring)
             .build();
-    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
 
@@ -79,7 +93,14 @@ public class RaceConverterTest {
             .withTrackEntityId("track-id")
             .withHeatScoring(heatScoring)
             .build();
-    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
 
@@ -118,7 +139,14 @@ public class RaceConverterTest {
             .withMinLapTime(0.0)
             .withFuelOptions(fuelOptions)
             .build();
-    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
 
@@ -136,7 +164,14 @@ public class RaceConverterTest {
             .withHeatRotationType(HeatRotationType.SingleHeatSolo)
             .withSoloLaneIndex(2)
             .build();
-    Track track = new Track("Test Track", new ArrayList<>(), null, "track-id", null);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
 
@@ -151,7 +186,13 @@ public class RaceConverterTest {
     List<com.antigravity.models.Lane> lanes = new ArrayList<>();
     lanes.add(new com.antigravity.models.Lane("red", "white", 10));
     com.antigravity.models.Track trackModel =
-        new com.antigravity.models.Track("Track", lanes, null, "t1", null);
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(null)
+            .entityId("t1")
+            .id(null)
+            .build();
 
     List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
     drivers.add(

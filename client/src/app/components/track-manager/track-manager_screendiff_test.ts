@@ -78,6 +78,22 @@ test.describe("Track Manager Visuals", () => {
     await expect(page).toHaveScreenshot("track-manager-arduino-summary.png");
   });
 
+  test("should show trackmate summary", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-manager"),
+    );
+
+    const managerHost = page.locator("app-track-manager");
+    const harness = new TrackManagerHarnessE2e(managerHost);
+
+    await harness.selectTrack("Trakmate Track");
+
+    await page.waitForTimeout(3000);
+    await expect(page).toHaveScreenshot("track-manager-trackmate-summary.png");
+  });
+
   test("should navigate to editor when Create New is clicked", async ({
     page,
   }) => {
