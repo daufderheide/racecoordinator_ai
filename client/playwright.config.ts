@@ -72,7 +72,6 @@ export default defineConfig({
     timeout: 10000,
     /* Visual regression settings */
     toHaveScreenshot: {
-      timeout: 15000,
       animations: "disabled",
       maxDiffPixels: 150,
       maxDiffPixelRatio: 0.0005,

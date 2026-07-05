@@ -98,7 +98,7 @@ $ServerBuildDir = Join-Path $ServerTmp "target_test"
 $env:PROTO_DEST_DIR = $ServerBuildDir
 
 Write-Host ""
-Write-Host "--- 🔹 Running Server Tests (PowerShell) 🔹 ---" -ForegroundColor Cyan
+Write-Host "--- Running Server Tests (PowerShell) ---" -ForegroundColor Cyan
 
 if (-not (Test-Path $ServerTmp)) {
     New-Item -ItemType Directory -Path $ServerTmp -Force | Out-Null
