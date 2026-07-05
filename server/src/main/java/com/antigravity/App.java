@@ -906,7 +906,8 @@ public class App {
     if (osName.contains("win")) {
       try {
         Process p = Runtime.getRuntime().exec("cmd /c netstat -ano -p tcp");
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+        try (BufferedReader reader =
+            new BufferedReader(new InputStreamReader(p.getInputStream()))) {
           String line;
           while ((line = reader.readLine()) != null) {
             String[] parts = line.trim().split("\\s+");
@@ -915,7 +916,8 @@ public class App {
               try {
                 int pidInt = Integer.parseInt(pid);
                 if (pidInt > 0) {
-                  logger.info("Found process with PID {} using port {}. Killing it...", pidInt, port);
+                  logger.info(
+                      "Found process with PID {} using port {}. Killing it...", pidInt, port);
                   Runtime.getRuntime().exec("taskkill /F /PID " + pidInt).waitFor();
                 }
               } catch (NumberFormatException nfe) {
@@ -930,8 +932,9 @@ public class App {
     } else {
       // Unix-like systems (Linux, macOS)
       try {
-        Process p = Runtime.getRuntime().exec(new String[]{"sh", "-c", "lsof -t -i:" + port});
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+        Process p = Runtime.getRuntime().exec(new String[] {"sh", "-c", "lsof -t -i:" + port});
+        try (BufferedReader reader =
+            new BufferedReader(new InputStreamReader(p.getInputStream()))) {
           String line;
           while ((line = reader.readLine()) != null) {
             String pid = line.trim();
@@ -939,8 +942,11 @@ public class App {
               try {
                 int pidInt = Integer.parseInt(pid);
                 if (pidInt > 0) {
-                  logger.info("Found process with PID {} using port {}. Killing it...", pidInt, port);
-                  Runtime.getRuntime().exec(new String[]{"kill", "-9", String.valueOf(pidInt)}).waitFor();
+                  logger.info(
+                      "Found process with PID {} using port {}. Killing it...", pidInt, port);
+                  Runtime.getRuntime()
+                      .exec(new String[] {"kill", "-9", String.valueOf(pidInt)})
+                      .waitFor();
                 }
               } catch (NumberFormatException nfe) {
                 // Ignore
