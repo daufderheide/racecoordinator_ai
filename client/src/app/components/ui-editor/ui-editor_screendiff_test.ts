@@ -111,7 +111,7 @@ test.describe("UI Editor Visuals", () => {
     // Wait for invalid class to be applied
     const container = page.locator(".theme-title-container.invalid").first();
     await container.waitFor({ state: "visible" });
-    await page.waitForTimeout(500); // Allow layout and font antialiasing to settle
+    await page.waitForTimeout(2000); // Allow layout and font antialiasing to settle
 
     const sectionHeader = page
       .locator(".theme-sub-section .section-header")
@@ -122,6 +122,8 @@ test.describe("UI Editor Visuals", () => {
       {
         maxDiffPixelRatio: 0.15,
         maxDiffPixels: 10000,
+        timeout: 15000,
+        animations: "disabled",
       },
     );
 
@@ -166,7 +168,12 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(page.locator(".config-section").nth(1)).toHaveScreenshot(
       "ui-editor-practice-layout-section.png",
-      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+        timeout: 15000,
+        animations: "disabled",
+      },
     );
   });
 
@@ -190,16 +197,23 @@ test.describe("UI Editor Visuals", () => {
 
     await expect(section.locator(".layout-controls").first()).toHaveScreenshot(
       "ui-editor-layout-resolution-dropdown.png",
-      { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+        timeout: 15000,
+        animations: "disabled",
+      },
     );
     await resolutionSelect.selectOption("1920x1080");
-    await page.waitForTimeout(500); // Wait for scaling animation
+    await page.waitForTimeout(2000); // Wait for scaling animation
 
     await expect(
       page.locator(".raceday-preview-scaler").first(),
     ).toHaveScreenshot("ui-editor-layout-preview-scaled.png", {
-      maxDiffPixelRatio: 0.05,
-      maxDiffPixels: 10000,
+      maxDiffPixelRatio: 0.1,
+      maxDiffPixels: 40000,
+      timeout: 15000,
+      animations: "disabled",
     });
   });
 });

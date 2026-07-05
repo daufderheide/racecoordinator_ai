@@ -3,6 +3,8 @@ const path = require('path');
 
 const PROJECT_ROOT = process.env.CLIENT_DIR || path.resolve(__dirname, '..', 'client');
 const REPORT_PATH = process.env.PW_REPORT_PATH || path.join(PROJECT_ROOT, 'pw-result.json');
+const ISOLATED_DIR = process.env.ISOLATED_DIR || path.join(PROJECT_ROOT, '.isolated-test');
+
 
 function findFailedSpecs(node) {
     if (!node) return [];
@@ -56,7 +58,12 @@ for (const spec of failedSpecs) {
             const attachments = result.attachments || [];
             for (const attachment of attachments) {
                 if (attachment.name.endsWith('-actual.png')) {
-                    const actualPath = attachment.path;
+                    let actualPath = attachment.path;
+                    // If the path is from the Docker container, map it back to the host filesystem
+                    if (actualPath.startsWith('/work/')) {
+                        actualPath = actualPath.replace('/work', ISOLATED_DIR);
+                    }
+
                     if (!fs.existsSync(actualPath)) {
                         console.log(`Warning: Actual file not found on disk: ${actualPath}`);
                         continue;

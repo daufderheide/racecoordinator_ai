@@ -6,7 +6,7 @@ source "$(dirname "$0")/scripts/test_env.sh"
 # If sync-only, run Node.js script to promote actual images to expected and exit
 if [[ "$*" == *"--sync-only"* ]]; then
     echo "Syncing snapshots from last run's actual results..."
-    PW_REPORT_PATH="$CLIENT_DIR/.isolated-test/playwright-report/pw-result.json" CLIENT_DIR="$CLIENT_DIR" node "$(dirname "$0")/scripts/sync_snapshots.js"
+    ISOLATED_DIR="$CLIENT_DIR/.isolated-test" PW_REPORT_PATH="$CLIENT_DIR/.isolated-test/pw-result.json" CLIENT_DIR="$CLIENT_DIR" node "$(dirname "$0")/scripts/sync_snapshots.js"
     exit 0
 fi
 
@@ -38,28 +38,43 @@ rm -rf "$ISOLATED_DIR/dist"
 
 cd "$ISOLATED_DIR" || exit
 
-# Ensure dependencies are installed in isolated directory
-# Check if package.json has changed since last install OR if playwright is missing/empty
-if [ ! -d "node_modules" ] || [ package.json -nt node_modules ] || [ ! -f "node_modules/@playwright/test/package.json" ]; then
-    echo "Installing/Updating dependencies in $ISOLATED_DIR..."
-    npm install --no-package-lock --ignore-scripts --cache "$ISOLATED_DIR/npm-cache" || echo "Warning: npm install failed, trying to proceed anyway..."
-    # Touch node_modules to update its mtime for the check above
-    touch node_modules
+# Check for Docker
+if ! command -v docker &> /dev/null; then
+    echo "Docker is required but not installed."
+    echo "Attempting to install Docker via Homebrew..."
+    if command -v brew &> /dev/null; then
+        brew install --cask docker
+        echo -e "\n========================================================"
+        echo "IMPORTANT: Docker Desktop has been installed."
+        echo "You must manually open Docker Desktop from your Applications"
+        echo "folder at least once to grant permissions and start the daemon."
+        echo "Please do this, and then re-run this script."
+        echo "========================================================\n"
+        exit 1
+    else
+        echo "Homebrew not found. Please install Docker manually from https://www.docker.com/"
+        exit 1
+    fi
 fi
 
-# Find the Chrome binary from Playwright browsers
-export PLAYWRIGHT_BROWSERS_PATH="$ISOLATED_DIR/browsers"
-mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"
-
-# Only install browsers if they don't exist
-if [ ! -d "$PLAYWRIGHT_BROWSERS_PATH/webkit" ] && [ ! -d "$PLAYWRIGHT_BROWSERS_PATH/chromium" ]; then
-    echo "Installing Playwright browsers..."
-    npx -y playwright install
+# Make sure Docker daemon is running
+if ! docker info &> /dev/null; then
+    echo "Docker daemon is not running. Please start Docker Desktop and try again."
+    exit 1
 fi
 
-# Setup a clean home for the test to avoid EPERM on .angular-config.json
+echo "Running tests in Docker container..."
 mkdir -p "$ISOLATED_DIR/test-home"
-HOME="$ISOLATED_DIR/test-home" npx -y playwright test "$@"
+
+# We must run npm install inside the container so native modules are Linux-compatible
+docker run --rm \
+  --ipc=host \
+  -v "$ISOLATED_DIR:/work" \
+  -w /work \
+  -e HOME="/work/test-home" \
+  -e PWTEST_WORKERS="${PWTEST_WORKERS:-2}" \
+  mcr.microsoft.com/playwright:v1.61.1-jammy \
+  /bin/bash -c "npm install --no-package-lock --ignore-scripts && npx playwright test $*"
 TEST_EXIT_CODE=$?
 
 # If updating snapshots, copy them back to the original source directory
@@ -73,6 +88,14 @@ if [[ "$*" == *"--update-snapshots"* ]]; then
         cp -Rf "$dir/" "$dest_dir/"
         echo "Copied snapshots to $dest_dir"
     done
+fi
+
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "Tests failed. Opening report..."
+    cd "$CLIENT_DIR" || exit
+    # Run the show-report command (this will block the terminal until you exit)
+    npx playwright show-report "$ISOLATED_DIR/playwright-report"
 fi
 
 exit $TEST_EXIT_CODE
