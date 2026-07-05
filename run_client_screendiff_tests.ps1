@@ -83,7 +83,7 @@ $DockerArgs = @(
     "-v", "$IsolatedDir`:/work",
     "-w", "/work",
     "-e", "HOME=/work/test-home",
-    "-e", "PWTEST_WORKERS=$((if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '2' }))",
+    "-e", "PWTEST_WORKERS=$((if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '50%' }))",
     "mcr.microsoft.com/playwright:v1.61.1-jammy",
     "/bin/bash", "-c", "npm install --no-package-lock --legacy-peer-deps --ignore-scripts && npx playwright test $args"
 )

@@ -72,7 +72,7 @@ docker run --rm \
   -v "$ISOLATED_DIR:/work" \
   -w /work \
   -e HOME="/work/test-home" \
-  -e PWTEST_WORKERS="${PWTEST_WORKERS:-2}" \
+  -e PWTEST_WORKERS="${PWTEST_WORKERS:-50%}" \
   mcr.microsoft.com/playwright:v1.61.1-jammy \
   /bin/bash -c "npm install --no-package-lock --ignore-scripts && npx playwright test $*"
 TEST_EXIT_CODE=$?
