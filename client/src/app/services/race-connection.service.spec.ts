@@ -354,6 +354,35 @@ describe("RaceConnectionService", () => {
 
       mockFlagSubject.next(RaceFlag.GREEN);
     });
+
+    it("should drop transient raceTime 0 during STARTING transition", fakeAsync(() => {
+      const raceStateSubject = new Subject<RaceState>();
+      mockDataService.getRaceState.and.returnValue(
+        raceStateSubject.asObservable(),
+      );
+
+      const raceTimeSubject = new Subject<any>();
+      mockDataService.getRaceTime.and.returnValue(
+        raceTimeSubject.asObservable(),
+      );
+
+      const emittedTimes: any[] = [];
+      service.connect();
+      service.raceTime$.subscribe((t) => emittedTimes.push(t));
+
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      raceTimeSubject.next({ time: 5.0, autoStartRemaining: 5.0 });
+      tick();
+
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 0 });
+      tick();
+
+      expect(emittedTimes.length).toBe(2);
+      expect(emittedTimes[0].time).toBe(0);
+      expect(emittedTimes[1].time).toBe(5.0);
+    }));
   });
 
   describe("Connection recovery", () => {

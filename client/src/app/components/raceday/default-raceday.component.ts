@@ -296,6 +296,34 @@ export class DefaultRacedayComponent
 
   protected get formattedTime(): string {
     const s = this.raceState;
+
+    const showDurationOnly =
+      this.race?.heat_scoring?.finishMethod === FinishMethod.Timed &&
+      ((s === RaceState.NOT_STARTED &&
+        this.autoStartRemaining <= 0 &&
+        this.autoAdvanceRemaining <= 0) ||
+       (s === RaceState.STARTING &&
+        this.showCountdownOverlay &&
+        !this.isRestarting));
+
+    if (showDurationOnly) {
+      const duration = this.race?.heat_scoring?.finishValue || 0;
+
+      const hoursD = Math.floor(duration / 3600);
+      const minutesD = Math.floor((duration % 3600) / 60);
+      const secondsD = Math.floor(duration % 60);
+
+      if (hoursD > 0) {
+        return `${hoursD}:${minutesD.toString().padStart(2, "0")}:${secondsD
+          .toString()
+          .padStart(2, "0")}`;
+      }
+      if (minutesD > 0) {
+        return `${minutesD}:${secondsD.toString().padStart(2, "0")}`;
+      }
+      return `${secondsD}`;
+    }
+
     if (
       (s === RaceState.NOT_STARTED || s === RaceState.UNKNOWN_STATE) &&
       this.autoStartRemaining <= 0 &&
@@ -307,7 +335,7 @@ export class DefaultRacedayComponent
     const time = this.time || 0;
 
     if (s === RaceState.HEAT_OVER && time <= 0) {
-      return "--";
+      return "0";
     }
     const hours = Math.floor(time / 3600);
     const minutes = Math.floor((time % 3600) / 60);
@@ -909,8 +937,9 @@ export class DefaultRacedayComponent
         this.autoStartRemaining = raceTime.autoStartRemaining || 0;
         this.autoAdvanceRemaining = raceTime.autoAdvanceRemaining || 0;
 
-        let time = raceTime.time || 0;
-        if (this.autoStartRemaining > 0) {
+        const actualRaceTime = raceTime.time || 0;
+        let time = actualRaceTime;
+        if (this.autoStartRemaining > 0 && !this.isRestarting) {
           time = this.autoStartRemaining;
         } else if (this.autoAdvanceRemaining > 0) {
           time = this.autoAdvanceRemaining;
@@ -924,21 +953,38 @@ export class DefaultRacedayComponent
         if (time > this.previousTime) {
           this.timeFormat = "1.0-0";
         } else if (time < this.previousTime) {
-          const timerWidget = this.layout?.widgets?.find(
-            (w) => w.widgetType === "timer",
-          );
-          const threshold =
-            timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10;
-          const decimals =
-            timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2;
-
-          if (time < threshold && decimals > 0) {
-            this.timeFormat = `1.${decimals}-${decimals}`;
-          } else {
+          if (
+            this.raceState === RaceState.STARTING &&
+            this.race?.heat_scoring?.finishMethod === FinishMethod.Timed
+          ) {
             this.timeFormat = "1.0-0";
+          } else {
+            const timerWidget = this.layout?.widgets?.find(
+              (w) => w.widgetType === "timer",
+            );
+            const threshold =
+              timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10;
+            const decimals =
+              timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2;
+
+            if (time < threshold && decimals > 0) {
+              this.timeFormat = `1.${decimals}-${decimals}`;
+            } else {
+              this.timeFormat = "1.0-0";
+            }
           }
         } else {
           if (time === 0) this.timeFormat = "1.0-0";
+        }
+
+        if (
+          time === 0 &&
+          this.previousTime > 0 &&
+          this.showCountdownOverlay &&
+          this.autoStartRemaining <= 0 &&
+          this.autoAdvanceRemaining <= 0
+        ) {
+          time = this.previousTime;
         }
 
         if (this.raceState === RaceState.RACING) {
@@ -3549,8 +3595,21 @@ export class DefaultRacedayComponent
 
     // If RACING state came, set all lamps to green
     if (state === RaceState.RACING) {
-      this.isRestarting = false;
       this.setAllLampsGo();
+
+      if (
+        previousState === RaceState.STARTING &&
+        this.showCountdownOverlay &&
+        !this.isRestarting
+      ) {
+        const scoring = this.race?.heat_scoring;
+        if (scoring?.finishMethod === FinishMethod.Timed) {
+          this.time = scoring.finishValue;
+        }
+      }
+
+      this.isRestarting = false;
+
       if (previousState !== RaceState.UNKNOWN_STATE) {
         this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
       }
@@ -3577,11 +3636,16 @@ export class DefaultRacedayComponent
       return;
     }
 
+    const displayTime =
+      this.raceState === RaceState.STARTING && currentTime <= 0
+        ? 1
+        : currentTime;
+
     // Show the number of lamps corresponding to the seconds elapsed (e.g., 1st sec = 1 lamp).
     // This synchronizes with the updated hardware LED logic (1, 2, 3, GO).
     const onCount = Math.max(
       1,
-      this.countdownTotalLamps - Math.ceil(currentTime) + 1,
+      this.countdownTotalLamps - Math.ceil(displayTime) + 1,
     );
 
     this.countdownLamps = [];
@@ -3599,7 +3663,7 @@ export class DefaultRacedayComponent
       });
     }
 
-    this.countdownText = `${Math.ceil(currentTime)}`;
+    this.countdownText = `${Math.ceil(displayTime)}`;
     this.countdownColor = "lime";
 
     const currentSecond = Math.ceil(currentTime);

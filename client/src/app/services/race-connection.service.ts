@@ -222,6 +222,27 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getRaceTime().subscribe((raceTime) => {
+        try {
+          const current = this.raceTimeSubject.getValue() || { time: 0 };
+          const currentState = this.raceStateSubject.getValue();
+
+          if (
+            raceTime &&
+            (raceTime.autoStartRemaining == null || raceTime.autoStartRemaining <= 0) &&
+            (raceTime.autoAdvanceRemaining == null || raceTime.autoAdvanceRemaining <= 0) &&
+            raceTime.time === 0 &&
+            (current.time || 0) > 0 &&
+            currentState === RaceState.STARTING
+          ) {
+            this.logger.debug(
+              "RaceConnectionService: dropping transient raceTime 0 during STARTING transition",
+            );
+            return;
+          }
+        } catch (e) {
+          // Defensive: if getValue() isn't available for any reason, just forward
+        }
+
         this.raceTimeSubject.next(raceTime);
       }),
     );
