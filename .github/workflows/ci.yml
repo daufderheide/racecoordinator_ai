@@ -60,7 +60,7 @@ jobs:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
 
   test-visual:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 20
@@ -74,7 +74,7 @@ jobs:
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         with:
-          path: ~/Library/Caches/ms-playwright
+          path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('client/package-lock.json') }}
       - name: Install Playwright Browsers
         run: cd client && npx playwright install --with-deps
@@ -84,7 +84,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Install Protoc
-        run: brew install protobuf
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Generate Protobufs
         run: cd server && chmod +x generate_protos.sh && ./generate_protos.sh
       - name: Run visual tests
