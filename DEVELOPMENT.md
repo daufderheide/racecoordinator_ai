@@ -1,6 +1,6 @@
 # Race Coordinator AI Development Guide
 
-This guide provides instructions for setting up your environment and running the Race Coordinator AI application on Windows and macOS.
+This guide provides instructions for setting up your environment and running the Race Coordinator AI application on Windows and macOS from the source code.
 
 If you encounter any problems with the steps in this document or with Race Coordinator AI itself, please report them by creating an issue on [GitHub](https://github.com/daufderheide/racecoordinator_ai/issues).
 
@@ -12,13 +12,6 @@ System requirements to build and run Race Coordinator AI from source code will b
 
 ---
 
-## macOS
-
-> [!NOTE]
-> **TODO**: Add macOS setup and development instructions.
-
----
-
 ## Windows
 
 ### Step 1: Install Google Antigravity IDE
@@ -26,7 +19,7 @@ System requirements to build and run Race Coordinator AI from source code will b
 Please install **Google Antigravity IDE** from the official product page:
 - [Google Antigravity IDE Product Page](https://antigravity.google/product/antigravity-ide) *
 
-*\* Note: Ensure you download the **IDE version** specifically, rather than any command-line tool or standalone extension, to ensure compatibility with all pair-programming and browser features.*
+*\* Note: Ensure you download the **IDE version** specifically, rather than any command-line tool or standalone extension.*
 
 ### Step 2: Create a GitHub Account
 
@@ -43,20 +36,12 @@ To collaborate and sync repository changes, you need a GitHub account. Follow th
 
 ---
 
-### Developers
-
-> [!NOTE]
-> **TODO**: Add instructions for contributing code, running tests, writing code, and code formatting rules.  This will require forking the repository and doing pull requests.
-
----
-
 ### Beta Testers
 
 As a beta tester, you will clone the repository, install the dependencies, and run both the client and server locally on your system from the main developement branch (currently just main).
 
 > [!WARNING]
 > Because you are cloning the repository directly, you will not have permissions to push changes back to it. As such, you should not make any local changes to the code, as you will be unable to update the remote repository with them.
-
 
 #### 1. Clone the Repository
 Once you have your GitHub account set up, clone the repository to your local machine:
@@ -77,18 +62,16 @@ Once you have your GitHub account set up, clone the repository to your local mac
 6. Open a new terminal inside the IDE (which will now point directly to the project root directory).
 
 #### 2. Dependencies and Installation
-All required dependencies are installed automatically by the application's build and run scripts. You do not need to manually install, configure, or set up any databases, packages, or third-party dependencies on your machine:
-* **Node.js / npm**: Automatically installed/restored via the client startup script.
-* **MongoDB**: Automatically managed! The backend server uses an embedded MongoDB engine (via Flapdoodle Embedded MongoDB) which is automatically spun up and configured on port `27017` when starting the server. You do not need to install or run a separate MongoDB database instance.
+All required dependencies are installed automatically by the application's build and run scripts. You do not need to manually install, configure, or set up any databases, packages, or third-party dependencies on your machine.
 
 #### 3. Building and Running the Application
 To run the application, you need to start both the Java backend server and the Angular frontend client. We provide PowerShell scripts to streamline this.
 
 > [!IMPORTANT]
 > As a beta tester, there are only 3 commands you will ever need to run, and in general they should be run in this order:
-> 1. `git pull`
-> 2. `.\run_server_headless.ps1`
-> 3. `.\run_client.ps1`
+> 1. `git pull` -- syncs your local codebase to the absolute latest version on GitHub.
+> 2. `.\run_server_headless.ps1` -- installs dependencies, builds, and starts the server on port 7070
+> 3. `.\run_client.ps1` -- installs dependencies, builds, and starts the client on port 4200
 
 ##### Update the Codebase
 Before starting the server and client, it is highly recommended to update your local codebase with the latest changes.
@@ -97,7 +80,7 @@ Before starting the server and client, it is highly recommended to update your l
    ```powershell
    git pull
    ```
-   
+
 ##### Run the Headless Server
 The server manages the application logic, databases, and connection ports.
 1. Open a terminal tab inside the Google Antigravity IDE (by default this will be a PowerShell terminal on Windows).
@@ -106,7 +89,8 @@ The server manages the application logic, databases, and connection ports.
    .\run_server_headless.ps1
    ```
    *(This script: [run_server_headless.ps1](run_server_headless.ps1))*
-3. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
+3. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
+4. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
 
 ##### Run the Client
 The client provides the web-based user interface.
@@ -119,3 +103,17 @@ The client provides the web-based user interface.
 3. On first run, it will automatically download and install dependencies (`npm install`), compile Protobuf schemas, and launch the dev server.
 4. Once running, access the user interface in your browser at:
    - [http://localhost:4200](http://localhost:4200)
+
+---
+
+### Developers
+
+> [!NOTE]
+> **TODO**: Add instructions for contributing code, running tests, writing code, and code formatting rules.  This will require forking the repository and doing pull requests.
+
+---
+
+## macOS
+
+> [!NOTE]
+> **TODO**: Add macOS setup and development instructions.
