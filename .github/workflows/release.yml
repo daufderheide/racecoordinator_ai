@@ -171,6 +171,12 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
           echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
 
+      - name: Rename Files with Version
+        run: |
+          mv final-release/RaceCoordinatorAI_Online_Setup.exe "final-release/RaceCoordinatorAI_Online_Setup_${TAG}.exe" || true
+          mv final-release/RaceCoordinatorAI_Offline_Legacy_Setup.exe "final-release/RaceCoordinatorAI_Offline_Legacy_Setup_${TAG}.exe" || true
+          mv final-release/RaceCoordinator_Mac.dmg "final-release/RaceCoordinator_Mac_${TAG}.dmg" || true
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
