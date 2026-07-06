@@ -100,9 +100,10 @@ $TestExitCode = $LASTEXITCODE
 # If updating snapshots, copy them back to the original source directory
 if ($args -contains "--update-snapshots") {
     Write-Host "Syncing updated snapshots back to source..." -ForegroundColor Cyan
-    $SnapshotDirs = Get-ChildItem -Path (Join-Path $IsolatedDir "src") -Filter "*-snapshots" -Recurse -Directory
+    $FullIsolatedDir = (Get-Item $IsolatedDir).FullName
+    $SnapshotDirs = Get-ChildItem -Path (Join-Path $FullIsolatedDir "src") -Filter "*-snapshots" -Recurse -Directory
     foreach ($dir in $SnapshotDirs) {
-        $relativePath = $dir.FullName.Substring($IsolatedDir.Length + 1)
+        $relativePath = $dir.FullName.Substring($FullIsolatedDir.Length + 1)
         $destPath = Join-Path $ClientDir $relativePath
         if (-not (Test-Path $destPath)) {
             New-Item -ItemType Directory -Path $destPath -Force | Out-Null
