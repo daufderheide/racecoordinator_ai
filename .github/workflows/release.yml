@@ -35,7 +35,7 @@ jobs:
           elif [ "${{ github.ref_type }}" == "tag" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            VERSION="0.0.0-alpha.$(git rev-parse --short HEAD)"
+            VERSION="0.0.0-alpha.${GITHUB_SHA::7}"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
@@ -165,7 +165,7 @@ jobs:
               IS_PRERELEASE="false"
             fi
           else
-            TAG="v0.0.0-alpha.$(git rev-parse --short HEAD)"
+            TAG="v0.0.0-alpha.${GITHUB_SHA::7}"
             IS_PRERELEASE="true"
           fi
           echo "TAG=$TAG" >> $GITHUB_ENV
