@@ -13,6 +13,12 @@ $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-visual"
 
 if (-not (Test-Path $IsolatedDir)) {
     New-Item -ItemType Directory -Path $IsolatedDir -Force | Out-Null
+} else {
+    # If the directory exists, clear out 'dist' so we don't serve a stale angular build
+    $StaleDist = Join-Path $IsolatedDir "dist"
+    if (Test-Path $StaleDist) {
+        Remove-Item -Path $StaleDist -Recurse -Force
+    }
 }
 
 $env:PW_REPORT_PATH = Join-Path $IsolatedDir "pw-result.json"
@@ -83,7 +89,7 @@ $DockerArgs = @(
     "-v", "$IsolatedDir`:/work",
     "-w", "/work",
     "-e", "HOME=/work/test-home",
-    "-e", "PWTEST_WORKERS=$((if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '50%' }))",
+    "-e", "PWTEST_WORKERS=$(if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '50%' })",
     "mcr.microsoft.com/playwright:v1.61.1-jammy",
     "/bin/bash", "-c", "npm install --no-package-lock --legacy-peer-deps --ignore-scripts && npx playwright test $args"
 )
