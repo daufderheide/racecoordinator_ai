@@ -346,41 +346,8 @@ create_scripts release/RaceCoordinator
 echo "Generating scripts for offline distribution..."
 create_scripts release/RaceCoordinator_Offline
 
-# 6. Create Mac DMG (if on Mac)
-
-# DMG for Mac (if on Mac)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Creating Mac Online DMG..."
-    mkdir -p release/dmg_content
-    mkdir -p release/dmg_content/web
-    
-    echo "Copying core application files..."
-    cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar release/dmg_content/RaceCoordinator.jar
-    cp -r client/dist/client/* release/dmg_content/web/
-    if [ -d "server/src/main/resources/arduino" ]; then
-        cp -r server/src/main/resources/arduino release/dmg_content/
-    fi
-    
-    echo "Bundling Mac-specific scripts..."
-    cp release/RaceCoordinator/start_mac.command release/dmg_content/
-    if [ -f "scripts/install_dependencies_mac.sh" ]; then
-        cp scripts/install_dependencies_mac.sh release/dmg_content/
-    fi
-    cp release/RaceCoordinator/README.txt release/dmg_content/
-    
-    # Update README inside DMG if needed
-    cat >> release/dmg_content/README.txt << 'EOF'
-
-Mac User Note:
---------------
-If Java is not installed, running start_mac.command will offer to automatically download and install dependencies for you.
-EOF
-
-    hdiutil create -volname "RaceCoordinator" -srcfolder release/dmg_content -ov -format UDZO release/RaceCoordinator_Mac.dmg || echo "Warning: Mac DMG creation failed, but continuing..."
-    rm -rf release/dmg_content
-fi
-
 echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline_legacy.iss)"
+echo "Manual Step for Mac: Run create_mac_dmg.sh on a macOS machine to build the DMG."
 
 echo "Build Complete!"
 echo "Artifacts in 'release/' directory."

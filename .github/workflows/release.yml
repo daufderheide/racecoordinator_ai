@@ -1,0 +1,181 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  schedule:
+    - cron: '0 6 * * *' # 2 AM EDT (6 AM UTC)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0-beta.1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/ci.yml
+
+  build-artifacts:
+    needs: run-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine Version
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            VERSION="0.0.0-alpha.$(date +%Y%m%d)"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.0.0-alpha.$(git rev-parse --short HEAD)"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Set Version in Files
+        run: |
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" client/package.json
+          sed -i "s/#define MyAppVersion \".*\"/#define MyAppVersion \"$VERSION\"/" installer_base.iss
+          sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
+          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/analytics.service.ts
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Create Dummy Analytics Properties
+        run: |
+          mkdir -p server/src/main/resources
+          echo "analytics.key=placeholder" > server/src/main/resources/analytics.properties
+
+      - name: Build Artifacts
+        run: ./create_installers.sh
+
+      - name: Upload Release Directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+
+  build-windows:
+    needs: build-artifacts
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Determine Version
+        id: vars
+        run: |
+          if ("${{ github.event_name }}" -eq "schedule") {
+            $VERSION = "0.0.0-alpha.$(Get-Date -Format 'yyyyMMdd')"
+          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch" -and "${{ github.event.inputs.version }}" -ne "") {
+            $VERSION = "${{ github.event.inputs.version }}"
+          } elseif ("${{ github.ref_type }}" -eq "tag") {
+            $VERSION = "${{ github.ref_name }}".Substring(1)
+          } else {
+            $VERSION = "0.0.0-alpha.dev"
+          }
+          (Get-Content installer_base.iss) -replace '#define MyAppVersion ".*"', "#define MyAppVersion ""$VERSION""" | Set-Content installer_base.iss
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+
+      - name: Compile Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_online.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_offline_legacy.iss
+
+      - name: Upload Windows Installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: Output/
+
+  build-mac:
+    needs: build-artifacts
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
+
+      - name: Build DMG
+        run: ./create_mac_dmg.sh
+
+      - name: Upload Mac DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-dmg
+          path: release/RaceCoordinator_Mac.dmg
+
+  publish-release:
+    needs: [build-windows, build-mac, build-artifacts]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows Installers
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installers
+          path: final-release/
+          
+      - name: Download Mac DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-dmg
+          path: final-release/
+
+      - name: Determine Tags and Prerelease
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            TAG="v0.0.0-alpha.$(date +%Y%m%d)"
+            IS_PRERELEASE="true"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.version }}" != "" ]; then
+            TAG="v${{ github.event.inputs.version }}"
+            if [[ "$TAG" == *"alpha"* ]] || [[ "$TAG" == *"beta"* ]]; then
+              IS_PRERELEASE="true"
+            else
+              IS_PRERELEASE="false"
+            fi
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            TAG="${{ github.ref_name }}"
+            if [[ "$TAG" == *"alpha"* ]] || [[ "$TAG" == *"beta"* ]]; then
+              IS_PRERELEASE="true"
+            else
+              IS_PRERELEASE="false"
+            fi
+          else
+            TAG="v0.0.0-alpha.$(git rev-parse --short HEAD)"
+            IS_PRERELEASE="true"
+          fi
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Release ${{ env.TAG }}
+          prerelease: ${{ env.IS_PRERELEASE == 'true' }}
+          files: |
+            final-release/*
