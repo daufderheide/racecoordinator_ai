@@ -46,6 +46,7 @@ if (Test-Path $LOCAL_PROTOC) {
         Write-Host "Attempting to download via 'mvn protobuf:compile'..."
         # Run maven to download protoc
         Set-Location $SERVER_DIR
+        $env:MAVEN_OPTS = '--add-opens java.base/java.lang=ALL-UNNAMED'
         mvn protobuf:compile 2>&1 | Out-Null
     }
 
