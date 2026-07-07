@@ -23,15 +23,15 @@
 .customizing-widget-overlay {
   position: absolute;
   top: 0;
-  right: 0;
-  width: 100%;
-  min-width: 150px;
+  left: 0;
   height: 28px;
   background: rgba(15, 23, 42, 0.85);
   border-bottom: 1px solid rgba(59, 130, 246, 0.5);
+  border-right: 1px solid rgba(59, 130, 246, 0.5);
+  border-bottom-right-radius: 6px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
   padding: 0 8px;
   z-index: 1010;
   user-select: none;
@@ -43,7 +43,6 @@
   align-items: center;
   gap: 6px;
   cursor: move;
-  flex: 1;
   height: 100%;
   color: #e2e8f0;
 }
