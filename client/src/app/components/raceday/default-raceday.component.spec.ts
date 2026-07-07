@@ -2725,6 +2725,56 @@ describe("DefaultRacedayComponent", () => {
       tick();
       expect(component["showCountdownOverlay"]).toBeFalse();
     }));
+
+    it("should not show autoStartRemaining on timer during STARTING state", fakeAsync(() => {
+      component["race"] = {
+        ...MOCK_RACES[0],
+        start_time: 5.0,
+        heat_scoring: { finishMethod: FinishMethod.Timed },
+      } as any;
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      // During STARTING, timer should show actual race time (0), not autoStartRemaining
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 5.0 });
+      tick();
+
+      expect(component["time"]).toBe(0);
+      expect(component["showCountdownOverlay"]).toBeTrue();
+    }));
+
+    it("should not show autoStartRemaining on timer during STARTING state for Lap races", fakeAsync(() => {
+      component["race"] = {
+        ...MOCK_RACES[0],
+        start_time: 5.0,
+        heat_scoring: { finishMethod: FinishMethod.Lap },
+      } as any;
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      // During STARTING, timer should show actual race time (0), not autoStartRemaining
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 5.0 });
+      tick();
+
+      expect(component["time"]).toBe(0);
+      expect(component["showCountdownOverlay"]).toBeTrue();
+    }));
+
+    it("should show autoStartRemaining on timer when NOT in STARTING state", fakeAsync(() => {
+      component["race"] = {
+        ...MOCK_RACES[0],
+        start_time: 5.0,
+        heat_scoring: { finishMethod: FinishMethod.Timed },
+      } as any;
+      raceStateSubject.next(RaceState.NOT_STARTED);
+      tick();
+
+      // When NOT in STARTING, timer should show autoStartRemaining
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 5.0 });
+      tick();
+
+      expect(component["time"]).toBe(5.0);
+    }));
   });
 
   describe("Theme Asset Integration", () => {
