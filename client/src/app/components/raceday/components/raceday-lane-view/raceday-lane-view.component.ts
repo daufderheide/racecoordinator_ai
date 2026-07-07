@@ -3,7 +3,6 @@ import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
   Component,
-  effect,
   ElementRef,
   inject,
   input,
@@ -42,26 +41,14 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
     viewChildren<ElementRef<HTMLElement>>("fitTextTarget");
 
   private resizeObserver?: ResizeObserver;
+  private mutationObserver?: MutationObserver;
   private lastWidth = 0;
   private lastHeight = 0;
   private resizeTimeout?: any;
+  private mutationTimeout?: any;
   private zone = inject(NgZone);
 
-  constructor() {
-    effect(() => {
-      // Trigger whenever inputs change that might affect layout
-      this.parent()?.sortedHeatDrivers;
-      this.parent()?.columns;
-      this.widget();
-
-      if (this.resizeTimeout) {
-        clearTimeout(this.resizeTimeout);
-      }
-      this.zone.runOutsideAngular(() => {
-        this.resizeTimeout = setTimeout(() => this.fitTexts(), 10);
-      });
-    });
-  }
+  constructor() {}
 
   ngAfterViewInit() {
     if (typeof ResizeObserver !== "undefined") {
@@ -76,6 +63,7 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
           ) {
             return;
           }
+
           this.lastWidth = width;
           this.lastHeight = height;
         }
@@ -92,19 +80,46 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver.observe(container);
       }
     }
+
+    if (typeof MutationObserver !== "undefined") {
+      this.mutationObserver = new MutationObserver(() => {
+        if (this.mutationTimeout) {
+          clearTimeout(this.mutationTimeout);
+        }
+        this.zone.runOutsideAngular(() => {
+          this.mutationTimeout = setTimeout(() => this.fitTexts(), 50);
+        });
+      });
+      const container = this.laneViewContainer()?.nativeElement;
+      if (container) {
+        this.mutationObserver.observe(container, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      }
+    }
   }
 
   ngOnDestroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+    }
     if (this.resizeTimeout) {
       clearTimeout(this.resizeTimeout);
+    }
+    if (this.mutationTimeout) {
+      clearTimeout(this.mutationTimeout);
     }
   }
 
   private fitTexts() {
-    const targets = this.fitTextTargets().map((t) => t.nativeElement);
+    const targets = this.fitTextTargets()
+      .map((t) => t.nativeElement)
+      .filter((el) => el.clientHeight > 0 && el.clientWidth > 0);
     if (!targets.length) return;
 
     // Reset all to natural size
@@ -121,11 +136,19 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       const textEl =
         (el.querySelector(".teammate-display-name") as HTMLElement) || el;
 
-      const isOverflowing =
-        textEl.scrollHeight > textEl.clientHeight + 1 ||
-        textEl.scrollWidth > textEl.clientWidth + 1;
+      const checkOverflow = (element: HTMLElement) => {
+        return (
+          element.scrollHeight > element.clientHeight + 1 ||
+          element.scrollWidth > element.clientWidth + 1 ||
+          (element.firstElementChild &&
+            element.firstElementChild.scrollHeight >
+              element.clientHeight + 1) ||
+          (element.firstElementChild &&
+            element.firstElementChild.scrollWidth > element.clientWidth + 1)
+        );
+      };
 
-      if (isOverflowing) {
+      if (checkOverflow(textEl)) {
         let minScale = 0.1;
         let maxScale = 1.0;
         let bestScale = 1.0;
@@ -135,10 +158,7 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
           const scale = (minScale + maxScale) / 2;
           el.style.setProperty("--text-fit-scale", scale.toString());
 
-          if (
-            textEl.scrollHeight > textEl.clientHeight + 1 ||
-            textEl.scrollWidth > textEl.clientWidth + 1
-          ) {
+          if (checkOverflow(textEl)) {
             maxScale = scale; // still too big
           } else {
             bestScale = scale; // fits, try bigger

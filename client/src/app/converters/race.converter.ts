@@ -93,7 +93,9 @@ export class RaceConverter {
             p.heatScoring.finishMethod === 1
               ? FinishMethod.Timed
               : FinishMethod.Lap,
-            p.heatScoring.finishValue ? Number(p.heatScoring.finishValue) : 10,
+            p.heatScoring.finishValue != null
+              ? Number(p.heatScoring.finishValue)
+              : 0,
             heatRanking as unknown as HeatRanking,
             heatRankingTiebreaker as unknown as HeatRankingTiebreaker,
             allowFinish as unknown as AllowFinish,

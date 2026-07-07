@@ -212,7 +212,7 @@ export class DataService {
       maxLapTimeMs: 5000,
       minRefuelTimeMs: 5000,
       maxRefuelTimeMs: 10000,
-      numSegments: 4,
+      numSegments: 2,
       minLapsBetweenPits: 3,
       maxLapsBetweenPits: 7,
       minReactionTimeMs: 1,

@@ -260,37 +260,22 @@ public class DemoProtocolTest {
 
     // 2. Regular Lap (5000ms)
     // target = 5000.
-    // offsets = [750, 2000, 3000, 4250]
+    // offsets = [1750, 5000]
 
-    // Advance to Segment 1 (750ms)
-    segmentDemo.advanceTime(800);
+    // Advance to Segment 1 (1750ms)
+    segmentDemo.advanceTime(1800); // 1800 total
     scheduler.tick();
     assertEquals("Should have 1 segment hit", 1, segmentListener.segments.size());
-    assertEquals(0.75, segmentListener.segments.get(0).time, 0.001);
-
-    // Advance to Segment 2 (2000ms total)
-    segmentDemo.advanceTime(1300); // 2100 total
-    scheduler.tick();
-    assertEquals("Should have 2 segment hits", 2, segmentListener.segments.size());
-    assertEquals(1.25, segmentListener.segments.get(1).time, 0.001);
-
-    // Advance to Segment 3 (3000ms total)
-    segmentDemo.advanceTime(1000); // 3100 total
-    scheduler.tick();
-    assertEquals("Should have 3 segment hits", 3, segmentListener.segments.size());
-    assertEquals(1.0, segmentListener.segments.get(2).time, 0.001);
-
-    // Advance to Segment 4 (4250ms total)
-    segmentDemo.advanceTime(1300); // 4400 total
-    scheduler.tick();
-    assertEquals("Should have 4 segment hits", 4, segmentListener.segments.size());
-    assertEquals(1.25, segmentListener.segments.get(3).time, 0.001);
+    assertEquals(1.750, segmentListener.segments.get(0).time, 0.001);
 
     // Advance to Lap Complete
-    segmentDemo.advanceTime(1000); // 5400 total
+    segmentDemo.advanceTime(3300); // 5100 total
     scheduler.tick();
     assertEquals("Should have completed the lap", 1, segmentListener.laps.size());
-    assertEquals(5.4, segmentListener.laps.get(0), 0.001);
+    assertEquals(5.1, segmentListener.laps.get(0), 0.001);
+
+    assertEquals("Should have 2 segment hits", 2, segmentListener.segments.size());
+    assertEquals(3.350, segmentListener.segments.get(1).time, 0.001); // 5.100 - 1.750 = 3.350
   }
 
   @Test
@@ -405,26 +390,22 @@ public class DemoProtocolTest {
     customListener.laps.clear();
 
     // 2. Regular lap (fixed 1000ms)
-    // 2 segments should be at 1/3 and 2/3 of 1000ms
-    // offsets = [333, 666]
+    // 2 segments should be at 0.35 and 1.0 of 1000ms -> [350, 1000]
 
-    // Advance to Segment 1 (333ms)
+    // Advance to Segment 1 (350ms)
     customDemo.advanceTime(400); // 400ms since lap start
     scheduler.tick();
     assertEquals("Should have 1 segment hit", 1, customListener.segments.size());
-    assertEquals(0.333, customListener.segments.get(0).time, 0.001);
-
-    // Advance to Segment 2 (666ms)
-    customDemo.advanceTime(300); // 700ms since lap start
-    scheduler.tick();
-    assertEquals("Should have 2 segment hits", 2, customListener.segments.size());
-    assertEquals(0.333, customListener.segments.get(1).time, 0.001);
+    assertEquals(0.350, customListener.segments.get(0).time, 0.001);
 
     // Advance to Lap Complete (1000ms)
-    customDemo.advanceTime(400); // 1100ms since lap start
+    customDemo.advanceTime(600); // 1000ms total
     scheduler.tick();
     assertEquals("Should have completed the lap", 1, customListener.laps.size());
-    assertEquals(1.1, customListener.laps.get(0), 0.001);
+    assertEquals(1.0, customListener.laps.get(0), 0.001);
+
+    assertEquals("Should have 2 segment hits", 2, customListener.segments.size());
+    assertEquals(0.650, customListener.segments.get(1).time, 0.001); // 1.0 - 0.350 = 0.650
   }
 
   @Test
@@ -586,40 +567,38 @@ public class DemoProtocolTest {
     segmentListener.laps.clear();
 
     // Now on regular lap 1 (target 5000ms)
-    // offsets = [750, 2000, 3000, 4250]
+    // offsets = [1750, 5000]
     assertEquals(5000, segmentDemo.laneStates[0].targetLapDuration);
-    assertEquals(750, segmentDemo.laneStates[0].segmentOffsets[0]);
-    assertEquals(2000, segmentDemo.laneStates[0].segmentOffsets[1]);
+    assertEquals(1750, segmentDemo.laneStates[0].segmentOffsets[0]);
+    assertEquals(5000, segmentDemo.laneStates[0].segmentOffsets[1]);
 
-    // Advance past first segment hit (1000ms total elapsed)
-    segmentDemo.advanceTime(1000);
+    // Advance past first segment hit (1800ms total elapsed)
+    segmentDemo.advanceTime(1800);
     scheduler.tick();
     assertEquals("Should have 1 segment hit", 1, segmentListener.segments.size());
-    assertEquals(0.75, segmentListener.segments.get(0).time, 0.001);
+    assertEquals(1.750, segmentListener.segments.get(0).time, 0.001);
 
     // Pause the race
     segmentDemo.stopTimer();
-    assertEquals(1000, segmentDemo.laneStates[0].currentLapElapsedTime);
+    assertEquals(1800, segmentDemo.laneStates[0].currentLapElapsedTime);
 
     // Resume the race
     scheduler.reset();
     segmentDemo.startTimer();
 
     // Verify adjusted segment offsets
-    assertEquals(4000, segmentDemo.laneStates[0].targetLapDuration);
-    assertEquals(0, segmentDemo.laneStates[0].segmentOffsets[0]); // was 750 - 1000 -> 0
-    assertEquals(1000, segmentDemo.laneStates[0].segmentOffsets[1]); // was 2000 - 1000 -> 1000
-    assertEquals(2000, segmentDemo.laneStates[0].segmentOffsets[2]); // was 3000 - 1000 -> 2000
-    assertEquals(3250, segmentDemo.laneStates[0].segmentOffsets[3]); // was 4250 - 1000 -> 3250
+    assertEquals(3200, segmentDemo.laneStates[0].targetLapDuration);
+    assertEquals(0, segmentDemo.laneStates[0].segmentOffsets[0]); // was 1750 - 1800 -> 0
+    assertEquals(3200, segmentDemo.laneStates[0].segmentOffsets[1]); // was 5000 - 1800 -> 3200
 
-    // Advance 1100ms since resume (total 1100ms)
-    segmentDemo.advanceTime(1100);
+    // Advance 3200ms since resume (total 3200ms) - triggers lap
+    segmentDemo.advanceTime(3200);
     scheduler.tick();
 
     // Verify Segment 2 (index 1) is sent
     assertEquals("Should have 2 segment hits total", 2, segmentListener.segments.size());
     assertEquals(
-        1.0, segmentListener.segments.get(1).time, 0.001); // 2000 - 1000 = 1000ms offset trigger
+        3.200, segmentListener.segments.get(1).time, 0.001); // 3.200 - 0 = 3.200ms offset trigger
   }
 
   @Test

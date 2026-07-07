@@ -116,16 +116,24 @@ public class Demo extends DefaultProtocol {
       }
       // Calculate segment offsets
       int numSegments = config.getNumSegments();
-      if (numSegments == 4) {
-        // Keep legacy distribution for 4 segments
-        double[] percentages = {0.15, 0.40, 0.60, 0.85};
+      if (numSegments == 1) {
+        segmentOffsets[0] = (long) (targetLapDuration * 1.0 / 2.0);
+      } else if (numSegments >= 2 && numSegments <= 4) {
+        double[] percentages;
+        if (numSegments == 2) {
+          percentages = new double[] {0.35, 1.0};
+        } else if (numSegments == 3) {
+          percentages = new double[] {0.25, 0.60, 1.0};
+        } else {
+          percentages = new double[] {0.15, 0.40, 0.60, 1.0};
+        }
         for (int i = 0; i < segmentOffsets.length; i++) {
           segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
         }
-      } else if (numSegments > 0) {
+      } else if (numSegments > 4) {
         // Linear distribution for other counts
         for (int i = 0; i < numSegments; i++) {
-          segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / (numSegments + 1.0));
+          segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / numSegments);
         }
       }
     }
@@ -181,7 +189,7 @@ public class Demo extends DefaultProtocol {
         .setMaxLapTimeMs(5000)
         .setMinRefuelTimeMs(5000)
         .setMaxRefuelTimeMs(10000)
-        .setNumSegments(4)
+        .setNumSegments(2)
         .setMinLapsBetweenPits(3)
         .setMaxLapsBetweenPits(7)
         .setMinReactionTimeMs(1)
@@ -329,7 +337,11 @@ public class Demo extends DefaultProtocol {
 
     // Handle segment hits
     if (!state.isFirstLap) {
-      for (int j = 0; j < state.segmentOffsets.length; j++) {
+      int segmentsToCheck =
+          config.getNumSegments() > 1
+              ? state.segmentOffsets.length - 1
+              : state.segmentOffsets.length;
+      for (int j = 0; j < segmentsToCheck; j++) {
         if (state.segmentOffsets[j] > 0
             && totalElapsed >= state.segmentOffsets[j]
             && !state.segmentSent[j]) {
@@ -348,6 +360,17 @@ public class Demo extends DefaultProtocol {
       double lapTime = totalElapsed / 1000.0;
 
       if (listener != null) {
+        int numSegments = config.getNumSegments();
+        if (numSegments > 1) {
+          int lastSegIdx = numSegments - 1;
+          if (state.segmentOffsets[lastSegIdx] > 0 && !state.segmentSent[lastSegIdx]) {
+            state.segmentSent[lastSegIdx] = true;
+            int segmentId = 101 + i;
+            long prevOffset = state.segmentOffsets[lastSegIdx - 1];
+            listener.onSegment(i, lapTime - (prevOffset / 1000.0), segmentId, getInterfaceIndex());
+          }
+        }
+
         int laneInterfaceId = DemoPinId.DEMO_PIN_ID_LANE_BASE_VALUE.getNumber() + i;
         listener.onLap(i, lapTime, laneInterfaceId, getInterfaceIndex());
       }

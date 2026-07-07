@@ -460,6 +460,30 @@
                             "
                             [style.align-items]="'center'"
                             [style.gap]="'4px'"
+                            [style.padding-bottom]="
+                              !$last && widget()?.customSettings?.['isVertical']
+                                ? '2px'
+                                : '0'
+                            "
+                            [style.padding-right]="
+                              !$last &&
+                              !widget()?.customSettings?.['isVertical']
+                                ? '4px'
+                                : '0'
+                            "
+                            [style.border-bottom]="
+                              !$last && widget()?.customSettings?.['isVertical']
+                                ? '1px solid ' +
+                                  parent().getLaneColor(hd, 'font_color')
+                                : null
+                            "
+                            [style.border-right]="
+                              !$last &&
+                              !widget()?.customSettings?.['isVertical']
+                                ? '1px solid ' +
+                                  parent().getLaneColor(hd, 'font_color')
+                                : null
+                            "
                           >
                             <span>{{ lapObj.lapTime }}</span>
                             @if (lapObj.segments.length > 0) {
@@ -475,7 +499,41 @@
                                 [style.opacity]="'0.8'"
                               >
                                 @for (seg of lapObj.segments; track $index) {
-                                  <span>{{ seg }}</span>
+                                  <span
+                                    [style.padding-bottom]="
+                                      !$last &&
+                                      widget()?.customSettings?.['isVertical']
+                                        ? '2px'
+                                        : '0'
+                                    "
+                                    [style.padding-right]="
+                                      !$last &&
+                                      !widget()?.customSettings?.['isVertical']
+                                        ? '4px'
+                                        : '0'
+                                    "
+                                    [style.border-bottom]="
+                                      !$last &&
+                                      widget()?.customSettings?.['isVertical']
+                                        ? '1px solid ' +
+                                          parent().getLaneColor(
+                                            hd,
+                                            'font_color'
+                                          )
+                                        : null
+                                    "
+                                    [style.border-right]="
+                                      !$last &&
+                                      !widget()?.customSettings?.['isVertical']
+                                        ? '1px solid ' +
+                                          parent().getLaneColor(
+                                            hd,
+                                            'font_color'
+                                          )
+                                        : null
+                                    "
+                                    >{{ seg }}</span
+                                  >
                                 }
                               </div>
                             }

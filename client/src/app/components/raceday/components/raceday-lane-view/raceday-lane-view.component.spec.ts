@@ -195,13 +195,23 @@ describe("RacedayLaneViewComponent", () => {
       configurable: true,
     });
 
-    // Mock height to not overflow
+    // Mock parent to not overflow
     Object.defineProperty(textEl, "scrollHeight", {
       get: () => 20,
       configurable: true,
     });
     Object.defineProperty(textEl, "clientHeight", {
       get: () => 20,
+      configurable: true,
+    });
+
+    // Mock targetCell to pass the filter
+    Object.defineProperty(targetCell, "clientHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+    Object.defineProperty(targetCell, "clientWidth", {
+      get: () => 100,
       configurable: true,
     });
 
@@ -232,6 +242,88 @@ describe("RacedayLaneViewComponent", () => {
     expect(scale).toBeTruthy();
     expect(Number(scale)).toBeLessThan(1.0);
     expect(Number(scale)).toBeGreaterThan(0.0);
+  });
+
+  it("should scale down text if child element overflows the container", async () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const targetCell = rowEl.querySelector(
+      ".anchor-center-center",
+    ) as HTMLElement;
+
+    const textEl =
+      (targetCell.querySelector(".teammate-display-name") as HTMLElement) ||
+      targetCell;
+
+    const mockChild = document.createElement("span");
+
+    // Force overflow on child, but respect scale
+    Object.defineProperty(mockChild, "scrollWidth", {
+      get: () => {
+        const scale = Number(
+          targetCell.style.getPropertyValue("--text-fit-scale") || 1,
+        );
+        return 200 * scale;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(mockChild, "scrollHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+
+    Object.defineProperty(textEl, "firstElementChild", {
+      get: () => mockChild,
+      configurable: true,
+    });
+
+    // Mock parent to not overflow
+    Object.defineProperty(textEl, "scrollWidth", {
+      get: () => 100,
+      configurable: true,
+    });
+    Object.defineProperty(textEl, "clientWidth", {
+      get: () => 100,
+      configurable: true,
+    });
+    Object.defineProperty(textEl, "scrollHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+    Object.defineProperty(textEl, "clientHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+
+    // Mock targetCell to pass the filter
+    Object.defineProperty(targetCell, "clientHeight", {
+      get: () => 20,
+      configurable: true,
+    });
+    Object.defineProperty(targetCell, "clientWidth", {
+      get: () => 100,
+      configurable: true,
+    });
+
+    (component as any).fitTexts();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const scale = targetCell.style.getPropertyValue("--text-fit-scale");
+    expect(scale).toBeTruthy();
+    expect(Number(scale)).toBeLessThan(1.0);
+    expect(Number(scale)).toBeGreaterThan(0.0);
+  });
+
+  it("should call fitTexts when a mutation occurs", async () => {
+    const fitTextsSpy = spyOn<any>(component, "fitTexts").and.callThrough();
+    const container = fixture.nativeElement.querySelector(".table-row");
+
+    // trigger mutation
+    const div = document.createElement("div");
+    container.appendChild(div);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(fitTextsSpy).toHaveBeenCalled();
   });
 
   it("should apply custom font sizes as CSS variables when configured and scaleMode is not auto", () => {

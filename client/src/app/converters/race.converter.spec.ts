@@ -118,4 +118,34 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.practice).toBeFalse();
   });
+
+  it("should parse finishValue in heatScoring", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r10" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatScoring: {
+        finishMethod: 1,
+        finishValue: 42,
+      },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.heat_scoring.finishValue).toBe(42);
+  });
+
+  it("should handle null finishValue in heatScoring", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r11" },
+      name: "Test Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatScoring: {
+        finishMethod: 1,
+        finishValue: null,
+      },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.heat_scoring.finishValue).toBe(0);
+  });
 });
