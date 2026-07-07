@@ -18,9 +18,9 @@
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
     "lint:server": "cd server && mvn spotless:check checkstyle:check pmd:check",
     "test": "npm run test:client && npm run test:visual && npm run test:server",
-    "test:client": "./run_client_unit_tests.sh",
-    "test:visual": "./run_client_screendiff_tests.sh",
-    "test:server": "./run_server_tests.sh"
+    "test:client": "node -e \"process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_unit_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_unit_tests.sh', {stdio: 'inherit'})\"",
+    "test:visual": "node -e \"process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_screendiff_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_screendiff_tests.sh', {stdio: 'inherit'})\"",
+    "test:server": "node -e \"process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_server_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_server_tests.sh', {stdio: 'inherit'})\""
   },
   "lint-staged": {
     "client/**/*.{ts,tsx,js,jsx,html}": [
