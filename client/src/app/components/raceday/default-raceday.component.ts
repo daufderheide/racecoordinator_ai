@@ -928,7 +928,11 @@ export class DefaultRacedayComponent
 
         const actualRaceTime = raceTime.time || 0;
         let time = actualRaceTime;
-        if (this.autoStartRemaining > 0 && !this.isRestarting) {
+        if (
+          this.raceState !== RaceState.STARTING &&
+          this.autoStartRemaining > 0 &&
+          !this.isRestarting
+        ) {
           time = this.autoStartRemaining;
         } else if (this.autoAdvanceRemaining > 0) {
           time = this.autoAdvanceRemaining;
@@ -942,10 +946,7 @@ export class DefaultRacedayComponent
         if (time > this.previousTime) {
           this.timeFormat = "1.0-0";
         } else if (time < this.previousTime) {
-          if (
-            this.raceState === RaceState.STARTING &&
-            this.race?.heat_scoring?.finishMethod === FinishMethod.Timed
-          ) {
+          if (this.raceState === RaceState.STARTING) {
             this.timeFormat = "1.0-0";
           } else {
             const timerWidget = this.layout?.widgets?.find(
