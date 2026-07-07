@@ -92,6 +92,7 @@ test.describe("Upcoming Inspector Visuals", () => {
 
     await sliders.nth(1).fill("22"); // Lane font size
     await colorPickers.nth(1).fill("#00ff00"); // Lane text color to Green
+    await colorPickers.nth(1).blur(); // Trigger blur to ensure change event fires in Webkit
 
     await page.waitForTimeout(200);
 

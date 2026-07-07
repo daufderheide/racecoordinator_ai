@@ -69,6 +69,7 @@ test.describe("Menu Inspector Visuals", () => {
 
     await sliders.nth(0).fill("18"); // Font size
     await colorPickers.nth(0).fill("#ff0000"); // Text color to Red
+    await colorPickers.nth(0).blur(); // Trigger blur to ensure change event fires in Webkit
 
     await page.waitForTimeout(200);
 
