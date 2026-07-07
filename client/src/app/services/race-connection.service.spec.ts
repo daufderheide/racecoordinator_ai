@@ -20,11 +20,13 @@ describe("RaceConnectionService", () => {
   let interfaceEventsSubject: Subject<IInterfaceEvent>;
   let raceUpdateSubject: Subject<any>;
   let lapsSubject: Subject<ILap>;
+  let standingsUpdateSubject: Subject<any>;
 
   beforeEach(() => {
     interfaceEventsSubject = new Subject<IInterfaceEvent>();
     raceUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<ILap>();
+    standingsUpdateSubject = new Subject<any>();
 
     mockDataService = jasmine.createSpyObj("DataService", [
       "getInterfaceEvents",
@@ -58,7 +60,9 @@ describe("RaceConnectionService", () => {
     mockDataService.getLaps.and.returnValue(lapsSubject.asObservable());
     mockDataService.getRaceTime.and.returnValue(of(0));
     mockDataService.getCarData.and.returnValue(of({}));
-    mockDataService.getStandingsUpdate.and.returnValue(of({}));
+    mockDataService.getStandingsUpdate.and.returnValue(
+      standingsUpdateSubject.asObservable(),
+    );
     mockDataService.getOverallStandingsUpdate.and.returnValue(of({}));
     mockDataService.getGroupStandingsUpdate.and.returnValue(of({}));
     mockDataService.getReactionTimes.and.returnValue(of({}));
@@ -400,5 +404,35 @@ describe("RaceConnectionService", () => {
 
       expect((service as any).hydrateDrivers).toHaveBeenCalled();
     });
+  });
+
+  describe("Standings Updates", () => {
+    it("should update heat standings correctly when receiving a standings update", fakeAsync(() => {
+      service.connect();
+
+      const heatMock = {
+        heatDrivers: [
+          { objectId: "d1", rank: 0, gapLeader: 0, gapPosition: 0 },
+          { objectId: "d2", rank: 0, gapLeader: 0, gapPosition: 0 },
+        ],
+        standings: [] as string[],
+      };
+
+      mockRaceService.getCurrentHeat.and.returnValue(heatMock);
+
+      const updateData = {
+        updates: [
+          { objectId: "d2", rank: 1, gapLeader: 0, gapPosition: 0 },
+          { objectId: "d1", rank: 2, gapLeader: 5, gapPosition: 5 },
+        ],
+      };
+
+      standingsUpdateSubject.next(updateData);
+      tick();
+
+      expect(heatMock.standings).toEqual(["d2", "d1"]);
+      expect(heatMock.heatDrivers[0].rank).toBe(2);
+      expect(heatMock.heatDrivers[1].rank).toBe(1);
+    }));
   });
 });

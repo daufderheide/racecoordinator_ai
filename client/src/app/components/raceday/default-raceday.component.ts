@@ -302,9 +302,9 @@ export class DefaultRacedayComponent
       ((s === RaceState.NOT_STARTED &&
         this.autoStartRemaining <= 0 &&
         this.autoAdvanceRemaining <= 0) ||
-       (s === RaceState.STARTING &&
-        this.showCountdownOverlay &&
-        !this.isRestarting));
+        (s === RaceState.STARTING &&
+          this.showCountdownOverlay &&
+          !this.isRestarting));
 
     if (showDurationOnly) {
       const duration = this.race?.heat_scoring?.finishValue || 0;
@@ -1508,14 +1508,13 @@ export class DefaultRacedayComponent
 
     const settings = this.settingsService.getSettings();
     if (settings.sortByStandings && !this.isDragging) {
-      // TODO(aufderheide): Server should 100% control the presentation order.  I'm worried this may cause issues when we do disqualifications and such.
-      // Sort a separate copy to determine visual positions
+      // Sort a separate copy to determine visual positions using the server-provided standings list
       const ranked = [...this.heat.heatDrivers].sort((a, b) => {
-        let rankA = this.driverRankings.get(a.objectId) ?? 999;
-        let rankB = this.driverRankings.get(b.objectId) ?? 999;
-        if (rankA === 0) rankA = 999;
-        if (rankB === 0) rankB = 999;
-        return rankA - rankB;
+        let idxA = this.heat?.standings?.indexOf(a.objectId) ?? -1;
+        let idxB = this.heat?.standings?.indexOf(b.objectId) ?? -1;
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
       });
       this.driverVisualPositions.clear();
       ranked.forEach((hd, i) =>

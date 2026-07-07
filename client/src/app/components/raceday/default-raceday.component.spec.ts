@@ -2191,8 +2191,8 @@ describe("DefaultRacedayComponent", () => {
 
     it("should sort by standings when sortByStandings is true", () => {
       mockSettings.sortByStandings = true;
-      component["driverRankings"].set("hd1", 2);
-      component["driverRankings"].set("hd2", 1);
+      (component as any).heat = (component as any).heat || ({} as any);
+      ((component as any).heat as any).standings = ["hd2", "hd1"]; // hd2 first, hd1 second
 
       (component as any).sortHeatDrivers();
       fixture.detectChanges();
@@ -2203,11 +2203,14 @@ describe("DefaultRacedayComponent", () => {
 
     it("should update rankings and sort on standingsUpdate$ event", fakeAsync(() => {
       mockSettings.sortByStandings = true;
-      component["driverRankings"].set("hd1", 1);
-      component["driverRankings"].set("hd2", 2);
+      (component as any).heat = (component as any).heat || ({} as any);
+      ((component as any).heat as any).standings = ["hd1", "hd2"];
 
       fixture.detectChanges(); // Trigger ngOnInit setup
       tick(); // Flush any timers
+
+      // Simulate the service updating the model BEFORE emitting the event
+      ((component as any).heat as any).standings = ["hd2", "hd1"];
 
       standingsUpdateSubject.next({
         updates: [

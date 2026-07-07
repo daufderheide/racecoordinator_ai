@@ -228,8 +228,10 @@ export class RaceConnectionService implements OnDestroy {
 
           if (
             raceTime &&
-            (raceTime.autoStartRemaining == null || raceTime.autoStartRemaining <= 0) &&
-            (raceTime.autoAdvanceRemaining == null || raceTime.autoAdvanceRemaining <= 0) &&
+            (raceTime.autoStartRemaining == null ||
+              raceTime.autoStartRemaining <= 0) &&
+            (raceTime.autoAdvanceRemaining == null ||
+              raceTime.autoAdvanceRemaining <= 0) &&
             raceTime.time === 0 &&
             (current.time || 0) > 0 &&
             currentState === RaceState.STARTING
@@ -487,8 +489,10 @@ export class RaceConnectionService implements OnDestroy {
 
   private applyStandingsUpdate(update: IStandingsUpdate, heat: any) {
     if (heat && update && update.updates) {
+      heat.standings = []; // Rebuild standings list to match server exactly
       update.updates.forEach((u: any) => {
         if (u.objectId) {
+          heat.standings.push(u.objectId); // Server drives the standings!
           this.driverRankings.set(u.objectId, u.rank || 0);
           const driverData = heat.heatDrivers.find(
             (d: any) => d.objectId === u.objectId,

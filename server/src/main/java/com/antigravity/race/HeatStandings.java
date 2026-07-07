@@ -32,8 +32,7 @@ public class HeatStandings {
   }
 
   public void reset() {
-    this.currentStandings =
-        this.driverHeatData.stream().map(DriverHeatData::getObjectId).collect(Collectors.toList());
+    this.currentStandings = this.calculateStandings();
   }
 
   public List<String> getStandings() {

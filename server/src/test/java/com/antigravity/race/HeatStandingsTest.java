@@ -467,4 +467,35 @@ public class HeatStandingsTest {
       assertEquals(99, pos.getRank());
     }
   }
+
+  @Test
+  public void testResetWithEmptyLanes() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = new RaceParticipant(Driver.EMPTY_DRIVER, "empty");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    DriverHeatData d2 = new DriverHeatData(p2);
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d2); // empty lane first
+    data.add(d1); // real driver second
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
+
+    // Initial state set by constructor calculateStandings
+    List<String> results = standings.getStandings();
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+
+    // Resetting should maintain the same sorted order (empty lane last)
+    standings.reset();
+    results = standings.getStandings();
+    assertEquals(d1.getObjectId(), results.get(0));
+    assertEquals(d2.getObjectId(), results.get(1));
+  }
 }
