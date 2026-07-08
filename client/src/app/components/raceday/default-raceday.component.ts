@@ -862,6 +862,7 @@ export class DefaultRacedayComponent
       this.raceService.groupParticipants$.subscribe((participants) => {
         this.groupParticipants = participants || [];
         this.updateGroupLeaderboardEntries();
+
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -1803,6 +1804,20 @@ export class DefaultRacedayComponent
     );
   }
 
+  getDriverGroupRanking(hd: DriverHeatData): number | undefined {
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const entry = this.groupLeaderboardEntries?.find(
+      (e) => e.entityId === driverId,
+    );
+    if (entry && entry.rank > 0) return entry.rank;
+
+    const match = this.groupParticipants?.find(
+      (p) => p.driver?.entity_id === driverId || p.driver?.name === driverId,
+    );
+    return match?.rank && match.rank > 0 ? match.rank : undefined;
+  }
+
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
     return RacedayFormatUtils.getPropertyValue(heatDriver, propertyPath);
   }
@@ -1827,6 +1842,7 @@ export class DefaultRacedayComponent
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
+      getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -1860,6 +1876,7 @@ export class DefaultRacedayComponent
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
+      getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
@@ -3056,6 +3073,7 @@ export class DefaultRacedayComponent
       seed: 216,
       rankHeat: 108,
       rankOverall: 108,
+      rankGroup: 108,
       mph: 330,
       kph: 330,
       fph: 330,
@@ -3262,6 +3280,7 @@ export class DefaultRacedayComponent
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
+      getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

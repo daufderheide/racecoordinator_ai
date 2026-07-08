@@ -1173,6 +1173,35 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("getDriverGroupRanking", () => {
+    it("should return raw rank from group participants list", () => {
+      (component as any).groupLeaderboardEntries = [
+        { entityId: "d1", rank: 3 } as any,
+        { entityId: "d2", rank: 4 } as any,
+      ];
+      const hd1 = {
+        driver: { entity_id: "d1" },
+        participant: { rank: 10 },
+      } as any;
+      const hd2 = {
+        driver: { entity_id: "d2" },
+        participant: { rank: 10 },
+      } as any;
+
+      expect(component.getDriverGroupRanking(hd1)).toBe(3);
+      expect(component.getDriverGroupRanking(hd2)).toBe(4);
+    });
+
+    it("should return undefined if not found in group list", () => {
+      component["groupParticipants"] = [];
+      const hd = {
+        driver: { entity_id: "d1" },
+        participant: { rank: 12 },
+      } as any;
+      expect(component.getDriverGroupRanking(hd)).toBeUndefined();
+    });
+  });
+
   describe("formatValue", () => {
     let mockHd: any;
 

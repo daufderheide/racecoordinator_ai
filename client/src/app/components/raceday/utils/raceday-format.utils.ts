@@ -21,6 +21,7 @@ export interface FormatContext {
   getImageSetUrl: (hd: DriverHeatData, propertyName: string) => string;
   laneViewWidgetSettings?: any;
   getDriverOverallRanking?: (hd: DriverHeatData) => number | undefined;
+  getDriverGroupRanking?: (hd: DriverHeatData) => number | undefined;
 }
 
 export class RacedayFormatUtils {
@@ -188,6 +189,13 @@ export class RacedayFormatUtils {
         ? ctx.getDriverOverallRanking(hd)
         : (hd.participant?.rank ?? (hd.driver as any)?.rank);
       return rank ? `${rank}` : "--";
+    } else if (baseKey === "rankGroup") {
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "";
+      let rank: number | undefined;
+      if (ctx.getDriverGroupRanking) {
+        rank = ctx.getDriverGroupRanking(hd);
+      }
+      return rank !== undefined ? `${rank}` : "--";
     } else if (baseKey === "flag") {
       const flag =
         value === RaceFlag.UNKNOWN_FLAG || value === 0

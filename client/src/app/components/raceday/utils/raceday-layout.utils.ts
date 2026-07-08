@@ -246,6 +246,7 @@ export class RacedayLayoutUtils {
       seed: "RD_COL_SEED",
       rankHeat: "RD_COL_RANK_HEAT",
       rankOverall: "RD_COL_RANK_OVERALL",
+      rankGroup: "RD_COL_RANK_GROUP",
       mph: "RD_COL_MPH",
       kph: "RD_COL_KPH",
       fph: "RD_COL_FPH",

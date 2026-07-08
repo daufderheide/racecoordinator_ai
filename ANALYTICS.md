@@ -5,9 +5,9 @@ This document describes how Google Analytics 4 (GA4) is integrated into Race Coo
 # Why Tracking?
 RaceCoordinator AI tracks page views, basic user interaction with the software, and some configuration data.  This data is only used to improve the software itself and help steer very limited support resources where they will make the biggest impact.  This data will never be sold, or used beyond the betterment of RaceCoordinator AI by it's developers.  Google Analytics handles privacy and the most specific data tracked is the country the data is coming from.
 
-While this data is very important, we understand if you want to opt out of it.  Simply disable analytics from the toolbar in RaceCoordiator AI.
+While this data is very important, we understand if you want to opt out of it.  Simply disable analytics from the toolbar in RaceCoordinator AI.
 
-# Stalenss
+# Staleness
 While every effort will be made to keep this document up to date, ultimately the source code is the source of truth.  If something is being tracked and you do not find it in this document please let us know and we'll update it as soon as possible.
 
 ## 1. What Tracking Is Being Done?

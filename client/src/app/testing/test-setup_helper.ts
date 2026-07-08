@@ -1293,6 +1293,18 @@ export class TestSetupHelper {
   }
 
   static async mockRaceData(page: Page, data: any) {
+    // Inject missing ranks into mock drivers so that leaderboard and position visuals
+    // work automatically (they rely on rank rather than pure array index now)
+    if (data?.race?.drivers) {
+      data.race.drivers.forEach((driver: any, index: number) => {
+        // Don't inject rank for empty drivers (usually have empty entityId)
+        const isEmptyDriver = driver?.driver?.model?.entityId === "";
+        if (driver.rank === undefined && !isEmptyDriver) {
+          driver.rank = index + 1;
+        }
+      });
+    }
+
     const buffer = RaceData.encode(data).finish();
     const dataArray = Array.from(buffer);
     await page.evaluate((bufferArray) => {
