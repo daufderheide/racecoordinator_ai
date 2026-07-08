@@ -20,6 +20,7 @@ export interface FormatContext {
   getFullUrl: (url: string | undefined) => string;
   getImageSetUrl: (hd: DriverHeatData, propertyName: string) => string;
   laneViewWidgetSettings?: any;
+  getDriverOverallRanking?: (hd: DriverHeatData) => number | undefined;
 }
 
 export class RacedayFormatUtils {
@@ -183,7 +184,9 @@ export class RacedayFormatUtils {
       return rank ? `${rank}` : "--";
     } else if (baseKey === "rankOverall") {
       if (RacedayFormatUtils.isEmptyDriver(hd)) return "";
-      const rank = hd.participant?.rank ?? (hd.driver as any)?.rank;
+      const rank = ctx.getDriverOverallRanking
+        ? ctx.getDriverOverallRanking(hd)
+        : (hd.participant?.rank ?? (hd.driver as any)?.rank);
       return rank ? `${rank}` : "--";
     } else if (baseKey === "flag") {
       const flag =

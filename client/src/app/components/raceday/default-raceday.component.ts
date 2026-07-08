@@ -839,6 +839,19 @@ export class DefaultRacedayComponent
       this.raceService.participants$.subscribe((participants) => {
         this.participants = participants || [];
         this.updateLeaderboardEntries();
+        if (this.heat && this.heat.heatDrivers) {
+          this.heat.heatDrivers.forEach((hd) => {
+            const d = hd.actualDriver || hd.driver;
+            const driverId = d?.entity_id || d?.name;
+            const match = this.participants.find(
+              (p) =>
+                p.driver?.entity_id === driverId || p.driver?.name === driverId,
+            );
+            if (match && match.rank) {
+              (hd as any).overallRank = match.rank;
+            }
+          });
+        }
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -1782,6 +1795,13 @@ export class DefaultRacedayComponent
   getAnchorFontSize(anchor: string): number {
     return RacedayLayoutUtils.getAnchorFontSize(anchor);
   }
+  getDriverOverallRanking(hd: DriverHeatData): number | undefined {
+    return (
+      (hd as any).overallRank ??
+      hd.participant?.rank ??
+      (hd.driver as any)?.rank
+    );
+  }
 
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
     return RacedayFormatUtils.getPropertyValue(heatDriver, propertyPath);
@@ -1806,6 +1826,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
+      getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -1838,6 +1859,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
+      getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
@@ -3239,6 +3261,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
+      getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

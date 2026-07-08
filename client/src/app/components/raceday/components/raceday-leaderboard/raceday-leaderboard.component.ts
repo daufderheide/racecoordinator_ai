@@ -24,12 +24,11 @@ export class RacedayLeaderboardComponent {
 
   sortedLeaderboardEntries = computed(() => {
     return [...this.leaderboardEntries()].sort((a, b) => {
-      if (a.rank !== b.rank) {
-        if (a.rank === 0) return 1;
-        if (b.rank === 0) return -1;
-        return a.rank - b.rank;
-      }
-      return a.name.localeCompare(b.name);
+      const aRank = a.rank || 0;
+      const bRank = b.rank || 0;
+      if (aRank === 0) return 1;
+      if (bRank === 0) return -1;
+      return aRank - bRank;
     });
   });
 
@@ -39,12 +38,11 @@ export class RacedayLeaderboardComponent {
 
   getLeaderboardPosition(entry: any): number {
     const sorted = [...this.leaderboardEntries()].sort((a, b) => {
-      if (a.rank !== b.rank) {
-        if (a.rank === 0) return 1;
-        if (b.rank === 0) return -1;
-        return a.rank - b.rank;
-      }
-      return a.name.localeCompare(b.name);
+      const aRank = a.rank || 0;
+      const bRank = b.rank || 0;
+      if (aRank === 0) return 1;
+      if (bRank === 0) return -1;
+      return aRank - bRank;
     });
     const pos = sorted.findIndex((e) => e.entityId === entry.entityId);
     return pos >= 0 ? pos : 0;

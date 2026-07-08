@@ -99,7 +99,7 @@
                     : widget()?.customSettings?.['restTextColor'] || null
                 "
               >
-                {{ i + 1 }} {{ entry.name }}
+                {{ entry.rank || "-" }} {{ entry.name }}
               </span>
               <span
                 [class.leader-gold]="i === 0"

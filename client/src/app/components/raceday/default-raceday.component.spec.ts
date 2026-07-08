@@ -1146,6 +1146,33 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("getDriverOverallRanking", () => {
+    it("should return raw rank from participants list", () => {
+      const hd1 = {
+        driver: { entity_id: "d1" },
+        participant: { rank: 10 },
+        overallRank: 2,
+      } as any;
+      const hd2 = {
+        driver: { entity_id: "d2" },
+        participant: { rank: 10 },
+        overallRank: 5,
+      } as any;
+
+      expect(component.getDriverOverallRanking(hd1)).toBe(2);
+      expect(component.getDriverOverallRanking(hd2)).toBe(5);
+    });
+
+    it("should fallback to hd.participant.rank if not found in overall list", () => {
+      component["participants"] = [];
+      const hd = {
+        driver: { entity_id: "d1" },
+        participant: { rank: 10 },
+      } as any;
+      expect(component.getDriverOverallRanking(hd)).toBe(10);
+    });
+  });
+
   describe("formatValue", () => {
     let mockHd: any;
 
