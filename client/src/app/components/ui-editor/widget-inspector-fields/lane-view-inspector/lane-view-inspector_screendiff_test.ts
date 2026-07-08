@@ -71,7 +71,10 @@ test.describe("Lane View Inspector Visuals", () => {
     await harness.setTimeDecimalPlaces(1);
     await harness.setLapDecimalPlaces(0);
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

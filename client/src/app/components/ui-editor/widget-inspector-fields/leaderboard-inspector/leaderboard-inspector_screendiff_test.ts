@@ -62,7 +62,10 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await harness.setOverallLeaderFontSize(24);
     await harness.setRestFontSize(20);
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
@@ -154,7 +157,10 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await sliders.nth(2).fill("24"); // Overall leader font size
     await sliders.nth(3).fill("18"); // Rest font size
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

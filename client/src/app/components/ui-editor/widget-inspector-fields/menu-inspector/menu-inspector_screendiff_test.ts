@@ -71,7 +71,10 @@ test.describe("Menu Inspector Visuals", () => {
     await colorPickers.nth(0).fill("#ff0000"); // Text color to Red
     await colorPickers.nth(0).blur(); // Trigger blur to ensure change event fires in Webkit
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

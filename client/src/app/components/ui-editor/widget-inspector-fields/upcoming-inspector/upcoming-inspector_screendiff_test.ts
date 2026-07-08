@@ -94,7 +94,10 @@ test.describe("Upcoming Inspector Visuals", () => {
     await colorPickers.nth(1).fill("#00ff00"); // Lane text color to Green
     await colorPickers.nth(1).blur(); // Trigger blur to ensure change event fires in Webkit
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
@@ -130,7 +133,10 @@ test.describe("Upcoming Inspector Visuals", () => {
     const inspectorFields = page.locator("app-upcoming-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
-    await page.waitForTimeout(200);
+    // Blur any active element and move mouse to remove hover states
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
