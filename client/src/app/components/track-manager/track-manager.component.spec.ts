@@ -258,7 +258,14 @@ describe("TrackManagerComponent", () => {
 
   it("should handle extremely long track names without logic errors", () => {
     const longName = "A".repeat(500);
-    const mockTrack = new Track("t-long", longName, 100, [], false, []);
+    const mockTrack = new Track({
+      entity_id: "t-long",
+      name: longName,
+      num_track_sections: 100,
+      lanes: [],
+      has_digital_fuel: false,
+      arduino_configs: [],
+    });
 
     component.tracks = [mockTrack];
     component.selectTrack(mockTrack);

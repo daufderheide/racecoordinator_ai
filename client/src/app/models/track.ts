@@ -11,38 +11,39 @@ export const MAX_ANALOG_PINS = 16;
  * at the same time and it includes the hardware connected to the track that handles
  * everything from lap counting, to lane power and visual effects like led lights.
  */
-export class Track implements Model {
-  readonly entity_id: string;
-  readonly name: string;
-  readonly num_track_sections: number;
-  readonly lanes: Lane[];
-  readonly has_digital_fuel: boolean;
-  readonly has_per_lane_relays: boolean;
-  readonly has_main_relay: boolean;
-  readonly arduino_configs: ArduinoConfig[];
-  readonly trackmate_configs: TrackmateConfig[];
+export interface TrackParams {
+  entity_id: string;
+  name: string;
+  num_track_sections?: number;
+  lanes: Lane[];
+  has_digital_fuel?: boolean;
+  has_per_lane_relays?: boolean;
+  has_main_relay?: boolean;
+  arduino_configs?: ArduinoConfig[];
+  trackmate_configs?: TrackmateConfig[];
+}
 
-  // TODO(aufderheide): Cleanup this constructor.
-  constructor(
-    entity_id: string,
-    name: string,
-    num_track_sections: number = 100,
-    lanes: Lane[],
-    has_digital_fuel: boolean = false,
-    arduino_configs?: ArduinoConfig[],
-    has_per_lane_relays: boolean = false,
-    has_main_relay: boolean = false,
-    trackmate_configs?: TrackmateConfig[],
-  ) {
-    this.entity_id = entity_id;
-    this.name = name;
-    this.num_track_sections = num_track_sections;
-    this.lanes = lanes;
-    this.has_digital_fuel = has_digital_fuel;
-    this.arduino_configs = arduino_configs || [];
-    this.has_per_lane_relays = has_per_lane_relays;
-    this.has_main_relay = has_main_relay;
-    this.trackmate_configs = trackmate_configs || [];
+export class Track implements Model {
+  readonly entity_id!: string;
+  readonly name!: string;
+  readonly num_track_sections!: number;
+  readonly lanes!: Lane[];
+  readonly has_digital_fuel!: boolean;
+  readonly has_per_lane_relays!: boolean;
+  readonly has_main_relay!: boolean;
+  readonly arduino_configs!: ArduinoConfig[];
+  readonly trackmate_configs!: TrackmateConfig[];
+
+  constructor(params: TrackParams) {
+    Object.assign(this, params);
+
+    // Apply defaults for optional parameters that weren't provided
+    this.num_track_sections ??= 100;
+    this.has_digital_fuel ??= false;
+    this.has_per_lane_relays ??= false;
+    this.has_main_relay ??= false;
+    this.arduino_configs ??= [];
+    this.trackmate_configs ??= [];
   }
 
   get objectId(): string {

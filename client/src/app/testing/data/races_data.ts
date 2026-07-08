@@ -164,7 +164,12 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
   return new Race(
     r.entity_id,
     r.name,
-    new Track(r.track_entity_id || "", "", 100, []),
+    new Track({
+      entity_id: r.track_entity_id || "",
+      name: "",
+      num_track_sections: 100,
+      lanes: [],
+    }),
     r.heat_rotation_type || "RoundRobin",
     heatScoring,
     overallScoring,

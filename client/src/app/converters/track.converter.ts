@@ -15,7 +15,14 @@ export class TrackConverter {
 
   static fromProto(proto: ITrackModel): Track {
     if (!proto) {
-      return new Track("", "Unknown Track", 100, [], false, []);
+      return new Track({
+        entity_id: "",
+        name: "Unknown Track",
+        num_track_sections: 100,
+        lanes: [],
+        has_digital_fuel: false,
+        arduino_configs: [],
+      });
     }
     const objectId = proto.model?.entityId || "";
     const isReference =
@@ -34,21 +41,21 @@ export class TrackConverter {
         const lanes = (proto.lanes || []).map((l) =>
           LaneConverter.fromProto(l),
         );
-        return new Track(
-          objectId,
-          proto.name || "Unknown Track",
-          proto.numTrackSections || 100,
-          lanes,
-          proto.hasDigitalFuel ?? false,
-          (proto.arduinoConfigs || []).map((ac) =>
+        return new Track({
+          entity_id: objectId,
+          name: proto.name || "Unknown Track",
+          num_track_sections: proto.numTrackSections || 100,
+          lanes: lanes,
+          has_digital_fuel: proto.hasDigitalFuel ?? false,
+          arduino_configs: (proto.arduinoConfigs || []).map((ac) =>
             ArduinoConfigConverter.fromProto(ac),
           ),
-          proto.hasPerLaneRelays ?? false,
-          proto.hasMainRelay ?? false,
-          (proto.trackmateConfigs || []).map((tc) =>
+          has_per_lane_relays: proto.hasPerLaneRelays ?? false,
+          has_main_relay: proto.hasMainRelay ?? false,
+          trackmate_configs: (proto.trackmateConfigs || []).map((tc) =>
             TrackmateConfigConverter.fromProto(tc),
           ),
-        );
+        });
       },
       () => {
         if (!proto.lanes && !isReference) {

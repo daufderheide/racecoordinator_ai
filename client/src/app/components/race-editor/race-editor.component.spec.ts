@@ -567,8 +567,20 @@ describe("RaceEditorComponent", () => {
 
     it("should correctly identify digital fuel capability of a track", () => {
       component.tracks = [
-        new Track("t1", "Analog Track", 100, [], false),
-        new Track("speedway", "Digital Track", 100, [], true),
+        new Track({
+          entity_id: "t1",
+          name: "Analog Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: false,
+        }),
+        new Track({
+          entity_id: "speedway",
+          name: "Digital Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: true,
+        }),
       ];
 
       component.editingRace.track_entity_id = "t1";
@@ -579,7 +591,15 @@ describe("RaceEditorComponent", () => {
     });
 
     it("should enforce fuel rules: disable digital fuel if track is analog", () => {
-      component.tracks = [new Track("track1", "Analog Track", 100, [], false)];
+      component.tracks = [
+        new Track({
+          entity_id: "track1",
+          name: "Analog Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: false,
+        }),
+      ];
       component.editingRace.track_entity_id = "track1";
       component.editingRace.digital_fuel_options = { enabled: true } as any;
 

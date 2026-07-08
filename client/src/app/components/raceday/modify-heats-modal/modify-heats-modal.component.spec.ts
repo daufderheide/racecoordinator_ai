@@ -126,18 +126,23 @@ describe("ModifyHeatsModalComponent", () => {
   };
 
   const createMockTrack = () => {
-    return new Track("track-1", "Test Track", 100, [
-      {
-        lane_index: 0,
-        background_color: "red",
-        foreground_color: "white",
-      } as any,
-      {
-        lane_index: 1,
-        background_color: "blue",
-        foreground_color: "white",
-      } as any,
-    ]);
+    return new Track({
+      entity_id: "track-1",
+      name: "Test Track",
+      num_track_sections: 100,
+      lanes: [
+        {
+          lane_index: 0,
+          background_color: "red",
+          foreground_color: "white",
+        } as any,
+        {
+          lane_index: 1,
+          background_color: "blue",
+          foreground_color: "white",
+        } as any,
+      ],
+    });
   };
 
   it("should show all participants in RACING pool even if they are assigned to a heat", () => {

@@ -171,17 +171,17 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.tracks = data.map(
           (t) =>
-            new Track(
-              t.entity_id,
-              t.name,
-              t.num_track_sections ?? 100,
-              t.lanes || [],
-              t.has_digital_fuel ?? false,
-              t.arduino_configs,
-              t.has_per_lane_relays ?? false,
-              t.has_main_relay ?? false,
-              t.trackmate_configs,
-            ),
+            new Track({
+              entity_id: t.entity_id,
+              name: t.name,
+              num_track_sections: t.num_track_sections ?? 100,
+              lanes: t.lanes || [],
+              has_digital_fuel: t.has_digital_fuel ?? false,
+              arduino_configs: t.arduino_configs,
+              has_per_lane_relays: t.has_per_lane_relays ?? false,
+              has_main_relay: t.has_main_relay ?? false,
+              trackmate_configs: t.trackmate_configs,
+            }),
         );
         if (this.tracks.length > 0) {
           const lastEdited = this.navigationService.getLastEditedId("track");

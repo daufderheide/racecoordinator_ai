@@ -68,10 +68,15 @@ describe("RacedayOnDeckComponent", () => {
   });
 
   it("should compute and render on deck drivers correctly", async () => {
-    const mockTrack = new Track("t1", "Track 1", 100, [
-      new Lane("l1", "white", "red", 50),
-      new Lane("l2", "white", "blue", 50),
-    ]);
+    const mockTrack = new Track({
+      entity_id: "t1",
+      name: "Track 1",
+      num_track_sections: 100,
+      lanes: [
+        new Lane("l1", "white", "red", 50),
+        new Lane("l2", "white", "blue", 50),
+      ],
+    });
 
     const d1 = new Driver("d1", "Driver One", "One");
     const d2 = new Driver("d2", "Driver Two", "Two");
@@ -126,9 +131,12 @@ describe("RacedayOnDeckComponent", () => {
   });
 
   it("should display team name and trigger teammate change when isTeam is true", async () => {
-    const mockTrack = new Track("t1", "Track 1", 100, [
-      new Lane("l1", "white", "red", 50),
-    ]);
+    const mockTrack = new Track({
+      entity_id: "t1",
+      name: "Track 1",
+      num_track_sections: 100,
+      lanes: [new Lane("l1", "white", "red", 50)],
+    });
 
     const d1 = new Driver("d1", "Driver One", "One");
     roleSubject.next("DIRECTOR");

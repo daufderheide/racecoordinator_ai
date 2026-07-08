@@ -599,14 +599,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       next: (tracks) => {
         this.tracks = tracks.map(
           (t) =>
-            new Track(
-              t.entity_id,
-              t.name,
-              t.num_track_sections || 100,
-              t.lanes || [],
-              t.has_digital_fuel ?? false,
-              t.arduino_configs,
-            ),
+            new Track({
+              entity_id: t.entity_id,
+              name: t.name,
+              num_track_sections: t.num_track_sections || 100,
+              lanes: t.lanes || [],
+              has_digital_fuel: t.has_digital_fuel ?? false,
+              arduino_configs: t.arduino_configs,
+            }),
         );
         if (
           this.editingRace &&

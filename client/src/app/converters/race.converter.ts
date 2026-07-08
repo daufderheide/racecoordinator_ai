@@ -34,7 +34,14 @@ export class RaceConverter {
       return new Race(
         "",
         "Unknown Race",
-        new Track("", "Unknown Track", 100, [], false, []),
+        new Track({
+          entity_id: "",
+          name: "Unknown Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: false,
+          arduino_configs: [],
+        }),
         "RoundRobin",
         new HeatScoring(),
         new OverallScoring(),

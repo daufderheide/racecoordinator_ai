@@ -399,11 +399,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.subscriptions.push(
               this.dataService.getTrackFactorySettings().subscribe({
                 next: (factoryTrack) => {
-                  this.editingTrack = new Track(
-                    "new",
-                    this.translationService.translate("TM_DEFAULT_TRACK_NAME"),
-                    factoryTrack.num_track_sections || 100,
-                    factoryTrack.lanes.map(
+                  this.editingTrack = new Track({
+                    entity_id: "new",
+                    name: this.translationService.translate(
+                      "TM_DEFAULT_TRACK_NAME",
+                    ),
+                    num_track_sections: factoryTrack.num_track_sections || 100,
+                    lanes: factoryTrack.lanes.map(
                       (l: any) =>
                         new Lane(
                           this.generateId(),
@@ -412,27 +414,28 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                           l.length,
                         ),
                     ),
-                    false,
-                    factoryTrack.arduino_configs,
-                    factoryTrack.has_per_lane_relays || false,
-                    factoryTrack.has_main_relay || false,
-                    factoryTrack.trackmate_configs,
-                  );
+                    has_digital_fuel: false,
+                    arduino_configs: factoryTrack.arduino_configs,
+                    has_per_lane_relays:
+                      factoryTrack.has_per_lane_relays || false,
+                    has_main_relay: factoryTrack.has_main_relay || false,
+                    trackmate_configs: factoryTrack.trackmate_configs,
+                  });
                   this.initializeEditingState();
                 },
                 error: (err) => {
                   this.logger.error("Failed to load factory settings", err);
                   // Fallback default
-                  this.editingTrack = new Track(
-                    "new",
-                    "",
-                    100,
-                    [
+                  this.editingTrack = new Track({
+                    entity_id: "new",
+                    name: "",
+                    num_track_sections: 100,
+                    lanes: [
                       new Lane(this.generateId(), "#ef4444", "black", 100),
                       new Lane(this.generateId(), "#ffffff", "black", 100),
                     ],
-                    false,
-                  );
+                    has_digital_fuel: false,
+                  });
                   this.initializeEditingState();
                 },
               }),
@@ -511,7 +514,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       // Now initialize tracking with a fully populated model
       this.undoManager.initialize(this.editingTrack);
     } else {
-      this.editingTrack = new Track("new", "", 100, [], false);
+      this.editingTrack = new Track({
+        entity_id: "new",
+        name: "",
+        num_track_sections: 100,
+        lanes: [],
+        has_digital_fuel: false,
+      });
       this.trackName = "";
       this.numTrackSections = 100;
       this.lanes = [];
@@ -576,32 +585,38 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const trackmateCopy = track.trackmate_configs
       ? JSON.parse(JSON.stringify(track.trackmate_configs))
       : [];
-    return new Track(
-      track.entity_id,
-      track.name,
-      track.num_track_sections,
-      lanesCopy,
-      track.has_digital_fuel,
-      arduinoCopy,
-      track.has_per_lane_relays,
-      track.has_main_relay,
-      trackmateCopy,
-    );
+    return new Track({
+      entity_id: track.entity_id,
+      name: track.name,
+      num_track_sections: track.num_track_sections,
+      lanes: lanesCopy,
+      has_digital_fuel: track.has_digital_fuel,
+      arduino_configs: arduinoCopy,
+      has_per_lane_relays: track.has_per_lane_relays,
+      has_main_relay: track.has_main_relay,
+      trackmate_configs: trackmateCopy,
+    });
   }
 
   private createSnapshot(): Track {
     if (!this.editingTrack) {
-      return new Track("new", "", 100, [], false);
+      return new Track({
+        entity_id: "new",
+        name: "",
+        num_track_sections: 100,
+        lanes: [],
+        has_digital_fuel: false,
+      });
     }
     const configs = this.arduinoConfigs ? deepCopy(this.arduinoConfigs) : [];
     const tmConfigs = this.trackmateConfigs
       ? deepCopy(this.trackmateConfigs)
       : [];
-    return new Track(
-      this.editingTrack.entity_id,
-      this.trackName,
-      this.numTrackSections,
-      this.lanes.map(
+    return new Track({
+      entity_id: this.editingTrack.entity_id,
+      name: this.trackName,
+      num_track_sections: this.numTrackSections,
+      lanes: this.lanes.map(
         (l) =>
           new Lane(
             l.entity_id,
@@ -610,12 +625,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             l.length,
           ),
       ),
-      this.editingTrack.has_digital_fuel,
-      configs,
-      this.editingTrack.has_per_lane_relays,
-      this.editingTrack.has_main_relay,
-      tmConfigs,
-    );
+      has_digital_fuel: this.editingTrack.has_digital_fuel,
+      arduino_configs: configs,
+      has_per_lane_relays: this.editingTrack.has_per_lane_relays,
+      has_main_relay: this.editingTrack.has_main_relay,
+      trackmate_configs: tmConfigs,
+    });
   }
 
   private areTracksEqual(t1: Track, t2: Track): boolean {
@@ -1459,15 +1474,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.isAutoSaving = false;
           this.navigationService.setLastEditedId("track", result.entity_id);
           // Update local state with result (especially ID)
-          this.editingTrack = new Track(
-            result.entity_id,
-            result.name,
-            result.num_track_sections ?? 100,
-            result.lanes,
-            result.has_digital_fuel ?? false,
-            result.arduino_configs,
-            result.trackmate_configs,
-          );
+          this.editingTrack = new Track({
+            entity_id: result.entity_id,
+            name: result.name,
+            num_track_sections: result.num_track_sections ?? 100,
+            lanes: result.lanes,
+            has_digital_fuel: result.has_digital_fuel ?? false,
+            arduino_configs: result.arduino_configs,
+            has_per_lane_relays: result.has_per_lane_relays ?? false,
+            has_main_relay: result.has_main_relay ?? false,
+            trackmate_configs: result.trackmate_configs,
+          });
 
           // Update allTracks cache to ensure name uniqueness checks stay in sync
           const idx = this.allTracks.findIndex(

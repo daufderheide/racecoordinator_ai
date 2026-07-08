@@ -129,11 +129,11 @@ export const MOCK_TRACKS = [
 
 export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
   (t: any) =>
-    new Track(
-      t.entity_id,
-      t.name,
-      t.num_track_sections || 100,
-      t.lanes.map(
+    new Track({
+      entity_id: t.entity_id,
+      name: t.name,
+      num_track_sections: t.num_track_sections || 100,
+      lanes: t.lanes.map(
         (l: any) =>
           new Lane(
             l.entity_id,
@@ -142,12 +142,12 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
             l.length,
           ),
       ),
-      t.has_digital_fuel || false,
-      t.arduino_configs,
-      t.has_per_lane_relays || false,
-      t.has_main_relay || false,
-      t.trackmate_configs,
-    ),
+      has_digital_fuel: t.has_digital_fuel || false,
+      arduino_configs: t.arduino_configs,
+      has_per_lane_relays: t.has_per_lane_relays || false,
+      has_main_relay: t.has_main_relay || false,
+      trackmate_configs: t.trackmate_configs,
+    }),
 );
 
 export const MOCK_FACTORY_SETTINGS = {

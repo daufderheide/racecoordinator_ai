@@ -258,6 +258,37 @@ describe("TrackEditorComponent", () => {
     expect(component.isSaving).toBeFalse();
   });
 
+  it("should retain trackmate_configs after a successful track update", fakeAsync(() => {
+    const mockTrackmateConfig = [
+      { name: "TM1", commPort: "COM2", lapPinPitBehavior: 2 },
+    ];
+    dataService.updateTrack.and.returnValue(
+      of({
+        entity_id: "t1",
+        name: "Updated Track",
+        lanes: component.lanes,
+        arduino_configs: component.arduinoConfigs,
+        has_per_lane_relays: true,
+        has_main_relay: false,
+        trackmate_configs: mockTrackmateConfig,
+      }),
+    );
+
+    component.trackmateConfigs = mockTrackmateConfig as any;
+    component.trackName = "Updated Track";
+
+    component.updateTrack();
+
+    flush();
+    fixture.detectChanges();
+
+    expect(component.trackmateConfigs).toEqual(mockTrackmateConfig as any);
+    expect(component.editingTrack?.trackmate_configs).toEqual(
+      mockTrackmateConfig as any,
+    );
+    expect(component.editingTrack?.has_per_lane_relays).toBeTrue();
+  }));
+
   it("should save as new track", () => {
     component.saveAsNew();
 
