@@ -94,7 +94,8 @@
           >
             @if (
               col.propertyName === "rankHeat" ||
-              col.propertyName === "rankOverall"
+              col.propertyName === "rankOverall" ||
+              col.propertyName === "rankGroup"
             ) {
               <div
                 #fitTextTarget
@@ -113,8 +114,14 @@
                   style="
                     font-size: calc(1em * var(--text-fit-scale, 1));
                     white-space: normal;
-                    word-break: break-word;
                     line-height: 1.1;
+                  "
+                  [style.word-break]="
+                    ['rankHeat', 'rankOverall', 'rankGroup'].includes(
+                      col.propertyName
+                    )
+                      ? 'normal'
+                      : 'break-word'
                   "
                 >
                   {{ parent().getColumnLabel(col) }}
@@ -296,6 +303,13 @@
                   <div
                     #fitTextTarget
                     [class]="parent().getAnchorClass(entry.anchor)"
+                    [style.word-break]="
+                      ['rankHeat', 'rankOverall', 'rankGroup'].includes(
+                        entry.property
+                      )
+                        ? 'normal'
+                        : null
+                    "
                     [style.font-family]="
                       entry.anchor?.startsWith('center-')
                         ? widget()?.customSettings?.['dataFontFamily'] || null
