@@ -270,6 +270,35 @@ describe("DriverStationComponent", () => {
     );
   });
 
+  describe("hasLapData", () => {
+    it("should return false if no driverData", () => {
+      component["driverData"] = undefined;
+      expect(component.hasLapData).toBeFalse();
+    });
+
+    it("should return true if reactionTime > 0", () => {
+      component["driverData"] = { reactionTime: 0.123, lapTimes: [] } as any;
+      expect(component.hasLapData).toBeTrue();
+    });
+
+    it("should return true if lapTimes has entries", () => {
+      component["driverData"] = { reactionTime: 0, lapTimes: [1.23] } as any;
+      expect(component.hasLapData).toBeTrue();
+    });
+
+    it("should return false if no reactionTime and no lapTimes and no adjustments", () => {
+      component["driverData"] = {
+        reactionTime: 0,
+        lapTimes: [],
+        userLaps: 0,
+        autoCalculatedLaps: 0,
+        penaltyLaps: 0,
+        adjustedLapCount: 0,
+      } as any;
+      expect(component.hasLapData).toBeFalse();
+    });
+  });
+
   describe("Viewer Race Ended Redirect", () => {
     it("should redirect to /raceday-setup on acknowledge if race has ended", () => {
       fixture.detectChanges();

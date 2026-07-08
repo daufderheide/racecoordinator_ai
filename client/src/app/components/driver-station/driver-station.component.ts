@@ -114,6 +114,7 @@ export class DriverStationComponent implements OnInit, OnDestroy {
       this.cdr,
       {
         onlyForViewer: true,
+        skipRaceStartedAck: true,
         onRaceStarted: () => {
           this.loadRaceData();
         },
@@ -353,5 +354,18 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
   get backgroundColor(): string {
     return this.lane?.background_color || "#ffffff";
+  }
+
+  get hasLapData(): boolean {
+    if (!this.driverData) return false;
+    const hd = this.driverData;
+    const hasReactionTime = hd.reactionTime > 0;
+    const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;
+    const hasAdjustment =
+      (hd.userLaps !== undefined && hd.userLaps !== 0) ||
+      (hd.autoCalculatedLaps !== undefined && hd.autoCalculatedLaps !== 0) ||
+      (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
+      (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
+    return hasReactionTime || hasRealLap || hasAdjustment;
   }
 }

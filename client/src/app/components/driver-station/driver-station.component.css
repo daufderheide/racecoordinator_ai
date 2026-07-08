@@ -273,13 +273,33 @@
 .lap-row {
   display: flex;
   flex-direction: row;
+  align-items: stretch; /* Override flex-start from .data-row so both columns are equal height */
   gap: 20px;
 }
 
 .lap-col {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1; /* Default for other usages, if any */
+}
+
+/* Make lap time column rigid so it never shrinks or grows */
+.lap-time-col {
+  flex: 0 0 auto;
+}
+
+/* Make lap count column take the remaining space */
+.lap-count-col {
+  flex: 1 1 0px;
+  min-width: 0;
+}
+
+/* Container specifically for the lap count value so its cqi scale does NOT affect the label's cqw scale! */
+.lap-value-container {
+  container-type: inline-size;
+  display: block;
+  width: 100%;
+  margin: auto 0; /* Center the wrapper itself to fix Safari nested flex-height bugs */
 }
 
 .lap-col .label {
@@ -292,6 +312,21 @@
 .lap-col .value {
   font-size: 3.6rem;
   font-weight: bold;
+}
+
+/* Vertically center ALL values to align them flawlessly */
+.lap-col .value {
+  margin: auto 0;
+}
+
+/* Let lap count shrink down to 1.5rem if space gets constrained */
+.lap-col .value.lap-count-value {
+  font-size: clamp(1.5rem, 25cqw, 3.6rem);
+}
+
+.lap-col .value.lap-count-value.shrink-more {
+  /* When text is long, scale using column cqi to ensure it fits the remaining space exactly */
+  font-size: clamp(1.2rem, 30cqi, 3.6rem);
 }
 
 /* Race state row */

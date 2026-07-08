@@ -148,6 +148,39 @@ describe("ViewerRaceEndedHandler", () => {
     handler.stopListening();
   });
 
+  it("should clear showAckModal and not set race started texts when skipRaceStartedAck is true", () => {
+    const onRaceStartedSpy = jasmine.createSpy("onRaceStarted");
+    const handler = new ViewerRaceEndedHandler(
+      mockDataService,
+      mockAuthService,
+      mockCdr,
+      { skipRaceStartedAck: true, onRaceStarted: onRaceStartedSpy },
+    );
+    handler.startListening();
+
+    // Start and end a race to show the race ended modal
+    systemStateSubject.next({
+      resourceLockState: "RACE_RUNNING",
+    } as SystemState);
+    systemStateSubject.next({ resourceLockState: "IDLE" } as SystemState);
+    expect(handler.showAckModal).toBeTrue(); // race ended modal is shown
+    expect(handler.raceHasEnded).toBeTrue();
+
+    // Start a new race
+    systemStateSubject.next({
+      resourceLockState: "RACE_RUNNING",
+    } as SystemState);
+
+    // Modal should be hidden when a new race starts if skipRaceStartedAck is true
+    expect(handler.showAckModal).toBeFalse();
+    expect(handler.raceHasEnded).toBeFalse();
+    expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    expect(onRaceStartedSpy).toHaveBeenCalled();
+    expect(mockCdr.markForCheck).toHaveBeenCalled();
+
+    handler.stopListening();
+  });
+
   it("should reset showAckModal to false when acknowledge is called", () => {
     const handler = new ViewerRaceEndedHandler(
       mockDataService,

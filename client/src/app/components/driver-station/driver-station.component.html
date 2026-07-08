@@ -64,14 +64,23 @@
         }}</span>
       </div>
     </div>
+    @let lapText = hasLapData ? (driverData?.lapCount | number: "1.0-2") : "--";
+    @let hasFraction = lapText != null && lapText.includes(".");
+
     <div class="data-row lap-row">
-      <div class="lap-col">
+      <div class="lap-col lap-count-col">
         <span class="label shrink-value">{{ "RD_COL_LAP" | translate }}</span>
-        <span class="value shrink-value">{{
-          driverData?.lapCount ? driverData?.lapCount : "--"
-        }}</span>
+        @if (hasFraction) {
+          <div class="lap-value-container">
+            <span class="value shrink-value lap-count-value shrink-more">{{
+              lapText
+            }}</span>
+          </div>
+        } @else {
+          <span class="value shrink-value lap-count-value">{{ lapText }}</span>
+        }
       </div>
-      <div class="lap-col">
+      <div class="lap-col lap-time-col">
         <span class="label shrink-value">{{
           "RD_COL_LAP_TIME" | translate
         }}</span>

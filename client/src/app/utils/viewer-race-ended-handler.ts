@@ -19,6 +19,7 @@ export class ViewerRaceEndedHandler {
     private cdr: ChangeDetectorRef,
     private options?: {
       onlyForViewer?: boolean;
+      skipRaceStartedAck?: boolean;
       onRaceStarted?: () => void;
       onRaceEnded?: () => void;
     },
@@ -51,10 +52,14 @@ export class ViewerRaceEndedHandler {
           if (this.raceHasEnded || this.previousState === "IDLE") {
             this.raceHasEnded = false;
             if (this.previousState === "IDLE") {
-              this.ackModalTitle = "RD_RACE_STARTED_TITLE";
-              this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
-              this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
-              this.showAckModal = true;
+              if (this.options?.skipRaceStartedAck) {
+                this.showAckModal = false;
+              } else {
+                this.ackModalTitle = "RD_RACE_STARTED_TITLE";
+                this.ackModalMessage = "RD_RACE_STARTED_MESSAGE";
+                this.ackModalButtonText = "RD_RACE_STARTED_BTN_OK";
+                this.showAckModal = true;
+              }
               this.dataService.updateRaceSubscription(true);
               if (this.options?.onRaceStarted) {
                 this.options.onRaceStarted();

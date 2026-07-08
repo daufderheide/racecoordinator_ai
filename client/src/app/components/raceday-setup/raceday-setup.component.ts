@@ -110,6 +110,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public directorPassword = "";
   public showPassword = false;
   private hasLoadedSetupComponent = false;
+  private systemStateSubscription?: Subscription;
 
   constructor(
     private fileSystem: FileSystemService,
@@ -333,13 +334,15 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
 
       // Subscribe to system state to know when race starts
-      this.dataService.getSystemState().subscribe((state) => {
-        this.systemState = state;
-        if (state && state.resourceLockState === "RACE_RUNNING") {
-          this.router.navigate(["/raceday"]);
-        }
-        this.cdr.detectChanges();
-      });
+      this.systemStateSubscription = this.dataService
+        .getSystemState()
+        .subscribe((state) => {
+          this.systemState = state;
+          if (state && state.resourceLockState === "RACE_RUNNING") {
+            this.router.navigate(["/raceday"]);
+          }
+          this.cdr.detectChanges();
+        });
     }
   }
 
@@ -354,6 +357,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
     if (this.splashTimeoutTimer) {
       clearTimeout(this.splashTimeoutTimer);
+    }
+    if (this.systemStateSubscription) {
+      this.systemStateSubscription.unsubscribe();
     }
   }
 
