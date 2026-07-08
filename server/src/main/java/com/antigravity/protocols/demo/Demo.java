@@ -148,6 +148,9 @@ public class Demo extends DefaultProtocol {
       for (int i = 0; i < segmentSent.length; i++) {
         segmentSent[i] = false;
       }
+      for (int i = 0; i < segmentOffsets.length; i++) {
+        segmentOffsets[i] = 0;
+      }
       setNextTarget();
     }
   }

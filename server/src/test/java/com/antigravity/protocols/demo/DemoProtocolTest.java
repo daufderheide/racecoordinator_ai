@@ -631,4 +631,32 @@ public class DemoProtocolTest {
     assertEquals("Should complete regular lap 1", 1, testListener.laps.size());
     assertEquals(4.1, testListener.laps.get(0), 0.001);
   }
+
+  @Test
+  public void testResetClearsSegmentOffsets() {
+    MockRandom random = new MockRandom();
+    // Regular lap target
+    random.addNextInt(2000);
+    // Reaction lap target
+    random.addNextInt(100);
+
+    TestableDemo testDemo = new TestableDemo(1, scheduler, random, false, true);
+    MockProtocolListener testListener = new MockProtocolListener();
+    testDemo.setListener(testListener);
+
+    // Simulate first lap finished
+    testDemo.laneStates[0].isFirstLap = false;
+    testDemo.laneStates[0].setNextTarget();
+
+    // Verify offsets are set
+    assertTrue("Segment offsets should be positive", testDemo.laneStates[0].segmentOffsets[0] > 0);
+
+    // Reset the demo (simulates heat restart)
+    testDemo.laneStates[0].reset();
+
+    // Verify segmentOffsets are cleared
+    for (long offset : testDemo.laneStates[0].segmentOffsets) {
+      assertEquals("Segment offset should be cleared to 0 on reset", 0, offset);
+    }
+  }
 }
