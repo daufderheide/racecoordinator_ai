@@ -45,6 +45,7 @@ jobs:
           sed -i "s/#define MyAppVersion \".*\"/#define MyAppVersion \"$VERSION\"/" installer_base.iss
           sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
           sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/analytics.service.ts
+          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/components/raceday-setup/raceday-setup.component.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
