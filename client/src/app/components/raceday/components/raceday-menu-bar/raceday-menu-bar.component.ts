@@ -3,6 +3,8 @@ import {
   Component,
   HostListener,
   input,
+  OnDestroy,
+  OnInit,
   output,
   ViewEncapsulation,
 } from "@angular/core";
@@ -21,8 +23,9 @@ import { AuthService } from "@app/services/auth.service";
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, LanguageSelectorComponent, TranslatePipe],
 })
-export class RacedayMenuBarComponent {
+export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   track = input<Track | undefined>(undefined);
+  participants = input<any[]>([]);
   isSaveDisabled = input<boolean>(false);
   isStartResumeDisabled = input<boolean>(false);
   isPauseDisabled = input<boolean>(false);
@@ -45,6 +48,7 @@ export class RacedayMenuBarComponent {
   menuSelect = output<string>();
   laneMenuSelect = output<number>();
   windowsMenuSelect = output<string>();
+  driverViewMenuSelect = output<string>();
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
 
@@ -55,15 +59,78 @@ export class RacedayMenuBarComponent {
   isMenuOpen = false;
   isDriversStationOpen = false;
   isWindowsMenuOpen = false;
+  isDriversViewOpen = false;
   isOptionsMenuOpen = false;
   isTrackPowerMenuOpen = false;
 
+  get driverViewMenuOptions(): { id: string; value: string; label: string }[] {
+    const options: { id: string; value: string; label: string }[] = [];
+    for (const p of this.participants()) {
+      if (
+        p.team &&
+        p.team.name &&
+        !options.find((o) => o.value === p.team!.entity_id)
+      ) {
+        options.push({
+          id: p.team.entity_id,
+          value: p.team.entity_id,
+          label: p.team.name,
+        });
+
+        // Add all team members if we have their names loaded
+        if (p.team.driverIds && p.team.driverIds.length > 0) {
+          for (const driverId of p.team.driverIds) {
+            const d = this.allDrivers.find(
+              (d) => d.objectId === driverId || d.entity_id === driverId,
+            );
+            if (
+              d &&
+              !options.find((o) => o.id === `${p.team!.entity_id}_${driverId}`)
+            ) {
+              const name = d.nickname || d.name;
+              options.push({
+                id: `${p.team.entity_id}_${driverId}`,
+                value: driverId,
+                label: ` - ${name}`,
+              });
+            }
+          }
+        }
+      } else if (!p.team && p.driver && !p.driver.isEmpty()) {
+        const name = p.driver.nickname || p.driver.name;
+        if (!options.find((o) => o.value === p.driver.entity_id)) {
+          options.push({
+            id: p.driver.entity_id,
+            value: p.driver.entity_id,
+            label: name,
+          });
+        }
+      }
+    }
+    console.log("OPTIONS:", options);
+    return options;
+  }
+
   Role = Role;
+  private allDrivers: any[] = [];
+  private subscriptions: any[] = [];
 
   constructor(
     public authService: AuthService,
     public dataService: DataService,
   ) {}
+
+  ngOnInit() {
+    this.subscriptions.push(
+      this.dataService.getDrivers().subscribe((drivers) => {
+        this.allDrivers = drivers || [];
+      }),
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach((s) => s.unsubscribe());
+  }
 
   trackPowerShortcut(digit: number, off: boolean): string {
     if (digit > 9) return "";
@@ -98,6 +165,16 @@ export class RacedayMenuBarComponent {
 
   toggleDriversStationMenu() {
     this.isDriversStationOpen = !this.isDriversStationOpen;
+    if (this.isDriversStationOpen) {
+      this.isDriversViewOpen = false;
+    }
+  }
+
+  toggleDriversViewMenu() {
+    this.isDriversViewOpen = !this.isDriversViewOpen;
+    if (this.isDriversViewOpen) {
+      this.isDriversStationOpen = false;
+    }
   }
 
   toggleWindowsMenu() {
@@ -123,6 +200,7 @@ export class RacedayMenuBarComponent {
       this.isOptionsMenuOpen = menu === "options";
       if (!this.isWindowsMenuOpen) {
         this.isDriversStationOpen = false;
+        this.isDriversViewOpen = false;
       }
       if (!this.isMenuOpen) {
         this.isTrackPowerMenuOpen = false;
@@ -162,6 +240,11 @@ export class RacedayMenuBarComponent {
     this.closeAll();
   }
 
+  onDriverViewMenuSelect(driverId: string) {
+    this.driverViewMenuSelect.emit(driverId);
+    this.closeAll();
+  }
+
   onOptionsSelect(action: string) {
     this.optionsMenuSelect.emit(action);
     this.closeAll();
@@ -193,6 +276,7 @@ export class RacedayMenuBarComponent {
     if (active !== "windows") {
       this.isWindowsMenuOpen = false;
       this.isDriversStationOpen = false;
+      this.isDriversViewOpen = false;
     }
     if (active !== "options") this.isOptionsMenuOpen = false;
   }
@@ -201,6 +285,7 @@ export class RacedayMenuBarComponent {
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
     this.isDriversStationOpen = false;
+    this.isDriversViewOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
     this.isTrackPowerMenuOpen = false;

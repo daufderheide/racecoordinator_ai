@@ -163,6 +163,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
     { key: "flag", label: "RD_COL_DRIVER_STATE" },
     { key: "qrCode", label: "RD_COL_LANE_QR" },
+    { key: "driverViewQrCode", label: "RD_COL_DRIVER_VIEW_QR" },
     { key: "laneNumber", label: "RD_COL_LANE" },
   ];
   availableTransitions = [
@@ -761,6 +762,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
           { key: "flag", label: "RD_COL_DRIVER_STATE" },
           { key: "qrCode", label: "RD_COL_LANE_QR" },
+          { key: "driverViewQrCode", label: "RD_COL_DRIVER_VIEW_QR" },
           { key: "laneNumber", label: "RD_COL_LANE" },
           ...imageSetColumns,
         ];

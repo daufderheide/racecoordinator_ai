@@ -2,7 +2,9 @@ import { DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  effect,
   inject,
+  input,
   OnDestroy,
   OnInit,
 } from "@angular/core";
@@ -85,6 +87,29 @@ export class DriverStationComponent implements OnInit, OnDestroy {
 
   // ... existing code ...
   private subscriptions: Subscription[] = [];
+
+  inputLaneIndex = input<number>();
+
+  constructor(
+    private route: ActivatedRoute,
+    private dataService: DataService,
+    private raceService: RaceService,
+    private raceConnectionService: RaceConnectionService,
+    private raceFlagService: RaceFlagService,
+    private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
+  ) {
+    effect(() => {
+      const val = this.inputLaneIndex();
+      if (val !== undefined) {
+        this.laneIndex = val;
+        if (this.heat) {
+          this.loadRaceData();
+        }
+      }
+    });
+  }
+
   protected laneIndex: number = 0;
   protected driverData?: DriverHeatData;
   protected race?: Race;
@@ -95,16 +120,6 @@ export class DriverStationComponent implements OnInit, OnDestroy {
   protected overallPosition: number = 0;
   protected raceState: RaceState = RaceState.UNKNOWN_STATE;
   protected hasRacedInCurrentHeat: boolean = false;
-
-  constructor(
-    private route: ActivatedRoute,
-    private dataService: DataService,
-    private raceService: RaceService,
-    private raceConnectionService: RaceConnectionService,
-    private raceFlagService: RaceFlagService,
-    private cdr: ChangeDetectorRef,
-    private logger: LoggerService,
-  ) {}
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
@@ -123,7 +138,11 @@ export class DriverStationComponent implements OnInit, OnDestroy {
     this.viewerRaceEndedHandler.startListening();
 
     this.route.params.subscribe((params) => {
-      this.laneIndex = +params["lane"] - 1;
+      if (this.inputLaneIndex() !== undefined) {
+        this.laneIndex = this.inputLaneIndex()!;
+      } else if (params["lane"]) {
+        this.laneIndex = +params["lane"] - 1;
+      }
       this.loadRaceData();
     });
 

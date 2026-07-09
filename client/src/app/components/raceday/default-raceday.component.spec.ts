@@ -2583,6 +2583,18 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isDriversStationOpen).toBeFalse();
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
+
+    it("should call onDriverViewMenuSelect with correct id and navigate", () => {
+      const mockRouter = TestBed.inject(Router) as any;
+
+      component.onDriverViewMenuSelect("test-driver-id");
+
+      expect(component.isWindowsMenuOpen).toBeFalse();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/driver-view", "test-driver-id"],
+        { state: { bypassDeactivate: true } },
+      );
+    });
   });
 
   describe("Options Menu", () => {

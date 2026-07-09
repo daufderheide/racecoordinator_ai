@@ -1,0 +1,23 @@
+.driver-view-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--surface-card, #1e293b);
+}
+
+.on-deck-mobile-container {
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the app-raceday-heat-drivers fills the space */
+.on-deck-mobile-container > app-raceday-heat-drivers {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

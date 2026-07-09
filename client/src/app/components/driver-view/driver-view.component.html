@@ -1,0 +1,23 @@
+<div class="driver-view-container">
+  @if (isRacingInCurrentHeat) {
+    <app-driver-station [inputLaneIndex]="laneIndex"></app-driver-station>
+  } @else {
+    <!-- Full-screen on deck container for mobile -->
+    <div class="on-deck-mobile-container">
+      <app-raceday-heat-drivers
+        type="on-deck"
+        [track]="track"
+        [currentHeat]="currentHeat"
+        [heats]="heats"
+      ></app-raceday-heat-drivers>
+    </div>
+  }
+</div>
+
+<app-acknowledgement-modal
+  [visible]="showAckModal"
+  [title]="ackModalTitle"
+  [message]="ackModalMessage"
+  [buttonText]="ackModalButtonText"
+  (acknowledge)="onAcknowledgeModal()"
+></app-acknowledgement-modal>

@@ -149,6 +149,15 @@ export const routes: Routes = [
     data: { animation: "DriverStationPage" },
   },
   {
+    path: "driver-view/:driverId",
+    loadComponent: () =>
+      import("@app/components/driver-view/driver-view.component").then(
+        (c) => c.DriverViewComponent,
+      ),
+    title: "Driver View",
+    data: { animation: "DriverViewPage" },
+  },
+  {
     path: "heat-results",
     component: HeatResultsComponent,
     title: "Heat Results",

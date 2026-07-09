@@ -23,6 +23,7 @@ export interface FormatContext {
   getDriverOverallRanking?: (hd: DriverHeatData) => number | undefined;
   getDriverGroupRanking?: (hd: DriverHeatData) => number | undefined;
   getLaneQrCodeUrl?: (laneIndex: number) => string;
+  getDriverViewQrCodeUrl?: (hd: DriverHeatData) => string;
 }
 
 export class RacedayFormatUtils {
@@ -283,6 +284,9 @@ export class RacedayFormatUtils {
       return ctx.getImageSetUrl(hd, propertyName);
     } else if (baseKey === "qrCode") {
       return ctx.getLaneQrCodeUrl ? ctx.getLaneQrCodeUrl(hd.laneIndex) : "";
+    } else if (baseKey === "driverViewQrCode") {
+      if (this.isEmptyDriver(hd)) return "";
+      return ctx.getDriverViewQrCodeUrl ? ctx.getDriverViewQrCodeUrl(hd) : "";
     }
 
     return value?.toString() ?? "";

@@ -127,7 +127,7 @@ export class DefaultRacedayComponent
   protected sortedHeatDrivers: DriverHeatData[] = [];
   protected driverVisualPositions = new Map<number, number>();
   protected allDrivers: any[] = [];
-  protected participants: RaceParticipant[] = [];
+  public participants: RaceParticipant[] = [];
 
   // Countdown Overlay state
   showCountdownOverlay: boolean = false;
@@ -162,6 +162,7 @@ export class DefaultRacedayComponent
   protected qrCodeUrl?: string;
   protected serverUrlBase: string = window?.location?.origin || "";
   protected laneQrCodeCache = new Map<number, string>();
+  protected driverViewQrCodeCache = new Map<string, string>();
 
   get groupEnabled(): boolean {
     return this.race?.group_options?.enabled || false;
@@ -839,6 +840,7 @@ export class DefaultRacedayComponent
   private subscribeToRaceData() {
     this.subscriptions.push(
       this.raceService.participants$.subscribe((participants) => {
+        console.log("DEFAULT RACEDAY PARTICIPANTS:", participants);
         this.participants = participants || [];
         this.updateLeaderboardEntries();
         if (this.heat && this.heat.heatDrivers) {
@@ -900,6 +902,7 @@ export class DefaultRacedayComponent
             if (this.serverUrlBase !== url) {
               this.serverUrlBase = url;
               this.laneQrCodeCache.clear();
+              this.driverViewQrCodeCache.clear();
             }
             QRCode.toDataURL(url, { margin: 1 })
               .then((dataUrl) => {
@@ -1508,7 +1511,8 @@ export class DefaultRacedayComponent
         nextState.url.includes("/team-manager") ||
         nextState.url.includes("/driver-manager") ||
         nextState.url.includes("/ui-editor") ||
-        nextState.url.includes("/driver-station")
+        nextState.url.includes("/driver-station") ||
+        nextState.url.includes("/driver-view")
       ) {
         return true;
       }
@@ -1869,6 +1873,33 @@ export class DefaultRacedayComponent
     return this.laneQrCodeCache.get(laneIndex) || "";
   }
 
+  getDriverViewQrCodeUrl(hd: DriverHeatData): string {
+    const entityId =
+      hd.participant?.team?.entity_id ||
+      hd.actualDriver?.entity_id ||
+      hd.driver?.entity_id;
+    if (!entityId) return "";
+
+    let dataUrl = this.driverViewQrCodeCache.get(entityId);
+    if (!dataUrl) {
+      this.driverViewQrCodeCache.set(entityId, "generating");
+      QRCode.toDataURL(`${this.serverUrlBase}/driver-view/${entityId}`, {
+        margin: 1,
+      })
+        .then((url) => {
+          this.driverViewQrCodeCache.set(entityId, url);
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        })
+        .catch((err) => {
+          this.logger.error("Driver View QR Code generation failed", err);
+          this.driverViewQrCodeCache.delete(entityId);
+        });
+    }
+    return dataUrl === "generating" ? "" : dataUrl || "";
+  }
+
   formatColumnValue(
     heatDriver: DriverHeatData,
     column: ColumnDefinition,
@@ -1891,6 +1922,7 @@ export class DefaultRacedayComponent
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
+      getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -2676,6 +2708,15 @@ export class DefaultRacedayComponent
     this.router.navigate(["/driver-station", laneIndex + 1]);
   }
 
+  onDriverViewMenuSelect(driverId: string) {
+    this.logger.debug("Driver selected for Driver View:", driverId);
+    this.isWindowsMenuOpen = false; // Close menu
+
+    this.router.navigate(["/driver-view", driverId], {
+      state: { bypassDeactivate: true },
+    });
+  }
+
   @HostListener("window:keyup", ["$event"])
   handleKeyUpEvent(event: KeyboardEvent) {
     if (event.code === "Space") {
@@ -3330,6 +3371,7 @@ export class DefaultRacedayComponent
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
+      getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

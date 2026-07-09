@@ -36,6 +36,7 @@
       @case ("menu-bar") {
         <app-raceday-menu-bar
           [track]="parentComponent().track"
+          [participants]="parentComponent().participants"
           [isSaveDisabled]="parentComponent().isSaveDisabled"
           [isStartResumeDisabled]="parentComponent().isStartResumeDisabled"
           [isPauseDisabled]="parentComponent().isPauseDisabled"
@@ -56,6 +57,9 @@
           (menuSelect)="parentComponent().onMenuSelect($event)"
           (laneMenuSelect)="parentComponent().onLaneMenuSelect($event)"
           (windowsMenuSelect)="parentComponent().onWindowsMenuSelect($event)"
+          (driverViewMenuSelect)="
+            parentComponent().onDriverViewMenuSelect($event)
+          "
           (optionsMenuSelect)="parentComponent().onOptionsSelect($event)"
           (languageSelected)="parentComponent().onLanguageSelected()"
           (trackPowerMainSelect)="

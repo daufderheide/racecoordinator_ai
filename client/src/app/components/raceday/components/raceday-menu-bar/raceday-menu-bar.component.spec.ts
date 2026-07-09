@@ -1,6 +1,6 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -30,6 +30,7 @@ describe("RacedayMenuBarComponent", () => {
           hasMainRelay: false,
           hasPerLaneRelays: false,
         }),
+      getDrivers: jasmine.createSpy("getDrivers").and.returnValue(of([])),
     };
 
     mockAuthService = {
@@ -168,5 +169,60 @@ describe("RacedayMenuBarComponent", () => {
     mockDataService.getSystemStateValue.and.returnValue(null);
     expect(component.hasMainRelay()).toBeFalse();
     expect(component.hasPerLaneRelays()).toBeFalse();
+  });
+
+  describe("driverViewMenuOptions", () => {
+    it("should generate options correctly for teams and drivers, omitting empty lanes", () => {
+      // Mock participants and allDrivers
+      (component as any).allDrivers = [
+        { objectId: "driver2", nickname: "Jesse" },
+      ];
+
+      fixture.componentRef.setInput("participants", [
+        {
+          driver: {
+            name: "Solo Driver",
+            entity_id: "driver1",
+            isEmpty: () => false,
+          },
+        },
+        {
+          driver: { name: "", entity_id: "empty1", isEmpty: () => true }, // Empty driver
+        },
+        {
+          team: {
+            name: "Team Rocket",
+            entity_id: "team1",
+            driverIds: ["driver2"],
+          },
+        },
+        {
+          team: {
+            name: "Team Rocket",
+            entity_id: "team1",
+            driverIds: ["driver2"],
+          },
+          driver: { name: "Jesse", entity_id: "driver2", isEmpty: () => false },
+        },
+      ]);
+      const options = component.driverViewMenuOptions;
+
+      expect(options.length).toBe(3);
+      expect(options[0]).toEqual({
+        id: "driver1",
+        value: "driver1",
+        label: "Solo Driver",
+      });
+      expect(options[1]).toEqual({
+        id: "team1",
+        value: "team1",
+        label: "Team Rocket",
+      });
+      expect(options[2]).toEqual({
+        id: "team1_driver2",
+        value: "driver2",
+        label: " - Jesse",
+      });
+    });
   });
 });

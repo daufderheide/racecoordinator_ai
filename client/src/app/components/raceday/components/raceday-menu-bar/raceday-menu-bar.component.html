@@ -249,6 +249,25 @@
               </div>
             }
           </div>
+          <div
+            class="menu-item has-submenu"
+            (click)="toggleDriversViewMenu(); $event.stopPropagation()"
+          >
+            {{ "RD_MENU_DRIVERS_VIEW" | translate }}
+            <span class="submenu-arrow">▶</span>
+            @if (isDriversViewOpen) {
+              <div class="menu-dropdown submenu">
+                @for (opt of driverViewMenuOptions; track opt.id) {
+                  <div
+                    class="menu-item"
+                    (click)="onDriverViewMenuSelect(opt.value)"
+                  >
+                    {{ opt.label }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
         }
       </div>
     }
