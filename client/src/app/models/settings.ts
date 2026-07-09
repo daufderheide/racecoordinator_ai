@@ -336,7 +336,7 @@ export class Settings {
         customSettings: {
           timeFontFamily: "",
           timeFontSize: 100,
-          timeTextColor: "#ffffff",
+          timeTextColor: "",
         },
       },
       {
