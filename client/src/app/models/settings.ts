@@ -125,6 +125,7 @@ export class Settings {
     "driver.nickname": {
       [AnchorPoint.CenterCenter]: "driver.nickname",
       [AnchorPoint.BottomRight]: "participant.team.name",
+      [AnchorPoint.BottomLeft]: "driverViewQrCode",
     },
 
     "imageset_fuel-gauge-builtin": {
