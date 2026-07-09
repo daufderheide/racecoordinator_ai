@@ -90,9 +90,12 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     // Height of text at 100px font-size is roughly 100px (line-height is 1)
     const textHeight = 100;
 
-    // Pad container bounds (12% horizontal margin, 24% vertical margin to accommodate labels)
+    // Always reserve space for both labels so timer size stays consistent
+    const reservedLabelHeight = 48;
+
+    // Pad container bounds (12% horizontal margin, reserve label height vertically)
     const containerWidth = panelEl.clientWidth * 0.88;
-    const containerHeight = panelEl.clientHeight * 0.76;
+    const containerHeight = Math.max(1, panelEl.clientHeight - reservedLabelHeight);
 
     const scaleX = containerWidth / textWidth;
     const scaleY = containerHeight / textHeight;
@@ -101,7 +104,11 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     const baseScaleFactor = widgetData?.textScaleFactor ?? 1;
     const targetFontSize = Math.floor(100 * scale * baseScaleFactor);
 
+    // Proportional vertical offset so text stays visually centered at any size
+    const textOffset = Math.max(0, Math.floor(targetFontSize * 0.05));
+
     // Apply via CSS custom property so children scale too
     panelEl.style.setProperty("--timer-font-size", `${targetFontSize}px`);
+    panelEl.style.setProperty("--timer-text-offset", `-${textOffset}px`);
   }
 }

@@ -43,7 +43,7 @@
 
 .timer-text {
   font-family: 'Tahoma', sans-serif;
-  font-size: 100px;
+  font-size: var(--timer-font-size, 100px);
   font-weight: bold;
   color: #32cd32;
   text-shadow: 0 0 24px rgba(50, 205, 50, 0.5);
@@ -52,7 +52,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translateY(-7px);
+  overflow: hidden;
+  min-height: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0 4px;
+  transform: translateY(var(--timer-text-offset, -7px));
 }
 
 .status-label {
