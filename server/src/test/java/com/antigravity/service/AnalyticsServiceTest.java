@@ -305,6 +305,11 @@ public class AnalyticsServiceTest {
     when(mockFuelOptions.isEnabled()).thenReturn(true);
     when(mockTrack.hasDigitalFuel()).thenReturn(true);
 
+    List<com.antigravity.protocols.arduino.ArduinoConfig> arduinoConfigs = new ArrayList<>();
+    arduinoConfigs.add(mock(com.antigravity.protocols.arduino.ArduinoConfig.class));
+    when(mockTrack.getArduinoConfigs()).thenReturn(arduinoConfigs);
+    when(mockTrack.getTrackmateConfigs()).thenReturn(new ArrayList<>());
+
     Map<String, Object> params = service.buildRaceStartParams(mockRace);
 
     assertEquals(HeatRotationType.RoundRobin.name(), params.get("heat_rotation_type"));
@@ -312,6 +317,7 @@ public class AnalyticsServiceTest {
     assertEquals(
         OverallScoring.OverallRanking.LAP_COUNT.name(), params.get("overall_scoring_method"));
     assertEquals("Digital", params.get("fuel_system"));
+    assertEquals("Arduino", params.get("hardware_interface"));
   }
 
   @Test
@@ -337,6 +343,11 @@ public class AnalyticsServiceTest {
     when(mockFuelOptions.isEnabled()).thenReturn(true);
     when(mockTrack.hasDigitalFuel()).thenReturn(false);
 
+    when(mockTrack.getArduinoConfigs()).thenReturn(new ArrayList<>());
+    List<com.antigravity.protocols.trackmate.TrackmateConfig> trackmateConfigs = new ArrayList<>();
+    trackmateConfigs.add(mock(com.antigravity.protocols.trackmate.TrackmateConfig.class));
+    when(mockTrack.getTrackmateConfigs()).thenReturn(trackmateConfigs);
+
     Map<String, Object> params = service.buildRaceStartParams(mockRace);
 
     assertEquals(HeatRotationType.CustomRoundRobin.name(), params.get("heat_rotation_type"));
@@ -344,6 +355,7 @@ public class AnalyticsServiceTest {
     assertEquals(
         OverallScoring.OverallRanking.TOTAL_TIME.name(), params.get("overall_scoring_method"));
     assertEquals("Analog", params.get("fuel_system"));
+    assertEquals("Trackmate", params.get("hardware_interface"));
   }
 
   @Test
@@ -368,9 +380,13 @@ public class AnalyticsServiceTest {
     when(mockRace.getFuelOptions()).thenReturn(mockFuelOptions);
     when(mockFuelOptions.isEnabled()).thenReturn(false);
 
+    when(mockTrack.getArduinoConfigs()).thenReturn(null);
+    when(mockTrack.getTrackmateConfigs()).thenReturn(null);
+
     Map<String, Object> params = service.buildRaceStartParams(mockRace);
 
     assertEquals("None", params.get("fuel_system"));
     assertEquals(HeatScoring.HeatRanking.FASTEST_LAP.name(), params.get("heat_scoring_method"));
+    assertEquals("None", params.get("hardware_interface"));
   }
 }

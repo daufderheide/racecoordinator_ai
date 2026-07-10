@@ -140,6 +140,25 @@ public class AnalyticsService {
         race.getFuelOptions() != null && race.getFuelOptions().isEnabled()
             ? (race.getTrack() != null && race.getTrack().hasDigitalFuel() ? "Digital" : "Analog")
             : "None");
+    boolean hasArduino =
+        race.getTrack() != null
+            && race.getTrack().getArduinoConfigs() != null
+            && !race.getTrack().getArduinoConfigs().isEmpty();
+    boolean hasTrackmate =
+        race.getTrack() != null
+            && race.getTrack().getTrackmateConfigs() != null
+            && !race.getTrack().getTrackmateConfigs().isEmpty();
+
+    String hardwareInterface = "None";
+    if (hasArduino && hasTrackmate) {
+      hardwareInterface = "Multiple";
+    } else if (hasArduino) {
+      hardwareInterface = "Arduino";
+    } else if (hasTrackmate) {
+      hardwareInterface = "Trackmate";
+    }
+    params.put("hardware_interface", hardwareInterface);
+
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());
     return params;

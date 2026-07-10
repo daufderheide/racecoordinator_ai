@@ -48,6 +48,7 @@ All server-side events automatically include the following parameters:
    - `heat_scoring_method`
    - `overall_scoring_method` (e.g., LAP_COUNT, TOTAL_TIME)
    - `fuel_system` (Analog, Digital, or None)
+   - `hardware_interface` (String representing the primary hardware interface: "Arduino", "Trackmate", "Multiple", or "None")
 2. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
