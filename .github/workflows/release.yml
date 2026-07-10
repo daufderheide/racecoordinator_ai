@@ -101,7 +101,7 @@ jobs:
       - name: Compile Inno Setup
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_online.iss
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_offline_legacy.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_offline.iss
 
       - name: Upload Windows Installers
         uses: actions/upload-artifact@v4
@@ -175,7 +175,7 @@ jobs:
       - name: Rename Files with Version
         run: |
           mv final-release/RaceCoordinatorAI_Online_Setup.exe "final-release/RaceCoordinatorAI_Online_Setup_${TAG}.exe" || true
-          mv final-release/RaceCoordinatorAI_Offline_Legacy_Setup.exe "final-release/RaceCoordinatorAI_Offline_Legacy_Setup_${TAG}.exe" || true
+          mv final-release/RaceCoordinatorAI_Offline_Setup.exe "final-release/RaceCoordinatorAI_Offline_Setup_${TAG}.exe" || true
           mv final-release/RaceCoordinator_Mac.dmg "final-release/RaceCoordinator_Mac_${TAG}.dmg" || true
 
       - name: Publish GitHub Release
