@@ -63,6 +63,15 @@
   max-height: 250px;
   object-fit: contain;
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease-in-out;
+  position: relative;
+  z-index: 1;
+  transform-origin: center 20%;
+}
+
+.board-image:hover {
+  transform: scale(1.6);
+  z-index: 10;
 }
 
 .right-controls {
