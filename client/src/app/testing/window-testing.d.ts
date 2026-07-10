@@ -5,6 +5,7 @@ declare global {
     mockSocket?: any;
     disableMockHeartbeat?: boolean;
     WATCHDOG_TIMEOUT?: number;
+    INITIAL_WATCHDOG_TIMEOUT?: number;
     MockWebSocket?: any;
     gtag?: (...args: any[]) => void;
     dataLayer?: any[];

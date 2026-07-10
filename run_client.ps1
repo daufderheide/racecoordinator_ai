@@ -1,3 +1,6 @@
+param(
+    [switch]$Open
+)
 $ErrorActionPreference = "Stop"
 
 # Setup Node Environment
@@ -72,4 +75,8 @@ Write-Host "Generating Protos..." -ForegroundColor Cyan
 npm run proto:gen
 
 Write-Host "Starting Client..." -ForegroundColor Green
-npm start
+if ($Open) {
+    npm start -- --open
+} else {
+    npm start
+}

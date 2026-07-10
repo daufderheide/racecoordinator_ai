@@ -106,6 +106,10 @@ export class RaceConnectionService implements OnDestroy {
     return (window as any).WATCHDOG_TIMEOUT || 5000;
   }
 
+  private get INITIAL_WATCHDOG_TIMEOUT(): number {
+    return (window as any).INITIAL_WATCHDOG_TIMEOUT || 30000;
+  }
+
   constructor(
     private dataService: DataService,
     private raceService: RaceService,
@@ -568,6 +572,10 @@ export class RaceConnectionService implements OnDestroy {
       this.noStatusWatchdog = null;
       return;
     }
+
+    const timeout = this.hasInitiallyConnected
+      ? this.WATCHDOG_TIMEOUT
+      : this.INITIAL_WATCHDOG_TIMEOUT;
     this.noStatusWatchdog = setTimeout(() => {
       this.lastInterfaceStatus = -1;
       if (!this.hasInitiallyConnected) {
@@ -578,7 +586,7 @@ export class RaceConnectionService implements OnDestroy {
       } else {
         this.emitAlert("ACK_MODAL_TITLE_NO_STATUS", "ACK_MODAL_MSG_NO_STATUS");
       }
-    }, this.WATCHDOG_TIMEOUT);
+    }, timeout);
   }
 
   private emitAlert(titleKey: string, messageKey: string) {
@@ -595,9 +603,12 @@ export class RaceConnectionService implements OnDestroy {
     }
     if (this.disconnectedTimeout) return;
 
+    const timeout = this.hasInitiallyConnected
+      ? this.WATCHDOG_TIMEOUT
+      : this.INITIAL_WATCHDOG_TIMEOUT;
     this.disconnectedTimeout = setTimeout(() => {
       this.emitAlert(titleKey, messageKey);
-    }, this.WATCHDOG_TIMEOUT);
+    }, timeout);
   }
 
   private clearDisconnectedError() {

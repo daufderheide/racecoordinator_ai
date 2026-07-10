@@ -1,4 +1,19 @@
 #!/bin/bash
+
+HEADLESS=false
+for arg in "$@"; do
+  if [ "$arg" = "--headless" ]; then
+    HEADLESS=true
+  fi
+done
+
+if [ "$HEADLESS" = false ]; then
+  echo "Starting Angular Client..."
+  "$(dirname "$0")/run_client.sh" --open &
+  CLIENT_PID=$!
+  trap 'kill $CLIENT_PID 2>/dev/null' EXIT
+fi
+
 cd "$(dirname "$0")/server"
 
 # Find and kill any process using port 7070 or 8085
@@ -26,7 +41,12 @@ done
 
 
 chmod +x generate_protos.sh
-mvn clean -Dmaven.repo.local="$(pwd)/.m2/repository" || true
+
+# Use target_generated to avoid conflicts with locked target_dev
+export PROTO_DEST_DIR="$(pwd)/target_generated_3"
+mkdir -p "$PROTO_DEST_DIR"
+
+mvn clean -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dmaven.repo.local="$(pwd)/.m2/repository" || true
 ./generate_protos.sh --server-only
 
-mvn compile exec:java -Dexec.mainClass="com.antigravity.App" -Dapp.data.dir="$(pwd)/../data" -Dmaven.repo.local="$(pwd)/.m2/repository"
+mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -DLOG_DIR="$(pwd)/../data_v3" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" -Dmaven.repo.local="$(pwd)/.m2/repository"

@@ -995,6 +995,9 @@ export class TestSetupHelper {
       if (typeof (window as any).WATCHDOG_TIMEOUT === "undefined") {
         (window as any).WATCHDOG_TIMEOUT = 99999999;
       }
+      if (typeof (window as any).INITIAL_WATCHDOG_TIMEOUT === "undefined") {
+        (window as any).INITIAL_WATCHDOG_TIMEOUT = 99999999;
+      }
 
       window.allMockSockets = [];
       window.MockWebSocket = class extends EventTarget {

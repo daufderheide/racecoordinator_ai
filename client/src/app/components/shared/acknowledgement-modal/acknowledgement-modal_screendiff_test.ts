@@ -32,6 +32,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
       // @ts-ignore
       window.disableMockHeartbeat = true;
       (window as any).WATCHDOG_TIMEOUT = 2000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 2000;
     });
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
@@ -53,6 +54,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
     // Increase timeout to prevent watchdog overwriting NO_DATA modal title while asserting
     await page.evaluate(() => {
       (window as any).WATCHDOG_TIMEOUT = 100000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 100000;
     });
 
     // Now send NO_DATA — calls showInterfaceError() immediately
@@ -99,6 +101,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
     // Simulate DISCONNECTED with 1000ms delay threshold
     await page.evaluate(() => {
       (window as any).WATCHDOG_TIMEOUT = 1000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 1000;
     });
     await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
@@ -125,6 +128,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
     // 1. Simulate DISCONNECTED and wait for modal
     await page.evaluate(() => {
       (window as any).WATCHDOG_TIMEOUT = 1000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 1000;
     });
     await sendInterfaceEvent(page, InterfaceStatus.DISCONNECTED);
 
@@ -144,6 +148,7 @@ test.describe("Acknowledgement Modal Visuals", () => {
     // 2. Simulate CONNECTED (recovery) - disable watchdog overwrite asserting
     await page.evaluate(() => {
       (window as any).WATCHDOG_TIMEOUT = 100000;
+      (window as any).INITIAL_WATCHDOG_TIMEOUT = 100000;
     });
     await sendInterfaceEvent(page, InterfaceStatus.CONNECTED);
 

@@ -6,23 +6,23 @@ RaceCoordinator 2.0 built with google antigravity
 ### How to Run (Linux/Mac)
 
 #### First Time Setup
-The `run_server_headless.sh` script handles dependency downloading (including `protoc`) automatically.
+The `run_server.sh` script handles dependency downloading (including `protoc`) automatically and starts both the Java server and Angular client.
 The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing or the client dependency manifest changed.
 
-- Check permissions: `chmod +x run_server_headless.sh run_client.sh`
-- Run Server: `./run_server_headless.sh`
-- Run Client: `./run_client.sh` (will take a moment to install dependencies first time)
+- Check permissions: `chmod +x run_server.sh run_client.sh`
+- Run Application: `./run_server.sh` (will take a moment to install dependencies first time and automatically open your browser)
+- Run Headless Server: `./run_server.sh --headless` (starts only the Java server without the web client or browser)
 
-**Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server_headless.sh` again.
+**Note:** The script incrementally compiles. If you need a clean build (e.g., weird compilation errors), run `cd server && mvn clean` manually, then run `./run_server.sh` again.
 
 ### How to Run (Windows)
 
 #### First Time Setup
-The `run_server_headless.ps1` script handles dependency downloading (including `protoc`) automatically.
+The `run_server.ps1` script handles dependency downloading (including `protoc`) automatically and starts both the Java server and Angular client.
 The `run_client.ps1` script handles `npm install` automatically if `node_modules` is missing or the client dependency manifest changed.
 
-- Run Server: `.\run_server_headless.ps1`
-- Run Client: `.\run_client.ps1` (will take a moment to install dependencies first time)
+- Run Application: `.\run_server.ps1` (will take a moment to install dependencies first time and automatically open your browser)
+- Run Headless Server: `.\run_server.ps1 -Headless` (starts only the Java server without the web client or browser)
 
 **Note:** If you get a script execution error, run `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process` in your terminal first.
 
@@ -175,7 +175,7 @@ To debug the server, you need to enable the Java Debug Wire Protocol (JDWP) when
 
 1. **Start the server in debug mode:**
    ```bash
-   MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" ./run_server_headless.sh
+   MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" ./run_server.sh --headless
    ```
    *Note: `suspend=n` means the server will start immediately. Change to `suspend=y` if you want it to wait for a debugger to attach before starting.*
 
@@ -333,7 +333,7 @@ The generated installer will be located in the **`Output/`** folder:
 This installer will:
 - Install the application to `C:\Program Files\RaceCoordinator AI`.
 - Setup writable data (database, assets) in `C:\ProgramData\RaceCoordinator AI`.
-- Create desktop shortcuts for both the **Headless Server** and the **Web Client**.
+- Create a unified desktop shortcut for the application.
 - Bundle a compatible Java Runtime (Java 8 for legacy Windows, Java 17 for modern Windows) so the user doesn't need to install Java manually.
 
 ### System Requirements for Installers

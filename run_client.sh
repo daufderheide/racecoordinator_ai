@@ -8,4 +8,8 @@ if [ ! -d "node_modules" ] || [ package.json -nt node_modules ] || [ package-loc
 fi
 
 npm run proto:gen
-npm start
+if [ "$1" = "--open" ]; then
+    npm start -- --open
+else
+    npm start
+fi

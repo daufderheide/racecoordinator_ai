@@ -1,4 +1,17 @@
+param(
+    [switch]$Headless
+)
 $ErrorActionPreference = "Stop"
+
+if (-not $Headless) {
+    Write-Host "Starting Angular Client..." -ForegroundColor Cyan
+    $ClientProcess = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSScriptRoot\run_client.ps1`" -Open" -PassThru
+    Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+        if ($ClientProcess -and -not $ClientProcess.HasExited) {
+            Stop-Process -Id $ClientProcess.Id -Force
+        }
+    } | Out-Null
+}
 
 # Stop any stale server or database processes using our ports before starting
 $PortsToFree = @(7070, 8085)
@@ -55,6 +68,7 @@ if (-not [string]::IsNullOrEmpty($env:JAVA_HOME)) {
     $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 }
 $SERVER_DIR = "$PSScriptRoot\server"
+$BUILD_DIR = "target_generated"
 
 # Ensure Maven is available (system, common locations, or local tools folder)
 $MvnCmd = Get-Command mvn.cmd -ErrorAction SilentlyContinue
@@ -104,18 +118,18 @@ if (Test-Path $LocalMavenBin) {
 }
 
 # Run generate_protos.ps1 to handle protobuf generation (like generate_protos.sh on Unix)
-# Use --server-only to avoid regenerating client protobuf files which can cause compatibility issues
+# Tell it to use the same output directory as this headless build
 Write-Host "Generating Protobuf files..." -ForegroundColor Cyan
 Set-Location $SERVER_DIR
+$env:PROTO_DEST_DIR = Join-Path $SERVER_DIR $BUILD_DIR
 . .\generate_protos.ps1 --server-only
 
-Write-Host "Starting Server..." -ForegroundColor Green
+Write-Host "Starting Headless Server..." -ForegroundColor Green
 Set-Location $SERVER_DIR
 
 # Find mvn.cmd
 $MvnCmd = Get-Command mvn.cmd -ErrorAction SilentlyContinue
 if ($null -eq $MvnCmd) {
-    # Try common installation paths if not in PATH
     $CommonPaths = @(
         "C:\Maven\apache-maven-*\bin\mvn.cmd",
         "C:\Program Files\apache-maven-*\bin\mvn.cmd",
@@ -132,7 +146,8 @@ if ($null -eq $MvnCmd) {
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
-$MvnArgs = @("compile", "exec:java", "-Dexec.mainClass=com.antigravity.App", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=true")
+# Use BUILD_DIR for both proto generation and maven build to avoid conflicts
+$MvnArgs = @("compile", "exec:java", "-Dbuild.dist.dir=$BUILD_DIR", "-Dexec.mainClass=com.antigravity.App", "-Dexec.args=--headless", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=true")
 if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
     $MvnArgs += '-Dde.flapdoodle.os.override="Windows|X86_64||"'
 }

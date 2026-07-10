@@ -138,7 +138,7 @@ describe("RaceConnectionService", () => {
   });
 
   describe("Watchdog and Alerts", () => {
-    it("should emit timeout alert after 5s of NO_STATUS on startup", fakeAsync(() => {
+    it("should emit timeout alert after 30s of NO_STATUS on startup", fakeAsync(() => {
       let emittedAlert: any = null;
       const sub = service.interfaceAlert$.subscribe(
         (alert) => (emittedAlert = alert),
@@ -147,7 +147,7 @@ describe("RaceConnectionService", () => {
       service.connect();
       expect(emittedAlert).toBeNull();
 
-      tick(5000);
+      tick(30000);
       expect(emittedAlert).toEqual({
         titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
         messageKey: "ACK_MODAL_MSG_DISCONNECTED",
@@ -163,7 +163,7 @@ describe("RaceConnectionService", () => {
       );
 
       service.connect();
-      tick(5000); // Trigger timeout
+      tick(30000); // Trigger timeout
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       // First connection should be silent (suppress CONNECTED alert)
@@ -281,15 +281,15 @@ describe("RaceConnectionService", () => {
       // Emit IDLE system state
       systemStateSubject.next({ resourceLockState: "IDLE" });
 
-      // After 5 seconds, normally a timeout would fire, but should be suppressed
-      tick(5000);
+      // After 30 seconds, normally a timeout would fire, but should be suppressed
+      tick(30000);
       expect(emittedAlert).toBeNull();
 
       // When DISCONNECTED event occurs, it should also be suppressed
       interfaceEventsSubject.next({
         status: { status: InterfaceStatus.DISCONNECTED },
       });
-      tick(5000);
+      tick(30000);
       expect(emittedAlert).toBeNull();
 
       sub.unsubscribe();
@@ -311,14 +311,14 @@ describe("RaceConnectionService", () => {
 
       // Start with IDLE
       systemStateSubject.next({ resourceLockState: "IDLE" });
-      tick(5000);
+      tick(30000);
       expect(emittedAlert).toBeNull();
 
       // Transition to RACE_RUNNING
       systemStateSubject.next({ resourceLockState: "RACE_RUNNING" });
 
       // After transition, no status watchdog should be reset and eventually fire if no status
-      tick(5000);
+      tick(30000);
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       sub.unsubscribe();
