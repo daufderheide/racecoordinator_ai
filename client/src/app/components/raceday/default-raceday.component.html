@@ -188,7 +188,7 @@
                 class="toolbox-widget-item"
                 draggable="true"
                 (dragstart)="onToolboxDragStart($event, widget)"
-                [title]="'UE_TITLE_DRAG_WIDGET_DOCK' | translate"
+                [title]="getWidgetTypeLabelKey(widget) | translate"
               >
                 <span class="material-icons drag-indicator-icon"
                   >drag_indicator</span
@@ -196,7 +196,9 @@
                 <span class="material-icons toolbox-widget-icon"
                   >extension</span
                 >
-                <span class="toolbox-widget-label">{{ widget }}</span>
+                <span class="toolbox-widget-label">{{
+                  getWidgetTypeLabelKey(widget) | translate
+                }}</span>
               </div>
             }
             @if (getUnusedWidgets().length === 0) {

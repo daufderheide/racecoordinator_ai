@@ -1213,6 +1213,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  getWidgetTypeLabelKey(widgetType: string): string {
+    return "UE_WIDGET_TYPE_" + widgetType.toUpperCase().replace(/-/g, "_");
+  }
+
   // --- Theme management ---
 
   get activeTheme(): Theme | null {

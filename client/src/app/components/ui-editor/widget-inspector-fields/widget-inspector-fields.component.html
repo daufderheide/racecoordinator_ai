@@ -93,4 +93,67 @@
       (change)="onSettingsChange()"
     ></app-menu-inspector>
   }
+  @case ("action-start-resume") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-pause") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-next-heat") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-restart-heat") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-defer-heat") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-skip-heat") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-skip-race") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-add-lap") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-modify-heats") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
 }

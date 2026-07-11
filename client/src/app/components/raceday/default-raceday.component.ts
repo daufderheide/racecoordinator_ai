@@ -63,6 +63,7 @@ export interface LapDisplayInfo {
   lapTime: string;
   segments: string[];
 }
+import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -2762,6 +2763,10 @@ export class DefaultRacedayComponent
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (this.checkWidgetShortcuts(event)) {
+      return;
+    }
+
     const isCtrlOrCmd = event.ctrlKey || event.metaKey;
     const inInputField =
       document.activeElement &&
@@ -2847,6 +2852,92 @@ export class DefaultRacedayComponent
     if (isDeferHeatKey) {
       event.preventDefault();
       this.onMenuSelect("DEFER_HEAT");
+    }
+  }
+
+  private checkWidgetShortcuts(event: KeyboardEvent): boolean {
+    const inInputField =
+      document.activeElement &&
+      (document.activeElement.tagName === "INPUT" ||
+        document.activeElement.tagName === "TEXTAREA");
+    if (inInputField) return false;
+
+    const widgets = this.layout?.widgets || [];
+    for (const widget of widgets) {
+      if (
+        widget.widgetType.startsWith("action-") &&
+        widget.customSettings?.["shortcut"]
+      ) {
+        if (this.matchShortcut(event, widget.customSettings["shortcut"])) {
+          this.executeWidgetAction(widget.widgetType);
+          event.preventDefault();
+          event.stopPropagation();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private matchShortcut(event: KeyboardEvent, shortcutStr: string): boolean {
+    if (!shortcutStr) return false;
+    const parts = shortcutStr
+      .toLowerCase()
+      .split("+")
+      .map((p) => p.trim());
+    const needsCtrl =
+      parts.includes("ctrl") ||
+      parts.includes("control") ||
+      parts.includes("cmd");
+    const needsAlt = parts.includes("alt");
+    const needsShift = parts.includes("shift");
+
+    const key = parts[parts.length - 1]; // The actual key is usually the last part
+    const eventKey = event.key.toLowerCase();
+    const eventCode = event.code.toLowerCase();
+
+    // Check modifiers
+    if (needsCtrl !== (event.ctrlKey || event.metaKey)) return false;
+    if (needsAlt !== event.altKey) return false;
+    if (needsShift !== event.shiftKey) return false;
+
+    // Check key
+    return (
+      key === eventKey ||
+      key === eventCode ||
+      key === eventCode.replace("key", "")
+    );
+  }
+
+  private executeWidgetAction(widgetType: string) {
+    switch (widgetType) {
+      case "action-start-resume":
+        if (!this.isStartResumeDisabled) this.onMenuSelect("START_RESUME");
+        break;
+      case "action-pause":
+        if (!this.isPauseDisabled) this.onMenuSelect("PAUSE");
+        break;
+      case "action-next-heat":
+        if (!this.isNextHeatDisabled) this.onMenuSelect("NEXT_HEAT");
+        break;
+      case "action-restart-heat":
+        if (!this.isRestartHeatDisabled) this.onMenuSelect("RESTART_HEAT");
+        break;
+      case "action-defer-heat":
+        if (!this.isDeferHeatDisabled) this.onMenuSelect("DEFER_HEAT");
+        break;
+      case "action-skip-heat":
+        if (!this.isSkipHeatDisabled) this.onMenuSelect("SKIP_HEAT");
+        break;
+      case "action-skip-race":
+        if (!this.isSkipRaceDisabled) this.onMenuSelect("SKIP_RACE");
+        break;
+      case "action-add-lap":
+        if (!this.isAddLapDisabled) this.onMenuSelect("ADD_LAP");
+        break;
+      case "action-modify-heats":
+        if (!this.isModifyDisabled) this.onMenuSelect("MODIFY");
+        break;
     }
   }
 
@@ -4078,6 +4169,10 @@ export class DefaultRacedayComponent
     this.cdr.detectChanges();
   }
 
+  getWidgetTypeLabelKey(widgetType: string): string {
+    return "UE_WIDGET_TYPE_" + widgetType.toUpperCase().replace(/-/g, "_");
+  }
+
   saveLayout() {
     console.log("saveLayout called");
     this.normalizeZIndices();
@@ -4129,6 +4224,15 @@ export class DefaultRacedayComponent
       "on-deck",
       "next-heat",
       "image",
+      "action-start-resume",
+      "action-pause",
+      "action-next-heat",
+      "action-restart-heat",
+      "action-defer-heat",
+      "action-skip-heat",
+      "action-skip-race",
+      "action-add-lap",
+      "action-modify-heats",
     ];
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes
@@ -4166,13 +4270,17 @@ export class DefaultRacedayComponent
       this.draggedWidgetType === "next-heat" ||
       this.draggedWidgetType === "image";
 
-    const width = isLeaderboardOrDeck ? 384 : 400;
+    const isActionButton = this.draggedWidgetType?.startsWith("action-");
+
+    const width = isLeaderboardOrDeck ? 384 : isActionButton ? 170 : 400;
     const height =
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
       this.draggedWidgetType === "image"
         ? 239
-        : 300;
+        : isActionButton
+          ? 80
+          : 300;
 
     const scaleX = rect.width / scalableContent.offsetWidth || 1;
     const scaleY = rect.height / scalableContent.offsetHeight || 1;
@@ -4193,6 +4301,11 @@ export class DefaultRacedayComponent
 
     if (this.draggedWidgetType === "image") {
       newWidget.customSettings = { imageUrl: "" };
+    } else {
+      const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
+      if (registryEntry?.defaultSettings) {
+        newWidget.customSettings = registryEntry.defaultSettings();
+      }
     }
 
     if (!this.layout.widgets) this.layout.widgets = [];

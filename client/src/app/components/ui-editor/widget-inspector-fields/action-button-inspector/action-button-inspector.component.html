@@ -1,0 +1,113 @@
+<div class="inspector-geometry-title">
+  {{ "UE_INSPECTOR_BUTTON_SETTINGS" | translate }}
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_FONT_FAMILY" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <select
+      [(ngModel)]="settings['fontFamily']"
+      (change)="onFieldChange()"
+      (focus)="fontService.loadLocalFonts()"
+    >
+      <option value="">
+        {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+      </option>
+      @for (font of fontService.availableFonts(); track font) {
+        <option [value]="font">{{ font }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+<div class="inspector-section">
+  <div class="inspector-label-row">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <span class="inspector-val-badge">{{ settings["fontSize"] || 16 }}px</span>
+  </div>
+  <input
+    type="range"
+    min="10"
+    max="100"
+    [(ngModel)]="settings['fontSize']"
+    [disabled]="disableFontSizes()"
+    (change)="onFieldChange()"
+    class="inspector-slider"
+  />
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_TEXT_COLOR" | translate
+  }}</label>
+  <div class="color-picker-wrapper" [class.is-null]="!settings['textColor']">
+    <input
+      type="color"
+      [value]="settings['textColor'] || '#ffffff'"
+      (change)="onColorChange('textColor', $event)"
+      class="color-picker-input"
+    />
+    @if (!settings["textColor"]) {
+      <span class="color-picker-placeholder">{{
+        "UE_INSPECTOR_COLOR_DEFAULT" | translate
+      }}</span>
+    }
+    @if (settings["textColor"]) {
+      <button
+        class="color-reset-btn"
+        (click)="resetColor('textColor')"
+        [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+      >
+        ✕
+      </button>
+    }
+  </div>
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+  }}</label>
+  <div
+    class="color-picker-wrapper"
+    [class.is-null]="!settings['backgroundColor']"
+  >
+    <input
+      type="color"
+      [value]="settings['backgroundColor'] || '#009dff'"
+      (change)="onColorChange('backgroundColor', $event)"
+      class="color-picker-input"
+    />
+    @if (!settings["backgroundColor"]) {
+      <span class="color-picker-placeholder">{{
+        "UE_INSPECTOR_COLOR_DEFAULT" | translate
+      }}</span>
+    }
+    @if (settings["backgroundColor"]) {
+      <button
+        class="color-reset-btn"
+        (click)="resetColor('backgroundColor')"
+        [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+      >
+        ✕
+      </button>
+    }
+  </div>
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_SHORTCUT" | translate
+  }}</label>
+  <input
+    type="text"
+    class="inspector-input"
+    [(ngModel)]="settings['shortcut']"
+    (ngModelChange)="onFieldChange()"
+    placeholder="e.g. F4, Control+S"
+  />
+</div>

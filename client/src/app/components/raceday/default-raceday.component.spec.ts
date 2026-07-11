@@ -4529,5 +4529,55 @@ describe("DefaultRacedayComponent", () => {
         component.layout,
       );
     });
+
+    it("should set default size and customSettings for action buttons when dropping onto the canvas", () => {
+      component.layout = { widgets: [] } as any;
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "action-start-resume";
+      spyOn(component.layoutChanged, "emit");
+
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 50,
+        top: 20,
+        width: 960,
+        height: 540,
+      } as DOMRect);
+
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 250,
+        clientY: 120,
+      } as any;
+
+      component.onCanvasDrop(event);
+
+      expect(component.layout.widgets.length).toBe(1);
+      const droppedWidget = component.layout.widgets[0];
+      expect(droppedWidget.widgetType).toBe("action-start-resume");
+      expect(droppedWidget.scaleMode).toBe("auto");
+
+      // Expected logic:
+      // scaleX = 960 / 1920 = 0.5
+      // scaleY = 540 / 1080 = 0.5
+      // width = 170 (action button default)
+      // height = 80 (action button default)
+      // x = (250 - 50) / 0.5 - (170 / 2) = 400 - 85 = 315
+      // y = (120 - 20) / 0.5 = 200
+      expect(droppedWidget.width).toBe(170);
+      expect(droppedWidget.height).toBe(80);
+      expect(droppedWidget.x).toBe(315);
+      expect(droppedWidget.y).toBe(200);
+
+      expect(droppedWidget.customSettings).toBeDefined();
+      expect(droppedWidget.customSettings?.["backgroundColor"]).toBe("");
+      expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
+    });
   });
 });

@@ -215,7 +215,10 @@
                             "UE_INSPECTOR_WIDGET_TYPE" | translate
                           }}</label>
                           <div class="inspector-value-readonly">
-                            {{ selectedWidget.widgetType }}
+                            {{
+                              getWidgetTypeLabelKey(selectedWidget.widgetType)
+                                | translate
+                            }}
                           </div>
                         </div>
                         <div class="inspector-section">
@@ -465,7 +468,11 @@
                             "UE_INSPECTOR_WIDGET_TYPE" | translate
                           }}</label>
                           <div class="inspector-value-readonly">
-                            {{ selectedPracticeWidget.widgetType }}
+                            {{
+                              getWidgetTypeLabelKey(
+                                selectedPracticeWidget.widgetType
+                              ) | translate
+                            }}
                           </div>
                         </div>
                         <div class="inspector-section">

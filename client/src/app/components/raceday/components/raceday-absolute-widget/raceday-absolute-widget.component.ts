@@ -6,6 +6,7 @@ import {
   input,
   ViewEncapsulation,
 } from "@angular/core";
+import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
@@ -47,6 +48,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
     RacedayImageComponent,
+    RacedayActionButtonComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent {

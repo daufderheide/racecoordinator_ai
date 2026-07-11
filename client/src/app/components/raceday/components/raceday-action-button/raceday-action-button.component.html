@@ -1,0 +1,17 @@
+<button
+  class="action-button"
+  [disabled]="isActionDisabled"
+  (click)="onClick($event)"
+  [style.font-family]="widget().customSettings?.['fontFamily'] || null"
+  [style.font-size.px]="
+    widget().scaleMode === 'fixed' || !widget().scaleMode
+      ? widget().customSettings?.['fontSize'] || null
+      : null
+  "
+  [style.color]="widget().customSettings?.['textColor'] || null"
+  [style.background-color]="
+    widget().customSettings?.['backgroundColor'] || '#009dff'
+  "
+>
+  {{ actionLabelKey | translate }}
+</button>

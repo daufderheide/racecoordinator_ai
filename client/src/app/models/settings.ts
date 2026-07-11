@@ -22,7 +22,16 @@ export type WidgetType =
   | "lane-view"
   | "on-deck"
   | "next-heat"
-  | "image";
+  | "image"
+  | "action-start-resume"
+  | "action-pause"
+  | "action-next-heat"
+  | "action-restart-heat"
+  | "action-defer-heat"
+  | "action-skip-heat"
+  | "action-skip-race"
+  | "action-add-lap"
+  | "action-modify-heats";
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page

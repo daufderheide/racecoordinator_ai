@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, input, output } from "@angular/core";
 import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 
+import { ActionButtonInspectorComponent } from "./action-button-inspector/action-button-inspector.component";
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
 import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
@@ -10,7 +11,6 @@ import { RecordsInspectorComponent } from "./records-inspector/records-inspector
 import { TextInfoInspectorComponent } from "./text-info-inspector/text-info-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
 import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspector.component";
-
 @Component({
   standalone: true,
   selector: "app-widget-inspector-fields",
@@ -25,6 +25,7 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     UpcomingInspectorComponent,
     TextInfoInspectorComponent,
     MenuInspectorComponent,
+    ActionButtonInspectorComponent,
   ],
 })
 export class WidgetInspectorFieldsComponent {
