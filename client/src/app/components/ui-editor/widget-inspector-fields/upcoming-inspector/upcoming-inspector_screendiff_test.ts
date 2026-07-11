@@ -88,11 +88,16 @@ test.describe("Upcoming Inspector Visuals", () => {
     const colorPickers = inspectorFields.locator("input[type='color']");
 
     await sliders.nth(0).fill("28"); // Title font size
-    await colorPickers.nth(0).fill("#ff0000"); // Title text color to Red
+    await colorPickers.nth(0).evaluate((el: HTMLInputElement) => {
+      el.value = "#ff0000";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }); // Title text color to Red
 
     await sliders.nth(1).fill("22"); // Lane font size
-    await colorPickers.nth(1).fill("#00ff00"); // Lane text color to Green
-    await colorPickers.nth(1).blur(); // Trigger blur to ensure change event fires in Webkit
+    await colorPickers.nth(1).evaluate((el: HTMLInputElement) => {
+      el.value = "#00ff00";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }); // Lane text color to Green
 
     // Blur any active element and move mouse to remove hover states
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
