@@ -59,7 +59,11 @@ fi
 
 # Make sure Docker daemon is running
 if ! docker info &> /dev/null; then
-    echo "Docker daemon is not running. Please start Docker Desktop and try again."
+    echo -e "\n\033[1;31m*****************************************************************\033[0m"
+    echo -e "\033[1;31m* ERROR: Docker daemon is not running!                          *\033[0m"
+    echo -e "\033[1;31m* The visual tests require Docker to ensure identical rendering.*\033[0m"
+    echo -e "\033[1;31m* Please start Docker Desktop and try again.                    *\033[0m"
+    echo -e "\033[1;31m*****************************************************************\033[0m\n"
     exit 1
 fi
 

@@ -74,7 +74,11 @@ if (-not (Get-Command "docker" -ErrorAction SilentlyContinue)) {
 # Make sure Docker daemon is running
 $dockerInfo = docker info 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Docker daemon is not running. Please start Docker Desktop and try again." -ForegroundColor Red
+    Write-Host "`n*****************************************************************" -ForegroundColor Red
+    Write-Host "* ERROR: Docker daemon is not running!                          *" -ForegroundColor Red
+    Write-Host "* The visual tests require Docker to ensure identical rendering.*" -ForegroundColor Red
+    Write-Host "* Please start Docker Desktop and try again.                    *" -ForegroundColor Red
+    Write-Host "*****************************************************************`n" -ForegroundColor Red
     exit 1
 }
 
