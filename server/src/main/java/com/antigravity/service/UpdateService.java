@@ -70,63 +70,36 @@ public class UpdateService {
         if (latestAlpha != null) {
           String tagVersion = latestAlpha.get("tag_name").asText();
 
-          boolean isNewer = false;
-          if (currentVersion.equals("0.0.0_dev")) {
-            isNewer = true;
-          } else {
-            // Find current release in the list to compare dates
-            JsonNode currentRelease =
-                StreamSupport.stream(releases.spliterator(), false)
-                    .filter(
-                        node ->
-                            node.has("tag_name")
-                                && (node.get("tag_name").asText().equals(currentVersion)
-                                    || node.get("tag_name").asText().equals("v" + currentVersion)))
-                    .findFirst()
-                    .orElse(null);
+          boolean isNewerThanCurrent =
+              isVersionNewer(releases, currentVersion, latestAlpha, tagVersion);
 
-            if (currentRelease != null
-                && currentRelease.has("published_at")
-                && !currentRelease.get("published_at").isNull()) {
-              String currentPublishedAt = currentRelease.get("published_at").asText();
-              String latestPublishedAt = latestAlpha.get("published_at").asText();
-              isNewer = latestPublishedAt.compareTo(currentPublishedAt) > 0;
-            } else {
-              // Fallback to string comparison if current release is not found in the list
-              String strippedTagVersion =
-                  tagVersion.startsWith("v") ? tagVersion.substring(1) : tagVersion;
-              String strippedCurrentVersion =
-                  currentVersion.startsWith("v") ? currentVersion.substring(1) : currentVersion;
-              isNewer = strippedTagVersion.compareTo(strippedCurrentVersion) > 0;
-            }
+          boolean isNewerThanSkipped = true;
+          String skipped = configService.getSkippedUpdateVersion();
+          if (skipped != null && !skipped.isEmpty()) {
+            isNewerThanSkipped = isVersionNewer(releases, skipped, latestAlpha, tagVersion);
           }
 
-          if (isNewer) {
-            String skipped = configService.getSkippedUpdateVersion();
-            if (skipped != null && skipped.equals(tagVersion)) {
-              // User skipped this version, do not prompt
-            } else {
-              result.updateAvailable = true;
-              result.latestVersion = tagVersion;
-              result.releaseNotes = latestAlpha.has("body") ? latestAlpha.get("body").asText() : "";
-              result.releaseUrl =
-                  latestAlpha.has("html_url") ? latestAlpha.get("html_url").asText() : "";
+          if (isNewerThanCurrent && isNewerThanSkipped) {
+            result.updateAvailable = true;
+            result.latestVersion = tagVersion;
+            result.releaseNotes = latestAlpha.has("body") ? latestAlpha.get("body").asText() : "";
+            result.releaseUrl =
+                latestAlpha.has("html_url") ? latestAlpha.get("html_url").asText() : "";
 
-              // Find the correct asset
-              JsonNode assets = latestAlpha.get("assets");
-              if (assets != null && assets.isArray()) {
-                for (JsonNode asset : assets) {
-                  String assetName = asset.get("name").asText().toLowerCase();
-                  boolean matchesWindows =
-                      result.isWindows
-                          && assetName.contains("online_setup")
-                          && assetName.endsWith(".exe");
-                  boolean matchesMac = !result.isWindows && assetName.endsWith(".dmg");
+            // Find the correct asset
+            JsonNode assets = latestAlpha.get("assets");
+            if (assets != null && assets.isArray()) {
+              for (JsonNode asset : assets) {
+                String assetName = asset.get("name").asText().toLowerCase();
+                boolean matchesWindows =
+                    result.isWindows
+                        && assetName.contains("online_setup")
+                        && assetName.endsWith(".exe");
+                boolean matchesMac = !result.isWindows && assetName.endsWith(".dmg");
 
-                  if (matchesWindows || matchesMac) {
-                    result.downloadUrl = asset.get("browser_download_url").asText();
-                    break;
-                  }
+                if (matchesWindows || matchesMac) {
+                  result.downloadUrl = asset.get("browser_download_url").asText();
+                  break;
                 }
               }
             }
@@ -142,6 +115,41 @@ public class UpdateService {
     }
 
     return result;
+  }
+
+  public void clearCache() {
+    this.cachedResult = null;
+    this.lastCheckTime = 0;
+  }
+
+  private boolean isVersionNewer(
+      JsonNode releases, String baseVersion, JsonNode latestAlpha, String tagVersion) {
+    if (baseVersion.equals("0.0.0_dev")) {
+      return true;
+    }
+
+    JsonNode baseRelease =
+        StreamSupport.stream(releases.spliterator(), false)
+            .filter(
+                node ->
+                    node.has("tag_name")
+                        && (node.get("tag_name").asText().equals(baseVersion)
+                            || node.get("tag_name").asText().equals("v" + baseVersion)))
+            .findFirst()
+            .orElse(null);
+
+    if (baseRelease != null
+        && baseRelease.has("published_at")
+        && !baseRelease.get("published_at").isNull()) {
+      String basePublishedAt = baseRelease.get("published_at").asText();
+      String latestPublishedAt = latestAlpha.get("published_at").asText();
+      return latestPublishedAt.compareTo(basePublishedAt) > 0;
+    } else {
+      String strippedTagVersion = tagVersion.startsWith("v") ? tagVersion.substring(1) : tagVersion;
+      String strippedBaseVersion =
+          baseVersion.startsWith("v") ? baseVersion.substring(1) : baseVersion;
+      return strippedTagVersion.compareTo(strippedBaseVersion) > 0;
+    }
   }
 
   // Helper method no longer needed as we do inline date comparison

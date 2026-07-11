@@ -594,6 +594,7 @@ public class App {
               if (json.has("version")) {
                 String version = json.get("version").asText();
                 configService.setSkippedUpdateVersion(version);
+                updateService.clearCache();
                 ctx.status(200).result("Version skipped");
               } else {
                 ctx.status(400).result("Missing version");

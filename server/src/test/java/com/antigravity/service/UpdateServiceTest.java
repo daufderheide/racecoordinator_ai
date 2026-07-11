@@ -180,4 +180,70 @@ public class UpdateServiceTest {
       assertEquals("https://github.com/mac-setup.dmg", result.downloadUrl);
     }
   }
+
+  @Test
+  public void testCheckForUpdates_NewerVersionThanSkippedAvailable() throws Exception {
+    when(mockConfigService.getSkippedUpdateVersion()).thenReturn("v0.0.0-alpha.20260710");
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260701", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260715\",\n"
+            + "    \"published_at\": \"2026-07-15T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260710\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260701\",\n"
+            + "    \"published_at\": \"2026-07-01T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(
+        "Update should be available because the latest version is newer than the skipped version",
+        result.updateAvailable);
+    assertEquals("v0.0.0-alpha.20260715", result.latestVersion);
+  }
+
+  @Test
+  public void testClearCache() throws Exception {
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260701", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260710\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult firstResult = service.checkForUpdates();
+    assertTrue(firstResult.updateAvailable);
+
+    // Now mock skipping the version
+    when(mockConfigService.getSkippedUpdateVersion()).thenReturn("v0.0.0-alpha.20260710");
+
+    // Without clearCache, it should return the cached result (updateAvailable = true)
+    UpdateService.UpdateCheckResult secondResult = service.checkForUpdates();
+    assertTrue("Should still return cached result", secondResult.updateAvailable);
+
+    // After clearCache, it should re-fetch and see that the latest is now skipped
+    service.clearCache();
+    UpdateService.UpdateCheckResult thirdResult = service.checkForUpdates();
+    assertFalse(
+        "Should be false because we cleared cache and skipped the version",
+        thirdResult.updateAvailable);
+  }
 }
