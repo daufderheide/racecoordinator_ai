@@ -113,12 +113,17 @@ public class UpdateService {
                   latestAlpha.has("html_url") ? latestAlpha.get("html_url").asText() : "";
 
               // Find the correct asset
-              String targetExtension = result.isWindows ? "_online_setup.exe" : ".dmg";
               JsonNode assets = latestAlpha.get("assets");
               if (assets != null && assets.isArray()) {
                 for (JsonNode asset : assets) {
                   String assetName = asset.get("name").asText().toLowerCase();
-                  if (assetName.endsWith(targetExtension)) {
+                  boolean matchesWindows =
+                      result.isWindows
+                          && assetName.contains("online_setup")
+                          && assetName.endsWith(".exe");
+                  boolean matchesMac = !result.isWindows && assetName.endsWith(".dmg");
+
+                  if (matchesWindows || matchesMac) {
                     result.downloadUrl = asset.get("browser_download_url").asText();
                     break;
                   }

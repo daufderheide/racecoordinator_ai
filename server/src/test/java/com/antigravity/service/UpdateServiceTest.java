@@ -145,4 +145,39 @@ public class UpdateServiceTest {
         "Update should NOT be available because the versions match exactly despite the 'v' prefix in the tag",
         result.updateAvailable);
   }
+
+  @Test
+  public void testCheckForUpdates_FindsDownloadUrlWithVersionedFilenames() throws Exception {
+    UpdateService service = spy(new UpdateService("0.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0-alpha.123\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": [\n"
+            + "      {\n"
+            + "        \"name\": \"RaceCoordinatorAI_Online_Setup_v1.0.0-alpha.123.exe\",\n"
+            + "        \"browser_download_url\": \"https://github.com/win-setup.exe\"\n"
+            + "      },\n"
+            + "      {\n"
+            + "        \"name\": \"RaceCoordinator_Mac_v1.0.0-alpha.123.dmg\",\n"
+            + "        \"browser_download_url\": \"https://github.com/mac-setup.dmg\"\n"
+            + "      }\n"
+            + "    ]\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+
+    assertTrue("Update should be available", result.updateAvailable);
+
+    if (result.isWindows) {
+      assertEquals("https://github.com/win-setup.exe", result.downloadUrl);
+    } else {
+      assertEquals("https://github.com/mac-setup.dmg", result.downloadUrl);
+    }
+  }
 }
