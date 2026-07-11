@@ -68,8 +68,10 @@ test.describe("Menu Inspector Visuals", () => {
     const colorPickers = inspectorFields.locator("input[type='color']");
 
     await sliders.nth(0).fill("18"); // Font size
-    await colorPickers.nth(0).fill("#ff0000"); // Text color to Red
-    await colorPickers.nth(0).blur(); // Trigger blur to ensure change event fires in Webkit
+    await colorPickers.nth(0).evaluate((el: HTMLInputElement) => {
+      el.value = "#ff0000";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    }); // Text color to Red
 
     // Blur any active element and move mouse to remove hover states
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
