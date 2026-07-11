@@ -75,6 +75,14 @@ export class RacedayActionButtonComponent {
         return "RD_MENU_ADD_LAP";
       case "action-modify-heats":
         return "RD_MENU_MODIFY";
+      case "action-export-pdf":
+        return "RD_MENU_EXPORT_PDF";
+      case "action-export-csv":
+        return "RD_MENU_EXPORT_CSV";
+      case "action-open-heat-results":
+        return "RD_WIN_HEAT_RESULTS";
+      case "action-open-race-results":
+        return "RD_WIN_RACE_RESULTS";
       default:
         return "";
     }
@@ -113,10 +121,31 @@ export class RacedayActionButtonComponent {
       case "action-modify-heats":
         actionString = "MODIFY";
         break;
+      case "action-export-pdf":
+        actionString = "EXPORT_PDF";
+        break;
+      case "action-export-csv":
+        actionString = "EXPORT_CSV";
+        break;
+      case "action-open-heat-results":
+        actionString = "HEAT_RESULTS";
+        break;
+      case "action-open-race-results":
+        actionString = "RACE_RESULTS";
+        break;
     }
 
     if (actionString) {
-      this.parent().onMenuSelect(actionString);
+      if (actionString === "EXPORT_CSV" || actionString === "EXPORT_PDF") {
+        this.parent().onFileMenuSelect(actionString);
+      } else if (
+        actionString === "HEAT_RESULTS" ||
+        actionString === "RACE_RESULTS"
+      ) {
+        this.parent().onWindowsMenuSelect(actionString);
+      } else {
+        this.parent().onMenuSelect(actionString);
+      }
     }
   }
 }

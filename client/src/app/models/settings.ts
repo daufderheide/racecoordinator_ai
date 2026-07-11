@@ -31,7 +31,11 @@ export type WidgetType =
   | "action-skip-heat"
   | "action-skip-race"
   | "action-add-lap"
-  | "action-modify-heats";
+  | "action-modify-heats"
+  | "action-export-pdf"
+  | "action-export-csv"
+  | "action-open-heat-results"
+  | "action-open-race-results";
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page

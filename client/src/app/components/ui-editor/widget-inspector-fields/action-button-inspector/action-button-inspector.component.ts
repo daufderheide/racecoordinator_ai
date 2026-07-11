@@ -46,6 +46,14 @@ export class ActionButtonInspectorComponent {
         return "RD_MENU_ADD_LAP";
       case "action-modify-heats":
         return "RD_MENU_MODIFY";
+      case "action-export-pdf":
+        return "RD_MENU_EXPORT_PDF";
+      case "action-export-csv":
+        return "RD_MENU_EXPORT_CSV";
+      case "action-open-heat-results":
+        return "RD_WIN_HEAT_RESULTS";
+      case "action-open-race-results":
+        return "RD_WIN_RACE_RESULTS";
       default:
         return "";
     }

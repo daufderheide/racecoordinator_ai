@@ -92,4 +92,119 @@ describe("RacedayActionButtonComponent", () => {
     mockParent.isStartResumeDisabled = false;
     expect(component.isActionDisabled).toBeFalse();
   });
+
+  describe("Widget Actions and Labels", () => {
+    const actionTests = [
+      {
+        widgetType: "action-start-resume",
+        label: "RD_MENU_START_RESUME",
+        action: "START_RESUME",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-pause",
+        label: "RD_MENU_PAUSE",
+        action: "PAUSE",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-next-heat",
+        label: "RD_MENU_NEXT_HEAT",
+        action: "NEXT_HEAT",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-restart-heat",
+        label: "RD_MENU_RESTART",
+        action: "RESTART_HEAT",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-defer-heat",
+        label: "RD_MENU_DEFER",
+        action: "DEFER_HEAT",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-skip-heat",
+        label: "RD_MENU_SKIP_HEAT",
+        action: "SKIP_HEAT",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-skip-race",
+        label: "RD_MENU_SKIP_RACE",
+        action: "SKIP_RACE",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-add-lap",
+        label: "RD_MENU_ADD_LAP",
+        action: "ADD_LAP",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-modify-heats",
+        label: "RD_MENU_MODIFY",
+        action: "MODIFY",
+        method: "onMenuSelect",
+      },
+      {
+        widgetType: "action-export-pdf",
+        label: "RD_MENU_EXPORT_PDF",
+        action: "EXPORT_PDF",
+        method: "onFileMenuSelect",
+      },
+      {
+        widgetType: "action-export-csv",
+        label: "RD_MENU_EXPORT_CSV",
+        action: "EXPORT_CSV",
+        method: "onFileMenuSelect",
+      },
+      {
+        widgetType: "action-open-heat-results",
+        label: "RD_WIN_HEAT_RESULTS",
+        action: "HEAT_RESULTS",
+        method: "onWindowsMenuSelect",
+      },
+      {
+        widgetType: "action-open-race-results",
+        label: "RD_WIN_RACE_RESULTS",
+        action: "RACE_RESULTS",
+        method: "onWindowsMenuSelect",
+      },
+    ];
+
+    actionTests.forEach((testCase) => {
+      it(`should return correct label and dispatch correct event for ${testCase.widgetType}`, () => {
+        // Setup mock widget
+        const testWidget: AbsoluteWidgetNode = {
+          ...mockWidget,
+          widgetType: testCase.widgetType as any,
+        };
+        fixture.componentRef.setInput("widget", testWidget);
+
+        // Ensure action is not disabled
+        mockParent.isUIEditorMode = () => true;
+
+        // Setup spy on the parent component method
+        const methodSpy = jasmine.createSpy(testCase.method);
+        (mockParent as any)[testCase.method] = methodSpy;
+        fixture.componentRef.setInput("parent", mockParent);
+
+        fixture.detectChanges();
+
+        // Test label
+        expect(component.actionLabelKey).toBe(testCase.label);
+
+        // Test click
+        const event = new Event("click");
+        spyOn(event, "stopPropagation");
+        component.onClick(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(methodSpy).toHaveBeenCalledWith(testCase.action);
+      });
+    });
+  });
 });

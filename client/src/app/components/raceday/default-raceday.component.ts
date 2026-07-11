@@ -4233,6 +4233,10 @@ export class DefaultRacedayComponent
       "action-skip-race",
       "action-add-lap",
       "action-modify-heats",
+      "action-export-pdf",
+      "action-export-csv",
+      "action-open-heat-results",
+      "action-open-race-results",
     ];
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes

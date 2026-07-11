@@ -156,4 +156,32 @@
       (change)="onSettingsChange()"
     ></app-action-button-inspector>
   }
+  @case ("action-export-pdf") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-export-csv") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-open-heat-results") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
+  @case ("action-open-race-results") {
+    <app-action-button-inspector
+      [widget]="widget()"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-action-button-inspector>
+  }
 }
