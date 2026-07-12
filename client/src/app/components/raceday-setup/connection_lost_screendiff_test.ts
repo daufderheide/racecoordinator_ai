@@ -20,19 +20,14 @@ test.describe("Connection Loss Visuals", () => {
       walkthroughSeen: true,
     });
 
-    // Override the drivers route with connection-switching logic.
-    // Playwright applies later-registered routes first, so this takes priority
-    // over the one registered inside setupStandardMocks.
+    await page.unroute("**/api/version");
     let connectionSucceeds = true;
-    await page.route("**/api/drivers", async (route) => {
+    await page.route("**/api/version", async (route) => {
       if (connectionSucceeds) {
         await route.fulfill({
           status: 200,
-          contentType: "application/json",
-          body: JSON.stringify([
-            { entity_id: "d1", name: "Alice", nickname: "The Rocket" },
-            { entity_id: "d2", name: "Bob", nickname: "Drift King" },
-          ]),
+          contentType: "text/plain",
+          body: "TEST-SERVER-VERSION",
         });
       } else {
         await route.abort("failed");
@@ -45,13 +40,15 @@ test.describe("Connection Loss Visuals", () => {
     const container = page.locator(".shell-container");
     const _harness = new RacedaySetupHarnessE2e(container);
 
-    await page.clock.fastForward(5500);
-
+    // Initial load and first connection check
+    await page.clock.runFor(5500);
     await expect(page.locator(".setup-menu-bar")).toBeVisible();
 
+    // Trigger connection loss
     connectionSucceeds = false;
 
-    await page.clock.fastForward(5500);
+    // Run for enough time to trigger the next 5s interval and the 3s timeout
+    await page.clock.runFor(8500);
 
     // Wait for the overlay to become visible instead of instant check
     await expect(page.locator(".connection-lost-overlay")).toBeVisible({
