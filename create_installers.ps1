@@ -130,13 +130,7 @@ function Extract-To-Release {
         Expand-Archive -Path $ZipPath -DestinationPath $TempDir -Force
         $Extracted = Get-ChildItem -Path $TempDir | Where-Object { $_.PSIsContainer } | Select-Object -First 1
         if ($Extracted) {
-            # Handle nested directory structure (like adoptium JDKs)
-            $NestedDirs = Get-ChildItem -Path $Extracted.FullName | Where-Object { $_.PSIsContainer }
-            if ($NestedDirs) {
-                Copy-Item "$($NestedDirs[0].FullName)\*" "release\RaceCoordinator\$DestSubDir\" -Recurse -Force
-            } else {
-                Copy-Item "$($Extracted.FullName)\*" "release\RaceCoordinator\$DestSubDir\" -Recurse -Force
-            }
+            Copy-Item "$($Extracted.FullName)\*" "release\RaceCoordinator\$DestSubDir\" -Recurse -Force
         }
         Remove-Item $TempDir -Recurse -Force
     }

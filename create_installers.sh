@@ -39,6 +39,7 @@ mkdir -p release/RaceCoordinator/web
 mkdir -p release/RaceCoordinator/jre8
 mkdir -p release/RaceCoordinator/jre17
 mkdir -p release/RaceCoordinator/mongodb32
+mkdir -p release/RaceCoordinator/mongodb60
 mkdir -p release/RaceCoordinator_Offline/web
 
 # Copy Modern Artifacts
@@ -80,6 +81,12 @@ if [ ! -s build_cache/mongodb32.zip ]; then
     curl -L "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" -o build_cache/mongodb32.zip || echo "Warning: MongoDB 3.2 download failed"
 fi
 
+# MongoDB 6.0 (64-bit for Modern Windows)
+if [ ! -s build_cache/mongodb60.zip ]; then
+    echo "Downloading MongoDB 6.0 (64-bit)..."
+    curl -L "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -o build_cache/mongodb60.zip || echo "Warning: MongoDB 6.0 download failed"
+fi
+
 # 4. Extract and Bundle Dependencies
 if [ -r build_cache/java8.zip ]; then
     cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
@@ -103,6 +110,13 @@ if [ -r build_cache/mongodb32.zip ]; then
     unzip -q build_cache/mongodb32.zip -d release/RaceCoordinator/temp_mongo32
     mv release/RaceCoordinator/temp_mongo32/*/* release/RaceCoordinator/mongodb32/
     rm -rf release/RaceCoordinator/temp_mongo32
+fi
+
+if [ -r build_cache/mongodb60.zip ]; then
+    echo "Extracting MongoDB 6.0..."
+    unzip -q build_cache/mongodb60.zip -d release/RaceCoordinator/temp_mongo60
+    mv release/RaceCoordinator/temp_mongo60/*/* release/RaceCoordinator/mongodb60/
+    rm -rf release/RaceCoordinator/temp_mongo60
 fi
 
 
