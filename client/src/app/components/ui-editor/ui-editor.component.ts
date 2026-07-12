@@ -1575,6 +1575,27 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return "1920x1080";
   }
 
+  getLayoutResolutionOptions(isPractice: boolean) {
+    const layout = isPractice
+      ? this.editingSettings?.practiceRacedayLayout
+      : this.editingSettings?.racedayLayout;
+
+    const options = [...this.layoutResolutionOptions];
+    if (layout && layout.baseWidth && layout.baseHeight) {
+      const found = options.find(
+        (o) => o.width === layout.baseWidth && o.height === layout.baseHeight,
+      );
+      if (!found) {
+        options.push({
+          label: `${layout.baseWidth}x${layout.baseHeight}`,
+          width: layout.baseWidth,
+          height: layout.baseHeight,
+        });
+      }
+    }
+    return options;
+  }
+
   setLayoutResolution(isPractice: boolean, event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     const layout = isPractice

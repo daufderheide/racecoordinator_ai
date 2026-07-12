@@ -129,7 +129,7 @@
                           (change)="setLayoutResolution(false, $event)"
                         >
                           @for (
-                            option of layoutResolutionOptions;
+                            option of getLayoutResolutionOptions(false);
                             track option
                           ) {
                             <option
@@ -380,7 +380,7 @@
                           (change)="setLayoutResolution(true, $event)"
                         >
                           @for (
-                            option of layoutResolutionOptions;
+                            option of getLayoutResolutionOptions(true);
                             track option
                           ) {
                             <option

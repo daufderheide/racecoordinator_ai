@@ -2156,6 +2156,30 @@ describe("UIEditorComponent", () => {
       expect((component as any).captureState).toHaveBeenCalled();
     });
 
+    it("should handle getLayoutResolutionOptions dynamically appending missing resolutions", () => {
+      component.layoutResolutionOptions = [
+        { label: "Standard", width: 1920, height: 1080 },
+      ];
+      component.editingSettings.racedayLayout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+      } as any;
+
+      let options = component.getLayoutResolutionOptions(false);
+      expect(options.length).toEqual(1);
+      expect(options[0].width).toEqual(1920);
+
+      component.editingSettings.racedayLayout = {
+        baseWidth: 1440,
+        baseHeight: 900,
+      } as any;
+      options = component.getLayoutResolutionOptions(false);
+      expect(options.length).toEqual(2);
+      expect(options[1].width).toEqual(1440);
+      expect(options[1].height).toEqual(900);
+      expect(options[1].label).toEqual("1440x900");
+    });
+
     describe("Layout Import/Export", () => {
       it("should export raceday layout", () => {
         spyOn(component as any, "downloadJson");
