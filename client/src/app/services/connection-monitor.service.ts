@@ -63,6 +63,7 @@ export class ConnectionMonitorService implements OnDestroy {
   }
 
   private hasInitialConnectionBeenEstablished = false;
+  private initialServerVersion: string | null = null;
 
   /**
    * Manually check connection status.
@@ -70,9 +71,22 @@ export class ConnectionMonitorService implements OnDestroy {
    * Also updates the shared state.
    */
   checkConnection(): Observable<boolean> {
-    return this.dataService.getDrivers().pipe(
+    return this.dataService.getServerVersion().pipe(
       timeout(this.TIMEOUT_MS),
-      map(() => {
+      map((version: string) => {
+        if (this.initialServerVersion === null) {
+          this.initialServerVersion = version;
+        } else if (
+          this.initialServerVersion !== version &&
+          this.hasInitialConnectionBeenEstablished
+        ) {
+          this.logger.info(
+            `Server version changed from ${this.initialServerVersion} to ${version}. Reloading...`,
+          );
+          this.initialServerVersion = version;
+          this.document.location?.reload();
+        }
+
         if (this.connectionStateSubject.value !== ConnectionState.CONNECTED) {
           this.logger.info("Connection restored!");
           this.connectionStateSubject.next(ConnectionState.CONNECTED);

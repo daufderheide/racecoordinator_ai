@@ -21,8 +21,8 @@ describe("ConnectionMonitorService", () => {
 
   beforeEach(() => {
     // Reset mock calls
-    mockDataService.getDrivers.calls.reset();
-    mockDataService.getDrivers.and.returnValue(of([]));
+    mockDataService.getServerVersion.calls.reset();
+    mockDataService.getServerVersion.and.returnValue(of("1.0.0"));
 
     const mockLogger = {
       info: jasmine.createSpy("info"),
@@ -94,8 +94,25 @@ describe("ConnectionMonitorService", () => {
       });
     });
 
+    it("should reload the page if server version changes", (done) => {
+      // 1. Establish initial connection with version 1.0.0
+      service.checkConnection().subscribe(() => {
+        expect(mockDocument.location.reload).not.toHaveBeenCalled();
+
+        // 2. Mock a version change
+        mockDataService.getServerVersion.and.returnValue(of("1.1.0"));
+
+        // 3. Next check should trigger reload
+        service.checkConnection().subscribe((isConnected) => {
+          expect(isConnected).toBeTrue();
+          expect(mockDocument.location.reload).toHaveBeenCalled();
+          done();
+        });
+      });
+    });
+
     it("should return false and update state to DISCONNECTED on failure", (done) => {
-      mockDataService.getDrivers.and.returnValue(
+      mockDataService.getServerVersion.and.returnValue(
         throwError(() => new Error("Network Error")),
       );
 
@@ -115,13 +132,13 @@ describe("ConnectionMonitorService", () => {
 
       // Initial tick shouldn't trigger immediate check (switchMap on interval starts after delay usually,
       // but let's check basic interval behavior: interval(5000) emits at T+5000)
-      expect(mockDataService.getDrivers).not.toHaveBeenCalled();
+      expect(mockDataService.getServerVersion).not.toHaveBeenCalled();
 
       tick(5000);
-      expect(mockDataService.getDrivers).toHaveBeenCalledTimes(1);
+      expect(mockDataService.getServerVersion).toHaveBeenCalledTimes(1);
 
       tick(5000);
-      expect(mockDataService.getDrivers).toHaveBeenCalledTimes(2);
+      expect(mockDataService.getServerVersion).toHaveBeenCalledTimes(2);
 
       service.stopMonitoring();
       discardPeriodicTasks();
@@ -132,7 +149,7 @@ describe("ConnectionMonitorService", () => {
       service.setConnectionState(ConnectionState.DISCONNECTED);
 
       // 1. Fail first check
-      mockDataService.getDrivers.and.returnValue(
+      mockDataService.getServerVersion.and.returnValue(
         throwError(() => new Error("Fail")),
       );
 
@@ -140,13 +157,13 @@ describe("ConnectionMonitorService", () => {
       tick(5000);
 
       service.connectionState$.subscribe((state) => {
-        if (mockDataService.getDrivers.calls.count() === 1) {
+        if (mockDataService.getServerVersion.calls.count() === 1) {
           expect(state).toBe(ConnectionState.DISCONNECTED);
         }
       });
 
       // 2. Succeed second check
-      mockDataService.getDrivers.and.returnValue(of([]));
+      mockDataService.getServerVersion.and.returnValue(of("1.0.0"));
       tick(5000);
 
       let currentState: ConnectionState | undefined;
@@ -161,22 +178,22 @@ describe("ConnectionMonitorService", () => {
   describe("waitForConnection", () => {
     it("should resolve immediately if already connected (via check)", fakeAsync(() => {
       // Mock successful check
-      mockDataService.getDrivers.and.returnValue(of([]));
+      mockDataService.getServerVersion.and.returnValue(of("1.0.0"));
 
       let resolved = false;
       service.waitForConnection().then(() => (resolved = true));
 
       tick(); // Allow checkConnection observable to complete
       expect(resolved).toBeTrue();
-      expect(mockDataService.getDrivers).toHaveBeenCalledTimes(1);
+      expect(mockDataService.getServerVersion).toHaveBeenCalledTimes(1);
     }));
 
     it("should poll until connected if initially failing", fakeAsync(() => {
       // 1. Fail initial check
       let isSuccess = false;
-      mockDataService.getDrivers.and.callFake(() => {
+      mockDataService.getServerVersion.and.callFake(() => {
         if (!isSuccess) return throwError(() => new Error("Fail"));
-        return of([]);
+        return of("1.0.0");
       });
 
       let resolved = false;
