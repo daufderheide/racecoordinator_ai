@@ -33,16 +33,17 @@ body {
     color-adjust: exact !important;
   }
 
-  html,
-  body,
-  app-root,
-  .app-route-container {
+  body.print-full-scroll,
+  html.print-full-scroll,
+  body.print-full-scroll app-root,
+  body.print-full-scroll .app-route-container,
+  body.print-full-scroll .dashboard-wrapper {
     height: auto !important;
     min-height: 0 !important;
     overflow: visible !important;
   }
 
-  app-help-overlay {
+  body.print-full-scroll app-help-overlay {
     display: none !important;
   }
 }

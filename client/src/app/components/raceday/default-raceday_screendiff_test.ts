@@ -873,4 +873,72 @@ test.describe("Raceday Visuals for Fuel", () => {
       maxDiffPixels: 0,
     });
   });
+
+  test("should display PDF print preview correctly", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await expect(page.locator(".scalable-content")).toBeVisible();
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Mock GP",
+          practice: false,
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#550000",
+                foregroundColor: "#ffffff",
+              },
+              {
+                objectId: "l2",
+                length: 10,
+                backgroundColor: "#005500",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            driver: {
+              model: { entityId: "d1" },
+              name: "Driver 1",
+              nickname: "D1",
+            },
+            totalLaps: 10,
+            bestLapTime: 5.123,
+          },
+        ],
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".table-row").first().waitFor({ state: "visible" });
+
+    // Emulate print media and manually dispatch beforeprint
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => {
+      document.body.classList.add("print-full-scroll");
+      window.dispatchEvent(new Event("beforeprint"));
+    });
+    // Wait a brief moment for change detection
+    await page.waitForTimeout(100);
+
+    await expect(page).toHaveScreenshot("raceday-pdf-print-preview.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });

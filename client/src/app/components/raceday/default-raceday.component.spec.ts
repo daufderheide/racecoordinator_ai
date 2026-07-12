@@ -4580,4 +4580,16 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
     });
   });
+
+  describe("Printing", () => {
+    it("should toggle isPrinting flag on beforeprint and afterprint events", () => {
+      expect(component.isPrinting).toBeFalse();
+
+      window.dispatchEvent(new Event("beforeprint"));
+      expect(component.isPrinting).toBeTrue();
+
+      window.dispatchEvent(new Event("afterprint"));
+      expect(component.isPrinting).toBeFalse();
+    });
+  });
 });

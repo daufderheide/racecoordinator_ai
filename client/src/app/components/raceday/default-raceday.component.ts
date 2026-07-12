@@ -143,6 +143,19 @@ export class DefaultRacedayComponent
   countdownTotalLamps: number = 0;
   private lastPlayedCountdownSecond: number = -1;
   protected isRestarting: boolean = false;
+  isPrinting = false;
+
+  @HostListener("window:beforeprint")
+  onBeforePrint() {
+    this.isPrinting = true;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener("window:afterprint")
+  onAfterPrint() {
+    this.isPrinting = false;
+    this.cdr.detectChanges();
+  }
 
   // Static record values for now as requested
   // Record values

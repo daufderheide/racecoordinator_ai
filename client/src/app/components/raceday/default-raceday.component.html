@@ -73,11 +73,16 @@
   <div
     class="scalable-content"
     [class.edit-mode]="isLayoutCustomizing"
-    [style.width.px]="dashboardWidth"
-    [style.min-width.px]="dashboardWidth"
-    [style.height.px]="dashboardHeight"
-    [style.min-height.px]="dashboardHeight"
-    [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+    [style.width.px]="isPrinting ? 1920 : dashboardWidth"
+    [style.min-width.px]="isPrinting ? 1920 : dashboardWidth"
+    [style.height.px]="isPrinting ? 1080 : dashboardHeight"
+    [style.min-height.px]="isPrinting ? 1080 : dashboardHeight"
+    [style.transform]="
+      isPrinting ? 'none' : 'translate(-50%, -50%) scale(' + scale + ')'
+    "
+    [style.position]="isPrinting ? 'relative' : 'absolute'"
+    [style.top]="isPrinting ? '0' : '50%'"
+    [style.left]="isPrinting ? '0' : '50%'"
   >
     <div
       class="raceday-absolute-layout-root-wrapper"

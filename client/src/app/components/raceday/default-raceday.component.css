@@ -176,33 +176,6 @@ app-default-raceday {
   }
 
   @media print {
-    app-default-raceday {
-      background: transparent !important;
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .dashboard-wrapper {
-      align-items: flex-start !important;
-      justify-content: flex-start !important;
-      background: transparent !important;
-    }
-
-    .scalable-content {
-      background: #0d151e !important;
-      position: relative !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 1920px !important;
-      min-width: 0 !important;
-      height: 1080px !important;
-      min-height: 0 !important;
-      overflow: visible !important;
-      transform: none !important;
-      zoom: 1 !important;
-      margin: 0 !important;
-    }
-
     .bottom-section {
       display: grid !important;
       grid-template-rows: auto 1fr !important;
@@ -424,5 +397,19 @@ app-default-raceday {
   .reset-btn:hover {
     background: rgba(239, 68, 68, 0.3);
     border-color: #ef4444;
+  }
+}
+@media print {
+  .dashboard-wrapper {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .scalable-content {
+    background: white !important;
+    color: black !important;
+  }
+  * {
+    color: black !important;
   }
 }
