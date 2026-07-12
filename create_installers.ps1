@@ -91,6 +91,28 @@ if (-not (Test-Path $Mongo60Zip) -or (Get-Item $Mongo60Zip).Length -eq 0) {
     }
 }
 
+# VC++ Redist 2015-2022 (x64 for Modern Windows)
+$VCRedist64 = "build_cache\vc_redist.x64.exe"
+if (-not (Test-Path $VCRedist64) -or (Get-Item $VCRedist64).Length -eq 0) {
+    Write-Host "Downloading VC++ Redistributable (x64)..."
+    try {
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $VCRedist64
+    } catch {
+        Write-Warning "VC++ Redist (x64) download failed: $_"
+    }
+}
+
+# VC++ Redist 2013 (x86 for Legacy Windows)
+$VCRedist86 = "build_cache\vcredist_x86.exe"
+if (-not (Test-Path $VCRedist86) -or (Get-Item $VCRedist86).Length -eq 0) {
+    Write-Host "Downloading VC++ Redistributable 2013 (x86)..."
+    try {
+        Invoke-WebRequest -Uri "https://aka.ms/highdpimfc2013x86enu" -OutFile $VCRedist86
+    } catch {
+        Write-Warning "VC++ Redist 2013 (x86) download failed: $_"
+    }
+}
+
 # 4. Create Release Directory Structure
 Write-Host "Creating Release Structure..." -ForegroundColor Yellow
 if (Test-Path "release") { Remove-Item -Path "release" -Recurse -Force -ErrorAction SilentlyContinue }
@@ -140,6 +162,13 @@ Extract-To-Release "java8.zip" "jre8" "bundled_jre8.zip"
 Extract-To-Release "java17.zip" "jre17" "bundled_jre17.zip"
 Extract-To-Release "mongodb32.zip" "mongodb32" $null
 Extract-To-Release "mongodb60.zip" "mongodb60" $null
+
+if (Test-Path "build_cache\vc_redist.x64.exe") {
+    Copy-Item "build_cache\vc_redist.x64.exe" "release\RaceCoordinator\vc_redist.x64.exe"
+}
+if (Test-Path "build_cache\vcredist_x86.exe") {
+    Copy-Item "build_cache\vcredist_x86.exe" "release\RaceCoordinator\vcredist_x86.exe"
+}
 
 # 5. Create Launch Scripts
 function Create-Scripts {
@@ -255,9 +284,31 @@ if (Test-Path $LocalJava) {
 $OSVersion = [System.Environment]::OSVersion.Version
 Write-Host "Detected Windows Version: $($OSVersion.Major).$($OSVersion.Minor)"
 
+if ($OSVersion.Major -ge 10) {
+    $VCRedistPath = Join-Path $ScriptPath "vc_redist.x64.exe"
+    if (Test-Path $VCRedistPath) {
+        Write-Host "Installing bundled VC++ Redistributable (x64)..." -ForegroundColor Cyan
+        try {
+            Start-Process -FilePath $VCRedistPath -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow
+        } catch {
+            Write-Warning "VC++ Redist installation failed."
+        }
+    }
+}
+
 $Url = ""
 $BundledZip = ""
 if ($OSVersion.Major -lt 10) {
+    $VCRedist86Path = Join-Path $ScriptPath "vcredist_x86.exe"
+    if (Test-Path $VCRedist86Path) {
+        Write-Host "Installing bundled VC++ Redistributable 2013 (x86)..." -ForegroundColor Cyan
+        try {
+            Start-Process -FilePath $VCRedist86Path -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow
+        } catch {
+            Write-Warning "VC++ Redist 2013 installation failed."
+        }
+    }
+
     Write-Host "Legacy Windows detected (XP/7/8). Selecting Java 8 (32-bit)." -ForegroundColor Yellow
     $Url = "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk"
     $BundledZip = Join-Path $ScriptPath "bundled_jre8.zip"

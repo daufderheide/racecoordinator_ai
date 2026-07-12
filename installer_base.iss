@@ -37,6 +37,9 @@ Source: "release\RaceCoordinator\RaceCoordinator.jar"; DestDir: "{app}"; Flags: 
 Source: "release\RaceCoordinator\web\*"; DestDir: "{app}\server\web"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Arduino Resources
 Source: "release\RaceCoordinator\arduino\*"; DestDir: "{app}\arduino"; Flags: ignoreversion recursesubdirs createallsubdirs
+; VC++ Redistributables
+Source: "release\RaceCoordinator\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion skipifsourcedoesntexist; Check: IsWindows10OrNewer
+Source: "release\RaceCoordinator\vcredist_x86.exe"; DestDir: "{tmp}"; Flags: ignoreversion skipifsourcedoesntexist; Check: not IsWindows10OrNewer
 
 [Icons]
 ; Desktop Icons
@@ -65,6 +68,10 @@ Name: "{commonappdata}\{#MyAppName}\server_temp"; Permissions: users-full
 Name: "{app}\mongodb"; Permissions: users-full
 
 [Run]
+; Install VC++ Redistributable before launching
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; Check: IsWindows10OrNewer; StatusMsg: "Installing Visual C++ Redistributable..."; Flags: waituntilterminated skipifdoesntexist
+Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: not IsWindows10OrNewer; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
+
 ; Server
 Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
 Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless)"""; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested

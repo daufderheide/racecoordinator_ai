@@ -87,6 +87,18 @@ if [ ! -s build_cache/mongodb60.zip ]; then
     curl -L "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -o build_cache/mongodb60.zip || echo "Warning: MongoDB 6.0 download failed"
 fi
 
+# VC++ Redist 2015-2022 (x64)
+if [ ! -s build_cache/vc_redist.x64.exe ]; then
+    echo "Downloading VC++ Redistributable (x64)..."
+    curl -L "https://aka.ms/vs/17/release/vc_redist.x64.exe" -o build_cache/vc_redist.x64.exe || echo "Warning: VC++ Redist download failed"
+fi
+
+# VC++ Redist 2013 (x86)
+if [ ! -s build_cache/vcredist_x86.exe ]; then
+    echo "Downloading VC++ Redistributable 2013 (x86)..."
+    curl -L "https://aka.ms/highdpimfc2013x86enu" -o build_cache/vcredist_x86.exe || echo "Warning: VC++ Redist 2013 download failed"
+fi
+
 # 4. Extract and Bundle Dependencies
 if [ -r build_cache/java8.zip ]; then
     cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
@@ -117,6 +129,14 @@ if [ -r build_cache/mongodb60.zip ]; then
     unzip -q build_cache/mongodb60.zip -d release/RaceCoordinator/temp_mongo60
     mv release/RaceCoordinator/temp_mongo60/*/* release/RaceCoordinator/mongodb60/
     rm -rf release/RaceCoordinator/temp_mongo60
+fi
+
+if [ -f build_cache/vc_redist.x64.exe ]; then
+    cp build_cache/vc_redist.x64.exe release/RaceCoordinator/vc_redist.x64.exe
+fi
+
+if [ -f build_cache/vcredist_x86.exe ]; then
+    cp build_cache/vcredist_x86.exe release/RaceCoordinator/vcredist_x86.exe
 fi
 
 
@@ -234,9 +254,31 @@ if (Test-Path $LocalJava) {
 $OSVersion = [System.Environment]::OSVersion.Version
 Write-Host "Detected Windows Version: $($OSVersion.Major).$($OSVersion.Minor)"
 
+if ($OSVersion.Major -ge 10) {
+    $VCRedistPath = Join-Path $ScriptPath "vc_redist.x64.exe"
+    if (Test-Path $VCRedistPath) {
+        Write-Host "Installing bundled VC++ Redistributable (x64)..." -ForegroundColor Cyan
+        try {
+            Start-Process -FilePath $VCRedistPath -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow
+        } catch {
+            Write-Warning "VC++ Redist installation failed."
+        }
+    }
+}
+
 $Url = ""
 $BundledZip = ""
 if ($OSVersion.Major -lt 10) {
+    $VCRedist86Path = Join-Path $ScriptPath "vcredist_x86.exe"
+    if (Test-Path $VCRedist86Path) {
+        Write-Host "Installing bundled VC++ Redistributable 2013 (x86)..." -ForegroundColor Cyan
+        try {
+            Start-Process -FilePath $VCRedist86Path -ArgumentList "/install /quiet /norestart" -Wait -NoNewWindow
+        } catch {
+            Write-Warning "VC++ Redist 2013 installation failed."
+        }
+    }
+
     Write-Host "Legacy Windows detected (XP/7/8). Selecting Java 8 (32-bit)." -ForegroundColor Yellow
     $Url = "https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jdk/hotspot/normal/eclipse?project=jdk"
     $BundledZip = Join-Path $ScriptPath "bundled_jre8.zip"
