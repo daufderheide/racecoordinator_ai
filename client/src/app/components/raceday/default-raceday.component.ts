@@ -1681,6 +1681,7 @@ export class DefaultRacedayComponent
         this.layout = this.getDefaultLayout();
       }
 
+      this.updateScale();
       this.loadColumns();
       this.initializeHeat();
 
@@ -4207,6 +4208,7 @@ export class DefaultRacedayComponent
     } else {
       this.layout = this.getDefaultLayout();
     }
+    this.updateScale();
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();
   }
@@ -4216,6 +4218,7 @@ export class DefaultRacedayComponent
     const settings = this.settingsService.getSettings();
     this.currentRacedayLayout = this.layout;
     this.settingsService.saveSettings(settings);
+    this.updateScale();
     this.isLayoutCustomizing = false;
     this.cdr.detectChanges();
   }

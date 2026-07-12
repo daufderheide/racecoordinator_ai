@@ -4592,4 +4592,41 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isPrinting).toBeFalse();
     });
   });
+
+  describe("Layout Scaling Transition", () => {
+    it("should call updateScale and recalculate dimensions when transitioning to a Practice layout", () => {
+      const updateScaleSpy = spyOn<any>(
+        component,
+        "updateScale",
+      ).and.callThrough();
+
+      mockSettings.racedayLayout = {
+        widgets: [],
+        baseWidth: 1920,
+        baseHeight: 1080,
+      };
+      mockSettings.practiceRacedayLayout = {
+        widgets: [],
+        baseWidth: 1000,
+        baseHeight: 500,
+      };
+
+      // Force normal raceday initially
+      mockRaceService.getRace.and.returnValue({ practice: false } as any);
+      (component as any).loadRaceData();
+      expect(component.dashboardWidth).toBe(1920);
+      expect(component.dashboardHeight).toBe(1080);
+
+      updateScaleSpy.calls.reset();
+
+      // Switch to practice race
+      mockRaceService.getRace.and.returnValue({ practice: true } as any);
+      (component as any).loadRaceData();
+
+      // Should have recalculated scale and dimensions for the practice layout
+      expect(updateScaleSpy).toHaveBeenCalled();
+      expect(component.dashboardWidth).toBe(1000);
+      expect(component.dashboardHeight).toBe(500);
+    });
+  });
 });
