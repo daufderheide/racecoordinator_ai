@@ -494,7 +494,9 @@
                                   <span
                                     [style.font-size]="
                                       'calc(1em / ' +
-                                      lapObj.segments.length +
+                                      (lapObj.segments.length < 2
+                                        ? 2
+                                        : lapObj.segments.length) +
                                       ')'
                                     "
                                     [style.line-height]="'1'"
