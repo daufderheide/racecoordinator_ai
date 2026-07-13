@@ -15,3 +15,24 @@ Source: "release\RaceCoordinator\mongodb60\*"; DestDir: "{app}\mongodb"; Flags: 
 ; Legacy OS
 Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
 Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  MongoSource, MongoDest: String;
+begin
+  if CurStep = ssInstall then
+  begin
+    MongoSource := ExpandConstant('{app}\mongodb\bin\mongod.exe');
+    MongoDest := ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools\mongod_legacy.exe');
+    
+    if FileExists(MongoSource) then
+    begin
+      if not DirExists(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools')) then
+        ForceDirectories(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools'));
+        
+      Log('Backing up legacy MongoDB executable for potential migration...');
+      FileCopy(MongoSource, MongoDest, False);
+    end;
+  end;
+end;

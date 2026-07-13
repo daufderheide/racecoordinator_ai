@@ -271,22 +271,16 @@ public class App {
               logger.warn(
                   "Attempting to back up incompatible database files and start a fresh database...");
 
-              try {
-                String timestamp = String.valueOf(System.currentTimeMillis());
-                Path backupPath = backupIncompatibleDatabase(appDataDir, timestamp);
-                if (backupPath != null) {
-                  // Restart embedded Mongo
-                  logger.info("Restarting MongoDB with a clean data directory...");
-                  startEmbeddedMongo();
+              String timestamp = String.valueOf(System.currentTimeMillis());
+              if (performDatabaseMigration(appDataDir, timestamp)) {
+                // Restart embedded Mongo
+                logger.info("Restarting MongoDB with a clean data directory after migration...");
+                startEmbeddedMongo();
 
-                  // Reset loop variables to wait again
-                  retried = true;
-                  i = -1; // Next iteration will be 0
-                  continue;
-                }
-              } catch (IOException ioe) {
-                logger.error(
-                    "Failed to back up incompatible database directory: {}", ioe.getMessage(), ioe);
+                // Reset loop variables to wait again
+                retried = true;
+                i = -1; // Next iteration will be 0
+                continue;
               }
             }
             break;
@@ -390,6 +384,30 @@ public class App {
       }
 
       logger.info("Connected to MongoDB successfully.");
+
+      // Perform any pending migrations
+      File pendingImportDir = new File(appDataDir, "pending_imports");
+      if (pendingImportDir.exists() && pendingImportDir.isDirectory()) {
+        logger.info("Found pending database migrations. Importing...");
+        File[] zipFiles = pendingImportDir.listFiles((dir, name) -> name.endsWith(".zip"));
+        if (zipFiles != null) {
+          for (File zipFile : zipFiles) {
+            String dbName = zipFile.getName().substring(0, zipFile.getName().length() - 4);
+            logger.info("Importing migrated database: {}", dbName);
+            try (java.io.FileInputStream fis = new java.io.FileInputStream(zipFile)) {
+              databaseContext.importDatabase(dbName, fis);
+            } catch (Exception e) {
+              logger.error("Failed to import migrated database: " + dbName, e);
+            }
+          }
+        }
+        // Delete pending directory
+        for (File f : pendingImportDir.listFiles()) {
+          f.delete();
+        }
+        pendingImportDir.delete();
+        logger.info("Migration imports completed.");
+      }
 
       logger.info("Starting database backfill loop...");
       // Backfill defaults for all databases
@@ -853,22 +871,21 @@ public class App {
           String appDir = System.getProperty("user.dir");
           String appDataDir =
               System.getProperty("app.data.dir", Paths.get(appDir, "app_data").toString());
-          try {
-            String timestamp = String.valueOf(System.currentTimeMillis());
-            Path backupPath = backupIncompatibleDatabase(appDataDir, timestamp);
-            if (backupPath != null) {
-              // Try starting again
-              startEmbeddedMongo();
-              return;
-            }
-          } catch (IOException ioe) {
-            logger.error(
-                "Failed to back up incompatible database directory: {}", ioe.getMessage(), ioe);
+          String timestamp = String.valueOf(System.currentTimeMillis());
+          if (performDatabaseMigration(appDataDir, timestamp)) {
+            // Try starting again
+            startEmbeddedMongo();
+            return;
           }
         }
       }
       System.exit(1);
     }
+  }
+
+  /* package */ static de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion
+      getMongoVersion() {
+    return Version.Main.V6_0;
   }
 
   /* package */ static String getLocalIpAddress() {
@@ -936,6 +953,141 @@ public class App {
       return InetAddress.getLocalHost().getHostAddress();
     } catch (Exception e) {
       return "Unknown";
+    }
+  }
+
+  private static boolean performDatabaseMigration(String appDataDir, String timestamp) {
+    logger.warn("Starting auto-migration of incompatible databases...");
+    String dataDir = Paths.get(appDataDir, "mongodb_data").toString();
+    String tempExportDir = Paths.get(appDataDir, "migration_export_" + timestamp).toString();
+    try {
+      Files.createDirectories(Paths.get(tempExportDir));
+    } catch (IOException e) {
+      logger.error("Failed to create temp export dir", e);
+      return false;
+    }
+
+    Process legacyProcess = null;
+    de.flapdoodle.embed.mongo.transitions.RunningMongodProcess flapdoodleProcess = null;
+
+    try {
+      // 1. Try to start local backed-up mongod_legacy.exe
+      legacyProcess = startLegacyMongodLocally(appDataDir, dataDir);
+
+      if (legacyProcess == null) {
+        flapdoodleProcess = startLegacyMongodFlapdoodle(appDataDir, dataDir);
+      }
+
+      // 2. Connect and Export
+      exportLegacyDatabases(appDataDir, tempExportDir);
+
+    } catch (Exception e) {
+      logger.error("Migration failed during export phase: {}", e.getMessage(), e);
+      return false;
+    } finally {
+      // 3. Stop Legacy MongoDB
+      if (legacyProcess != null) {
+        logger.info("Stopping legacy mongod process...");
+        legacyProcess.destroy();
+        try {
+          if (!legacyProcess.waitFor(5, TimeUnit.SECONDS)) {
+            legacyProcess.destroyForcibly();
+          }
+        } catch (InterruptedException e) {
+          legacyProcess.destroyForcibly();
+        }
+      }
+      if (flapdoodleProcess != null) {
+        logger.info("Stopping legacy flapdoodle process...");
+        flapdoodleProcess.stop();
+      }
+    }
+
+    // 4. Backup the old data directory
+    try {
+      Path backupPath = backupIncompatibleDatabase(appDataDir, timestamp);
+      if (backupPath == null) {
+        return false;
+      }
+    } catch (IOException e) {
+      logger.error("Failed to backup old data directory", e);
+      return false;
+    }
+
+    // 5. Mark for pending imports
+    File pendingImportDir = new File(appDataDir, "pending_imports");
+    new File(tempExportDir).renameTo(pendingImportDir);
+    logger.info("Marked exported databases for pending import.");
+    return true;
+  }
+
+  private static Process startLegacyMongodLocally(String appDataDir, String dataDir)
+      throws Exception {
+    File legacyMongo = new File(appDataDir, "migration_tools/mongod_legacy.exe");
+    if (legacyMongo.exists()) {
+      logger.info(
+          "Found backed-up legacy mongod at {}. Starting it...", legacyMongo.getAbsolutePath());
+      List<String> command = new ArrayList<>();
+      command.add(legacyMongo.getAbsolutePath());
+      command.add("--dbpath");
+      command.add(dataDir);
+      command.add("--port");
+      command.add(String.valueOf(MONGO_PORT));
+      command.add("--bind_ip");
+      command.add("127.0.0.1");
+
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      Process legacyProcess = pb.start();
+      Thread.sleep(3000);
+
+      // Ensure process didn't die immediately
+      if (legacyProcess.isAlive()) {
+        return legacyProcess;
+      } else {
+        logger.warn(
+            "Legacy mongod failed to start (exit code {}). Falling back to Flapdoodle...",
+            legacyProcess.exitValue());
+      }
+    }
+    return null;
+  }
+
+  private static de.flapdoodle.embed.mongo.transitions.RunningMongodProcess
+      startLegacyMongodFlapdoodle(String appDataDir, String dataDir) {
+    logger.info(
+        "Local legacy mongod not viable. Attempting to download and start MongoDB 4.4 via Flapdoodle...");
+    de.flapdoodle.embed.mongo.distribution.IFeatureAwareVersion mongoVersion = Version.Main.V4_4;
+    String mongoTempDir = Paths.get(appDataDir, "mongo_temp").toString();
+    ImmutableMongod mongod =
+        Mongod.instance()
+            .withInitTempDirectory(
+                de.flapdoodle.embed.process.transitions.InitTempDirectory.with(
+                    Paths.get(mongoTempDir)))
+            .withDatabaseDir(
+                Start.to(DatabaseDir.class).initializedWith(DatabaseDir.of(Paths.get(dataDir))))
+            .withNet(Start.to(Net.class).initializedWith(Net.of("localhost", MONGO_PORT, false)));
+    return mongod.start(mongoVersion).current();
+  }
+
+  private static void exportLegacyDatabases(String appDataDir, String tempExportDir)
+      throws Exception {
+    logger.info("Connecting to legacy MongoDB instance to export data...");
+    try (MongoClient legacyClient = MongoClients.create("mongodb://127.0.0.1:" + MONGO_PORT)) {
+      // Wait for connection
+      legacyClient.listDatabaseNames().first();
+
+      DatabaseContext tempCtx = new DatabaseContext(legacyClient, "admin", null, appDataDir);
+      for (String dbName : tempCtx.listDatabases()) {
+        if (!dbName.equals("admin") && !dbName.equals("local") && !dbName.equals("config")) {
+          logger.info("Exporting database: {}", dbName);
+          File exportFile = new File(tempExportDir, dbName + ".zip");
+          try (java.io.FileOutputStream fos = new java.io.FileOutputStream(exportFile)) {
+            tempCtx.exportDatabase(dbName, fos);
+          }
+        }
+      }
+      logger.info("All user databases exported successfully.");
     }
   }
 

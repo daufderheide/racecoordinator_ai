@@ -175,7 +175,23 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   JavaZip, MongoZip: String;
+  MongoSource, MongoDest: String;
 begin
+  if CurStep = ssInstall then
+  begin
+    MongoSource := ExpandConstant('{app}\mongodb\bin\mongod.exe');
+    MongoDest := ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools\mongod_legacy.exe');
+    
+    if FileExists(MongoSource) then
+    begin
+      if not DirExists(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools')) then
+        ForceDirectories(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools'));
+        
+      Log('Backing up legacy MongoDB executable for potential migration...');
+      FileCopy(MongoSource, MongoDest, False);
+    end;
+  end;
+
   if CurStep = ssPostInstall then
   begin
     JavaZip := ExpandConstant('{tmp}\java_setup.zip');
