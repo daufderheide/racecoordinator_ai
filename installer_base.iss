@@ -173,13 +173,13 @@ end;
 function IsJavaInstalled(IsModernOS: Boolean): Boolean;
 var
   VersionFile: String;
-  InstalledVersion: String;
+  InstalledVersion: AnsiString;
 begin
   VersionFile := ExpandConstant('{app}\jre\.rcai_version');
   if FileExists(VersionFile) then
   begin
     LoadStringFromFile(VersionFile, InstalledVersion);
-    if Trim(InstalledVersion) = GetRequiredJavaVersion(IsModernOS) then
+    if Trim(String(InstalledVersion)) = GetRequiredJavaVersion(IsModernOS) then
     begin
       Result := True;
       Exit;
@@ -203,13 +203,13 @@ end;
 function IsMongoInstalled(IsModernOS: Boolean): Boolean;
 var
   VersionFile: String;
-  InstalledVersion: String;
+  InstalledVersion: AnsiString;
 begin
   VersionFile := ExpandConstant('{app}\mongodb\.rcai_version');
   if FileExists(VersionFile) then
   begin
     LoadStringFromFile(VersionFile, InstalledVersion);
-    if Trim(InstalledVersion) = GetRequiredMongoVersion(IsModernOS) then
+    if Trim(String(InstalledVersion)) = GetRequiredMongoVersion(IsModernOS) then
     begin
       Result := True;
       Exit;
