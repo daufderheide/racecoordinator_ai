@@ -136,3 +136,6 @@ server/checkstyle_report_final.txt
 # Local portable tools
 /tools/
 
+# IntelliJ IDEA
+.idea/
+
