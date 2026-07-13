@@ -696,8 +696,9 @@
   background: #000;
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  z-index: 20;
 }
 
 .raceday-preview-scaler {
@@ -714,6 +715,8 @@
   gap: 20px;
   align-items: flex-start;
   width: 100%;
+  position: relative;
+  z-index: 50;
 }
 
 .widget-inspector-panel {
@@ -728,6 +731,8 @@
   animation: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
   color: #000;
+  position: relative;
+  z-index: 5;
 }
 
 

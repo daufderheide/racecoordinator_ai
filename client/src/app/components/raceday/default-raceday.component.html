@@ -1,5 +1,6 @@
 <div
   class="dashboard-wrapper"
+  [style.overflow]="isUIEditorMode() ? 'visible' : 'hidden'"
   (dragover)="onCanvasDragOver($event)"
   (drop)="onCanvasDrop($event)"
 >
@@ -128,13 +129,17 @@
   @if (isLayoutCustomizing) {
     <div
       class="layout-customizer-toolbox-wrapper"
-      [style.transform]="isUIEditorMode() ? 'scale(1.6)' : 'none'"
+      [style.transform]="
+        isUIEditorMode() ? 'scale(' + 1 / uiScale() + ')' : 'none'
+      "
     >
       <div
         class="layout-customizer-toolbox"
         cdkDrag
         [cdkDragScale]="toolboxScale"
-        cdkDragBoundary=".dashboard-wrapper"
+        [cdkDragBoundary]="
+          isUIEditorMode() ? '.raceday-layout-section' : '.dashboard-wrapper'
+        "
         [cdkDragFreeDragPosition]="layoutEditorPosition"
         (cdkDragEnded)="onLayoutEditorDragEnded($event)"
       >

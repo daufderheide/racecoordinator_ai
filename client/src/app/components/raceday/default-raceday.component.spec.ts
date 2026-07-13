@@ -190,6 +190,60 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("clampLayoutEditorPosition", () => {
+    let _widthSpy: jasmine.Spy;
+    let _heightSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      _widthSpy = spyOnProperty(window, "innerWidth", "get").and.returnValue(
+        1920,
+      );
+      _heightSpy = spyOnProperty(window, "innerHeight", "get").and.returnValue(
+        1080,
+      );
+    });
+
+    it("should restrict position inside bounds when not in UI editor mode", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+      // scale = 1
+      // maxX = Math.max(0, 1920 - 260) = 1660
+      // maxY = Math.max(0, 1080 - 400) = 680
+
+      const clamped = (component as any).clampLayoutEditorPosition({
+        x: 2000,
+        y: 1000,
+      });
+      expect(clamped.x).toBe(1660);
+      expect(clamped.y).toBe(680);
+
+      const clampedNegative = (component as any).clampLayoutEditorPosition({
+        x: -100,
+        y: -200,
+      });
+      expect(clampedNegative.x).toBe(0);
+      expect(clampedNegative.y).toBe(0);
+    });
+
+    it("should not restrict position in UI editor mode, as it relies on cdkDragBoundary", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(true);
+      spyOn(component, "uiScale").and.returnValue(0.5);
+
+      const pos = { x: 2000, y: 1000 };
+      const clamped = (component as any).clampLayoutEditorPosition(pos);
+
+      expect(clamped).toEqual(pos);
+    });
+
+    it("should not clamp if position is perfectly within bounds", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+
+      const pos = { x: 500, y: 300 };
+      const clamped = (component as any).clampLayoutEditorPosition(pos);
+
+      expect(clamped).toEqual(pos);
+    });
+  });
+
   let component: DefaultRacedayComponent;
   let fixture: ComponentFixture<DefaultRacedayComponent>;
   let mockDataService: any;
@@ -4247,14 +4301,14 @@ describe("DefaultRacedayComponent", () => {
   describe("Layout Editor Panel Persistence", () => {
     it("should initialize layout editor minimized state and position from settings", () => {
       mockSettings.layoutEditorMinimized = true;
-      mockSettings.layoutEditorPositionX = 120;
-      mockSettings.layoutEditorPositionY = 240;
+      mockSettings.layoutEditorPositionX = 10;
+      mockSettings.layoutEditorPositionY = 10;
 
       // Re-trigger setupInitialState by calling ngOnInit
       component.ngOnInit();
 
       expect(component.isLayoutEditorMinimized).toBeTrue();
-      expect(component.layoutEditorPosition).toEqual({ x: 120, y: 240 });
+      expect(component.layoutEditorPosition).toEqual({ x: 10, y: 10 });
     });
 
     it("should save minimize state and emit columnsChanged on toggleLayoutEditorMinimize", () => {
@@ -4295,7 +4349,7 @@ describe("DefaultRacedayComponent", () => {
 
       const fakeDragEvent = {
         source: {
-          getFreeDragPosition: () => ({ x: 300, y: 400 }),
+          getFreeDragPosition: () => ({ x: 10, y: 10 }),
         },
       };
 
@@ -4303,9 +4357,9 @@ describe("DefaultRacedayComponent", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);
       component.onLayoutEditorDragEnded(fakeDragEvent);
 
-      expect(component.layoutEditorPosition).toEqual({ x: 300, y: 400 });
-      expect(mockSettings.layoutEditorPositionX).toBe(300);
-      expect(mockSettings.layoutEditorPositionY).toBe(400);
+      expect(component.layoutEditorPosition).toEqual({ x: 10, y: 10 });
+      expect(mockSettings.layoutEditorPositionX).toBe(10);
+      expect(mockSettings.layoutEditorPositionY).toBe(10);
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
       expect(settingsService.saveSettings).not.toHaveBeenCalled();
 
@@ -4380,12 +4434,12 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should calculate scale based on min aspect ratio and keep dashboardWidth at layout baseWidth in normal mode", () => {
-      const widthSpy = spyOnProperty(
+      const _widthSpy = spyOnProperty(
         window,
         "innerWidth",
         "get",
       ).and.returnValue(1920);
-      const heightSpy = spyOnProperty(
+      const _heightSpy = spyOnProperty(
         window,
         "innerHeight",
         "get",
@@ -4393,22 +4447,22 @@ describe("DefaultRacedayComponent", () => {
       fixture.componentRef.setInput("isUIEditorMode", false);
       fixture.detectChanges();
 
-      widthSpy.and.returnValue(1440);
-      heightSpy.and.returnValue(900);
+      _widthSpy.and.returnValue(1440);
+      _heightSpy.and.returnValue(900);
 
       component.onResize();
       expect(component.scale).toBeCloseTo(1440 / 1920, 3); // scaleX (0.75) < scaleY (0.833)
       expect(component.dashboardWidth).toBe(1920);
 
-      widthSpy.and.returnValue(2560);
-      heightSpy.and.returnValue(1080);
+      _widthSpy.and.returnValue(2560);
+      _heightSpy.and.returnValue(1080);
 
       component.onResize();
       expect(component.scale).toBeCloseTo(1.0, 3); // scaleY (1.0) < scaleX (1.33)
       expect(component.dashboardWidth).toBe(1920);
 
-      widthSpy.and.returnValue(1024);
-      heightSpy.and.returnValue(768);
+      _widthSpy.and.returnValue(1024);
+      _heightSpy.and.returnValue(768);
 
       component.onResize();
       expect(component.scale).toBeCloseTo(1024 / 1920, 3); // scaleX (0.533) < scaleY (0.711)

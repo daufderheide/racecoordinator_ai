@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  HostBinding,
   HostListener,
   input,
   OnChanges,
@@ -611,6 +612,12 @@ export class DefaultRacedayComponent
   layoutChanged = output<LayoutConfig>();
   columnsChanged = output<void>();
   isLayoutCustomizing = false;
+
+  @HostBinding("style.overflow")
+  get overflowStyle() {
+    return this.isUIEditorMode() ? "visible" : "hidden";
+  }
+
   isLayoutEditorMinimized = false;
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;
@@ -2053,6 +2060,7 @@ export class DefaultRacedayComponent
 
     if (this.isUIEditorMode()) {
       this.scale = 1;
+      let resolutionChanged = false;
       if (
         this.dashboardWidth !== targetWidth ||
         this.dashboardHeight !== targetHeight
@@ -2060,6 +2068,11 @@ export class DefaultRacedayComponent
         this.dashboardWidth = targetWidth;
         this.dashboardHeight = targetHeight;
         this.loadColumns();
+        resolutionChanged = true;
+      }
+
+      if (resolutionChanged) {
+        this.layoutEditorPosition = { x: 10, y: 10 };
       }
       return;
     }
@@ -2083,6 +2096,43 @@ export class DefaultRacedayComponent
       this.dashboardHeight = targetHeight;
       this.loadColumns();
     }
+
+    this.layoutEditorPosition = this.clampLayoutEditorPosition(
+      this.layoutEditorPosition,
+    );
+  }
+
+  private clampLayoutEditorPosition(pos: { x: number; y: number }): {
+    x: number;
+    y: number;
+  } {
+    if (this.isUIEditorMode()) {
+      // In UI editor mode, we rely on cdkDragBoundary to handle boundaries.
+      // updateScale() resets the position on resolution changes.
+      return pos;
+    }
+
+    let { x, y } = pos;
+    const scale = 1; // Always 1 in normal mode
+    const toolboxWidth = 260; // Base width from CSS
+    const toolboxHeight = 400; // Approximate max height
+
+    // Calculate max X/Y in the local coordinate space of the scaled wrapper
+    const maxX = Math.max(
+      0,
+      (this.dashboardWidth - toolboxWidth * scale) / scale,
+    );
+    const maxY = Math.max(
+      0,
+      (this.dashboardHeight - toolboxHeight * scale) / scale,
+    );
+
+    if (x > maxX) x = maxX;
+    if (x < 0) x = 0;
+    if (y > maxY) y = maxY;
+    if (y < 0) y = 0;
+
+    return { x, y };
   }
 
   toggleMenu() {
