@@ -9,6 +9,7 @@ RaceCoordinator 2.0 built with google antigravity
 The `run_server.sh` script handles dependency downloading (including `protoc`) automatically and starts both the Java server and Angular client.
 The `run_client.sh` script handles `npm install` automatically if `node_modules` is missing or the client dependency manifest changed.
 
+- (Mac only) make sure maven is installed: `brew install mvn`
 - Check permissions: `chmod +x run_server.sh run_client.sh`
 - Run Application: `./run_server.sh` (will take a moment to install dependencies first time and automatically open your browser)
 - Run Headless Server: `./run_server.sh --headless` (starts only the Java server without the web client or browser)
