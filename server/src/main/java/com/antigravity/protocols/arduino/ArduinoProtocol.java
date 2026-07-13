@@ -954,7 +954,19 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   protected boolean useLapsForSegments() {
-    return config != null && config.useLapsForSegments;
+    return config != null && config.useLapsForSegments && hasSegmentSensors();
+  }
+
+  private boolean hasSegmentSensors() {
+    if (pinLookup == null) {
+      return false;
+    }
+    for (PinConfig pinConfig : pinLookup.values()) {
+      if (pinConfig.behavior == InputBehavior.SEGMENT_COUNTER) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
