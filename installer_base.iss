@@ -69,8 +69,8 @@ Name: "{app}\mongodb"; Permissions: users-full
 
 [Run]
 ; Install VC++ Redistributable before launching
-Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; Check: IsWindows10OrNewer; StatusMsg: "Installing Visual C++ Redistributable..."; Flags: waituntilterminated skipifdoesntexist
-Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: not IsWindows10OrNewer; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
+Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist64; StatusMsg: "Installing Visual C++ Redistributable..."; Flags: waituntilterminated skipifdoesntexist
+Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
 Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
@@ -101,6 +101,36 @@ begin
   GetWindowsVersionEx(Version);
   // Windows 10 is version 10.0
   Result := (Version.Major >= 10);
+end;
+
+function IsVCRedist64Installed: Boolean;
+begin
+  Result := RegKeyExists(HKLM, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64');
+  if (not Result) and IsWin64 then
+    Result := RegKeyExists(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64');
+end;
+
+function IsVCRedist86Installed: Boolean;
+begin
+  Result := RegKeyExists(HKLM, 'SOFTWARE\Microsoft\VisualStudio\12.0\VC\Runtimes\x86');
+  if (not Result) and IsWin64 then
+    Result := RegKeyExists(HKLM64, 'SOFTWARE\Microsoft\VisualStudio\12.0\VC\Runtimes\x86');
+end;
+
+function NeedsVCRedist64: Boolean;
+begin
+  if not IsWindows10OrNewer then
+    Result := False
+  else
+    Result := not IsVCRedist64Installed;
+end;
+
+function NeedsVCRedist86: Boolean;
+begin
+  if IsWindows10OrNewer then
+    Result := False
+  else
+    Result := not IsVCRedist86Installed;
 end;
 
 function IsRestartAppRequested: Boolean;
