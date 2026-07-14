@@ -10,6 +10,10 @@ message HeatPositionUpdate {
   int32 rank = 2;
   double gap_leader = 3;
   double gap_position = 4;
+  double gap_leader_f1 = 5;
+  double gap_position_f1 = 6;
+  int32 laps_down_leader = 7;
+  int32 laps_down_position = 8;
 }
 
 message StandingsUpdate {

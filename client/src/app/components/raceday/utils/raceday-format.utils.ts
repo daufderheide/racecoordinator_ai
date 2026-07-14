@@ -98,7 +98,12 @@ export class RacedayFormatUtils {
       ) {
         return "--";
       }
-      if (baseKey === "gapLeader" || baseKey === "gapPosition") {
+      if (
+        baseKey === "gapLeader" ||
+        baseKey === "gapPosition" ||
+        baseKey === "gapLeaderF1" ||
+        baseKey === "gapPositionF1"
+      ) {
         return timePlaceholder;
       }
     }
@@ -113,6 +118,23 @@ export class RacedayFormatUtils {
       if (value === 0) return timePlaceholder;
       const sign = value > 0 ? "+" : "";
       return sign + value.toFixed(timeDecimals);
+    } else if (baseKey === "gapLeaderF1" || baseKey === "gapPositionF1") {
+      const isLeader = baseKey === "gapLeaderF1";
+      const lapsDown = isLeader ? hd.lapsDownLeader : hd.lapsDownPosition;
+
+      if (lapsDown === 1) {
+        return ctx
+          .translate("RD_LAP_DOWN")
+          .replace("{{count}}", lapsDown.toString());
+      } else if (lapsDown > 1) {
+        return ctx
+          .translate("RD_LAPS_DOWN")
+          .replace("{{count}}", lapsDown.toString());
+      } else {
+        if (value === 0) return timePlaceholder;
+        const sign = value > 0 ? "+" : "";
+        return sign + value.toFixed(timeDecimals);
+      }
     } else if (baseKey === "lapCount") {
       const hasReactionTime = hd.reactionTime > 0;
       const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;

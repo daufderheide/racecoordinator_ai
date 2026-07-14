@@ -93,4 +93,54 @@ public class GapCalculatorTest {
     // projectedGap = -5.0 + 2.25 * 5.5 = -5.0 + 12.375 = 7.375
     org.mockito.Mockito.verify(current).setGapLeader(7.375);
   }
+
+  @Test
+  public void testGapCalculator_F1_SameLap() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(20.0);
+    when(leader.getPhysicalLapCount()).thenReturn(20);
+    when(leader.getTotalTime()).thenReturn(100.0);
+    when(leader.getTimeAtLap(20)).thenReturn(100.0);
+
+    GapParticipant current = mock(GapParticipant.class);
+    when(current.getAdjustedLapCount()).thenReturn(20.0);
+    when(current.getPhysicalLapCount()).thenReturn(20);
+    when(current.getTotalTime()).thenReturn(102.5);
+    when(current.getTimeAtLap(20)).thenReturn(102.5);
+
+    List<GapParticipant> participants = Arrays.asList(leader, current);
+    GapCalculator.calculateGaps(participants, HeatScoring.FinishMethod.Lap);
+
+    // F1 Gap Leader
+    org.mockito.Mockito.verify(leader).setGapLeaderF1(0.0);
+    org.mockito.Mockito.verify(leader).setLapsDownLeader(0);
+
+    // F1 Gap Current
+    org.mockito.Mockito.verify(current).setGapLeaderF1(2.5);
+    org.mockito.Mockito.verify(current).setLapsDownLeader(0);
+  }
+
+  @Test
+  public void testGapCalculator_F1_LapsDown() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getAdjustedLapCount()).thenReturn(20.0);
+    when(leader.getPhysicalLapCount()).thenReturn(20);
+    when(leader.getTotalTime()).thenReturn(100.0);
+
+    GapParticipant current = mock(GapParticipant.class);
+    when(current.getAdjustedLapCount()).thenReturn(18.0);
+    when(current.getPhysicalLapCount()).thenReturn(18);
+    when(current.getTotalTime()).thenReturn(95.0);
+
+    List<GapParticipant> participants = Arrays.asList(leader, current);
+    GapCalculator.calculateGaps(participants, HeatScoring.FinishMethod.Lap);
+
+    // F1 Gap Leader
+    org.mockito.Mockito.verify(leader).setGapLeaderF1(0.0);
+    org.mockito.Mockito.verify(leader).setLapsDownLeader(0);
+
+    // F1 Gap Current
+    org.mockito.Mockito.verify(current).setGapLeaderF1(0.0);
+    org.mockito.Mockito.verify(current).setLapsDownLeader(1);
+  }
 }

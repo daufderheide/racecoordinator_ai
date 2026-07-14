@@ -238,6 +238,8 @@ export class RacedayLayoutUtils {
       totalTime: "RD_COL_TOTAL_TIME",
       gapLeader: "RD_COL_GAP_LEADER",
       gapPosition: "RD_COL_GAP_POSITION",
+      gapLeaderF1: "RD_COL_GAP_LEADER_F1",
+      gapPositionF1: "RD_COL_GAP_POSITION_F1",
       reactionTime: "RD_COL_REACTION_TIME",
       "participant.team.name": "RD_COL_TEAM",
       "driver.name": "RD_COL_NAME",

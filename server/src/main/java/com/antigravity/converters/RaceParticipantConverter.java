@@ -40,6 +40,10 @@ public class RaceParticipantConverter {
         .setFuelLevel(participant.getFuelLevel())
         .setGapLeader(participant.getGapLeader())
         .setGapPosition(participant.getGapPosition())
+        .setGapLeaderF1(participant.getGapLeaderF1())
+        .setGapPositionF1(participant.getGapPositionF1())
+        .setLapsDownLeader(participant.getLapsDownLeader())
+        .setLapsDownPosition(participant.getLapsDownPosition())
         .build();
   }
 }

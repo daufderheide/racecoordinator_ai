@@ -3306,6 +3306,8 @@ export class DefaultRacedayComponent
       totalTime: 330,
       gapLeader: 330,
       gapPosition: 330,
+      gapLeaderF1: 330,
+      gapPositionF1: 330,
       "driver.name": 480,
       "driver.nickname": 480,
       "driver.avatarUrl": 120,

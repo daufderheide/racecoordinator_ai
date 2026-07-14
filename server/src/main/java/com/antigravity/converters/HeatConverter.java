@@ -87,6 +87,10 @@ public class HeatConverter {
         .setReactionTime(data.getReactionTime())
         .setGapLeader(data.getGapLeader())
         .setGapPosition(data.getGapPosition())
+        .setGapLeaderF1(data.getGapLeaderF1())
+        .setGapPositionF1(data.getGapPositionF1())
+        .setLapsDownLeader(data.getLapsDownLeader())
+        .setLapsDownPosition(data.getLapsDownPosition())
         .setIsRefueling(data.isRefueling())
         .setCurrentLocation(
             data.getCurrentLocation() != null ? data.getCurrentLocation().getValue() : -1)

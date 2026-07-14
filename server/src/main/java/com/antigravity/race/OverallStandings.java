@@ -73,6 +73,7 @@ public class OverallStandings {
       if (bestLap == Double.MAX_VALUE) {
         bestLap = 0.0;
       }
+      driver.setAllScoringLaps(allScoringLaps);
       driver.setTotalLaps(totalLaps);
       driver.setTotalTime(totalTime);
       driver.setBestLapTime(bestLap);

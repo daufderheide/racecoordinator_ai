@@ -30,6 +30,10 @@ export class RaceParticipantConverter {
       cached.fuelLevel = proto.fuelLevel || 0;
       cached.gapLeader = proto.gapLeader || 0;
       cached.gapPosition = proto.gapPosition || 0;
+      cached.gapLeaderF1 = proto.gapLeaderF1 || 0;
+      cached.gapPositionF1 = proto.gapPositionF1 || 0;
+      cached.lapsDownLeader = proto.lapsDownLeader || 0;
+      cached.lapsDownPosition = proto.lapsDownPosition || 0;
       if (proto.team) {
         cached.team = TeamConverter.fromProto(proto.team);
       }
@@ -57,6 +61,10 @@ export class RaceParticipantConverter {
         proto.gapLeader || 0,
         proto.gapPosition || 0,
         team,
+        proto.gapLeaderF1 || 0,
+        proto.gapPositionF1 || 0,
+        proto.lapsDownLeader || 0,
+        proto.lapsDownPosition || 0,
       );
     });
   }

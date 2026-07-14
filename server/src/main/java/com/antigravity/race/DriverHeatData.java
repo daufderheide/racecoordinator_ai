@@ -73,6 +73,10 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   private double initialFuelLevel = 0.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
+  private double gapLeaderF1 = 0.0;
+  private double gapPositionF1 = 0.0;
+  private int lapsDownLeader = 0;
+  private int lapsDownPosition = 0;
   private ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
   private double penaltyLaps = 0;
@@ -156,6 +160,26 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
     return laps.size();
   }
 
+  @Override
+  public int getPhysicalLapCount() {
+    return laps.size();
+  }
+
+  @Override
+  public double getTimeAtLap(int lapIndex) {
+    if (lapIndex <= 0) {
+      return 0.0;
+    }
+    if (lapIndex > laps.size()) {
+      lapIndex = laps.size();
+    }
+    double sum = 0.0;
+    for (int i = 0; i < lapIndex; i++) {
+      sum += laps.get(i).getLapTime();
+    }
+    return sum;
+  }
+
   public double getAdjustedLapCount() {
     return (double) getLapCount() - penaltyLaps + userLaps + autoCalculatedLaps;
   }
@@ -229,6 +253,10 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
     pendingLapTime = 0.0f;
     gapLeader = 0.0;
     gapPosition = 0.0;
+    gapLeaderF1 = 0.0;
+    gapPositionF1 = 0.0;
+    lapsDownLeader = 0;
+    lapsDownPosition = 0;
     falseStarts = 0;
     remainingFalseStartTimePenalty = 0.0;
   }
@@ -272,6 +300,42 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
 
   public void setGapPosition(double gapPosition) {
     this.gapPosition = gapPosition;
+  }
+
+  public double getGapLeaderF1() {
+    return gapLeaderF1;
+  }
+
+  @Override
+  public void setGapLeaderF1(double gapLeaderF1) {
+    this.gapLeaderF1 = gapLeaderF1;
+  }
+
+  public double getGapPositionF1() {
+    return gapPositionF1;
+  }
+
+  @Override
+  public void setGapPositionF1(double gapPositionF1) {
+    this.gapPositionF1 = gapPositionF1;
+  }
+
+  public int getLapsDownLeader() {
+    return lapsDownLeader;
+  }
+
+  @Override
+  public void setLapsDownLeader(int lapsDownLeader) {
+    this.lapsDownLeader = lapsDownLeader;
+  }
+
+  public int getLapsDownPosition() {
+    return lapsDownPosition;
+  }
+
+  @Override
+  public void setLapsDownPosition(int lapsDownPosition) {
+    this.lapsDownPosition = lapsDownPosition;
   }
 
   public CarLocation getCurrentLocation() {

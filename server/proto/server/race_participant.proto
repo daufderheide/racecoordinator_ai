@@ -23,4 +23,8 @@ message RaceParticipant {
   double fuel_level = 12;
   double gap_leader = 13;
   double gap_position = 14;
+  double gap_leader_f1 = 15;
+  double gap_position_f1 = 16;
+  int32 laps_down_leader = 17;
+  int32 laps_down_position = 18;
 }

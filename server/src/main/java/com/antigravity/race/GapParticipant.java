@@ -18,4 +18,22 @@ public interface GapParticipant {
 
   /** Sets the gap to the position immediately ahead in seconds. */
   void setGapPosition(double gapPosition);
+
+  /** Gets the time elapsed at the specific physical lap index (1-indexed). */
+  double getTimeAtLap(int lapIndex);
+
+  /** Gets the physical full lap count, ignoring penalties or manual segments. */
+  int getPhysicalLapCount();
+
+  /** Sets the F1 style time gap to the leader in seconds. */
+  void setGapLeaderF1(double gapLeaderF1);
+
+  /** Sets the F1 style time gap to the position immediately ahead in seconds. */
+  void setGapPositionF1(double gapPositionF1);
+
+  /** Sets the number of laps down to the leader. */
+  void setLapsDownLeader(int lapsDown);
+
+  /** Sets the number of laps down to the position immediately ahead. */
+  void setLapsDownPosition(int lapsDown);
 }

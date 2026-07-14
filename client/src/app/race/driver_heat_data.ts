@@ -29,6 +29,10 @@ export class DriverHeatData {
   private _reactionTime: number = 0;
   private _gapLeader: number = 0;
   private _gapPosition: number = 0;
+  private _gapLeaderF1: number = 0;
+  private _gapPositionF1: number = 0;
+  private _lapsDownLeader: number = 0;
+  private _lapsDownPosition: number = 0;
   public penaltyLaps: number = 0;
   public userLaps: number = 0;
   public autoCalculatedLaps: number = 0;
@@ -66,6 +70,10 @@ export class DriverHeatData {
     this._reactionTime = 0;
     this._gapLeader = 0;
     this._gapPosition = 0;
+    this._gapLeaderF1 = 0;
+    this._gapPositionF1 = 0;
+    this._lapsDownLeader = 0;
+    this._lapsDownPosition = 0;
     this._currentLapSegments = [];
     this.penaltyLaps = 0;
     this.userLaps = 0;
@@ -218,6 +226,38 @@ export class DriverHeatData {
 
   set gapPosition(value: number) {
     this._gapPosition = value;
+  }
+
+  get gapLeaderF1(): number {
+    return this._gapLeaderF1;
+  }
+
+  set gapLeaderF1(value: number) {
+    this._gapLeaderF1 = value;
+  }
+
+  get gapPositionF1(): number {
+    return this._gapPositionF1;
+  }
+
+  set gapPositionF1(value: number) {
+    this._gapPositionF1 = value;
+  }
+
+  get lapsDownLeader(): number {
+    return this._lapsDownLeader;
+  }
+
+  set lapsDownLeader(value: number) {
+    this._lapsDownLeader = value;
+  }
+
+  get lapsDownPosition(): number {
+    return this._lapsDownPosition;
+  }
+
+  set lapsDownPosition(value: number) {
+    this._lapsDownPosition = value;
   }
 
   addSegmentTime(index: number, segmentTime: number): void {

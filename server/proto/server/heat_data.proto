@@ -23,6 +23,10 @@ message DriverHeatData {
   DriverModel actual_driver = 4;
   double gap_leader = 5;
   double gap_position = 6;
+  double gap_leader_f1 = 22;
+  double gap_position_f1 = 23;
+  int32 laps_down_leader = 24;
+  int32 laps_down_position = 25;
   repeated double segments = 7;
   repeated LapData laps = 8;
   double penalty_laps = 9;

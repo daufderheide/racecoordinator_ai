@@ -20,6 +20,10 @@ public class GapCalculator {
     GapParticipant leader = sortedParticipants.get(0);
     leader.setGapLeader(0.0);
     leader.setGapPosition(0.0);
+    leader.setGapLeaderF1(0.0);
+    leader.setGapPositionF1(0.0);
+    leader.setLapsDownLeader(0);
+    leader.setLapsDownPosition(0);
 
     for (int i = 1; i < sortedParticipants.size(); i++) {
       GapParticipant current = sortedParticipants.get(i);
@@ -27,6 +31,9 @@ public class GapCalculator {
 
       current.setGapLeader(calculateGap(leader, current, finishMethod));
       current.setGapPosition(calculateGap(ahead, current, finishMethod));
+
+      calculateF1Gap(leader, current, true);
+      calculateF1Gap(ahead, current, false);
     }
   }
 
@@ -53,6 +60,37 @@ public class GapCalculator {
         }
         return projectedGap;
       }
+    }
+  }
+
+  private static void calculateF1Gap(
+      GapParticipant leadParticipant, GapParticipant curParticipant, boolean isLeader) {
+
+    int leadLaps = leadParticipant.getPhysicalLapCount();
+    int curLaps = curParticipant.getPhysicalLapCount();
+    int lapsDown = (leadLaps - curLaps) - 1;
+
+    double timeGap = 0.0;
+
+    if (lapsDown <= 0) {
+      lapsDown = 0;
+      if (leadLaps == curLaps) {
+        timeGap = curParticipant.getTotalTime() - leadParticipant.getTotalTime();
+      } else {
+        timeGap = curParticipant.getTotalTime() - leadParticipant.getTimeAtLap(curLaps);
+      }
+    }
+
+    if (timeGap < 0) {
+      timeGap = 0.0;
+    }
+
+    if (isLeader) {
+      curParticipant.setLapsDownLeader(lapsDown);
+      curParticipant.setGapLeaderF1(timeGap);
+    } else {
+      curParticipant.setLapsDownPosition(lapsDown);
+      curParticipant.setGapPositionF1(timeGap);
     }
   }
 }

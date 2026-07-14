@@ -21,6 +21,10 @@ export class RaceParticipant {
     public gapLeader: number = 0,
     public gapPosition: number = 0,
     team?: Team,
+    public gapLeaderF1: number = 0,
+    public gapPositionF1: number = 0,
+    public lapsDownLeader: number = 0,
+    public lapsDownPosition: number = 0,
   ) {
     this.driver = driver;
     this.objectId = objectId;

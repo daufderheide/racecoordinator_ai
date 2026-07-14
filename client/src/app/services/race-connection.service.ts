@@ -505,6 +505,10 @@ export class RaceConnectionService implements OnDestroy {
             driverData.rank = u.rank || 0;
             driverData.gapLeader = u.gapLeader || 0;
             driverData.gapPosition = u.gapPosition || 0;
+            driverData.gapLeaderF1 = u.gapLeaderF1 || 0;
+            driverData.gapPositionF1 = u.gapPositionF1 || 0;
+            driverData.lapsDownLeader = u.lapsDownLeader || 0;
+            driverData.lapsDownPosition = u.lapsDownPosition || 0;
           }
         }
       });

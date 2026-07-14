@@ -57,6 +57,10 @@ export class HeatConverter {
             );
             hd.gapLeader = dProto.gapLeader || 0;
             hd.gapPosition = dProto.gapPosition || 0;
+            hd.gapLeaderF1 = dProto.gapLeaderF1 || 0;
+            hd.gapPositionF1 = dProto.gapPositionF1 || 0;
+            hd.lapsDownLeader = dProto.lapsDownLeader || 0;
+            hd.lapsDownPosition = dProto.lapsDownPosition || 0;
             hd.penaltyLaps = dProto.penaltyLaps || 0;
             hd.userLaps = dProto.userLaps || 0;
             hd.autoCalculatedLaps = dProto.autoCalculatedLaps || 0;

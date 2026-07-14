@@ -71,6 +71,10 @@ public class HeatStandings {
                 .setRank(rank)
                 .setGapLeader(dhd.getGapLeader())
                 .setGapPosition(dhd.getGapPosition())
+                .setGapLeaderF1(dhd.getGapLeaderF1())
+                .setGapPositionF1(dhd.getGapPositionF1())
+                .setLapsDownLeader(dhd.getLapsDownLeader())
+                .setLapsDownPosition(dhd.getLapsDownPosition())
                 .build());
       }
     }

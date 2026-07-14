@@ -22,6 +22,11 @@ public class RaceParticipant extends ServerToClientObject implements GapParticip
   private double fuelLevel = 100.0;
   private double gapLeader;
   private double gapPosition;
+  private double gapLeaderF1;
+  private double gapPositionF1;
+  private int lapsDownLeader;
+  private int lapsDownPosition;
+  private List<Double> allScoringLaps;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -198,6 +203,37 @@ public class RaceParticipant extends ServerToClientObject implements GapParticip
     return getTotalLaps();
   }
 
+  public void setAllScoringLaps(List<Double> laps) {
+    this.allScoringLaps = laps;
+  }
+
+  public List<Double> getAllScoringLaps() {
+    return allScoringLaps;
+  }
+
+  @Override
+  public int getPhysicalLapCount() {
+    if (allScoringLaps == null) {
+      return 0;
+    }
+    return allScoringLaps.size();
+  }
+
+  @Override
+  public double getTimeAtLap(int lapIndex) {
+    if (allScoringLaps == null || lapIndex <= 0) {
+      return 0.0;
+    }
+    if (lapIndex > allScoringLaps.size()) {
+      lapIndex = allScoringLaps.size();
+    }
+    double sum = 0.0;
+    for (int i = 0; i < lapIndex; i++) {
+      sum += allScoringLaps.get(i);
+    }
+    return sum;
+  }
+
   @Override
   public boolean hasNoFullLaps() {
     return getTotalTime() == 0.0;
@@ -219,5 +255,41 @@ public class RaceParticipant extends ServerToClientObject implements GapParticip
 
   public double getGapPosition() {
     return gapPosition;
+  }
+
+  @Override
+  public void setGapLeaderF1(double gapLeaderF1) {
+    this.gapLeaderF1 = gapLeaderF1;
+  }
+
+  public double getGapLeaderF1() {
+    return gapLeaderF1;
+  }
+
+  @Override
+  public void setGapPositionF1(double gapPositionF1) {
+    this.gapPositionF1 = gapPositionF1;
+  }
+
+  public double getGapPositionF1() {
+    return gapPositionF1;
+  }
+
+  @Override
+  public void setLapsDownLeader(int lapsDown) {
+    this.lapsDownLeader = lapsDown;
+  }
+
+  public int getLapsDownLeader() {
+    return lapsDownLeader;
+  }
+
+  @Override
+  public void setLapsDownPosition(int lapsDown) {
+    this.lapsDownPosition = lapsDown;
+  }
+
+  public int getLapsDownPosition() {
+    return lapsDownPosition;
   }
 }
