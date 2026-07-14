@@ -61,7 +61,8 @@ jobs:
       - name: Create Analytics Properties
         run: |
           mkdir -p server/src/main/resources
-          echo "analytics.key=${{ secrets.ANALYTICS_KEY }}" > server/src/main/resources/analytics.properties
+          echo "ga.measurement.id=${{ secrets.GA_MEASUREMENT_ID }}" > server/src/main/resources/analytics.properties
+          echo "ga.api.secret=${{ secrets.GA_API_SECRET }}" >> server/src/main/resources/analytics.properties
 
       - name: Build Artifacts
         run: ./create_installers.sh
