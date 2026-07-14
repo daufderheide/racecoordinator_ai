@@ -78,6 +78,13 @@ export class AppComponent implements OnInit {
       });
     }
 
+    // Prefetch typescript transpiler module for custom TS code overrides during splash screen
+    setTimeout(() => {
+      import("typescript").catch((err) =>
+        this.logger.warn("Failed to prefetch typescript module", err),
+      );
+    }, 1000);
+
     this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
 

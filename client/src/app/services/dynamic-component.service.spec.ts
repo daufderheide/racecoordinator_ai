@@ -15,17 +15,17 @@ describe("DynamicComponentService", () => {
     expect(service).toBeTruthy();
   });
 
-  it("should generate unique selectors for components", () => {
+  it("should generate unique selectors for components", async () => {
     const classA = class {};
     const classB = class {};
 
-    const componentA = service.createDynamicComponent(
+    const componentA = await service.createDynamicComponent(
       classA,
       "<a></a>",
       "",
       "",
     );
-    const componentB = service.createDynamicComponent(
+    const componentB = await service.createDynamicComponent(
       classB,
       "<b></b>",
       "",
@@ -40,9 +40,9 @@ describe("DynamicComponentService", () => {
     expect(defA?.selectors[0][0]).not.toEqual(defB?.selectors[0][0]);
   });
 
-  it("should include required imports (TranslatePipe, Modals, etc.)", () => {
+  it("should include required imports (TranslatePipe, Modals, etc.)", async () => {
     const baseClass = class {};
-    const component = service.createDynamicComponent(
+    const component = await service.createDynamicComponent(
       baseClass,
       "<html></html>",
       "",
@@ -60,7 +60,7 @@ describe("DynamicComponentService", () => {
     expect((def as any).standalone).toBeTrue();
   });
 
-  it("should compile a template using DatePipe and routerLink successfully", () => {
+  it("should compile a template using DatePipe and routerLink successfully", async () => {
     const baseClass = class {
       testDate = new Date();
     };
@@ -72,11 +72,51 @@ describe("DynamicComponentService", () => {
       <a [routerLink]="['/driver-results', '123']">Driver Results</a>
     `;
 
-    const component = service.createDynamicComponent(baseClass, html, "", "");
+    const component = await service.createDynamicComponent(
+      baseClass,
+      html,
+      "",
+      "",
+    );
 
     expect(component).toBeTruthy();
     const def = getComponentDef(component);
     expect(def).toBeTruthy();
     expect((def as any).standalone).toBeTrue();
+  });
+
+  it("should evaluate custom typescript code and extend the base class", async () => {
+    const baseClass = class {
+      baseMethod() {
+        return "base";
+      }
+    };
+
+    const tsCode = `
+      return class CustomClass extends baseClass {
+        customMethod(): string {
+          return "custom";
+        }
+        override baseMethod(): string {
+          return "overridden";
+        }
+      };
+    `;
+
+    const component = await service.createDynamicComponent(
+      baseClass,
+      "<html></html>",
+      "",
+      tsCode,
+    );
+
+    expect(component).toBeTruthy();
+
+    // Instantiate the component to test its methods
+    const instance = new component();
+
+    expect(instance instanceof baseClass).toBeTrue();
+    expect(instance.baseMethod()).toBe("overridden");
+    expect(instance.customMethod()).toBe("custom");
   });
 });

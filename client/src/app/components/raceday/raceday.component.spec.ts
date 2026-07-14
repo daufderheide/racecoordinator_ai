@@ -86,7 +86,7 @@ describe("RacedayComponent", () => {
         Promise.resolve("<html></html>"),
       );
       mockDynamicComponentService.createDynamicComponent.and.returnValue(
-        class {},
+        Promise.resolve(class {}),
       );
       mockContainer.createComponent.and.returnValue({ instance: {} } as any);
 
@@ -115,7 +115,7 @@ describe("RacedayComponent", () => {
         Promise.resolve("<html></html>"),
       );
       mockDynamicComponentService.createDynamicComponent.and.returnValue(
-        class {},
+        Promise.resolve(class {}),
       );
       mockContainer.createComponent.and.returnValue({ instance: {} } as any);
 
@@ -188,7 +188,7 @@ describe("RacedayComponent", () => {
         Promise.resolve(mockFetchResponse as any),
       );
       mockDynamicComponentService.createDynamicComponent.and.returnValue(
-        class {},
+        Promise.resolve(class {}),
       );
       mockContainer.createComponent.and.returnValue({ instance: {} } as any);
 

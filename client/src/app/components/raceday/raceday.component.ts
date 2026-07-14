@@ -180,12 +180,13 @@ export class RacedayComponent
       }
 
       const baseClass = CustomRacedayBaseComponent;
-      const componentType = this.dynamicComponentService.createDynamicComponent(
-        baseClass,
-        html,
-        css,
-        tsCode,
-      );
+      const componentType =
+        await this.dynamicComponentService.createDynamicComponent(
+          baseClass,
+          html,
+          css,
+          tsCode,
+        );
 
       const componentRef = this.container.createComponent(componentType);
       this.childComponent = componentRef.instance;

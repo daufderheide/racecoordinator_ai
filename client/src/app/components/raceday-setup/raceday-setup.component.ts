@@ -736,12 +736,13 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
       // Create Custom Component Class
       const baseClass = CustomUiBaseComponent;
-      const componentType = this.dynamicComponentService.createDynamicComponent(
-        baseClass,
-        html,
-        css,
-        tsCode,
-      );
+      const componentType =
+        await this.dynamicComponentService.createDynamicComponent(
+          baseClass,
+          html,
+          css,
+          tsCode,
+        );
       // Create the component directly (no Module required for standalone)
       const componentRef = this.container.createComponent(componentType);
 

@@ -613,7 +613,7 @@ describe("RacedaySetupComponent", () => {
         Promise.resolve(mockFetchResponse as any),
       );
       mockDynamicComponentService.createDynamicComponent.and.returnValue(
-        class {},
+        Promise.resolve(class {}),
       );
 
       component.ngOnInit();
