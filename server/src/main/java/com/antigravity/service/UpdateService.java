@@ -26,6 +26,10 @@ public class UpdateService {
   private UpdateCheckResult cachedResult = null;
   private long lastCheckTime = 0;
 
+  private volatile int downloadProgress = 0;
+  private volatile String downloadStatus = "";
+  private volatile boolean cancelDownload = false;
+
   public UpdateService(String currentVersion, ServerConfigService configService) {
     this.currentVersion = currentVersion;
     this.configService = configService;
@@ -38,6 +42,25 @@ public class UpdateService {
     public String releaseNotes;
     public String releaseUrl;
     public boolean isWindows;
+  }
+
+  public static class UpdateProgress {
+    public int progress;
+    public String status;
+
+    public UpdateProgress(int progress, String status) {
+      this.progress = progress;
+      this.status = status;
+    }
+  }
+
+  public UpdateProgress getDownloadProgress() {
+    return new UpdateProgress(downloadProgress, downloadStatus);
+  }
+
+  public void cancelDownload() {
+    this.cancelDownload = true;
+    this.downloadStatus = "RDS_UPDATE_STATUS_CANCELLED";
   }
 
   public UpdateCheckResult checkForUpdates() {
@@ -176,6 +199,10 @@ public class UpdateService {
           "Automatic installation is only supported on Windows.");
     }
 
+    cancelDownload = false;
+    downloadProgress = 0;
+    downloadStatus = "RDS_UPDATE_STATUS_CONNECTING";
+
     logger.info("Downloading update from: {}", downloadUrl);
 
     Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "racecoordinator_updates");
@@ -198,15 +225,33 @@ public class UpdateService {
       conn = (HttpURLConnection) new URL(newUrl).openConnection();
     }
 
+    downloadStatus = "RDS_UPDATE_STATUS_DOWNLOADING";
+    int contentLength = conn.getContentLength();
+    long downloaded = 0;
+
     try (InputStream in = conn.getInputStream();
         FileOutputStream out = new FileOutputStream(installerFile)) {
       byte[] buffer = new byte[8192];
       int bytesRead;
       while ((bytesRead = in.read(buffer)) != -1) {
+        if (cancelDownload) {
+          logger.info("Update download cancelled by user.");
+          return;
+        }
         out.write(buffer, 0, bytesRead);
+        downloaded += bytesRead;
+        if (contentLength > 0) {
+          downloadProgress = (int) ((downloaded * 100L) / contentLength);
+        }
       }
     }
 
+    if (cancelDownload) {
+      return; // Double check in case it was cancelled exactly at the end
+    }
+
+    downloadProgress = 100;
+    downloadStatus = "RDS_UPDATE_STATUS_LAUNCHING";
     logger.info("Download complete. Launching installer...");
 
     // Execute installer with silent and custom restart flag

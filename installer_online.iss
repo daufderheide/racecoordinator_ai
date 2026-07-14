@@ -23,17 +23,32 @@ begin
     if not DirExists(DestDir) then
       ForceDirectories(DestDir);
       
-    // PowerShell command for extraction
-    PSCommand := Format('-NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path ''%s'' -DestinationPath ''%s'' -Force"', [ZipFile, DestDir]);
-    Log('Running PowerShell: ' + PSCommand);
-    
-    if Exec('powershell.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    if IsWindows10OrNewer() then
     begin
-      if ResultCode <> 0 then
-        MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
+      PSCommand := Format('/c "tar -xf ""%s"" -C ""%s"""', [ZipFile, DestDir]);
+      Log('Running CMD: ' + PSCommand);
+      if Exec('cmd.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        if ResultCode <> 0 then
+          MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
+      end
+      else
+        MsgBox('Failed to launch cmd for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
     end
     else
-      MsgBox('Failed to launch PowerShell for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
+    begin
+      // PowerShell command for extraction (legacy fallback)
+      PSCommand := Format('-NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path ''%s'' -DestinationPath ''%s'' -Force"', [ZipFile, DestDir]);
+      Log('Running PowerShell: ' + PSCommand);
+      
+      if Exec('powershell.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      begin
+        if ResultCode <> 0 then
+          MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
+      end
+      else
+        MsgBox('Failed to launch PowerShell for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
+    end;
   finally
     WizardForm.ProgressGauge.Style := npbstNormal;
   end;

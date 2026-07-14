@@ -13,7 +13,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Router } from "@angular/router";
-import { of, Subscription } from "rxjs";
+import { interval, of, Subscription } from "rxjs";
 import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { DataService } from "@app/data.service";
@@ -33,7 +33,11 @@ import { ParticipantValidationService } from "@app/services/participant-validati
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { UpdateCheckResult, UpdateService } from "@app/services/update.service";
+import {
+  UpdateCheckResult,
+  UpdateProgress,
+  UpdateService,
+} from "@app/services/update.service";
 
 import { DefaultRacedaySetupComponent } from "./default-raceday-setup.component";
 
@@ -118,6 +122,8 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public updateResult: UpdateCheckResult | null = null;
   public isUpdating = false;
   public updateBannerDismissed = false;
+  public updateProgress: UpdateProgress | null = null;
+  private progressSubscription: Subscription | null = null;
 
   public get updateVersionHtml(): string {
     if (!this.updateResult) return "";
@@ -383,6 +389,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     if (this.systemStateSubscription) {
       this.systemStateSubscription.unsubscribe();
     }
+    if (this.progressSubscription) {
+      this.progressSubscription.unsubscribe();
+    }
   }
 
   private checkUpdates() {
@@ -401,15 +410,60 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public installUpdate() {
     if (!this.updateResult || !this.updateResult.downloadUrl) return;
     this.isUpdating = true;
+    this.updateProgress = {
+      progress: 0,
+      status: "RDS_UPDATE_STATUS_CONNECTING",
+    };
     this.updateService.installUpdate(this.updateResult.downloadUrl).subscribe({
       next: () => {
         this.logger.info("Update started");
+        this.progressSubscription = interval(500).subscribe(() => {
+          this.updateService.getUpdateProgress().subscribe({
+            next: (prog) => {
+              this.updateProgress = prog;
+              if (
+                prog.progress === 100 &&
+                prog.status === "RDS_UPDATE_STATUS_LAUNCHING"
+              ) {
+                if (this.progressSubscription) {
+                  this.progressSubscription.unsubscribe();
+                }
+              } else if (prog.status === "RDS_UPDATE_STATUS_CANCELLED") {
+                if (this.progressSubscription) {
+                  this.progressSubscription.unsubscribe();
+                }
+                this.isUpdating = false;
+                this.updateProgress = null;
+              }
+            },
+          });
+        });
       },
       error: (err) => {
         this.logger.error("Failed to install update", err);
         this.isUpdating = false;
+        this.updateProgress = null;
+        if (this.progressSubscription) {
+          this.progressSubscription.unsubscribe();
+        }
         this.error = "Update installation failed";
         setTimeout(() => (this.error = null), 5000);
+      },
+    });
+  }
+
+  public cancelUpdate() {
+    this.updateService.cancelUpdate().subscribe({
+      next: () => {
+        this.logger.info("Update cancelled");
+        this.isUpdating = false;
+        this.updateProgress = null;
+        if (this.progressSubscription) {
+          this.progressSubscription.unsubscribe();
+        }
+      },
+      error: (err) => {
+        this.logger.error("Failed to cancel update", err);
       },
     });
   }

@@ -651,6 +651,20 @@ public class App {
             }
           });
 
+      app.get(
+          "/api/update/progress",
+          ctx -> {
+            ctx.contentType("application/json");
+            ctx.result(new ObjectMapper().writeValueAsString(updateService.getDownloadProgress()));
+          });
+
+      app.post(
+          "/api/update/cancel",
+          ctx -> {
+            updateService.cancelDownload();
+            ctx.status(200).result("Cancelled");
+          });
+
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
 

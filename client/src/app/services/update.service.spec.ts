@@ -63,6 +63,32 @@ describe("UpdateService", () => {
     req.flush("OK");
   });
 
+  it("should get update progress", () => {
+    const mockProgress = { progress: 45, status: "Downloading..." };
+
+    service.getUpdateProgress().subscribe((result) => {
+      expect(result).toEqual(mockProgress);
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/progress"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush(mockProgress);
+  });
+
+  it("should cancel update installation", () => {
+    service.cancelUpdate().subscribe((result) => {
+      expect(result).toBeTruthy();
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/cancel"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush("Cancelled");
+  });
+
   it("should skip an update version", () => {
     const versionToSkip = "v0.0.0-alpha.20260710";
 

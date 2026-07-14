@@ -11,6 +11,11 @@ export interface UpdateCheckResult {
   isWindows: boolean;
 }
 
+export interface UpdateProgress {
+  progress: number;
+  status: string;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -32,6 +37,18 @@ export class UpdateService {
     return this.http.post(
       `${this.apiUrl}/install`,
       { downloadUrl },
+      { responseType: "text" },
+    );
+  }
+
+  getUpdateProgress(): Observable<UpdateProgress> {
+    return this.http.get<UpdateProgress>(`${this.apiUrl}/progress`);
+  }
+
+  cancelUpdate(): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/cancel`,
+      {},
       { responseType: "text" },
     );
   }

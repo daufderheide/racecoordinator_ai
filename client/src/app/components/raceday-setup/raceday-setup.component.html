@@ -13,17 +13,30 @@
       ></span>
       <div class="update-actions">
         @if (updateResult?.isWindows) {
-          <button
-            (click)="installUpdate()"
-            [disabled]="isUpdating"
-            class="update-btn-primary"
-          >
-            {{
-              isUpdating
-                ? ("RDS_UPDATE_BTN_DOWNLOADING" | translate)
-                : ("RDS_UPDATE_BTN_INSTALL_NOW" | translate)
-            }}
-          </button>
+          @if (!isUpdating) {
+            <button (click)="installUpdate()" class="update-btn-primary">
+              {{ "RDS_UPDATE_BTN_INSTALL_NOW" | translate }}
+            </button>
+          } @else {
+            <div class="update-progress-container">
+              <span class="update-progress-text">
+                {{
+                  updateProgress?.status || "RDS_UPDATE_STATUS_CONNECTING"
+                    | translate
+                }}
+                {{ updateProgress?.progress || 0 }}%
+              </span>
+              <div class="update-progress-bar">
+                <div
+                  class="update-progress-fill"
+                  [style.width.%]="updateProgress?.progress || 0"
+                ></div>
+              </div>
+              <button (click)="cancelUpdate()" class="update-btn-secondary">
+                {{ "RDS_UPDATE_BTN_CANCEL" | translate }}
+              </button>
+            </div>
+          }
         }
         @if (!updateResult?.isWindows) {
           <a

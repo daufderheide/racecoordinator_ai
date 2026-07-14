@@ -246,4 +246,25 @@ public class UpdateServiceTest {
         "Should be false because we cleared cache and skipped the version",
         thirdResult.updateAvailable);
   }
+
+  @Test
+  public void testCancelDownload() {
+    UpdateService service = new UpdateService("0.0.0", mockConfigService);
+
+    // Call cancel
+    service.cancelDownload();
+
+    // State should be updated
+    UpdateService.UpdateProgress progress = service.getDownloadProgress();
+    assertEquals("RDS_UPDATE_STATUS_CANCELLED", progress.status);
+  }
+
+  @Test
+  public void testGetDownloadProgress() {
+    UpdateService service = new UpdateService("0.0.0", mockConfigService);
+
+    UpdateService.UpdateProgress progress = service.getDownloadProgress();
+    assertEquals(0, progress.progress);
+    assertEquals("", progress.status);
+  }
 }
