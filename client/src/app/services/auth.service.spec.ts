@@ -3,6 +3,7 @@ import {
   HttpTestingController,
 } from "@angular/common/http/testing";
 import { TestBed } from "@angular/core/testing";
+import { of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
@@ -20,6 +21,7 @@ describe("AuthService", () => {
   beforeEach(() => {
     dataServiceMock = {
       serverUrl: "http://localhost:7070",
+      socketConnected$: of(true),
     };
 
     loggerServiceMock = jasmine.createSpyObj("LoggerService", [

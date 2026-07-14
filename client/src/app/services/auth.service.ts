@@ -6,6 +6,8 @@ import {
   distinctUntilChanged,
   filter,
   map,
+  switchMap,
+  take,
   tap,
 } from "rxjs/operators";
 import { AnalyticsService } from "@app/analytics.service";
@@ -80,16 +82,22 @@ export class AuthService {
   }
 
   private checkInitialRole(): void {
-    // Call the server to get our role. It will use the token or our IP to determine it.
-    this.fetchRoleFromServer().subscribe((role) => {
-      // If we are still VIEWER and we have a saved password, try to auto-login
-      if (role === Role.VIEWER && typeof localStorage !== "undefined") {
-        const savedPassword = localStorage.getItem(this.PASSWORD_KEY);
-        if (savedPassword) {
-          this.loginAsDirector(savedPassword).subscribe();
+    // Wait for the socket to be connected before checking the role
+    (this.dataService.socketConnected$ || of(true))
+      .pipe(
+        filter((connected) => connected),
+        take(1),
+        switchMap(() => this.fetchRoleFromServer()),
+      )
+      .subscribe((role) => {
+        // If we are still VIEWER and we have a saved password, try to auto-login
+        if (role === Role.VIEWER && typeof localStorage !== "undefined") {
+          const savedPassword = localStorage.getItem(this.PASSWORD_KEY);
+          if (savedPassword) {
+            this.loginAsDirector(savedPassword).subscribe();
+          }
         }
-      }
-    });
+      });
   }
 
   public fetchRoleFromServer(): Observable<Role> {

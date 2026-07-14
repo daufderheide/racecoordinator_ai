@@ -13,7 +13,8 @@ import {
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Router } from "@angular/router";
-import { Subscription } from "rxjs";
+import { of, Subscription } from "rxjs";
+import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
@@ -186,8 +187,15 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.container.clear();
 
-    this.refreshServerInfo();
-    this.checkUpdates();
+    (this.dataService.socketConnected$ || of(true))
+      .pipe(
+        filter((connected) => connected),
+        take(1),
+      )
+      .subscribe(() => {
+        this.refreshServerInfo();
+        this.checkUpdates();
+      });
 
     // Start Splash Screen Logic ONLY when translations are ready
     // This prevents raw keys from showing

@@ -63,7 +63,8 @@
             "allowedCommonJsDependencies": [
               "protobufjs",
               "@protobufjs/inquire",
-              "qrcode"
+              "qrcode",
+              "typescript"
             ]
           },
           "configurations": {
