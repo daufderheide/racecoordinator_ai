@@ -48,3 +48,38 @@ projectedGap = timeDiff + (avgLapTime * lapDiff)
 ```
 
 > **Note:** If the `projectedGap` calculation somehow yields a negative number (e.g., due to unusual timing anomalies or manual adjustments), the system falls back to the `Timed Finish` projection logic (`avgLapTime * lapDiff`).
+
+---
+
+## Formula 1 Gaps (`gapLeaderF1` and `gapPositionF1`)
+
+Formula 1 style gaps represent the actual physical time difference between two cars on the track, rather than a projected gap based on average lap times. Additionally, if a driver is lapped by the driver ahead, the gap is represented purely as the number of laps down, instead of a time gap.
+
+Similar to standard gaps, these are calculated against both the overall leader (`gapLeaderF1`) and the immediate position ahead (`gapPositionF1`).
+
+The calculation yields two distinct values: `lapsDown` and a `timeGap`.
+
+Let `leader` be the driver ahead, and `current` be the trailing driver.
+
+### 1. Laps Down
+First, the system calculates how many full laps the trailing driver is behind the leading driver. This is based purely on physical laps completed.
+
+```java
+lapsDown = (leader.getPhysicalLapCount() - current.getPhysicalLapCount()) - 1
+```
+
+If `lapsDown` is greater than 0, the driver is considered lapped. The gap is presented as being `+X Laps` down, and the actual `timeGap` is forced to `0.0`.
+
+### 2. Time Gap
+If the trailing driver is on the same lap as the leader (`lapsDown <= 0`), the system calculates the actual time gap:
+
+* **Same Laps Completed:** If both drivers have completed the exact same number of physical laps, the gap is the simple difference in their total times.
+  ```java
+  timeGap = current.getTotalTime() - leader.getTotalTime()
+  ```
+* **Leader is One Lap Ahead:** If the leader has completed exactly one more physical lap (meaning they have crossed the start/finish line to begin their next lap, but the trailing driver has not), the gap is measured back to when the leader was at the *same* lap.
+  ```java
+  timeGap = current.getTotalTime() - leader.getTimeAtLap(current.getPhysicalLapCount())
+  ```
+
+> **Note:** If the calculated `timeGap` is somehow negative (e.g., due to unusual timing anomalies), it is forced to `0.0`.
