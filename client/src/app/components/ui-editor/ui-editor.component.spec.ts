@@ -521,6 +521,29 @@ describe("UIEditorComponent", () => {
     expect(imageSetCol?.label).toBe("My Set");
   });
 
+  it("should populate soundAssets and assets correctly on loadData", () => {
+    mockDataService.listAssets.and.returnValue(
+      of([
+        { type: "image", url: "img1.png" },
+        { type: "sound", name: "Beep", model: { entityId: "sound1" } },
+        { type: "audio_set", name: "Announcer", model: { entityId: "set1" } },
+      ]),
+    );
+
+    component.loadData();
+
+    expect(component.assets.length).toBe(3);
+    expect(component.soundAssets.length).toBe(2);
+    expect(component.soundAssets[0].type).toBe("sound");
+    expect(component.soundAssets[1].type).toBe("audio_set");
+  });
+
+  it("should initialize previewTTSContext", () => {
+    expect(component.previewTTSContext).toBeDefined();
+    expect(component.previewTTSContext.driver).toBeDefined();
+    expect(component.previewTTSContext.driver.name).toBe("Dave");
+  });
+
   it("should deduplicate fuel gauge image set in availableColumns", () => {
     // Simulate multiple assets that could match "Fuel Gauge"
     // 1. One by name
