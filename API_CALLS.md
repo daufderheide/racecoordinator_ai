@@ -1,5 +1,7 @@
 # Race Coordinator AI: Server API Reference (`localhost:7070`)
 
+Date reviewed: 07/14/2026
+
 This document provides a comprehensive reference of all REST API endpoints and WebSocket channels exposed by the Race Coordinator AI backend server running on port `7070`.
 
 ---

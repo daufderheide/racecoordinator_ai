@@ -1,5 +1,7 @@
 # Race Coordinator AI: WebSocket API Reference
 
+Date reviewed: 07/14/2026
+
 The server exposes two WebSocket channels to broadcast real-time state changes and hardware events. Both channels stream binary payloads containing serialized **Protocol Buffers (Protobuf)** messages and enforce connection parameters.
 
 ---
