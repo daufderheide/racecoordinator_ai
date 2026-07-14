@@ -216,4 +216,4 @@ Endpoints for running live races, pit stops, and hardware interfaces. Many write
 
 ## 8. WebSocket Channels
 
-Real-time state changes and hardware events are streamed via WebSockets. To see detailed documentation on subscription flows, session roles, automatic cleanups, and connection keepalives, refer to [WEBSOCKETS.md](file:///Users/luizvaldetaro/racecoordinator_ai/WEBSOCKETS.md).
+Real-time state changes and hardware events are streamed via WebSockets. To see detailed documentation on subscription flows, session roles, automatic cleanups, and connection keepalives, refer to [WEBSOCKETS.md](file:///./WEBSOCKETS.md).
