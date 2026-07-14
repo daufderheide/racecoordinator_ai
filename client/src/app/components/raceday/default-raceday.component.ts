@@ -861,7 +861,6 @@ export class DefaultRacedayComponent
   private subscribeToRaceData() {
     this.subscriptions.push(
       this.raceService.participants$.subscribe((participants) => {
-        console.log("DEFAULT RACEDAY PARTICIPANTS:", participants);
         this.participants = participants || [];
         this.updateLeaderboardEntries();
         if (this.heat && this.heat.heatDrivers) {

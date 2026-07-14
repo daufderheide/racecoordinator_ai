@@ -613,7 +613,7 @@ describe("RacedaySetupComponent", () => {
         Promise.resolve(mockFetchResponse as any),
       );
       mockDynamicComponentService.createDynamicComponent.and.returnValue(
-        class {},
+        Promise.resolve(class {}),
       );
 
       component.ngOnInit();
@@ -688,10 +688,11 @@ describe("RacedaySetupComponent", () => {
         isWindows: true,
       };
 
-      const html = component.updateVersionHtml;
-      expect(html).toContain('href="http://example.com/release"');
-      expect(html).toContain("v1.2.3");
-      expect(html).toContain('target="_blank"');
+      const html: any = component.updateVersionHtml;
+      const htmlStr = html.changingThisBreaksApplicationSecurity || html;
+      expect(htmlStr).toContain('href="http://example.com/release"');
+      expect(htmlStr).toContain("v1.2.3");
+      expect(htmlStr).toContain('target="_blank"');
     });
 
     it("should return empty string for updateVersionHtml when update is not available", () => {

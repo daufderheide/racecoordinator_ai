@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -40,6 +41,7 @@ public class DatabaseTaskHandlerTest {
   private MongoDatabase mongoDatabase;
   private MongoCollection<Race> raceCollection;
   private MongoCollection<Team> teamCollection;
+  private MongoCollection<com.antigravity.models.Driver> driverCollection;
   private MongoCollection<Document> countersCollection;
   private Javalin app;
   private DatabaseTaskHandler handler;
@@ -59,6 +61,9 @@ public class DatabaseTaskHandlerTest {
     when(mongoDatabase.getCollection(any(String.class))).thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
     when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
+    driverCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("drivers"), eq(com.antigravity.models.Driver.class)))
+        .thenReturn(driverCollection);
     when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class)))
         .thenReturn(mock(MongoCollection.class));
     when(mongoDatabase.getCollection(eq("counters"))).thenReturn(countersCollection);
@@ -575,5 +580,80 @@ public class DatabaseTaskHandlerTest {
     verify(mongoDatabase, never())
         .getCollection(eq("demo_driver_statistics"), eq(DriverStatistics.class));
     verify(res).setContentType("application/json");
+  }
+
+  @Test
+  public void testDeleteDriver_CascadingDelete_TeamUpdated() {
+    String driverId = "driver-123";
+
+    DeleteResult deleteResult = mock(DeleteResult.class);
+    when(deleteResult.getDeletedCount()).thenReturn(1L);
+    when(driverCollection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+
+    Team team =
+        new Team(
+            "Team 1", "url", java.util.Arrays.asList(driverId, "other-driver"), "team-1", null);
+    FindIterable<Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    // Create an iterable that yields our mock team
+    java.util.List<Team> teams = java.util.Arrays.asList(team);
+    java.util.Iterator<Team> iterator = teams.iterator();
+
+    // Manually handle the forEach call
+    io.javalin.http.Context dummyCtx = mock(io.javalin.http.Context.class);
+    doAnswer(
+            invocation -> {
+              java.util.function.Consumer<Team> consumer = invocation.getArgument(0);
+              while (iterator.hasNext()) {
+                consumer.accept(iterator.next());
+              }
+              return null;
+            })
+        .when(findIterable)
+        .forEach(any());
+
+    UpdateResult updateResult = mock(UpdateResult.class);
+    when(teamCollection.replaceOne(any(Bson.class), any(Team.class))).thenReturn(updateResult);
+
+    handler.deleteDriver(driverId);
+
+    verify(driverCollection).deleteOne(any(Bson.class));
+    verify(teamCollection).replaceOne(any(Bson.class), any(Team.class));
+    verify(teamCollection, never()).deleteOne(any(Bson.class));
+  }
+
+  @Test
+  public void testDeleteDriver_CascadingDelete_TeamDeleted() {
+    String driverId = "driver-456";
+
+    DeleteResult deleteResult = mock(DeleteResult.class);
+    when(deleteResult.getDeletedCount()).thenReturn(1L);
+    when(driverCollection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+
+    Team team = new Team("Team 2", "url", java.util.Arrays.asList(driverId), "team-2", null);
+    FindIterable<Team> findIterable = mock(FindIterable.class);
+    when(teamCollection.find(any(Bson.class))).thenReturn(findIterable);
+
+    java.util.List<Team> teams = java.util.Arrays.asList(team);
+    java.util.Iterator<Team> iterator = teams.iterator();
+    doAnswer(
+            invocation -> {
+              java.util.function.Consumer<Team> consumer = invocation.getArgument(0);
+              while (iterator.hasNext()) {
+                consumer.accept(iterator.next());
+              }
+              return null;
+            })
+        .when(findIterable)
+        .forEach(any());
+
+    when(teamCollection.deleteOne(any(Bson.class))).thenReturn(deleteResult);
+
+    handler.deleteDriver(driverId);
+
+    verify(driverCollection).deleteOne(any(Bson.class));
+    verify(teamCollection).deleteOne(any(Bson.class)); // Delete team called
+    verify(teamCollection, never()).replaceOne(any(Bson.class), any(Team.class));
   }
 }

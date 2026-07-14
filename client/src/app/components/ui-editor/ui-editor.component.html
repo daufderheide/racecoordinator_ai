@@ -1385,7 +1385,7 @@
     [visible]="showDeleteConfirm"
     title="UE_DELETE_THEME_TITLE"
     message="UE_DELETE_THEME_MESSAGE"
-    [messageParams]="{ name: themeToDelete?.name }"
+    [messageParams]="deleteThemeParams"
     (confirm)="onConfirmDeleteTheme()"
     (cancel)="onCancelDeleteTheme()"
   >

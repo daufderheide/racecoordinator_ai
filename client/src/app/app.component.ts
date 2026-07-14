@@ -5,7 +5,8 @@ import {
   Router,
   RouterOutlet,
 } from "@angular/router";
-import { filter } from "rxjs/operators";
+import { of } from "rxjs";
+import { filter, take } from "rxjs/operators";
 import { slideInAnimation } from "@app/utils/animations";
 
 import { AnalyticsService } from "./analytics.service";
@@ -78,6 +79,13 @@ export class AppComponent implements OnInit {
       });
     }
 
+    // Prefetch typescript transpiler module for custom TS code overrides during splash screen
+    setTimeout(() => {
+      import("typescript").catch((err) =>
+        this.logger.warn("Failed to prefetch typescript module", err),
+      );
+    }, 1000);
+
     this.analyticsService.initTracking();
     this.dataService.connectToRaceDataSocket();
 
@@ -87,15 +95,30 @@ export class AppComponent implements OnInit {
       this.logger.setLevel(settings.clientLogLevel as any);
     }
     if (settings.serverLogLevel && !(window as any).isPlaywright) {
-      this.dataService.setServerLogLevel(settings.serverLogLevel).subscribe({
-        error: (err) =>
-          this.logger.error("Failed to initialize server log level", err),
-      });
+      (this.dataService.socketConnected$ || of(true))
+        .pipe(
+          filter((connected) => connected),
+          take(1),
+        )
+        .subscribe(() => {
+          this.dataService
+            .setServerLogLevel(settings.serverLogLevel)
+            .subscribe({
+              error: (err) => {
+                if (err.status !== 0) {
+                  this.logger.error(
+                    "Failed to initialize server log level",
+                    err,
+                  );
+                } else {
+                  this.logger.debug(
+                    "Failed to initialize server log level: server offline",
+                  );
+                }
+              },
+            });
+        });
     }
-
-    this.themeService.initialize().then(() => {
-      this.logger.debug("AppComponent: ThemeService initialized");
-    });
 
     this.dataService.getSystemState().subscribe((state) => {
       if (state) {

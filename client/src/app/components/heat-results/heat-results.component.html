@@ -1,84 +1,18 @@
-<div class="dashboard-wrapper">
-  <div class="scrollable-container">
-    <!-- Top Cyberpunk Title Bar -->
-    <div class="header-bar">
-      <div class="title-glow-container">
-        <h1 class="page-title">
-          {{ "HR_TITLE" | translate: { heat: heat?.heatNumber } }}
-        </h1>
-        <div class="cyberpunk-line"></div>
-      </div>
-      @if (race) {
-        <div class="race-name-container">
-          <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
-          <span class="value-text">{{ race.name }}</span>
-          <button
-            class="export-pdf-btn no-print"
-            (click)="exportPdf()"
-            title="Export PDF"
-          >
-            <span class="material-icons">picture_as_pdf</span>
-          </button>
-        </div>
-      }
+<div class="dynamic-component-container">
+  @if (isLoading) {
+    <div class="loading-container fade-out">
+      <div class="loading-spinner"></div>
+      <p>Loading Component...</p>
     </div>
+  }
 
-    <!-- Standings Grid Glass Overlay -->
-    <div class="results-container">
-      <div class="section-container">
-        <div class="heats-section-container">
-          @if (heatData && heatData.length > 0) {
-            @for (dh of heatData; track dh.heatDriver.objectId) {
-              <app-heat-driver-expander
-                [heatData]="dh"
-                [isExpanded]="expandedHeats.has(dh.heatDriver.objectId)"
-                [isTeam]="!!dh.heatDriver.participant.team"
-                [participants]="participants"
-                [allHeats]="[dh.heat]"
-                [customStatsTitle]="dh.driverName"
-                [isGroupRace]="race?.group_options?.enabled ?? false"
-                (toggle)="toggleHeat(dh.heatDriver.objectId)"
-              ></app-heat-driver-expander>
-            }
-          } @else {
-            <div class="no-data-row">
-              <div class="no-data-msg">
-                <span class="material-icons warning-icon">warning</span>
-                <span>No driver data available for this heat.</span>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
+  @if (error) {
+    <div class="error-container fade-in">
+      <h2>Failed to Load Component</h2>
+      <p>{{ error }}</p>
     </div>
+  }
 
-    <app-twin-graphs
-      [driverLines]="driverLines"
-      [xTicks]="xTicks"
-      [yTicksLeft]="yTicksLeft"
-      [yTicks]="yTicks"
-      [width]="width"
-      [height]="height"
-      [padding]="padding"
-      [maxX]="maxX"
-      [maxY]="maxY"
-      titleKey="HR_TITLE"
-      [titleParams]="{ heat: heat?.heatNumber }"
-      leftTitleKey="HR_RANKINGS_HEADER"
-      rightTitleKey="HR_LAP_TIMES_HEADER"
-      leftXAxisKey="HR_X_AXIS"
-      rightXAxisKey="HR_X_AXIS"
-      leftYAxisKey="HR_HEAT_POSITION"
-      rightYAxisKey="HR_Y_AXIS"
-    ></app-twin-graphs>
-  </div>
+  <!-- The dynamic component will be inserted here -->
+  <ng-container #container></ng-container>
 </div>
-
-<app-acknowledgement-modal
-  [visible]="showAckModal"
-  [title]="ackModalTitle"
-  [message]="ackModalMessage"
-  [buttonText]="ackModalButtonText"
-  (acknowledge)="onAcknowledgeModal()"
->
-</app-acknowledgement-modal>

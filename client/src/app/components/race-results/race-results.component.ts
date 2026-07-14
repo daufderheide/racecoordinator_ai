@@ -149,12 +149,13 @@ export class RaceResultsComponent implements OnInit {
       }
 
       const baseClass = CustomRaceResultsBaseComponent;
-      const componentType = this.dynamicComponentService.createDynamicComponent(
-        baseClass,
-        html,
-        css,
-        tsCode,
-      );
+      const componentType =
+        await this.dynamicComponentService.createDynamicComponent(
+          baseClass,
+          html,
+          css,
+          tsCode,
+        );
 
       const componentRef = this.container.createComponent(componentType);
       this.childComponent = componentRef.instance;

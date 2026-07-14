@@ -382,11 +382,32 @@ public class DatabaseTaskHandler {
   private void deleteDriver(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      getDriverCollection().deleteOne(Filters.eq("entity_id", id));
+      deleteDriver(id);
       ctx.status(204);
     } catch (Exception e) {
       logger.error("Error deleting driver", e);
       ctx.status(500).result("Error deleting driver: " + e.getMessage());
+    }
+  }
+
+  public void deleteDriver(String id) {
+    getDriverCollection().deleteOne(Filters.eq("entity_id", id));
+
+    MongoCollection<Team> teamCol = getTeamCollection();
+    List<Team> teamsToUpdate = new ArrayList<>();
+    teamCol.find(Filters.in("driverIds", id)).forEach(teamsToUpdate::add);
+
+    for (Team team : teamsToUpdate) {
+      List<String> driverIds = team.getDriverIds();
+      driverIds.remove(id);
+      if (driverIds.isEmpty()) {
+        deleteTeam(team.getEntityId());
+      } else {
+        Team updatedTeam =
+            new Team(
+                team.getName(), team.getAvatarUrl(), driverIds, team.getEntityId(), team.getId());
+        teamCol.replaceOne(Filters.eq("entity_id", team.getEntityId()), updatedTeam);
+      }
     }
   }
 

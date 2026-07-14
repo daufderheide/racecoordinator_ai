@@ -99,7 +99,11 @@ export class ConnectionMonitorService implements OnDestroy {
       }),
       catchError((err) => {
         if (this.connectionStateSubject.value === ConnectionState.CONNECTED) {
-          this.logger.warn("Connection lost in monitor", err);
+          if (err.status !== 0) {
+            this.logger.warn("Connection lost in monitor", err);
+          } else {
+            this.logger.debug("Connection lost in monitor (server offline)");
+          }
           this.connectionStateSubject.next(ConnectionState.DISCONNECTED);
         }
         return of(false);

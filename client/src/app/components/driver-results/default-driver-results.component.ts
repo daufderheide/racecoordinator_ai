@@ -112,7 +112,6 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (stats) => {
           this.driverStats = stats;
-          console.log("DRIVER STATS RECEIVED:", stats);
           this.cdr.detectChanges();
         },
         error: (err) => {

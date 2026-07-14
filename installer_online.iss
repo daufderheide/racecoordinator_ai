@@ -10,35 +10,7 @@ OutputBaseFilename=RaceCoordinatorAI_Online_Setup
 var
   DownloadPage: TDownloadWizardPage;
 
-function IsJavaInstalled(IsModernOS: Boolean): Boolean;
-begin
-  if IsModernOS then
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\JDK\17') or
-              RegKeyExists(HKLM64, 'SOFTWARE\Eclipse Foundation\JDK\17\jre') or 
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\JDK\17');
-  end
-  else
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8') or
-              RegKeyExists(HKLM64, 'SOFTWARE\JavaSoft\Java Runtime Environment\1.8');
-  end;
-end;
 
-function IsMongoInstalled(IsModernOS: Boolean): Boolean;
-begin
-  if IsModernOS then
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
-  end
-  else
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2') or
-              RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
-  end;
-end;
 
 procedure ExtractZip(const ZipFile, DestDir, StatusMsg: String);
 var
@@ -89,7 +61,7 @@ begin
           Exec('powershell.exe', Format('-NoProfile -ExecutionPolicy Bypass -Command "Move-Item -Path ''%s\*'' -Destination ''%s'' -Force"', [SubPath, BasePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
           
           // Remove the now empty subfolder
-          DelTree(SubPath, True, True, True);
+          DelTree(SubPath, True, False, False);
           break; // Only flatten the first subfolder found
         end;
       until not FindNext(FindRec);
@@ -199,16 +171,20 @@ begin
 
     if FileExists(JavaZip) then
     begin
+      DelTree(ExpandConstant('{app}\jre'), True, False, False);
       ExtractZip(JavaZip, ExpandConstant('{app}\jre'), 'Extracting Java Runtime...');
       FlattenDirectory(ExpandConstant('{app}\jre'));
       DeleteFile(JavaZip);
+      SaveStringToFile(ExpandConstant('{app}\jre\.rcai_version'), GetRequiredJavaVersion(IsWindows10OrNewer()), False);
     end;
 
     if FileExists(MongoZip) then
     begin
+      DelTree(ExpandConstant('{app}\mongodb'), True, False, False);
       ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB...');
       FlattenDirectory(ExpandConstant('{app}\mongodb'));
       DeleteFile(MongoZip);
+      SaveStringToFile(ExpandConstant('{app}\mongodb\.rcai_version'), GetRequiredMongoVersion(IsWindows10OrNewer()), False);
     end;
   end;
 end;

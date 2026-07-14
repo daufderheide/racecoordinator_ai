@@ -36,18 +36,39 @@ export class DynamicComponentService {
 
   constructor() {}
 
-  createDynamicComponent(
+  async createDynamicComponent(
     baseClass: Type<any>,
     html: string,
     css: string,
-    _tsCode: string,
-  ): Type<any> {
+    tsCode: string,
+  ): Promise<Type<any>> {
     // Increment count to ensure unique selector and ID
     const id = ++this.componentCount;
     const selector = `app-dynamic-component-${id}`;
 
     // Create a named class to help with debugging
-    const DynamicComponent = class extends baseClass {};
+    let DynamicComponent = class extends baseClass {};
+
+    if (tsCode && tsCode.trim().length > 0) {
+      try {
+        const ts = await import("typescript");
+        const jsCode = ts.transpile(tsCode, { target: ts.ScriptTarget.ES2022 });
+        const createClass = new Function("baseClass", jsCode);
+        const UserComponent = createClass(baseClass);
+        if (UserComponent && UserComponent.prototype instanceof baseClass) {
+          DynamicComponent = UserComponent;
+        } else {
+          console.error(
+            "Custom component must return a class that extends baseClass",
+          );
+        }
+      } catch (e) {
+        console.error(
+          "Failed to compile or evaluate custom typescript code",
+          e,
+        );
+      }
+    }
 
     // Ensure custom dynamic components always act as a block-level full-height container
     // to match route transition constraints and prevent visual "popping"

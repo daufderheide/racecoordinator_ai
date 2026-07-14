@@ -1353,7 +1353,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onerror = (err) => {
-      this.logger.warn("Race Data WebSocket error", err);
+      this.logger.debug("Race Data WebSocket error", err);
       // onerror often followed by onclose, so we rely on onclose for retry
     };
   }

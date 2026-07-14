@@ -9,14 +9,15 @@ OutputBaseFilename=RaceCoordinatorAI_Offline_Setup
 
 [Files]
 ; Modern OS (Win10+)
-Source: "release\RaceCoordinator\jre17\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: IsWindows10OrNewer
-Source: "release\RaceCoordinator\mongodb60\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: IsWindows10OrNewer
+Source: "release\RaceCoordinator\jre17\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsModernJava
+Source: "release\RaceCoordinator\mongodb60\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsModernMongo
 
 ; Legacy OS
-Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
-Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: not IsWindows10OrNewer
+Source: "release\RaceCoordinator\jre8\*"; DestDir: "{app}\jre"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsLegacyJava
+Source: "release\RaceCoordinator\mongodb32\*"; DestDir: "{app}\mongodb"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist; Check: NeedsLegacyMongo
 
 [Code]
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   MongoSource, MongoDest: String;
@@ -34,5 +35,14 @@ begin
       Log('Backing up legacy MongoDB executable for potential migration...');
       FileCopy(MongoSource, MongoDest, False);
     end;
+  end;
+
+  if CurStep = ssPostInstall then
+  begin
+    if DirExists(ExpandConstant('{app}\jre')) then
+      SaveStringToFile(ExpandConstant('{app}\jre\.rcai_version'), GetRequiredJavaVersion(IsWindows10OrNewer()), False);
+
+    if DirExists(ExpandConstant('{app}\mongodb')) then
+      SaveStringToFile(ExpandConstant('{app}\mongodb\.rcai_version'), GetRequiredMongoVersion(IsWindows10OrNewer()), False);
   end;
 end;

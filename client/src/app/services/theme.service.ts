@@ -51,8 +51,14 @@ export class ThemeService {
   async initialize(): Promise<void> {
     try {
       this.themes = await firstValueFrom(this.dataService.getThemes());
-    } catch (e) {
-      this.logger.error("ThemeService: Failed to fetch themes", e);
+    } catch (e: any) {
+      if (e.status !== 0) {
+        this.logger.error("ThemeService: Failed to fetch themes", e);
+      } else {
+        this.logger.debug(
+          "ThemeService: Server offline, unable to fetch themes.",
+        );
+      }
       this.themes = [];
     }
 
@@ -232,8 +238,14 @@ export class ThemeService {
   async refresh(): Promise<void> {
     try {
       this.themes = await firstValueFrom(this.dataService.getThemes());
-    } catch (e) {
-      this.logger.error("ThemeService: Failed to refresh themes", e);
+    } catch (e: any) {
+      if (e.status !== 0) {
+        this.logger.error("ThemeService: Failed to refresh themes", e);
+      } else {
+        this.logger.debug(
+          "ThemeService: Server offline, unable to refresh themes.",
+        );
+      }
     }
 
     // Re-validate active theme

@@ -1,0 +1,189 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #06090e;
+  font-family: 'Tahoma', sans-serif;
+  color: #e0e6ed;
+}
+
+.dashboard-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.4) 0%, rgba(6, 9, 14, 0.8) 100%), url('/assets/images/race_results_bg.png') no-repeat center top;
+  background-size: cover;
+  background-attachment: fixed;
+  box-sizing: border-box;
+}
+
+/* Cyberpunk Scrollbars for the Dashboard Page */
+.dashboard-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-wrapper::-webkit-scrollbar-track {
+  background: rgba(6, 9, 14, 0.5);
+  border-radius: 4px;
+}
+
+.dashboard-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.dashboard-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+.scrollable-container {
+  width: 100%;
+  max-width: 1400px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+  box-sizing: border-box;
+}
+
+/* Header Bar Styling */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0 10px;
+}
+
+.driver-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.title-glow-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 42px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6), 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+.driver-sub-name {
+  font-size: 18px;
+  color: #90a4ae;
+  margin-top: 4px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cyberpunk-line {
+  height: 4px;
+  width: 250px;
+  background: linear-gradient(90deg, #00e5ff 0%, #d500f9 100%);
+  margin-top: 10px;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.race-name-container {
+  display: flex;
+  align-items: center;
+  background: rgba(10, 16, 26, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  padding: 10px 24px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+.label-text {
+  font-size: 14px;
+  color: #00e5ff;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-right: 12px;
+}
+
+.value-text {
+  font-size: 20px;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* Standings Grid Glass Overlay */
+.results-container {
+  background: rgba(8, 14, 24, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 229, 255, 0.05);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.section-container {
+  padding: 24px;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #00e5ff;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  padding-bottom: 10px;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.results-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Custom Scrollbars */
+.results-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.results-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(10, 16, 26, 0.4);
+  border-radius: 4px;
+}
+
+.results-table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.results-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+

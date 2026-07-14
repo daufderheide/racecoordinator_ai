@@ -977,6 +977,7 @@ public class ArduinoProtocolTest {
     config.digitalIds =
         new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
     config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+    config.digitalIds.set(3, PinBehavior.BEHAVIOR_SEGMENT_BASE.getNumber() + 0);
     config.useLapsForSegments = true;
 
     protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
@@ -1338,6 +1339,7 @@ public class ArduinoProtocolTest {
     config.normallyClosedLaneSensors = false;
     config.digitalIds = new ArrayList<>();
     config.digitalIds.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE); // Pin 0 = Lane 0 Lap
+    config.digitalIds.add(PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE); // Pin 1 = Lane 0 Segment
     config.useLapsForSegments = true;
 
     protocol.updateConfig(config);
@@ -1356,6 +1358,34 @@ public class ArduinoProtocolTest {
 
     assertEquals(1, listener.lapCount);
     assertEquals(1, listener.segmentCount); // Should also fire segment
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testUseLapsForSegments_NoSegmentPins_ShouldNotFireSegment() {
+    ArduinoConfig config = new ArduinoConfig();
+    config.commPort = "COM1";
+    config.normallyClosedLaneSensors = false;
+    config.digitalIds = new ArrayList<>();
+    config.digitalIds.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE); // Pin 0 = Lane 0 Lap
+    // Deliberately no segment sensor configured
+    config.useLapsForSegments = true;
+
+    protocol.updateConfig(config);
+    protocol.open();
+
+    // Verify version
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    protocol.simulateHeartbeat();
+
+    // OPCODE_INPUT (I), DIGITAL (D), Pin (0), State (0 - active trigger), Terminator (;)
+    byte[] message = {0x49, 0x44, 0, 0, 0x3B};
+    serialConnection.injectData(message);
+
+    assertEquals(1, listener.lapCount);
+    assertEquals(0, listener.segmentCount); // Should NOT fire segment
   }
 
   @Test

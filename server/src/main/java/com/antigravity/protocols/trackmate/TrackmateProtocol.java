@@ -168,7 +168,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       timeLength = 0;
       // Trackmate time is in ms. hwLapTime uses microseconds.
       long timeUs = t * 1000;
-      logger.debug("Processed time message: {} ms", t);
+      logger.trace("Processed time message: {} ms", t);
       for (int i = 0; i < getNumLanes(); i++) {
         hwLapTime[i].add(timeUs);
         hwSegmentTime[i].add(timeUs);
