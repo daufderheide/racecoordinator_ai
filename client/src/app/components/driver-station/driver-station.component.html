@@ -1,146 +1,18 @@
-<div
-  class="driver-station-container"
-  [class.fuel-race]="isFuelRace"
-  [style.background-color]="backgroundColor"
-  [style.color]="foregroundColor"
->
-  <!-- Column 1: Thermometer (Time/Laps Left) -->
-  <div class="column thermometer-column">
-    <div class="thermometer-container">
-      <div
-        class="thermometer-fill"
-        [style.height.%]="progressPercentage"
-        [style.background-color]="foregroundColor"
-      ></div>
-    </div>
-    <div class="thermometer-label">
-      @if (finishMethod === "Timed") {
-        <span>{{ time | number: "1.0-0" }}</span>
-      }
-      @if (finishMethod === "Lap") {
-        <span>{{ finishValue - (driverData?.lapCount || 0) }}</span>
-      }
-    </div>
-  </div>
-
-  <!-- Column 2: Data Rows -->
-  <div class="column data-column" [class.span-all]="!isFuelRace">
-    <div class="data-row driver-row">
-      <div class="driver-col">
-        <span class="label shrink-value">{{
-          "RD_COL_NICKNAME" | translate
-        }}</span>
-        <div class="nickname-container">
-          <span class="value nickname-value">{{
-            driverData?.driver?.nickname
-          }}</span>
-          @if (driverData?.participant?.team) {
-            <span class="team-name">{{
-              driverData?.participant?.team?.name
-            }}</span>
-          }
-        </div>
-      </div>
-      <div class="driver-col">
-        <span class="label shrink-value">{{ "RD_COL_LANE" | translate }}</span>
-        <span class="value shrink-value">{{ laneIndex + 1 }}</span>
-      </div>
-    </div>
-    <div class="data-row rank-row">
-      <div class="rank-col">
-        <span class="label shrink-value">{{
-          "RD_COL_RANK_HEAT" | translate
-        }}</span>
-        <span class="value shrink-value">{{
-          standingsPosition ? standingsPosition : "--"
-        }}</span>
-      </div>
-      <div class="rank-col">
-        <span class="label shrink-value">{{
-          "RD_COL_RANK_OVERALL" | translate
-        }}</span>
-        <span class="value shrink-value">{{
-          overallPosition ? overallPosition : "--"
-        }}</span>
-      </div>
-    </div>
-    @let lapText = hasLapData ? (driverData?.lapCount | number: "1.0-2") : "--";
-    @let hasFraction = lapText != null && lapText.includes(".");
-
-    <div class="data-row lap-row">
-      <div class="lap-col lap-count-col">
-        <span class="label shrink-value">{{ "RD_COL_LAP" | translate }}</span>
-        @if (hasFraction) {
-          <div class="lap-value-container">
-            <span class="value shrink-value lap-count-value shrink-more">{{
-              lapText
-            }}</span>
-          </div>
-        } @else {
-          <span class="value shrink-value lap-count-value">{{ lapText }}</span>
-        }
-      </div>
-      <div class="lap-col lap-time-col">
-        <span class="label shrink-value">{{
-          "RD_COL_LAP_TIME" | translate
-        }}</span>
-        <span class="value shrink-value">{{
-          driverData?.lastLapTime
-            ? (driverData?.lastLapTime | number: "1.3-3")
-            : "--.---"
-        }}</span>
-      </div>
-    </div>
-    <div class="data-row">
-      <span class="label shrink-value">{{
-        "RD_COL_GAP_LEADER" | translate
-      }}</span>
-      <span class="value shrink-value">{{
-        driverData?.gapLeader
-          ? (driverData?.gapLeader | number: "1.3-3")
-          : "--.---"
-      }}</span>
-    </div>
-    <div class="data-row">
-      <span class="label shrink-value">{{
-        "RD_COL_BEST_LAP" | translate
-      }}</span>
-      <span class="value shrink-value">{{
-        driverData?.bestLapTime
-          ? (driverData?.bestLapTime | number: "1.3-3")
-          : "--.---"
-      }}</span>
-    </div>
-    <div class="data-row race-state-row">
-      <div
-        class="race-state-indicator"
-        [class]="'race-state-' + raceStateColor"
-      ></div>
-    </div>
-  </div>
-
-  <!-- Column 3: Fuel Thermometer (Conditional) -->
-  @if (isFuelRace) {
-    <div class="column thermometer-column fuel-column">
-      <div class="thermometer-container">
-        <div
-          class="thermometer-fill"
-          [style.height.%]="fuelPercentage"
-          [style.background-color]="foregroundColor"
-        ></div>
-      </div>
-      <div class="thermometer-label">
-        <span>{{ fuelPercentage | number: "1.0-0" }}%</span>
-      </div>
+<div class="dynamic-component-container">
+  @if (isLoading) {
+    <div class="loading-container fade-out">
+      <div class="loading-spinner"></div>
+      <p>Loading Component...</p>
     </div>
   }
-</div>
 
-<app-acknowledgement-modal
-  [visible]="showAckModal"
-  [title]="ackModalTitle"
-  [message]="ackModalMessage"
-  [buttonText]="ackModalButtonText"
-  (acknowledge)="onAcknowledgeModal()"
->
-</app-acknowledgement-modal>
+  @if (error) {
+    <div class="error-container fade-in">
+      <h2>Failed to Load Component</h2>
+      <p>{{ error }}</p>
+    </div>
+  }
+
+  <!-- The dynamic component will be inserted here -->
+  <ng-container #container></ng-container>
+</div>
