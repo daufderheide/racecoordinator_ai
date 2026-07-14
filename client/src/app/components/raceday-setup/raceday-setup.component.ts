@@ -11,7 +11,7 @@ import {
   ViewContainerRef,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { DomSanitizer } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
@@ -118,11 +118,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public isUpdating = false;
   public updateBannerDismissed = false;
 
-  public get updateVersionHtml(): SafeHtml {
+  public get updateVersionHtml(): string {
     if (!this.updateResult) return "";
-    return this.sanitizer.bypassSecurityTrustHtml(
-      `<a href="${this.updateResult.releaseUrl}" target="_blank" style="color: inherit; text-decoration: underline;">${this.updateResult.latestVersion}</a>`,
-    );
+    return `<a href="${this.updateResult.releaseUrl}" target="_blank" class="update-link">${this.updateResult.latestVersion}</a>`;
   }
 
   constructor(
