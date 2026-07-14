@@ -724,6 +724,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             a.type === "sound" ||
             a.type === "audio_set",
         );
+        this.soundAssets = this.assets.filter(
+          (a) => a.type === "sound" || a.type === "audio_set",
+        );
 
         // Dynamic columns for image sets
         const imageSetColumns = result.assets
@@ -1234,11 +1237,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.themeService.isThemeActive();
   }
 
-  get soundAssets(): any[] {
-    return this.assets.filter(
-      (a) => a.type === "sound" || a.type === "audio_set",
-    );
-  }
+  soundAssets: any[] = [];
+  previewTTSContext: any = mockTTSContext();
 
   private sortAvailableColumns() {
     this.availableColumns.sort((a, b) => {
@@ -1252,9 +1252,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
    * Provides mock context data for previewing Text-to-Speech in the editor.
    * This is only used for the UI Editor's preview functionality.
    */
-  get previewTTSContext(): any {
-    return mockTTSContext();
-  }
 
   async loadThemes() {
     await this.themeService.refresh();
