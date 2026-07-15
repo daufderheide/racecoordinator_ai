@@ -15,6 +15,9 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   private int timeLength = 0;
   private final byte[] timeStream = new byte[3];
 
+  private final int[] lfCountSinceLastHit = new int[8];
+  private final boolean[] isSensorActive = new boolean[8];
+
   private static final byte START_COMMAND = 0x53; // 'S'
 
   // NC Relay turns track power on with 'E'
@@ -98,6 +101,26 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
   }
 
+  private void triggerPinBehavior(int behavior, int state, int pinIndex) {
+    if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE) {
+      int lane = behavior - PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
+      handleLapCounter(lane, state, pinIndex);
+    } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE) {
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
+      handlePitIn(lane, state);
+    } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE) {
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
+      handlePitOut(lane, state);
+    } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1000) {
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
+      handlePitInOut(lane, state);
+    }
+  }
+
   @Override
   protected void processData() {
     while (rxBuffer.size() > 0) {
@@ -109,34 +132,33 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       } else if (data == TERMINATOR_LF) {
         // Line feed acts as a heartbeat
         if (listener != null) {
-          // No specific pit debounce logic implemented here yet as trackmate just sends
-          // laps.
-          // In C# they used LF to handle debounce/pitting logic, but
-          // AbstractSerialProtocol handles
-          // basic debounce via getHardwareDebounceUs.
+          // LF acts as a timer to determine when the car has left the sensor.
+          // If we receive 2 LFs without seeing the sensor character, release the sensor.
+          for (int i = 0; i < 8; i++) {
+            if (isSensorActive[i]) {
+              lfCountSinceLastHit[i]++;
+              if (lfCountSinceLastHit[i] >= 2) {
+                isSensorActive[i] = false;
+                if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
+                  int behavior = config.lapPinBehaviors.get(i);
+                  int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
+                  triggerPinBehavior(behavior, inactiveState, i);
+                }
+              }
+            }
+          }
         }
       } else if (data >= 0x41 && data <= 0x48) { // 'A' through 'H'
         int pinIndex = data - 0x41;
+        lfCountSinceLastHit[pinIndex] = 0;
+
         if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
           int behavior = config.lapPinBehaviors.get(pinIndex);
           int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
 
-          if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
-              && behavior < PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE) {
-            int lane = behavior - PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
-            handleLapCounter(lane, activeState, pinIndex);
-          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE
-              && behavior < PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE) {
-            int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
-            handlePitIn(lane, activeState);
-          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
-              && behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE) {
-            int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
-            handlePitOut(lane, activeState);
-          } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
-              && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1000) {
-            int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
-            handlePitInOut(lane, activeState);
+          if (!isSensorActive[pinIndex]) {
+            isSensorActive[pinIndex] = true;
+            triggerPinBehavior(behavior, activeState, pinIndex);
           }
         }
       } else if (data == 0x57) { // 'W' Call button

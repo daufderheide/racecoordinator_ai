@@ -101,8 +101,15 @@ public class TrackmateProtocolTest {
       lastStatus = status;
     }
 
+    boolean[] laneInPits = new boolean[2];
+
     @Override
-    public void onCarData(CarData carData) {}
+    public void onCarData(CarData carData) {
+      if (carData != null && carData.getLane() < laneInPits.length) {
+        laneInPits[carData.getLane()] =
+            carData.getLocation() == com.antigravity.protocols.CarLocation.PitRow;
+      }
+    }
 
     @Override
     public void onInterfaceEvent(InterfaceEvent event) {}
@@ -247,5 +254,41 @@ public class TrackmateProtocolTest {
 
     protocol.setLanePower(false, 0); // Turn Lane 0 OFF. bitmask = 1
     assertArrayEquals(new byte[] {0x6E, 0x02}, serialConnection.lastWrittenData);
+  }
+
+  @Test
+  public void testLfDebouncePitting() {
+    // Configure PIT_IN_OUT behavior
+    config.lapPinPitBehavior =
+        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT;
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // 1. Trigger sensor for Lane 0 ('A')
+    serialConnection.injectData(new byte[] {0x41});
+    org.junit.Assert.assertTrue("Car should enter pits on sensor trigger", listener.laneInPits[0]);
+
+    // 2. First heartbeat (LF) - Car should still be in pits
+    serialConnection.injectData(new byte[] {0x0A});
+    org.junit.Assert.assertTrue("Car should remain in pits after 1 LF", listener.laneInPits[0]);
+
+    // 3. Second heartbeat (LF) - Car should leave pits
+    serialConnection.injectData(new byte[] {0x0A});
+    org.junit.Assert.assertFalse(
+        "Car should leave pits after 2 LFs without trigger", listener.laneInPits[0]);
+
+    // 4. Trigger again - ensure it can re-enter pits
+    serialConnection.injectData(new byte[] {0x41});
+    org.junit.Assert.assertTrue("Car should re-enter pits", listener.laneInPits[0]);
+
+    // 5. Trigger once more before LF - shouldn't break anything, just resets LF counter
+    serialConnection.injectData(new byte[] {0x41});
+    org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
+
+    serialConnection.injectData(new byte[] {0x0A}); // 1st LF
+    org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
+    serialConnection.injectData(new byte[] {0x0A}); // 2nd LF
+    org.junit.Assert.assertFalse("Car leaves pits", listener.laneInPits[0]);
   }
 }
