@@ -338,8 +338,8 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     this.closeDriverResultsWindows();
   }
 
-  @HostListener("window:unload", ["$event"])
-  onUnload(_event: any) {
+  @HostListener("window:pagehide", ["$event"])
+  onPageHide(_event: any) {
     this.closeDriverResultsWindows();
   }
 

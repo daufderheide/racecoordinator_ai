@@ -171,7 +171,7 @@ describe("DefaultHeatResultsComponent", () => {
     );
   });
 
-  it("should open driver results window, track it, and close it on destroy or unload", () => {
+  it("should open driver results window, track it, and close it on destroy or pagehide", () => {
     const mockWindow = jasmine.createSpyObj("Window", ["close"]);
     mockWindow.closed = false;
     spyOn(window, "open").and.returnValue(mockWindow);
@@ -180,8 +180,8 @@ describe("DefaultHeatResultsComponent", () => {
     expect(window.open).toHaveBeenCalledWith("/driver-results/d1", "_blank");
     expect(component["driverResultsWindows"].length).toBe(1);
 
-    // Call unload
-    component.onUnload(null);
+    // Call pagehide
+    component.onPageHide(null);
     expect(mockWindow.close).toHaveBeenCalled();
     expect(component["driverResultsWindows"].length).toBe(0);
 

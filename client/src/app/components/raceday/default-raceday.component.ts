@@ -2378,8 +2378,8 @@ export class DefaultRacedayComponent
     }
   }
 
-  @HostListener("window:unload", ["$event"])
-  onUnload(_event: any) {
+  @HostListener("window:pagehide", ["$event"])
+  onPageHide(_event: any) {
     if (this.leaderBoardWindow) {
       this.leaderBoardWindow.close();
       this.leaderBoardWindow = null;

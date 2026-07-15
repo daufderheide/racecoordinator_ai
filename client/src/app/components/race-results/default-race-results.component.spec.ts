@@ -954,7 +954,7 @@ describe("DefaultRaceResultsComponent", () => {
   });
 
   describe("Window Tracking and Cleanup", () => {
-    it("should open, track, and close driver results windows on destroy or unload", () => {
+    it("should open, track, and close driver results windows on destroy or pagehide", () => {
       const mockWindow = jasmine.createSpyObj("Window", ["close"]);
       mockWindow.closed = false;
       spyOn(window, "open").and.returnValue(mockWindow);
@@ -970,8 +970,8 @@ describe("DefaultRaceResultsComponent", () => {
       expect(window.open).toHaveBeenCalledWith("/driver-results/d1", "_blank");
       expect(component["driverResultsWindows"].length).toBe(1);
 
-      // Trigger unload
-      component.onUnload(null);
+      // Trigger pagehide
+      component.onPageHide(null);
       expect(mockWindow.close).toHaveBeenCalled();
       expect(component["driverResultsWindows"].length).toBe(0);
 
