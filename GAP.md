@@ -9,6 +9,12 @@ First, drivers are sorted into their current race positions (1st, 2nd, 3rd, etc.
 * **Gap Leader (`gapLeader`)**: For any given driver, this is the time gap between themselves and the driver currently in 1st place. The 1st place driver's gap leader is always `0.0`.
 * **Gap Position (`gapPosition`)**: For any given driver, this is the time gap between themselves and the driver immediately ahead of them in the standings. For example, the 3rd place driver's gap position is the gap between them and the 2nd place driver.
 
+### When are the gaps evaluated?
+
+While both standard gaps and F1 gaps are updated continuously throughout the race (whenever standings are refreshed), they represent different points in time:
+* **Standard Gaps**: Represent a continuously projected estimate. They use the trailing driver's average lap time to mathematically project the time difference based on their current pace and lap deficit.
+* **Formula 1 Gaps**: Represent a precise historical snapshot measured *at the start/finish line*. The gap evaluates the exact physical time difference between when the leading driver completed a specific lap and when the trailing driver completed that exact same lap.
+
 ---
 
 ## How the Time Gap is Calculated
