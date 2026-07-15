@@ -13,6 +13,10 @@
     <div
       #timerText
       class="timer-text"
+      [class.timer-warmup]="isWarmup()"
+      [class.timer-auto]="
+        autoStatusLabel() && !showCountdownOverlay() && !isWarmup()
+      "
       [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
       [style.font-size.px]="
         widget()?.scaleMode === 'fixed' || !widget()?.scaleMode

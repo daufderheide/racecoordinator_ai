@@ -60,6 +60,16 @@
   transform: translateY(var(--timer-text-offset, -7px));
 }
 
+.timer-text.timer-warmup {
+  color: #00ffff;
+  text-shadow: 0 0 24px rgba(0, 255, 255, 0.6);
+}
+
+.timer-text.timer-auto {
+  color: #ffaa00;
+  text-shadow: 0 0 24px rgba(255, 170, 0, 0.5);
+}
+
 .status-label {
   font-family: 'Orbitron', sans-serif;
   font-size: 16px;
