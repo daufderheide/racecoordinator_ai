@@ -16,6 +16,7 @@ procedure ExtractZip(const ZipFile, DestDir, StatusMsg: String);
 var
   ResultCode: Integer;
   PSCommand: String;
+  TarPath: String;
 begin
   WizardForm.StatusLabel.Caption := StatusMsg;
   WizardForm.ProgressGauge.Style := npbstMarquee;
@@ -25,30 +26,36 @@ begin
       
     if IsWindows10OrNewer() then
     begin
-      PSCommand := Format('/c "tar -xf ""%s"" -C ""%s"""', [ZipFile, DestDir]);
-      Log('Running CMD: ' + PSCommand);
-      if Exec('cmd.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+      TarPath := ExpandConstant('{sysnative}\tar.exe');
+      if FileExists(TarPath) then
       begin
-        if ResultCode <> 0 then
-          MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
+        Log('Running TAR: ' + TarPath);
+        if Exec(TarPath, Format('-xf "%s" -C "%s"', [ZipFile, DestDir]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        begin
+          if ResultCode = 0 then
+            Exit; // Success
+            
+          Log(Format('TAR extraction failed with code %d. Falling back to PowerShell.', [ResultCode]));
+        end
+        else
+          Log('Failed to execute TAR. Falling back to PowerShell.');
       end
       else
-        MsgBox('Failed to launch cmd for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
+        Log('TAR not found at ' + TarPath + '. Falling back to PowerShell.');
+    end;
+    
+    // PowerShell command for extraction (legacy fallback or TAR failure)
+    PSCommand := Format('-NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path ''%s'' -DestinationPath ''%s'' -Force"', [ZipFile, DestDir]);
+    Log('Running PowerShell: ' + PSCommand);
+    
+    if Exec('powershell.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+    begin
+      if ResultCode <> 0 then
+        MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
     end
     else
-    begin
-      // PowerShell command for extraction (legacy fallback)
-      PSCommand := Format('-NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path ''%s'' -DestinationPath ''%s'' -Force"', [ZipFile, DestDir]);
-      Log('Running PowerShell: ' + PSCommand);
+      MsgBox('Failed to launch PowerShell for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
       
-      if Exec('powershell.exe', PSCommand, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      begin
-        if ResultCode <> 0 then
-          MsgBox(Format('Extraction of %s failed with code %d.', [ExtractFileName(ZipFile), ResultCode]), mbError, MB_OK);
-      end
-      else
-        MsgBox('Failed to launch PowerShell for extraction: ' + ExtractFileName(ZipFile), mbError, MB_OK);
-    end;
   finally
     WizardForm.ProgressGauge.Style := npbstNormal;
   end;
@@ -100,11 +107,15 @@ begin
   DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), 'Checking and downloading dependencies...', @OnDownloadProgress);
 end;
 
-function NextButtonClick(CurPageID: Integer): Boolean;
+procedure CurStepChanged(CurStep: TSetupStep);
 var
+  JavaZip, MongoZip: String;
+  MongoSource, MongoDest: String;
   NeedsJava, NeedsMongo, IsModernOS: Boolean;
 begin
-  if CurPageID = wpReady then begin
+  if CurStep = ssInstall then
+  begin
+    // Evaluate if dependencies are needed
     IsModernOS := IsWindows10OrNewer();
     NeedsJava := not IsJavaInstalled(IsModernOS);
     NeedsMongo := not IsMongoInstalled(IsModernOS);
@@ -114,9 +125,9 @@ begin
       
       if NeedsJava then begin
         if IsModernOS then
-          DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse', 'java_setup.zip', '')
+          DownloadPage.Add('https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.19%2B10/OpenJDK17U-jre_x64_windows_hotspot_17.0.19_10.zip', 'java_setup.zip', '')
         else
-          DownloadPage.Add('https://api.adoptium.net/v3/binary/latest/8/ga/windows/x86/jre/hotspot/normal/eclipse', 'java_setup.zip', '');
+          DownloadPage.Add('https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u472-b08/OpenJDK8U-jre_x86-32_windows_hotspot_8u472b08.zip', 'java_setup.zip', '');
       end;
       
       if NeedsMongo then begin
@@ -130,10 +141,9 @@ begin
       try
         try
           DownloadPage.Download;
-          Result := True;
         except
           if DownloadPage.AbortedByUser then
-            Result := False
+            Abort()
           else
           begin
             if Pos('12007', GetExceptionMessage) > 0 then
@@ -141,31 +151,19 @@ begin
               MsgBox('Network Error: The installer could not resolve the download server addresses (DNS Error 12007).' + #13#10#13#10 +
                      'This "Online" installer requires an active internet connection to download Java and MongoDB.' + #13#10#13#10 +
                      'Please check your internet connection or try again later.', mbCriticalError, MB_OK);
-              Result := False;
             end
             else
             begin
               SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
-              Result := False;
             end;
+            Abort();
           end;
         end;
       finally
         DownloadPage.Hide;
       end;
-    end else
-      Result := True;
-  end else
-    Result := True;
-end;
+    end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  JavaZip, MongoZip: String;
-  MongoSource, MongoDest: String;
-begin
-  if CurStep = ssInstall then
-  begin
     MongoSource := ExpandConstant('{app}\mongodb\bin\mongod.exe');
     MongoDest := ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools\mongod_legacy.exe');
     

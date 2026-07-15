@@ -12,6 +12,11 @@ on:
         description: 'Release version (e.g. 1.0.0-beta.1)'
         required: false
         default: ''
+      skip_release:
+        description: 'Skip publishing GitHub Release (just build artifacts)'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -132,6 +137,7 @@ jobs:
 
   publish-release:
     needs: [build-windows, build-mac, build-artifacts]
+    if: ${{ github.event.inputs.skip_release != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Download Windows Installers
