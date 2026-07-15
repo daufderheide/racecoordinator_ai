@@ -152,7 +152,11 @@ function Extract-To-Release {
         Expand-Archive -Path $ZipPath -DestinationPath $TempDir -Force
         $Extracted = Get-ChildItem -Path $TempDir | Where-Object { $_.PSIsContainer } | Select-Object -First 1
         if ($Extracted) {
-            Copy-Item "$($Extracted.FullName)\*" "release\RaceCoordinator\$DestSubDir\" -Recurse -Force
+            # Ensure destination is clear before moving to avoid nesting
+            if (Test-Path "release\RaceCoordinator\$DestSubDir") {
+                Remove-Item "release\RaceCoordinator\$DestSubDir" -Recurse -Force
+            }
+            Move-Item "$($Extracted.FullName)" "release\RaceCoordinator\$DestSubDir" -Force
         }
         Remove-Item $TempDir -Recurse -Force
     }

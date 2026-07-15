@@ -73,8 +73,8 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; C
 Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
-Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
-Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless)"""; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
+Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"") else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"")"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent 64bit; Check: not IsRestartAppRequested
+Filename: "{cmd}"; Parameters: "/c ""if exist ""{app}\jre\bin\java.exe"" (""{app}\jre\bin\java.exe"" -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless) else (java -Dapp.data.dir=""{commonappdata}\{#MyAppName}"" -jar ""{app}\{#MyAppExeName}"" --headless)"""; WorkingDir: "{app}"; Flags: nowait 64bit; Check: IsRestartAppRequested
 
 [Code]
 function KillProcesses: Boolean;
@@ -181,8 +181,12 @@ begin
     LoadStringFromFile(VersionFile, InstalledVersion);
     if Trim(String(InstalledVersion)) = GetRequiredJavaVersion(IsModernOS) then
     begin
-      Result := True;
-      Exit;
+      // Ensure the installation is not corrupt (must have bin\java.exe and bin\management.dll)
+      if FileExists(ExpandConstant('{app}\jre\bin\java.exe')) and FileExists(ExpandConstant('{app}\jre\bin\management.dll')) then
+      begin
+        Result := True;
+        Exit;
+      end;
     end;
   end;
 
