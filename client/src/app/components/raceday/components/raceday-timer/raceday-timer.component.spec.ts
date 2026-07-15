@@ -108,4 +108,45 @@ describe("RacedayTimerComponent", () => {
     expect(timerText).toBeTruthy();
     expect(timerText.textContent.trim()).toBe("01:23");
   });
+
+  it("should apply timer-warmup class during warmup state", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("isWarmup", true);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-warmup")).toBe(true);
+    expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
+
+  it("should apply timer-auto class during auto-start/auto-advance (not warmup)", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("autoStatusLabel", "RD_AUTO_START");
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("showCountdownOverlay", false);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-auto")).toBe(true);
+    expect(timerText.classList.contains("timer-warmup")).toBe(false);
+  });
+
+  it("should not apply timer-auto class during countdown overlay", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("autoStatusLabel", "RD_AUTO_START");
+    fixture.componentRef.setInput("isWarmup", false);
+    fixture.componentRef.setInput("showCountdownOverlay", true);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
+
+  it("should not apply timer-auto class during warmup even with auto status", () => {
+    fixture.componentRef.setInput("formattedTime", "01:23");
+    fixture.componentRef.setInput("autoStatusLabel", "RD_AUTO_START");
+    fixture.componentRef.setInput("isWarmup", true);
+    fixture.componentRef.setInput("showCountdownOverlay", false);
+    fixture.detectChanges();
+    const timerText = fixture.nativeElement.querySelector(".timer-text");
+    expect(timerText.classList.contains("timer-warmup")).toBe(true);
+    expect(timerText.classList.contains("timer-auto")).toBe(false);
+  });
 });
