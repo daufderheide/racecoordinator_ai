@@ -1,5 +1,7 @@
 # Race Coordinator AI: Server API Reference (`localhost:7070`)
 
+Date reviewed: 07/14/2026
+
 This document provides a comprehensive reference of all REST API endpoints and WebSocket channels exposed by the Race Coordinator AI backend server running on port `7070`.
 
 ---
@@ -216,13 +218,4 @@ Endpoints for running live races, pit stops, and hardware interfaces. Many write
 
 ## 8. WebSocket Channels
 
-The server exposes two WebSocket channels to broadcast real-time state changes to all clients:
-
-### 1. Active Race Stream (`/api/race-data`)
-* **Purpose**: Broadcasts state snapshots of the active race (`RaceSnapshot`) containing live lap times, positions, fuel levels, heat progress, and session settings.
-* **Format**: Binary payloads.
-* **Client Subscription**: To subscribe to updates for a specific race, the client must send a binary `RaceSubscriptionRequest` message upon connection upgrade.
-
-### 2. Interface Connectivity Stream (`/api/interface-data`)
-* **Purpose**: Broadcasts real-time events regarding connection statuses, serial packet statistics, pin changes, and hardware events on the physical interface.
-* **Format**: JSON payloads.
+Real-time state changes and hardware events are streamed via WebSockets. To see detailed documentation on subscription flows, session roles, automatic cleanups, and connection keepalives, refer to [WEBSOCKETS.md](file:///./WEBSOCKETS.md).
