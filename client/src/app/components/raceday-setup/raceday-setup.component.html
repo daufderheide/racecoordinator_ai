@@ -47,15 +47,17 @@
             {{ "RDS_UPDATE_BTN_DOWNLOAD" | translate }}
           </a>
         }
-        <button
-          (click)="updateBannerDismissed = true"
-          class="update-btn-secondary"
-        >
-          {{ "RDS_UPDATE_BTN_INSTALL_LATER" | translate }}
-        </button>
-        <button (click)="skipVersion()" class="update-btn-secondary">
-          {{ "RDS_UPDATE_BTN_SKIP_VERSION" | translate }}
-        </button>
+        @if (!isUpdating) {
+          <button
+            (click)="updateBannerDismissed = true"
+            class="update-btn-secondary"
+          >
+            {{ "RDS_UPDATE_BTN_INSTALL_LATER" | translate }}
+          </button>
+          <button (click)="skipVersion()" class="update-btn-secondary">
+            {{ "RDS_UPDATE_BTN_SKIP_VERSION" | translate }}
+          </button>
+        }
       </div>
     </div>
   }

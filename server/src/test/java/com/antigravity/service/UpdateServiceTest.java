@@ -267,4 +267,30 @@ public class UpdateServiceTest {
     assertEquals(0, progress.progress);
     assertEquals("", progress.status);
   }
+
+  @Test
+  public void testCalculateDownloadProgressWithContentLength() {
+    // 50MB out of 100MB
+    int progress = UpdateService.calculateDownloadProgress(50 * 1024 * 1024L, 100 * 1024 * 1024);
+    assertEquals(50, progress);
+
+    // 100% complete
+    progress = UpdateService.calculateDownloadProgress(100 * 1024 * 1024L, 100 * 1024 * 1024);
+    assertEquals(100, progress);
+  }
+
+  @Test
+  public void testCalculateDownloadProgressWithoutContentLength() {
+    // 75MB downloaded, no content length (fallback is 150MB)
+    int progress = UpdateService.calculateDownloadProgress(75 * 1024 * 1024L, -1);
+    assertEquals(50, progress); // 75MB / 150MB = 50%
+
+    // 150MB downloaded, no content length (fallback is 150MB, capped at 99%)
+    progress = UpdateService.calculateDownloadProgress(150 * 1024 * 1024L, -1);
+    assertEquals(99, progress); // Should cap at 99%
+
+    // 200MB downloaded, no content length (exceeds fallback, still capped at 99%)
+    progress = UpdateService.calculateDownloadProgress(200 * 1024 * 1024L, -1);
+    assertEquals(99, progress);
+  }
 }

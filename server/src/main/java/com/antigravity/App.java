@@ -654,6 +654,7 @@ public class App {
       app.get(
           "/api/update/progress",
           ctx -> {
+            ctx.header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
             ctx.contentType("application/json");
             ctx.result(new ObjectMapper().writeValueAsString(updateService.getDownloadProgress()));
           });

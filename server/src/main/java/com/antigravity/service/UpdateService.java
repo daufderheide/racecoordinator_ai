@@ -240,9 +240,7 @@ public class UpdateService {
         }
         out.write(buffer, 0, bytesRead);
         downloaded += bytesRead;
-        if (contentLength > 0) {
-          downloadProgress = (int) ((downloaded * 100L) / contentLength);
-        }
+        downloadProgress = calculateDownloadProgress(downloaded, contentLength);
       }
     }
 
@@ -259,5 +257,14 @@ public class UpdateService {
         new ProcessBuilder(
             "cmd.exe", "/c", "start", installerFile.getAbsolutePath(), "/SILENT", "/RESTARTAPP");
     pb.start();
+  }
+
+  static int calculateDownloadProgress(long downloaded, int contentLength) {
+    if (contentLength > 0) {
+      return (int) ((downloaded * 100L) / contentLength);
+    } else {
+      // Fallback if Content-Length is unknown: estimate based on 150MB installer size
+      return Math.min(99, (int) ((downloaded * 100L) / (150 * 1024 * 1024)));
+    }
   }
 }
